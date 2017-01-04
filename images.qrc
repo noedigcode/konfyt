@@ -1,0 +1,24 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/midi.png</file>
+        <file>icons/sf2.png</file>
+        <file>icons/sfz.png</file>
+        <file>icons/settings.png</file>
+        <file>icons/remove.png</file>
+        <file>icons/add.png</file>
+        <file>icons/down.png</file>
+        <file>icons/up.png</file>
+        <file>icons/konfyt 16.png</file>
+        <file>icons/konfyt 32.png</file>
+        <file>icons/konfyt 64.png</file>
+        <file>icons/konfyt 128.png</file>
+        <file>icons/konfyt yellow text with monster.png</file>
+        <file>icons/back.png</file>
+        <file>icons/person.png</file>
+        <file>icons/place.png</file>
+        <file>icons/refresh.png</file>
+        <file>icons/folder.png</file>
+        <file>icons/picture.png</file>
+        <file>icons/play.png</file>
+    </qresource>
+</RCC>

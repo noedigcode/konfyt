@@ -1,0 +1,7 @@
+*.o
+konfyt
+konfyt.pro.user*
+moc_*
+qrc_*
+ui_*
+
