@@ -661,7 +661,7 @@ konfytPatchLayer konfytPatchEngine::addAudioInPortToPatch(int port)
     currentPatch->setLayerBus(&g, currentProject->audioBus_getFirstBusId(-1));
 
     reloadPatch();
-    return g;
+    return currentPatch->getLayerItem(g);
 }
 
 // Print error message to stdout, and abort app.

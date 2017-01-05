@@ -1517,7 +1517,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>6</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
@@ -2174,10 +2174,16 @@ border-bottom-right-radius: 0;
 </string>
                              </property>
                              <property name="text">
-                              <string>Save Patch</string>
+                              <string>Patch Menu</string>
                              </property>
                              <property name="popupMode">
-                              <enum>QToolButton::MenuButtonPopup</enum>
+                              <enum>QToolButton::InstantPopup</enum>
+                             </property>
+                             <property name="toolButtonStyle">
+                              <enum>Qt::ToolButtonTextBesideIcon</enum>
+                             </property>
+                             <property name="arrowType">
+                              <enum>Qt::NoArrow</enum>
                              </property>
                             </widget>
                            </item>
@@ -2204,6 +2210,12 @@ border-bottom-right-radius: 0;</string>
                              <property name="popupMode">
                               <enum>QToolButton::InstantPopup</enum>
                              </property>
+                             <property name="toolButtonStyle">
+                              <enum>Qt::ToolButtonTextBesideIcon</enum>
+                             </property>
+                             <property name="arrowType">
+                              <enum>Qt::NoArrow</enum>
+                             </property>
                             </widget>
                            </item>
                            <item row="0" column="2">
@@ -2226,6 +2238,12 @@ border-bottom-left-radius: 0;</string>
                              </property>
                              <property name="popupMode">
                               <enum>QToolButton::InstantPopup</enum>
+                             </property>
+                             <property name="toolButtonStyle">
+                              <enum>Qt::ToolButtonTextBesideIcon</enum>
+                             </property>
+                             <property name="arrowType">
+                              <enum>Qt::NoArrow</enum>
                              </property>
                             </widget>
                            </item>
@@ -5906,7 +5924,7 @@ QSlider::handle:horizontal:hover {
   </action>
   <action name="actionSave_Patch_As_Copy">
    <property name="text">
-    <string>Save As Copy</string>
+    <string>Create Copy</string>
    </property>
    <property name="toolTip">
     <string>Save Patch As Copy</string>
@@ -6118,6 +6136,66 @@ QSlider::handle:horizontal:hover {
   <action name="actionPanic">
    <property name="text">
     <string>Panic</string>
+   </property>
+  </action>
+  <action name="actionLayer_5_Gain">
+   <property name="text">
+    <string>Layer 5 Gain</string>
+   </property>
+  </action>
+  <action name="actionLayer_5_Solo">
+   <property name="text">
+    <string>Layer 5 Solo</string>
+   </property>
+  </action>
+  <action name="actionLayer_5_Mute">
+   <property name="text">
+    <string>Layer 5 Mute</string>
+   </property>
+  </action>
+  <action name="actionLayer_6_Gain">
+   <property name="text">
+    <string>Layer 6 Gain</string>
+   </property>
+  </action>
+  <action name="actionLayer_6_Solo">
+   <property name="text">
+    <string>Layer 6 Solo</string>
+   </property>
+  </action>
+  <action name="actionLayer_6_Mute">
+   <property name="text">
+    <string>Layer 6 Mute</string>
+   </property>
+  </action>
+  <action name="actionLayer_7_Gain">
+   <property name="text">
+    <string>Layer 7 Gain</string>
+   </property>
+  </action>
+  <action name="actionLayer_7_Solo">
+   <property name="text">
+    <string>Layer 7 Solo</string>
+   </property>
+  </action>
+  <action name="actionLayer_7_Mute">
+   <property name="text">
+    <string>Layer 7 Mute</string>
+   </property>
+  </action>
+  <action name="actionLayer_8_Gain">
+   <property name="text">
+    <string>Layer 8 Gain</string>
+   </property>
+  </action>
+  <action name="actionLayer_8_Solo">
+   <property name="text">
+    <string>Layer 8 Solo</string>
+   </property>
+  </action>
+  <action name="actionLayer_8_Mute">
+   <property name="text">
+    <string>Layer 8 Mute</string>
    </property>
   </action>
  </widget>

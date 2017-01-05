@@ -981,7 +981,15 @@ bool konfytProject::isPatchLoaded(int patch_id)
 
 void konfytProject::addAndReplaceTrigger(konfytTrigger newTrigger)
 {
-    removeTrigger(newTrigger.actionText);
+    // Remove any action that has the same trigger
+    int trigint = newTrigger.toInt();
+    QList<QString> l = triggerHash.keys();
+    for (int i=0; i<l.count(); i++) {
+        if (triggerHash.value(l[i]).toInt() == trigint) {
+            triggerHash.remove(l[i]);
+        }
+    }
+
     triggerHash.insert(newTrigger.actionText, newTrigger);
     setModified(true);
 }

@@ -192,7 +192,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Save-patch button menu
     QMenu* savePatchMenu = new QMenu();
-    savePatchMenu->addAction(ui->actionSave_Patch);
+    //savePatchMenu->addAction(ui->actionSave_Patch); // 2017-01-05 Not used at the moment; patches are saved automatically.
     savePatchMenu->addAction(ui->actionSave_Patch_As_Copy);
     savePatchMenu->addAction(ui->actionAdd_Patch_To_Library);
     savePatchMenu->addAction(ui->actionSave_Patch_To_File);
@@ -1077,11 +1077,7 @@ void MainWindow::initTriggers()
       << ui->actionMaster_Volume_Slider
       << ui->actionMaster_Volume_Up
       << ui->actionMaster_Volume_Down
-      << ui->actionSave_Patch
-      << ui->actionLayer_1_Gain << ui->actionLayer_1_Mute << ui->actionLayer_1_Solo
-      << ui->actionLayer_2_Gain << ui->actionLayer_2_Mute << ui->actionLayer_2_Solo
-      << ui->actionLayer_3_Gain << ui->actionLayer_3_Mute << ui->actionLayer_3_Solo
-      << ui->actionLayer_4_Gain << ui->actionLayer_4_Mute << ui->actionLayer_4_Solo
+      << ui->actionProject_save
       << ui->actionPatch_1
       << ui->actionPatch_2
       << ui->actionPatch_3
@@ -1089,14 +1085,28 @@ void MainWindow::initTriggers()
       << ui->actionPatch_5
       << ui->actionPatch_6
       << ui->actionPatch_7
-      << ui->actionPatch_8;
+      << ui->actionPatch_8
+      << ui->actionLayer_1_Gain << ui->actionLayer_1_Mute << ui->actionLayer_1_Solo
+      << ui->actionLayer_2_Gain << ui->actionLayer_2_Mute << ui->actionLayer_2_Solo
+      << ui->actionLayer_3_Gain << ui->actionLayer_3_Mute << ui->actionLayer_3_Solo
+      << ui->actionLayer_4_Gain << ui->actionLayer_4_Mute << ui->actionLayer_4_Solo
+      << ui->actionLayer_5_Gain << ui->actionLayer_5_Mute << ui->actionLayer_5_Solo
+      << ui->actionLayer_6_Gain << ui->actionLayer_6_Mute << ui->actionLayer_6_Solo
+      << ui->actionLayer_7_Gain << ui->actionLayer_7_Mute << ui->actionLayer_7_Solo
+      << ui->actionLayer_8_Gain << ui->actionLayer_8_Mute << ui->actionLayer_8_Solo;
 
     channelGainActions << ui->actionLayer_1_Gain << ui->actionLayer_2_Gain
-                       << ui->actionLayer_3_Gain << ui->actionLayer_4_Gain;
+                       << ui->actionLayer_3_Gain << ui->actionLayer_4_Gain
+                       << ui->actionLayer_5_Gain << ui->actionLayer_6_Gain
+                       << ui->actionLayer_7_Gain << ui->actionLayer_8_Gain;
     channelSoloActions << ui->actionLayer_1_Solo << ui->actionLayer_2_Solo
-                       << ui->actionLayer_3_Solo << ui->actionLayer_4_Solo;
+                       << ui->actionLayer_3_Solo << ui->actionLayer_4_Solo
+                       << ui->actionLayer_5_Solo << ui->actionLayer_6_Solo
+                       << ui->actionLayer_7_Solo << ui->actionLayer_8_Solo;
     channelMuteActions << ui->actionLayer_1_Mute << ui->actionLayer_2_Mute
-                       << ui->actionLayer_3_Mute << ui->actionLayer_4_Mute;
+                       << ui->actionLayer_3_Mute << ui->actionLayer_4_Mute
+                       << ui->actionLayer_5_Mute << ui->actionLayer_6_Mute
+                       << ui->actionLayer_7_Mute << ui->actionLayer_8_Mute;
     patchActions << ui->actionPatch_1
                  << ui->actionPatch_2
                  << ui->actionPatch_3
@@ -2079,6 +2089,8 @@ void MainWindow::addMidiPortToCurrentPatch(int port)
 
     // Add to GUI list
     addLayerItemToGUI(g);
+
+    setPatchModified(true);
 }
 
 // Adds an audio bus to the current patch in engine and GUI
@@ -2095,6 +2107,8 @@ void MainWindow::addAudioInPortToCurrentPatch(int port)
 
     // Add to GUI list
     addLayerItemToGUI(g);
+
+    setPatchModified(true);
 }
 
 // Sets previewMode based on choice, and updates the gui.
@@ -2790,21 +2804,15 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
     // Perform the action
     if (action == ui->actionPanic) {
 
-        if (ev.data2 > 0) {
-            ui->actionPanic->trigger();
-        }
+        if (ev.data2 > 0) { ui->actionPanic->trigger(); }
 
     } else if (action == ui->actionNext_Patch) {
 
-        if (ev.data2 > 0) {
-            setCurrentPatch( currentPatchIndex+1 );
-        }
+        if (ev.data2 > 0) { setCurrentPatch( currentPatchIndex+1 ); }
 
     } else if (action == ui->actionPrevious_Patch) {
 
-        if (ev.data2 > 0) {
-            setCurrentPatch( currentPatchIndex-1 );
-        }
+        if (ev.data2 > 0) { setCurrentPatch( currentPatchIndex-1 ); }
 
     } else if (action == ui->actionMaster_Volume_Slider) {
 
@@ -2814,19 +2822,19 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
 
     } else if (action == ui->actionMaster_Volume_Up) {
 
-        if (ev.data2 > 0) {
-            userMessage("DUMMY Master volume up"); // TODO
-        }
+        if (ev.data2 > 0) { ui->actionMaster_Volume_Up->trigger(); }
 
     } else if (action == ui->actionMaster_Volume_Down) {
 
-        if (ev.data2 > 0) {
-            userMessage("DUMMY Master volume down"); // TODO
-        }
+        if (ev.data2 > 0) { ui->actionMaster_Volume_Down->trigger(); }
 
     } else if (action == ui->actionSave_Patch) {
 
-        on_actionSave_Patch_triggered();
+        if (ev.data2 > 0) { ui->actionSave_Patch->trigger(); }
+
+    } else if (action == ui->actionProject_save) {
+
+        if (ev.data2 > 0) { ui->actionProject_save->trigger(); }
 
     } else if (channelGainActions.contains(action)) {
 
@@ -2929,6 +2937,8 @@ void MainWindow::on_layerBusMenu_ActionTrigger(QAction *action)
     layerBusMenu_sourceItem->setLayerItem( g );
     // Update in pengine
     pengine->setLayerBus( &g, busId );
+
+    setPatchModified(true);
 
     // If the user added a new bus, open the connections page and show bus.
     if (action == layerBusMenu_NewBusAction) {
@@ -3124,6 +3134,7 @@ void MainWindow::removeLayerItem(konfytLayerWidget *layerItem)
 
     removeLayerItem_GUIonly(layerItem);
 
+    setPatchModified(true);
 }
 
 // Remove a layer item from the gui (and our internal list) only.
@@ -3198,6 +3209,9 @@ void MainWindow::on_pushButton_Settings_Sfz_clicked()
  * to currently selected patch in the project. */
 void MainWindow::on_actionSave_Patch_triggered()
 {
+
+    // 2017-01-05 This is not really used anymore as patches are automatically saved at the moment.
+
     konfytProject* prj = getCurrentProject();
 
     // Write the patch note from the GUI to the patch.
@@ -3325,7 +3339,7 @@ void MainWindow::on_toolButton_AddPatch_clicked()
 /* Save button clicked (not its menu). */
 void MainWindow::on_toolButton_SavePatch_clicked()
 {
-    on_actionSave_Patch_triggered();
+    //on_actionSave_Patch_triggered();
 
 }
 
@@ -3334,13 +3348,6 @@ void MainWindow::on_toolButton_SavePatch_clicked()
 void MainWindow::on_pushButton_ShowConsole_clicked()
 {
     this->consoleDiag->show();
-    return;
-    // TODO: DECIDE IF WE KEEP THE BELOW
-    if (ui->stackedWidget->currentIndex() != STACKED_WIDGET_PAGE_CONSOLE) {
-        ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_CONSOLE);
-    } else {
-        ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
-    }
 }
 
 
@@ -4432,7 +4439,7 @@ void MainWindow::on_pushButton_triggersPage_assign_clicked()
 
     // Add to project
     prj->addAndReplaceTrigger(trig);
-    // Add to quick lookup hash, which is used when events are received.
+    // Add to quick-lookup-hash, which is used when events are received.
     // (First remove if it already contains the action)
     QList<QAction*> l = triggersMidiActionHash.values();
     if (l.contains(action)) {
@@ -4620,6 +4627,8 @@ void MainWindow::on_pushButton_ExtApp_Replace_clicked()
 
     QListWidgetItem* item = ui->listWidget_ExtApps->item(row);
     item->setText(ui->lineEdit_ExtApp->text());
+
+    setProjectModified();
 }
 
 void MainWindow::on_MIDI_indicator_clicked()
