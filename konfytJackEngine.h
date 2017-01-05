@@ -87,7 +87,7 @@ public:
     QStringList getMidiOutputPortsList();
     QStringList getAudioInputPortsList();
     QStringList getAudioOutputPortsList();
-
+    double getSampleRate();
 
     // Auto connect input port
     void setOurMidiInputPortName(QString newName);
@@ -158,6 +158,7 @@ private:
     jack_client_t* client;
     jack_nframes_t nframes;
     bool clientActive;      // Flag to indicate if the client has been successfully activated
+    double samplerate;
 
     bool panicCmd;  // Panic command from outside
     int panicState; // Internal panic state

@@ -23,7 +23,7 @@ void konfytPatchEngine::initPatchEngine(konfytJackEngine* newJackClient)
     // Fluidsynth Engine
     konfytFluidsynthEngine* e = new konfytFluidsynthEngine();
     connect(e, SIGNAL(userMessage(QString)), this, SLOT(userMessageFromEngine(QString)));
-    e->InitFluidsynth();
+    e->InitFluidsynth(jack->getSampleRate());
     fluidsynthEngine = e;
     jack->fluidsynthEngine = e; // Give to Jack so it can get sound out of it.
 

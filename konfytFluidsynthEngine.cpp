@@ -7,6 +7,7 @@ konfytFluidsynthEngine::konfytFluidsynthEngine(QObject *parent) :
     QObject(parent)
 {
     synthUniqueIDCounter = 0;
+    samplerate = 44100;
 }
 
 
@@ -78,6 +79,8 @@ int konfytFluidsynthEngine::addSoundfontProgram(konfytSoundfontProgram p)
     }
 
     // Set settings if necessary
+    fluid_settings_setnum(s.settings, "synth.sample-rate", this->samplerate);
+
 
     // Create the synthesizer
     s.synth = new_fluid_synth(s.settings);
@@ -122,9 +125,11 @@ void konfytFluidsynthEngine::removeSoundfontProgram(int ID)
 }
 
 
-void konfytFluidsynthEngine::InitFluidsynth()
+void konfytFluidsynthEngine::InitFluidsynth(double SampleRate)
 {
     userMessage("Fluidsynth version " + QString(fluid_version_str()));
+    this->samplerate = SampleRate;
+    userMessage("Fluidsynth sample rate: " + n2s(samplerate));
 }
 
 float konfytFluidsynthEngine::getGain(int ID)

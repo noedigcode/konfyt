@@ -1542,6 +1542,10 @@ bool konfytJackEngine::InitJackClient(QString name)
         this->clientActive = true;
     }
 
+    // Get sample rate
+    this->samplerate = jack_get_sample_rate(client);
+    userMessage("JACK: Samplerate " + n2s(samplerate));
+
     startPortTimer(); // Timer that will take care of automatically restoring port connections
 
     return true;
@@ -1607,6 +1611,11 @@ QStringList konfytJackEngine::getAudioInputPortsList()
 QStringList konfytJackEngine::getAudioOutputPortsList()
 {
     return getPortsList("audio", JackPortIsOutput);
+}
+
+double konfytJackEngine::getSampleRate()
+{
+    return this->samplerate;
 }
 
 

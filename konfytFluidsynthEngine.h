@@ -24,7 +24,7 @@ public:
 
     explicit konfytFluidsynthEngine(QObject *parent = 0);
 
-    void InitFluidsynth();
+    void InitFluidsynth(double SampleRate);
 
     QMutex mutex;
     void processJackMidi(int ID, const konfytMidiEvent* ev);
@@ -41,6 +41,7 @@ public:
 private:
     int synthUniqueIDCounter;
     QMap<int, konfytFluidSynthData> synthDataMap;
+    double samplerate;
     
 signals:
     void userMessage(QString msg);
