@@ -80,8 +80,5 @@ QMAKE_LFLAGS += -fpermissive
 RESOURCES += \
     images.qrc
 
-OTHER_FILES += \
-    TODO TODO TODO \
-    TODO TODO TODO
 
 

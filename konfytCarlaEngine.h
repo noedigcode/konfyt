@@ -8,8 +8,9 @@
 #include "konfytJackEngine.h"
 #include <QTime>
 
-#define CARLA_OUT_LEFT "out-left"
-#define CARLA_OUT_RIGHT "out-right"
+#define CARLA_MIDI_IN_PORT_POSTFIX "events-in"
+#define CARLA_OUT_LEFT_PORT_POSTFIX "out-left"
+#define CARLA_OUT_RIGHT_PORT_POSTFIX "out-right"
 
 CARLA_BACKEND_USE_NAMESPACE
 

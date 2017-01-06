@@ -3464,8 +3464,7 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
                 midi_setLayerMute(9, 127);
                 break;
             default:
-                userMessage("DEBUG: Unhandled key event " + keyEvent->text());
-
+                break;
             }
             return true;
 

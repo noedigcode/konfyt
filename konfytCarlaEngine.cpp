@@ -169,38 +169,25 @@ QString konfytCarlaEngine::carlaJackClientName()
 QString konfytCarlaEngine::midiInPort(int ID)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
-// todo carla: not sure why we're searching like this. Find out and fix if need be or explain in a comment.
-    QString ret;
-    QStringList pmidi = jack->getMidiInputPortsList();
-    QString search = jackClientName;
-    search = search + ":" + pluginName(ID);
-    for (int i=0; i<pmidi.count(); i++) {
-        if (pmidi.at(i).contains(search)) {
-            ret = pmidi.at(i);
-        }
-    }
-    return ret;
+
+    // TODO: This depends on Carla naming the ports as we expect. A better way would be
+    // to get the port names from a Carla callback.
+
+    return jackClientName + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_MIDI_IN_PORT_POSTFIX);
 }
 
 QStringList konfytCarlaEngine::audioOutPorts(int ID)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
-// todo carla: not sure why we're searching like this. Find out and fix if need be or explain in a comment.
-    QStringList ret;
-    ret << "" << "";
 
-    QStringList paudio = jack->getAudioOutputPortsList();
-    QString search_left = jackClientName;
-    search_left = search_left + ":" + pluginName(ID) + ":";
-    QString search_right = search_left + QString::fromLocal8Bit(CARLA_OUT_RIGHT);
-    search_left = search_left + QString::fromLocal8Bit(CARLA_OUT_LEFT);
-    for (int i=0; i<paudio.count(); i++) {
-        if (paudio.at(i).contains(search_left)) {
-            ret.replace(0, paudio.at(i));
-        } else if (paudio.at(i).contains(search_right)) {
-            ret.replace(1, paudio.at(i));
-        }
-    }
+    // TODO: This depends on Carla naming the ports as we expect. A better way would be
+    // to get the port names from a Carla callback.
+
+    QStringList ret;
+
+    ret.append( jackClientName + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_OUT_LEFT_PORT_POSTFIX) );
+    ret.append( jackClientName + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_OUT_RIGHT_PORT_POSTFIX) );
+
     return ret;
 }
 

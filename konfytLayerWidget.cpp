@@ -233,25 +233,6 @@ void konfytLayerWidget::changeBackground(int min, int max)
     if (max >= 127) { background_rectRight = 1; }
     else { background_rectRight = (float)max/127.0; }
     this->repaint();
-    return;
-    // TODO: REMOVE BELOW
-
-    float stop2 = (float)min/127.0;
-    float stop1 = stop2 - 0.01;
-    float stop3 = (float)max/127.0;
-    float stop4 = stop3 + 0.01;
-
-    QString st1 = "QGroupBox{background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:";
-    QString st2 = n2s(stop1);
-    QString st3 = " rgba(39, 7, 34, 0), stop:";
-    QString st4 = n2s(stop2);
-    QString st5 = " rgba(9, 57, 99, 255), stop:";
-    QString st6 = n2s(stop3);
-    QString st7 = " rgba(24, 87, 127, 255), stop:";
-    QString st8 = n2s(stop4);
-    QString st9 = " rgba(0, 0, 0, 0));}";
-
-    this->setStyleSheet(st1 + st2 + st3 + st4 + st5 + st6 + st7 + st8 + st9);
 }
 
 konfytPatchLayer konfytLayerWidget::getPatchLayerItem()

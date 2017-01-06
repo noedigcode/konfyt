@@ -1051,8 +1051,7 @@ void konfytJackEngine::setPortRouting(konfytJackPortType type, konfytJackPort *s
     pauseJackProcessing(false);
 }
 
-// TODO: Explain this function, why it is used and how exactly the
-// client active thing works. I can't remember anymore.
+// This indicates whether we are connected to Jack or failed to create/activate a client.
 bool konfytJackEngine::clientIsActive()
 {
     return this->clientActive;
@@ -1534,10 +1533,6 @@ QStringList konfytJackEngine::getPortsList(QString typePattern, unsigned long fl
             QString portname = QString::fromLocal8Bit(ports[i]);
 
             pl.append(portname);
-
-            // TODO: Figure out if it is okay to leave out below and just call
-            // jack_free on the entire char** as done further below.
-            //jack_free(ports[i]); // See jack_get_ports documentation
 
             i++;
         }
