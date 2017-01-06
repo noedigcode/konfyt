@@ -142,7 +142,11 @@ void konfytLayerWidget::setUpGUI()
         int portId = g.midiOutputPortData.portIdInProject;
         QString text = "MIDI Out " + n2s(portId);
         if (project != NULL) {
-            text = text + ": " + project->midiOutPort_getPort(portId).portName;
+            if (project->midiOutPort_exists(portId)) {
+                text = text + ": " + project->midiOutPort_getPort(portId).portName;
+            } else {
+                g.setErrorMessage("No MIDI out port " + n2s(portId) + " in project.");
+            }
         }
         ui->lineEdit->setText( text );
         // Indicate note range of the midi filter
@@ -158,7 +162,11 @@ void konfytLayerWidget::setUpGUI()
         int portId = g.audioInPortData.portIdInProject;
         QString text = "Audio In " + n2s(portId);
         if (project != NULL) {
-            text = text + ": " + project->audioInPort_getPort(portId).portName;
+            if (project->audioInPort_exists(portId)) {
+                text = text + ": " + project->audioInPort_getPort(portId).portName;
+            } else {
+                g.setErrorMessage("No audio in port " + n2s(portId) + " in project.");
+            }
         }
         ui->lineEdit->setText( text );
         changeBackground(0,127);

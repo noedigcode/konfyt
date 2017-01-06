@@ -124,6 +124,7 @@ public:
     void buildSfTree(QTreeWidgetItem* twi, konfytDbTreeItem* item);
 
     konfytDatabase *db;
+    bool saveDatabase();
     int returnSfontRequester;
     QList<konfytSoundfontProgram> programList; // List of programs currently displayed in program list view in library.
     void library_refreshGUIProgramList();      // Refresh the GUI program list to match programList

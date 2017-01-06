@@ -428,9 +428,11 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
 
             // Set solo and mute in jack client
             layerMidiOutStruct portData = layer.midiOutputPortData;
-            prjMidiOutPort projectPort = currentProject->midiOutPort_getPort( portData.portIdInProject );
-            jack->setPortSolo(KonfytJackPortType_MidiOut, projectPort.jackPort, portData.solo);
-            jack->setPortMute(KonfytJackPortType_MidiOut, projectPort.jackPort, portData.mute);
+            if (currentProject->midiOutPort_exists(portData.portIdInProject)) {
+                prjMidiOutPort projectPort = currentProject->midiOutPort_getPort( portData.portIdInProject );
+                jack->setPortSolo(KonfytJackPortType_MidiOut, projectPort.jackPort, portData.solo);
+                jack->setPortMute(KonfytJackPortType_MidiOut, projectPort.jackPort, portData.mute);
+            }
 
         } else if (type == KonfytLayerType_AudioIn) {
 
@@ -440,17 +442,19 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
             // The bus number in audioInLayerStruct refers to a bus in the project with a left and right jack port.
             // We have to retrieve the port pair and bus from the project in order to get the left and right port Jack port numbers.
             layerAudioInStruct audioPortData = layer.audioInPortData;
-            prjAudioInPort portPair = currentProject->audioInPort_getPort(audioPortData.portIdInProject);
-            // Left channel
-            jack->setPortSolo(KonfytJackPortType_AudioIn, portPair.leftJackPort, audioPortData.solo);
-            jack->setPortMute(KonfytJackPortType_AudioIn, portPair.leftJackPort, audioPortData.mute);
-            jack->setPortGain(KonfytJackPortType_AudioIn, portPair.leftJackPort, convertGain(audioPortData.gain*masterGain));
-            jack->setPortRouting(KonfytJackPortType_AudioIn, portPair.leftJackPort, bus.leftJackPort);
-            // Right channel
-            jack->setPortSolo(KonfytJackPortType_AudioIn, portPair.rightJackPort, audioPortData.solo);
-            jack->setPortMute(KonfytJackPortType_AudioIn, portPair.rightJackPort, audioPortData.mute);
-            jack->setPortGain(KonfytJackPortType_AudioIn, portPair.rightJackPort, convertGain(audioPortData.gain*masterGain));
-            jack->setPortRouting(KonfytJackPortType_AudioIn, portPair.rightJackPort, bus.rightJackPort);
+            if (currentProject->audioInPort_exists(audioPortData.portIdInProject)) {
+                prjAudioInPort portPair = currentProject->audioInPort_getPort(audioPortData.portIdInProject);
+                // Left channel
+                jack->setPortSolo(KonfytJackPortType_AudioIn, portPair.leftJackPort, audioPortData.solo);
+                jack->setPortMute(KonfytJackPortType_AudioIn, portPair.leftJackPort, audioPortData.mute);
+                jack->setPortGain(KonfytJackPortType_AudioIn, portPair.leftJackPort, convertGain(audioPortData.gain*masterGain));
+                jack->setPortRouting(KonfytJackPortType_AudioIn, portPair.leftJackPort, bus.leftJackPort);
+                // Right channel
+                jack->setPortSolo(KonfytJackPortType_AudioIn, portPair.rightJackPort, audioPortData.solo);
+                jack->setPortMute(KonfytJackPortType_AudioIn, portPair.rightJackPort, audioPortData.mute);
+                jack->setPortGain(KonfytJackPortType_AudioIn, portPair.rightJackPort, convertGain(audioPortData.gain*masterGain));
+                jack->setPortRouting(KonfytJackPortType_AudioIn, portPair.rightJackPort, bus.rightJackPort);
+            }
 
         } else if (type == KonfytLayerType_Uninitialized) {
 

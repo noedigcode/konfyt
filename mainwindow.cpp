@@ -2221,8 +2221,9 @@ bool MainWindow::savePatchToLibrary(konfytPatch *patch)
         if (!searchMode) {
             fillTreeWithAll();
         }
-        // TODO: We added the patch to the library for now, but we should save the
-        //       library for it to still have effect when the user starts the app next time.
+        // Now save database
+        saveDatabase();
+
         return true;
     } else {
         userMessage("Failed saving patch to file " + patchName);
@@ -2429,15 +2430,23 @@ void MainWindow::database_scanDirsFinished()
     userMessage("   Found " + n2s(db->getNumPatches()) + " patches.");
 
     // Save to database file
-    if (db->saveDatabaseToFile(settingsDir + "/" + DATABASE_FILE)) {
-        userMessage("Saved database to file " + settingsDir + "/" + DATABASE_FILE);
-    } else {
-        userMessage("Failed to save database.");
-    }
+    saveDatabase();
 
     fillTreeWithAll();
     stopWaiter();
     ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+}
+
+bool MainWindow::saveDatabase()
+{
+    // Save to database file
+    if (db->saveDatabaseToFile(settingsDir + "/" + DATABASE_FILE)) {
+        userMessage("Saved database to file " + settingsDir + "/" + DATABASE_FILE);
+        return true;
+    } else {
+        userMessage("Failed to save database.");
+        return false;
+    }
 }
 
 void MainWindow::database_scanDirsStatus(QString msg)
@@ -3256,10 +3265,6 @@ void MainWindow::on_actionAdd_Patch_To_Library_triggered()
 
     if (savePatchToLibrary(pt)) {
         userMessage("Saved to library.");
-        // Update tree if we are not in searchMode
-        if (!searchMode) {
-            fillTreeWithAll();
-        }
     } else {
         userMessage("Could not save patch to library.");
     }
