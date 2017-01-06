@@ -1517,7 +1517,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>6</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
@@ -1927,6 +1927,9 @@ border-bottom-right-radius: 0;</string>
                   <layout class="QVBoxLayout" name="verticalLayout_3">
                    <item>
                     <widget class="QLineEdit" name="lineEdit_ProjectName">
+                     <property name="toolTip">
+                      <string>Project name (click to edit)</string>
+                     </property>
                      <property name="styleSheet">
                       <string notr="true">background-color: rgba(255, 255, 255, 0);
 font: 14pt &quot;Lucida Sans&quot;;
@@ -1956,6 +1959,9 @@ color: white;</string>
                    </item>
                    <item>
                     <widget class="QLineEdit" name="lineEdit_PatchName">
+                     <property name="toolTip">
+                      <string>Patch name (click to edit)</string>
+                     </property>
                      <property name="styleSheet">
                       <string notr="true">background-color: rgba(255, 255, 255, 0);
 font: 16pt &quot;Lucida Sans&quot;;

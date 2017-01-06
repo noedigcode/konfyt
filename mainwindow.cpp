@@ -317,7 +317,7 @@ void MainWindow::updateProjectsMenu()
     } else {
         for (int i=0; i<projectDirList.count(); i++) {
             QFileInfo fi = projectDirList[i];
-            QAction* newAction = projectsMenu.addAction( fi.baseName() );
+            QAction* newAction = projectsMenu.addAction( fi.fileName().remove(PROJECT_FILENAME_EXTENSION) );
             newAction->setToolTip(fi.filePath());
             projectsMenuMap.insert(newAction, fi);
         }
@@ -1133,7 +1133,7 @@ void MainWindow::showTriggersPage()
     ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_TRIGGERS);
 
     ui->tree_Triggers->setColumnWidth(0, ui->tree_Triggers->width()/2);
-    ui->tree_Triggers->setColumnWidth(1, ui->tree_Triggers->width()/2);
+    ui->tree_Triggers->setColumnWidth(1, ui->tree_Triggers->width()/2 - 16); // -16 is quick and dirty fix to accomodate scroll bar
 
     konfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
@@ -1825,6 +1825,7 @@ void MainWindow::userMessage(QString message)
 
     // Seperate console dialog
     this->consoleDiag->userMessage(message);
+
 }
 
 void MainWindow::error_abort(QString msg)

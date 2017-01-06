@@ -44,8 +44,8 @@ Carla
     All versions are not guaranteed to work since Carla is under active development
     and the API is still subject to change.
     Tested with:
-    1.9.6 (2.0-beta4)
-       - 1.9.5~git20161121
+     - 1.9.6 (2.0-beta4) (KXStudio package 1.9.5~git20161121)
+     - 1.9.7 (2.0-beta5) (KXStudio Package 1.9.7+git20170105)
 
 g++-4.8
 

@@ -124,20 +124,15 @@ void konfytJackEngine::refreshPortConnections()
     // For each midi output port to external apps, refresh connections to all their clients
     for (int i=0; i<midi_out_ports.count(); i++) {
 
-        // Get our port
-        QString pn = getPortNameWithClient(KonfytJackPortType_MidiOut, i);
-        jack_port_t* p = jack_port_by_name(client, pn.toLocal8Bit());
+        konfytJackPort* port = midi_out_ports.at(i);
+        const char* portname = jack_port_name( port->jack_pointer );
 
-        QStringList l = midi_out_ports.at(i)->connectionList; // List of clients for this port
-        for (int j=0; j<l.count(); j++) {
+        for (int j=0; j<port->connectionList.count(); j++) {
+            QString clientname = port->connectionList.at(j);
 
-            // Client name
-            QString cname = l.at(j);
-
-            if (!jack_port_connected_to( p, cname.toLocal8Bit() ) ) {
-                int success = jack_connect(client, pn.toLocal8Bit(), cname.toLocal8Bit() ); // NB order of ports important; First source, then dest.
+            if (!jack_port_connected_to( port->jack_pointer, clientname.toLocal8Bit())) {
+                int success = jack_connect(client, portname, clientname.toLocal8Bit()); // NB order of ports important; First source, then dest.
             }
-
         }
     }
 
@@ -747,42 +742,6 @@ konfytJackPort* konfytJackEngine::addPort(konfytJackPortType type, QString port_
 
 
 
-// Returns the name of Jack port, without the client prepended.
-QString konfytJackEngine::getPortName(konfytJackPortType type, int port)
-{
-    switch (type) {
-    case KonfytJackPortType_MidiIn:
-        return KONFYT_JACK_MIDI_IN_PORT_NAME;
-        break;
-    case KonfytJackPortType_MidiOut:
-        if ( (port>=0) && (port<midi_out_ports.count())) {
-            return QString( jack_port_name( midi_out_ports[port]->jack_pointer ) );
-        } else {
-            error_abort( "getPortName: Port " + n2s(port) + " out of index 0-"
-                         + n2s( midi_out_ports.count()-1 ) + "." );
-        }
-        break;
-    case KonfytJackPortType_AudioIn:
-
-        // TODO
-
-        break;
-    case KonfytJackPortType_AudioOut:
-
-        // TODO
-
-        break;
-    default:
-        error_abort( "getPortName: Unknown Jack Port Type." );
-    }
-}
-
-// Returns the name of Jack port, with our client name prepended.
-// TODO: DELETE IF NOT USED ANYMORE
-QString konfytJackEngine::getPortNameWithClient(konfytJackPortType type, int port)
-{
-    return ourJackClientName + ":" + getPortName(type, port);
-}
 
 void konfytJackEngine::setPortClients(konfytJackPortType type, konfytJackPort *port, QStringList newClientList)
 {

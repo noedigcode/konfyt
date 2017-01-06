@@ -174,8 +174,13 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
     // Set midi filters for midi output ports
     QList<layerMidiOutStruct> l = currentPatch->getMidiOutputPortList_struct();
     for (int i=0; i<l.count(); i++) {
-        prjMidiOutPort projectPort = currentProject->midiOutPort_getPort( l[i].portIdInProject );
-        jack->setPortFilter(KonfytJackPortType_MidiOut, projectPort.jackPort, l[i].filter);
+        int portId = l[i].portIdInProject;
+        if (currentProject->midiOutPort_exists( portId )) {
+            prjMidiOutPort projectPort = currentProject->midiOutPort_getPort( portId );
+            jack->setPortFilter(KonfytJackPortType_MidiOut, projectPort.jackPort, l[i].filter);
+        } else {
+            userMessage("WARNING: MIDI out port layer refers to project port that does not exist: " + n2s( portId ));
+        }
     }
 
     // ---------------------------------------------------

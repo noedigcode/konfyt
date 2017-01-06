@@ -108,9 +108,6 @@ public:
     void nullDestinationPorts_pointingTo(konfytJackPort* port);
     void nullDestinationPorts_all();
 
-    QString getPortName(konfytJackPortType type, int port); // TODO: DELETE IF NOT USED ANYMORE OR FIX IMPLEMENTATION EVERYWHERE
-    QString getPortNameWithClient(konfytJackPortType type, int port); // TODO: DELETE IF NOT USED ANYMORE
-
     void setPortClients(konfytJackPortType type, konfytJackPort* port, QStringList newClientList);
     void clearPortClients(konfytJackPortType type, konfytJackPort* port);
     void clearPortClients_andDisconnect(konfytJackPortType type, konfytJackPort* port);

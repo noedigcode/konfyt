@@ -103,6 +103,7 @@ int konfytCarlaEngine::addSFZ(QString path)
                           pluginData.name.toLocal8Bit(),"sfz",0,NULL);
     #else
     // 2015-03-28 Updated to Carla 1.9.6 (2.0-beta4). carla_add_plugin now has an additional parameter.
+    // 2017-01-06 Tested with Carla 1.9.7 (2.0-beta5) (0x01097) as well.
     returnValue = carla_add_plugin(BINARY_NATIVE, PLUGIN_SFZ,pluginData.path.toLocal8Bit(),
                                       pluginData.name.toLocal8Bit(),"sfz",0,NULL,0);
     #endif
