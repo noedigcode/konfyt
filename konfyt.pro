@@ -16,7 +16,6 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     toetsdialog.cpp \
-    scanfoldersthread.cpp \
     consoledialog.cpp \
     konfytPatchEngine.cpp \
     konfytPatch.cpp \
@@ -37,7 +36,6 @@ SOURCES += main.cpp\
 
 HEADERS  += mainwindow.h \
     toetsdialog.h \
-    scanfoldersthread.h \
     consoledialog.h \
     konfytPatchEngine.h \
     konfytPatch.h \
