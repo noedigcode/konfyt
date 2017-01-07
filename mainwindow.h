@@ -38,7 +38,6 @@
 #include "konfytMidiFilter.h"
 #include <QKeyEvent>
 #include "konfytLayerWidget.h"
-#include "scanfoldersthread.h"
 #include "consoledialog.h"
 #include <QCheckBox>
 #include <QSignalMapper>
