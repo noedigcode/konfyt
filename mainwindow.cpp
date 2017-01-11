@@ -2138,6 +2138,8 @@ void MainWindow::setPreviewMode(bool choice)
 {
     previewMode = choice;
 
+    ui->stackedWidget->setEnabled(!previewMode);
+
     // Update the GUI
     loadPatchForModeAndUpdateGUI();
 }
@@ -2725,7 +2727,7 @@ void MainWindow::midi_setLayerGain(int layer, int midiValue)
 
 void MainWindow::midi_setLayerMute(int layer, int midiValue)
 {
-    if (midiValue == 127) {
+    if (midiValue > 0) {
         if ((layer>=0) && (layer < pengine->getNumLayers()) ) {
             bool newMute = !(pengine->getPatch()->getLayerItems().at(layer).isMute());
             pengine->setLayerMute(layer, newMute);
@@ -2737,7 +2739,7 @@ void MainWindow::midi_setLayerMute(int layer, int midiValue)
 
 void MainWindow::midi_setLayerSolo(int layer, int midiValue)
 {
-    if (midiValue == 127) {
+    if (midiValue > 0) {
         if ((layer>=0) && (layer < pengine->getNumLayers()) ) {
             bool newSolo = !(pengine->getPatch()->getLayerItems().at(layer).isSolo());
             pengine->setLayerSolo(layer, newSolo);
