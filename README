@@ -11,10 +11,12 @@ for live keyboard playing. Patches may consist of multiple layers of soundfonts
 which scans the filesystem for and allows quick access to soundfont programs and
 SFZs.
 
-Konfyt is very much alpha software with no guarantee of support or maintenance and
-may be unstable.
+Konfyt is very much alpha software with no guarantee of support or maintenance
+and may be unstable.
 
-Konfyt is open source and makes use of Qt, JACK, Carla and Fluidsynth.
+Konfyt is open source under the GPL license and makes use of Qt, JACK, Carla and
+Fluidsynth. Note however that Linuxsampler is used to load SFZ files (via Carla)
+which is licensed under GPL with a commercial exception.
 
 More information is available at www.noedig.co.za/konfyt/
 
