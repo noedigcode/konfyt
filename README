@@ -32,7 +32,7 @@ Qt4
     Check the Qt version that qmake uses with:
     qmake -v
 
-    Sometimes, if both Qt5 and Qt4 is installed, the Qt4 qmake command is:
+    Sometimes, if both Qt5 and Qt4 are installed, the Qt4 qmake command is:
     qmake-qt4
 
 pkg-config
