@@ -47,6 +47,7 @@
 #include <QAction>
 #include "konfytsfloader.h"
 #include <QShortcut>
+#include <QScrollBar>
 
 CARLA_BACKEND_USE_NAMESPACE
 

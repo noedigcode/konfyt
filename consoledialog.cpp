@@ -38,7 +38,21 @@ ConsoleDialog::~ConsoleDialog()
 
 void ConsoleDialog::userMessage(QString message)
 {
+    static bool start = true;
+
     ui->textBrowser->append(message);
+
+    /* Ensure textBrowser scrolls to maximum when it is filled with text. Usually
+     * this is only done when the user explicitely scrolls to the end. We want it to
+     * happen from the start. Once it's there, we set 'start=false' as the
+     * user / textBrowser can then handle it themselves. */
+    QScrollBar* v = ui->textBrowser->verticalScrollBar();
+    if (start) {
+        if (v->value() != v->maximum()) {
+            v->setValue(v->maximum());
+            start = false;
+        }
+    }
 }
 
 void ConsoleDialog::on_pushButton_Clear_clicked()
