@@ -223,7 +223,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QMenu* projectButtonMenu = new QMenu();
     projectButtonMenu->addAction(ui->actionProject_save);
     updateProjectsMenu();
-    connect(&projectsMenu, SIGNAL(triggered(QAction*)), this, SLOT(on_projectMenu_ActionTrigger(QAction*)));
+    connect(&projectsMenu, SIGNAL(triggered(QAction*)), this, SLOT(onprojectMenu_ActionTrigger(QAction*)));
     projectButtonMenu->addMenu(&projectsMenu);
     projectButtonMenu->addAction(ui->actionProject_New);
     //projectButtonMenu->addAction(ui->actionProject_SaveAs); // TODO: SaveAs menu entry disabled for now until it is implemented.
@@ -232,17 +232,17 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Add-midi-port-to-patch button
     connect(&patchMidiOutPortsMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(on_patchMidiOutPortsMenu_ActionTrigger(QAction*)));
+            this, SLOT(onPatchMidiOutPortsMenu_ActionTrigger(QAction*)));
     ui->toolButton_layer_AddMidiPort->setMenu(&patchMidiOutPortsMenu);
 
     // Button: add audio input port to patch
     connect(&patchAudioInPortsMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(on_patchAudioInPortsMenu_ActionTrigger(QAction*)));
+            this, SLOT(onPatchAudioInPortsMenu_ActionTrigger(QAction*)));
     ui->toolButton_layer_AddAudioInput->setMenu(&patchAudioInPortsMenu);
 
     // Layer bus menu
     connect(&layerBusMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(on_layerBusMenu_ActionTrigger(QAction*)));
+            this, SLOT(onLayerBusMenu_ActionTrigger(QAction*)));
 
     // Hide main toolbar
     ui->mainToolBar->hide();
@@ -347,7 +347,7 @@ void MainWindow::updateProjectsMenu()
     projectsMenu.addAction(ui->actionProject_OpenDirectory);
 }
 
-void MainWindow::on_projectMenu_ActionTrigger(QAction *action)
+void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
 {
     if ( projectsMenuMap.contains(action) ) {
         QFileInfo fi = projectsMenuMap.value(action);
@@ -711,26 +711,6 @@ void MainWindow::gui_updatePortsBussesTree()
 
     // Delete all tree items
     if (busParent != NULL) {
-
-        /* Items are deleted when clearing the tree widget.
-
-        QList<QTreeWidgetItem*> busItems = tree_busMap.keys();
-        for (int i=0; i<busItems.count(); i++) { delete busItems[i]; }
-
-        QList<QTreeWidgetItem*> audioInItems = tree_audioInMap.keys();
-        for (int i=0; i<audioInItems.count(); i++) { delete audioInItems[i]; }
-
-        QList<QTreeWidgetItem*> midiOutItems = tree_midiOutMap.keys();
-        for (int i=0; i<midiOutItems.count(); i++) { delete midiOutItems[i]; }
-
-        QList<QTreeWidgetItem*> midiInItems = tree_midiInMap.keys();
-        for (int i=0; i<midiInItems.count(); i++) { delete midiInItems[i]; }
-
-        delete busParent;
-        delete audioInParent;
-        delete midiOutParent;
-        delete midiInParent;
-        */
 
         tree_busMap.clear();
         tree_audioInMap.clear();
@@ -2182,15 +2162,6 @@ void MainWindow::on_lineEdit_PatchName_returnPressed()
     setPatchModified(true);
 }
 
-// Current row of patch list changed
-void MainWindow::on_listWidget_Patches_currentRowChanged(int currentRow)
-{
-
-}
-
-
-
-
 
 void MainWindow::on_lineEdit_PatchName_editingFinished()
 {
@@ -2202,17 +2173,6 @@ void MainWindow::on_lineEdit_PatchName_editingFinished()
 
     // Indicate to the user that the patch has been modified.
     setPatchModified(true);
-}
-
-void MainWindow::on_pushButton_SavePatch_clicked()
-{
-
-}
-
-void MainWindow::on_pushButton_LoadPatch_clicked()
-{
-
-
 }
 
 
@@ -2391,13 +2351,7 @@ void MainWindow::processFinishedSlot(int index, konfytProcess *process)
 
 
 
-void MainWindow::on_pushButton_SaveToLibrary_clicked()
-{
 
-
-
-
-}
 
 void MainWindow::showWaitingPage(QString title)
 {
@@ -2532,13 +2486,6 @@ void MainWindow::scanThreadFihishedSlot()
     //ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
 
     userMessage("ScanThread finished!");
-}
-
-
-
-void MainWindow::on_pushButton_AddPatchFromLibrary_clicked()
-{
-
 }
 
 
@@ -2906,11 +2853,6 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
 
 
 
-void MainWindow::on_horizontalSlider_MasterGain_valueChanged(int value)
-{
-
-}
-
 void MainWindow::on_pushButton_ClearConsole_clicked()
 {
     ui->textBrowser->clear();
@@ -2919,13 +2861,8 @@ void MainWindow::on_pushButton_ClearConsole_clicked()
 
 
 
-
-
-
-
-
 /* Patch midi output port menu item has been clicked. */
-void MainWindow::on_patchMidiOutPortsMenu_ActionTrigger(QAction *action)
+void MainWindow::onPatchMidiOutPortsMenu_ActionTrigger(QAction *action)
 {
     if (action == patchMidiOutPortsMenu_NewPortAction) {
         // Add new port
@@ -2944,7 +2881,7 @@ void MainWindow::on_patchMidiOutPortsMenu_ActionTrigger(QAction *action)
 }
 
 /* Patch add audio bus menu item has been clicked. */
-void MainWindow::on_patchAudioInPortsMenu_ActionTrigger(QAction *action)
+void MainWindow::onPatchAudioInPortsMenu_ActionTrigger(QAction *action)
 {
     if (action == patchAudioInPortsMenu_NewPortAction) {
         // Add new port
@@ -2964,7 +2901,7 @@ void MainWindow::on_patchAudioInPortsMenu_ActionTrigger(QAction *action)
 }
 
 /* Layer bus menu item has been clicked. */
-void MainWindow::on_layerBusMenu_ActionTrigger(QAction *action)
+void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
 {
     int busId;
     if (action == layerBusMenu_NewBusAction) {
@@ -3066,28 +3003,28 @@ void MainWindow::on_pushButton_ExtApp_remove_clicked()
 
 
 /* Slot: on layer item remove button clicked. */
-void MainWindow::on_layer_remove_clicked(konfytLayerWidget *layerItem)
+void MainWindow::onLayer_remove_clicked(konfytLayerWidget *layerItem)
 {
     // Remove layer item from engine and GUI.
     removeLayerItem(layerItem);
 }
 
 /* Slot: on layer item filter button clicked. */
-void MainWindow::on_layer_filter_clicked(konfytLayerWidget *layerItem)
+void MainWindow::onLayer_filter_clicked(konfytLayerWidget *layerItem)
 {
     midiFilterEditItem = layerItem;
     showMidiFilterEditor();
 }
 
 /* Slot: on layer item slider move. */
-void MainWindow::on_layer_slider_moved(konfytLayerWidget *layerItem, float gain)
+void MainWindow::onLayer_slider_moved(konfytLayerWidget *layerItem, float gain)
 {
     konfytPatchLayer g = layerItem->getPatchLayerItem();
     pengine->setLayerGain(&g, gain);
 }
 
 /* Slot: on layer item solo button clicked. */
-void MainWindow::on_layer_solo_clicked(konfytLayerWidget *layerItem, bool solo)
+void MainWindow::onLayer_solo_clicked(konfytLayerWidget *layerItem, bool solo)
 {
     konfytPatchLayer g = layerItem->getPatchLayerItem();
     pengine->setLayerSolo(&g, solo);
@@ -3095,14 +3032,14 @@ void MainWindow::on_layer_solo_clicked(konfytLayerWidget *layerItem, bool solo)
 }
 
 /* Slot: on layer item mute button clicked. */
-void MainWindow::on_layer_mute_clicked(konfytLayerWidget *layerItem, bool mute)
+void MainWindow::onLayer_mute_clicked(konfytLayerWidget *layerItem, bool mute)
 {
     konfytPatchLayer g = layerItem->getPatchLayerItem();
     pengine->setLayerMute(&g, mute);
 }
 
 /* Slot: on layer item bus button clicked. */
-void MainWindow::on_layer_bus_clicked(konfytLayerWidget *layerItem)
+void MainWindow::onLayer_bus_clicked(konfytLayerWidget *layerItem)
 {
     // Save the layer item for future use,
     // update and display a menu of available busses.
@@ -3112,7 +3049,7 @@ void MainWindow::on_layer_bus_clicked(konfytLayerWidget *layerItem)
     layerBusMenu.popup(QCursor::pos());
 }
 
-void MainWindow::on_layer_reload_clicked(konfytLayerWidget *layerItem)
+void MainWindow::onLayer_reload_clicked(konfytLayerWidget *layerItem)
 {
     konfytPatchLayer l = layerItem->getPatchLayerItem();
     konfytPatchLayer lnew = pengine->reloadLayer( &l );
@@ -3161,13 +3098,13 @@ void MainWindow::addLayerItemToGUI(konfytPatchLayer layerItem)
     ui->listWidget_Layers->setItemWidget(item, gui);
 
     // Make all connections
-    connect(gui, SIGNAL(slider_moved_signal(konfytLayerWidget*,float)), this, SLOT(on_layer_slider_moved(konfytLayerWidget*,float)));
-    connect(gui, SIGNAL(remove_clicked_signal(konfytLayerWidget*)), this, SLOT(on_layer_remove_clicked(konfytLayerWidget*)));
-    connect(gui, SIGNAL(filter_clicked_signal(konfytLayerWidget*)), this, SLOT(on_layer_filter_clicked(konfytLayerWidget*)));
-    connect(gui, SIGNAL(solo_clicked_signal(konfytLayerWidget*,bool)), this, SLOT(on_layer_solo_clicked(konfytLayerWidget*,bool)));
-    connect(gui, SIGNAL(mute_clicked_signal(konfytLayerWidget*,bool)), this, SLOT(on_layer_mute_clicked(konfytLayerWidget*,bool)));
-    connect(gui, SIGNAL(bus_clicked_signal(konfytLayerWidget*)), this, SLOT(on_layer_bus_clicked(konfytLayerWidget*)));
-    connect(gui, SIGNAL(reload_clicked_signal(konfytLayerWidget*)), this, SLOT(on_layer_reload_clicked(konfytLayerWidget*)));
+    connect(gui, SIGNAL(slider_moved_signal(konfytLayerWidget*,float)), this, SLOT(onLayer_slider_moved(konfytLayerWidget*,float)));
+    connect(gui, SIGNAL(remove_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_remove_clicked(konfytLayerWidget*)));
+    connect(gui, SIGNAL(filter_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_filter_clicked(konfytLayerWidget*)));
+    connect(gui, SIGNAL(solo_clicked_signal(konfytLayerWidget*,bool)), this, SLOT(onLayer_solo_clicked(konfytLayerWidget*,bool)));
+    connect(gui, SIGNAL(mute_clicked_signal(konfytLayerWidget*,bool)), this, SLOT(onLayer_mute_clicked(konfytLayerWidget*,bool)));
+    connect(gui, SIGNAL(bus_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_bus_clicked(konfytLayerWidget*)));
+    connect(gui, SIGNAL(reload_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_reload_clicked(konfytLayerWidget*)));
 
 }
 

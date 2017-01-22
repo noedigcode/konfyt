@@ -400,7 +400,7 @@ private slots:
     void projectModifiedStateChanged(bool modified);
 
     // Projects Menu
-    void on_projectMenu_ActionTrigger(QAction* action);
+    void onprojectMenu_ActionTrigger(QAction* action);
 
     // ========================================================================
     // Processes (external apps)
@@ -481,28 +481,23 @@ private slots:
     // Patch related
     void on_lineEdit_PatchName_returnPressed();
     void on_lineEdit_PatchName_editingFinished();
-    void on_patchMidiOutPortsMenu_ActionTrigger(QAction* action);
-    void on_patchAudioInPortsMenu_ActionTrigger(QAction* action);
-    void on_pushButton_SavePatch_clicked();
-    void on_pushButton_LoadPatch_clicked();
+    void onPatchMidiOutPortsMenu_ActionTrigger(QAction* action);
+    void onPatchAudioInPortsMenu_ActionTrigger(QAction* action);
     void on_lineEdit_ProjectName_editingFinished();
-    void on_pushButton_SaveToLibrary_clicked();
-    void on_pushButton_AddPatchFromLibrary_clicked();
     void on_toolButton_SavePatch_clicked();
     void on_textBrowser_patchNote_textChanged();
 
     // Layers
-    void on_layer_remove_clicked(konfytLayerWidget* layerItem);
-    void on_layer_filter_clicked(konfytLayerWidget* layerItem);
-    void on_layer_slider_moved(konfytLayerWidget* layerItem, float gain);
-    void on_layer_solo_clicked(konfytLayerWidget* layerItem, bool solo);
-    void on_layer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
-    void on_layer_bus_clicked(konfytLayerWidget* layerItem);
-    void on_layer_reload_clicked(konfytLayerWidget* layerItem);
-    void on_layerBusMenu_ActionTrigger(QAction* action);
+    void onLayer_remove_clicked(konfytLayerWidget* layerItem);
+    void onLayer_filter_clicked(konfytLayerWidget* layerItem);
+    void onLayer_slider_moved(konfytLayerWidget* layerItem, float gain);
+    void onLayer_solo_clicked(konfytLayerWidget* layerItem, bool solo);
+    void onLayer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
+    void onLayer_bus_clicked(konfytLayerWidget* layerItem);
+    void onLayer_reload_clicked(konfytLayerWidget* layerItem);
+    void onLayerBusMenu_ActionTrigger(QAction* action);
 
     // Patch List
-    void on_listWidget_Patches_currentRowChanged(int currentRow);
     void on_pushButton_RemovePatch_clicked();
     void on_pushButton_PatchUp_clicked();
     void on_pushButton_PatchDown_clicked();
@@ -645,8 +640,6 @@ private slots:
     // ========================================================================
 
     void on_horizontalSlider_MasterGain_sliderMoved(int position);
-
-    void on_horizontalSlider_MasterGain_valueChanged(int value);
 
     void on_pushButton_LiveMode_clicked();
 
