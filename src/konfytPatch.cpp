@@ -216,6 +216,9 @@ void konfytPatch::writeMidiFilterToXMLStream(QXmlStreamWriter *stream, konfytMid
         stream->writeTextElement("cc", n2s(f.passCC.at(i)));
     }
 
+    stream->writeTextElement("inChan", n2s(f.inChan));
+    stream->writeTextElement("outChan", n2s(f.outChan));
+
     stream->writeEndElement(); // midiFilter
 }
 
@@ -253,6 +256,10 @@ konfytMidiFilter konfytPatch::readMidiFilterFromXMLStream(QXmlStreamReader* r)
             f.passProg = (r->readElementText() == "1");
         } else if (r->name() == "cc") {
             f.passCC.append(r->readElementText().toInt());
+        } else if (r->name() == "inChan") {
+            f.inChan = r->readElementText().toInt();
+        } else if (r->name() == "outChan") {
+            f.outChan = r->readElementText().toInt();
         } else {
             r->skipCurrentElement();
         }

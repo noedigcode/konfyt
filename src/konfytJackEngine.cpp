@@ -20,7 +20,6 @@
  *****************************************************************************/
 
 #include "konfytJackEngine.h"
-#include <stdio.h>
 #include <iostream>
 
 
@@ -1449,14 +1448,19 @@ void konfytJackEngine::sendMidiClosureEvents(konfytJackPort *port)
 {
     unsigned char* out_buffer;
 
+    int channel = port->filter.outChan;
+
     // All notes off
     out_buffer = jack_midi_event_reserve( port->buffer, 0, 3);
+    evAllNotesOff.channel = channel;
     evAllNotesOff.toBuffer(out_buffer);
     // Also send sustain off message
     out_buffer = jack_midi_event_reserve( port->buffer, 0, 3 );
+    evSustainZero.channel = channel;
     evSustainZero.toBuffer(out_buffer);
     // And also pitchbend zero
     out_buffer = jack_midi_event_reserve( port->buffer, 0, 3 );
+    evPitchbendZero.channel = channel;
     evPitchbendZero.toBuffer(out_buffer);
 }
 

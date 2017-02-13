@@ -24,14 +24,16 @@
 
 #include <QObject>
 #include <QStringList>
-#include <jack/jack.h>
 #include <QBasicTimer>
 #include <QTimerEvent>
+#include <QMap>
+
+#include <jack/jack.h>
 #include <jack/jack.h>
 #include <jack/midiport.h>
+
 #include "konfytPatch.h"
 #include "konfytProject.h"
-#include <QMap>
 #include "konfytDefines.h"
 #include "konfytStructs.h"
 #include "konfytFluidsynthEngine.h"
