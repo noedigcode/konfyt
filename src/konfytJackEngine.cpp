@@ -1378,7 +1378,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
     }
 
 
-    // Unloack jack_process -------------------
+    // Unlock jack_process --------------------
     e->jack_process_busy = false;
     // ----------------------------------------
 

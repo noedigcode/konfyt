@@ -30,6 +30,9 @@ konfytMidiFilter::konfytMidiFilter()
     this->passProg = false;
     this->passPitchbend = true;
 
+    this->inChan = -1; // -1 = any
+    this->outChan = 0;
+
 }
 
 void konfytMidiFilter::addZone(int lowNote, int highNote, int multiply, int add, int lowVel, int highVel)
@@ -71,6 +74,13 @@ void konfytMidiFilter::removeZone(int i)
 bool konfytMidiFilter::passFilter(const konfytMidiEvent* ev)
 {
     bool pass = false;
+
+    // If inChan < 0, pass for any channel. Otherwise, channel must match.
+    if (inChan >= 0) {
+        if (ev->channel != inChan) {
+            return false;
+        }
+    }
 
     if (ev->type == MIDI_EVENT_TYPE_CC) {
 
@@ -118,14 +128,14 @@ bool konfytMidiFilter::passFilter(const konfytMidiEvent* ev)
     return pass;
 }
 
-// Modify buffer (containing midi note event) based on filter rules, e.g.
-// transposing, etc.
+// Modify buffer (containing midi event) based on filter rules, e.g.
+// transposing, midi channel, etc.
 konfytMidiEvent konfytMidiFilter::modify(const konfytMidiEvent* ev)
 {
     konfytMidiEvent r = *ev;
 
-    // Force channel zero
-    r.channel = 0;
+    // Set output channel
+    r.channel = outChan;
 
     if ( (r.type == MIDI_EVENT_TYPE_NOTEON) || (r.type == MIDI_EVENT_TYPE_NOTEOFF) ) {
 

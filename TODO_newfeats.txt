@@ -1,0 +1,17 @@
+TODO for branch newfeats 2017-02-13
+
+Just added input and output midi channels to midifilter.
+
+- Add in patch layer save and load.
+- In Jack process callback, ensure noteoffs etc. on patch change gets sent to
+  correct channels (filter.outChan).
+- Same with panic state messages.
+- Check same in Fluidsynth process callback.
+- Add functionality to layer / midifilter in GUI.
+- Test.
+- Increment version number.
+- Update docs where appropriate.
+
+
+- Volume fade out on patch change.
+

@@ -54,6 +54,8 @@ public:
     bool passAllCC;
     bool passProg;
     bool passPitchbend;
+    int inChan;
+    int outChan;
 
 private:
     QList<konfytMidiFilterZone> zoneList;

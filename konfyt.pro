@@ -79,5 +79,8 @@ QMAKE_LFLAGS += -fpermissive
 RESOURCES += \
     images.qrc
 
+OTHER_FILES += \
+    TODO_newfeats.txt
+
 
 
