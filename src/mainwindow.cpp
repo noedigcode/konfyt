@@ -21,40 +21,8 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include  <QMap>
-#include "konfytFluidsynthEngine.h"
+
 #include <iostream>
-#include <QTreeWidgetItem>
-#include <QFileDialog>
-#include <QMessageBox>
-
-#define TREE_ITEM_SEARCH_RESULTS "Search Results:"
-#define TREE_ITEM_SOUNDFONTS "Soundfonts"
-#define TREE_ITEM_PATCHES "Patches"
-#define TREE_ITEM_SFZ "SFZ"
-
-#define STACKED_WIDGET_PAGE_PATCHES     0
-#define STACKED_WIDGET_PAGE_SETTINGS    1
-#define STACKED_WIDGET_PAGE_CONSOLE     2
-#define STACKED_WIDGET_PAGE_FILTER      3
-#define STACKED_WIDGET_PAGE_WAITING     4
-#define STACKED_WIDGET_PAGE_CONNECTIONS 5
-#define STACKED_WIDGET_PAGE_TRIGGERS    6
-#define STACKED_WIDGET_PAGE_SANDBOX     7
-
-#define STACKED_WIDGET_LEFT_LIBRARY 0
-#define STACKED_WIDGET_LEFT_LIVE 1
-
-#define STACKED_WIDGET_PATCHLAYERS_PATCH 0
-#define STACKED_WIDGET_PATCHLAYERS_NOPATCH 1
-
-#define LIBRARY_TAB_LIBRARY     0
-#define LIBRARY_TAB_FILESYSTEM  1
-
-#define TREECON_COL_PORT 0
-#define TREECON_COL_L 1
-#define TREECON_COL_R 2
-
 
 
 MainWindow::MainWindow(QWidget *parent) :

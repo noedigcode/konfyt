@@ -23,31 +23,38 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QMap>
 #include <QMenu>
-#include <fluidsynth.h>
-#include "konfytDatabase.h"
 #include <QListWidgetItem>
 #include <QTreeWidgetItem>
+#include <QKeyEvent>
+#include <QCheckBox>
+#include <QSignalMapper>
+#include <QDesktopServices>
+#include <QCloseEvent>
+#include <QAction>
+#include <QShortcut>
+#include <QScrollBar>
+#include <QTreeWidgetItem>
+#include <QFileDialog>
+#include <QMessageBox>
+
+#include <fluidsynth.h>
+#include <carla/CarlaHost.h>
+
+#include "konfytDatabase.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytPatchEngine.h"
 #include "konfytProject.h"
 #include "konfytJackEngine.h"
 #include "konfytProcess.h"
-#include <carla/CarlaHost.h>
 #include "konfytPatchLayer.h"
 #include "konfytMidiFilter.h"
-#include <QKeyEvent>
 #include "konfytLayerWidget.h"
 #include "consoledialog.h"
-#include <QCheckBox>
-#include <QSignalMapper>
 #include "konfytDefines.h"
-#include <QDesktopServices>
-#include <QCloseEvent>
-#include <QAction>
 #include "konfytsfloader.h"
-#include <QShortcut>
-#include <QScrollBar>
+
 
 CARLA_BACKEND_USE_NAMESPACE
 
@@ -61,6 +68,33 @@ CARLA_BACKEND_USE_NAMESPACE
 #define EVENT_FILTER_MODE_WAITER 1
 
 #define returnSfontRequester_on_treeWidget_filesystem_itemDoubleClicked 0
+
+#define TREE_ITEM_SEARCH_RESULTS "Search Results:"
+#define TREE_ITEM_SOUNDFONTS "Soundfonts"
+#define TREE_ITEM_PATCHES "Patches"
+#define TREE_ITEM_SFZ "SFZ"
+
+#define STACKED_WIDGET_PAGE_PATCHES     0
+#define STACKED_WIDGET_PAGE_SETTINGS    1
+#define STACKED_WIDGET_PAGE_CONSOLE     2
+#define STACKED_WIDGET_PAGE_FILTER      3
+#define STACKED_WIDGET_PAGE_WAITING     4
+#define STACKED_WIDGET_PAGE_CONNECTIONS 5
+#define STACKED_WIDGET_PAGE_TRIGGERS    6
+#define STACKED_WIDGET_PAGE_SANDBOX     7
+
+#define STACKED_WIDGET_LEFT_LIBRARY 0
+#define STACKED_WIDGET_LEFT_LIVE 1
+
+#define STACKED_WIDGET_PATCHLAYERS_PATCH 0
+#define STACKED_WIDGET_PATCHLAYERS_NOPATCH 1
+
+#define LIBRARY_TAB_LIBRARY     0
+#define LIBRARY_TAB_FILESYSTEM  1
+
+#define TREECON_COL_PORT 0
+#define TREECON_COL_L 1
+#define TREECON_COL_R 2
 
 
 namespace Ui {
