@@ -321,8 +321,12 @@ public:
     // ========================================================================
     // Midi filter editor
     // ========================================================================
-    void showMidiFilterEditor();
+    int midiFilter_lastChan;
+    int midiFilter_lastData1;
+    int midiFilter_lastData2;
     konfytLayerWidget* midiFilterEditItem;
+    void showMidiFilterEditor();
+    void updateMidiFilterEditorLastRx();
 
     // ========================================================================
     // Jack
@@ -570,6 +574,8 @@ private slots:
 
     void on_toolButton_MidiFilter_removeCC_clicked();
 
+    void on_toolButton_MidiFilter_inChan_last_clicked();
+
     // ========================================================================
     // Settings Dialog
 
@@ -691,6 +697,8 @@ private slots:
     void on_pushButton_ThreadTest_clicked();
 
     void on_MIDI_indicator_clicked();
+
+
 
 private:
     Ui::MainWindow *ui;

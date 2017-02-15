@@ -31,11 +31,17 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    // Initialise variables
+
     panicState = false;
     masterPatch = NULL;
     previewPatch = NULL;
     previewMode = false;
     patchNote_ignoreChange = false;
+
+    midiFilter_lastChan = 0;
+    midiFilter_lastData1 = 0;
+    midiFilter_lastData2 = 0;
 
     // Initialise console dialog
     this->consoleDiag = new ConsoleDialog(this);
@@ -376,6 +382,13 @@ void MainWindow::showSettingsDialog()
     ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_SETTINGS);
 }
 
+void MainWindow::updateMidiFilterEditorLastRx()
+{
+    ui->lineEdit_MidiFilter_Last->setText("Ch " + n2s(midiFilter_lastChan+1)
+                                          + " - " + n2s(midiFilter_lastData1)
+                                          + ", " + n2s(midiFilter_lastData2));
+}
+
 void MainWindow::showMidiFilterEditor()
 {
     // Switch to midi filter view
@@ -401,6 +414,13 @@ void MainWindow::showMidiFilterEditor()
         ui->spinBox_midiFilter_LowVel->setValue(0);
         ui->spinBox_midiFilter_HighVel->setValue(127);
     }
+    // Midi in channel combo box
+    if (f.inChan<0) {
+        // <0 means all channels
+        ui->comboBox_midiFilter_inChannel->setCurrentIndex(0);
+    } else {
+        ui->comboBox_midiFilter_inChannel->setCurrentIndex(f.inChan+1);
+    }
     ui->checkBox_midiFilter_AllCCs->setChecked(f.passAllCC);
     ui->checkBox_midiFilter_Prog->setChecked(f.passProg);
     ui->checkBox_midiFilter_pitchbend->setChecked(f.passPitchbend);
@@ -408,6 +428,8 @@ void MainWindow::showMidiFilterEditor()
     for (int i=0; i<f.passCC.count(); i++) {
         ui->listWidget_midiFilter_CC->addItem( n2s( f.passCC.at(i) ) );
     }
+
+    updateMidiFilterEditorLastRx();
 
     // Switch to midi filter page
     ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_FILTER);
@@ -2694,8 +2716,10 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
 
 
     // Set the "last" lineEdits in the MidiFilter view
-    ui->lineEdit_MidiFilter_Last1->setText(n2s(ev.data1));
-    ui->lineEdit_MidiFilter_Last2->setText(n2s(ev.data2));
+    midiFilter_lastChan = ev.channel;
+    midiFilter_lastData1 = ev.data1;
+    midiFilter_lastData2 = ev.data2;
+    updateMidiFilterEditorLastRx();
 
     // Save bank selects
     if (ev.type == MIDI_EVENT_TYPE_CC) {
@@ -3437,6 +3461,12 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
                ui->spinBox_midiFilter_Add->value(),
                ui->spinBox_midiFilter_LowVel->value(),
                ui->spinBox_midiFilter_HighVel->value());
+    if (ui->comboBox_midiFilter_inChannel->currentIndex() == 0) {
+        // Index zero is all channels
+        f.inChan = -1;
+    } else {
+        f.inChan = ui->comboBox_midiFilter_inChannel->currentIndex()-1;
+    }
     f.passAllCC = ui->checkBox_midiFilter_AllCCs->isChecked();
     f.passPitchbend = ui->checkBox_midiFilter_pitchbend->isChecked();
     f.passProg = ui->checkBox_midiFilter_Prog->isChecked();
@@ -3464,22 +3494,22 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
 
 void MainWindow::on_toolButton_MidiFilter_lowNote_clicked()
 {
-    ui->spinBox_midiFilter_LowNote->setValue(ui->lineEdit_MidiFilter_Last1->text().toInt());
+    ui->spinBox_midiFilter_LowNote->setValue(midiFilter_lastData1);
 }
 
 void MainWindow::on_toolButton_MidiFilter_HighNote_clicked()
 {
-    ui->spinBox_midiFilter_HighNote->setValue(ui->lineEdit_MidiFilter_Last1->text().toInt());
+    ui->spinBox_midiFilter_HighNote->setValue(midiFilter_lastData1);
 }
 
 void MainWindow::on_toolButton_MidiFilter_Multiply_clicked()
 {
-    ui->spinBox_midiFilter_Multiply->setValue(ui->lineEdit_MidiFilter_Last1->text().toInt());
+    ui->spinBox_midiFilter_Multiply->setValue(midiFilter_lastData1);
 }
 
 void MainWindow::on_toolButton_MidiFilter_Add_clicked()
 {
-    ui->spinBox_midiFilter_Add->setValue(ui->lineEdit_MidiFilter_Last1->text().toInt());
+    ui->spinBox_midiFilter_Add->setValue(midiFilter_lastData1);
 }
 
 void MainWindow::on_toolButton_MidiFilter_Add_Plus12_clicked()
@@ -3596,17 +3626,17 @@ void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int colu
 
 void MainWindow::on_toolButton_MidiFilter_lowVel_clicked()
 {
-    ui->spinBox_midiFilter_LowVel->setValue( ui->lineEdit_MidiFilter_Last2->text().toInt() );
+    ui->spinBox_midiFilter_LowVel->setValue( midiFilter_lastData2 );
 }
 
 void MainWindow::on_toolButton_MidiFilter_HighVel_clicked()
 {
-    ui->spinBox_midiFilter_HighVel->setValue( ui->lineEdit_MidiFilter_Last2->text().toInt() );
+    ui->spinBox_midiFilter_HighVel->setValue( midiFilter_lastData2 );
 }
 
 void MainWindow::on_toolButton_MidiFilter_lastCC_clicked()
 {
-    ui->lineEdit_MidiFilter_CC->setText(ui->lineEdit_MidiFilter_Last1->text());
+    ui->lineEdit_MidiFilter_CC->setText( n2s(midiFilter_lastData1) );
 }
 
 void MainWindow::on_toolButton_MidiFilter_Add_CC_clicked()
@@ -4581,4 +4611,9 @@ void MainWindow::on_pushButton_ExtApp_Replace_clicked()
 void MainWindow::on_MIDI_indicator_clicked()
 {
     ui->MIDI_indicator->setChecked(false);
+}
+
+void MainWindow::on_toolButton_MidiFilter_inChan_last_clicked()
+{
+    ui->comboBox_midiFilter_inChannel->setCurrentIndex( midiFilter_lastChan+1 );
 }
