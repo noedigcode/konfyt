@@ -218,6 +218,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&layerBusMenu, SIGNAL(triggered(QAction*)),
             this, SLOT(onLayerBusMenu_ActionTrigger(QAction*)));
 
+    // Layer MIDI output channel menu
+    connect(&layerMidiOutChannelMenu, SIGNAL(triggered(QAction*)),
+            this, SLOT(onLayerMidiOutChannelMenu_ActionTrigger(QAction*)));
+
     // Hide main toolbar
     ui->mainToolBar->hide();
 
@@ -2892,6 +2896,24 @@ void MainWindow::onPatchAudioInPortsMenu_ActionTrigger(QAction *action)
     }
 }
 
+/* Layer midi output channel menu item has been clicked. */
+void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
+{
+    int channel = layerMidiOutChannelMenu_map.value(action);
+
+    konfytPatchLayer layer = layerBusMenu_sourceItem->getPatchLayerItem();
+    konfytMidiFilter filter = layer.getMidiFilter();
+    filter.outChan = channel;
+    layer.setMidiFilter(filter);
+
+    // Update layer widget
+    layerBusMenu_sourceItem->setLayerItem(layer);
+    // Update in pengine
+    pengine->setLayerFilter(&layer, filter);
+
+    setPatchModified(true);
+}
+
 /* Layer bus menu item has been clicked. */
 void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
 {
@@ -3033,12 +3055,21 @@ void MainWindow::onLayer_mute_clicked(konfytLayerWidget *layerItem, bool mute)
 /* Slot: on layer item bus button clicked. */
 void MainWindow::onLayer_bus_clicked(konfytLayerWidget *layerItem)
 {
-    // Save the layer item for future use,
-    // update and display a menu of available busses.
-    // The rest will be done in on_layerBusMenu_ActionTrigger when the user clicked.
+    // Save the layer item for future use
     layerBusMenu_sourceItem = layerItem;
-    gui_updateLayerBusMenu();
-    layerBusMenu.popup(QCursor::pos());
+
+    konfytLayerType type = layerItem->getPatchLayerItem().getLayerType();
+    if (type == KonfytLayerType_MidiOut) {
+        // Show MIDI channel menu
+        gui_updateLayerMidiOutChannelMenu();
+        layerMidiOutChannelMenu.popup(QCursor::pos());
+    } else {
+        // Show Busses menu
+        gui_updateLayerBusMenu();
+        layerBusMenu.popup(QCursor::pos());
+
+    }
+    // The rest will be done in onlayerBusMenu_ActionTrigger when the user clicked.
 }
 
 void MainWindow::onLayer_reload_clicked(konfytLayerWidget *layerItem)
@@ -3064,7 +3095,20 @@ void MainWindow::gui_updateLayerBusMenu()
     layerBusMenu_NewBusAction = layerBusMenu.addAction("New Bus");
 }
 
+void MainWindow::gui_updateLayerMidiOutChannelMenu()
+{
+    static bool done = false;
 
+    if (!done) {
+        done = true;
+        layerMidiOutChannelMenu.clear();
+        layerMidiOutChannelMenu_map.clear();
+        for (int i=0; i<=15; i++) {
+            QAction* action = layerMidiOutChannelMenu.addAction("Channel " + n2s(i+1));
+            layerMidiOutChannelMenu_map.insert(action, i);
+        }
+    }
+}
 
 
 
@@ -3453,8 +3497,10 @@ void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
 // The user has been editing the midi filter and has now clicked apply.
 void MainWindow::on_pushButton_midiFilter_Apply_clicked()
 {
-    // Create a new midiFilter from the GUI.
-    konfytMidiFilter f;
+    konfytPatchLayer g = midiFilterEditItem->getPatchLayerItem();
+    konfytMidiFilter f = g.getMidiFilter();
+
+    // Update the filter from the GUI
     f.addZone( ui->spinBox_midiFilter_LowNote->value(),
                ui->spinBox_midiFilter_HighNote->value(),
                ui->spinBox_midiFilter_Multiply->value(),
@@ -3476,7 +3522,6 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     }
 
     // Update filter in gui layer item
-    konfytPatchLayer g = midiFilterEditItem->getPatchLayerItem();
     g.setMidiFilter(f);
     midiFilterEditItem->setLayerItem(g);
     // and also in engine.

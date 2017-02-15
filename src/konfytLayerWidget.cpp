@@ -174,8 +174,10 @@ void konfytLayerWidget::setUpGUI()
         this->updateBackgroundFromFilter();
         // Volume
         ui->gainSlider->setVisible(false);
-        // Disable bus button
-        ui->toolButton_bus->setVisible(false);
+        // Use bus button as midi output channel
+        int outchan = g.getMidiFilter().outChan;
+        ui->toolButton_bus->setText( n2s(outchan+1));
+        ui->toolButton_bus->setToolTip("MIDI Channel");
 
     } else if (g.getLayerType() == KonfytLayerType_AudioIn ) {
 
@@ -207,7 +209,7 @@ void konfytLayerWidget::setUpGUI()
     ui->toolButton_mute->setChecked(g.isMute());
 
     // Bus button
-    if (project != NULL) {
+    if ( (project != NULL) && (g.getLayerType() != KonfytLayerType_MidiOut) ) {
         if ( project->audioBus_exists(g.busIdInProject) ) {
             ui->toolButton_bus->setText( n2s(g.busIdInProject) );
             ui->toolButton_bus->setToolTip("Bus: " + project->audioBus_getBus(g.busIdInProject).busName);

@@ -7,8 +7,8 @@ Just added input and output midi channels to midifilter.
          correct channels (filter.outChan).
 - [DONE] Same with panic state messages.
 - [DONE] Add functionality to layer / midifilter in GUI for In Channel.
+- [DONE] Add functionality to layer in GUI for Out channel.
 
-- Add functionality to layer in GUI for Out channel.
 - Test. (all types of layers)
 - Increment version number.
 - Update docs where appropriate.

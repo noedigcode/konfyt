@@ -262,13 +262,16 @@ public:
     void gui_updatePatchAudioInPortsMenu();
 
     // layerBusMenu: Bus menu in the layers in patch view.
-    //   Opened when user clicks on layer item bus button, see on_layer_bus_clicked()
-    //   When an item is clicked: on_layerBusMenu_ActionTrigger
+    //   Opened when user clicks on layer item bus button, see onlayer_bus_clicked()
+    //   When a menu item is clicked: onlayerBusMenu_ActionTrigger
     void gui_updateLayerBusMenu();
+    void gui_updateLayerMidiOutChannelMenu();
     QMenu layerBusMenu;
+    QMenu layerMidiOutChannelMenu;
     QAction* layerBusMenu_NewBusAction;
     konfytLayerWidget* layerBusMenu_sourceItem;
     QMap<QAction*, int> layerBusMenu_actionsBusIdsMap; // Map menu actions to bus ids
+    QMap<QAction*, int> layerMidiOutChannelMenu_map;
 
     // ========================================================================
     // Connections page (Ports and busses)
@@ -534,6 +537,7 @@ private slots:
     void onLayer_bus_clicked(konfytLayerWidget* layerItem);
     void onLayer_reload_clicked(konfytLayerWidget* layerItem);
     void onLayerBusMenu_ActionTrigger(QAction* action);
+    void onLayerMidiOutChannelMenu_ActionTrigger(QAction* action);
 
     // Patch List
     void on_pushButton_RemovePatch_clicked();
