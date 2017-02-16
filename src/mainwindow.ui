@@ -30,6 +30,8 @@
 
 QCheckBox::indicator {
 	border: 1px solid grey;
+    width: 13px;
+    height: 13px;
 }
 
 QCheckBox::indicator:checked {
@@ -72,6 +74,12 @@ QGroupBox::title {
 	subcontrol-position: top left;
 	subcontrol-origin: margin;
 	padding: 0 3px;
+}
+
+/* Header of tree widghets */
+QHeaderView::section {
+    background-color: rgb(38, 38, 38);
+    border: 0px;
 }
 
 QLabel{
@@ -401,21 +409,24 @@ QToolTip {
 	background-color: black;
 	color: white;
 }
-</string>
+
+QStatusBar {
+    background-color: rgb(80, 80, 80);
+}</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout_15">
     <property name="leftMargin">
-     <number>2</number>
+     <number>0</number>
     </property>
     <property name="topMargin">
-     <number>2</number>
+     <number>0</number>
     </property>
     <property name="rightMargin">
-     <number>2</number>
+     <number>0</number>
     </property>
     <property name="bottomMargin">
-     <number>2</number>
+     <number>5</number>
     </property>
     <item row="0" column="0">
      <widget class="QGroupBox" name="groupBox_MainToolbar">
@@ -435,7 +446,7 @@ QToolTip {
        <string notr="true">QGroupBox {
 	margin-top: 0px;
 	border: 0px;
-	border-radius: 2px;
+	border-radius: 0px;
 	background-color: rgb(80, 80, 80);
 	
 }</string>
@@ -669,6 +680,18 @@ border-bottom-left-radius: 0;</string>
        </item>
        <item>
         <widget class="QTabWidget" name="tabWidget_Projects">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>23</height>
+          </size>
+         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
@@ -877,12 +900,15 @@ QCheckBox::indicator:checked {
           <number>0</number>
          </property>
          <item row="0" column="0">
-          <widget class="QGroupBox" name="groupBox">
+          <widget class="QGroupBox" name="groupBox_Library">
            <property name="styleSheet">
-            <string notr="true">QGroupBox{
+            <string notr="true">QGroupBox#groupBox_Library{
 	background-color: rgba(100,100,100, 255);
 	border: 0px solid;
-	border-radius: 4px;
+	border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
 	margin-top: 0ex;
 	padding-top: 0ex;
 }</string>
@@ -1517,7 +1543,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
@@ -4820,6 +4846,9 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                </item>
                <item>
                 <widget class="QTreeWidget" name="tree_Connections">
+                 <property name="styleSheet">
+                  <string notr="true"/>
+                 </property>
                  <property name="alternatingRowColors">
                   <bool>false</bool>
                  </property>
@@ -5473,7 +5502,7 @@ border-bottom-left-radius: 0;
           <number>0</number>
          </property>
          <property name="bottomMargin">
-          <number>5</number>
+          <number>0</number>
          </property>
          <property name="horizontalSpacing">
           <number>5</number>
@@ -5493,7 +5522,10 @@ border-bottom-left-radius: 0;
             <string notr="true">QGroupBox{
 	background-color: rgba(100,100,100, 255);
 	border: 0px solid;
-	border-radius: 4px;
+	border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
 	margin-top: 0ex;
 	padding-top: 2ex;
 }
@@ -5991,7 +6023,10 @@ border-bottom-right-radius: 0;</string>
 
 	background-color: rgba(120,120,120, 255);
 	border: 0px solid;
-	border-radius: 4px;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
 	margin-top: 0ex;
 	padding-top: 2ex;
 }</string>
@@ -6086,7 +6121,7 @@ QSlider::handle:horizontal:hover {
      <x>0</x>
      <y>0</y>
      <width>1148</width>
-     <height>19</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

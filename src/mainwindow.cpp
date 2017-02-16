@@ -31,6 +31,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+
+
     // Initialise variables
 
     panicState = false;
