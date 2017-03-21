@@ -31,7 +31,7 @@ konfytMidiFilter::konfytMidiFilter()
     this->passPitchbend = true;
 
     this->inChan = -1; // -1 = any
-    this->outChan = 0;
+    this->outChan = -1; // -1 = original
 
 }
 
@@ -134,8 +134,10 @@ konfytMidiEvent konfytMidiFilter::modify(const konfytMidiEvent* ev)
 {
     konfytMidiEvent r = *ev;
 
-    // Set output channel
-    r.channel = outChan;
+    // Set output channel if outChan >= 0; If outChan is -1, leave channel as is.
+    if (outChan >= 0) {
+        r.channel = outChan;
+    }
 
     if ( (r.type == MIDI_EVENT_TYPE_NOTEON) || (r.type == MIDI_EVENT_TYPE_NOTEOFF) ) {
 

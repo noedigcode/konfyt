@@ -176,7 +176,11 @@ void konfytLayerWidget::setUpGUI()
         ui->gainSlider->setVisible(false);
         // Use bus button as midi output channel
         int outchan = g.getMidiFilter().outChan;
-        ui->toolButton_bus->setText( n2s(outchan+1));
+        if (outchan >= 0) {
+            ui->toolButton_bus->setText( n2s(outchan+1));
+        } else {
+            ui->toolButton_bus->setText( "-" );
+        }
         ui->toolButton_bus->setToolTip("MIDI Channel");
 
     } else if (g.getLayerType() == KonfytLayerType_AudioIn ) {

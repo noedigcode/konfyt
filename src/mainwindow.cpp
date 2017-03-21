@@ -3105,6 +3105,8 @@ void MainWindow::gui_updateLayerMidiOutChannelMenu()
         done = true;
         layerMidiOutChannelMenu.clear();
         layerMidiOutChannelMenu_map.clear();
+        QAction* action = layerMidiOutChannelMenu.addAction("Original Channel" );
+        layerMidiOutChannelMenu_map.insert(action, -1);
         for (int i=0; i<=15; i++) {
             QAction* action = layerMidiOutChannelMenu.addAction("Channel " + n2s(i+1));
             layerMidiOutChannelMenu_map.insert(action, i);
