@@ -1362,6 +1362,9 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
                     // Get output buffer, based on size and time of input event
                     out_buffer = jack_midi_event_reserve( tempPort->buffer, inEvent_jack.time, inEvent_jack.size);
 
+                    // Force MIDI channel 0
+                    evToSend.channel = 0;
+
                     // Copy input event to output buffer
                     evToSend.toBuffer( out_buffer );
 
