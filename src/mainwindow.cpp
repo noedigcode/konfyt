@@ -2854,23 +2854,23 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
 
     } else if (action == ui->actionGlobal_Transpose_12_Down) {
 
-        setMasterInTranspose(-12,true);
+        if (ev.data2 > 0) { setMasterInTranspose(-12,true); }
 
     } else if (action == ui->actionGlobal_Transpose_12_Up) {
 
-        setMasterInTranspose(12,true);
+        if (ev.data2 > 0) { setMasterInTranspose(12,true); }
 
     } else if (action == ui->actionGlobal_Transpose_1_Down) {
 
-        setMasterInTranspose(-1,true);
+        if (ev.data2 > 0) { setMasterInTranspose(-1,true); }
 
     } else if (action == ui->actionGlobal_Transpose_1_Up) {
 
-        setMasterInTranspose(1,true);
+        if (ev.data2 > 0) { setMasterInTranspose(1,true); }
 
     } else if (action == ui->actionGlobal_Transpose_Zero) {
 
-        setMasterInTranspose(0,true);
+        if (ev.data2 > 0) { setMasterInTranspose(0,true); }
 
     }
 
