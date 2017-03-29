@@ -173,6 +173,8 @@ public:
 
     void activatePortsForPatch(const konfytPatch *patch, const konfytProject *project);
 
+    void setGlobalTranspose(int transpose);
+
 
 private:
     jack_client_t* client;
@@ -190,6 +192,8 @@ private:
     QBasicTimer timer;
     void timerEvent(QTimerEvent *event);
     void startPortTimer();
+
+    int globalTranspose;
 
 
     // Auto connection of our main midi input port

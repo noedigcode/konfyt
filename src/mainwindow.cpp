@@ -175,6 +175,9 @@ MainWindow::MainWindow(QWidget *parent) :
     // Initialise and update GUI
     // ----------------------------------------------------
 
+    // Global Transpose
+    ui->spinBox_MasterIn_Transpose->setValue(0);
+
     // Library filesystem view
     this->fsview_currentPath = QDir::homePath();
     refreshFilesystemView();
@@ -1090,7 +1093,12 @@ void MainWindow::initTriggers()
       << ui->actionLayer_5_Gain << ui->actionLayer_5_Mute << ui->actionLayer_5_Solo
       << ui->actionLayer_6_Gain << ui->actionLayer_6_Mute << ui->actionLayer_6_Solo
       << ui->actionLayer_7_Gain << ui->actionLayer_7_Mute << ui->actionLayer_7_Solo
-      << ui->actionLayer_8_Gain << ui->actionLayer_8_Mute << ui->actionLayer_8_Solo;
+      << ui->actionLayer_8_Gain << ui->actionLayer_8_Mute << ui->actionLayer_8_Solo
+      << ui->actionGlobal_Transpose_12_Down
+      << ui->actionGlobal_Transpose_12_Up
+      << ui->actionGlobal_Transpose_1_Down
+      << ui->actionGlobal_Transpose_1_Up
+      << ui->actionGlobal_Transpose_Zero;
 
     channelGainActions << ui->actionLayer_1_Gain << ui->actionLayer_2_Gain
                        << ui->actionLayer_3_Gain << ui->actionLayer_4_Gain
@@ -2843,6 +2851,26 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
     } else if (patchActions.contains(action)) {
 
         setCurrentPatch( patchActions.indexOf(action) );
+
+    } else if (action == ui->actionGlobal_Transpose_12_Down) {
+
+        setMasterInTranspose(-12,true);
+
+    } else if (action == ui->actionGlobal_Transpose_12_Up) {
+
+        setMasterInTranspose(12,true);
+
+    } else if (action == ui->actionGlobal_Transpose_1_Down) {
+
+        setMasterInTranspose(-1,true);
+
+    } else if (action == ui->actionGlobal_Transpose_1_Up) {
+
+        setMasterInTranspose(1,true);
+
+    } else if (action == ui->actionGlobal_Transpose_Zero) {
+
+        setMasterInTranspose(0,true);
 
     }
 
@@ -4665,4 +4693,32 @@ void MainWindow::on_MIDI_indicator_clicked()
 void MainWindow::on_toolButton_MidiFilter_inChan_last_clicked()
 {
     ui->comboBox_midiFilter_inChannel->setCurrentIndex( midiFilter_lastChan+1 );
+}
+
+void MainWindow::setMasterInTranspose(int transpose, bool relative)
+{
+    if (relative) {
+        transpose += ui->spinBox_MasterIn_Transpose->value();
+    }
+    ui->spinBox_MasterIn_Transpose->setValue( transpose );
+}
+
+void MainWindow::on_spinBox_MasterIn_Transpose_valueChanged(int arg1)
+{
+    this->jack->setGlobalTranspose(arg1);
+}
+
+void MainWindow::on_pushButton_MasterIn_TransposeSub12_clicked()
+{
+    setMasterInTranspose(-12,true);
+}
+
+void MainWindow::on_pushButton_MasterIn_TransposeAdd12_clicked()
+{
+    setMasterInTranspose(12,true);
+}
+
+void MainWindow::on_pushButton_MasterIn_TransposeZero_clicked()
+{
+    setMasterInTranspose(0,false);
 }

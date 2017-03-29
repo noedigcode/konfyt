@@ -416,6 +416,8 @@ public:
     QShortcut* shortcut_save;
     QShortcut* shortcut_panic;
 
+    void setMasterInTranspose(int transpose, bool relative);
+
     void error_abort(QString msg);
     void messageBox(QString msg);
     
@@ -680,6 +682,17 @@ private slots:
     void on_pushButton_ShowConsole_clicked();
 
     void on_checkBox_ConsoleShowMidiMessages_clicked();
+
+    // ========================================================================
+    // Global transpose
+
+    void on_spinBox_MasterIn_Transpose_valueChanged(int arg1);
+
+    void on_pushButton_MasterIn_TransposeSub12_clicked();
+
+    void on_pushButton_MasterIn_TransposeAdd12_clicked();
+
+    void on_pushButton_MasterIn_TransposeZero_clicked();
 
     // ========================================================================
 

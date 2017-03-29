@@ -37,6 +37,7 @@ konfytJackEngine::konfytJackEngine(QObject *parent) :
     initMidiClosureEvents();
     panicCmd = false;
     panicState = 0;
+    globalTranspose = 0;
 }
 
 // Set panicCmd. The Jack process callback will behave accordingly.
@@ -1317,63 +1318,76 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
             emit e->midiEventSignal( ev );
         }
 
+        // Apply global transpose
+        bool passEvent = true;
+        if ( (ev.type == MIDI_EVENT_TYPE_NOTEON) || (ev.type == MIDI_EVENT_TYPE_NOTEOFF) ) {
+            ev.data1 += e->globalTranspose;
+            if ( (ev.data1 < 0) && (ev.data1 > 127) ) {
+                passEvent = false;
+            }
+        }
+
         if (e->panicState == 0) {
 
-            // Send to fluidsynth
-            for (n=0; n<e->soundfont_ports.count(); n++) {
-                tempPort = e->soundfont_ports.at(n)->midi_out;
-                id = e->soundfont_ports.at(n)->plugin_id;
-                if ( e->passMidiMuteSoloActiveFilterAndModify(tempPort, &ev, &evToSend) ) {
+            if ( passEvent ) {
 
-                    e->fluidsynthEngine->processJackMidi( id, &evToSend );
+                // Send to fluidsynth
+                for (n=0; n<e->soundfont_ports.count(); n++) {
+                    tempPort = e->soundfont_ports.at(n)->midi_out;
+                    id = e->soundfont_ports.at(n)->plugin_id;
+                    if ( e->passMidiMuteSoloActiveFilterAndModify(tempPort, &ev, &evToSend) ) {
 
-                } else if ( (tempPort->prev_active) && !(tempPort->active) ) {
-                    // Was previously active, but not anymore. Send "midi closure messages".
-                    e->fluidsynthEngine->processJackMidi( id, &(e->evAllNotesOff) );
-                    e->fluidsynthEngine->processJackMidi( id, &(e->evSustainZero) );
-                    e->fluidsynthEngine->processJackMidi( id, &(e->evPitchbendZero) );
+                        e->fluidsynthEngine->processJackMidi( id, &evToSend );
+
+                    } else if ( (tempPort->prev_active) && !(tempPort->active) ) {
+                        // Was previously active, but not anymore. Send "midi closure messages".
+                        e->fluidsynthEngine->processJackMidi( id, &(e->evAllNotesOff) );
+                        e->fluidsynthEngine->processJackMidi( id, &(e->evSustainZero) );
+                        e->fluidsynthEngine->processJackMidi( id, &(e->evPitchbendZero) );
+                    }
+                    tempPort->prev_active = tempPort->active;
                 }
-                tempPort->prev_active = tempPort->active;
-            }
 
-            // Give to all active output ports to external apps
-            for (n=0; n<e->midi_out_ports.count(); n++) {
-                tempPort = e->midi_out_ports.at(n);
-                if ( e->passMidiMuteSoloActiveFilterAndModify(tempPort, &ev, &evToSend) ) {
+                // Give to all active output ports to external apps
+                for (n=0; n<e->midi_out_ports.count(); n++) {
+                    tempPort = e->midi_out_ports.at(n);
+                    if ( e->passMidiMuteSoloActiveFilterAndModify(tempPort, &ev, &evToSend) ) {
 
-                    // Get output buffer, based on size and time of input event
-                    out_buffer = jack_midi_event_reserve( tempPort->buffer, inEvent_jack.time, inEvent_jack.size);
+                        // Get output buffer, based on size and time of input event
+                        out_buffer = jack_midi_event_reserve( tempPort->buffer, inEvent_jack.time, inEvent_jack.size);
 
-                    // Copy input event to output buffer
-                    evToSend.toBuffer( out_buffer );
+                        // Copy input event to output buffer
+                        evToSend.toBuffer( out_buffer );
 
-                } else if ( (tempPort->prev_active) && !(tempPort->active) ) {
-                    // Was previously active, but not anymore. Send all notes off message.
-                    e->sendMidiClosureEvents( tempPort );
+                    } else if ( (tempPort->prev_active) && !(tempPort->active) ) {
+                        // Was previously active, but not anymore. Send all notes off message.
+                        e->sendMidiClosureEvents( tempPort );
+                    }
+                    tempPort->prev_active = tempPort->active;
                 }
-                tempPort->prev_active = tempPort->active;
-            }
 
-            // Also give to all active plugin ports
-            for (n=0; n<e->plugin_ports.count(); n++) {
-                tempPort = e->plugin_ports[n]->midi_out;
-                if ( e->passMidiMuteSoloActiveFilterAndModify(tempPort, &ev, &evToSend) ) {
+                // Also give to all active plugin ports
+                for (n=0; n<e->plugin_ports.count(); n++) {
+                    tempPort = e->plugin_ports[n]->midi_out;
+                    if ( e->passMidiMuteSoloActiveFilterAndModify(tempPort, &ev, &evToSend) ) {
 
-                    // Get output buffer, based on size and time of input event
-                    out_buffer = jack_midi_event_reserve( tempPort->buffer, inEvent_jack.time, inEvent_jack.size);
+                        // Get output buffer, based on size and time of input event
+                        out_buffer = jack_midi_event_reserve( tempPort->buffer, inEvent_jack.time, inEvent_jack.size);
 
-                    // Force MIDI channel 0
-                    evToSend.channel = 0;
+                        // Force MIDI channel 0
+                        evToSend.channel = 0;
 
-                    // Copy input event to output buffer
-                    evToSend.toBuffer( out_buffer );
+                        // Copy input event to output buffer
+                        evToSend.toBuffer( out_buffer );
 
-                } else if ( (tempPort->prev_active) && !(tempPort->active) ) {
-                    // Was previoiusly active, but not anymore. Send all notes off message.
-                    e->sendMidiClosureEvents( tempPort );
+                    } else if ( (tempPort->prev_active) && !(tempPort->active) ) {
+                        // Was previoiusly active, but not anymore. Send all notes off message.
+                        e->sendMidiClosureEvents( tempPort );
+                    }
+                    tempPort->prev_active = tempPort->active;
                 }
-                tempPort->prev_active = tempPort->active;
-            }
+
+            } // end if passEvent
 
         } // end if panicState == 0
 
@@ -1758,6 +1772,11 @@ void konfytJackEngine::activatePortsForPatch(const konfytPatch* patch, const kon
             // invalid port layer.
         }
     }
+}
+
+void konfytJackEngine::setGlobalTranspose(int transpose)
+{
+    this->globalTranspose = transpose;
 }
 
 
