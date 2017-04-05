@@ -1273,7 +1273,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
         for (n=0; n<e->soundfont_ports.count(); n++) {
             tempPort = e->soundfont_ports.at(n)->midi_out;
             id = e->soundfont_ports.at(n)->plugin_id;
-            // Don't even check if port is active, just send.
+            // Fluidsynthengine will force event channel to zero
             e->fluidsynthEngine->processJackMidi( id, &(e->evAllNotesOff) );
             e->fluidsynthEngine->processJackMidi( id, &(e->evSustainZero) );
             e->fluidsynthEngine->processJackMidi( id, &(e->evPitchbendZero) );
@@ -1282,13 +1282,13 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
         // Give to all active output ports to external apps
         for (n=0; n<e->midi_out_ports.count(); n++) {
             tempPort = e->midi_out_ports.at(n);
-            e->sendMidiClosureEvents( tempPort );
+            e->sendMidiClosureEvents_allChannels( tempPort ); // Send to all MIDI channels
         }
 
         // Also give to all active plugin ports
         for (n=0; n<e->plugin_ports.count(); n++) {
             tempPort = e->plugin_ports[n]->midi_out;
-            e->sendMidiClosureEvents( tempPort );
+            e->sendMidiClosureEvents_chanZeroOnly( tempPort ); // Only on channel zero
         }
 
         e->panicState = 2; // Proceed to panicState 2 where we will just wait for panic to subside.
@@ -1443,6 +1443,7 @@ void konfytJackEngine::mixBufferToDestinationPort(konfytJackPort* port, jack_nfr
     }
 }
 
+// Initialises MIDI closure events that will be sent to ports during Jack process callback.
 void konfytJackEngine::initMidiClosureEvents()
 {
     evAllNotesOff = konfytMidiEvent();
@@ -1461,11 +1462,9 @@ void konfytJackEngine::initMidiClosureEvents()
 }
 
 // Helper function for Jack process callback
-void konfytJackEngine::sendMidiClosureEvents(konfytJackPort *port)
+void konfytJackEngine::sendMidiClosureEvents(konfytJackPort *port, int channel)
 {
     unsigned char* out_buffer;
-
-    int channel = port->filter.outChan;
 
     // All notes off
     out_buffer = jack_midi_event_reserve( port->buffer, 0, 3);
@@ -1479,6 +1478,20 @@ void konfytJackEngine::sendMidiClosureEvents(konfytJackPort *port)
     out_buffer = jack_midi_event_reserve( port->buffer, 0, 3 );
     evPitchbendZero.channel = channel;
     evPitchbendZero.toBuffer(out_buffer);
+}
+
+// Helper function for Jack process callback
+void konfytJackEngine::sendMidiClosureEvents_chanZeroOnly(konfytJackPort *port)
+{
+    sendMidiClosureEvents(port, 0);
+}
+
+// Helper function for Jack process callback
+void konfytJackEngine::sendMidiClosureEvents_allChannels(konfytJackPort *port)
+{
+    for (int i=0; i<15; i++) {
+        sendMidiClosureEvents(port, i);
+    }
 }
 
 // Helper function for Jack process callback

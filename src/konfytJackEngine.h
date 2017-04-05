@@ -68,7 +68,9 @@ public:
     // Helper functions
     bool passMuteSoloActiveCriteria(konfytJackPort* port);
     void mixBufferToDestinationPort(konfytJackPort* port, jack_nframes_t nframes, bool applyGain);
-    void sendMidiClosureEvents(konfytJackPort* port);
+    void sendMidiClosureEvents(konfytJackPort* port, int channel);
+    void sendMidiClosureEvents_chanZeroOnly(konfytJackPort* port);
+    void sendMidiClosureEvents_allChannels(konfytJackPort* port);
     bool passMidiMuteSoloActiveFilterAndModify(konfytJackPort* port, const konfytMidiEvent* ev, konfytMidiEvent* evToSend);
 
     bool connectCallback;
