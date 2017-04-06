@@ -1322,10 +1322,42 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
         bool passEvent = true;
         if ( (ev.type == MIDI_EVENT_TYPE_NOTEON) || (ev.type == MIDI_EVENT_TYPE_NOTEOFF) ) {
             ev.data1 += e->globalTranspose;
-            if ( (ev.data1 < 0) && (ev.data1 > 127) ) {
+            if ( (ev.data1 < 0) || (ev.data1 > 127) ) {
                 passEvent = false;
             }
         }
+
+
+        /* If noteoff [do not apply global transpose]:
+         *  for each item in noteonList:
+         *      Apply item's global transpose
+         *      If event passes filter, does modified event match noteon?
+         *          Then send noteoff to port outChan
+         *          And remove noteoff from list
+         *
+         *
+         * For each port:
+         *      if noteon:
+         *          Check if pass filter, do filter modify, etc.
+         *          Add to noteonList(note, port, filter, globalTranspose)
+         *          send msg
+         *      if sustain >0:
+         *          if not already sustainOnFlag:
+         *              set sustainOnFlag
+         *              Apply filter
+         *              send sustain msg
+         *              add to sustainList(port, filter)
+         *      if sustain 0:
+         *          for each item in list:
+         *          send sustain off to port outChan
+         *          remove from list
+         * same for pitchbend
+         *
+         *
+         *
+         */
+
+
 
         if (e->panicState == 0) {
 
