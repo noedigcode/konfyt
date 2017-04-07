@@ -60,4 +60,13 @@ typedef struct {
 
 } konfytJackPluginPorts;
 
+struct konfytJackNoteOnRecord {
+    int note;
+    konfytJackPort* port;
+    konfytMidiFilter filter;
+    int globalTranspose;
+};
+
+
+
 #endif // KONFYTJACKSTRUCTS_H

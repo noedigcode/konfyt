@@ -39,6 +39,7 @@
 #include "konfytFluidsynthEngine.h"
 #include "konfytStructs.h"
 #include "konfytJackStructs.h"
+#include "konfytArrayList.h"
 
 #define KONFYT_JACK_MIDI_IN_PORT_NAME "midi_in"
 #define KONFYT_JACK_MIDI_OUT_PORT_NAME "midi_out_"
@@ -96,6 +97,10 @@ public:
 
     QList<konfytJackPluginPorts*> plugin_ports;
     QList<konfytJackPluginPorts*> soundfont_ports;
+
+    konfytArrayList<konfytJackNoteOnRecord> noteOnList;
+    konfytArrayList<konfytJackNoteOnRecord> sustainList;
+    konfytArrayList<konfytJackNoteOnRecord> pitchBendList;
 
     // Our main midi input port
     jack_port_t *midi_input_port;

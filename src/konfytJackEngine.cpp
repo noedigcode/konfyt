@@ -1318,6 +1318,54 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
             emit e->midiEventSignal( ev );
         }
 
+
+
+        if (ev.type == MIDI_EVENT_TYPE_NOTEOFF) {
+            for (int i=0; i<noteOnList.count(); i++) {
+                konfytJackNoteOnRecord rec = noteOnList.at(i);
+                // Apply global transpose that was active at time of noteon
+                ev.data1 += rec.globalTranspose;
+                // Check if event passes noteon filter
+                if ( rec.filter.passFilter(&ev) ) {
+                    // Apply noteon filter modification
+                    konfytMidiEvent newEv = rec.filter.modify( &ev );
+                    if (newEv.data1 == rec.note) {
+                        // Match! Send noteoff and remove noteon from list.
+
+                        // Get output buffer, based on size and time of input event
+                        out_buffer = jack_midi_event_reserve( rec.port->buffer, inEvent_jack.time, inEvent_jack.size);
+                        // Copy input event to output buffer
+                        newEv.toBuffer( out_buffer );
+
+                        noteOnList.remove(i);
+                        i--; // Due to removal, have to stay at same index after for loop i++
+                    }
+                }
+                ev.data1 -= rec.globalTranspose;
+            }
+        } else if ( (ev.type == MIDI_EVENT_TYPE_CC) && (ev.data1 == 64) && (ev.data2 == 0) ) {
+            // Sustain zero
+            for (int i=0; i<sustainList.count(); i++) {
+                // Send sustain zero to port and remove from list
+
+                konfytJackNoteOnRecord rec = sustainList.at(i);
+
+                // Get output buffer, based on size and time of input event
+                out_buffer = jack_midi_event_reserve( rec.port->buffer, inEvent_jack.time, inEvent_jack.size);
+                // Copy input event to output buffer
+                ev.toBuffer( out_buffer );
+
+                // TODO 2017-04-07: - Will have to put sustain and pitchbend through midi filter also.
+                //                  - When removing ports, will have to remove events from noteon/sustain/pb lists
+                //                    that point to those ports as well.
+                //                  - Write test code for konfytArrayList.
+
+            }
+        }
+
+
+
+
         // Apply global transpose
         bool passEvent = true;
         if ( (ev.type == MIDI_EVENT_TYPE_NOTEON) || (ev.type == MIDI_EVENT_TYPE_NOTEOFF) ) {
@@ -1347,10 +1395,10 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
          *              Apply filter
          *              send sustain msg
          *              add to sustainList(port, filter)
-         *      if sustain 0:
-         *          for each item in list:
-         *          send sustain off to port outChan
-         *          remove from list
+         * if sustain 0:
+         *  for each item in list:
+         *     send sustain off to port outChan
+         *     remove from list
          * same for pitchbend
          *
          *
@@ -1393,7 +1441,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 
                     } else if ( (tempPort->prev_active) && !(tempPort->active) ) {
                         // Was previously active, but not anymore. Send all notes off message.
-                        e->sendMidiClosureEvents( tempPort );
+// TODO FIX                        e->sendMidiClosureEvents( tempPort );
                     }
                     tempPort->prev_active = tempPort->active;
                 }
@@ -1414,7 +1462,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 
                     } else if ( (tempPort->prev_active) && !(tempPort->active) ) {
                         // Was previoiusly active, but not anymore. Send all notes off message.
-                        e->sendMidiClosureEvents( tempPort );
+// TODO FIX                        e->sendMidiClosureEvents( tempPort );
                     }
                     tempPort->prev_active = tempPort->active;
                 }
