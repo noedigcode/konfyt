@@ -23,9 +23,11 @@
 #define KONFYT_PATCH_ENGINE_H
 
 #include <QObject>
+
+#include <jack/jack.h>
+
 #include "konfytPatch.h"
 #include "konfytFluidsynthEngine.h"
-#include <jack/jack.h>
 #include "konfytJackEngine.h"
 #include "konfytProject.h"
 #include "konfytCarlaEngine.h"

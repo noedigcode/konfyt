@@ -23,10 +23,12 @@
 #define KONFYT_FLUIDSYNTH_ENGINE_H
 
 #include <QObject>
+#include <QMutex>
+
 #include <fluidsynth.h>
+
 #include "konfytDefines.h"
 #include "konfytDatabase.h"
-#include <QMutex>
 
 
 class konfytFluidsynthEngine : public QObject

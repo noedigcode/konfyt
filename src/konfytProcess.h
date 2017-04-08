@@ -24,8 +24,9 @@
 
 #include <QProcess>
 #include <QFileInfo>
+
 #include "konfytDefines.h"
-#include <iostream>
+
 
 enum konfytProcessState {
     KONFYTPROCESS_NOT_STARTED = 0,

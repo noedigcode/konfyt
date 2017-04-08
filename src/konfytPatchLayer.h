@@ -28,6 +28,7 @@
 #include <QPushButton>
 #include <QLineEdit>
 #include <QSlider>
+
 #include "konfytStructs.h"
 #include "konfytMidiFilter.h"
 

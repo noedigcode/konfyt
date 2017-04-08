@@ -22,9 +22,8 @@
 #ifndef KONFYT_STRUCTS_H
 #define KONFYT_STRUCTS_H
 
-#include <jack/jack.h>
 #include <QString>
-
+#include <jack/jack.h>
 
 
 /* This represents a program/preset within a soundfont (i.e. a single voice/instrument). */

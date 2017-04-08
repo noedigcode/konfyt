@@ -25,9 +25,14 @@
 #include <QObject>
 #include <QList>
 #include <QStringList>
-#include <fluidsynth.h>
 #include <QMap>
 #include <QThread>
+#include <QDir>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
+
+#include <fluidsynth.h>
+
 #include "konfytPatch.h"
 #include "konfytDbTree.h"
 #include "konfytDbTreeItem.h"

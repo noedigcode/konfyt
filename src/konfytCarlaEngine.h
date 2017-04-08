@@ -23,11 +23,13 @@
 #define KONFYT_CARLA_ENGINE_H
 
 #include <QObject>
+#include <QTime>
+
 #include <carla/CarlaHost.h>
+
 #include "konfytDefines.h"
 #include "konfytDatabase.h"
 #include "konfytJackEngine.h"
-#include <QTime>
 
 #define CARLA_MIDI_IN_PORT_POSTFIX "events-in"
 #define CARLA_OUT_LEFT_PORT_POSTFIX "out-left"

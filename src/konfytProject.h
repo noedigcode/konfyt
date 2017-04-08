@@ -25,10 +25,11 @@
 #include <QObject>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
-#include "konfytPatch.h"
 #include <QFile>
 #include <QDir>
 #include <QStringList>
+
+#include "konfytPatch.h"
 #include "konfytProcess.h"
 #include "konfytDefines.h"
 #include "konfytStructs.h"

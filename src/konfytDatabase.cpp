@@ -20,10 +20,7 @@
  *****************************************************************************/
 
 #include "konfytDatabase.h"
-#include <QDir>
-#include <fluidsynth.h>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
+
 
 // ============================================================================
 // konfytDatabaseWorker
