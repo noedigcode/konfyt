@@ -33,6 +33,7 @@ public:
     void add(T item);
     int count();
     T at(int index);
+    T* at_ptr(int index);
     void remove(int index);
 
 private:

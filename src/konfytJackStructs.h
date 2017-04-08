@@ -44,10 +44,14 @@ typedef struct konfytJackPort_t {
     float gain;
     QStringList connectionList;
     konfytJackPort_t* destinationPort; // For audio input ports, the destination output port (bus).
+    int noteOns;
+    bool sustainNonZero;
+    bool pitchbendNonZero;
 
     // Constructor with initializer list. Instantiate all instances with constructor to take advantage of this.
     konfytJackPort_t() : jack_pointer(NULL), active(false), prev_active(false),
-        solo(false), mute(false), gain(1), destinationPort(NULL) {}
+        solo(false), mute(false), gain(1), destinationPort(NULL), noteOns(0),
+        sustainNonZero(false), pitchbendNonZero(false) {}
 
 } konfytJackPort;
 
@@ -62,7 +66,10 @@ typedef struct {
 
 struct konfytJackNoteOnRecord {
     int note;
+    bool jackPortNotFluidsynth; // true for jack port, false for Fluidsynth
+    int fluidsynthID;
     konfytJackPort* port;
+    konfytJackPort* relatedPort;
     konfytMidiFilter filter;
     int globalTranspose;
 };

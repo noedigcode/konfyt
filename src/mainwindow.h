@@ -438,6 +438,7 @@ private slots:
     // Midi / Jack
     void midiEventSlot(konfytMidiEvent ev);
     void jackPortsChanged();
+    void jackXrun();
 
     // Project modified
     void projectModifiedStateChanged(bool modified);

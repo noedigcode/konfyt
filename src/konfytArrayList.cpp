@@ -38,6 +38,14 @@ T konfytArrayList<T>::at(int index)
 }
 
 template <typename T>
+T* konfytArrayList<T>::at_ptr(int index)
+{
+    if ( (index<0) || (index>=arrayCount)) { abort(); }
+
+    return &( array[ ptrArray[index] ].data );
+}
+
+template <typename T>
 void konfytArrayList<T>::remove(int index)
 {
     if ( (index<0) || (index>=arrayCount)) { abort(); }

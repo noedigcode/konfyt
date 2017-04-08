@@ -146,8 +146,11 @@ konfytMidiEvent konfytMidiFilter::modify(const konfytMidiEvent* ev)
             if ( (r.data1>=z.lowNote) && (r.data1<=z.highNote) ) { // Check if in zone
                 // Modify based on multiplification and addition
                 r.data1 = r.data1*z.multiply + z.add;
-                if (r.data1<0) { r.data1 = 0; }
-                if (r.data1 > 127) { r.data1 = 127; }
+                // TODO: In the following cases the note shouldn't actually be passed.
+                //       We don't want an unexpected note with value 0 or 127.
+                //       For now, velocity is just made zero.
+                if (r.data1<0) { r.data1 = 0; r.data2 = 0; }
+                if (r.data1 > 127) { r.data1 = 127; r.data2 = 0; }
             }
         }
     }

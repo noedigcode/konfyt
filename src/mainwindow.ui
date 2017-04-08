@@ -406,8 +406,10 @@ QToolButton[popupMode=&quot;1&quot;] { /* only for MenuButtonPopup */
 /*******************************************************/
 
 QToolTip {
-	background-color: black;
-	color: white;
+	font: 9pt;
+	background-color: white;
+	color: black;
+
 }
 
 QStatusBar {
@@ -1960,9 +1962,17 @@ border-bottom-right-radius: 0;</string>
                       <string>Project name (click to edit)</string>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">background-color: rgba(255, 255, 255, 0);
-font: 14pt &quot;Lucida Sans&quot;;
-border: 0pt;</string>
+                      <string notr="true">QLineEdit {
+	background-color: rgba(255, 255, 255, 0);
+	font: 14pt &quot;Lucida Sans&quot;;
+	border: 0pt;
+}
+
+QToolTip {
+	font: 9pt;
+	background-color: black;
+	color: white;
+}</string>
                      </property>
                      <property name="text">
                       <string>Project</string>
@@ -1992,9 +2002,13 @@ color: white;</string>
                       <string>Patch name (click to edit)</string>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">background-color: rgba(255, 255, 255, 0);
-font: 16pt &quot;Lucida Sans&quot;;
-border: 0pt;</string>
+                      <string notr="true">QLineEdit {
+	background-color: rgba(255, 255, 255, 0);
+	font: 16pt &quot;Lucida Sans&quot;;
+	border: 0pt;
+}
+
+</string>
                      </property>
                      <property name="text">
                       <string>Patch</string>
@@ -5514,7 +5528,6 @@ border-bottom-left-radius: 0;
           <widget class="QGroupBox" name="groupBox_5">
            <property name="styleSheet">
             <string notr="true">QGroupBox{
-
 	background-color: rgba(120,120,120, 255);
 	border: 0px solid;
     border-top-left-radius: 4px;
@@ -5523,6 +5536,10 @@ border-bottom-left-radius: 0;
     border-bottom-right-radius: 0px;
 	margin-top: 0ex;
 	padding-top: 2ex;
+}
+
+QGroupBox::title {
+	padding-top: 2px;
 }</string>
            </property>
            <property name="title">
@@ -5673,7 +5690,7 @@ border-bottom-left-radius: 0;</string>
             <item row="0" column="0">
              <widget class="QLabel" name="label_4">
               <property name="text">
-               <string>Transpose</string>
+               <string>Global Transpose</string>
               </property>
              </widget>
             </item>
@@ -5698,6 +5715,10 @@ border-bottom-left-radius: 0;</string>
     border-bottom-right-radius: 0px;
 	margin-top: 0ex;
 	padding-top: 2ex;
+}
+
+QGroupBox::title {
+	padding-top: 2px;
 }
 
 QPushButton{
@@ -6199,6 +6220,10 @@ border-bottom-right-radius: 0;</string>
     border-bottom-right-radius: 0px;
 	margin-top: 0ex;
 	padding-top: 2ex;
+}
+
+QGroupBox::title {
+	padding-top: 2px;
 }</string>
            </property>
            <property name="title">
@@ -6291,7 +6316,7 @@ QSlider::handle:horizontal:hover {
      <x>0</x>
      <y>0</y>
      <width>1148</width>
-     <height>19</height>
+     <height>18</height>
     </rect>
    </property>
   </widget>

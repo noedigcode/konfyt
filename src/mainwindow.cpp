@@ -73,6 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(jack, SIGNAL(JackPortsChanged()), this, SLOT(jackPortsChanged()));
     qRegisterMetaType<konfytMidiEvent>("konfytMidiEvent"); // To be able to use konfytMidiEvent in the Qt signal/slot system
     connect(jack, SIGNAL(midiEventSignal(konfytMidiEvent)), this, SLOT(midiEventSlot(konfytMidiEvent)));
+    connect(jack, SIGNAL(xrunSignal()), this, SLOT(jackXrun()));
 
     if ( jack->InitJackClient(KONFYT_JACK_DEFAULT_CLIENT_NAME) ) {
         // Jack client initialised.
@@ -345,6 +346,12 @@ void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
 void MainWindow::jackPortsChanged()
 {
 
+}
+
+void MainWindow::jackXrun()
+{
+    static int count = 1;
+    userMessage("XRUN " + n2s(count++));
 }
 
 // Scan given directory recursively and add project files to list.
@@ -4297,17 +4304,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
     for (int i=0; i<this->projectList.count(); i++) {
         konfytProject* prj = projectList[i];
         if (prj->isModified()) {
-            QMessageBox::StandardButton btn = QMessageBox::question( this,
-                                                                     APP_NAME,
-                                                                     "Do you want to save the changes to project " + prj->getProjectName() + "?",
-                                                                     QMessageBox::Cancel | QMessageBox::Yes | QMessageBox::No,
-                                                                     QMessageBox::Cancel);
-            if (btn == QMessageBox::Yes) {
+            QMessageBox msgbox;
+            msgbox.setText("Do you want to save the changes to project " + prj->getProjectName() + "?");
+            msgbox.setIcon(QMessageBox::Question);
+            msgbox.setStandardButtons(QMessageBox::Cancel | QMessageBox::Yes | QMessageBox::No);
+            msgbox.setDefaultButton(QMessageBox::Cancel);
+            int ret = msgbox.exec();
+            if (ret == QMessageBox::Yes) {
                 if ( saveProject(prj) == false ) {
                     event->ignore();
                     return;
                 }
-            } else if (btn == QMessageBox::Cancel) {
+            } else if (ret == QMessageBox::Cancel) {
                 event->ignore();
                 return;
             }

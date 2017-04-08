@@ -221,6 +221,7 @@ signals:
     void userMessage(QString msg);
     void JackPortsChanged();
     void midiEventSignal(konfytMidiEvent event);
+    void xrunSignal();
 
     
 public slots:
