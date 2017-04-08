@@ -74,7 +74,9 @@ QGroupBox::title {
 	subcontrol-position: top left;
 	subcontrol-origin: margin;
 	padding: 0 3px;
+	padding-top: 2px;
 }
+
 
 /* Header of tree widghets */
 QHeaderView::section {
@@ -3389,7 +3391,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
 }</string>
                </property>
                <property name="title">
-                <string>Midi Filter</string>
+                <string>MIDI Filter</string>
                </property>
                <widget class="QGroupBox" name="groupBox_21">
                 <property name="geometry">
@@ -5538,9 +5540,7 @@ border-bottom-left-radius: 0;
 	padding-top: 2ex;
 }
 
-QGroupBox::title {
-	padding-top: 2px;
-}</string>
+</string>
            </property>
            <property name="title">
             <string>Master Input</string>
@@ -5717,9 +5717,7 @@ border-bottom-left-radius: 0;</string>
 	padding-top: 2ex;
 }
 
-QGroupBox::title {
-	padding-top: 2px;
-}
+
 
 QPushButton{
 	border-top: 1px solid rgb(100,100,100);
@@ -6222,9 +6220,7 @@ border-bottom-right-radius: 0;</string>
 	padding-top: 2ex;
 }
 
-QGroupBox::title {
-	padding-top: 2px;
-}</string>
+</string>
            </property>
            <property name="title">
             <string>Master Output</string>

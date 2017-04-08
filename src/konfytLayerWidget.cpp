@@ -319,8 +319,8 @@ void konfytLayerWidget::on_gainSlider_valueChanged(int value)
     float tooltip_gain = (float)ui->gainSlider->value()/(float)ui->gainSlider->maximum();
     int tooltip_midi = tooltip_gain*127.0;
     ui->gainSlider->setToolTip("Gain: " +
-                               n2s( tooltip_gain ) +
-                               ", Midi value: " +
+                               QString::number( tooltip_gain, 'g', 2 ) +
+                               ", MIDI Value: " +
                                n2s( tooltip_midi ) );
 }
 
