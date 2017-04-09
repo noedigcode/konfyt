@@ -1970,11 +1970,7 @@ border-bottom-right-radius: 0;</string>
 	border: 0pt;
 }
 
-QToolTip {
-	font: 9pt;
-	background-color: black;
-	color: white;
-}</string>
+</string>
                      </property>
                      <property name="text">
                       <string>Project</string>
