@@ -50,6 +50,8 @@
 #define KONFYT_JACK_SYSTEM_OUT_LEFT "system:playback_1"
 #define KONFYT_JACK_SYSTEM_OUT_RIGHT "system:playback_2"
 
+#define KONFYT_JACK_SUSTAIN_THRESH 63
+
 
 typedef void (*send_midi_to_fluidsynth_t)(unsigned char* data, int size);
 
@@ -68,6 +70,7 @@ public:
     static int jackXrunCallback(void *arg);
     // Helper functions
     bool passMuteSoloActiveCriteria(konfytJackPort* port);
+    bool passMuteSoloCriteria(konfytJackPort* port);
     void mixBufferToDestinationPort(konfytJackPort* port, jack_nframes_t nframes, bool applyGain);
     void sendMidiClosureEvents(konfytJackPort* port, int channel);
     void sendMidiClosureEvents_chanZeroOnly(konfytJackPort* port);
