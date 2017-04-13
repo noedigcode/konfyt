@@ -1869,6 +1869,7 @@ bool konfytJackEngine::InitJackClient(QString name)
     fadeOutSecs = 1;
     fadeOutValuesCount = samplerate*fadeOutSecs;
     // Linear fadeout
+    fadeOutValues = malloc(sizeof(float)*fadeOutValuesCount);
     for (int i=0; i<fadeOutValuesCount; i++) {
         fadeOutValues[i] = 1 - (i/fadeOutValuesCount);
     }
