@@ -38,6 +38,9 @@ konfytJackEngine::konfytJackEngine(QObject *parent) :
     panicCmd = false;
     panicState = 0;
     globalTranspose = 0;
+
+    fadeOutSecs = 0;
+    fadeOutValuesCount = 0;
 }
 
 // Set panicCmd. The Jack process callback will behave accordingly.
@@ -1276,6 +1279,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
                 tempPort->buffer = jack_port_get_buffer( tempPort->jack_pointer, nframes );
                 e->mixBufferToDestinationPort( tempPort, nframes, true );
             }
+
         }
 
         // For each soundfont audio in port, mix to destination bus
@@ -1854,6 +1858,13 @@ bool konfytJackEngine::InitJackClient(QString name)
     // Get sample rate
     this->samplerate = jack_get_sample_rate(client);
     userMessage("JACK: Samplerate " + n2s(samplerate));
+
+    fadeOutSecs = 1;
+    fadeOutValuesCount = samplerate*fadeOutSecs;
+    // Linear fadeout
+    for (int i=0; i<fadeOutValuesCount; i++) {
+        fadeOutValues[i] = 1 - (i/fadeOutValuesCount);
+    }
 
     startPortTimer(); // Timer that will take care of automatically restoring port connections
 
