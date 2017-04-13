@@ -1282,8 +1282,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
         if (e->fluidsynthEngine != NULL) {
             for (n=0; n<e->soundfont_ports.count(); n++) {
                 tempPort = e->soundfont_ports[n]->audio_in_l; // Left
-
-                if ( e->passMuteSoloActiveCriteria(tempPort) ) {
+                if ( e->passMuteSoloCriteria(tempPort) ) { // Don't check if port is active, only solo and mute
                     tempPort2 = e->soundfont_ports[n]->audio_in_r;
                     // We are not getting our audio from Jack audio ports, but from fluidsynth.
                     // The buffers have already been allocated when we added the soundfont layer to the engine.
@@ -1304,7 +1303,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
         // For each plugin audio in port, mix to destination bus
         for (n=0; n<e->plugin_ports.count(); n++) {
             tempPort = e->plugin_ports[n]->audio_in_l; // Left
-            if ( e->passMuteSoloActiveCriteria( tempPort ) ) {
+            if ( e->passMuteSoloCriteria( tempPort ) ) { // Don't check if port is active, only solo and mute
                 // Left
                 tempPort->buffer = jack_port_get_buffer( tempPort->jack_pointer, nframes );
                 e->mixBufferToDestinationPort( tempPort, nframes, false );
@@ -1431,7 +1430,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
                             e->fluidsynthEngine->processJackMidi( rec->fluidsynthID, &newEv );
                         }
                         rec->port->noteOns--;
-                        if (rec->relatedPort!=NULL) { rec->relatedPort->noteOns--; }
+                        if (rec->relatedPort!=NULL) { rec->relatedPort->noteOns--; } // TODO: Related ports possibly not needed anymore.
 
                         e->noteOnList.remove(i);
                         i--; // Due to removal, have to stay at same index after for loop i++
@@ -1440,7 +1439,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
                 ev.data1 -= rec->globalTranspose;
             }
         } else if ( (ev.type == MIDI_EVENT_TYPE_CC) && (ev.data1 == 64) ) {
-            if (ev.data2 == 0) {
+            if (ev.data2 <= KONFYT_JACK_SUSTAIN_THRESH) {
                 // Sustain zero
                 passEvent = false;
                 for (int i=0; i<e->sustainList.count(); i++) {
@@ -1449,6 +1448,8 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
                     if ( rec->filter.passFilter(&ev) ) {
                         // Apply filter modification
                         konfytMidiEvent newEv = rec->filter.modify( &ev );
+                        // Set sustain value to zero exactly
+                        newEv.data2 = 0;
                         // Send sustain zero and remove from list
                         if (rec->jackPortNotFluidsynth) {
                             // Get output buffer, based on size and time of input event
@@ -1705,12 +1706,18 @@ int konfytJackEngine::jackXrunCallback(void *arg)
 // Helper function for Jack process callback
 bool konfytJackEngine::passMuteSoloActiveCriteria(konfytJackPort* port)
 {
-    if ( (port->active) || (port->noteOns) || (port->sustainNonZero) || (port->pitchbendNonZero) ) {
-        if (port->mute == false) {
-            if ( ( soloFlag && port->solo ) || (soloFlag==false) ) {
-                if (port->destinationPort != NULL) {
-                    return true;
-                }
+    if ( port->active ) {
+        return passMuteSoloCriteria(port);
+    }
+    return false;
+}
+
+bool konfytJackEngine::passMuteSoloCriteria(konfytJackPort *port)
+{
+    if (port->mute == false) {
+        if ( ( soloFlag && port->solo ) || (soloFlag==false) ) {
+            if (port->destinationPort != NULL) {
+                return true;
             }
         }
     }
