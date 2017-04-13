@@ -83,8 +83,8 @@ int konfytFluidsynthEngine::fluidsynthWriteFloat(int ID, void *leftBuffer, void 
     Q_ASSERT( synthDataMap.contains(ID) );
 
     int ret =  fluid_synth_write_float( synthDataMap.value(ID).synth, len,
-                                    leftBuffer, NULL, NULL,
-                                    rightBuffer, NULL, NULL);
+                                    leftBuffer, 0, 1,
+                                    rightBuffer, 0, 1);
 
     mutex.unlock();
     return ret;

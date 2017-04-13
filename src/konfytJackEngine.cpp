@@ -1197,17 +1197,10 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
                     // The buffers have already been allocated when we added the soundfont layer to the engine.
                     // Get data from fluidsynth
 
-                    /* Same as below, just manually one at a time.*/
-                    for (i=0; i<nframes; i++) {
-                        e->fluidsynthEngine->fluidsynthWriteFloat( e->soundfont_ports[n]->plugin_id,
-                                                                   &( ((jack_default_audio_sample_t*)tempPort->buffer)[i] ),
-                                                                   &( ((jack_default_audio_sample_t*)tempPort2->buffer)[i] ), 1 );
-                    }
-                    /*
                     e->fluidsynthEngine->fluidsynthWriteFloat( e->soundfont_ports[n]->plugin_id,
                                                                ((jack_default_audio_sample_t*)tempPort->buffer),
                                                                ((jack_default_audio_sample_t*)tempPort2->buffer), nframes );
-                    */
+
 
                     e->mixBufferToDestinationPort( tempPort, nframes, false );
                     e->mixBufferToDestinationPort( tempPort2, nframes, false );
