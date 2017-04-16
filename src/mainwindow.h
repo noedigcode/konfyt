@@ -104,9 +104,14 @@ class MainWindow;
 
 
 enum libraryTreeItemType { libTreeInvalid,
-                           libTreePatchesRoot, libTreePatch,
-                           libTreeSFZRoot, libTreeSFZFolder, libTreeSFZ,
-                           libTreeSoundfontRoot, libTreeSoundfontFolder, libTreeSoundfont };
+                           libTreePatchesRoot,
+                           libTreePatch,
+                           libTreeSFZRoot,
+                           libTreeSFZFolder,
+                           libTreeSFZ,
+                           libTreeSoundfontRoot,
+                           libTreeSoundfontFolder,
+                           libTreeSoundfont };
 
 class MainWindow : public QMainWindow
 {

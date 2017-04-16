@@ -82,6 +82,10 @@ public:
 
     konfytFluidsynthEngine* fluidsynthEngine;
 
+    float *fadeOutValues;
+    unsigned int fadeOutValuesCount;
+    float fadeOutSecs;
+
     konfytMidiEvent evAllNotesOff;
     konfytMidiEvent evSustainZero;
     konfytMidiEvent evPitchbendZero;
