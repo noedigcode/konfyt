@@ -20,7 +20,6 @@
  *****************************************************************************/
 
 #include "konfytCarlaEngine.h"
-#include <stdio.h>
 #include <iostream>
 
 

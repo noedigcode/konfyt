@@ -22,11 +22,12 @@
 #ifndef KONFYT_PATCH_H
 #define KONFYT_PATCH_H
 
+#include <QFile>
+#include <QXmlStreamWriter>
+#include <QXmlStreamReader>
 
 #include "konfytMidiFilter.h"
 #include "konfytPatchLayer.h"
-#include <QXmlStreamWriter>
-#include <QXmlStreamReader>
 
 #define DEFAULT_GAIN_FOR_NEW_LAYER 0.8
 

@@ -73,6 +73,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(jack, SIGNAL(JackPortsChanged()), this, SLOT(jackPortsChanged()));
     qRegisterMetaType<konfytMidiEvent>("konfytMidiEvent"); // To be able to use konfytMidiEvent in the Qt signal/slot system
     connect(jack, SIGNAL(midiEventSignal(konfytMidiEvent)), this, SLOT(midiEventSlot(konfytMidiEvent)));
+    connect(jack, SIGNAL(xrunSignal()), this, SLOT(jackXrun()));
 
     if ( jack->InitJackClient(KONFYT_JACK_DEFAULT_CLIENT_NAME) ) {
         // Jack client initialised.
@@ -174,6 +175,9 @@ MainWindow::MainWindow(QWidget *parent) :
     // ----------------------------------------------------
     // Initialise and update GUI
     // ----------------------------------------------------
+
+    // Global Transpose
+    ui->spinBox_MasterIn_Transpose->setValue(0);
 
     // Library filesystem view
     this->fsview_currentPath = QDir::homePath();
@@ -342,6 +346,12 @@ void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
 void MainWindow::jackPortsChanged()
 {
 
+}
+
+void MainWindow::jackXrun()
+{
+    static int count = 1;
+    userMessage("XRUN " + n2s(count++));
 }
 
 // Scan given directory recursively and add project files to list.
@@ -1090,7 +1100,12 @@ void MainWindow::initTriggers()
       << ui->actionLayer_5_Gain << ui->actionLayer_5_Mute << ui->actionLayer_5_Solo
       << ui->actionLayer_6_Gain << ui->actionLayer_6_Mute << ui->actionLayer_6_Solo
       << ui->actionLayer_7_Gain << ui->actionLayer_7_Mute << ui->actionLayer_7_Solo
-      << ui->actionLayer_8_Gain << ui->actionLayer_8_Mute << ui->actionLayer_8_Solo;
+      << ui->actionLayer_8_Gain << ui->actionLayer_8_Mute << ui->actionLayer_8_Solo
+      << ui->actionGlobal_Transpose_12_Down
+      << ui->actionGlobal_Transpose_12_Up
+      << ui->actionGlobal_Transpose_1_Down
+      << ui->actionGlobal_Transpose_1_Up
+      << ui->actionGlobal_Transpose_Zero;
 
     channelGainActions << ui->actionLayer_1_Gain << ui->actionLayer_2_Gain
                        << ui->actionLayer_3_Gain << ui->actionLayer_4_Gain
@@ -2844,6 +2859,26 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
 
         setCurrentPatch( patchActions.indexOf(action) );
 
+    } else if (action == ui->actionGlobal_Transpose_12_Down) {
+
+        if (ev.data2 > 0) { setMasterInTranspose(-12,true); }
+
+    } else if (action == ui->actionGlobal_Transpose_12_Up) {
+
+        if (ev.data2 > 0) { setMasterInTranspose(12,true); }
+
+    } else if (action == ui->actionGlobal_Transpose_1_Down) {
+
+        if (ev.data2 > 0) { setMasterInTranspose(-1,true); }
+
+    } else if (action == ui->actionGlobal_Transpose_1_Up) {
+
+        if (ev.data2 > 0) { setMasterInTranspose(1,true); }
+
+    } else if (action == ui->actionGlobal_Transpose_Zero) {
+
+        if (ev.data2 > 0) { setMasterInTranspose(0,true); }
+
     }
 
 }
@@ -4269,17 +4304,18 @@ void MainWindow::closeEvent(QCloseEvent *event)
     for (int i=0; i<this->projectList.count(); i++) {
         konfytProject* prj = projectList[i];
         if (prj->isModified()) {
-            QMessageBox::StandardButton btn = QMessageBox::question( this,
-                                                                     APP_NAME,
-                                                                     "Do you want to save the changes to project " + prj->getProjectName() + "?",
-                                                                     QMessageBox::Cancel | QMessageBox::Yes | QMessageBox::No,
-                                                                     QMessageBox::Cancel);
-            if (btn == QMessageBox::Yes) {
+            QMessageBox msgbox;
+            msgbox.setText("Do you want to save the changes to project " + prj->getProjectName() + "?");
+            msgbox.setIcon(QMessageBox::Question);
+            msgbox.setStandardButtons(QMessageBox::Cancel | QMessageBox::Yes | QMessageBox::No);
+            msgbox.setDefaultButton(QMessageBox::Cancel);
+            int ret = msgbox.exec();
+            if (ret == QMessageBox::Yes) {
                 if ( saveProject(prj) == false ) {
                     event->ignore();
                     return;
                 }
-            } else if (btn == QMessageBox::Cancel) {
+            } else if (ret == QMessageBox::Cancel) {
                 event->ignore();
                 return;
             }
@@ -4665,4 +4701,32 @@ void MainWindow::on_MIDI_indicator_clicked()
 void MainWindow::on_toolButton_MidiFilter_inChan_last_clicked()
 {
     ui->comboBox_midiFilter_inChannel->setCurrentIndex( midiFilter_lastChan+1 );
+}
+
+void MainWindow::setMasterInTranspose(int transpose, bool relative)
+{
+    if (relative) {
+        transpose += ui->spinBox_MasterIn_Transpose->value();
+    }
+    ui->spinBox_MasterIn_Transpose->setValue( transpose );
+}
+
+void MainWindow::on_spinBox_MasterIn_Transpose_valueChanged(int arg1)
+{
+    this->jack->setGlobalTranspose(arg1);
+}
+
+void MainWindow::on_pushButton_MasterIn_TransposeSub12_clicked()
+{
+    setMasterInTranspose(-12,true);
+}
+
+void MainWindow::on_pushButton_MasterIn_TransposeAdd12_clicked()
+{
+    setMasterInTranspose(12,true);
+}
+
+void MainWindow::on_pushButton_MasterIn_TransposeZero_clicked()
+{
+    setMasterInTranspose(0,false);
 }

@@ -74,7 +74,9 @@ QGroupBox::title {
 	subcontrol-position: top left;
 	subcontrol-origin: margin;
 	padding: 0 3px;
+	padding-top: 2px;
 }
+
 
 /* Header of tree widghets */
 QHeaderView::section {
@@ -406,8 +408,10 @@ QToolButton[popupMode=&quot;1&quot;] { /* only for MenuButtonPopup */
 /*******************************************************/
 
 QToolTip {
-	background-color: black;
-	color: white;
+	font: 9pt;
+	background-color: white;
+	color: black;
+
 }
 
 QStatusBar {
@@ -1960,9 +1964,13 @@ border-bottom-right-radius: 0;</string>
                       <string>Project name (click to edit)</string>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">background-color: rgba(255, 255, 255, 0);
-font: 14pt &quot;Lucida Sans&quot;;
-border: 0pt;</string>
+                      <string notr="true">QLineEdit {
+	background-color: rgba(255, 255, 255, 0);
+	font: 14pt &quot;Lucida Sans&quot;;
+	border: 0pt;
+}
+
+</string>
                      </property>
                      <property name="text">
                       <string>Project</string>
@@ -1992,9 +2000,13 @@ color: white;</string>
                       <string>Patch name (click to edit)</string>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">background-color: rgba(255, 255, 255, 0);
-font: 16pt &quot;Lucida Sans&quot;;
-border: 0pt;</string>
+                      <string notr="true">QLineEdit {
+	background-color: rgba(255, 255, 255, 0);
+	font: 16pt &quot;Lucida Sans&quot;;
+	border: 0pt;
+}
+
+</string>
                      </property>
                      <property name="text">
                       <string>Patch</string>
@@ -3375,7 +3387,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
 }</string>
                </property>
                <property name="title">
-                <string>Midi Filter</string>
+                <string>MIDI Filter</string>
                </property>
                <widget class="QGroupBox" name="groupBox_21">
                 <property name="geometry">
@@ -5510,7 +5522,178 @@ border-bottom-left-radius: 0;
          <property name="verticalSpacing">
           <number>8</number>
          </property>
-         <item row="2" column="0">
+         <item row="1" column="0">
+          <widget class="QGroupBox" name="groupBox_5">
+           <property name="styleSheet">
+            <string notr="true">QGroupBox{
+	background-color: rgba(120,120,120, 255);
+	border: 0px solid;
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+    border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+	margin-top: 0ex;
+	padding-top: 2ex;
+}
+
+</string>
+           </property>
+           <property name="title">
+            <string>Master Input</string>
+           </property>
+           <layout class="QGridLayout" name="gridLayout_36">
+            <item row="1" column="0">
+             <widget class="QFrame" name="frame_32">
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QFrame{
+	background: rgb(40,40,40);
+    padding: 1px;
+	border-radius: 3px;
+}
+
+</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_28" stretch="0,0,0,0">
+               <property name="spacing">
+                <number>1</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QPushButton" name="pushButton_MasterIn_TransposeSub12">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                 </property>
+                 <property name="text">
+                  <string>-12</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButton_MasterIn_TransposeAdd12">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                 </property>
+                 <property name="text">
+                  <string>+12</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="pushButton_MasterIn_TransposeZero">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                 </property>
+                 <property name="text">
+                  <string>0</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QSpinBox" name="spinBox_MasterIn_Transpose">
+                 <property name="minimumSize">
+                  <size>
+                   <width>0</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>23</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                 </property>
+                 <property name="minimum">
+                  <number>-127</number>
+                 </property>
+                 <property name="maximum">
+                  <number>127</number>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_4">
+              <property name="text">
+               <string>Global Transpose</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="3" column="0">
           <widget class="QGroupBox" name="groupBox_13">
            <property name="minimumSize">
             <size>
@@ -5529,6 +5712,8 @@ border-bottom-left-radius: 0;
 	margin-top: 0ex;
 	padding-top: 2ex;
 }
+
+
 
 QPushButton{
 	border-top: 1px solid rgb(100,100,100);
@@ -6016,7 +6201,7 @@ border-bottom-right-radius: 0;</string>
            </layout>
           </widget>
          </item>
-         <item row="0" column="0">
+         <item row="2" column="0">
           <widget class="QGroupBox" name="groupBox_4">
            <property name="styleSheet">
             <string notr="true">QGroupBox{
@@ -6029,7 +6214,9 @@ border-bottom-right-radius: 0;</string>
     border-bottom-right-radius: 0px;
 	margin-top: 0ex;
 	padding-top: 2ex;
-}</string>
+}
+
+</string>
            </property>
            <property name="title">
             <string>Master Output</string>
@@ -6121,7 +6308,7 @@ QSlider::handle:horizontal:hover {
      <x>0</x>
      <y>0</y>
      <width>1148</width>
-     <height>22</height>
+     <height>18</height>
     </rect>
    </property>
   </widget>
@@ -6432,6 +6619,31 @@ QSlider::handle:horizontal:hover {
   <action name="actionLayer_8_Mute">
    <property name="text">
     <string>Layer 8 Mute</string>
+   </property>
+  </action>
+  <action name="actionGlobal_Transpose_12_Down">
+   <property name="text">
+    <string>Global Transpose 12 Down</string>
+   </property>
+  </action>
+  <action name="actionGlobal_Transpose_12_Up">
+   <property name="text">
+    <string>Global Transpose 12 Up</string>
+   </property>
+  </action>
+  <action name="actionGlobal_Transpose_Zero">
+   <property name="text">
+    <string>Global Transpose Zero</string>
+   </property>
+  </action>
+  <action name="actionGlobal_Transpose_1_Down">
+   <property name="text">
+    <string>Global Transpose 1 Down</string>
+   </property>
+  </action>
+  <action name="actionGlobal_Transpose_1_Up">
+   <property name="text">
+    <string>Global Transpose 1 Up</string>
    </property>
   </action>
  </widget>

@@ -1,3 +1,11 @@
+konfyt bugs 2017-04-09:
+
+When more than one project open, running external programs in second project doesn't work.
+
+Maybe detect sustain off as <64
+
+
+
 TODO for branch newfeats 2017-02-13
 
 Just added input and output midi channels to midifilter.

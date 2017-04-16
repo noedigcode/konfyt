@@ -19,37 +19,48 @@
  *
  *****************************************************************************/
 
-#ifndef KONFYT_STRUCTS_H
-#define KONFYT_STRUCTS_H
+#ifndef KONFYT_JACK_ARRAYLIST_H
+#define KONFYT_JACK_ARRAYLIST_H
 
-#include <QString>
-#include <jack/jack.h>
+#define KONFYT_ARLIST_SIZE 128
+
+template <typename T>
+class konfytArrayList
+{
+public:
+
+    konfytArrayList();
+    void add(T item);
+    int count();
+    T at(int index);
+    T* at_ptr(int index);
+    void remove(int index);
+
+private:
+
+    struct Item
+    {
+        bool used;
+        T data;
+    };
+
+    int ptrArray[KONFYT_ARLIST_SIZE];
+    Item array[KONFYT_ARLIST_SIZE];
+    int arrayEnd;
+    int arrayStart;
+    int arrayCount;
+
+    int freeIndexes[KONFYT_ARLIST_SIZE];
+    int freeCount;
 
 
-/* This represents a program/preset within a soundfont (i.e. a single voice/instrument). */
-struct konfytSoundfontProgram {
-
-    QString name;               // Program name
-    int bank;                   // Bank number
-    int program;                // Program/preset number
-    QString parent_soundfont;   // Filename of parent soundfont
-
-    // Constructor
-    konfytSoundfontProgram() : bank(0), program(0) {}
+    int getFreeIndex();
+    void releaseIndex(int i);
 
 };
 
-struct konfytSoundfont {
-
-    QString filename;
-    QString name;
-    QList<konfytSoundfontProgram> programlist;
-    QList<konfytSoundfontProgram> searchResults;
-
-};
+#include "konfytArrayList.cpp"
 
 
+#endif // KONFYT_JACK_ARRAYLIST_H
 
-
-
-#endif // KONFYT_STRUCTS_H

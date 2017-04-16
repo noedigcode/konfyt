@@ -20,7 +20,6 @@
  *****************************************************************************/
 
 #include "konfytFluidsynthEngine.h"
-#include <stdio.h>
 #include <iostream>
 
 #define MIDI_CHANNEL_0 0 // Used to easily see where channel 0 is forced.

@@ -23,13 +23,15 @@
 #define KONFYT_LAYER_WIDGET_H
 
 #include <QWidget>
-#include "konfytPatchLayer.h"
 #include <QListWidgetItem>
 #include <QMenu>
-#include "konfytProject.h"
 #include <QPainter>
 #include <QBrush>
 #include <QRect>
+
+#include "konfytPatchLayer.h"
+#include "konfytProject.h"
+
 
 namespace Ui {
 class guiLayerItem;

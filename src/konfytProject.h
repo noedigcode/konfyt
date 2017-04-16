@@ -25,10 +25,11 @@
 #include <QObject>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
-#include "konfytPatch.h"
 #include <QFile>
 #include <QDir>
 #include <QStringList>
+
+#include "konfytPatch.h"
 #include "konfytProcess.h"
 #include "konfytDefines.h"
 #include "konfytStructs.h"
@@ -37,7 +38,7 @@
 #define PROJECT_FILENAME_EXTENSION ".konfytproject"
 #define PROJECT_PATCH_DIR "patches"
 
-typedef struct {
+struct prjAudioBus {
     QString busName;
     konfytJackPort* leftJackPort;
     float leftGain;
@@ -45,9 +46,9 @@ typedef struct {
     konfytJackPort* rightJackPort;
     float rightGain;
     QStringList rightOutClients;
-} prjAudioBus;
+};
 
-typedef struct {
+struct prjAudioInPort {
     QString portName;
     konfytJackPort* leftJackPort;
     konfytJackPort* rightJackPort;
@@ -56,15 +57,15 @@ typedef struct {
     QStringList leftInClients;
     QStringList rightInClients;
     int destinationBus;
-} prjAudioInPort;
+};
 
-typedef struct {
+struct prjMidiOutPort {
     QString portName;
     QStringList clients;
     konfytJackPort* jackPort;
-} prjMidiOutPort;
+};
 
-typedef struct konfytTrigger_t {
+struct konfytTrigger {
     QString actionText;
     int type;
     int channel;
@@ -72,7 +73,11 @@ typedef struct konfytTrigger_t {
     int bankMSB;
     int bankLSB;
 
-    konfytTrigger_t() : type(-1), channel(0), data1(-1), bankMSB(-1), bankLSB(-1) {}
+    konfytTrigger() : type(-1),
+                      channel(0),
+                      data1(-1),
+                      bankMSB(-1),
+                      bankLSB(-1) {}
     int toInt()
     {
         return hashMidiEventToInt(type, channel, data1, bankMSB, bankLSB);
@@ -82,9 +87,9 @@ typedef struct konfytTrigger_t {
         return midiEventToString(type, channel, data1, bankMSB, bankLSB);
     }
 
-} konfytTrigger;
+};
 
-typedef enum { leftPort, rightPort } portLeftRight;
+enum portLeftRight { leftPort, rightPort };
 
 class konfytProject : public QObject
 {

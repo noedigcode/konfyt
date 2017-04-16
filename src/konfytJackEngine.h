@@ -39,6 +39,7 @@
 #include "konfytFluidsynthEngine.h"
 #include "konfytStructs.h"
 #include "konfytJackStructs.h"
+#include "konfytArrayList.h"
 
 #define KONFYT_JACK_MIDI_IN_PORT_NAME "midi_in"
 #define KONFYT_JACK_MIDI_OUT_PORT_NAME "midi_out_"
@@ -48,6 +49,8 @@
 #define KONFYT_JACK_DEFAULT_CLIENT_NAME "Konfyt"   // Default client name. Actual name is set in the Jack client.
 #define KONFYT_JACK_SYSTEM_OUT_LEFT "system:playback_1"
 #define KONFYT_JACK_SYSTEM_OUT_RIGHT "system:playback_2"
+
+#define KONFYT_JACK_SUSTAIN_THRESH 63
 
 
 typedef void (*send_midi_to_fluidsynth_t)(unsigned char* data, int size);
@@ -67,14 +70,21 @@ public:
     static int jackXrunCallback(void *arg);
     // Helper functions
     bool passMuteSoloActiveCriteria(konfytJackPort* port);
+    bool passMuteSoloCriteria(konfytJackPort* port);
     void mixBufferToDestinationPort(konfytJackPort* port, jack_nframes_t nframes, bool applyGain);
-    void sendMidiClosureEvents(konfytJackPort* port);
+    void sendMidiClosureEvents(konfytJackPort* port, int channel);
+    void sendMidiClosureEvents_chanZeroOnly(konfytJackPort* port);
+    void sendMidiClosureEvents_allChannels(konfytJackPort* port);
     bool passMidiMuteSoloActiveFilterAndModify(konfytJackPort* port, const konfytMidiEvent* ev, konfytMidiEvent* evToSend);
 
     bool connectCallback;
     bool registerCallback;
 
     konfytFluidsynthEngine* fluidsynthEngine;
+
+    float *fadeOutValues;
+    unsigned int fadeOutValuesCount;
+    float fadeOutSecs;
 
     konfytMidiEvent evAllNotesOff;
     konfytMidiEvent evSustainZero;
@@ -94,6 +104,10 @@ public:
 
     QList<konfytJackPluginPorts*> plugin_ports;
     QList<konfytJackPluginPorts*> soundfont_ports;
+
+    konfytArrayList<konfytJackNoteOnRecord> noteOnList;
+    konfytArrayList<konfytJackNoteOnRecord> sustainList;
+    konfytArrayList<konfytJackNoteOnRecord> pitchBendList;
 
     // Our main midi input port
     jack_port_t *midi_input_port;
@@ -173,6 +187,8 @@ public:
 
     void activatePortsForPatch(const konfytPatch *patch, const konfytProject *project);
 
+    void setGlobalTranspose(int transpose);
+
 
 private:
     jack_client_t* client;
@@ -190,6 +206,8 @@ private:
     QBasicTimer timer;
     void timerEvent(QTimerEvent *event);
     void startPortTimer();
+
+    int globalTranspose;
 
 
     // Auto connection of our main midi input port
@@ -210,6 +228,7 @@ signals:
     void userMessage(QString msg);
     void JackPortsChanged();
     void midiEventSignal(konfytMidiEvent event);
+    void xrunSignal();
 
     
 public slots:

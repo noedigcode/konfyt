@@ -20,9 +20,6 @@
  *****************************************************************************/
 
 #include "konfytPatch.h"
-#include <QFile>
-#include <QXmlStreamWriter>
-#include <QXmlStreamReader>
 #include <iostream>
 
 #define bool_to_10_string(x) x ? "1" : "0"
