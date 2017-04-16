@@ -45,6 +45,8 @@ struct konfytJackPort {
     int noteOns;
     bool sustainNonZero;
     bool pitchbendNonZero;
+    unsigned int fadeoutCounter;
+    bool fadingOut;
 
     konfytJackPort() : jack_pointer(NULL),
                        active(false),
@@ -55,7 +57,9 @@ struct konfytJackPort {
                        destinationPort(NULL),
                        noteOns(0),
                        sustainNonZero(false),
-                       pitchbendNonZero(false) {}
+                       pitchbendNonZero(false),
+                       fadeoutCounter(0),
+                       fadingOut(false) {}
 
 };
 

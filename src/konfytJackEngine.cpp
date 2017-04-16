@@ -1275,7 +1275,29 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
         // For each audio in port, if active, mix input buffer to destination bus (out port)
         for (n=0; n<e->audio_in_ports.count(); n++) {
             tempPort = e->audio_in_ports.at(n);
+            // If active:
+            //   If counter >0:
+            //     Count down; Multiply with output
+            //   outputFlag = 1
+            // Else:
+            //   If counter < max:
+            //     Count up; Multiply with output
+            //     OutputFlag = 1
+            //   Else:
+            //     OutputFlag = 0
+            // If outputFlag:
+            //   Do Output
+            bool outputFlag = false;
             if (e->passMuteSoloActiveCriteria( tempPort )) {
+                tempPort->fadingOut = false;
+                outputFlag = true;
+            } else {
+                if (tempPort->fadeoutCounter < (e->fadeOutValuesCount-1) ) {
+                    tempPort->fadingOut = true;
+                    outputFlag = true;
+                }
+            }
+            if (outputFlag) {
                 tempPort->buffer = jack_port_get_buffer( tempPort->jack_pointer, nframes );
                 e->mixBufferToDestinationPort( tempPort, nframes, true );
             }
@@ -1720,9 +1742,7 @@ bool konfytJackEngine::passMuteSoloCriteria(konfytJackPort *port)
 {
     if (port->mute == false) {
         if ( ( soloFlag && port->solo ) || (soloFlag==false) ) {
-            if (port->destinationPort != NULL) {
-                return true;
-            }
+            return true;
         }
     }
     return false;
@@ -1731,6 +1751,8 @@ bool konfytJackEngine::passMuteSoloCriteria(konfytJackPort *port)
 // Helper function for Jack process callback
 void konfytJackEngine::mixBufferToDestinationPort(konfytJackPort* port, jack_nframes_t nframes, bool applyGain)
 {
+    if (port->destinationPort == NULL) { return; }
+
     float gain = 1;
     if (applyGain) {
         gain = port->gain;
@@ -1738,8 +1760,19 @@ void konfytJackEngine::mixBufferToDestinationPort(konfytJackPort* port, jack_nfr
 
     // For each frame: bus_buffer[frame] += port_buffer[frame]
     for (int i=0; i<nframes; i++) {
+
         ( (jack_default_audio_sample_t*)(port->destinationPort->buffer) )[i] +=
-                ((jack_default_audio_sample_t*)(port->buffer))[i] * gain;
+                ((jack_default_audio_sample_t*)(port->buffer))[i] * gain * fadeOutValues[port->fadeoutCounter];
+
+        if (port->fadingOut) {
+            if (port->fadeoutCounter < (fadeOutValuesCount-1) ) {
+                port->fadeoutCounter++;
+            }
+        } else {
+            if (port->fadeoutCounter>0) {
+                port->fadeoutCounter--;
+            }
+        }
     }
 }
 
@@ -1864,7 +1897,7 @@ bool konfytJackEngine::InitJackClient(QString name)
     // Linear fadeout
     fadeOutValues = malloc(sizeof(float)*fadeOutValuesCount);
     for (int i=0; i<fadeOutValuesCount; i++) {
-        fadeOutValues[i] = 1 - (i/fadeOutValuesCount);
+        fadeOutValues[i] = 1 - ((float)i/(float)fadeOutValuesCount);
     }
 
     startPortTimer(); // Timer that will take care of automatically restoring port connections
