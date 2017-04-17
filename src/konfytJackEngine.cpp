@@ -489,6 +489,7 @@ void konfytJackEngine::setPluginMute(int indexInEngine, bool mute)
 
 void konfytJackEngine::setSoundfontRouting(int indexInEngine, konfytJackPort *port_left, konfytJackPort *port_right)
 {
+    if (!clientIsActive()) { return; }
     pauseJackProcessing(true);
 
     if (!audio_out_ports.contains(port_left)) {
@@ -511,6 +512,7 @@ void konfytJackEngine::setSoundfontRouting(int indexInEngine, konfytJackPort *po
 
 void konfytJackEngine::setPluginRouting(int indexInEngine, konfytJackPort* port_left, konfytJackPort* port_right)
 {
+    if (!clientIsActive()) { return; }
     pauseJackProcessing(true);
 
     if (!audio_out_ports.contains(port_left)) {
@@ -1055,6 +1057,7 @@ int konfytJackEngine::getPortCount(konfytJackPortType type)
 
 void konfytJackEngine::setPortFilter(konfytJackPortType type, konfytJackPort *port, konfytMidiFilter filter)
 {
+    if (!clientIsActive()) { return; }
     QList<konfytJackPort*> *l;
 
     switch (type) {
@@ -1074,6 +1077,7 @@ void konfytJackEngine::setPortFilter(konfytJackPortType type, konfytJackPort *po
 
 void konfytJackEngine::setPortSolo(konfytJackPortType type, konfytJackPort *port, bool solo)
 {
+    if (!clientIsActive()) { return; }
     switch (type) {
     case KonfytJackPortType_MidiOut:
         if (midi_out_ports.contains(port)) {
@@ -1098,6 +1102,7 @@ void konfytJackEngine::setPortSolo(konfytJackPortType type, konfytJackPort *port
 
 void konfytJackEngine::setPortMute(konfytJackPortType type, konfytJackPort *port, bool mute)
 {
+    if (!clientIsActive()) { return; }
     switch (type) {
     case KonfytJackPortType_MidiOut:
         if (midi_out_ports.contains(port)) {
@@ -1122,6 +1127,7 @@ void konfytJackEngine::setPortMute(konfytJackPortType type, konfytJackPort *port
 
 void konfytJackEngine::setPortGain(konfytJackPortType type, konfytJackPort *port, float gain)
 {
+    if (!clientIsActive()) { return; }
     switch (type) {
     case KonfytJackPortType_AudioOut:
         if (audio_out_ports.contains(port)) {
@@ -1148,6 +1154,7 @@ void konfytJackEngine::setPortGain(konfytJackPortType type, konfytJackPort *port
  * the src port to the dest port (bus). */
 void konfytJackEngine::setPortRouting(konfytJackPortType type, konfytJackPort *src, konfytJackPort *dest)
 {
+    if (!clientIsActive()) { return; }
     pauseJackProcessing(true);
 
     switch (type) {
