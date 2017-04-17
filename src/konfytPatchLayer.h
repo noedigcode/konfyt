@@ -98,9 +98,6 @@ struct layerCarlaPluginStruct {
 // ----------------------------------------------------
 struct layerMidiOutStruct {
     int portIdInProject;
-    // TODO: IMPLEMENT SENDING EVENTS WHEN SWITCHING TO MIDI PORT
-    // but use the konfytMidiEvent struct
-    //QList<midiEventStruct> sendEventsStart; // List of midi events to send when switching to port
     konfytMidiFilter filter;
     bool solo;
     bool mute;

@@ -716,9 +716,6 @@ private slots:
 
     void on_pushButton_Panic_clicked();
 
-    // TODO: Remove
-    void on_pushButton_ThreadTest_clicked();
-
     void on_MIDI_indicator_clicked();
 
 

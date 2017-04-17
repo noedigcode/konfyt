@@ -6283,19 +6283,6 @@ QSlider::handle:horizontal:hover {
         <attribute name="title">
          <string>Playground</string>
         </attribute>
-        <widget class="QPushButton" name="pushButton_ThreadTest">
-         <property name="geometry">
-          <rect>
-           <x>90</x>
-           <y>250</y>
-           <width>80</width>
-           <height>23</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>THREAD</string>
-         </property>
-        </widget>
        </widget>
       </widget>
      </widget>

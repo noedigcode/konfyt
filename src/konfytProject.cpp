@@ -944,11 +944,6 @@ void konfytProject::runProcess(int index)
         // Start process
         processList.at(index)->start();
         userMessage("Starting process " + processList.at(index)->appname);
-        userMessage("   args:");
-        QStringList args = processList.at(index)->args;
-        for (int i=0; i<args.count(); i++) {
-            userMessage("       " + args[i]);
-        }
     }
 }
 
