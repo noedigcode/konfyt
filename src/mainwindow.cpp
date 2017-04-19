@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     jack = new konfytJackEngine();
     connect(jack, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
-    connect(jack, SIGNAL(JackPortsChanged()), this, SLOT(jackPortsChanged()));
+    connect(jack, SIGNAL(jackPortRegisterOrConnectCallback()), this, SLOT(jackPortRegisterOrConnectCallback()));
     qRegisterMetaType<konfytMidiEvent>("konfytMidiEvent"); // To be able to use konfytMidiEvent in the Qt signal/slot system
     connect(jack, SIGNAL(midiEventSignal(konfytMidiEvent)), this, SLOT(midiEventSlot(konfytMidiEvent)));
     connect(jack, SIGNAL(xrunSignal()), this, SLOT(jackXrun()));
@@ -342,16 +342,16 @@ void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
 }
 
 
-// Slot for signal when a jack port as been (un)registered.
-void MainWindow::jackPortsChanged()
-{
-
-}
-
 void MainWindow::jackXrun()
 {
     static int count = 1;
     userMessage("XRUN " + n2s(count++));
+}
+
+void MainWindow::jackPortRegisterOrConnectCallback()
+{
+    // Refresh ports/connections tree
+    gui_updateConnectionsTree(); // TODO feat_warnings: warnings should be updated in here.
 }
 
 // Scan given directory recursively and add project files to list.
@@ -774,6 +774,10 @@ void MainWindow::gui_updatePortsBussesTree()
 
 void MainWindow::gui_updateConnectionsTree()
 {
+    // TODO feat_warnings: warnings should be updated in here.
+    //                     SECOND THOUGHT: MAYBE NOT, THIS ONLY DEALS WITH CURRENTLY SELECTED PORT/BUS
+    //                     Still, consolidate functions for this and warning section.
+
     // First, clear everything
 
     QList<QCheckBox*> ll = conChecksMap1.keys();
@@ -2685,12 +2689,16 @@ void MainWindow::updateGUIWarnings()
 
     // Check warnings
 
-    // MIDI input port connected
+    // TODO feat_warnings: consolidate functions for checking port clients here and in updating GUI ports/busses/connections tree.
+
+    // MIDI input port: no connecions
     if ( prj->midiInPort_getClients().count() == 0 ) {
         addWarning("MIDI input port not connected");
     }
 
-    // Any other port not connected
+    // MIDI input port: client(s) not running
+
+    // Bus ports: no connections
     QList<int> busIds = prj->audioBus_getAllBusIds();
     for (int i=0; i<busIds.count(); i++) {
         prjAudioBus bus = prj->audioBus_getBus(busIds[i]);
@@ -2704,6 +2712,8 @@ void MainWindow::updateGUIWarnings()
             addWarning("Bus " + bus.busName + " right port unconnected");
         }
     }
+
+    // Bus ports: client(s) not running
 
 }
 

@@ -389,8 +389,10 @@ public:
     // Warnings
     // ========================================================================
 
+
     void updateGUIWarnings();
     void addWarning(QString warning);
+
 
     // ========================================================================
     // Other
@@ -449,8 +451,8 @@ private slots:
 
     // Midi / Jack
     void midiEventSlot(konfytMidiEvent ev);
-    void jackPortsChanged();
     void jackXrun();
+    void jackPortRegisterOrConnectCallback();
 
     // Project modified
     void projectModifiedStateChanged(bool modified);

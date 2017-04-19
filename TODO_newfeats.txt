@@ -6,7 +6,15 @@ konfyt TODO 2017-04-16:
 - Follow all debug and todo comments.
 
 
-Changes on Testing branch:
+feat_warnings branch:
+
+ - Follow all "TODO feat_warnings" comments.
+
+ - [TEST] Modified konfytJackEngine timerEvent (refresh port connections) - TEST port connections refresh.
+ - [TEST] Port/bus connections tree auto update when Jack ports change.
+
+
+Testing branch:
 
 - [DONE] Maybe detect sustain off as <64
 
@@ -23,7 +31,8 @@ Changes on Testing branch:
          - Volume fade for audio in ports
          - Midi noteon, sustain and pb tracking for other ports
 
-- Test. (all types of layers)
+
+- Use semantic versioning MAJOR.MINOR.PATCH
 - Increment version number.
 - Update docs where appropriate.
 

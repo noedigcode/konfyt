@@ -226,7 +226,7 @@ private:
 
 signals:
     void userMessage(QString msg);
-    void JackPortsChanged();
+    void jackPortRegisterOrConnectCallback();
     void midiEventSignal(konfytMidiEvent event);
     void xrunSignal();
 

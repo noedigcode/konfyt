@@ -62,15 +62,11 @@ void konfytJackEngine::timerEvent(QTimerEvent *event)
         return;
     }
 
-    if (event->timerId() == this->timer.timerId() ) {
-        if (registerCallback) {
-            JackPortsChanged();
-        }
-        if (connectCallback || registerCallback) {
-            connectCallback = false;
-            registerCallback = false;
-            refreshPortConnections();
-        }
+    if (connectCallback || registerCallback) {
+        connectCallback = false;
+        registerCallback = false;
+        refreshPortConnections();
+        jackPortRegisterOrConnectCallback();
     }
 
     timer_busy = false;
