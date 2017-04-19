@@ -34,6 +34,13 @@ struct konfytMidiFilterZone {
     int add;
     int lowVel;
     int highVel;
+
+    konfytMidiFilterZone() : lowNote(0),
+                             highNote(127),
+                             multiply(1),
+                             add(0),
+                             lowVel(0),
+                             highVel(127) {}
 };
 
 class konfytMidiFilter
@@ -41,11 +48,9 @@ class konfytMidiFilter
 public:
     konfytMidiFilter();
 
-    void addZone(int lowNote, int highNote, int multiply, int add, int lowVel, int highVel);
-    void addZone(konfytMidiFilterZone newZone);
-    QList<konfytMidiFilterZone> getZoneList();
-    int numZones();
-    void removeZone(int i);
+    konfytMidiFilterZone zone;
+    void setZone(int lowNote, int highNote, int multiply, int add, int lowVel, int highVel);
+    void setZone(konfytMidiFilterZone newZone);
 
     bool passFilter(const konfytMidiEvent *ev);
     konfytMidiEvent modify(const konfytMidiEvent* ev);
@@ -56,10 +61,6 @@ public:
     bool passPitchbend;
     int inChan;
     int outChan;
-
-private:
-    QList<konfytMidiFilterZone> zoneList;
-
 
 };
 

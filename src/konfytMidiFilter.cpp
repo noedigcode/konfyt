@@ -35,38 +35,19 @@ konfytMidiFilter::konfytMidiFilter()
 
 }
 
-void konfytMidiFilter::addZone(int lowNote, int highNote, int multiply, int add, int lowVel, int highVel)
+void konfytMidiFilter::setZone(int lowNote, int highNote, int multiply, int add, int lowVel, int highVel)
 {
-    konfytMidiFilterZone z;
-    z.lowNote = lowNote;
-    z.highNote = highNote;
-    z.multiply = multiply;
-    z.add = add;
-    z.lowVel = lowVel;
-    z.highVel = highVel;
-    zoneList.append(z);
+    zone.lowNote = lowNote;
+    zone.highNote = highNote;
+    zone.multiply = multiply;
+    zone.add = add;
+    zone.lowVel = lowVel;
+    zone.highVel = highVel;
 }
 
-void konfytMidiFilter::addZone(konfytMidiFilterZone newZone)
+void konfytMidiFilter::setZone(konfytMidiFilterZone newZone)
 {
-    zoneList.append(newZone);
-}
-
-QList<konfytMidiFilterZone> konfytMidiFilter::getZoneList()
-{
-    return zoneList;
-}
-
-int konfytMidiFilter::numZones()
-{
-    return zoneList.count();
-}
-
-void konfytMidiFilter::removeZone(int i)
-{
-    if ( (i>=0) && (i<zoneList.count())) {
-        zoneList.removeAt(i);
-    }
+    zone = newZone;
 }
 
 // Returns true if midi event in specified buffer passes based on
@@ -102,24 +83,16 @@ bool konfytMidiFilter::passFilter(const konfytMidiEvent* ev)
 
     } else if ( (ev->type == MIDI_EVENT_TYPE_NOTEON) || (ev->type == MIDI_EVENT_TYPE_NOTEOFF) ) {
 
-        // Pass by default if no zones are defined.
-        if (zoneList.count() == 0) {
-            return true;
-        }
-
-        for (int i=0; i<zoneList.count(); i++) {
-            konfytMidiFilterZone z = zoneList.at(i);
-            // Check note
-            if ( (ev->data1>=z.lowNote) && (ev->data1<=z.highNote) ) {
-                // If NoteOn, check velocity
-                if (ev->type == MIDI_EVENT_TYPE_NOTEON) {
-                    if ( (ev->data2>=z.lowVel) && (ev->data2<=z.highVel) ) {
-                        pass = true;
-                    }
-                } else {
-                    // else, if note off, always pass
+        // Check note
+        if ( (ev->data1>=zone.lowNote) && (ev->data1<=zone.highNote) ) {
+            // If NoteOn, check velocity
+            if (ev->type == MIDI_EVENT_TYPE_NOTEON) {
+                if ( (ev->data2>=zone.lowVel) && (ev->data2<=zone.highVel) ) {
                     pass = true;
                 }
+            } else {
+                // else, if note off, always pass
+                pass = true;
             }
         }
 
@@ -141,17 +114,14 @@ konfytMidiEvent konfytMidiFilter::modify(const konfytMidiEvent* ev)
 
     if ( (r.type == MIDI_EVENT_TYPE_NOTEON) || (r.type == MIDI_EVENT_TYPE_NOTEOFF) ) {
 
-        for (int i=0; i<zoneList.count(); i++) {
-            konfytMidiFilterZone z = zoneList.at(i);
-            if ( (r.data1>=z.lowNote) && (r.data1<=z.highNote) ) { // Check if in zone
-                // Modify based on multiplification and addition
-                r.data1 = r.data1*z.multiply + z.add;
-                // TODO: In the following cases the note shouldn't actually be passed.
-                //       We don't want an unexpected note with value 0 or 127.
-                //       For now, velocity is just made zero.
-                if (r.data1<0) { r.data1 = 0; r.data2 = 0; }
-                if (r.data1 > 127) { r.data1 = 127; r.data2 = 0; }
-            }
+        if ( (r.data1>=zone.lowNote) && (r.data1<=zone.highNote) ) { // Check if in zone
+            // Modify based on multiplification and addition
+            r.data1 = r.data1*zone.multiply + zone.add;
+            // TODO: In the following cases the note shouldn't actually be passed.
+            //       We don't want an unexpected note with value 0 or 127.
+            //       For now, velocity is just made zero.
+            if (r.data1<0) { r.data1 = 0; r.data2 = 0; }
+            if (r.data1 > 127) { r.data1 = 127; r.data2 = 0; }
         }
     }
     return r;

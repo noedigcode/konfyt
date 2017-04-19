@@ -180,31 +180,27 @@ void konfytPatch::writeMidiFilterToXMLStream(QXmlStreamWriter *stream, konfytMid
 {
     stream->writeStartElement("midiFilter");
 
-    QList<konfytMidiFilterZone> l = f.getZoneList();
-    if (l.count()) {
+    // Note / velocity zone
+    konfytMidiFilterZone z = f.zone;
+    stream->writeStartElement("zone");
+    stream->writeTextElement("lowNote", n2s(z.lowNote));
+    stream->writeTextElement("highNote", n2s(z.highNote));
+    stream->writeTextElement("multiply", n2s(z.multiply));
+    stream->writeTextElement("add", n2s(z.add));
+    stream->writeTextElement("lowVel", n2s(z.lowVel));
+    stream->writeTextElement("highVel", n2s(z.highVel));
+    stream->writeEndElement();
 
-        // Filter zones
-        for (int j=0; j<l.count(); j++) {
-            konfytMidiFilterZone z = l.at(j);
-            stream->writeStartElement("zone");
-            stream->writeTextElement("lowNote", n2s(z.lowNote));
-            stream->writeTextElement("highNote", n2s(z.highNote));
-            stream->writeTextElement("multiply", n2s(z.multiply));
-            stream->writeTextElement("add", n2s(z.add));
-            stream->writeTextElement("lowVel", n2s(z.lowVel));
-            stream->writeTextElement("highVel", n2s(z.highVel));
-            stream->writeEndElement(); // zone
-        }
-
-    }
-
+    // passAllCC
     QString tempBool;
     if (f.passAllCC) { tempBool = "1"; } else { tempBool = "0"; }
     stream->writeTextElement("passAllCC", tempBool);
 
+    // passPitchbend
     if (f.passPitchbend) { tempBool = "1"; } else { tempBool = "0"; }
     stream->writeTextElement("passPitchbend", tempBool);
 
+    // passProg
     if (f.passProg) { tempBool = "1"; } else { tempBool = "0"; }
     stream->writeTextElement("passProg", tempBool);
 
@@ -213,6 +209,7 @@ void konfytPatch::writeMidiFilterToXMLStream(QXmlStreamWriter *stream, konfytMid
         stream->writeTextElement("cc", n2s(f.passCC.at(i)));
     }
 
+    // Input/output channels
     stream->writeTextElement("inChan", n2s(f.inChan));
     stream->writeTextElement("outChan", n2s(f.outChan));
 
@@ -244,7 +241,7 @@ konfytMidiFilter konfytPatch::readMidiFilterFromXMLStream(QXmlStreamReader* r)
                     r->skipCurrentElement();
                 }
             } // end zone while
-            f.addZone(z);
+            f.setZone(z);
         } else if (r->name() == "passAllCC") {
             f.passAllCC = (r->readElementText() == "1");
         } else if (r->name() == "passPitchbend") {
