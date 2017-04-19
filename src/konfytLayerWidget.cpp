@@ -243,12 +243,8 @@ void konfytLayerWidget::setUpGUI()
 void konfytLayerWidget::updateBackgroundFromFilter()
 {
     konfytMidiFilter filter = g.getMidiFilter();
-    if (filter.numZones() == 0) {
-        this->changeBackground(0, 127);
-    } else {
-        konfytMidiFilterZone z = filter.getZoneList().at(0);
-        this->changeBackground(z.lowNote, z.highNote);
-    }
+    konfytMidiFilterZone z = filter.zone;
+    this->changeBackground(z.lowNote, z.highNote);
 }
 
 // Change the background depending on the min and max values (between 0 and 127),

@@ -412,24 +412,13 @@ void MainWindow::showMidiFilterEditor()
     konfytPatchLayer g = midiFilterEditItem->getPatchLayerItem();
 
     konfytMidiFilter f = g.getMidiFilter();
-    QList<konfytMidiFilterZone> l = f.getZoneList();
-    if (l.count() != 0) {
-        konfytMidiFilterZone z = f.getZoneList().at(0);
-        ui->spinBox_midiFilter_LowNote->setValue(z.lowNote);
-        ui->spinBox_midiFilter_HighNote->setValue(z.highNote);
-        ui->spinBox_midiFilter_Multiply->setValue(z.multiply);
-        ui->spinBox_midiFilter_Add->setValue(z.add);
-        ui->spinBox_midiFilter_LowVel->setValue(z.lowVel);
-        ui->spinBox_midiFilter_HighVel->setValue(z.highVel);
-    } else {
-        // Fill with default values
-        ui->spinBox_midiFilter_LowNote->setValue(0);
-        ui->spinBox_midiFilter_HighNote->setValue(127);
-        ui->spinBox_midiFilter_Multiply->setValue(1);
-        ui->spinBox_midiFilter_Add->setValue(0);
-        ui->spinBox_midiFilter_LowVel->setValue(0);
-        ui->spinBox_midiFilter_HighVel->setValue(127);
-    }
+    konfytMidiFilterZone z = f.zone;
+    ui->spinBox_midiFilter_LowNote->setValue(z.lowNote);
+    ui->spinBox_midiFilter_HighNote->setValue(z.highNote);
+    ui->spinBox_midiFilter_Multiply->setValue(z.multiply);
+    ui->spinBox_midiFilter_Add->setValue(z.add);
+    ui->spinBox_midiFilter_LowVel->setValue(z.lowVel);
+    ui->spinBox_midiFilter_HighVel->setValue(z.highVel);
     // Midi in channel combo box
     if (f.inChan<0) {
         // <0 means all channels
@@ -3580,7 +3569,7 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     konfytMidiFilter f = g.getMidiFilter();
 
     // Update the filter from the GUI
-    f.addZone( ui->spinBox_midiFilter_LowNote->value(),
+    f.setZone( ui->spinBox_midiFilter_LowNote->value(),
                ui->spinBox_midiFilter_HighNote->value(),
                ui->spinBox_midiFilter_Multiply->value(),
                ui->spinBox_midiFilter_Add->value(),
