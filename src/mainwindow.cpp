@@ -1319,6 +1319,9 @@ void MainWindow::setCurrentProject(int i)
         showTriggersPage();
     }
 
+    // Indicate warnings to user
+    updateGUIWarnings();
+
     jack->pauseJackProcessing(false);
 
 }
@@ -2680,6 +2683,44 @@ bool MainWindow::saveProject(konfytProject *p)
 
     }
 
+} // end of saveProject()
+
+
+void MainWindow::updateGUIWarnings()
+{
+    ui->listWidget_Warnings->clear();
+
+    konfytProject* prj = getCurrentProject();
+    if (prj == NULL) { return; }
+
+
+    // Check warnings
+
+    // MIDI input port connected
+    if ( prj->midiInPort_getClients().count() == 0 ) {
+        addWarning("MIDI input port not connected");
+    }
+
+    // Any other port not connected
+    QList<int> busIds = prj->audioBus_getAllBusIds();
+    for (int i=0; i<busIds.count(); i++) {
+        prjAudioBus bus = prj->audioBus_getBus(busIds[i]);
+        bool left = (bus.leftOutClients.count() == 0);
+        bool right = (bus.rightOutClients.count() == 0);
+        if (left && right) {
+            addWarning("Bus " + bus.busName + " ports unconnected");
+        } else if (left) {
+            addWarning("Bus " + bus.busName + " left port unconnected");
+        } else if (right) {
+            addWarning("Bus " + bus.busName + " right port unconnected");
+        }
+    }
+
+}
+
+void MainWindow::addWarning(QString warning)
+{
+    ui->listWidget_Warnings->addItem(warning);
 }
 
 
