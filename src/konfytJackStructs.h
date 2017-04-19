@@ -24,16 +24,14 @@
 
 #include "konfytMidiFilter.h"
 
-typedef enum {
+enum konfytJackPortType {
     KonfytJackPortType_AudioIn  = 0,
     KonfytJackPortType_AudioOut = 1,
     KonfytJackPortType_MidiIn   = 2,
     KonfytJackPortType_MidiOut  = 3,
-} konfytJackPortType;
+};
 
-/* When creating, use constructor in order to initialise destinationPort to NULL.
- * Jack process callback uses this. */
-typedef struct konfytJackPort_t {
+struct konfytJackPort {
     jack_port_t* jack_pointer;
     bool active;
     bool prev_active;
@@ -43,26 +41,35 @@ typedef struct konfytJackPort_t {
     bool mute;
     float gain;
     QStringList connectionList;
-    konfytJackPort_t* destinationPort; // For audio input ports, the destination output port (bus).
+    konfytJackPort* destinationPort; // For audio input ports, the destination output port (bus).
     int noteOns;
     bool sustainNonZero;
     bool pitchbendNonZero;
+    unsigned int fadeoutCounter;
+    bool fadingOut;
 
-    // Constructor with initializer list. Instantiate all instances with constructor to take advantage of this.
-    konfytJackPort_t() : jack_pointer(NULL), active(false), prev_active(false),
-        solo(false), mute(false), gain(1), destinationPort(NULL), noteOns(0),
-        sustainNonZero(false), pitchbendNonZero(false) {}
+    konfytJackPort() : jack_pointer(NULL),
+                       active(false),
+                       prev_active(false),
+                       solo(false),
+                       mute(false),
+                       gain(1),
+                       destinationPort(NULL),
+                       noteOns(0),
+                       sustainNonZero(false),
+                       pitchbendNonZero(false),
+                       fadeoutCounter(0),
+                       fadingOut(false) {}
 
-} konfytJackPort;
+};
 
-typedef struct {
-
+struct konfytJackPluginPorts {
     int plugin_id;
     konfytJackPort* midi_out;    // Send midi output to plugin
     konfytJackPort* audio_in_l;  // Receive plugin audio
     konfytJackPort* audio_in_r;
 
-} konfytJackPluginPorts;
+};
 
 struct konfytJackNoteOnRecord {
     int note;

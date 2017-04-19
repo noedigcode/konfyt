@@ -104,9 +104,14 @@ class MainWindow;
 
 
 enum libraryTreeItemType { libTreeInvalid,
-                           libTreePatchesRoot, libTreePatch,
-                           libTreeSFZRoot, libTreeSFZFolder, libTreeSFZ,
-                           libTreeSoundfontRoot, libTreeSoundfontFolder, libTreeSoundfont };
+                           libTreePatchesRoot,
+                           libTreePatch,
+                           libTreeSFZRoot,
+                           libTreeSFZFolder,
+                           libTreeSFZ,
+                           libTreeSoundfontRoot,
+                           libTreeSoundfontFolder,
+                           libTreeSoundfont };
 
 class MainWindow : public QMainWindow
 {
@@ -717,9 +722,6 @@ private slots:
     void on_toolButton_Project_clicked();
 
     void on_pushButton_Panic_clicked();
-
-    // TODO: Remove
-    void on_pushButton_ThreadTest_clicked();
 
     void on_MIDI_indicator_clicked();
 

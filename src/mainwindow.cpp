@@ -2842,7 +2842,6 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
     int key;
     if (ev.type == MIDI_EVENT_TYPE_PROGRAM) {
         key = hashMidiEventToInt(ev.type, ev.channel, ev.data1, lastBankSelectMSB, lastBankSelectLSB);
-        userMessage("key = " + n2s(key));
     } else {
         key = hashMidiEventToInt(ev.type, ev.channel, ev.data1, -1, -1);
     }
@@ -4672,33 +4671,6 @@ void MainWindow::on_actionPanic_triggered()
 
     // Update GUI
     ui->pushButton_Panic->setChecked(panicState);
-}
-
-void MainWindow::on_pushButton_ThreadTest_clicked()
-{
-    static bool firstRun = true;
-    if (firstRun) {
-        connect(&sfLoader, SIGNAL(finished()), this, SLOT(scanThreadFihishedSlot()));
-        connect(&sfLoader, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
-        firstRun = false;
-    }
-
-    fluid_settings_t* settings = new_fluid_settings();
-    fluid_synth_t* synth = new_fluid_synth(settings);
-    sfLoader.loadSoundfont(synth, "/home/gideon/Data/Sounds/Soundfonts/GM/Musyng Kite/Musyng Kite.sf2");
-    //sfLoader.loadSoundfont(synth, "/home/gideon/VMShared/Musyng Kite.sf2");
-    //sfLoader.loadSoundfont(synth, "/home/gideon/VMShared/splendid_72m.sf2");
-
-    /*
-    scanThread = new scanFoldersThread();
-    scanThread->filename = "/home/gideon/VMShared/Musyng Kite.sf2";
-    scanThread->synth = synth;
-    connect(scanThread, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
-    connect(scanThread,SIGNAL(finished()), this, SLOT(scanThreadFihishedSlot()));
-    userMessage("Starting ScanThread...");
-    scanThread->start();
-    */
-
 }
 
 void MainWindow::on_pushButton_LoadAll_clicked()

@@ -51,7 +51,7 @@ enum konfytCarlaPluginType {
 // ----------------------------------------------------
 // Structure for soundfont program layer
 // ----------------------------------------------------
-typedef struct layerSoundfontStruct_t {
+struct layerSoundfontStruct {
     konfytSoundfontProgram program;
     float gain;
     konfytMidiFilter filter;
@@ -59,15 +59,17 @@ typedef struct layerSoundfontStruct_t {
     bool solo;
     bool mute;
 
-    // Constructor with initializer list. Instantiate all instances with constructor to take advantage of this.
-    layerSoundfontStruct_t() : gain(1), indexInEngine(-1), solo(true), mute(true) {}
+    layerSoundfontStruct() : gain(1),
+                             indexInEngine(-1),
+                             solo(true),
+                             mute(true) {}
 
-} layerSoundfontStruct;
+};
 
 // ----------------------------------------------------
 // Structure for carla plugin
 // ----------------------------------------------------
-typedef struct layerCarlaPluginStruct_t {
+struct layerCarlaPluginStruct {
     QString name;
     QString path;
     konfytCarlaPluginType pluginType;
@@ -83,42 +85,43 @@ typedef struct layerCarlaPluginStruct_t {
     bool solo;
     bool mute;
 
-    // Constructor with initializer list. Instantiate all instances with constructor to take advantage of this.
-    layerCarlaPluginStruct_t() : indexInEngine(-1), gain(1), solo(false), mute(false) {}
+    layerCarlaPluginStruct() : indexInEngine(-1),
+                               gain(1),
+                               solo(false),
+                               mute(false) {}
 
-} layerCarlaPluginStruct;
+};
 
 
 // ----------------------------------------------------
 // Structure for midi output port layer
 // ----------------------------------------------------
-typedef struct layerMidiOutputStruct_t {
+struct layerMidiOutStruct {
     int portIdInProject;
-    // TODO: IMPLEMENT SENDING EVENTS WHEN SWITCHING TO MIDI PORT
-    // but use the konfytMidiEvent struct
-    //QList<midiEventStruct> sendEventsStart; // List of midi events to send when switching to port
     konfytMidiFilter filter;
     bool solo;
     bool mute;
 
-    // Constructor with initializer list. Instantiate all instances with constructor to take advantage of this.
-    layerMidiOutputStruct_t() : solo(false), mute(false) {}
+    layerMidiOutStruct() : solo(false),
+                           mute(false) {}
 
-} layerMidiOutStruct;
+};
 
 // ----------------------------------------------------
 // Structure for audio input port layer
 // ----------------------------------------------------
-typedef struct layerAudioInStruct_t {
+struct layerAudioInStruct {
     QString name;
     int portIdInProject;   // Index of audio input port in project
     float gain;
     bool solo;
     bool mute;
 
-    layerAudioInStruct_t() : gain(1), solo(false), mute(false) {}
+    layerAudioInStruct() : gain(1),
+                           solo(false),
+                           mute(false) {}
 
-} layerAudioInStruct;
+};
 
 
 // ----------------------------------------------------

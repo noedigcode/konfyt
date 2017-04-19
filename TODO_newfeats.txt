@@ -1,14 +1,16 @@
-konfyt bugs 2017-04-09:
+konfyt TODO 2017-04-16:
 
-When more than one project open, running external programs in second project doesn't work.
+- When more than one project open, running external programs in second project
+  doesn't work.
+- Remove unecessary console output
+- Follow all debug and todo comments.
 
-Maybe detect sustain off as <64
 
+Changes on Testing branch:
 
+- [DONE] Maybe detect sustain off as <64
 
-TODO for branch newfeats 2017-02-13
-
-Just added input and output midi channels to midifilter.
+- [DONE] add input and output midi channels to midifilter.
 
 - [DONE] Add in patch layer save and load.
 - [DONE] In Jack process callback, ensure noteoffs etc. on patch change gets sent to
@@ -17,10 +19,13 @@ Just added input and output midi channels to midifilter.
 - [DONE] Add functionality to layer / midifilter in GUI for In Channel.
 - [DONE] Add functionality to layer in GUI for Out channel.
 
+- [DONE] Volume fade out on patch change.
+         - Volume fade for audio in ports
+         - Midi noteon, sustain and pb tracking for other ports
+
 - Test. (all types of layers)
 - Increment version number.
 - Update docs where appropriate.
 
 
-- Volume fade out on patch change.
 
