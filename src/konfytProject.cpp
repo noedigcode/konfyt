@@ -87,7 +87,7 @@ bool konfytProject::saveProjectAs(QString dirname)
     stream.writeStartDocument();
 
     stream.writeComment("This is a Konfyt project.");
-    stream.writeComment("Created with " + QString(APP_NAME) + " version " + n2s(APP_VERSION));
+    stream.writeComment("Created with " + QString(APP_NAME) + " version " + APP_VERSION);
 
     stream.writeStartElement("sfproject");
     stream.writeAttribute("name",this->projectName);

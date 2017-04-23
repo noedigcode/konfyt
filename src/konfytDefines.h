@@ -25,7 +25,7 @@
 #include <QString>
 
 #define APP_NAME "Konfyt"
-#define APP_VERSION 0.01
+#define APP_VERSION "1.0.0"
 
 #define n2s(x) QString::number(x)
 #define STRING_PROJECT_DIR "$PROJ_DIR$"

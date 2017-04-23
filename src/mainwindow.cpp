@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // Initialise console dialog
     this->consoleDiag = new ConsoleDialog(this);
 
-    userMessage(QString(APP_NAME) + " " + n2s(APP_VERSION));
+    userMessage(QString(APP_NAME) + " " + APP_VERSION);
 
     // ----------------------------------------------------
     // Sort out settings
