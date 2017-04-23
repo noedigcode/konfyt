@@ -108,10 +108,14 @@ public:
 
     // Search functionality
     void searchProgram(QString str);    // Search all programs in all soundfonts and patches.
+    int getNumSfontsResults();
+    int getNumSfontProgramResults();
     QList<konfytSoundfont*>       getResults_sfonts();
     QList<konfytSoundfontProgram>    getResults_sfontPrograms(konfytSoundfont *sf);
     QList<konfytSoundfontProgram>    getResults_allPrograms();
+    int getNumPatchesResults();
     QList<konfytPatch>      getResults_patches();
+    int getNumSfzResults();
     QStringList         getResults_sfz();
 
     void addPatch(QString filename);

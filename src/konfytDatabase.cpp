@@ -846,7 +846,21 @@ QList<konfytSoundfont*> konfytDatabase::getResults_sfonts()
         l.append(sfontResults.value(keys.at(i)));
     }
     return l;
+}
 
+int konfytDatabase::getNumSfontsResults()
+{
+    return sfontResults.count();
+}
+
+int konfytDatabase::getNumSfontProgramResults()
+{
+    int programs = 0;
+    QList<konfytSoundfont*> sfonts = sfontResults.values();
+    for (int i=0; i<sfonts.count(); i++) {
+        programs += sfonts[i]->searchResults.count();
+    }
+    return programs;
 }
 
 // Returns a list of all programs within a specific sounfont matching the search.
@@ -864,6 +878,16 @@ QList<konfytSoundfontProgram> konfytDatabase::getResults_allPrograms()
         l.append(all.at(i)->searchResults);
     }
     return l;
+}
+
+int konfytDatabase::getNumPatchesResults()
+{
+    return patchResults.count();
+}
+
+int konfytDatabase::getNumSfzResults()
+{
+    return sfzResults.count();
 }
 
 QList<konfytPatch> konfytDatabase::getPatchList()

@@ -1662,7 +1662,7 @@ void MainWindow::fillTreeWithAll()
 
     // Create parent soundfonts tree item, with soundfont children
     library_sfRoot = new QTreeWidgetItem();
-    library_sfRoot->setText(0,TREE_ITEM_SOUNDFONTS);
+    library_sfRoot->setText(0,QString(TREE_ITEM_SOUNDFONTS) + " [" + n2s(db->getNumSfonts()) + "]");
     library_sfFolders.clear();
     library_sfMap.clear();
     db->buildSfontTree();
@@ -1671,7 +1671,7 @@ void MainWindow::fillTreeWithAll()
 
     // Create parent patches tree item, with patch children
     library_patchRoot = new QTreeWidgetItem();
-    library_patchRoot->setText(0,TREE_ITEM_PATCHES);
+    library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db->getNumPatches()) + "]");
     library_patchRoot->setIcon(0, QIcon(":/icons/folder.png"));
     QList<konfytPatch> pl = db->getPatchList();
     for (int i=0; i<pl.count(); i++) {
@@ -1688,7 +1688,7 @@ void MainWindow::fillTreeWithAll()
 
     // Create parent sfz item, with one child indicating the number of items
     library_sfzRoot = new QTreeWidgetItem();
-    library_sfzRoot->setText(0,TREE_ITEM_SFZ);
+    library_sfzRoot->setText(0,QString(TREE_ITEM_SFZ) + " [" + n2s(db->getNumSfz()) + "]");
     library_sfzFolders.clear();
     library_sfzMap.clear();
     db->buildSfzTree();
@@ -1696,7 +1696,6 @@ void MainWindow::fillTreeWithAll()
     library_sfzRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
     // Add items to tree
-
     ui->treeWidget->insertTopLevelItem(0,library_sfRoot);
     //ui->treeWidget->expandItem(soundfontsParent);
     ui->treeWidget->insertTopLevelItem(0,library_sfzRoot);
@@ -1789,7 +1788,7 @@ void MainWindow::fillTreeWithSearch(QString search)
     // Soundfonts
 
     library_sfRoot = new QTreeWidgetItem();
-    library_sfRoot->setText(0,TREE_ITEM_SOUNDFONTS);
+    library_sfRoot->setText(0,QString(TREE_ITEM_SOUNDFONTS) + " [" + n2s(db->getNumSfontsResults()) + " / " + n2s(db->getNumSfontProgramResults()) + "]");
 
     library_sfFolders.clear();
     library_sfMap.clear();
@@ -1800,7 +1799,7 @@ void MainWindow::fillTreeWithSearch(QString search)
     // Patches
 
     library_patchRoot = new QTreeWidgetItem();
-    library_patchRoot->setText(0,TREE_ITEM_PATCHES);
+    library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db->getNumPatchesResults()) + "]");
     library_patchRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
     QList<konfytPatch> pl = db->getResults_patches();
@@ -1818,10 +1817,11 @@ void MainWindow::fillTreeWithSearch(QString search)
     // SFZ
 
     library_sfzRoot = new QTreeWidgetItem();
-    library_sfzRoot->setText(0,TREE_ITEM_SFZ);
+    library_sfzRoot->setText(0,QString(TREE_ITEM_SFZ) + " [" + n2s(db->getNumSfzResults()) + "]");
     library_sfzFolders.clear();
     library_sfzMap.clear();
     db->buildSfzTree_results();
+
     buildSfzTree(library_sfzRoot, db->sfzTree_results->root);
     library_sfzRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
@@ -1834,6 +1834,7 @@ void MainWindow::fillTreeWithSearch(QString search)
 
     ui->treeWidget->insertTopLevelItem(0,twiResults);
     ui->treeWidget->expandItem(twiResults);
+    ui->treeWidget->expandItem(library_patchRoot);
     ui->treeWidget->expandItem(library_sfzRoot);
     ui->treeWidget->expandItem(library_sfRoot);
 }
