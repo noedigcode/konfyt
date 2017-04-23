@@ -82,6 +82,27 @@ void konfytPatchLayer::initLayer(int id, layerAudioInStruct newLayerData)
     this->audioInPortData = newLayerData;
 }
 
+QString konfytPatchLayer::getName()
+{
+    switch (layerType) {
+    case KonfytLayerType_AudioIn:
+        return this->audioInPortData.name;
+        break;
+    case KonfytLayerType_CarlaPlugin:
+        return this->carlaPluginData.name;
+        break;
+    case KonfytLayerType_MidiOut:
+        return "MIDI Out Port";
+        break;
+    case KonfytLayerType_SoundfontProgram:
+        return this->sfData.program.parent_soundfont + "/" + this->sfData.program.name;
+        break;
+    case KonfytLayerType_Uninitialized:
+        return "UNINITIALIZED LAYER";
+        break;
+    }
+}
+
 float konfytPatchLayer::getGain()
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
@@ -94,8 +115,6 @@ float konfytPatchLayer::getGain()
         return 0;
     }
 }
-
-
 
 void konfytPatchLayer::setGain(float newGain)
 {

@@ -805,10 +805,10 @@ void konfytDatabase::searchProgram(QString str)
         if (pt.getName().toLower().contains(str.toLower())) {
             patchResults.append(pt);
         } else {
-            // Else check patch programs
-            for (int j=0; j<pt.getNumSfLayers(); j++) {
-                konfytSoundfontProgram pr = pt.getProgram(j);
-                if (pr.name.toLower().contains(str.toLower())) {
+            // Else check patch layers
+            QList<konfytPatchLayer> layers = pt.getLayerItems();
+            for (int j=0; j<layers.count(); j++) {
+                if (layers[j].getName().toLower().contains(str.toLower())) {
                     patchResults.append(pt);
                     break;
                 }

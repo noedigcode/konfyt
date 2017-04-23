@@ -142,6 +142,7 @@ public:
     void initLayer(int id, layerMidiOutStruct newLayerData);
     void initLayer(int id, layerAudioInStruct newLayerData);
 
+    QString getName();
     float getGain();
     void setGain(float newGain);
     void setSolo(bool newSolo);
