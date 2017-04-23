@@ -1708,6 +1708,12 @@ void MainWindow::fillTreeWithAll()
 void MainWindow::buildSfzTree(QTreeWidgetItem* twi, konfytDbTreeItem* item)
 {
     if ( !item->hasChildren() ) {
+        // Remove soundfont directory from item name if present
+        QString rem = sfzDir + "/";
+        rem.remove(0,1); // sfzDir probably starts with "/", tree item does not. And yes, this is less than ideal.
+        QString pathRemoved = twi->text(0).remove(rem);
+        twi->setText(0, pathRemoved);
+
         library_sfzMap.insert(twi, item->path); // Add to sfz map
         twi->setToolTip(0,twi->text(0));
         twi->setIcon(0, QIcon(":/icons/picture.png"));
@@ -1737,7 +1743,14 @@ void MainWindow::buildSfzTree(QTreeWidgetItem* twi, konfytDbTreeItem* item)
 void MainWindow::buildSfTree(QTreeWidgetItem *twi, konfytDbTreeItem *item)
 {
     if ( !item->hasChildren() ) {
+        // Remove soundfont directory from item name if present
+        QString rem = soundfontsDir + "/";
+        rem.remove(0,1); // soundfontsDir probably starts with "/", tree item does not. And yes, this is less than ideal.
+        QString pathRemoved = twi->text(0).remove(rem);
+        twi->setText(0, pathRemoved);
+
         library_sfMap.insert(twi, (konfytSoundfont*)(item->data)); // Add to soundfonts map
+        twi->setToolTip(0,twi->text(0));
         twi->setIcon(0, QIcon(":/icons/picture.png"));
     } else {
         twi->setIcon(0, QIcon(":/icons/folder.png"));
@@ -1747,9 +1760,9 @@ void MainWindow::buildSfTree(QTreeWidgetItem *twi, konfytDbTreeItem *item)
         }
     }
 
-    // If database tree item has only one child that is not a leaf, skip it.
     if (item->hasChildren()) {
         if ( (item->children.count() == 1) && (item->children[0]->hasChildren()) ) {
+            // If database tree item has only one child that is not a leaf, skip it.
             buildSfTree( twi, item->children[0] );
         } else {
             for (int i=0; i<item->children.count(); i++) {
