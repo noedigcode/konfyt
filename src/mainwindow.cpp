@@ -351,7 +351,10 @@ void MainWindow::jackXrun()
 void MainWindow::jackPortRegisterOrConnectCallback()
 {
     // Refresh ports/connections tree
-    gui_updateConnectionsTree(); // TODO feat_warnings: warnings should be updated in here.
+    gui_updateConnectionsTree();
+
+    // Update warnings section
+    updateGUIWarnings();
 }
 
 // Scan given directory recursively and add project files to list.
@@ -774,10 +777,6 @@ void MainWindow::gui_updatePortsBussesTree()
 
 void MainWindow::gui_updateConnectionsTree()
 {
-    // TODO feat_warnings: warnings should be updated in here.
-    //                     SECOND THOUGHT: MAYBE NOT, THIS ONLY DEALS WITH CURRENTLY SELECTED PORT/BUS
-    //                     Still, consolidate functions for this and warning section.
-
     // First, clear everything
 
     QList<QCheckBox*> ll = conChecksMap1.keys();
@@ -2686,6 +2685,11 @@ void MainWindow::updateGUIWarnings()
     konfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
 
+    QStringList moports = jack->getMidiOutputPortsList();
+    QStringList miports = jack->getMidiInputPortsList();
+    QStringList aoports = jack->getAudioOutputPortsList();
+    QStringList aiports = jack->getAudioInputPortsList();
+
 
     // Check warnings
 
@@ -2694,9 +2698,19 @@ void MainWindow::updateGUIWarnings()
     // MIDI input port: no connecions
     if ( prj->midiInPort_getClients().count() == 0 ) {
         addWarning("MIDI input port not connected");
+    } else {
+        // MIDI input port: client(s) not running
+        QStringList miclients = prj->midiInPort_getClients();
+        int notRunning = 0;
+        for (int i=0; i<miclients.count(); i++) {
+            if ( !moports.contains(miclients[i]) ) {
+                notRunning++;
+            }
+        }
+        if (notRunning) {
+            addWarning("MIDI input port: " + n2s(notRunning) + " client(s) inactive");
+        }
     }
-
-    // MIDI input port: client(s) not running
 
     // Bus ports: no connections
     QList<int> busIds = prj->audioBus_getAllBusIds();
@@ -2705,15 +2719,90 @@ void MainWindow::updateGUIWarnings()
         bool left = (bus.leftOutClients.count() == 0);
         bool right = (bus.rightOutClients.count() == 0);
         if (left && right) {
-            addWarning("Bus " + bus.busName + " ports unconnected");
+            addWarning("Bus \"" + bus.busName + "\" not connected");
         } else if (left) {
-            addWarning("Bus " + bus.busName + " left port unconnected");
+            addWarning("Bus \"" + bus.busName + "\" left not connected");
         } else if (right) {
-            addWarning("Bus " + bus.busName + " right port unconnected");
+            addWarning("Bus \"" + bus.busName + "\" right not connected");
+        }
+        // Bus: client(s) not running
+        bool notRunning = false;
+        for (int i=0; i<bus.leftOutClients.count(); i++) {
+            if ( !aiports.contains(bus.leftOutClients[i]) ) {
+                notRunning = true;
+                break;
+            }
+        }
+        if (!notRunning) {
+            for (int i=0; i<bus.rightOutClients.count(); i++) {
+                if ( !aiports.contains(bus.rightOutClients[i]) ) {
+                    notRunning = true;
+                    break;
+                }
+            }
+        }
+        if (notRunning) {
+            addWarning("Bus \"" + bus.busName + "\" client(s) inactive");
         }
     }
 
-    // Bus ports: client(s) not running
+    // MIDI out ports
+    QList<int> moIds = prj->midiOutPort_getAllPortIds();
+    for (int i=0; i<moIds.count(); i++) {
+        prjMidiOutPort moport = prj->midiOutPort_getPort(moIds[i]);
+        // Check for no connections
+        if (moport.clients.count() == 0) {
+            addWarning("MIDI-out \"" + moport.portName + "\" not connected");
+        } else {
+            // Check if clients are running
+            bool notRunning = false;
+            for (int i=0; i<moport.clients.count(); i++) {
+                if ( !miports.contains(moport.clients[i]) ) {
+                    notRunning = true;
+                    break;
+                }
+            }
+            if (notRunning) {
+                addWarning("MIDI-out \"" + moport.portName + "\" client(s) inactive");
+            }
+        }
+    }
+
+    // Audio in ports
+    QList<int> aiIds = prj->audioInPort_getAllPortIds();
+    for (int i=0; i<aiIds.count(); i++) {
+        prjAudioInPort aiport = prj->audioInPort_getPort(aiIds[i]);
+        // Check for no connections
+        bool left = (aiport.leftInClients.count() == 0);
+        bool right = (aiport.rightInClients.count() == 0);
+        if (left && right) {
+            addWarning("Audio-in \"" + aiport.portName + "\" not connected");
+        } else if (left) {
+            addWarning("Audio-in \"" + aiport.portName + "\" left not connected");
+        } else if (right) {
+            addWarning("Audio-in \"" + aiport.portName + "\" right not connected");
+        }
+        // Check for clients not running
+        bool notRunning = false;
+        for (int i=0; i<aiport.leftInClients.count(); i++) {
+            if ( !aoports.contains(aiport.leftInClients[i]) ) {
+                notRunning = true;
+                break;
+            }
+        }
+        if (!notRunning) {
+            for (int i=0; i<aiport.rightInClients.count(); i++) {
+                if ( !aoports.contains(aiport.rightInClients[i]) ) {
+                    notRunning = true;
+                    break;
+                }
+            }
+        }
+        if (notRunning) {
+            addWarning("Audio-in \"" + aiport.portName + "\" client(s) inactive");
+        }
+
+    }
 
 }
 
