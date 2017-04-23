@@ -619,8 +619,8 @@ void konfytJackEngine::removeAllMidiOutPorts()
 {
     pauseJackProcessing(true);
 
-    for (int i=0; i<midi_out_ports.count(); i++) {
-        konfytJackPort* p = midi_out_ports[i];
+    while (midi_out_ports.count()) {
+        konfytJackPort* p = midi_out_ports[0];
         removePort(KonfytJackPortType_MidiOut, p);
     }
 
