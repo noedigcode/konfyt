@@ -2695,8 +2695,6 @@ void MainWindow::updateGUIWarnings()
 
     // Check warnings
 
-    // TODO feat_warnings: consolidate functions for checking port clients here and in updating GUI ports/busses/connections tree.
-
     // MIDI input port: no connecions
     if ( prj->midiInPort_getClients().count() == 0 ) {
         addWarning("MIDI input port not connected");

@@ -8,10 +8,9 @@ konfyt TODO 2017-04-16:
 
 feat_warnings branch:
 
- - Follow all "TODO feat_warnings" comments.
-
  - [TEST] Modified konfytJackEngine timerEvent (refresh port connections) - TEST port connections refresh.
- - [TEST] Port/bus connections tree auto update when Jack ports change.
+ - [DONE] Port/bus connections tree auto update when Jack ports change.
+ - [DONE] Implement warnings for bus/port connections/clients active.
 
 
 Testing branch:
