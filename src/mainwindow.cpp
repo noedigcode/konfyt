@@ -1037,6 +1037,8 @@ void MainWindow::checkboxes_signalmap_slot(QWidget *widget)
             prj->midiInPort_removeClient(portString);
         }
     }
+
+    updateGUIWarnings();
 }
 
 
