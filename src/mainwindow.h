@@ -119,11 +119,12 @@ class MainWindow : public QMainWindow
     
 public:
 
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent, QApplication* application, QStringList filesToLoad, QString jackClientName);
     ~MainWindow();
 
-    bool eventFilter(QObject *object, QEvent *event);
     QApplication* app;
+
+    bool eventFilter(QObject *object, QEvent *event);
     int eventFilterMode;
 
     // ========================================================================

@@ -25,16 +25,15 @@
 #include <iostream>
 
 
-MainWindow::MainWindow(QWidget *parent) :
+MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList filesToLoad, QString jackClientName) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
-
-
     // Initialise variables
 
+    app = application;
     panicState = false;
     masterPatch = NULL;
     previewPatch = NULL;
@@ -75,7 +74,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(jack, SIGNAL(midiEventSignal(konfytMidiEvent)), this, SLOT(midiEventSlot(konfytMidiEvent)));
     connect(jack, SIGNAL(xrunSignal()), this, SLOT(jackXrun()));
 
-    if ( jack->InitJackClient(KONFYT_JACK_DEFAULT_CLIENT_NAME) ) {
+    if (jackClientName.isEmpty()) {
+        jackClientName = KONFYT_JACK_DEFAULT_CLIENT_NAME;
+    }
+    if ( jack->InitJackClient(jackClientName) ) {
         // Jack client initialised.
         userMessage("Initialised JACK client with name " + jack->clientName());
     } else {
@@ -127,7 +129,13 @@ MainWindow::MainWindow(QWidget *parent) :
         userMessage("No project directory " + projectsDir);
     }
     // Load project if one was passed as an argument
-    if (app->arguments().count() > 1) {
+    for (int i=0; i<filesToLoad.count(); i++) {
+        // TODO 2017-04-24:
+        // If file is patch, sfz or sf2:
+        //      If a project is already loaded, add to current project
+        //      else, load an empty project and add to project
+        // else:
+        //      Try to load project.
         if (openProject(app->arguments()[1])) {
             // Project loaded!
             userMessage("Project loaded from argument.");
