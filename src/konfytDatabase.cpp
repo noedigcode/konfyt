@@ -40,7 +40,7 @@ void konfytDatabaseWorker::scanDirs(QString sfontDir, QString sfzDir, QString pa
     QStringList sfontSuffix, sfzSuffix, patchSuffix;
     sfontSuffix << "sf2";
     sfzSuffix << "sfz" << "gig";
-    patchSuffix << KonfytPatchSuffix;
+    patchSuffix << KONFYT_PATCH_SUFFIX;
     QStringList sfontsToLoad;
     QList<konfytSoundfont*> sfontsToReturn;
 

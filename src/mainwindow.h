@@ -219,6 +219,11 @@ public:
     konfytPatch* previewPatch;  // Patch played when in preview mode
     float previewGain;          // Gain when in preview mode
 
+    bool fileSuffixIs(QString file, QString suffix);
+    bool fileIsPatch(QString file);
+    bool fileIsSoundfont(QString file);
+    bool fileIsSfzOrGig(QString file);
+
     void setMasterGain(float gain);
 
     // Current patch functions

@@ -130,20 +130,54 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     }
     // Load project if one was passed as an argument
     for (int i=0; i<filesToLoad.count(); i++) {
-        // TODO 2017-04-24:
-        // If file is patch, sfz or sf2:
-        //      If a project is already loaded, add to current project
-        //      else, load an empty project and add to project
-        // else:
-        //      Try to load project.
-        if (openProject(app->arguments()[1])) {
-            // Project loaded!
-            userMessage("Project loaded from argument.");
-            setCurrentProject(0);
+        QString file = filesToLoad[i];
+        konfytProject *prj = NULL;
+        if ( fileIsPatch(file) || fileIsSfzOrGig(file) || fileIsSoundfont(file) ) {
+            // If no project loaded, create a new project
+            if (projectList.count() == 0) {
+                userMessage("Creating default new project to load " + file);
+                newProject();           // Create new project and add to list and GUI
+                setCurrentProject(0);   // Set current project to newly created project.
+            }
+            if (fileIsPatch(file)) {
+                // Load patch into current project and switch to patch
+
+                // TODO
+                userMessage("TODO: Load patch from argument into project.");
+
+            } else if (fileIsSfzOrGig(file)) {
+                // Create new patch and load sfz into patch
+                newPatchToProject();    // Create a new patch and add to current project.
+                prj = getCurrentProject();
+                setCurrentPatch(prj->getNumPatches()-1);
+
+                // TODO
+                userMessage("TODO: Add sfz from argument into new patch.");
+
+            } else if (fileIsSoundfont(file)) {
+                // Create new blank patch
+                newPatchToProject();    // Create a new patch and add to current project.
+                prj = getCurrentProject();
+                setCurrentPatch(prj->getNumPatches()-1);
+                // Locate soundfont in filebrowser, select it and show its programs
+
+                // TODO
+                userMessage("TODO: Locate soundfont in file browser and show its programs.");
+
+            }
+        } else {
+            // Try to load project
+            userMessage("Opening project " + file);
+            if (openProject(file)) {
+                userMessage("Project loaded from argument.");
+                setCurrentProject( projectList.count()-1 );
+                startupProject = false;
+            } else {
+                userMessage("Failed to load project from argument.");
+            }
         }
-        startupProject = false;
     }
-    // If not loaded, create default project
+    // If no project is loaded yet, create default project
     if (projectList.count() == 0) {
         userMessage("Creating default new project.");
         newProject();           // Create new project and add to list and GUI
@@ -1409,12 +1443,13 @@ void MainWindow::removePatchFromProject(int i)
 // Add a patch to the current project, and update the gui.
 void MainWindow::addPatchToProject(konfytPatch* newPatch)
 {
-    if (getCurrentProject() == NULL) {
+    konfytProject *prj = getCurrentProject();
+    if (prj == NULL) {
         userMessage("Select a project.");
         return;
     }
 
-    getCurrentProject()->addPatch(newPatch);
+    prj->addPatch(newPatch);
     // Add to list in gui:
     gui_updatePatchList();
 }
@@ -1515,6 +1550,35 @@ konfytSoundfont* MainWindow::library_getSelectedSfont()
         return NULL;
     }
 }
+
+/* Determine if file suffix is as specified. The specified suffix should not
+ * contain a leading dot. The suffix is checked by adding a dot.
+ * E.g. pass wav as suffix, then example.wav will match but not example.awav. */
+bool MainWindow::fileSuffixIs(QString file, QString suffix)
+{
+    suffix.prepend('.');
+    suffix = suffix.toLower();
+    QString right = file.right(suffix.length()).toLower();
+    return  right == suffix;
+}
+
+/* Determine if specified file is a Konfyt patch file. */
+bool MainWindow::fileIsPatch(QString file)
+{
+    return fileSuffixIs(file, KONFYT_PATCH_SUFFIX);
+}
+
+bool MainWindow::fileIsSfzOrGig(QString file)
+{
+    return fileSuffixIs(file, "sfz") || fileSuffixIs(file, "gig");
+}
+
+bool MainWindow::fileIsSoundfont(QString file)
+{
+    return fileSuffixIs(file, "sf2");
+}
+
+
 
 // Set master gain if in normal mode, or preview gain if in preview mode,
 // and set the master gain in the patch engine.
@@ -2228,13 +2292,13 @@ bool MainWindow::savePatchToLibrary(konfytPatch *patch)
         return false;
     }
 
-    QString patchName = getUniqueFilename(dir.path(), patch->getName(), "." + QString(KonfytPatchSuffix) );
+    QString patchName = getUniqueFilename(dir.path(), patch->getName(), "." + QString(KONFYT_PATCH_SUFFIX) );
     if (patchName == "") {
         userMessage("Could not find a suitable filename.");
         return false;
     }
 
-    if (patchName != patch->getName() + "." + KonfytPatchSuffix) {
+    if (patchName != patch->getName() + "." + KONFYT_PATCH_SUFFIX) {
         userMessage("Duplicate name exists. Saving patch as:");
         userMessage(patchName);
     }
@@ -3476,11 +3540,11 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
 
     konfytPatch* pt = pengine->getPatch(); // Get current patch
     QFileDialog d;
-    QString filename = d.getSaveFileName(this,"Save patch as file", patchesDir, "*." + QString(KonfytPatchSuffix));
+    QString filename = d.getSaveFileName(this,"Save patch as file", patchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
     if (filename=="") {return;} // Dialog was cancelled.
 
     // Add suffix if not already added (this is not foolproof, but what the hell.)
-    if (!filename.contains("." + QString(KonfytPatchSuffix))) { filename = filename + "." + QString(KonfytPatchSuffix); }
+    if (!filename.contains("." + QString(KONFYT_PATCH_SUFFIX))) { filename = filename + "." + QString(KONFYT_PATCH_SUFFIX); }
 
     if (pt->savePatchToFile(filename)) {
         userMessage("Patch saved.");
@@ -3518,7 +3582,7 @@ void MainWindow::on_actionAdd_Patch_From_File_triggered()
 
     konfytPatch* pt = new konfytPatch();
     QFileDialog d;
-    QString filename = d.getOpenFileName(this, "Open patch from file", patchesDir, "*." + QString(KonfytPatchSuffix));
+    QString filename = d.getOpenFileName(this, "Open patch from file", patchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
     if (filename=="") { return; }
     if (pt->loadPatchFromFile(filename)) {
         getCurrentProject()->addPatch(pt);
@@ -3944,10 +4008,10 @@ void MainWindow::refreshFilesystemView()
             ui->treeWidget_filesystem->addTopLevelItem(item);
             fsMap.insert(item, info);
         } else {
-            if ( ( (info.suffix().toLower() == "sfz")
-                 || (info.suffix().toLower() == "sf2")
-                 || (info.suffix().toLower() == "gig") )
-                || ( info.path().contains(project_dir) ) ) { // Add everything if in project dir
+            if ( fileIsSfzOrGig(info.filePath())
+                 || fileIsSoundfont(info.filePath())
+                 || fileIsPatch(info.filePath())
+                 || info.path().contains(project_dir) ) { // Add everything if in project dir
 
                 QTreeWidgetItem* item = new QTreeWidgetItem();
                 item->setIcon(0, QIcon(":/icons/picture.png"));
@@ -3980,7 +4044,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
     if (info.isDir()) {
         // If directory, cd to directory.
         cdFilesystemView(info.filePath());
-    } else if (info.suffix().toLower() == "sf2") {
+    } else if ( fileIsSoundfont(info.filePath()) ) {
         // If soundfont, read soundfont and fill program list.
 
         // Initiate mainwindow waiter (this disables the GUI and indicates to the user
@@ -3993,12 +4057,14 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
         // database_returnSfont() slot where we will continue.
         return;
 
-    } else if ( (info.suffix().toLower() == "sfz") || (info.suffix().toLower() == "gig") ) {
+    } else if ( fileIsSfzOrGig(info.filePath()) ) {
         // If sfz or gig, load file.
 
         addSfzToCurrentPatch( info.filePath() );
 
     }
+
+    // TODO: ADD PATCH LOADING ALSO
 
     // Refresh program list in the GUI based on contents of programList variable.
     library_refreshGUIProgramList();

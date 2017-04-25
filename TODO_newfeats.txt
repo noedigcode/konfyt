@@ -15,6 +15,13 @@ feat_warnings branch:
 
 Testing branch:
 
+- [TODO] Load project(s) and soundfile(s) from commandline argument.
+- [TODO] Load patch from filesystem view
+
+- [TEST] Changed file detection with suffixes (patch, sfz, sf2, gig)
+         Test filesystem view, viewing only sound files outside of project dir
+         Test loading sound files by double clicking in filesystem view
+
 - [DONE] Maybe detect sustain off as <64
 
 - [DONE] add input and output midi channels to midifilter.

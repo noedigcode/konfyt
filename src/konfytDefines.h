@@ -30,7 +30,7 @@
 #define n2s(x) QString::number(x)
 #define STRING_PROJECT_DIR "$PROJ_DIR$"
 
-#define KonfytPatchSuffix "konfytpatch"
+#define KONFYT_PATCH_SUFFIX "konfytpatch"
 
 
 #endif // KONFYT_DEFINES_H

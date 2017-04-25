@@ -949,7 +949,7 @@ QCheckBox::indicator:checked {
               </property>
               <widget class="QTabWidget" name="tabWidget_library">
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="tab_library">
                 <attribute name="title">
