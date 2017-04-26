@@ -15,18 +15,19 @@ feat_warnings branch:
 
 Testing branch:
 
+- [TODO] When switching project, e.g. during cmdline argument loading, ensure that the tab bar indicates this.
+- [DONE] Projects save patches with .konfytpatch extension.
+- [TODO] Port/bus connections tree: when scrolled down and a checkbox is clicked, should not scroll back up.
 - [TODO] Load project(s) and soundfile(s) from commandline argument.
-- [TODO] Load patch from filesystem view
+- [TEST] Load patch from filesystem view
+         Also retest loading other files from filesystem view.
 
 - [TEST] Changed file detection with suffixes (patch, sfz, sf2, gig)
          Test filesystem view, viewing only sound files outside of project dir
          Test loading sound files by double clicking in filesystem view
 
-- [DONE] Maybe detect sustain off as <64
-
-- [DONE] add input and output midi channels to midifilter.
-
-- [DONE] Add in patch layer save and load.
+- [DONE] Detect sustain off as <64
+- [DONE] Add input and output midi channels to midifilter.
 - [DONE] In Jack process callback, ensure noteoffs etc. on patch change gets sent to
          correct channels (filter.outChan).
 - [DONE] Same with panic state messages.

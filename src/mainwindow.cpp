@@ -131,7 +131,6 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // Load project if one was passed as an argument
     for (int i=0; i<filesToLoad.count(); i++) {
         QString file = filesToLoad[i];
-        konfytProject *prj = NULL;
         if ( fileIsPatch(file) || fileIsSfzOrGig(file) || fileIsSoundfont(file) ) {
             // If no project loaded, create a new project
             if (projectList.count() == 0) {
@@ -139,30 +138,44 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
                 newProject();           // Create new project and add to list and GUI
                 setCurrentProject(0);   // Set current project to newly created project.
             }
+            konfytProject *prj = getCurrentProject();
             if (fileIsPatch(file)) {
                 // Load patch into current project and switch to patch
 
                 // TODO
                 userMessage("TODO: Load patch from argument into project.");
+                konfytPatch* pt = new konfytPatch();
+                if (pt->loadPatchFromFile(file)) {
+                    addPatchToProject(pt);
+                    setCurrentPatch(prj->getNumPatches()-1);
+                } else {
+                    userMessage("Failed loading patch " + file);
+                    delete pt;
+                }
 
             } else if (fileIsSfzOrGig(file)) {
                 // Create new patch and load sfz into patch
                 newPatchToProject();    // Create a new patch and add to current project.
-                prj = getCurrentProject();
                 setCurrentPatch(prj->getNumPatches()-1);
 
                 // TODO
                 userMessage("TODO: Add sfz from argument into new patch.");
+                addSfzToCurrentPatch(file);
+                // Rename patch
+                ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(file) );
+                on_lineEdit_PatchName_editingFinished();
 
             } else if (fileIsSoundfont(file)) {
                 // Create new blank patch
                 newPatchToProject();    // Create a new patch and add to current project.
-                prj = getCurrentProject();
                 setCurrentPatch(prj->getNumPatches()-1);
                 // Locate soundfont in filebrowser, select it and show its programs
 
                 // TODO
                 userMessage("TODO: Locate soundfont in file browser and show its programs.");
+                // Rename patch
+                ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(file) );
+                on_lineEdit_PatchName_editingFinished();
 
             }
         } else {
@@ -1951,6 +1964,12 @@ void MainWindow::messageBox(QString msg)
     msgbox.exec();
 }
 
+QString MainWindow::getBaseNameWithoutExtension(QString filepath)
+{
+    QFileInfo fi(filepath);
+    return fi.baseName();
+}
+
 
 void MainWindow::on_treeWidget_itemClicked(QTreeWidgetItem *item, int column)
 {
@@ -3580,15 +3599,18 @@ void MainWindow::on_actionAdd_Patch_From_File_triggered()
 {
     // Load patch from user selected file
 
+    konfytProject *prj = getCurrentProject();
+    if (prj == NULL) { return; }
+
     konfytPatch* pt = new konfytPatch();
     QFileDialog d;
     QString filename = d.getOpenFileName(this, "Open patch from file", patchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
     if (filename=="") { return; }
     if (pt->loadPatchFromFile(filename)) {
-        getCurrentProject()->addPatch(pt);
-        gui_updatePatchList();
+        addPatchToProject(pt);
     } else {
         userMessage("Failed loading patch from file.");
+        delete pt;
     }
 }
 
@@ -4062,9 +4084,18 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
 
         addSfzToCurrentPatch( info.filePath() );
 
-    }
+    } else if ( fileIsPatch(info.filePath()) ) {
+        // File is a patch
 
-    // TODO: ADD PATCH LOADING ALSO
+        konfytPatch* pt = new konfytPatch();
+        if (pt->loadPatchFromFile(info.filePath())) {
+            addPatchToProject(pt);
+        } else {
+            userMessage("Failed to load patch " + info.filePath());
+            delete pt;
+        }
+
+    }
 
     // Refresh program list in the GUI based on contents of programList variable.
     library_refreshGUIProgramList();

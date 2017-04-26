@@ -98,7 +98,7 @@ bool konfytProject::saveProjectAs(QString dirname)
         stream.writeStartElement("patch");
         // Patch properties
         konfytPatch* pat = patchList.at(i);
-        QString patchFilename = QString(PROJECT_PATCH_DIR) + "/" + n2s(i) + "_" + pat->getName();
+        QString patchFilename = QString(PROJECT_PATCH_DIR) + "/" + n2s(i) + "_" + pat->getName() + "." + KONFYT_PATCH_SUFFIX;
         stream.writeTextElement("filename", patchFilename);
 
         // Save the patch file in the same directory as the project file

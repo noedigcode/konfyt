@@ -438,6 +438,9 @@ public:
 
     void setMasterInTranspose(int transpose, bool relative);
 
+    // General utilities
+    QString getBaseNameWithoutExtension(QString filepath);
+
     void error_abort(QString msg);
     void messageBox(QString msg);
     
