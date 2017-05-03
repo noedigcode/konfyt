@@ -427,9 +427,9 @@ bool konfytDatabase::saveDatabaseToFile(QString filename)
     stream.setAutoFormatting(true);
     stream.writeStartDocument();
 
-    stream.writeComment("This is a soundfont database.");
+    stream.writeComment("This is a Konfyt database.");
 
-    stream.writeStartElement("sfdatabase");
+    stream.writeStartElement(XML_DATABASE);
 
     // All the soundfonts
     for (int i=0; i<sfontlist.count(); i++) {

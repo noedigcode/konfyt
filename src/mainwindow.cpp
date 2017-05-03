@@ -451,7 +451,15 @@ void MainWindow::showSettingsDialog()
     ui->lineEdit_Settings_ProjectsDir->setText(this->projectsDir);
     ui->lineEdit_Settings_SfzDir->setText(this->sfzDir);
     ui->lineEdit_Settings_SoundfontsDir->setText(this->soundfontsDir);
-    ui->lineEdit_Settings_filemanager->setText(this->filemanager);
+
+    int i = ui->comboBox_Settings_filemanager->findText( this->filemanager );
+    if (i>=0) {
+        ui->comboBox_Settings_filemanager->setCurrentIndex(i);
+    } else {
+        ui->comboBox_Settings_filemanager->addItem(this->filemanager);
+        ui->comboBox_Settings_filemanager->setCurrentIndex( ui->comboBox_Settings_filemanager->count()-1 );
+    }
+
     // Switch to settings page
     ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_SETTINGS);
 }
@@ -507,7 +515,7 @@ void MainWindow::applySettings()
     patchesDir = ui->lineEdit_Settings_PatchesDir->text();
     soundfontsDir = ui->lineEdit_Settings_SoundfontsDir->text();
     sfzDir = ui->lineEdit_Settings_SfzDir->text();
-    filemanager = ui->lineEdit_Settings_filemanager->text();
+    filemanager = ui->comboBox_Settings_filemanager->currentText();
 
     userMessage("Settings applied.");
 
@@ -531,27 +539,27 @@ bool MainWindow::loadSettingsFile()
     QXmlStreamReader r(&file);
     r.setNamespaceProcessing(false);
 
-    while (r.readNextStartElement()) { // wsap_settings
+    while (r.readNextStartElement()) { // Settings
 
-        if (r.name() == "wsap_settings") {
+        if (r.name() == XML_SETTINGS) {
 
-            while (r.readNextStartElement()) { // Settings
+            while (r.readNextStartElement()) {
 
-                if (r.name() == "projectsDir") {
+                if (r.name() == XML_SETTINGS_PRJDIR) {
                     projectsDir = r.readElementText();
-                } else if (r.name() == "soundfontsDir") {
+                } else if (r.name() == XML_SETTINGS_SFDIR) {
                     soundfontsDir = r.readElementText();
-                } else if (r.name() == "patchesDir") {
+                } else if (r.name() == XML_SETTINGS_PATCHESDIR) {
                     patchesDir = r.readElementText();
-                } else if (r.name() == "sfzDir") {
+                } else if (r.name() == XML_SETTINGS_SFZDIR) {
                     sfzDir = r.readElementText();
-                } else if (r.name() == "filemanager") {
+                } else if (r.name() == XML_SETTINGS_FILEMAN) {
                     filemanager = r.readElementText();
                 }
 
             }
 
-        } else { // name not wsap_settings
+        } else {
             r.skipCurrentElement();
         }
     }
@@ -588,18 +596,18 @@ bool MainWindow::saveSettingsFile()
     stream.setAutoFormatting(true);
     stream.writeStartDocument();
 
-    stream.writeComment("This is a wsap settings file.");
+    stream.writeComment("This is a Konfyt settings file.");
 
-    stream.writeStartElement("wsap_settings");
+    stream.writeStartElement(XML_SETTINGS);
 
     // Settings
-    stream.writeTextElement("projectsDir", projectsDir);
-    stream.writeTextElement("soundfontsDir", soundfontsDir);
-    stream.writeTextElement("patchesDir", patchesDir);
-    stream.writeTextElement("sfzDir", sfzDir);
-    stream.writeTextElement("filemanager", filemanager);
+    stream.writeTextElement(XML_SETTINGS_PRJDIR, projectsDir);
+    stream.writeTextElement(XML_SETTINGS_SFDIR, soundfontsDir);
+    stream.writeTextElement(XML_SETTINGS_PATCHESDIR, patchesDir);
+    stream.writeTextElement(XML_SETTINGS_SFZDIR, sfzDir);
+    stream.writeTextElement(XML_SETTINGS_FILEMAN, filemanager);
 
-    stream.writeEndElement(); // wsap_settings
+    stream.writeEndElement(); // Settings
 
     stream.writeEndDocument();
 
@@ -3467,33 +3475,41 @@ void MainWindow::on_pushButton_Settings_Apply_clicked()
 void MainWindow::on_pushButton_settings_Projects_clicked()
 {
     // Show dialog to select projects directory
-    QFileDialog* d = new QFileDialog();
-    ui->lineEdit_Settings_ProjectsDir->setText( d->getExistingDirectory(this,"Select projects directory",
-                                                                        ui->lineEdit_Settings_ProjectsDir->text()) );
+    QFileDialog d;
+    QString path = d.getExistingDirectory( this, "Select projects directory", ui->lineEdit_Settings_ProjectsDir->text() );
+    if ( !path.isEmpty() ) {
+        ui->lineEdit_Settings_ProjectsDir->setText( path );
+    }
 }
 
 void MainWindow::on_pushButton_Settings_Soundfonts_clicked()
 {
     // Show dialog to select soundfonts directory
-    QFileDialog* d = new QFileDialog();
-    ui->lineEdit_Settings_SoundfontsDir->setText( d->getExistingDirectory(this,"Select soundfonts directory",
-                                                                        ui->lineEdit_Settings_SoundfontsDir->text()) );
+    QFileDialog d;
+    QString path = d.getExistingDirectory( this, "Select soundfonts directory", ui->lineEdit_Settings_SoundfontsDir->text() );
+    if ( !path.isEmpty() ) {
+        ui->lineEdit_Settings_SoundfontsDir->setText( path );
+    }
 }
 
 void MainWindow::on_pushButton_Settings_Patches_clicked()
 {
     // Show dialog to select patches directory
-    QFileDialog* d = new QFileDialog();
-    ui->lineEdit_Settings_PatchesDir->setText( d->getExistingDirectory(this,"Select patches directory",
-                                                                        ui->lineEdit_Settings_PatchesDir->text()) );
+    QFileDialog d;
+    QString path = d.getExistingDirectory( this, "Select patches directory", ui->lineEdit_Settings_PatchesDir->text() );
+    if ( !path.isEmpty() ) {
+        ui->lineEdit_Settings_PatchesDir->setText( path );
+    }
 }
 
 void MainWindow::on_pushButton_Settings_Sfz_clicked()
 {
     // Show dialog to select sfz directory
-    QFileDialog* d = new QFileDialog();
-    ui->lineEdit_Settings_SfzDir->setText( d->getExistingDirectory(this,"Select sfz directory",
-                                                                        ui->lineEdit_Settings_SfzDir->text()) );
+    QFileDialog d;
+    QString path = d.getExistingDirectory( this, "Select sfz directory", ui->lineEdit_Settings_SfzDir->text() );
+    if ( !path.isEmpty() ) {
+        ui->lineEdit_Settings_SfzDir->setText( path );
+    }
 }
 
 

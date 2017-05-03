@@ -72,7 +72,7 @@ bool konfytPatch::savePatchToFile(QString filename)
     stream.setAutoFormatting(true);
     stream.writeStartDocument();
 
-    stream.writeComment("This is a patch file.");
+    stream.writeComment("This is a Konfyt patch file.");
 
     stream.writeStartElement("sfpatch"); // change this to just patch, here and when loading
     stream.writeAttribute("name",this->patchName);

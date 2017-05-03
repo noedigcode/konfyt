@@ -39,6 +39,9 @@
 
 #define konfytDatabaseSource_returnSfont 1
 
+#define XML_DATABASE "database"
+
+
 // ============================================================================
 // konfytDatabaseWorker
 // ============================================================================

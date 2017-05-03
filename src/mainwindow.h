@@ -96,6 +96,13 @@ CARLA_BACKEND_USE_NAMESPACE
 #define TREECON_COL_L 1
 #define TREECON_COL_R 2
 
+#define XML_SETTINGS "settings"
+#define XML_SETTINGS_PRJDIR "projectsDir"
+#define XML_SETTINGS_SFDIR "soundfontsDir"
+#define XML_SETTINGS_PATCHESDIR "patchesDir"
+#define XML_SETTINGS_SFZDIR "sfzDir"
+#define XML_SETTINGS_FILEMAN "filemanager"
+
 
 namespace Ui {
 class MainWindow;
