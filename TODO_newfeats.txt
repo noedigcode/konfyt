@@ -1,4 +1,4 @@
-konfyt TODO 2017-04-16:
+konfyt TODO 2017-05-03:
 
 - When more than one project open, running external programs in second project
   doesn't work.
@@ -6,19 +6,15 @@ konfyt TODO 2017-04-16:
 - Follow all debug and todo comments.
 
 
-feat_warnings branch:
-
- - [TEST] Modified konfytJackEngine timerEvent (refresh port connections) - TEST port connections refresh.
- - [DONE] Port/bus connections tree auto update when Jack ports change.
- - [DONE] Implement warnings for bus/port connections/clients active.
-
-
-Testing branch:
 
 - [TODO] When switching project, e.g. during cmdline argument loading, ensure that the tab bar indicates this.
-- [DONE] Projects save patches with .konfytpatch extension.
+
 - [TODO] Port/bus connections tree: when scrolled down and a checkbox is clicked, should not scroll back up.
+
 - [TODO] Load project(s) and soundfile(s) from commandline argument.
+
+- [TODO] Replace string literals with defines in XML saving/loading.
+
 - [TEST] Load patch from filesystem view
          Also retest loading other files from filesystem view.
 
@@ -26,6 +22,15 @@ Testing branch:
          Test filesystem view, viewing only sound files outside of project dir
          Test loading sound files by double clicking in filesystem view
 
+- [TEST] Modified konfytJackEngine timerEvent (refresh port connections) - TEST port connections refresh.
+
+
+- [DONE] Changed old wording in settings and database files.
+         NB: Affects backward compatibility with settings file.
+- [DONE] Projects save patches with .konfytpatch extension.
+- [DONE] Fixed settings file dialogs leak and Cancel bug.
+- [DONE] Port/bus connections tree auto update when Jack ports change.
+- [DONE] Implement warnings for bus/port connections/clients active.
 - [DONE] Detect sustain off as <64
 - [DONE] Add input and output midi channels to midifilter.
 - [DONE] In Jack process callback, ensure noteoffs etc. on patch change gets sent to
