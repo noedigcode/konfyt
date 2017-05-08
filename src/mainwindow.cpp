@@ -142,8 +142,6 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
             if (fileIsPatch(file)) {
                 // Load patch into current project and switch to patch
 
-                // TODO
-                userMessage("TODO: Load patch from argument into project.");
                 konfytPatch* pt = new konfytPatch();
                 if (pt->loadPatchFromFile(file)) {
                     addPatchToProject(pt);
@@ -158,8 +156,6 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
                 newPatchToProject();    // Create a new patch and add to current project.
                 setCurrentPatch(prj->getNumPatches()-1);
 
-                // TODO
-                userMessage("TODO: Add sfz from argument into new patch.");
                 addSfzToCurrentPatch(file);
                 // Rename patch
                 ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(file) );
@@ -173,6 +169,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
 
                 // TODO
                 userMessage("TODO: Locate soundfont in file browser and show its programs.");
+
                 // Rename patch
                 ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(file) );
                 on_lineEdit_PatchName_editingFinished();
@@ -4066,8 +4063,16 @@ void MainWindow::refreshFilesystemView()
 // Change filesystem view directory, storing current path for the 'back' functionality.
 void MainWindow::cdFilesystemView(QString newpath)
 {
+    QFileInfo info(newpath);
+    QString path;
+    if (info.isDir()) {
+        path = info.filePath();
+    } else {
+        path = info.dir().path();
+    }
+
     fsview_back.append(fsview_currentPath);
-    fsview_currentPath = newpath;
+    fsview_currentPath = path;
     refreshFilesystemView();
 }
 
@@ -4120,8 +4125,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
 /* Filesystem view: one up button clicked. */
 void MainWindow::on_toolButton_filesystem_up_clicked()
 {
-    QFileInfo info(this->fsview_currentPath);
-    cdFilesystemView(info.path());
+    cdFilesystemView( fsview_currentPath );
 }
 
 /* Filesystem view: refresh button clicked. */
@@ -4149,12 +4153,7 @@ void MainWindow::on_toolButton_filesystem_back_clicked()
 /* Filesystem view: Enter pressed in file path text box. */
 void MainWindow::on_lineEdit_filesystem_path_returnPressed()
 {
-    QFileInfo info(ui->lineEdit_filesystem_path->text());
-    if (info.isDir()) {
-        cdFilesystemView(info.filePath());
-    } else {
-        cdFilesystemView( info.dir().path() );
-    }
+    cdFilesystemView( ui->lineEdit_filesystem_path->text() );
 }
 
 
