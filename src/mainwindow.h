@@ -191,7 +191,7 @@ public:
     void buildSfzTree(QTreeWidgetItem* twi, konfytDbTreeItem* item);
     void buildSfTree(QTreeWidgetItem* twi, konfytDbTreeItem* item);
 
-    konfytDatabase *db;
+    konfytDatabase db;
     bool saveDatabase();
     int returnSfontRequester;
     QList<konfytSoundfontProgram> programList; // List of programs currently displayed in program list view in library.
@@ -210,6 +210,7 @@ public:
     QStringList fsview_back;
     void refreshFilesystemView();
     void cdFilesystemView(QString newpath);
+    void selectItemInFilesystemView(QString path);
     QMap<QTreeWidgetItem*, QFileInfo> fsMap;
     QMenu fsViewMenu;
     QTreeWidgetItem* fsViewMenuItem;

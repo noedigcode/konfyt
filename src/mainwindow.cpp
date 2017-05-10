@@ -112,15 +112,42 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
 
 
     // ----------------------------------------------------
-    // Set up gui stuff that needs to happen before loading project
+    // Set up gui stuff that needs to happen before loading project or commandline arguments
     // ----------------------------------------------------
 
     // Triggers Page (must happen before setting project)
     initTriggers();
 
+    // Library filesystem view
+    this->fsview_currentPath = QDir::homePath();
+    refreshFilesystemView();
+    ui->tabWidget_library->setCurrentIndex(LIBRARY_TAB_LIBRARY);
 
     // ----------------------------------------------------
-    // Projects
+    // Initialise soundfont database
+    // ----------------------------------------------------
+    connect(&db, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
+    connect(&db, SIGNAL(scanDirs_finished()), this, SLOT(database_scanDirsFinished()));
+    connect(&db, SIGNAL(scanDirs_status(QString)), this, SLOT(database_scanDirsStatus(QString)));
+    connect(&db, SIGNAL(returnSfont_finished(konfytSoundfont*)), this, SLOT(database_returnSfont(konfytSoundfont*)));
+    // Check if database file exists. Otherwise, scan directories.
+    if (db.loadDatabaseFromFile(settingsDir + "/" + DATABASE_FILE)) {
+        userMessage("Database loaded from file. Rescan to refresh.");
+        userMessage("Database contains:");
+        userMessage("   " + n2s(db.getNumSfonts()) + " soundfonts.");
+        userMessage("   " + n2s(db.getNumPatches()) + " patches.");
+        userMessage("   " + n2s(db.getNumSfz()) + " sfz/gig samples.");
+    } else {
+        // Scan for soundfonts
+        userMessage("No database file found.");
+        userMessage("You can scan directories to create a database from Settings.");
+    }
+
+    fillTreeWithAll(); // Fill the tree widget with all the database entries
+
+
+    // ----------------------------------------------------
+    // Projects / commandline arguments
     // ----------------------------------------------------
 
     ui->tabWidget_Projects->clear();
@@ -150,6 +177,10 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
                     userMessage("Failed loading patch " + file);
                     delete pt;
                 }
+                // Locate in filesystem view
+                ui->tabWidget_library->setCurrentIndex(LIBRARY_TAB_FILESYSTEM);
+                cdFilesystemView(file);
+                selectItemInFilesystemView(file);
 
             } else if (fileIsSfzOrGig(file)) {
                 // Create new patch and load sfz into patch
@@ -161,14 +192,28 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
                 ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(file) );
                 on_lineEdit_PatchName_editingFinished();
 
+                // Locate in filesystem view
+                ui->tabWidget_library->setCurrentIndex(LIBRARY_TAB_FILESYSTEM);
+                cdFilesystemView(file);
+                selectItemInFilesystemView(file);
+
             } else if (fileIsSoundfont(file)) {
                 // Create new blank patch
                 newPatchToProject();    // Create a new patch and add to current project.
                 setCurrentPatch(prj->getNumPatches()-1);
                 // Locate soundfont in filebrowser, select it and show its programs
 
-                // TODO
-                userMessage("TODO: Locate soundfont in file browser and show its programs.");
+                // Locate in filesystem view
+                ui->tabWidget_library->setCurrentIndex(LIBRARY_TAB_FILESYSTEM);
+                cdFilesystemView(file);
+                selectItemInFilesystemView(file);
+                // Load from filesystem view
+                on_treeWidget_filesystem_itemDoubleClicked( ui->treeWidget_filesystem->currentItem(), 0 );
+                // Add first program to current patch
+                if (ui->listWidget_2->count()) {
+                    ui->listWidget_2->setCurrentRow(0);
+                    addProgramToCurrentPatch( library_getSelectedProgram() );
+                }
 
                 // Rename patch
                 ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(file) );
@@ -200,28 +245,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     }
 
 
-    // ----------------------------------------------------
-    // Initialise soundfont database
-    // ----------------------------------------------------
-    db = new konfytDatabase();
-    connect(db, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
-    connect(db, SIGNAL(scanDirs_finished()), this, SLOT(database_scanDirsFinished()));
-    connect(db, SIGNAL(scanDirs_status(QString)), this, SLOT(database_scanDirsStatus(QString)));
-    connect(db, SIGNAL(returnSfont_finished(konfytSoundfont*)), this, SLOT(database_returnSfont(konfytSoundfont*)));
-    // Check if database file exists. Otherwise, scan directories.
-    if (db->loadDatabaseFromFile(settingsDir + "/" + DATABASE_FILE)) {
-        userMessage("Database loaded from file. Rescan to refresh.");
-        userMessage("Database contains:");
-        userMessage("   " + n2s(db->getNumSfonts()) + " soundfonts.");
-        userMessage("   " + n2s(db->getNumPatches()) + " patches.");
-        userMessage("   " + n2s(db->getNumSfz()) + " sfz/gig samples.");
-    } else {
-        // Scan for soundfonts
-        userMessage("No database file found.");
-        userMessage("You can scan directories to create a database from Settings.");
-    }
 
-    fillTreeWithAll(); // Fill the tree widget with all the database entries
 
 
     // ----------------------------------------------------
@@ -230,11 +254,6 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
 
     // Global Transpose
     ui->spinBox_MasterIn_Transpose->setValue(0);
-
-    // Library filesystem view
-    this->fsview_currentPath = QDir::homePath();
-    refreshFilesystemView();
-    ui->tabWidget_library->setCurrentIndex(LIBRARY_TAB_LIBRARY);
 
     // Add-patch button menu
     QMenu* addPatchMenu = new QMenu();
@@ -1752,18 +1771,18 @@ void MainWindow::fillTreeWithAll()
 
     // Create parent soundfonts tree item, with soundfont children
     library_sfRoot = new QTreeWidgetItem();
-    library_sfRoot->setText(0,QString(TREE_ITEM_SOUNDFONTS) + " [" + n2s(db->getNumSfonts()) + "]");
+    library_sfRoot->setText(0,QString(TREE_ITEM_SOUNDFONTS) + " [" + n2s(db.getNumSfonts()) + "]");
     library_sfFolders.clear();
     library_sfMap.clear();
-    db->buildSfontTree();
-    buildSfTree(library_sfRoot, db->sfontTree->root);
+    db.buildSfontTree();
+    buildSfTree(library_sfRoot, db.sfontTree->root);
     library_sfRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
     // Create parent patches tree item, with patch children
     library_patchRoot = new QTreeWidgetItem();
-    library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db->getNumPatches()) + "]");
+    library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db.getNumPatches()) + "]");
     library_patchRoot->setIcon(0, QIcon(":/icons/folder.png"));
-    QList<konfytPatch> pl = db->getPatchList();
+    QList<konfytPatch> pl = db.getPatchList();
     for (int i=0; i<pl.count(); i++) {
         konfytPatch pt = pl.at(i);
 
@@ -1778,11 +1797,11 @@ void MainWindow::fillTreeWithAll()
 
     // Create parent sfz item, with one child indicating the number of items
     library_sfzRoot = new QTreeWidgetItem();
-    library_sfzRoot->setText(0,QString(TREE_ITEM_SFZ) + " [" + n2s(db->getNumSfz()) + "]");
+    library_sfzRoot->setText(0,QString(TREE_ITEM_SFZ) + " [" + n2s(db.getNumSfz()) + "]");
     library_sfzFolders.clear();
     library_sfzMap.clear();
-    db->buildSfzTree();
-    buildSfzTree(library_sfzRoot, db->sfzTree->root);
+    db.buildSfzTree();
+    buildSfzTree(library_sfzRoot, db.sfzTree->root);
     library_sfzRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
     // Add items to tree
@@ -1868,7 +1887,7 @@ void MainWindow::buildSfTree(QTreeWidgetItem *twi, konfytDbTreeItem *item)
 void MainWindow::fillTreeWithSearch(QString search)
 {
     searchMode = true; // Controls the behaviour when the user selects a tree item
-    db->searchProgram(search);
+    db.searchProgram(search);
 
     ui->treeWidget->clear();
 
@@ -1878,21 +1897,21 @@ void MainWindow::fillTreeWithSearch(QString search)
     // Soundfonts
 
     library_sfRoot = new QTreeWidgetItem();
-    library_sfRoot->setText(0,QString(TREE_ITEM_SOUNDFONTS) + " [" + n2s(db->getNumSfontsResults()) + " / " + n2s(db->getNumSfontProgramResults()) + "]");
+    library_sfRoot->setText(0,QString(TREE_ITEM_SOUNDFONTS) + " [" + n2s(db.getNumSfontsResults()) + " / " + n2s(db.getNumSfontProgramResults()) + "]");
 
     library_sfFolders.clear();
     library_sfMap.clear();
-    db->buildSfontTree_results();
-    buildSfTree(library_sfRoot, db->sfontTree_results->root);
+    db.buildSfontTree_results();
+    buildSfTree(library_sfRoot, db.sfontTree_results->root);
     library_sfRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
     // Patches
 
     library_patchRoot = new QTreeWidgetItem();
-    library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db->getNumPatchesResults()) + "]");
+    library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db.getNumPatchesResults()) + "]");
     library_patchRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
-    QList<konfytPatch> pl = db->getResults_patches();
+    QList<konfytPatch> pl = db.getResults_patches();
 
     for (int i=0; i<pl.count(); i++) {
         konfytPatch pt = pl.at(i);
@@ -1907,12 +1926,12 @@ void MainWindow::fillTreeWithSearch(QString search)
     // SFZ
 
     library_sfzRoot = new QTreeWidgetItem();
-    library_sfzRoot->setText(0,QString(TREE_ITEM_SFZ) + " [" + n2s(db->getNumSfzResults()) + "]");
+    library_sfzRoot->setText(0,QString(TREE_ITEM_SFZ) + " [" + n2s(db.getNumSfzResults()) + "]");
     library_sfzFolders.clear();
     library_sfzMap.clear();
-    db->buildSfzTree_results();
+    db.buildSfzTree_results();
 
-    buildSfzTree(library_sfzRoot, db->sfzTree_results->root);
+    buildSfzTree(library_sfzRoot, db.sfzTree_results->root);
     library_sfzRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
     // Add items to tree
@@ -2060,7 +2079,7 @@ void MainWindow::on_treeWidget_currentItemChanged(QTreeWidgetItem *current, QTre
         if (searchMode) {
             // Fill programList variable with program results of selected soundfont
             konfytSoundfont* sf = library_getSelectedSfont();
-            programList = db->getResults_sfontPrograms(sf);
+            programList = db.getResults_sfontPrograms(sf);
             // TODO: Track sf, might be a memory leak.
         } else {
             // Fill programList variable with all programs of selected soundfont
@@ -2331,7 +2350,7 @@ bool MainWindow::savePatchToLibrary(konfytPatch *patch)
     patchName = patchesDir + "/" + patchName;
     if (patch->savePatchToFile(patchName)) {
         userMessage("Patch saved as " + patchName);
-        db->addPatch(patchName);
+        db.addPatch(patchName);
         // Refresh tree view if not in searchmode
         if (!searchMode) {
             fillTreeWithAll();
@@ -2525,7 +2544,7 @@ void MainWindow::scanForDatabase()
     userMessage("Starting database scan.");
     showWaitingPage("Scanning database directories...");
     // Start scanning for directories.
-    db->scanDirs(soundfontsDir, sfzDir, patchesDir);
+    db.scanDirs(soundfontsDir, sfzDir, patchesDir);
     // When the finished signal is received, remove waiting screen.
     // See database_scanDirsFinished()
     // Periodic status info might be received in database_scanDirsStatus()
@@ -2534,9 +2553,9 @@ void MainWindow::scanForDatabase()
 void MainWindow::database_scanDirsFinished()
 {
     userMessage("Database scanning complete.");
-    userMessage("   Found " + n2s(db->getNumSfonts()) + " soundfonts.");
-    userMessage("   Found " + n2s(db->getNumSfz()) + " sfz/gig samples.");
-    userMessage("   Found " + n2s(db->getNumPatches()) + " patches.");
+    userMessage("   Found " + n2s(db.getNumSfonts()) + " soundfonts.");
+    userMessage("   Found " + n2s(db.getNumSfz()) + " sfz/gig samples.");
+    userMessage("   Found " + n2s(db.getNumPatches()) + " patches.");
 
     // Save to database file
     saveDatabase();
@@ -2549,7 +2568,7 @@ void MainWindow::database_scanDirsFinished()
 bool MainWindow::saveDatabase()
 {
     // Save to database file
-    if (db->saveDatabaseToFile(settingsDir + "/" + DATABASE_FILE)) {
+    if (db.saveDatabaseToFile(settingsDir + "/" + DATABASE_FILE)) {
         userMessage("Saved database to file " + settingsDir + "/" + DATABASE_FILE);
         return true;
     } else {
@@ -2582,7 +2601,7 @@ void MainWindow::on_pushButtonSettings_RescanLibrary_clicked()
     ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_WAITING);
     applySettings();
 
-    db->clearDatabase();
+    db.clearDatabase();
     scanForDatabase();
 }
 
@@ -2592,7 +2611,7 @@ void MainWindow::on_pushButtonSettings_QuickRescanLibrary_clicked()
     startWaiter("Scanning database...");
     applySettings();
 
-    db->clearDatabase_exceptSoundfonts();
+    db.clearDatabase_exceptSoundfonts();
     scanForDatabase();
     // This will be done in the background and database_scanDirsFinished()
     // will be called when done.
@@ -4060,7 +4079,7 @@ void MainWindow::refreshFilesystemView()
 
 }
 
-// Change filesystem view directory, storing current path for the 'back' functionality.
+/* Change filesystem view directory, storing current path for the 'back' functionality. */
 void MainWindow::cdFilesystemView(QString newpath)
 {
     QFileInfo info(newpath);
@@ -4074,6 +4093,23 @@ void MainWindow::cdFilesystemView(QString newpath)
     fsview_back.append(fsview_currentPath);
     fsview_currentPath = path;
     refreshFilesystemView();
+}
+
+void MainWindow::selectItemInFilesystemView(QString path)
+{
+    QFileInfo info(path);
+    if (fsview_currentPath == info.path()) {
+        QList<QTreeWidgetItem*> l = fsMap.keys();
+        for (int i=0; i<l.count(); i++) {
+            userMessage("DEBUG item:           " + fsMap[l[i]].fileName());
+            userMessage("      want to select: " + info.fileName());
+            if (fsMap[l[i]].fileName() == info.fileName()) {
+                userMessage("     MATCH");
+                ui->treeWidget_filesystem->setCurrentItem(l[i]);
+                break;
+            }
+        }
+    }
 }
 
 
@@ -4095,7 +4131,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
         startWaiter("Loading soundfont...");
         // Request soundfont from database
         returnSfontRequester = returnSfontRequester_on_treeWidget_filesystem_itemDoubleClicked;
-        this->db->returnSfont(info.filePath());
+        this->db.returnSfont(info.filePath());
         // This might take a while. The result will be sent by signal to the
         // database_returnSfont() slot where we will continue.
         return;
@@ -4125,7 +4161,10 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
 /* Filesystem view: one up button clicked. */
 void MainWindow::on_toolButton_filesystem_up_clicked()
 {
-    cdFilesystemView( fsview_currentPath );
+    QString itemToSelect = fsview_currentPath;
+    QFileInfo info(fsview_currentPath);
+    cdFilesystemView( info.path() ); // info.path() gives parent directory because info is a dir.
+    selectItemInFilesystemView(itemToSelect);
 }
 
 /* Filesystem view: refresh button clicked. */
