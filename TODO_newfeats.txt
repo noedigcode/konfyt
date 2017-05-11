@@ -1,4 +1,4 @@
-konfyt TODO 2017-05-03:
+konfyt TODO 2017-05-10:
 
 - When more than one project open, running external programs in second project
   doesn't work.
@@ -7,24 +7,21 @@ konfyt TODO 2017-05-03:
 
 
 
-- [TODO] When switching project, e.g. during cmdline argument loading, ensure that the tab bar indicates this.
 
 - [TODO] Port/bus connections tree: when scrolled down and a checkbox is clicked, should not scroll back up.
 
-- [TODO] Load project(s) and soundfile(s) from commandline argument.
-- [TODO] FILESYSTEM VIEW: on up, back or loading file, select appropriate item in filesystem view.
-
 - [TODO] Replace string literals with defines in XML saving/loading.
 
+
+- [TEST] When switching project, e.g. during cmdline argument loading, ensure that the tab bar indicates this.
+- [TEST] Load project(s) and soundfile(s) from commandline argument.
+- [TEST] FILESYSTEM VIEW: on navigating up or loading file, select appropriate item in filesystem view.
 - [TEST] Load patch from filesystem view
          Also retest loading other files from filesystem view.
-
 - [TEST] Changed file detection with suffixes (patch, sfz, sf2, gig)
          Test filesystem view, viewing only sound files outside of project dir
          Test loading sound files by double clicking in filesystem view
-
 - [TEST] Modified konfytJackEngine timerEvent (refresh port connections) - TEST port connections refresh.
-
 - [TEST] Modified cdFilesystemView; Test all functionality that uses it:
          - enter pressed in address bar pointing to dir; pointing to file
          - navigating in file system view (dblclick, up, home, project dir, back)

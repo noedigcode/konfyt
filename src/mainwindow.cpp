@@ -1395,6 +1395,9 @@ void MainWindow::setCurrentProject(int i)
     // Indicate warnings to user
     updateGUIWarnings();
 
+    // Change project tab in GUI
+    ui->tabWidget_Projects->setCurrentIndex(currentProject);
+
     jack->pauseJackProcessing(false);
 
 }
@@ -2630,7 +2633,9 @@ void MainWindow::scanThreadFihishedSlot()
 void MainWindow::on_tabWidget_Projects_currentChanged(int index)
 {
     if (index >=0) {
-        setCurrentProject(index);
+        if (currentProject != index) {
+            setCurrentProject(index);
+        }
     }
 }
 
