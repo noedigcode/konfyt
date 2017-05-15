@@ -31,6 +31,56 @@
 
 #define DEFAULT_GAIN_FOR_NEW_LAYER 0.8
 
+#define XML_PATCH "sfpatch"
+#define XML_PATCH_NAME "name"
+#define XML_PATCH_NOTE "patchNote"
+
+#define XML_PATCH_SFLAYER "sfLayer"
+#define XML_PATCH_SFLAYER_FILENAME "soundfont_filename"
+#define XML_PATCH_SFLAYER_BANK "bank"
+#define XML_PATCH_SFLAYER_PROGRAM "program"
+#define XML_PATCH_SFLAYER_NAME "name"
+#define XML_PATCH_SFLAYER_GAIN "gain"
+#define XML_PATCH_SFLAYER_BUS "bus"
+#define XML_PATCH_SFLAYER_SOLO "solo"
+#define XML_PATCH_SFLAYER_MUTE "mute"
+
+#define XML_PATCH_SFZLAYER "sfzLayer"
+#define XML_PATCH_SFZLAYER_NAME "name"
+#define XML_PATCH_SFZLAYER_PATH "path"
+#define XML_PATCH_SFZLAYER_GAIN "gain"
+#define XML_PATCH_SFZLAYER_BUS "bus"
+#define XML_PATCH_SFZLAYER_SOLO "solo"
+#define XML_PATCH_SFZLAYER_MUTE "mute"
+
+#define XML_PATCH_MIDIOUT "midiOutputPortLayer"
+#define XML_PATCH_MIDIOUT_PORT "port"
+#define XML_PATCH_MIDIOUT_SOLO "solo"
+#define XML_PATCH_MIDIOUT_MUTE "mute"
+
+#define XML_PATCH_AUDIOIN "audioInPortLayer"
+#define XML_PATCH_AUDIOIN_NAME "name"
+#define XML_PATCH_AUDIOIN_PORT "port"
+#define XML_PATCH_AUDIOIN_GAIN "gain"
+#define XML_PATCH_AUDIOIN_BUS "bus"
+#define XML_PATCH_AUDIOIN_SOLO "solo"
+#define XML_PATCH_AUDIOIN_MUTE "mute"
+
+#define XML_MIDIFILTER "midiFilter"
+#define XML_MIDIFILTER_ZONE "zone"
+#define XML_MIDIFILTER_ZONE_LOWNOTE "lowNote"
+#define XML_MIDIFILTER_ZONE_HINOTE "highNote"
+#define XML_MIDIFILTER_ZONE_MULT "multiply"
+#define XML_MIDIFILTER_ZONE_ADD "add"
+#define XML_MIDIFILTER_ZONE_LOWVEL "lowVel"
+#define XML_MIDIFILTER_ZONE_HIVEL "highVel"
+#define XML_MIDIFILTER_PASSALLCC "passAllCC"
+#define XML_MIDIFILTER_PASSPB "passPitchbend"
+#define XML_MIDIFILTER_PASSPROG "passProg"
+#define XML_MIDIFILTER_CC "cc"
+#define XML_MIDIFILTER_INCHAN "inChan"
+#define XML_MIDIFILTER_OUTCHAN "outChan"
+
 
 class konfytPatch
 {

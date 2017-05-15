@@ -74,10 +74,10 @@ bool konfytPatch::savePatchToFile(QString filename)
 
     stream.writeComment("This is a Konfyt patch file.");
 
-    stream.writeStartElement("sfpatch"); // change this to just patch, here and when loading
-    stream.writeAttribute("name",this->patchName);
+    stream.writeStartElement(XML_PATCH); // change this to just patch, here and when loading
+    stream.writeAttribute(XML_PATCH_NAME,this->patchName);
 
-    stream.writeTextElement("patchNote", this->getNote());
+    stream.writeTextElement(XML_PATCH_NOTE, this->getNote());
 
     // Step through all the layers. It's important to save them in the correct order.
     for (int i=0; i<this->layerList.count(); i++) {
@@ -89,17 +89,17 @@ bool konfytPatch::savePatchToFile(QString filename)
 
             layerSoundfontStruct sfLayer = g.sfData;
 
-            stream.writeStartElement("sfLayer");
+            stream.writeStartElement(XML_PATCH_SFLAYER);
             // Layer properties
             konfytSoundfontProgram p = sfLayer.program;
-            stream.writeTextElement("soundfont_filename", p.parent_soundfont);
-            stream.writeTextElement("bank", n2s(p.bank));
-            stream.writeTextElement("program", n2s(p.program));
-            stream.writeTextElement("name", p.name);
-            stream.writeTextElement("gain", n2s( sfLayer.gain ));
-            stream.writeTextElement("bus", n2s(g.busIdInProject));
-            stream.writeTextElement("solo", bool_to_10_string(sfLayer.solo));
-            stream.writeTextElement("mute", bool_to_10_string(sfLayer.mute));
+            stream.writeTextElement(XML_PATCH_SFLAYER_FILENAME, p.parent_soundfont);
+            stream.writeTextElement(XML_PATCH_SFLAYER_BANK, n2s(p.bank));
+            stream.writeTextElement(XML_PATCH_SFLAYER_PROGRAM, n2s(p.program));
+            stream.writeTextElement(XML_PATCH_SFLAYER_NAME, p.name);
+            stream.writeTextElement(XML_PATCH_SFLAYER_GAIN, n2s( sfLayer.gain ));
+            stream.writeTextElement(XML_PATCH_SFLAYER_BUS, n2s(g.busIdInProject));
+            stream.writeTextElement(XML_PATCH_SFLAYER_SOLO, bool_to_10_string(sfLayer.solo));
+            stream.writeTextElement(XML_PATCH_SFLAYER_MUTE, bool_to_10_string(sfLayer.mute));
 
             // Midi filter
             konfytMidiFilter f = sfLayer.filter;
@@ -115,13 +115,13 @@ bool konfytPatch::savePatchToFile(QString filename)
 
             layerCarlaPluginStruct p = g.carlaPluginData;
 
-            stream.writeStartElement("sfzLayer");
-            stream.writeTextElement("name", p.name);
-            stream.writeTextElement("path", p.path);
-            stream.writeTextElement("gain", n2s(p.gain));
-            stream.writeTextElement("bus", n2s(g.busIdInProject) );
-            stream.writeTextElement("solo", bool_to_10_string(p.solo));
-            stream.writeTextElement("mute", bool_to_10_string(p.mute));
+            stream.writeStartElement(XML_PATCH_SFZLAYER);
+            stream.writeTextElement(XML_PATCH_SFZLAYER_NAME, p.name);
+            stream.writeTextElement(XML_PATCH_SFZLAYER_PATH, p.path);
+            stream.writeTextElement(XML_PATCH_SFZLAYER_GAIN, n2s(p.gain));
+            stream.writeTextElement(XML_PATCH_SFZLAYER_BUS, n2s(g.busIdInProject) );
+            stream.writeTextElement(XML_PATCH_SFZLAYER_SOLO, bool_to_10_string(p.solo));
+            stream.writeTextElement(XML_PATCH_SFZLAYER_MUTE, bool_to_10_string(p.mute));
 
             // Midi filter
             konfytMidiFilter f = p.midiFilter;
@@ -137,10 +137,10 @@ bool konfytPatch::savePatchToFile(QString filename)
 
             layerMidiOutStruct m = g.midiOutputPortData;
 
-            stream.writeStartElement("midiOutputPortLayer");
-            stream.writeTextElement("port", n2s( m.portIdInProject ));
-            stream.writeTextElement("solo", bool_to_10_string(m.solo));
-            stream.writeTextElement("mute", bool_to_10_string(m.mute));
+            stream.writeStartElement(XML_PATCH_MIDIOUT);
+            stream.writeTextElement(XML_PATCH_MIDIOUT_PORT, n2s( m.portIdInProject ));
+            stream.writeTextElement(XML_PATCH_MIDIOUT_SOLO, bool_to_10_string(m.solo));
+            stream.writeTextElement(XML_PATCH_MIDIOUT_MUTE, bool_to_10_string(m.mute));
 
             // Midi filter
             konfytMidiFilter f = m.filter;
@@ -154,14 +154,14 @@ bool konfytPatch::savePatchToFile(QString filename)
 
             layerAudioInStruct a = g.audioInPortData;
 
-            stream.writeStartElement("audioInPortLayer");
+            stream.writeStartElement(XML_PATCH_AUDIOIN);
 
-            stream.writeTextElement("name", a.name);
-            stream.writeTextElement("port", n2s(a.portIdInProject));
-            stream.writeTextElement("gain", n2s(a.gain));
-            stream.writeTextElement("bus", n2s(g.busIdInProject));
-            stream.writeTextElement("solo", bool_to_10_string(a.solo));
-            stream.writeTextElement("mute", bool_to_10_string(a.mute));
+            stream.writeTextElement(XML_PATCH_AUDIOIN_NAME, a.name);
+            stream.writeTextElement(XML_PATCH_AUDIOIN_PORT, n2s(a.portIdInProject));
+            stream.writeTextElement(XML_PATCH_AUDIOIN_GAIN, n2s(a.gain));
+            stream.writeTextElement(XML_PATCH_AUDIOIN_BUS, n2s(g.busIdInProject));
+            stream.writeTextElement(XML_PATCH_AUDIOIN_SOLO, bool_to_10_string(a.solo));
+            stream.writeTextElement(XML_PATCH_AUDIOIN_MUTE, bool_to_10_string(a.mute));
 
             stream.writeEndElement();
         }
@@ -178,40 +178,40 @@ bool konfytPatch::savePatchToFile(QString filename)
 
 void konfytPatch::writeMidiFilterToXMLStream(QXmlStreamWriter *stream, konfytMidiFilter f)
 {
-    stream->writeStartElement("midiFilter");
+    stream->writeStartElement(XML_MIDIFILTER);
 
     // Note / velocity zone
     konfytMidiFilterZone z = f.zone;
-    stream->writeStartElement("zone");
-    stream->writeTextElement("lowNote", n2s(z.lowNote));
-    stream->writeTextElement("highNote", n2s(z.highNote));
-    stream->writeTextElement("multiply", n2s(z.multiply));
-    stream->writeTextElement("add", n2s(z.add));
-    stream->writeTextElement("lowVel", n2s(z.lowVel));
-    stream->writeTextElement("highVel", n2s(z.highVel));
+    stream->writeStartElement(XML_MIDIFILTER_ZONE);
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_LOWNOTE, n2s(z.lowNote));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_HINOTE, n2s(z.highNote));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_MULT, n2s(z.multiply));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_ADD, n2s(z.add));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_LOWVEL, n2s(z.lowVel));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_HIVEL, n2s(z.highVel));
     stream->writeEndElement();
 
     // passAllCC
     QString tempBool;
     if (f.passAllCC) { tempBool = "1"; } else { tempBool = "0"; }
-    stream->writeTextElement("passAllCC", tempBool);
+    stream->writeTextElement(XML_MIDIFILTER_PASSALLCC, tempBool);
 
     // passPitchbend
     if (f.passPitchbend) { tempBool = "1"; } else { tempBool = "0"; }
-    stream->writeTextElement("passPitchbend", tempBool);
+    stream->writeTextElement(XML_MIDIFILTER_PASSPB, tempBool);
 
     // passProg
     if (f.passProg) { tempBool = "1"; } else { tempBool = "0"; }
-    stream->writeTextElement("passProg", tempBool);
+    stream->writeTextElement(XML_MIDIFILTER_PASSPROG, tempBool);
 
     // CC list
     for (int i=0; i<f.passCC.count(); i++) {
-        stream->writeTextElement("cc", n2s(f.passCC.at(i)));
+        stream->writeTextElement(XML_MIDIFILTER_CC, n2s(f.passCC.at(i)));
     }
 
     // Input/output channels
-    stream->writeTextElement("inChan", n2s(f.inChan));
-    stream->writeTextElement("outChan", n2s(f.outChan));
+    stream->writeTextElement(XML_MIDIFILTER_INCHAN, n2s(f.inChan));
+    stream->writeTextElement(XML_MIDIFILTER_OUTCHAN, n2s(f.outChan));
 
     stream->writeEndElement(); // midiFilter
 }
@@ -222,37 +222,37 @@ konfytMidiFilter konfytPatch::readMidiFilterFromXMLStream(QXmlStreamReader* r)
     f.passCC.clear();
 
     while (r->readNextStartElement()) { // Filter properties
-        if (r->name() == "zone") {
+        if (r->name() == XML_MIDIFILTER_ZONE) {
             konfytMidiFilterZone z;
             while (r->readNextStartElement()) { // zone properties
-                if (r->name() == "lowNote") {
+                if (r->name() == XML_MIDIFILTER_ZONE_LOWNOTE) {
                     z.lowNote = r->readElementText().toInt();
-                } else if (r->name() == "highNote") {
+                } else if (r->name() == XML_MIDIFILTER_ZONE_HINOTE) {
                     z.highNote = r->readElementText().toInt();
-                } else if (r->name() == "multiply") {
+                } else if (r->name() == XML_MIDIFILTER_ZONE_MULT) {
                     z.multiply = r->readElementText().toInt();
-                } else if (r->name() == "add") {
+                } else if (r->name() == XML_MIDIFILTER_ZONE_ADD) {
                     z.add = r->readElementText().toInt();
-                } else if (r->name() ==  "lowVel") {
+                } else if (r->name() ==  XML_MIDIFILTER_ZONE_LOWVEL) {
                     z.lowVel = r->readElementText().toInt();
-                } else if (r->name() == "highVel") {
+                } else if (r->name() == XML_MIDIFILTER_ZONE_HIVEL) {
                     z.highVel = r->readElementText().toInt();
                 } else {
                     r->skipCurrentElement();
                 }
             } // end zone while
             f.setZone(z);
-        } else if (r->name() == "passAllCC") {
+        } else if (r->name() == XML_MIDIFILTER_PASSALLCC) {
             f.passAllCC = (r->readElementText() == "1");
-        } else if (r->name() == "passPitchbend") {
+        } else if (r->name() == XML_MIDIFILTER_PASSPB) {
             f.passPitchbend = (r->readElementText() == "1");
-        } else if (r->name() == "passProg") {
+        } else if (r->name() == XML_MIDIFILTER_PASSPROG) {
             f.passProg = (r->readElementText() == "1");
-        } else if (r->name() == "cc") {
+        } else if (r->name() == XML_MIDIFILTER_CC) {
             f.passCC.append(r->readElementText().toInt());
-        } else if (r->name() == "inChan") {
+        } else if (r->name() == XML_MIDIFILTER_INCHAN) {
             f.inChan = r->readElementText().toInt();
-        } else if (r->name() == "outChan") {
+        } else if (r->name() == XML_MIDIFILTER_OUTCHAN) {
             f.outChan = r->readElementText().toInt();
         } else {
             r->skipCurrentElement();
@@ -299,34 +299,34 @@ bool konfytPatch::loadPatchFromFile(QString filename)
 
         while (r.readNextStartElement()) {
 
-            if (r.name() == "patchNote") {
+            if (r.name() == XML_PATCH_NOTE) {
 
                 this->setNote(r.readElementText());
 
-            } else if (r.name() == "sfLayer") { // soundfont layer
+            } else if (r.name() == XML_PATCH_SFLAYER) { // soundfont layer
 
                 layerSoundfontStruct sfLayer = layerSoundfontStruct();
                 int bus = 0;
 
                 while (r.readNextStartElement()) { // layer properties
 
-                    if (r.name() == "soundfont_filename") {
+                    if (r.name() == XML_PATCH_SFLAYER_FILENAME) {
                         sfLayer.program.parent_soundfont = r.readElementText();
-                    } else if (r.name() == "bank") {
+                    } else if (r.name() == XML_PATCH_SFLAYER_BANK) {
                         sfLayer.program.bank = r.readElementText().toInt();
-                    } else if (r.name() == "program") {
+                    } else if (r.name() == XML_PATCH_SFLAYER_PROGRAM) {
                         sfLayer.program.program = r.readElementText().toInt();
-                    } else if (r.name() == "name") {
+                    } else if (r.name() == XML_PATCH_SFLAYER_NAME) {
                         sfLayer.program.name = r.readElementText();
-                    } else if (r.name() == "gain") {
+                    } else if (r.name() == XML_PATCH_SFLAYER_GAIN) {
                         sfLayer.gain = r.readElementText().toFloat();
-                    } else if (r.name() == "solo") {
+                    } else if (r.name() == XML_PATCH_SFLAYER_SOLO) {
                         sfLayer.solo = (r.readElementText() == "1");
-                    } else if (r.name() == "mute") {
+                    } else if (r.name() == XML_PATCH_SFLAYER_MUTE) {
                         sfLayer.mute = (r.readElementText() == "1");
-                    } else if (r.name() == "midiFilter") {
+                    } else if (r.name() == XML_MIDIFILTER) {
                         sfLayer.filter = readMidiFilterFromXMLStream(&r);
-                    } else if (r.name() == "bus") {
+                    } else if (r.name() == XML_PATCH_SFLAYER_BUS) {
                         bus = r.readElementText().toInt();
                     } else {
                         userMessage("konfytPatch::loadPatchFromFile: "
@@ -340,26 +340,26 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                 this->setLayerBus(&newLayer, bus);
 
 
-            } else if (r.name() == "sfzLayer") { // SFZ Layer
+            } else if (r.name() == XML_PATCH_SFZLAYER) { // SFZ Layer
 
                 layerCarlaPluginStruct p = layerCarlaPluginStruct();
                 int bus = 0;
 
                 while (r.readNextStartElement()) {
 
-                    if (r.name() == "name") {
+                    if (r.name() == XML_PATCH_SFZLAYER_NAME) {
                         p.name = r.readElementText();
-                    } else if (r.name() == "path") {
+                    } else if (r.name() == XML_PATCH_SFZLAYER_PATH) {
                         p.path = r.readElementText();
-                    } else if (r.name() == "gain") {
+                    } else if (r.name() == XML_PATCH_SFZLAYER_GAIN) {
                         p.gain = r.readElementText().toFloat();
-                    } else if (r.name() == "bus") {
+                    } else if (r.name() == XML_PATCH_SFZLAYER_BUS) {
                         bus = r.readElementText().toInt();
-                    } else if (r.name() == "solo") {
+                    } else if (r.name() == XML_PATCH_SFZLAYER_SOLO) {
                         p.solo = (r.readElementText() == "1");
-                    } else if (r.name() == "mute") {
+                    } else if (r.name() == XML_PATCH_SFZLAYER_MUTE) {
                         p.mute = (r.readElementText() == "1");
-                    } else if (r.name() == "midiFilter") {
+                    } else if (r.name() == XML_MIDIFILTER) {
                         p.midiFilter = readMidiFilterFromXMLStream(&r);
                     } else {
                         userMessage("konfytPatch::loadPatchFromFile: "
@@ -375,19 +375,19 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                 this->setLayerBus(&newLayer, bus);
 
 
-            } else if (r.name() == "midiOutputPortLayer") {
+            } else if (r.name() == XML_PATCH_MIDIOUT) {
 
                 konfytMidiFilter f;
                 layerMidiOutStruct mp;
 
                 while (r.readNextStartElement()) { // port
-                    if (r.name() == "port") {
+                    if (r.name() == XML_PATCH_MIDIOUT_PORT) {
                         mp.portIdInProject = r.readElementText().toInt();
-                    } else if (r.name() == "solo") {
+                    } else if (r.name() == XML_PATCH_MIDIOUT_SOLO) {
                         mp.solo = (r.readElementText() == "1");
-                    } else if (r.name() == "mute") {
+                    } else if (r.name() == XML_PATCH_MIDIOUT_MUTE) {
                         mp.mute = (r.readElementText() == "1");
-                    } else if (r.name() == "midiFilter") {
+                    } else if (r.name() == XML_MIDIFILTER) {
                         mp.filter = readMidiFilterFromXMLStream(&r);
                     } else {
                         userMessage("konfytPatch::loadPatchFromFile: "
@@ -399,18 +399,18 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                 // Add new midi port
                 this->addMidiOutputPort(mp);
 
-            } else if (r.name() == "audioInPortLayer") {
+            } else if (r.name() == XML_PATCH_AUDIOIN) {
 
                 layerAudioInStruct a;
                 int bus = 0;
 
                 while (r.readNextStartElement()) {
-                    if (r.name() == "name") { a.name = r.readElementText(); }
-                    else if (r.name() == "port") { a.portIdInProject = r.readElementText().toInt(); }
-                    else if (r.name() == "gain") { a.gain = r.readElementText().toFloat(); }
-                    else if (r.name() == "bus") { bus = r.readElementText().toInt(); }
-                    else if (r.name() == "solo") { a.solo = (r.readElementText() == "1"); }
-                    else if (r.name() == "mute") { a.mute = (r.readElementText() == "1"); }
+                    if (r.name() == XML_PATCH_AUDIOIN_NAME) { a.name = r.readElementText(); }
+                    else if (r.name() == XML_PATCH_AUDIOIN_PORT) { a.portIdInProject = r.readElementText().toInt(); }
+                    else if (r.name() == XML_PATCH_AUDIOIN_GAIN) { a.gain = r.readElementText().toFloat(); }
+                    else if (r.name() == XML_PATCH_AUDIOIN_BUS) { bus = r.readElementText().toInt(); }
+                    else if (r.name() == XML_PATCH_AUDIOIN_SOLO) { a.solo = (r.readElementText() == "1"); }
+                    else if (r.name() == XML_PATCH_AUDIOIN_MUTE) { a.mute = (r.readElementText() == "1"); }
                     else {
                         userMessage("konfytPatch::loadPatchFromFile: "
                                     "Unrecognized audioInPortLayer element: " + r.name().toString() );
