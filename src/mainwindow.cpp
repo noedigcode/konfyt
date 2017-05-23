@@ -34,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // Initialise variables
 
     app = application;
+    currentProject = -1;
     panicState = false;
     masterPatch = NULL;
     previewPatch = NULL;
@@ -422,7 +423,8 @@ void MainWindow::jackXrun()
 void MainWindow::jackPortRegisterOrConnectCallback()
 {
     // Refresh ports/connections tree
-    gui_updateConnectionsTree();
+    //gui_updateConnectionsTree(); // Disabled for now to prevent connections list from scrolling to top
+                                   // when user ticks checkbox; TODO Fix
 
     // Update warnings section
     updateGUIWarnings();
@@ -1245,6 +1247,8 @@ void MainWindow::showTriggersPage()
 
 void MainWindow::setCurrentProject(int i)
 {
+    if (currentProject == i) { return; }
+
     // First, disconnect signals from current project.
     konfytProject* oldprj = getCurrentProject();
     if (oldprj != NULL) {
@@ -1499,7 +1503,6 @@ konfytProject* MainWindow::getCurrentProject()
 {
     if (projectList.count()) {
         if ( (currentProject<0) || (currentProject >= projectList.count())) {
-            userMessage("Invalid currentProject index.");
             return NULL;
         } else {
             return projectList.at(currentProject);
@@ -4106,10 +4109,7 @@ void MainWindow::selectItemInFilesystemView(QString path)
     if (fsview_currentPath == info.path()) {
         QList<QTreeWidgetItem*> l = fsMap.keys();
         for (int i=0; i<l.count(); i++) {
-            userMessage("DEBUG item:           " + fsMap[l[i]].fileName());
-            userMessage("      want to select: " + info.fileName());
             if (fsMap[l[i]].fileName() == info.fileName()) {
-                userMessage("     MATCH");
                 ui->treeWidget_filesystem->setCurrentItem(l[i]);
                 break;
             }
