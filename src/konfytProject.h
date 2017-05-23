@@ -22,12 +22,12 @@
 #ifndef KONFYG_PROJECT_H
 #define KONFYG_PROJECT_H
 
+#include <QDir>
+#include <QFile>
 #include <QObject>
+#include <QStringList>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
-#include <QFile>
-#include <QDir>
-#include <QStringList>
 
 #include "konfytPatch.h"
 #include "konfytProcess.h"
@@ -37,6 +37,48 @@
 
 #define PROJECT_FILENAME_EXTENSION ".konfytproject"
 #define PROJECT_PATCH_DIR "patches"
+
+#define XML_PRJ "konfytProject"
+#define XML_PRJ_NAME "name"
+#define XML_PRJ_PATCH "patch"
+#define XML_PRJ_PATCH_FILENAME "filename"
+#define XML_PRJ_MIDI_IN_AUTOCON_LIST "midiAutoConnectList"
+#define XML_PRJ_MIDI_IN_AUTOCON_LIST_PORT "port"
+#define XML_PRJ_MIDI_OUT_PORTLIST "midiOutPortList"
+#define XML_PRJ_MIDI_OUT_PORT "port"
+#define XML_PRJ_MIDI_OUT_PORT_ID "portId"
+#define XML_PRJ_MIDI_OUT_PORT_NAME "portName"
+#define XML_PRJ_MIDI_OUT_PORT_CLIENT "client"
+#define XML_PRJ_BUSLIST "audioBusList"
+#define XML_PRJ_BUS "bus"
+#define XML_PRJ_BUS_ID "busId"
+#define XML_PRJ_BUS_NAME "busName"
+#define XML_PRJ_BUS_LGAIN "leftGain"
+#define XML_PRJ_BUS_RGAIN "rightGain"
+#define XML_PRJ_BUS_LCLIENT "leftClient"
+#define XML_PRJ_BUS_RCLIENT "rightClient"
+#define XML_PRJ_AUDIOINLIST "audioInputPortList"
+#define XML_PRJ_AUDIOIN_PORT "port"
+#define XML_PRJ_AUDIOIN_PORT_ID "portId"
+#define XML_PRJ_AUDIOIN_PORT_NAME "portName"
+#define XML_PRJ_AUDIOIN_PORT_LGAIN "leftGain"
+#define XML_PRJ_AUDIOIN_PORT_RGAIN "rightGain"
+#define XML_PRJ_AUDIOIN_PORT_BUS "destinationBus"
+#define XML_PRJ_AUDIOIN_PORT_LCLIENT "leftClient"
+#define XML_PRJ_AUDIOIN_PORT_RCLIENT "rightClient"
+#define XML_PRJ_PROCESSLIST "processList"
+#define XML_PRJ_PROCESS "process"
+#define XML_PRJ_PROCESS_APPNAME "appname"
+#define XML_PRJ_PROCESS_DIR "dir" // TODO: NOT USED
+#define XML_PRJ_PROCESS_ARG "argument" // TODO: NOT USED
+#define XML_PRJ_TRIGGERLIST "triggerList"
+#define XML_PRJ_TRIGGER "trigger"
+#define XML_PRJ_TRIGGER_ACTIONTEXT "actionText"
+#define XML_PRJ_TRIGGER_TYPE "type"
+#define XML_PRJ_TRIGGER_CHAN "channel"
+#define XML_PRJ_TRIGGER_DATA1 "data1"
+#define XML_PRJ_TRIGGER_BANKMSB "bankMSB"
+#define XML_PRJ_TRIGGER_BANKLSB "bankLSB"
 
 struct prjAudioBus {
     QString busName;
