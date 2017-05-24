@@ -113,6 +113,12 @@ int konfytCarlaEngine::addSFZ(QString path)
 
     bool returnValue;
     userMessage("Loading sfz: " + pluginData.path + ", " + pluginData.name);
+    PluginType carlaPluginType;
+    if (path.right(3).toLower() == "gig") {
+        carlaPluginType = PLUGIN_GIG;
+    } else {
+        carlaPluginType = PLUGIN_SFZ;
+    }
     #if CARLA_VERSION_HEX < 0x01095
     // Old carla used PLUGIN_FILE_SFZ below.
     returnValue = carla_add_plugin(BINARY_NATIVE, PLUGIN_FILE_SFZ,pluginData.path.toLocal8Bit(),
@@ -124,7 +130,7 @@ int konfytCarlaEngine::addSFZ(QString path)
     #else
     // 2015-03-28 Updated to Carla 1.9.6 (2.0-beta4). carla_add_plugin now has an additional parameter.
     // 2017-01-06 Tested with Carla 1.9.7 (2.0-beta5) (0x01097) as well.
-    returnValue = carla_add_plugin(BINARY_NATIVE, PLUGIN_SFZ,pluginData.path.toLocal8Bit(),
+    returnValue = carla_add_plugin(BINARY_NATIVE, carlaPluginType,pluginData.path.toLocal8Bit(),
                                       pluginData.name.toLocal8Bit(),"sfz",0,NULL,0);
     #endif
 
