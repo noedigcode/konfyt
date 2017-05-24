@@ -8,9 +8,10 @@ konfyt TODO 2017-05-10:
 
 
 
-- [TODO] Port/bus connections tree: when scrolled down and a checkbox is clicked, should not scroll back up.
 
 
+- [TEST] Confirm that SFZ loading and playing works with new Carla updates.
+- [TEST] .gig loading now works.
 - [TEST] When switching project, e.g. during cmdline argument loading, ensure that the tab bar indicates this.
 - [TEST] Load project(s) and soundfile(s) from commandline argument.
 - [TEST] FILESYSTEM VIEW: on navigating up or loading file, select appropriate item in filesystem view.
@@ -25,6 +26,7 @@ konfyt TODO 2017-05-10:
          - navigating in file system view (dblclick, up, home, project dir, back)
 
 
+- [DONE] Port/bus connections tree: when scrolled down and a checkbox is clicked, should not scroll back up.
 - [DONE] Replace string literals with defines in XML saving/loading.
 - [DONE] Changed old wording in settings and database files.
          NB: Affects backward compatibility with settings file.
