@@ -211,6 +211,12 @@ void konfytJackEngine::refreshPortConnections()
 
     }
 
+    // Refresh other JACK connections
+    for (int i=0; i<otherConsList.count(); i++) {
+        konfytJackConPair p = otherConsList[i];
+        jack_connect(client, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
+    }
+
 }
 
 // Add new soundfont ports. Also assigns midi filter.
@@ -2047,6 +2053,47 @@ void konfytJackEngine::setAllPluginPortsActive(bool active)
         plugin_ports[i]->audio_in_r->active = active;
     }
 }
+
+void konfytJackEngine::addOtherJackConPair(konfytJackConPair p)
+{
+    // Ignore if already in the list
+    for (int i=0; i<otherConsList.count(); i++) {
+        if (p.equals(otherConsList[i])) {
+            return;
+        }
+    }
+
+    otherConsList.append(p);
+
+    refreshPortConnections();
+}
+
+void konfytJackEngine::removeOtherJackConPair(konfytJackConPair p)
+{
+    pauseJackProcessing(true);
+
+    for (int i=0; i<otherConsList.count(); i++) {
+        if (p.equals(otherConsList[i])) {
+            otherConsList.removeAt(i);
+            return;
+        }
+    }
+
+    // TODO: Disconnect ports also.
+
+    pauseJackProcessing(false);
+    refreshPortConnections();
+}
+
+void konfytJackEngine::clearOtherJackConPair()
+{
+    pauseJackProcessing(true);
+
+    otherConsList.clear();
+
+    pauseJackProcessing(false);
+}
+
 
 /* Activate all the necessary Jack ports for the given patch.
  * Project is required for some of the patch ports that refer to ports set up in the project. */

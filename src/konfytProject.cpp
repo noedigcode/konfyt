@@ -207,7 +207,17 @@ bool konfytProject::saveProjectAs(QString dirname)
     }
     stream.writeEndElement(); // end of trigger list
 
-    stream.writeEndElement(); // sfproject
+    // Write other JACK connections list
+    stream.writeStartElement(XML_PRJ_OTHERJACKCON_LIST);
+    for (int i=0; i<jackConList.count(); i++) {
+        stream.writeStartElement(XML_PRJ_OTHERJACKCON);
+        stream.writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackConList[i].srcPort);
+        stream.writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackConList[i].destPort);
+        stream.writeEndElement(); // JACK connection pair
+    }
+    stream.writeEndElement(); // Other JACK connections list
+
+    stream.writeEndElement(); // project
 
     stream.writeEndDocument();
 
@@ -435,6 +445,34 @@ bool konfytProject::loadProject(QString filename)
                     } else {
                         userMessage("loadProject: "
                                     "Unrecognized triggerList element: " + r.name().toString() );
+                        r.skipCurrentElement();
+                    }
+                }
+
+            }
+
+            else if (r.name() == XML_PRJ_OTHERJACKCON_LIST) {
+
+                while (r.readNextStartElement()) {
+                    if (r.name() == XML_PRJ_OTHERJACKCON) {
+
+                        QString srcPort, destPort;
+                        while (r.readNextStartElement()) {
+                            if (r.name() == XML_PRJ_OTHERJACKCON_SRC) {
+                                srcPort = r.readElementText();
+                            } else if (r.name() == XML_PRJ_OTHERJACKCON_DEST) {
+                                destPort = r.readElementText();
+                            } else {
+                                userMessage("loadProject: "
+                                            "Unrecognized JACK con element: " + r.name().toString() );
+                                r.skipCurrentElement();
+                            }
+                        }
+                        this->addJackCon(srcPort, destPort);
+
+                    } else {
+                        userMessage("loadProject: "
+                                    "Unrecognized otherJackConList element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
                 }
@@ -1021,6 +1059,33 @@ void konfytProject::removeTrigger(QString actionText)
 QList<konfytTrigger> konfytProject::getTriggerList()
 {
     return triggerHash.values();
+}
+
+konfytJackConPair konfytProject::addJackCon(QString srcPort, QString destPort)
+{
+    konfytJackConPair a;
+    a.srcPort = srcPort;
+    a.destPort = destPort;
+    this->jackConList.append(a);
+    setModified(true);
+    return a;
+}
+
+QList<konfytJackConPair> konfytProject::getJackConList()
+{
+    return this->jackConList;
+}
+
+konfytJackConPair konfytProject::removeJackCon(int i)
+{
+    if ( (i<0) || (i>= jackConList.count()) ) {
+        error_abort("Invalid other JACK connection index: " + n2s(i));
+        return;
+    }
+    konfytJackConPair p = jackConList[i];
+    jackConList.removeAt(i);
+    setModified(true);
+    return p;
 }
 
 void konfytProject::setModified(bool mod)

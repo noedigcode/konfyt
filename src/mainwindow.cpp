@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     previewPatch = NULL;
     previewMode = false;
     patchNote_ignoreChange = false;
+    tabWidgetProject_disabled = false;
 
     midiFilter_lastChan = 0;
     midiFilter_lastData1 = 0;
@@ -151,7 +152,9 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // Projects / commandline arguments
     // ----------------------------------------------------
 
+    tabWidgetProject_disabled = true;
     ui->tabWidget_Projects->clear();
+    tabWidgetProject_disabled = false;
     // Scan projectsDir for projects. If none found, create a new project and empty patch.
     if ( !scanDirForProjects(projectsDir) ) {
         userMessage("No project directory " + projectsDir);
@@ -409,7 +412,7 @@ void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
         QFileInfo fi = projectsMenuMap.value(action);
         openProject(fi.filePath());
         // Switch to newly opened project
-        ui->tabWidget_Projects->setCurrentIndex(ui->tabWidget_Projects->count()-1);
+        setCurrentProject( this->projectList.count()-1 );
     }
 }
 
@@ -1247,7 +1250,7 @@ void MainWindow::showTriggersPage()
 
 void MainWindow::setCurrentProject(int i)
 {
-    if (currentProject == i) { return; }
+    userMessage("DEBUG: SET_CURRENT_PROJECT");
 
     // First, disconnect signals from current project.
     konfytProject* oldprj = getCurrentProject();
@@ -1383,6 +1386,13 @@ void MainWindow::setCurrentProject(int i)
         }
     }
 
+    // Update other JACK connections in Jack
+    jack->clearOtherJackConPair();
+    QList<konfytJackConPair> jackCons = prj->getJackConList();
+    for (int i=0; i<jackCons.count(); i++) {
+        jack->addOtherJackConPair( jackCons[i] );
+    }
+
     // Update project modified indication in GUI
     projectModifiedStateChanged(prj->isModified());
 
@@ -1394,6 +1404,9 @@ void MainWindow::setCurrentProject(int i)
     }
     if (ui->stackedWidget->currentIndex() == STACKED_WIDGET_PAGE_TRIGGERS) {
         showTriggersPage();
+    }
+    if (ui->stackedWidget->currentIndex() == STACKED_WIDGET_PAGE_JACK) {
+        showJackPage();
     }
 
     // Indicate warnings to user
@@ -2635,6 +2648,8 @@ void MainWindow::scanThreadFihishedSlot()
 
 void MainWindow::on_tabWidget_Projects_currentChanged(int index)
 {
+    if (tabWidgetProject_disabled) { return; }
+
     if (index >=0) {
         if (currentProject != index) {
             setCurrentProject(index);
@@ -5008,4 +5023,89 @@ void MainWindow::on_pushButton_MasterIn_TransposeAdd12_clicked()
 void MainWindow::on_pushButton_MasterIn_TransposeZero_clicked()
 {
     setMasterInTranspose(0,false);
+}
+
+void MainWindow::on_pushButton_ShowJackPage_clicked()
+{
+    if (ui->stackedWidget->currentIndex() == STACKED_WIDGET_PAGE_JACK) {
+        ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    } else {
+        showJackPage();
+    }
+}
+
+void MainWindow::showJackPage()
+{
+    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_JACK);
+
+    // Update JACK output ports
+    ui->treeWidget_jackPortsOut->clear();
+    QStringList mo = jack->getMidiOutputPortsList();
+    for (int i=0; i<mo.count(); i++) {
+        QString client_port = mo[i];
+//        QString client = client_port.split(":").at(0);
+//        QString port = client_port;
+//        port.replace(client + ":", ""); */
+        QTreeWidgetItem* item = new QTreeWidgetItem();
+        item->setText(0,client_port);
+        ui->treeWidget_jackPortsOut->addTopLevelItem(item);
+    }
+
+    // Update JACK input ports
+    ui->treeWidget_jackportsIn->clear();
+    QStringList mi = jack->getMidiInputPortsList();
+    for (int i=0; i<mi.count(); i++) {
+        QString client_port = mi[i];
+        QTreeWidgetItem* item = new QTreeWidgetItem();
+        item->setText(0,client_port);
+        ui->treeWidget_jackportsIn->addTopLevelItem(item);
+    }
+
+    // Fill connections list with connections from project
+    ui->listWidget_jackConnections->clear();
+    konfytProject* prj = getCurrentProject();
+    if (prj == NULL) { return; }
+    QList<konfytJackConPair> l = prj->getJackConList();
+    for (int i=0; i<l.count(); i++) {
+        ui->listWidget_jackConnections->addItem(l[i].toString());
+    }
+
+}
+
+void MainWindow::on_pushButton_jackConRefresh_clicked()
+{
+    showJackPage();
+}
+
+void MainWindow::on_pushButton_jackConAdd_clicked()
+{
+    QTreeWidgetItem* itemOut = ui->treeWidget_jackPortsOut->currentItem();
+    QTreeWidgetItem* itemIn = ui->treeWidget_jackportsIn->currentItem();
+    if ( (itemOut==NULL) || (itemIn==NULL) ) { return; }
+
+    // Add new connection pair to project
+    konfytProject* prj = getCurrentProject();
+    if (prj == NULL) { return; }
+    konfytJackConPair p = prj->addJackCon(itemOut->text(0), itemIn->text(0));
+    // Add to Jack engine
+    jack->addOtherJackConPair(p);
+    // Add to jack connections GUI list
+    ui->listWidget_jackConnections->addItem( p.toString() );
+
+}
+
+void MainWindow::on_pushButton_jackConRemove_clicked()
+{
+    int row = ui->listWidget_jackConnections->currentRow();
+    if (row<0) { return; }
+    konfytProject* prj = getCurrentProject();
+    if (prj == NULL) { return; }
+
+    // Remove from project
+    konfytJackConPair p = prj->removeJackCon(row);
+    // Remove from JACK
+    jack->removeOtherJackConPair(p);
+    // Remove from GUI
+    delete ui->listWidget_jackConnections->item(row);
+
 }

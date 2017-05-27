@@ -79,6 +79,10 @@
 #define XML_PRJ_TRIGGER_DATA1 "data1"
 #define XML_PRJ_TRIGGER_BANKMSB "bankMSB"
 #define XML_PRJ_TRIGGER_BANKLSB "bankLSB"
+#define XML_PRJ_OTHERJACKCON_LIST "otherJackConList"
+#define XML_PRJ_OTHERJACKCON "otherJackCon"
+#define XML_PRJ_OTHERJACKCON_SRC "srcPort"
+#define XML_PRJ_OTHERJACKCON_DEST "destPort"
 
 struct prjAudioBus {
     QString busName;
@@ -130,6 +134,7 @@ struct konfytTrigger {
     }
 
 };
+
 
 enum portLeftRight { leftPort, rightPort };
 
@@ -217,6 +222,11 @@ public:
     void removeTrigger(QString actionText);
     QList<konfytTrigger> getTriggerList();
 
+    // Other JACK connections
+    konfytJackConPair addJackCon(QString srcPort, QString destPort);
+    QList<konfytJackConPair> getJackConList();
+    konfytJackConPair removeJackCon(int i);
+
     bool isModified(); // Returns whether the project has been modified since last load/save.
     void setModified(bool mod);
 
@@ -241,6 +251,8 @@ private:
 
     QList<konfytProcess*> processList;
     QHash<QString, konfytTrigger> triggerHash;
+
+    QList<konfytJackConPair> jackConList;
 
     bool modified; // Whether project has been modified since last load/save.
 

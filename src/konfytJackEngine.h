@@ -184,6 +184,11 @@ public:
     bool getSoloFlagInternal();
     void setSoloFlagExternal(bool newSolo);
 
+    // Other JACK connections
+    QList<konfytJackConPair> otherConsList;
+    void addOtherJackConPair(konfytJackConPair p);
+    void removeOtherJackConPair(konfytJackConPair p);
+    void clearOtherJackConPair();
 
     void activatePortsForPatch(const konfytPatch *patch, const konfytProject *project);
 

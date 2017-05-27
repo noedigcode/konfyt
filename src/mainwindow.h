@@ -81,6 +81,7 @@ CARLA_BACKEND_USE_NAMESPACE
 #define STACKED_WIDGET_PAGE_WAITING     4
 #define STACKED_WIDGET_PAGE_CONNECTIONS 5
 #define STACKED_WIDGET_PAGE_TRIGGERS    6
+#define STACKED_WIDGET_PAGE_JACK     7
 #define STACKED_WIDGET_PAGE_SANDBOX     7
 
 #define STACKED_WIDGET_LEFT_LIBRARY 0
@@ -162,6 +163,7 @@ public:
 
     // Misc helper functions
     QString getUniqueFilename(QString dirname, QString name, QString extension);
+    bool tabWidgetProject_disabled;
 
     void setPatchModified(bool modified);
     void setProjectModified();
@@ -400,6 +402,11 @@ public:
     void midi_setLayerMute(int layer, int midiValue);
 
     // ========================================================================
+    // Other JACK connections
+    // ========================================================================
+    void showJackPage();
+
+    // ========================================================================
     // Warnings
     // ========================================================================
 
@@ -448,6 +455,7 @@ public:
 
     // General utilities
     QString getBaseNameWithoutExtension(QString filepath);
+
 
     void error_abort(QString msg);
     void messageBox(QString msg);
@@ -745,6 +753,14 @@ private slots:
     void on_MIDI_indicator_clicked();
 
 
+
+    void on_pushButton_ShowJackPage_clicked();
+
+    void on_pushButton_jackConRefresh_clicked();
+
+    void on_pushButton_jackConAdd_clicked();
+
+    void on_pushButton_jackConRemove_clicked();
 
 private:
     Ui::MainWindow *ui;

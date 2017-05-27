@@ -6,9 +6,10 @@ konfyt TODO 2017-05-10:
 - Follow all debug and todo comments.
 
 
+- [TODO] Polish and update GUI of other Jack connections feature.
+- [TODO] Follow, consolidate and control calls to setCurrentProject (especially when the tab widget current item keeps changing).
 
-
-
+- [TEST] Other Jack connections feature.
 
 - [TEST] Confirm that SFZ loading and playing works with new Carla updates.
 - [TEST] .gig loading now works.

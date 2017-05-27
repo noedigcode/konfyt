@@ -81,6 +81,20 @@ struct konfytJackNoteOnRecord {
     int globalTranspose;
 };
 
+struct konfytJackConPair {
+    QString srcPort;
+    QString destPort;
+
+    QString toString()
+    {
+        return srcPort + " --> " + destPort;
+    }
+
+    bool equals(const konfytJackConPair &a) {
+        return ( (this->srcPort == a.srcPort) && (this->destPort == a.destPort) );
+    }
+};
+
 
 
 #endif // KONFYTJACKSTRUCTS_H
