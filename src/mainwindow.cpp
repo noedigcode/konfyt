@@ -4085,10 +4085,16 @@ void MainWindow::refreshFilesystemView()
             ui->treeWidget_filesystem->addTopLevelItem(item);
             fsMap.insert(item, info);
         } else {
-            if ( fileIsSfzOrGig(info.filePath())
-                 || fileIsSoundfont(info.filePath())
-                 || fileIsPatch(info.filePath())
-                 || info.path().contains(project_dir) ) { // Add everything if in project dir
+            bool show = false;
+            if (ui->checkBox_filesystem_ShowOnlySounds->isChecked() == false) {
+                show = true;
+            } else {
+                show = fileIsSfzOrGig(info.filePath())       // sfz or gig
+                       || fileIsSoundfont(info.filePath())   // sf2
+                       || fileIsPatch(info.filePath())       // patch
+                       || info.path().contains(project_dir); // in project dir
+            }
+            if ( show ) {
 
                 QTreeWidgetItem* item = new QTreeWidgetItem();
                 item->setIcon(0, QIcon(":/icons/picture.png"));
@@ -5108,4 +5114,9 @@ void MainWindow::on_pushButton_jackConRemove_clicked()
     // Remove from GUI
     delete ui->listWidget_jackConnections->item(row);
 
+}
+
+void MainWindow::on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked)
+{
+    refreshFilesystemView();
 }

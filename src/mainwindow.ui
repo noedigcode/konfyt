@@ -968,7 +968,7 @@ QCheckBox::indicator:checked {
               </property>
               <widget class="QTabWidget" name="tabWidget_library">
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="tab_library">
                 <attribute name="title">
@@ -1484,6 +1484,16 @@ border-color: rgb(40, 40, 40);
                      <string>Soundfonts</string>
                     </property>
                    </column>
+                  </widget>
+                 </item>
+                 <item row="2" column="0">
+                  <widget class="QCheckBox" name="checkBox_filesystem_ShowOnlySounds">
+                   <property name="text">
+                    <string>Only show sound files</string>
+                   </property>
+                   <property name="checked">
+                    <bool>true</bool>
+                   </property>
                   </widget>
                  </item>
                 </layout>

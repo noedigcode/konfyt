@@ -762,6 +762,8 @@ private slots:
 
     void on_pushButton_jackConRemove_clicked();
 
+    void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
+
 private:
     Ui::MainWindow *ui;
 };
