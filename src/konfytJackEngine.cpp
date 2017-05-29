@@ -2075,7 +2075,7 @@ void konfytJackEngine::removeOtherJackConPair(konfytJackConPair p)
     for (int i=0; i<otherConsList.count(); i++) {
         if (p.equals(otherConsList[i])) {
             otherConsList.removeAt(i);
-            return;
+            break;
         }
     }
 
