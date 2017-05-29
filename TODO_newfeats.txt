@@ -6,12 +6,10 @@ konfyt TODO 2017-05-10:
 - Follow all debug and todo comments.
 
 
-- [TEST] Add warnings for Other Jack connections feature.
-- [TODO] Polish and update GUI of other Jack connections feature.
+
 - [TODO] Follow, consolidate and control calls to setCurrentProject (especially when the tab widget current item keeps changing).
 
 - [TEST] Other Jack connections feature.
-
 - [TEST] Confirm that SFZ loading and playing works with new Carla updates.
 - [TEST] .gig loading now works.
 - [TEST] When switching project, e.g. during cmdline argument loading, ensure that the tab bar indicates this.
@@ -28,6 +26,7 @@ konfyt TODO 2017-05-10:
          - navigating in file system view (dblclick, up, home, project dir, back)
 
 
+- [DONE] Polish and update GUI of other Jack connections feature.
 - [DONE] Port/bus connections tree: when scrolled down and a checkbox is clicked, should not scroll back up.
 - [DONE] Replace string literals with defines in XML saving/loading.
 - [DONE] Changed old wording in settings and database files.

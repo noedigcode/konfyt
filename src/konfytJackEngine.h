@@ -29,7 +29,6 @@
 #include <QMap>
 
 #include <jack/jack.h>
-#include <jack/jack.h>
 #include <jack/midiport.h>
 
 #include "konfytPatch.h"
