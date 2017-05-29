@@ -6,7 +6,7 @@ konfyt TODO 2017-05-10:
 - Follow all debug and todo comments.
 
 
-- [TODO] Add warnings for Other Jack connections feature.
+- [TEST] Add warnings for Other Jack connections feature.
 - [TODO] Polish and update GUI of other Jack connections feature.
 - [TODO] Follow, consolidate and control calls to setCurrentProject (especially when the tab widget current item keeps changing).
 

@@ -2956,6 +2956,26 @@ void MainWindow::updateGUIWarnings()
 
     }
 
+    // Other JACK connections
+    bool first = true;
+    QList<konfytJackConPair> cons = prj->getJackConList();
+    for (int i=0; i<cons.count(); i++) {
+        if ( !moports.contains(cons[i].srcPort) ) {
+            if (first) {
+                addWarning("Missing Other JACK Ports:");
+                first = false;
+            }
+            addWarning(" -TX:  " + cons[i].srcPort);
+        }
+        if ( !miports.contains(cons[i].destPort) ) {
+            if (first) {
+                addWarning("Missing Other JACK Ports:");
+                first = false;
+            }
+            addWarning(" -RX: " + cons[i].destPort);
+        }
+    }
+
 }
 
 void MainWindow::addWarning(QString warning)
@@ -5076,6 +5096,8 @@ void MainWindow::showJackPage()
         ui->listWidget_jackConnections->addItem(l[i].toString());
     }
 
+    updateGUIWarnings();
+
 }
 
 void MainWindow::on_pushButton_jackConRefresh_clicked()
@@ -5098,6 +5120,8 @@ void MainWindow::on_pushButton_jackConAdd_clicked()
     // Add to jack connections GUI list
     ui->listWidget_jackConnections->addItem( p.toString() );
 
+    updateGUIWarnings();
+
 }
 
 void MainWindow::on_pushButton_jackConRemove_clicked()
@@ -5113,6 +5137,8 @@ void MainWindow::on_pushButton_jackConRemove_clicked()
     jack->removeOtherJackConPair(p);
     // Remove from GUI
     delete ui->listWidget_jackConnections->item(row);
+
+    updateGUIWarnings();
 
 }
 
