@@ -40,7 +40,6 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     previewPatch = NULL;
     previewMode = false;
     patchNote_ignoreChange = false;
-    tabWidgetProject_disabled = false;
 
     midiFilter_lastChan = 0;
     midiFilter_lastData1 = 0;
@@ -152,9 +151,10 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // Projects / commandline arguments
     // ----------------------------------------------------
 
-    tabWidgetProject_disabled = true;
+    // Tab widget has some tabs for design purposes. Remove all.
+    ui->tabWidget_Projects->blockSignals(true);
     ui->tabWidget_Projects->clear();
-    tabWidgetProject_disabled = false;
+    ui->tabWidget_Projects->blockSignals(true);
     // Scan projectsDir for projects. If none found, create a new project and empty patch.
     if ( !scanDirForProjects(projectsDir) ) {
         userMessage("No project directory " + projectsDir);
@@ -229,7 +229,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
             userMessage("Opening project " + file);
             if (openProject(file)) {
                 userMessage("Project loaded from argument.");
-                setCurrentProject( projectList.count()-1 );
+                setCurrentProject( -1 );
                 startupProject = false;
             } else {
                 userMessage("Failed to load project from argument.");
@@ -412,7 +412,7 @@ void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
         QFileInfo fi = projectsMenuMap.value(action);
         openProject(fi.filePath());
         // Switch to newly opened project
-        setCurrentProject( this->projectList.count()-1 );
+        setCurrentProject( -1 );
     }
 }
 
@@ -714,7 +714,9 @@ void MainWindow::addProject(konfytProject* prj)
     projectList.append(prj);
     // Add to tabs
     QLabel* lbl = new QLabel();
+    ui->tabWidget_Projects->blockSignals(true);
     ui->tabWidget_Projects->addTab(lbl,prj->getProjectName());
+    ui->tabWidget_Projects->blockSignals(false);
 }
 
 /* Update the patch list according to the current project. */
@@ -1248,9 +1250,17 @@ void MainWindow::showTriggersPage()
 }
 
 
+/* Set current project corresponding to specified index.
+ * If index is -1, the last project in the list is loaded. */
 void MainWindow::setCurrentProject(int i)
 {
-    userMessage("DEBUG: SET_CURRENT_PROJECT");
+    userMessage("DEBUG: SET_CURRENT_PROJECT: " + n2s(i));
+
+    if (i==-1) { i = projectList.count()-1; }
+    if ( (i<0) || (i>=projectList.count()) ) {
+        userMessage("DEBUG: SET_CURRENT_PROJECT: INVALID INDEX " + n2s(i));
+        return;
+    }
 
     // First, disconnect signals from current project.
     konfytProject* oldprj = getCurrentProject();
@@ -1263,10 +1273,9 @@ void MainWindow::setCurrentProject(int i)
         disconnect(oldprj, SIGNAL(projectModifiedChanged(bool)), this, SLOT(projectModifiedStateChanged(bool)));
     }
     // Set up the current project
-    if ( (i<0) || (i>=projectList.count()) ) { return; }
+
     currentProject = i;
     konfytProject* prj = projectList.at(i);
-
     pengine->setProject(prj); // patch engine needs a pointer to the current project for some stuff.
 
     ui->lineEdit_ProjectName->setText(prj->getProjectName());
@@ -1274,10 +1283,8 @@ void MainWindow::setCurrentProject(int i)
     gui_updatePatchList();
 
     // And also update the midi input autoconnect list in the jack client
-    if (jack->clientIsActive()) {
-        jack->clearAutoConnectList_andDisconnect();
-        jack->addAutoConnectList(prj->midiInPort_getClients());
-    }
+    jack->clearAutoConnectList_andDisconnect();
+    jack->addAutoConnectList(prj->midiInPort_getClients());
 
     jack->pauseJackProcessing(true);
 
@@ -1413,7 +1420,9 @@ void MainWindow::setCurrentProject(int i)
     updateGUIWarnings();
 
     // Change project tab in GUI
+    ui->tabWidget_Projects->blockSignals(true);
     ui->tabWidget_Projects->setCurrentIndex(currentProject);
+    ui->tabWidget_Projects->blockSignals(false);
 
     jack->pauseJackProcessing(false);
 
@@ -2648,12 +2657,8 @@ void MainWindow::scanThreadFihishedSlot()
 
 void MainWindow::on_tabWidget_Projects_currentChanged(int index)
 {
-    if (tabWidgetProject_disabled) { return; }
-
     if (index >=0) {
-        if (currentProject != index) {
-            setCurrentProject(index);
-        }
+        setCurrentProject(index);
     }
 }
 
@@ -4917,14 +4922,17 @@ void MainWindow::on_actionProject_New_triggered()
 {
     newProject();
     // Switch to newly created project
-    ui->tabWidget_Projects->setCurrentIndex(ui->tabWidget_Projects->count()-1);
+    setCurrentProject(-1);
 }
 
 void MainWindow::on_actionProject_Open_triggered()
 {
     // Show open dialog box
     QFileDialog* d = new QFileDialog();
-    QString filename = d->getOpenFileName(this,"Select project to open",projectsDir,"*.sfproject");
+    QString filename = d->getOpenFileName(this,
+                                          "Select project to open",
+                                          projectsDir,
+                                          "*" + QString(PROJECT_FILENAME_EXTENSION) );
     if (filename == "") {
         userMessage("Cancelled.");
         return;
@@ -4932,7 +4940,7 @@ void MainWindow::on_actionProject_Open_triggered()
 
     openProject(filename);
     // Switch to newly opened project
-    ui->tabWidget_Projects->setCurrentIndex(ui->tabWidget_Projects->count()-1);
+    setCurrentProject(-1);
 }
 
 void MainWindow::on_actionProject_OpenDirectory_triggered()

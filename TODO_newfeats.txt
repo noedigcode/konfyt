@@ -7,7 +7,9 @@ konfyt TODO 2017-05-10:
 
 
 
-- [TODO] Follow, consolidate and control calls to setCurrentProject (especially when the tab widget current item keeps changing).
+- [TEST] Follow, consolidate and control calls to setCurrentProject (especially when the tab widget current item keeps changing).
+         [TEST] SetCurrentProject modified. Test again loading project from commandline.
+         [TEST] All possibilities of loading projects.
 
 - [TEST] Other Jack connections feature.
 - [TEST] Confirm that SFZ loading and playing works with new Carla updates.

@@ -163,7 +163,6 @@ public:
 
     // Misc helper functions
     QString getUniqueFilename(QString dirname, QString name, QString extension);
-    bool tabWidgetProject_disabled;
 
     void setPatchModified(bool modified);
     void setProjectModified();
