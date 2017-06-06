@@ -1,16 +1,14 @@
-konfyt TODO 2017-05-10:
+konfyt TODO 2017-06-06:
 
-- When more than one project open, running external programs in second project
-  doesn't work.
+
 - Remove unecessary console output
 - Follow all debug and todo comments.
 
 
-
+- [TEST] Double-clicking on external app while it is running should not try to start it again.
 - [TEST] Follow, consolidate and control calls to setCurrentProject (especially when the tab widget current item keeps changing).
          [TEST] SetCurrentProject modified. Test again loading project from commandline.
          [TEST] All possibilities of loading projects.
-
 - [TEST] Other Jack connections feature.
 - [TEST] Confirm that SFZ loading and playing works with new Carla updates.
 - [TEST] .gig loading now works.
@@ -26,6 +24,7 @@ konfyt TODO 2017-05-10:
 - [TEST] Modified cdFilesystemView; Test all functionality that uses it:
          - enter pressed in address bar pointing to dir; pointing to file
          - navigating in file system view (dblclick, up, home, project dir, back)
+- [TEST] When more than one project open, running external programs in second project doesn't work.
 
 
 - [DONE] Polish and update GUI of other Jack connections feature.

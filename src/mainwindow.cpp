@@ -2457,6 +2457,11 @@ void MainWindow::runProcess(int index)
     if (p == NULL) {
         return;
     }
+    // Abort if process is already running
+    if (p->isProcessRunning(index)) {
+        userMessage("Process is already running. Stop it before running it again.");
+        return;
+    }
     // Start process
     p->runProcess(index);
     // Indicate in list widget

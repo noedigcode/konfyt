@@ -976,12 +976,23 @@ void konfytProject::addProcess(konfytProcess* process)
     setModified(true);
 }
 
+bool konfytProject::isProcessRunning(int index)
+{
+    if ( (index>=0) && (index < processList.count()) ) {
+        return processList.at(index)->isRunning();
+    } else {
+        userMessage("ERROR: isProcessRunning: INVALID PROCESS INDEX " + n2s(index));
+    }
+}
+
 void konfytProject::runProcess(int index)
 {
     if ( (index>=0) && (index < processList.count()) ) {
         // Start process
         processList.at(index)->start();
         userMessage("Starting process " + processList.at(index)->appname);
+    } else {
+        userMessage("ERROR: runProcess: INVALID PROCESS INDEX " + n2s(index));
     }
 }
 
@@ -991,6 +1002,8 @@ void konfytProject::stopProcess(int index)
         // Stop process
         processList.at(index)->stop();
         userMessage("Stopping process " + processList.at(index)->appname);
+    } else {
+        userMessage("ERROR: stopProcess: INVALID PROCESS INDEX " + n2s(index));
     }
 }
 
@@ -999,6 +1012,8 @@ void konfytProject::removeProcess(int index)
     if ( (index>=0) && (index < processList.count()) ) {
         processList.removeAt(index);
         setModified(true);
+    } else {
+        userMessage("ERROR: removeProcess: INVALID PROCESS INDEX " + n2s(index));
     }
 }
 

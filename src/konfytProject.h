@@ -208,6 +208,7 @@ public:
 
     // External Programs
     void addProcess(konfytProcess *process);
+    bool isProcessRunning(int index);
     void runProcess(int index);
     void stopProcess(int index);
     void removeProcess(int index);
