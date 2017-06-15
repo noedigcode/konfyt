@@ -5,6 +5,7 @@ konfyt TODO 2017-06-06:
 - Follow all debug and todo comments.
 
 
+- [TEST] Starting app without JACK - restart function works.
 - [TEST] Double-clicking on external app while it is running should not try to start it again.
 - [TEST] Follow, consolidate and control calls to setCurrentProject (especially when the tab widget current item keeps changing).
          [TEST] SetCurrentProject modified. Test again loading project from commandline.

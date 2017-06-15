@@ -63,8 +63,9 @@ int main(int argc, char *argv[])
     // MainWindow can exit with QCoreApplication::exit(APP_RESTART_CODE) to restart.
     int return_code = 0;
 
+    QApplication a(argc, argv);
+
     do {
-        QApplication a(argc, argv);
 
         // Handle arguments
 
