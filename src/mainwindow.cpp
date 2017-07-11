@@ -1254,8 +1254,6 @@ void MainWindow::showTriggersPage()
  * If index is -1, the last project in the list is loaded. */
 void MainWindow::setCurrentProject(int i)
 {
-    userMessage("DEBUG: SET_CURRENT_PROJECT: " + n2s(i));
-
     if (i==-1) { i = projectList.count()-1; }
     if ( (i<0) || (i>=projectList.count()) ) {
         userMessage("DEBUG: SET_CURRENT_PROJECT: INVALID INDEX " + n2s(i));
@@ -5106,7 +5104,12 @@ void MainWindow::showJackPage()
     if (prj == NULL) { return; }
     QList<konfytJackConPair> l = prj->getJackConList();
     for (int i=0; i<l.count(); i++) {
-        ui->listWidget_jackConnections->addItem(l[i].toString());
+        QListWidgetItem* item = new QListWidgetItem( l[i].toString() );
+        // Colour red if one of the ports aren't present in JACK.
+        if ( !mo.contains(l[i].srcPort) || !mi.contains(l[i].destPort) ) {
+            item->setBackgroundColor(Qt::red);
+        }
+        ui->listWidget_jackConnections->addItem( item );
     }
 
     updateGUIWarnings();
