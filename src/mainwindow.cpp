@@ -3700,14 +3700,8 @@ void MainWindow::on_actionAdd_Patch_From_File_triggered()
 /* Add button clicked (not its menu). */
 void MainWindow::on_toolButton_AddPatch_clicked()
 {
-    // If a patch is selected in the library, add it to the project.
-    // Otherwise, add a new patch to the project.
-
-    if ( library_getSelectedTreeItemType() == libTreePatch ) {
-        on_actionAdd_Patch_From_Library_triggered();
-    } else {
-        on_actionNew_Patch_triggered();
-    }
+    // Add a new patch to the project.
+    on_actionNew_Patch_triggered();
 }
 
 /* Save button clicked (not its menu). */
