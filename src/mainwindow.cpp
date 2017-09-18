@@ -4113,8 +4113,10 @@ void MainWindow::refreshFilesystemView()
             } else {
                 show = fileIsSfzOrGig(info.filePath())       // sfz or gig
                        || fileIsSoundfont(info.filePath())   // sf2
-                       || fileIsPatch(info.filePath())       // patch
-                       || info.path().contains(project_dir); // in project dir
+                       || fileIsPatch(info.filePath());      // patch
+                if (!project_dir.isEmpty()) {
+                       show = show || info.path().contains(project_dir); // in project dir
+                }
             }
             if ( show ) {
 
