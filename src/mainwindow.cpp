@@ -214,8 +214,8 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
                 // Load from filesystem view
                 on_treeWidget_filesystem_itemDoubleClicked( ui->treeWidget_filesystem->currentItem(), 0 );
                 // Add first program to current patch
-                if (ui->listWidget_2->count()) {
-                    ui->listWidget_2->setCurrentRow(0);
+                if (ui->listWidget_LibraryBottom->count()) {
+                    ui->listWidget_LibraryBottom->setCurrentRow(0);
                     addProgramToCurrentPatch( library_getSelectedProgram() );
                 }
 
@@ -361,6 +361,10 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // Show welcome message in statusbar
     QString app_name(APP_NAME);
     ui->statusBar->showMessage("Welkom by " + app_name + ".",5000);
+
+    hf.setParent(this);
+    resizeHoverForm();
+    hf.show();
 }
 
 
@@ -1541,7 +1545,7 @@ bool MainWindow::library_isProgramSelected()
     if (programList.count()) {
         // If the currentrow of the program list widget is positive,
         // it contains programs and one is currently selected.
-        int currentRow = ui->listWidget_2->currentRow();
+        int currentRow = ui->listWidget_LibraryBottom->currentRow();
         if (currentRow>=0) {
             return true;
         } else {
@@ -1557,7 +1561,7 @@ bool MainWindow::library_isProgramSelected()
 konfytSoundfontProgram MainWindow::library_getSelectedProgram()
 {
     if (library_isProgramSelected()) {
-        konfytSoundfontProgram p = programList.at(ui->listWidget_2->currentRow());
+        konfytSoundfontProgram p = programList.at(ui->listWidget_LibraryBottom->currentRow());
         return p;
     } else {
         // Return blank one
@@ -1583,7 +1587,7 @@ libraryTreeItemType MainWindow::library_getTreeItemType(QTreeWidgetItem *item)
 
 libraryTreeItemType MainWindow::library_getSelectedTreeItemType()
 {
-    return library_getTreeItemType( ui->treeWidget->currentItem() );
+    return library_getTreeItemType( ui->treeWidget_Library->currentItem() );
 }
 
 
@@ -1592,7 +1596,7 @@ libraryTreeItemType MainWindow::library_getSelectedTreeItemType()
 konfytPatch MainWindow::library_getSelectedPatch()
 {
     if ( library_getSelectedTreeItemType() == libTreePatch ) {
-        konfytPatch p = library_patchMap.value(ui->treeWidget->currentItem());
+        konfytPatch p = library_patchMap.value(ui->treeWidget_Library->currentItem());
         return p;
     } else {
         // Return blank one
@@ -1602,17 +1606,20 @@ konfytPatch MainWindow::library_getSelectedPatch()
 }
 
 
+
 // Returns the currently selected soundfont, or NULL if
 // nothing is selected.
 konfytSoundfont* MainWindow::library_getSelectedSfont()
 {
     if ( library_getSelectedTreeItemType() == libTreeSoundfont ) {
-        QTreeWidgetItem* current = ui->treeWidget->currentItem();
+        QTreeWidgetItem* current = ui->treeWidget_Library->currentItem();
         return library_sfMap.value(current);
     } else {
         return NULL;
     }
 }
+
+
 
 /* Determine if file suffix is as specified. The specified suffix should not
  * contain a leading dot. The suffix is checked by adding a dot.
@@ -1625,16 +1632,22 @@ bool MainWindow::fileSuffixIs(QString file, QString suffix)
     return  right == suffix;
 }
 
+
+
 /* Determine if specified file is a Konfyt patch file. */
 bool MainWindow::fileIsPatch(QString file)
 {
     return fileSuffixIs(file, KONFYT_PATCH_SUFFIX);
 }
 
+
+
 bool MainWindow::fileIsSfzOrGig(QString file)
 {
     return fileSuffixIs(file, "sfz") || fileSuffixIs(file, "gig");
 }
+
+
 
 bool MainWindow::fileIsSoundfont(QString file)
 {
@@ -1654,6 +1667,8 @@ void MainWindow::setMasterGain(float gain)
     }
     pengine->setMasterGain(gain);
 }
+
+
 
 // Load the appropriate patch based on the mode (preview mode or normal) and
 // updates the GUI accordingly.
@@ -1728,6 +1743,8 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
 
 }
 
+
+
 void MainWindow::gui_updatePatchView()
 {
     clearLayerItems_GUIonly();
@@ -1763,6 +1780,8 @@ void MainWindow::gui_updatePatchView()
     ui->textBrowser_patchNote->setText(p->getNote());
 }
 
+
+
 void MainWindow::gui_updateWindowTitle()
 {
     if (previewMode) {
@@ -1786,12 +1805,11 @@ void MainWindow::gui_updateWindowTitle()
 
 
 
-
 // Fill the tree widget with all the entries in the soundfont database.
 void MainWindow::fillTreeWithAll()
 {
     searchMode = false; // Controls the behaviour when the user selects a tree item
-    ui->treeWidget->clear();
+    ui->treeWidget_Library->clear();
     programList.clear(); // Internal list of programs displayed
 
 
@@ -1831,12 +1849,14 @@ void MainWindow::fillTreeWithAll()
     library_sfzRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
     // Add items to tree
-    ui->treeWidget->insertTopLevelItem(0,library_sfRoot);
-    //ui->treeWidget->expandItem(soundfontsParent);
-    ui->treeWidget->insertTopLevelItem(0,library_sfzRoot);
-    //ui->treeWidget->expandItem(sfzParent);
-    ui->treeWidget->insertTopLevelItem(0,library_patchRoot);
+    ui->treeWidget_Library->insertTopLevelItem(0,library_sfRoot);
+    //ui->treeWidget_Library->expandItem(soundfontsParent);
+    ui->treeWidget_Library->insertTopLevelItem(0,library_sfzRoot);
+    //ui->treeWidget_Library->expandItem(sfzParent);
+    ui->treeWidget_Library->insertTopLevelItem(0,library_patchRoot);
 }
+
+
 
 /* Build TreeWidget tree from the database's tree. */
 void MainWindow::buildSfzTree(QTreeWidgetItem* twi, konfytDbTreeItem* item)
@@ -1915,7 +1935,7 @@ void MainWindow::fillTreeWithSearch(QString search)
     searchMode = true; // Controls the behaviour when the user selects a tree item
     db.searchProgram(search);
 
-    ui->treeWidget->clear();
+    ui->treeWidget_Library->clear();
 
     QTreeWidgetItem* twiResults = new QTreeWidgetItem();
     twiResults->setText(0, TREE_ITEM_SEARCH_RESULTS);
@@ -1967,11 +1987,11 @@ void MainWindow::fillTreeWithSearch(QString search)
     twiResults->addChild(library_sfRoot);
 
 
-    ui->treeWidget->insertTopLevelItem(0,twiResults);
-    ui->treeWidget->expandItem(twiResults);
-    ui->treeWidget->expandItem(library_patchRoot);
-    ui->treeWidget->expandItem(library_sfzRoot);
-    ui->treeWidget->expandItem(library_sfRoot);
+    ui->treeWidget_Library->insertTopLevelItem(0,twiResults);
+    ui->treeWidget_Library->expandItem(twiResults);
+    ui->treeWidget_Library->expandItem(library_patchRoot);
+    ui->treeWidget_Library->expandItem(library_sfzRoot);
+    ui->treeWidget_Library->expandItem(library_sfRoot);
 }
 
 
@@ -2021,7 +2041,7 @@ QString MainWindow::getBaseNameWithoutExtension(QString filepath)
 }
 
 
-void MainWindow::on_treeWidget_itemClicked(QTreeWidgetItem *item, int column)
+void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int column)
 {
     // Expand / unexpand item due to click (makes things a lot easier)
     item->setExpanded(!item->isExpanded());
@@ -2082,9 +2102,9 @@ void MainWindow::unsetCurrentPatchIcon()
     }
 }
 
-void MainWindow::on_treeWidget_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
+void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
 {
-    ui->listWidget_2->clear();  // Program list view
+    ui->listWidget_LibraryBottom->clear();  // Program list view
     programList.clear();        // Our internal program list, corresponding to the list view
 
     if (current == NULL) {
@@ -2097,6 +2117,13 @@ void MainWindow::on_treeWidget_currentItemChanged(QTreeWidgetItem *current, QTre
         if (previewMode) {
             loadPatchForModeAndUpdateGUI();
         }
+
+        // Display contents in text view below library
+        ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
+        ui->textBrowser_LibraryBottom->clear();
+        ui->textBrowser_LibraryBottom->append(library_selectedSfz);
+        ui->textBrowser_LibraryBottom->append("\nTODO: Load file contents here.");
+
         return;
     }
 
@@ -2114,10 +2141,11 @@ void MainWindow::on_treeWidget_currentItemChanged(QTreeWidgetItem *current, QTre
             // TODO: Track sf, might be a memory leak.
         }
         // Refresh the GUI program list with programs (if any).
+        ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_ProgramList);
         library_refreshGUIProgramList();
         // Automatically select the first program
-        if (ui->listWidget_2->count()) {
-            ui->listWidget_2->setCurrentRow(0);
+        if (ui->listWidget_LibraryBottom->count()) {
+            ui->listWidget_LibraryBottom->setCurrentRow(0);
         }
     }
 
@@ -2126,16 +2154,17 @@ void MainWindow::on_treeWidget_currentItemChanged(QTreeWidgetItem *current, QTre
             // Patch is selected in preview mode. Load patch.
             loadPatchForModeAndUpdateGUI();
         }
-        // Do nothing.
+        // Do nothing
+
     }
 }
 
 /* Refresh the program list view in the library, according to programList. */
 void MainWindow::library_refreshGUIProgramList()
 {
-    ui->listWidget_2->clear();
+    ui->listWidget_LibraryBottom->clear();
     for (int i=0; i<programList.count(); i++) {
-        ui->listWidget_2->addItem(n2s(programList.at(i).bank)
+        ui->listWidget_LibraryBottom->addItem(n2s(programList.at(i).bank)
                                   + "-"
                                   + n2s(programList.at(i).program)
                                   + " " + programList.at(i).name);
@@ -2168,7 +2197,7 @@ void MainWindow::on_pushButton_LibraryPreview_clicked()
 
 
 /* Library program list: Soundfont program selected. */
-void MainWindow::on_listWidget_2_currentRowChanged(int currentRow)
+void MainWindow::on_listWidget_LibraryBottom_currentRowChanged(int currentRow)
 {
     if (currentRow < 0) {
         return;
@@ -2565,6 +2594,17 @@ void MainWindow::timerEvent(QTimerEvent *ev)
         ui->MIDI_indicator->setChecked(false);
         midiIndicatorTimer.stop();
     }
+}
+
+void MainWindow::resizeHoverForm()
+{
+    hf.move(0,0);
+    hf.resize(this->width(),this->height());
+}
+
+void MainWindow::resizeEvent(QResizeEvent *ev)
+{
+    resizeHoverForm();
 }
 
 /* Helper function for scanning things into database. */
@@ -3987,7 +4027,7 @@ void MainWindow::on_listWidget_Patches_itemClicked(QListWidgetItem *item)
 
 
 /* Library soundfont program list: item double clicked. */
-void MainWindow::on_listWidget_2_itemDoubleClicked(QListWidgetItem *item)
+void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem *item)
 {
     // Add soundfont program to current patch.
 
@@ -4001,7 +4041,7 @@ void MainWindow::on_listWidget_2_itemDoubleClicked(QListWidgetItem *item)
 
 
 /* Library tree: item double clicked. */
-void MainWindow::on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column)
+void MainWindow::on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
     if (previewMode) { setPreviewMode(false); }
 
@@ -4114,9 +4154,6 @@ void MainWindow::refreshFilesystemView()
                 show = fileIsSfzOrGig(info.filePath())       // sfz or gig
                        || fileIsSoundfont(info.filePath())   // sf2
                        || fileIsPatch(info.filePath());      // patch
-                if (!project_dir.isEmpty()) {
-                       show = show || info.path().contains(project_dir); // in project dir
-                }
             }
             if ( show ) {
 
@@ -4680,9 +4717,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
 }
 
 /* Context menu requested for a library tree item. */
-void MainWindow::on_treeWidget_customContextMenuRequested(const QPoint &pos)
+void MainWindow::on_treeWidget_Library_customContextMenuRequested(const QPoint &pos)
 {
-    libraryMenuItem = ui->treeWidget->itemAt(pos);
+    libraryMenuItem = ui->treeWidget_Library->itemAt(pos);
     libraryTreeItemType itemType = library_getTreeItemType( libraryMenuItem );
 
     libraryMenu.clear();

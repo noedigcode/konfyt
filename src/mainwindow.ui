@@ -319,8 +319,10 @@ QTabWidget::pane { /* The tab widget frame */
  }
 /*******************************************************/
 
-QTextBrowser{
-	border: 1px solid grey;
+QTextBrowser {
+	background-color: rgb(50, 50, 50);
+	border: 1px solid;
+	border-color: rgb(77, 77, 77);
 }
 
 QTreeView {
@@ -968,7 +970,7 @@ QCheckBox::indicator:checked {
               </property>
               <widget class="QTabWidget" name="tabWidget_library">
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="tab_library">
                 <attribute name="title">
@@ -1141,7 +1143,7 @@ border-bottom-left-radius: 0;</string>
                   </widget>
                  </item>
                  <item row="1" column="0">
-                  <widget class="QTreeWidget" name="treeWidget">
+                  <widget class="QTreeWidget" name="treeWidget_Library">
                    <property name="contextMenuPolicy">
                     <enum>Qt::CustomContextMenu</enum>
                    </property>
@@ -1499,7 +1501,49 @@ border-color: rgb(40, 40, 40);
                 </layout>
                </widget>
               </widget>
-              <widget class="QListWidget" name="listWidget_2"/>
+              <widget class="QStackedWidget" name="stackedWidget_libraryBottom">
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <widget class="QWidget" name="page_libraryBottom_ProgramList">
+                <layout class="QGridLayout" name="gridLayout_45">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item row="0" column="0">
+                  <widget class="QListWidget" name="listWidget_LibraryBottom"/>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="page_libraryBottom_Text">
+                <layout class="QGridLayout" name="gridLayout_44">
+                 <property name="leftMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="topMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="rightMargin">
+                  <number>0</number>
+                 </property>
+                 <property name="bottomMargin">
+                  <number>0</number>
+                 </property>
+                 <item row="0" column="0">
+                  <widget class="QTextBrowser" name="textBrowser_LibraryBottom"/>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
              </widget>
             </item>
            </layout>
@@ -2104,6 +2148,10 @@ color: white;</string>
                             <width>16777215</width>
                             <height>80</height>
                            </size>
+                          </property>
+                          <property name="styleSheet">
+                           <string notr="true">border: 1px solid grey;
+background-color: rgba(0,0,0,0);</string>
                           </property>
                           <property name="readOnly">
                            <bool>false</bool>

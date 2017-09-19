@@ -54,6 +54,7 @@
 #include "consoledialog.h"
 #include "konfytDefines.h"
 #include "konfytsfloader.h"
+#include "../hoverform.h"
 
 
 CARLA_BACKEND_USE_NAMESPACE
@@ -436,6 +437,10 @@ public:
     QBasicTimer waiterTimer;
     void timerEvent(QTimerEvent *ev);
 
+    HoverForm hf;
+    void resizeHoverForm();
+    void resizeEvent(QResizeEvent *ev);
+
     // Console
     ConsoleDialog* consoleDiag; // Console dialog (seperate console window)
     void setConsoleShowMidiMessages(bool show);
@@ -513,46 +518,32 @@ private slots:
     // ========================================================================
     // Library and filesystem view
 
-    void on_treeWidget_itemClicked(QTreeWidgetItem *item, int column);
+    void on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int column);
+    void on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, int column);
+    /* When the user right-clicks on the library tree. */
+    void on_treeWidget_Library_customContextMenuRequested(const QPoint &pos);
 
-    void on_treeWidget_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void on_listWidget_LibraryBottom_currentRowChanged(int currentRow);
+    void on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem *item);
 
     void on_lineEdit_Search_returnPressed();
-
     void on_pushButton_ClearSearch_clicked();
-
     void on_pushButton_LibraryPreview_clicked();
 
-    void on_listWidget_2_currentRowChanged(int currentRow);
-
-    void on_listWidget_2_itemDoubleClicked(QListWidgetItem *item);
-
-    void on_treeWidget_itemDoubleClicked(QTreeWidgetItem *item, int column);
-
     void on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int column);
-
-    void on_toolButton_filesystem_up_clicked();
-
-    void on_toolButton_filesystem_refresh_clicked();
-
-    void on_toolButton_filesystem_home_clicked();
-
-    void on_toolButton_filesystem_back_clicked();
-
-    void on_lineEdit_filesystem_path_returnPressed();
-
-    /* When the user right-clicks on the library tree. */
-    void on_treeWidget_customContextMenuRequested(const QPoint &pos);
-
-    void on_actionOpen_In_File_Manager_library_triggered();
-
     /* When the user right-clicks on the filesystem tree. */
     void on_treeWidget_filesystem_customContextMenuRequested(const QPoint &pos);
 
-    void on_actionAdd_Path_To_External_App_Box_triggered();
-
+    void on_toolButton_filesystem_up_clicked();
+    void on_toolButton_filesystem_refresh_clicked();
+    void on_toolButton_filesystem_home_clicked();
+    void on_toolButton_filesystem_back_clicked();
+    void on_lineEdit_filesystem_path_returnPressed();
     void on_toolButton_filesystem_projectDir_clicked();
 
+    void on_actionOpen_In_File_Manager_library_triggered();
+    void on_actionAdd_Path_To_External_App_Box_triggered();
     void on_actionOpen_In_File_Manager_fsview_triggered();
 
     // ========================================================================
