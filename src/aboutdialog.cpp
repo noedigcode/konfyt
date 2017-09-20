@@ -1,9 +1,9 @@
-#include "hoverform.h"
-#include "ui_hoverform.h"
+#include "aboutdialog.h"
+#include "ui_aboutdialog.h"
 
-HoverForm::HoverForm(QWidget *parent) :
+AboutDialog::AboutDialog(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::HoverForm)
+    ui(new Ui::AboutDialog)
 {
     ui->setupUi(this);
 
@@ -12,17 +12,13 @@ HoverForm::HoverForm(QWidget *parent) :
     ui->textBrowser->document()->setHtml(txt);
 }
 
-HoverForm::~HoverForm()
+AboutDialog::~AboutDialog()
 {
     delete ui;
 }
 
-void HoverForm::on_pushButton_clicked()
+void AboutDialog::on_pushButton_clicked()
 {
     this->hide();
 }
 
-void HoverForm::on_groupBox_clicked()
-{
-    this->hide();
-}

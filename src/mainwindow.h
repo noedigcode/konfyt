@@ -54,7 +54,7 @@
 #include "consoledialog.h"
 #include "konfytDefines.h"
 #include "konfytsfloader.h"
-#include "../hoverform.h"
+#include "aboutdialog.h"
 
 
 CARLA_BACKEND_USE_NAMESPACE
@@ -437,7 +437,7 @@ public:
     QBasicTimer waiterTimer;
     void timerEvent(QTimerEvent *ev);
 
-    HoverForm hf;
+    AboutDialog aboutDialog;
     void resizeHoverForm();
     void resizeEvent(QResizeEvent *ev);
 

@@ -362,9 +362,9 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     QString app_name(APP_NAME);
     ui->statusBar->showMessage("Welkom by " + app_name + ".",5000);
 
-    hf.setParent(this);
+    aboutDialog.setParent(this);
     resizeHoverForm();
-    hf.show();
+    aboutDialog.show();
 }
 
 
@@ -2598,8 +2598,8 @@ void MainWindow::timerEvent(QTimerEvent *ev)
 
 void MainWindow::resizeHoverForm()
 {
-    hf.move(0,0);
-    hf.resize(this->width(),this->height());
+    aboutDialog.move(0,0);
+    aboutDialog.resize(this->width(),this->height());
 }
 
 void MainWindow::resizeEvent(QResizeEvent *ev)
@@ -5198,5 +5198,5 @@ void MainWindow::on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked)
 
 void MainWindow::on_pushButton_LavaMonster_clicked()
 {
-    hf.show();
+    aboutDialog.show();
 }

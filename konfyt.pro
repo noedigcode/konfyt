@@ -35,7 +35,7 @@ SOURCES += src/main.cpp\
     src/konfytCarlaEngine.cpp \
     src/konfytsfloader.cpp \
     src/konfytArrayList.cpp \
-    hoverform.cpp
+    src/aboutdialog.cpp
 
 HEADERS  += src/mainwindow.h \
     src/toetsdialog.h \
@@ -59,13 +59,13 @@ HEADERS  += src/mainwindow.h \
     src/konfytCarlaEngine.h \
     src/konfytsfloader.h \
     src/konfytArrayList.h \
-    hoverform.h
+    src/aboutdialog.h
 
 FORMS    += src/mainwindow.ui \
     src/toetsdialog.ui \
     src/consoledialog.ui \
     src/konfytLayerWidget.ui \
-    hoverform.ui
+    src/aboutdialog.ui
 
 unix: CONFIG += link_pkgconfig
 # Carla stuff

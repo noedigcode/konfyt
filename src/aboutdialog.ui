@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>HoverForm</class>
- <widget class="QWidget" name="HoverForm">
+ <class>AboutDialog</class>
+ <widget class="QWidget" name="AboutDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -14,7 +14,7 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#HoverForm {
+   <string notr="true">QWidget#AboutDialog {
 	border: 0px;
 }
 </string>
