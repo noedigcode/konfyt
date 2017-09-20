@@ -752,6 +752,8 @@ private slots:
 
     void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
 
+    void on_pushButton_LavaMonster_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

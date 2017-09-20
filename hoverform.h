@@ -2,6 +2,9 @@
 #define HOVERFORM_H
 
 #include <QWidget>
+#include "src/konfytDefines.h"
+
+#define REPLACE_TXT_APP_VERSION "%APP_VERSION%"
 
 namespace Ui {
 class HoverForm;

@@ -477,7 +477,7 @@ QStatusBar {
         <number>5</number>
        </property>
        <item>
-        <widget class="QWidget" name="widget" native="true">
+        <widget class="QPushButton" name="pushButton_LavaMonster">
          <property name="minimumSize">
           <size>
            <width>50</width>
@@ -485,7 +485,17 @@ QStatusBar {
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">image: url(:/icons/konfyt 64.png);</string>
+          <string notr="true">QPushButton {
+	image: url(:/icons/konfyt 64.png);
+	border: 0px;
+	margin: 0;
+	padding: 0;
+	background-color: rgba(0,0,0,0);
+}
+</string>
+         </property>
+         <property name="text">
+          <string/>
          </property>
         </widget>
        </item>

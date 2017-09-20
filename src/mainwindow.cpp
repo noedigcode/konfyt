@@ -5195,3 +5195,8 @@ void MainWindow::on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked)
 {
     refreshFilesystemView();
 }
+
+void MainWindow::on_pushButton_LavaMonster_clicked()
+{
+    hf.show();
+}

@@ -6,6 +6,10 @@ HoverForm::HoverForm(QWidget *parent) :
     ui(new Ui::HoverForm)
 {
     ui->setupUi(this);
+
+    QString txt = ui->textBrowser->document()->toHtml();
+    txt.replace(REPLACE_TXT_APP_VERSION, APP_VERSION);
+    ui->textBrowser->document()->setHtml(txt);
 }
 
 HoverForm::~HoverForm()
