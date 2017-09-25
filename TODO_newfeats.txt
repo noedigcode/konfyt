@@ -1,4 +1,4 @@
-konfyt TODO 2017-06-06:
+konfyt TODO 2017-09-25:
 
 
 - Remove unecessary console output
@@ -10,15 +10,15 @@ konfyt TODO 2017-06-06:
 - [TEST] Follow, consolidate and control calls to setCurrentProject (especially when the tab widget current item keeps changing).
          [TEST] SetCurrentProject modified. Test again loading project from commandline.
          [TEST] All possibilities of loading projects.
-- [TEST] Other Jack connections feature.
-- [TEST] Confirm that SFZ loading and playing works with new Carla updates.
+- [DONE] Other Jack connections feature - MIDI only at the moment.
+- [DONE] Confirm that SFZ loading and playing works with new Carla updates.
 - [TEST] .gig loading now works.
 - [TEST] When switching project, e.g. during cmdline argument loading, ensure that the tab bar indicates this.
 - [TEST] Load project(s) and soundfile(s) from commandline argument.
-- [TEST] FILESYSTEM VIEW: on navigating up or loading file, select appropriate item in filesystem view.
-- [TEST] Load patch from filesystem view
+- [DONE] FILESYSTEM VIEW: on navigating up or loading file, select appropriate item in filesystem view.
+- [DONE] Load patch from filesystem view
          Also retest loading other files from filesystem view.
-- [TEST] Changed file detection with suffixes (patch, sfz, sf2, gig)
+- [DONE] Changed file detection with suffixes (patch, sfz, sf2, gig)
          Test filesystem view, viewing only sound files outside of project dir
          Test loading sound files by double clicking in filesystem view
 - [TEST] Modified konfytJackEngine timerEvent (refresh port connections) - TEST port connections refresh.
