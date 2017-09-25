@@ -47,6 +47,7 @@ int pitchbendDataToInt_signed(unsigned char *data12);
 int pitchbendDataToInt_signed(int data1, int data2);
 void pitchbendSignedIntToData(int p, unsigned char *data12);
 int hashMidiEventToInt(int type, int channel, int data1, int bankMSB, int bankLSB);
+QString midiNoteName(int note);
 QString midiEventToString(int type, int channel, int data1, int bankMSB, int bankLSB);
 QString midiEventToString(int type, int channel, int data1, int data2, int bankMSB, int bankLSB);
 

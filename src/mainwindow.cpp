@@ -2121,12 +2121,10 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *curre
         }
 
         // Display contents in text view below library
-        showSfzContentsBelowLibrary();
+        showSfzContentsBelowLibrary(library_selectedSfz);
 
-        return;
-    }
+    } else if ( library_getSelectedTreeItemType() == libTreeSoundfont ) {
 
-    if ( library_getSelectedTreeItemType() == libTreeSoundfont ) {
         // Soundfont is selected.
         if (searchMode) {
             // Fill programList variable with program results of selected soundfont
@@ -2146,9 +2144,9 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *curre
         if (ui->listWidget_LibraryBottom->count()) {
             ui->listWidget_LibraryBottom->setCurrentRow(0);
         }
-    }
 
-    if ( library_getSelectedTreeItemType() == libTreePatch ) {
+    } else if ( library_getSelectedTreeItemType() == libTreePatch ) {
+
         if (previewMode) {
             // Patch is selected in preview mode. Load patch.
             loadPatchForModeAndUpdateGUI();
@@ -2162,6 +2160,7 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *curre
 void MainWindow::library_refreshGUIProgramList()
 {
     ui->listWidget_LibraryBottom->clear();
+    ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_ProgramList);
     for (int i=0; i<programList.count(); i++) {
         ui->listWidget_LibraryBottom->addItem(n2s(programList.at(i).bank)
                                   + "-"
@@ -3476,6 +3475,14 @@ void MainWindow::onLayer_reload_clicked(konfytLayerWidget *layerItem)
 
 }
 
+void MainWindow::onLayer_openInFileManager_clicked(konfytLayerWidget *layerItem, QString filepath)
+{
+    // If path is a file, change path to the folder name of the file
+    QFileInfo info(filepath);
+    if (!info.isDir()) { filepath = info.path(); }
+    openFileManager(filepath);
+}
+
 void MainWindow::gui_updateLayerBusMenu()
 {
     layerBusMenu.clear();
@@ -3539,6 +3546,7 @@ void MainWindow::addLayerItemToGUI(konfytPatchLayer layerItem)
     connect(gui, SIGNAL(mute_clicked_signal(konfytLayerWidget*,bool)), this, SLOT(onLayer_mute_clicked(konfytLayerWidget*,bool)));
     connect(gui, SIGNAL(bus_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_bus_clicked(konfytLayerWidget*)));
     connect(gui, SIGNAL(reload_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_reload_clicked(konfytLayerWidget*)));
+    connect(gui, SIGNAL(openInFileManager_clicked_signal(konfytLayerWidget*,QString)), this, SLOT(onLayer_openInFileManager_clicked(konfytLayerWidget*,QString)));
 
 }
 
@@ -4213,17 +4221,39 @@ void MainWindow::selectItemInFilesystemView(QString path)
 
 void MainWindow::on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
 {
+    ui->textBrowser_LibraryBottom->clear();
+    ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
 
+    QFileInfo info = fsMap.value(current);
+    if (info.isDir()) {
+        // Do nothing
+    } else if ( fileIsSoundfont(info.filePath()) ) {
+
+        ui->textBrowser_LibraryBottom->append("SF2 Soundfont");
+        ui->textBrowser_LibraryBottom->append("File size: " + n2s(info.size()/1024/1024) + " MB");
+        ui->textBrowser_LibraryBottom->append("\nDouble-click to load program list.");
+
+    } else if ( fileIsSfzOrGig(info.filePath()) ) {
+
+        showSfzContentsBelowLibrary(info.filePath());
+
+    } else if ( fileIsPatch(info.filePath())) {
+
+        ui->textBrowser_LibraryBottom->append("Double-click to load patch.");
+
+    }
 }
 
 
 /* Filesystem view: double clicked file or folder in file list. */
 void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
-    QFileInfo info = fsMap.value(item);
-
+    ui->textBrowser_LibraryBottom->clear();
+    ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
+    ui->listWidget_LibraryBottom->clear();
     programList.clear();
 
+    QFileInfo info = fsMap.value(item);
     if (info.isDir()) {
         // If directory, cd to directory.
         cdFilesystemView(info.filePath());
@@ -4233,6 +4263,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
         // Initiate mainwindow waiter (this disables the GUI and indicates to the user
         // that we are busy getting the soundfont in the background)
         startWaiter("Loading soundfont...");
+        ui->textBrowser_LibraryBottom->append("Loading soundfont...");
         // Request soundfont from database
         returnSfontRequester = returnSfontRequester_on_treeWidget_filesystem_itemDoubleClicked;
         this->db.returnSfont(info.filePath());
@@ -4244,6 +4275,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
         // If sfz or gig, load file.
 
         addSfzToCurrentPatch( info.filePath() );
+        showSfzContentsBelowLibrary(info.filePath());
 
     } else if ( fileIsPatch(info.filePath()) ) {
         // File is a patch
@@ -4802,11 +4834,11 @@ void MainWindow::openFileManager(QString path)
     }
 }
 
-void MainWindow::showSfzContentsBelowLibrary()
+void MainWindow::showSfzContentsBelowLibrary(QString filename)
 {
     ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
     ui->textBrowser_LibraryBottom->clear();
-    ui->textBrowser_LibraryBottom->append(loadSfzFileText(library_selectedSfz));
+    ui->textBrowser_LibraryBottom->append(loadSfzFileText(filename));
     QScrollBar* v = ui->textBrowser_LibraryBottom->verticalScrollBar();
     v->setValue(0);
     QScrollBar* h = ui->textBrowser_LibraryBottom->horizontalScrollBar();
@@ -4822,8 +4854,8 @@ QString MainWindow::loadSfzFileText(QString filename)
 
     if ( fi.size() > 1024*500 ) {
 
-        userMessage("File exceeds max allowed size: " + filename);
-        text = "File exceeds max allowed size.";
+        userMessage("File exceeds max allowed size to show contents: " + filename);
+        text = "File exceeds max allowed size to show contents.";
 
     } else if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
 

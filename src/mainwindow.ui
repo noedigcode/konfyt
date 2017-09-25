@@ -980,7 +980,7 @@ QCheckBox::indicator:checked {
               </property>
               <widget class="QTabWidget" name="tabWidget_library">
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="tab_library">
                 <attribute name="title">
@@ -1167,7 +1167,7 @@ border-color: rgb(40, 40, 40);
                     <enum>Qt::ScrollBarAlwaysOn</enum>
                    </property>
                    <property name="horizontalScrollBarPolicy">
-                    <enum>Qt::ScrollBarAlwaysOn</enum>
+                    <enum>Qt::ScrollBarAsNeeded</enum>
                    </property>
                    <property name="autoExpandDelay">
                     <number>-1</number>
@@ -1471,7 +1471,7 @@ border-color: rgb(40, 40, 40);
                     <enum>Qt::ScrollBarAlwaysOn</enum>
                    </property>
                    <property name="horizontalScrollBarPolicy">
-                    <enum>Qt::ScrollBarAlwaysOn</enum>
+                    <enum>Qt::ScrollBarAsNeeded</enum>
                    </property>
                    <property name="autoExpandDelay">
                     <number>-1</number>
@@ -1643,7 +1643,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>8</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
@@ -3485,7 +3485,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>241</width>
+                 <width>300</width>
                  <height>451</height>
                 </size>
                </property>
@@ -3506,7 +3506,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                  <rect>
                   <x>20</x>
                   <y>40</y>
-                  <width>201</width>
+                  <width>261</width>
                   <height>371</height>
                  </rect>
                 </property>
@@ -4517,8 +4517,13 @@ QPushButton::checked{
                        </size>
                       </property>
                       <property name="styleSheet">
-                       <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
+                       <string notr="true">QComboBox {
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+	color: white;
+	padding: 2px; /* This makes text colour work */
+}
+</string>
                       </property>
                       <item>
                        <property name="text">
@@ -4633,7 +4638,7 @@ border-bottom-left-radius: 0;</string>
                <widget class="QFrame" name="frame_9">
                 <property name="geometry">
                  <rect>
-                  <x>50</x>
+                  <x>80</x>
                   <y>420</y>
                   <width>141</width>
                   <height>25</height>
@@ -4744,7 +4749,7 @@ border-bottom-left-radius: 0;</string>
                  <rect>
                   <x>110</x>
                   <y>27</y>
-                  <width>111</width>
+                  <width>171</width>
                   <height>21</height>
                  </rect>
                 </property>

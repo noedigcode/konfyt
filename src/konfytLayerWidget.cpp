@@ -78,6 +78,9 @@ void konfytLayerWidget::on_toolButton_clicked()
         || (this->g.getLayerType() == KonfytLayerType_SoundfontProgram) ) {
         popupMenu.addAction(ui->actionReload_Layer);
     }
+    if (!filepath.isEmpty()) {
+        popupMenu.addAction(ui->actionOpen_in_File_Manager);
+    }
     if (popupMenu.actions().count()) { popupMenu.addSeparator(); }
     popupMenu.addAction(ui->actionRemove_Layer);
     popupMenu.popup(QCursor::pos());
@@ -102,9 +105,11 @@ void konfytLayerWidget::setLayerItem(konfytPatchLayer newg)
 // Set up the widgets corresponding to the layer item.
 void konfytLayerWidget::setUpGUI()
 {
+    filepath = "";
 
     if (g.getLayerType() == KonfytLayerType_SoundfontProgram) {
 
+        filepath = g.sfData.program.parent_soundfont;
         // Set icon
         QIcon icon(":/icons/sf2.png");
         ui->toolButton->setIcon(icon);
@@ -120,6 +125,8 @@ void konfytLayerWidget::setUpGUI()
 
 
     } else if (g.getLayerType() == KonfytLayerType_CarlaPlugin) {
+
+        filepath = g.carlaPluginData.path;
 
         if (g.carlaPluginData.pluginType == KonfytCarlaPluginType_SFZ) {
 
@@ -344,4 +351,9 @@ void konfytLayerWidget::on_toolButton_bus_clicked()
 void konfytLayerWidget::on_actionReload_Layer_triggered()
 {
     emit reload_clicked_signal(this);
+}
+
+void konfytLayerWidget::on_actionOpen_in_File_Manager_triggered()
+{
+    emit openInFileManager_clicked_signal(this, filepath);
 }

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>304</width>
+    <width>306</width>
     <height>37</height>
    </rect>
   </property>
@@ -183,6 +183,9 @@ QSlider::handle:horizontal:hover {
           <height>23</height>
          </size>
         </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
        </widget>
       </item>
       <item>
@@ -295,6 +298,11 @@ QSlider::handle:horizontal:hover {
    </property>
    <property name="toolTip">
     <string>Reload Layer</string>
+   </property>
+  </action>
+  <action name="actionOpen_in_File_Manager">
+   <property name="text">
+    <string>Open in File Manager</string>
    </property>
   </action>
  </widget>

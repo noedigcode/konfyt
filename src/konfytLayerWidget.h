@@ -66,6 +66,7 @@ private:
     konfytPatchLayer g;
     QListWidgetItem* listWidgetItem;
     QMenu popupMenu;
+    QString filepath;
 
     void setUpGUI();
     float background_rectLeft;
@@ -83,6 +84,7 @@ signals:
     void mute_clicked_signal(konfytLayerWidget* layerItem, bool mute);
     void bus_clicked_signal(konfytLayerWidget* layerItem);
     void reload_clicked_signal(konfytLayerWidget* layerItem);
+    void openInFileManager_clicked_signal(konfytLayerWidget* layerItem, QString filepath);
 
 private slots:
     void on_toolButton_clicked();
@@ -95,6 +97,7 @@ private slots:
     void on_toolButton_mute_clicked();
     void on_toolButton_bus_clicked();
     void on_actionReload_Layer_triggered();
+    void on_actionOpen_in_File_Manager_triggered();
 };
 
 #endif // KONFYT_LAYER_WIDGET_H

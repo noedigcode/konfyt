@@ -220,7 +220,7 @@ public:
 
     void openFileManager(QString path);
 
-    void showSfzContentsBelowLibrary();
+    void showSfzContentsBelowLibrary(QString filename);
     QString loadSfzFileText(QString filename);
 
     // ========================================================================
@@ -572,6 +572,7 @@ private slots:
     void onLayer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
     void onLayer_bus_clicked(konfytLayerWidget* layerItem);
     void onLayer_reload_clicked(konfytLayerWidget* layerItem);
+    void onLayer_openInFileManager_clicked(konfytLayerWidget* layerItem, QString filepath);
     void onLayerBusMenu_ActionTrigger(QAction* action);
     void onLayerMidiOutChannelMenu_ActionTrigger(QAction* action);
 
