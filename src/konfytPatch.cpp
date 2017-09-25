@@ -517,6 +517,7 @@ float konfytPatch::getLayerGain(konfytPatchLayer *layer)
 
     // No layer was found that matches the ID. This is probably a logic error somewhere.
     error_abort("getLayerGain: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+    return 0;
 }
 
 void konfytPatch::setLayerGain(konfytPatchLayer *layer, float newGain)
@@ -720,6 +721,8 @@ konfytPatchLayer konfytPatch::getLayerItem(konfytPatchLayer item)
 
     // No layer was found that matches the ID. This is probably a logic error somewhere.
     error_abort("getLayerItem: LayerItem with patch_id " + n2s(item.ID_in_patch) + " is not in the patch's layerList.");
+    konfytPatchLayer l;
+    return l;
 }
 
 // Return list of port ids of the patch's midi output ports.

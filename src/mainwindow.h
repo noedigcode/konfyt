@@ -220,6 +220,8 @@ public:
 
     void openFileManager(QString path);
 
+    QString loadSfzFileText(QString filename);
+
     // ========================================================================
     // Patches
     // ========================================================================
@@ -343,7 +345,7 @@ public:
     bool saveSettingsFile();
 
     // ========================================================================
-    // Midi filter editor
+    // MIDI filter editor
     // ========================================================================
     int midiFilter_lastChan;
     int midiFilter_lastData1;
@@ -438,7 +440,9 @@ public:
     void timerEvent(QTimerEvent *ev);
 
     AboutDialog aboutDialog;
-    void resizeHoverForm();
+    void initAboutDialog();
+    void showAboutDialog();
+    void resizeAboutDialog();
     void resizeEvent(QResizeEvent *ev);
 
     // Console

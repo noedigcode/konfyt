@@ -100,6 +100,8 @@ QString konfytPatchLayer::getName()
     case KonfytLayerType_Uninitialized:
         return "UNINITIALIZED LAYER";
         break;
+    default:
+        return "LAYER TYPE ERROR";
     }
 }
 
@@ -164,6 +166,7 @@ bool konfytPatchLayer::isSolo()
     } else if (this->layerType == KonfytLayerType_AudioIn) {
         return this->audioInPortData.solo;
     }
+    return false;
 }
 
 bool konfytPatchLayer::isMute()
@@ -177,6 +180,7 @@ bool konfytPatchLayer::isMute()
     } else if (this->layerType == KonfytLayerType_AudioIn) {
         return this->audioInPortData.mute;
     }
+    return false;
 }
 
 konfytMidiFilter konfytPatchLayer::getMidiFilter()

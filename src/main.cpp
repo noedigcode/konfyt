@@ -56,6 +56,7 @@ bool matchArgument(QString arg, KonfytArgument expected)
         return ( (arg=="-j") || (arg=="--jackname") );
         break;
     }
+    return false;
 }
 
 int main(int argc, char *argv[])

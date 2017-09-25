@@ -1513,7 +1513,7 @@ border-color: rgb(40, 40, 40);
               </widget>
               <widget class="QStackedWidget" name="stackedWidget_libraryBottom">
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="page_libraryBottom_ProgramList">
                 <layout class="QGridLayout" name="gridLayout_45">
@@ -1549,7 +1549,11 @@ border-color: rgb(40, 40, 40);
                   <number>0</number>
                  </property>
                  <item row="0" column="0">
-                  <widget class="QTextBrowser" name="textBrowser_LibraryBottom"/>
+                  <widget class="QTextBrowser" name="textBrowser_LibraryBottom">
+                   <property name="lineWrapMode">
+                    <enum>QTextEdit::NoWrap</enum>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -6800,7 +6804,7 @@ border-bottom-left-radius: 0;</string>
      <x>0</x>
      <y>0</y>
      <width>1148</width>
-     <height>23</height>
+     <height>18</height>
     </rect>
    </property>
   </widget>

@@ -50,6 +50,9 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
 
     userMessage(QString(APP_NAME) + " " + APP_VERSION);
 
+    // Initialise About Dialog
+    initAboutDialog();
+
     // ----------------------------------------------------
     // Sort out settings
     // ----------------------------------------------------
@@ -62,6 +65,8 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
         userMessage("Settings loaded.");
     } else {
         userMessage("Could not load settings.");
+        // If settings file does not exist, it's probably the first run. Show about dialog.
+        showAboutDialog();
     }
 
     // ----------------------------------------------------
@@ -361,10 +366,6 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // Show welcome message in statusbar
     QString app_name(APP_NAME);
     ui->statusBar->showMessage("Welkom by " + app_name + ".",5000);
-
-    aboutDialog.setParent(this);
-    resizeHoverForm();
-    aboutDialog.show();
 }
 
 
@@ -2106,6 +2107,7 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *curre
 {
     ui->listWidget_LibraryBottom->clear();  // Program list view
     programList.clear();        // Our internal program list, corresponding to the list view
+    ui->textBrowser_LibraryBottom->clear();
 
     if (current == NULL) {
         return;
@@ -2120,9 +2122,7 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *curre
 
         // Display contents in text view below library
         ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
-        ui->textBrowser_LibraryBottom->clear();
-        ui->textBrowser_LibraryBottom->append(library_selectedSfz);
-        ui->textBrowser_LibraryBottom->append("\nTODO: Load file contents here.");
+        ui->textBrowser_LibraryBottom->append(loadSfzFileText(library_selectedSfz));
 
         return;
     }
@@ -2596,7 +2596,19 @@ void MainWindow::timerEvent(QTimerEvent *ev)
     }
 }
 
-void MainWindow::resizeHoverForm()
+void MainWindow::initAboutDialog()
+{
+    aboutDialog.setParent(this);
+    aboutDialog.hide();
+    resizeAboutDialog();
+}
+
+void MainWindow::showAboutDialog()
+{
+    aboutDialog.show();
+}
+
+void MainWindow::resizeAboutDialog()
 {
     aboutDialog.move(0,0);
     aboutDialog.resize(this->width(),this->height());
@@ -2604,7 +2616,7 @@ void MainWindow::resizeHoverForm()
 
 void MainWindow::resizeEvent(QResizeEvent *ev)
 {
-    resizeHoverForm();
+    resizeAboutDialog();
 }
 
 /* Helper function for scanning things into database. */
@@ -4785,6 +4797,24 @@ void MainWindow::openFileManager(QString path)
     }
 }
 
+QString MainWindow::loadSfzFileText(QString filename)
+{
+    QString text;
+
+    QFile file(filename);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        userMessage("Failed to open file file: " + filename);
+        text = "Failed to open file.";
+    } else {
+        // TODO: Should probably check file size as we might run into a pickle when
+        // trying to load a large file that is not actually an SFZ file.
+        text = QString(file.readAll());
+        file.close();
+    }
+
+    return text;
+}
+
 void MainWindow::on_actionRename_BusPort_triggered()
 {
     konfytProject* prj = getCurrentProject();
@@ -5198,5 +5228,5 @@ void MainWindow::on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked)
 
 void MainWindow::on_pushButton_LavaMonster_clicked()
 {
-    aboutDialog.show();
+    showAboutDialog();
 }
