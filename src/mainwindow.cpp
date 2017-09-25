@@ -2121,8 +2121,7 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *curre
         }
 
         // Display contents in text view below library
-        ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
-        ui->textBrowser_LibraryBottom->append(loadSfzFileText(library_selectedSfz));
+        showSfzContentsBelowLibrary();
 
         return;
     }
@@ -4212,6 +4211,12 @@ void MainWindow::selectItemInFilesystemView(QString path)
 }
 
 
+void MainWindow::on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
+{
+
+}
+
+
 /* Filesystem view: double clicked file or folder in file list. */
 void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int column)
 {
@@ -4797,19 +4802,39 @@ void MainWindow::openFileManager(QString path)
     }
 }
 
+void MainWindow::showSfzContentsBelowLibrary()
+{
+    ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
+    ui->textBrowser_LibraryBottom->clear();
+    ui->textBrowser_LibraryBottom->append(loadSfzFileText(library_selectedSfz));
+    QScrollBar* v = ui->textBrowser_LibraryBottom->verticalScrollBar();
+    v->setValue(0);
+    QScrollBar* h = ui->textBrowser_LibraryBottom->horizontalScrollBar();
+    h->setValue(0);
+}
+
 QString MainWindow::loadSfzFileText(QString filename)
 {
     QString text;
 
+    QFileInfo fi(filename);
     QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        userMessage("Failed to open file file: " + filename);
+
+    if ( fi.size() > 1024*500 ) {
+
+        userMessage("File exceeds max allowed size: " + filename);
+        text = "File exceeds max allowed size.";
+
+    } else if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+
+        userMessage("Failed to open file: " + filename);
         text = "Failed to open file.";
+
     } else {
-        // TODO: Should probably check file size as we might run into a pickle when
-        // trying to load a large file that is not actually an SFZ file.
+
         text = QString(file.readAll());
         file.close();
+
     }
 
     return text;
@@ -5230,3 +5255,4 @@ void MainWindow::on_pushButton_LavaMonster_clicked()
 {
     showAboutDialog();
 }
+

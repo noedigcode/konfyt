@@ -220,6 +220,7 @@ public:
 
     void openFileManager(QString path);
 
+    void showSfzContentsBelowLibrary();
     QString loadSfzFileText(QString filename);
 
     // ========================================================================
@@ -535,6 +536,7 @@ private slots:
     void on_pushButton_ClearSearch_clicked();
     void on_pushButton_LibraryPreview_clicked();
 
+    void on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
     void on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int column);
     /* When the user right-clicks on the filesystem tree. */
     void on_treeWidget_filesystem_customContextMenuRequested(const QPoint &pos);
@@ -744,8 +746,6 @@ private slots:
 
     void on_MIDI_indicator_clicked();
 
-
-
     void on_pushButton_ShowJackPage_clicked();
 
     void on_pushButton_jackConRefresh_clicked();
@@ -757,6 +757,7 @@ private slots:
     void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
 
     void on_pushButton_LavaMonster_clicked();
+
 
 private:
     Ui::MainWindow *ui;

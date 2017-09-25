@@ -215,65 +215,65 @@ QScrollBar:vertical {
       width: 14px;
       margin: 0 0 0 0;
 	  padding: 14px 0 14px 0;
-  }
+}
 QScrollBar:horizontal {
       border: 0px solid grey;
       background: rgb(75,75,75);
-      width: 14px;
-      margin: 0 0 0 0;
-	  padding: 0 14px 0 14px;
-  }
-  QScrollBar::handle:vertical {
-      background: rgb(120,120,120);
-      min-height: 20px;
-  }
-QScrollBar::handle:hover:vertical {
-      background: rgb(160,160,160);
-      min-height: 20px;
-  }
-  QScrollBar::handle:horizontal {
-      background: rgb(120,120,120);
-      min-width: 20px;
-  }
-QScrollBar::handle:hover:horizontal {
-      background: rgb(160,160,160);
-      min-width: 20px;
-  }
-/* Top scrollbar button */
-  QScrollBar::sub-line:vertical {
-      background: rgb(100,100,100);
       height: 14px;
-      subcontrol-position: top;
-      subcontrol-origin: padding;
-  }
+      margin: 0 0 0 0;
+	  padding: 0px 14px 0px 14px;
+}
+QScrollBar::handle:vertical {
+	background: rgb(120,120,120);
+	min-height: 20px;
+}
+QScrollBar::handle:hover:vertical {
+	background: rgb(160,160,160);
+	min-height: 20px;
+}
+QScrollBar::handle:horizontal {
+	background: rgb(120,120,120);
+	min-width: 20px;
+}
+QScrollBar::handle:hover:horizontal {
+	background: rgb(160,160,160);
+	min-width: 20px;
+}
+/* Top scrollbar button */
+QScrollBar::sub-line:vertical {
+	background: rgb(100,100,100);
+    height: 14px;
+    subcontrol-position: top;
+    subcontrol-origin: padding;
+}
 /* Bottom scrollbar button */
-  QScrollBar::add-line:vertical {
+QScrollBar::add-line:vertical {
       background: rgb(100,100,100);
       height: 14px;
       subcontrol-position: bottom;
       subcontrol-origin: padding;
-  }
+}
 /* Left scrollbar button */
-  QScrollBar::sub-line:horizontal {
+QScrollBar::sub-line:horizontal {
       background: rgb(100,100,100);
-      height: 14px;
+      width: 14px;
       subcontrol-position: left;
       subcontrol-origin: padding;
-  }
+}
 /* Right scrollbar button */
-  QScrollBar::add-line:horizontal {
-      background: rgb(100,100,100);
-      height: 14px;
-      subcontrol-position: right;
-      subcontrol-origin: padding;
-  }
+QScrollBar::add-line:horizontal {
+	background: rgb(100,100,100);
+	width: 14px;
+	subcontrol-position: right;
+	subcontrol-origin: padding;
+}
 
 QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
-      background: none;
-  }
-  QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-      background: none;
-  }
+	background: none;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+	background: none;
+}
 
 /*******************************************************/
 
@@ -980,7 +980,7 @@ QCheckBox::indicator:checked {
               </property>
               <widget class="QTabWidget" name="tabWidget_library">
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="tab_library">
                 <attribute name="title">
@@ -1548,8 +1548,17 @@ border-color: rgb(40, 40, 40);
                  <property name="bottomMargin">
                   <number>0</number>
                  </property>
-                 <item row="0" column="0">
+                 <property name="spacing">
+                  <number>0</number>
+                 </property>
+                 <item row="1" column="0">
                   <widget class="QTextBrowser" name="textBrowser_LibraryBottom">
+                   <property name="verticalScrollBarPolicy">
+                    <enum>Qt::ScrollBarAlwaysOn</enum>
+                   </property>
+                   <property name="horizontalScrollBarPolicy">
+                    <enum>Qt::ScrollBarAlwaysOn</enum>
+                   </property>
                    <property name="lineWrapMode">
                     <enum>QTextEdit::NoWrap</enum>
                    </property>
@@ -1634,7 +1643,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>8</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
