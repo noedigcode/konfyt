@@ -3531,6 +3531,20 @@ QGroupBox::title {
                  <string/>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_24">
+                 <item row="10" column="1">
+                  <widget class="QLabel" name="label_19">
+                   <property name="text">
+                    <string>High Velocity</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="13" column="0">
+                  <widget class="QCheckBox" name="checkBox_midiFilter_AllCCs">
+                   <property name="text">
+                    <string>All CCs</string>
+                   </property>
+                  </widget>
+                 </item>
                  <item row="11" column="1">
                   <widget class="QFrame" name="frame_27">
                    <property name="minimumSize">
@@ -4252,13 +4266,6 @@ border-bottom-left-radius: 0;</string>
                    </property>
                   </widget>
                  </item>
-                 <item row="10" column="1">
-                  <widget class="QLabel" name="label_19">
-                   <property name="text">
-                    <string>High Velocity</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="12" column="0" colspan="2">
                   <widget class="QCheckBox" name="checkBox_midiFilter_Prog">
                    <property name="text">
@@ -4266,166 +4273,8 @@ border-bottom-left-radius: 0;</string>
                    </property>
                   </widget>
                  </item>
-                 <item row="14" column="0" colspan="2">
-                  <widget class="QFrame" name="frame_28">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_19">
-                    <property name="spacing">
-                     <number>1</number>
-                    </property>
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QLineEdit" name="lineEdit_MidiFilter_CC">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>23</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>23</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                      </property>
-                      <property name="text">
-                       <string>0</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QToolButton" name="toolButton_MidiFilter_Add_CC">
-                      <property name="styleSheet">
-                       <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;
-border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                      </property>
-                      <property name="text">
-                       <string>+</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QToolButton" name="toolButton_MidiFilter_lastCC">
-                      <property name="styleSheet">
-                       <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;
-border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                      </property>
-                      <property name="text">
-                       <string>last</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QToolButton" name="toolButton_MidiFilter_removeCC">
-                      <property name="styleSheet">
-                       <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                      </property>
-                      <property name="text">
-                       <string>-</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
                  <item row="15" column="0" colspan="2">
                   <widget class="QListWidget" name="listWidget_midiFilter_CC"/>
-                 </item>
-                 <item row="13" column="0">
-                  <widget class="QCheckBox" name="checkBox_midiFilter_AllCCs">
-                   <property name="text">
-                    <string>All CCs</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="13" column="1">
-                  <widget class="QCheckBox" name="checkBox_midiFilter_pitchbend">
-                   <property name="text">
-                    <string>Pitchbend</string>
-                   </property>
-                  </widget>
                  </item>
                  <item row="7" column="1">
                   <widget class="QFrame" name="frame_30">
@@ -4632,6 +4481,168 @@ border-bottom-left-radius: 0;</string>
                     <string>In Channel</string>
                    </property>
                   </widget>
+                 </item>
+                 <item row="13" column="1">
+                  <widget class="QCheckBox" name="checkBox_midiFilter_pitchbend">
+                   <property name="text">
+                    <string>Pitchbend</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="14" column="0" colspan="2">
+                  <layout class="QHBoxLayout" name="horizontalLayout_29">
+                   <item>
+                    <widget class="QLabel" name="label_4">
+                     <property name="text">
+                      <string>CCs</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QFrame" name="frame_28">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">QFrame{
+	background: rgb(40,40,40);
+    padding: 1px;
+	border-radius: 3px;
+}
+
+QPushButton{
+	border-top: 1px solid rgb(100,100,100);
+    border-left: 1px solid rgb(100,100,100);
+    border-right: 1px solid rgb(90,90,90);
+    border-bottom: 1px solid rgb(75,75,75);
+	
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
+
+	border-radius: 2px;
+}
+
+QPushButton:hover{
+	border-top: 1px solid rgb(100,100,100);
+    border-left: 1px solid rgb(100,100,100);
+    border-right: 1px solid rgb(90,90,90);
+    border-bottom: 1px solid rgb(75,75,75);
+	
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
+
+	border-radius: 2px;
+}
+
+QPushButton:pressed{
+	border-top: 1px solid rgb(100,100,100);
+    border-left: 1px solid rgb(100,100,100);
+    border-right: 1px solid rgb(90,90,90);
+    border-bottom: 1px solid rgb(75,75,75);
+	
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
+
+	border-radius: 2px;
+}
+
+QPushButton::checked{
+	color: red;
+	background-color: rgb(54, 54, 54);
+}</string>
+                     </property>
+                     <property name="frameShape">
+                      <enum>QFrame::StyledPanel</enum>
+                     </property>
+                     <property name="frameShadow">
+                      <enum>QFrame::Raised</enum>
+                     </property>
+                     <layout class="QHBoxLayout" name="horizontalLayout_19">
+                      <property name="spacing">
+                       <number>1</number>
+                      </property>
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QLineEdit" name="lineEdit_MidiFilter_CC">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>23</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>23</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                        </property>
+                        <property name="text">
+                         <string>0</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QToolButton" name="toolButton_MidiFilter_Add_CC">
+                        <property name="styleSheet">
+                         <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                        </property>
+                        <property name="text">
+                         <string>+</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QToolButton" name="toolButton_MidiFilter_lastCC">
+                        <property name="styleSheet">
+                         <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                        </property>
+                        <property name="text">
+                         <string>last</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QToolButton" name="toolButton_MidiFilter_removeCC">
+                        <property name="styleSheet">
+                         <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                        </property>
+                        <property name="text">
+                         <string>-</string>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                  </layout>
                  </item>
                 </layout>
                </widget>
@@ -5592,7 +5603,7 @@ border-top-left-radius: 0;
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>200</height>
+          <height>100</height>
          </size>
         </property>
         <property name="currentIndex">
@@ -5612,17 +5623,10 @@ border-top-left-radius: 0;
           <property name="bottomMargin">
            <number>0</number>
           </property>
-          <item row="1" column="0">
-           <widget class="QCheckBox" name="checkBox_ConsoleShowMidiMessages">
-            <property name="toolTip">
-             <string>Show received MIDI messages in console</string>
-            </property>
-            <property name="text">
-             <string>Show MIDI Messages</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0" colspan="3">
+          <property name="horizontalSpacing">
+           <number>1</number>
+          </property>
+          <item row="0" column="0">
            <widget class="QTextBrowser" name="textBrowser">
             <property name="maximumSize">
              <size>
@@ -5661,89 +5665,116 @@ p, li { white-space: pre-wrap; }
             </property>
            </widget>
           </item>
-          <item row="1" column="2">
-           <widget class="QFrame" name="frame_18">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QFrame{
+          <item row="0" column="2">
+           <layout class="QVBoxLayout" name="verticalLayout_9">
+            <item>
+             <widget class="QCheckBox" name="checkBox_ConsoleShowMidiMessages">
+              <property name="toolTip">
+               <string>Show received MIDI messages in console</string>
+              </property>
+              <property name="text">
+               <string>Show MIDI</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QFrame" name="frame_18">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QFrame{
 	background: rgb(40,40,40);
     padding: 1px;
 	border-radius: 3px;
 }
 
 </string>
-            </property>
-            <property name="frameShape">
-             <enum>QFrame::StyledPanel</enum>
-            </property>
-            <property name="frameShadow">
-             <enum>QFrame::Raised</enum>
-            </property>
-            <layout class="QHBoxLayout" name="horizontalLayout_22">
-             <property name="spacing">
-              <number>1</number>
-             </property>
-             <property name="leftMargin">
-              <number>0</number>
-             </property>
-             <property name="topMargin">
-              <number>0</number>
-             </property>
-             <property name="rightMargin">
-              <number>0</number>
-             </property>
-             <property name="bottomMargin">
-              <number>0</number>
-             </property>
-             <item>
-              <widget class="QPushButton" name="pushButton_ShowConsole">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <layout class="QGridLayout" name="gridLayout_38">
+               <property name="leftMargin">
+                <number>0</number>
                </property>
-               <property name="toolTip">
-                <string>Show pop-out console</string>
+               <property name="topMargin">
+                <number>0</number>
                </property>
-               <property name="styleSheet">
-                <string notr="true">border-top-right-radius: 0;
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <property name="spacing">
+                <number>1</number>
+               </property>
+               <item row="1" column="0">
+                <widget class="QPushButton" name="pushButton_ShowConsole">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Show pop-out console</string>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">border-bottom-left-radius: 0;
 border-bottom-right-radius: 0;
 </string>
-               </property>
-               <property name="text">
-                <string>Pop Out</string>
-               </property>
-              </widget>
-             </item>
-             <item>
-              <widget class="QPushButton" name="pushButton_ClearConsole">
-               <property name="maximumSize">
-                <size>
-                 <width>50</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="toolTip">
-                <string>Clear console</string>
-               </property>
-               <property name="styleSheet">
-                <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;
+                 </property>
+                 <property name="text">
+                  <string>Pop Out</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0">
+                <widget class="QPushButton" name="pushButton_ClearConsole">
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Clear console</string>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">border-top-left-radius: 0;
+border-top-right-radius: 0;
 </string>
-               </property>
-               <property name="text">
-                <string>Clear</string>
-               </property>
-              </widget>
-             </item>
-            </layout>
-           </widget>
+                 </property>
+                 <property name="text">
+                  <string>Clear</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
@@ -6694,107 +6725,6 @@ QPushButton:pressed{
               <property name="horizontalScrollMode">
                <enum>QAbstractItemView::ScrollPerPixel</enum>
               </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QFrame" name="frame_34">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>16777215</width>
-                <height>25</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
-              <layout class="QGridLayout" name="gridLayout_38">
-               <property name="leftMargin">
-                <number>0</number>
-               </property>
-               <property name="topMargin">
-                <number>0</number>
-               </property>
-               <property name="rightMargin">
-                <number>0</number>
-               </property>
-               <property name="bottomMargin">
-                <number>0</number>
-               </property>
-               <property name="spacing">
-                <number>1</number>
-               </property>
-               <item row="0" column="0">
-                <widget class="QPushButton" name="pushButton_Warnings_Clear">
-                 <property name="toolTip">
-                  <string>Run selected application</string>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;
-border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                 </property>
-                 <property name="text">
-                  <string>Clear</string>
-                 </property>
-                </widget>
-               </item>
-              </layout>
              </widget>
             </item>
            </layout>
