@@ -254,9 +254,6 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     }
 
 
-
-
-
     // ----------------------------------------------------
     // Initialise and update GUI
     // ----------------------------------------------------
@@ -359,6 +356,9 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     shortcut_panic = new QShortcut(QKeySequence("Ctrl+P"), this);
     connect(shortcut_panic, SIGNAL(activated()), this, SLOT(shortcut_panic_activated()));
     ui->pushButton_Panic->setToolTip( ui->pushButton_Panic->toolTip() + " [" + shortcut_panic->key().toString() + "]");
+
+    // Set up external apps combo box
+    setupExtAppMenu();
 
     // Show library view (not live mode)
     ui->stackedWidget_left->setCurrentIndex(STACKED_WIDGET_LEFT_LIBRARY);
@@ -2544,8 +2544,16 @@ void MainWindow::processFinishedSlot(int index, konfytProcess *process)
     }
 }
 
+void MainWindow::extAppsMenuTriggered(QAction *action)
+{
+    ui->lineEdit_ExtApp->setText( extAppsMenuActions.value(action, "") );
+}
 
 
+void MainWindow::on_toolButton_ExtAppsMenu_clicked()
+{
+    extAppsMenu.popup(QCursor::pos());
+}
 
 
 void MainWindow::showWaitingPage(QString title)
@@ -4470,6 +4478,26 @@ void MainWindow::addMidiOutPortToJack(int portId, konfytJackPort **jackPort)
     *jackPort = jack->addPort(KonfytJackPortType_MidiOut, "midi_out_" + n2s(portId));
 }
 
+void MainWindow::setupExtAppMenu()
+{
+    extAppsMenuActions.insert( extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)"),
+                               "a2jmidid -ue" );
+    extAppsMenuActions.insert( extAppsMenu.addAction("zynaddsubfx -l (Load .xmz state file)"),
+                               "zynaddsubfx -l " );
+    extAppsMenuActions.insert( extAppsMenu.addAction("zynaddsubfx -L (Load .xiz instrument file)"),
+                               "zynaddsubfx -L " );
+    extAppsMenuActions.insert( extAppsMenu.addAction("jack-keyboard"),
+                               "jack-keyboard" );
+    extAppsMenuActions.insert( extAppsMenu.addAction("VMPK (Virtual Keyboard)"),
+                               "vmpk" );
+    extAppsMenuActions.insert( extAppsMenu.addAction("Ardour"),
+                               "ardour " );
+    extAppsMenuActions.insert( extAppsMenu.addAction("Carla"),
+                               "carla " );
+
+    connect(&extAppsMenu, SIGNAL(triggered(QAction*)), this, SLOT(extAppsMenuTriggered(QAction*)));
+}
+
 
 void MainWindow::on_pushButton_connectionsPage_OK_clicked()
 {
@@ -5287,4 +5315,6 @@ void MainWindow::on_pushButton_LavaMonster_clicked()
 {
     showAboutDialog();
 }
+
+
 

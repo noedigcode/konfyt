@@ -366,6 +366,9 @@ public:
     // ========================================================================
     // Processes (External apps)
     // ========================================================================
+    QHash<QAction*, QString> extAppsMenuActions;
+    QMenu extAppsMenu;
+    void setupExtAppMenu();
     void addProcess(konfytProcess *process);
     void runProcess(int index);
     void stopProcess(int index);
@@ -496,6 +499,10 @@ private slots:
     // Processes (external apps)
     void processStartedSlot(int index, konfytProcess* process);
     void processFinishedSlot(int index, konfytProcess* process);
+
+    // External apps menu
+    void extAppsMenuTriggered(QAction* action);
+    void on_toolButton_ExtAppsMenu_clicked();
 
     // External Apps widgets
     void on_listWidget_ExtApps_doubleClicked(const QModelIndex &index);
@@ -758,6 +765,8 @@ private slots:
     void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
 
     void on_pushButton_LavaMonster_clicked();
+
+
 
 
 private:
