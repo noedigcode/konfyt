@@ -22,7 +22,7 @@
 #ifndef KONFYT_JACK_ARRAYLIST_H
 #define KONFYT_JACK_ARRAYLIST_H
 
-#define KONFYT_ARLIST_SIZE 128
+#define KONFYT_ARLIST_SIZE 1000
 
 template <typename T>
 class konfytArrayList
@@ -30,7 +30,7 @@ class konfytArrayList
 public:
 
     konfytArrayList();
-    void add(T item);
+    bool add(T item);
     int count();
     T at(int index);
     T* at_ptr(int index);

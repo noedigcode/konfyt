@@ -17,10 +17,15 @@ konfytArrayList<T>::konfytArrayList()
 }
 
 template <typename T>
-void konfytArrayList<T>::add(T item)
+bool konfytArrayList<T>::add(T item)
 {
-    int i = getFreeIndex();
-    array[i].data = item;
+    if (arrayCount >= KONFYT_ARLIST_SIZE) {
+        return false;
+    } else {
+        int i = getFreeIndex();
+        array[i].data = item;
+        return true;
+    }
 }
 
 template <typename T>
