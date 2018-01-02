@@ -12,54 +12,60 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = konfyt
 TEMPLATE = app
 
+INCLUDEPATH += src
 
-SOURCES += main.cpp\
-        mainwindow.cpp \
-    toetsdialog.cpp \
-    consoledialog.cpp \
-    konfytPatchEngine.cpp \
-    konfytPatch.cpp \
-    konfytPatchLayer.cpp \
-    konfytLayerWidget.cpp \
-    konfytFluidsynthEngine.cpp \
-    konfytJackEngine.cpp \
-    konfytDatabase.cpp \
-    konfytProject.cpp \
-    konfytDbTreeItem.cpp \
-    konfytDbTree.cpp \
-    konfytMidiFilter.cpp \
-    konfytProcess.cpp \
-    konfytDefines.cpp \
-    konfytMidi.cpp \
-    konfytCarlaEngine.cpp \
-    konfytsfloader.cpp
+SOURCES += src/main.cpp\
+        src/mainwindow.cpp \
+    src/toetsdialog.cpp \
+    src/consoledialog.cpp \
+    src/konfytPatchEngine.cpp \
+    src/konfytPatch.cpp \
+    src/konfytPatchLayer.cpp \
+    src/konfytLayerWidget.cpp \
+    src/konfytFluidsynthEngine.cpp \
+    src/konfytJackEngine.cpp \
+    src/konfytDatabase.cpp \
+    src/konfytProject.cpp \
+    src/konfytDbTreeItem.cpp \
+    src/konfytDbTree.cpp \
+    src/konfytMidiFilter.cpp \
+    src/konfytProcess.cpp \
+    src/konfytDefines.cpp \
+    src/konfytMidi.cpp \
+    src/konfytCarlaEngine.cpp \
+    src/konfytsfloader.cpp \
+    src/konfytArrayList.cpp \
+    src/aboutdialog.cpp
 
-HEADERS  += mainwindow.h \
-    toetsdialog.h \
-    consoledialog.h \
-    konfytPatchEngine.h \
-    konfytPatch.h \
-    konfytPatchLayer.h \
-    konfytLayerWidget.h \
-    konfytFluidsynthEngine.h \
-    konfytStructs.h \
-    konfytJackEngine.h \
-    konfytDatabase.h \
-    konfytProject.h \
-    konfytDbTreeItem.h \
-    konfytDbTree.h \
-    konfytMidiFilter.h \
-    konfytProcess.h \
-    konfytDefines.h \
-    konfytJackStructs.h \
-    konfytMidi.h \
-    konfytCarlaEngine.h \
-    konfytsfloader.h
+HEADERS  += src/mainwindow.h \
+    src/toetsdialog.h \
+    src/consoledialog.h \
+    src/konfytPatchEngine.h \
+    src/konfytPatch.h \
+    src/konfytPatchLayer.h \
+    src/konfytLayerWidget.h \
+    src/konfytFluidsynthEngine.h \
+    src/konfytStructs.h \
+    src/konfytJackEngine.h \
+    src/konfytDatabase.h \
+    src/konfytProject.h \
+    src/konfytDbTreeItem.h \
+    src/konfytDbTree.h \
+    src/konfytMidiFilter.h \
+    src/konfytProcess.h \
+    src/konfytDefines.h \
+    src/konfytJackStructs.h \
+    src/konfytMidi.h \
+    src/konfytCarlaEngine.h \
+    src/konfytsfloader.h \
+    src/konfytArrayList.h \
+    src/aboutdialog.h
 
-FORMS    += mainwindow.ui \
-    toetsdialog.ui \
-    consoledialog.ui \
-    konfytLayerWidget.ui
+FORMS    += src/mainwindow.ui \
+    src/toetsdialog.ui \
+    src/consoledialog.ui \
+    src/konfytLayerWidget.ui \
+    src/aboutdialog.ui
 
 unix: CONFIG += link_pkgconfig
 # Carla stuff
@@ -77,6 +83,9 @@ QMAKE_LFLAGS += -fpermissive
 
 RESOURCES += \
     images.qrc
+
+OTHER_FILES += \
+    TODO_newfeats.txt
 
 
 
