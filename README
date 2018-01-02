@@ -1,7 +1,7 @@
 Konfyt - Digital Keyboard Workstation for Linux
 ===============================================
 
-2014-2017 Gideon van der Kolf, noedigcode@gmail.com
+2014-2018 Gideon van der Kolf, noedigcode@gmail.com
 
 Welkom by Konfyt.
 Konfyt is a digital keyboard workstation for Linux which allows you to set up
@@ -24,7 +24,7 @@ More information is available at www.noedig.co.za/konfyt/
 Requirements:
 =============
 
-Konfyt was developed and tested on KXStudio 14.04.2.
+Konfyt was developed and tested on Linux Mint 18.3 (based on Ubuntu 16.04).
 
 Qt4
     Ensure that the Qt4 development packages are installed.
@@ -46,8 +46,7 @@ Carla
     All versions are not guaranteed to work since Carla is under active development
     and the API is still subject to change.
     Tested with:
-     - 1.9.6 (2.0-beta4) (KXStudio package 1.9.5~git20161121)
-     - 1.9.7 (2.0-beta5) (KXStudio Package 1.9.7+git20170105)
+     - 1.9.7 (2.0-beta5) (KXStudio Package version 2:1.9.7+git20171228v5)
 
 g++-4.8
 
