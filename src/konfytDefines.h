@@ -32,5 +32,7 @@
 
 #define KONFYT_PATCH_SUFFIX "konfytpatch"
 
+QString sanitiseFilename(QString path);
+
 
 #endif // KONFYT_DEFINES_H

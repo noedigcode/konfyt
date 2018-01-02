@@ -2845,7 +2845,7 @@ bool MainWindow::saveProject(konfytProject *p)
             // We need to bring up a save dialog.
         } else {
             // Find a unique directory name within our default projects dir
-            QString dir = getUniqueFilename(this->projectsDir,p->getProjectName(),"");
+            QString dir = getUniqueFilename(this->projectsDir,sanitiseFilename( p->getProjectName() ),"");
             if (dir == "") {
                 userMessage("Failed to obtain a unique directory name.");
             } else {

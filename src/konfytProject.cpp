@@ -69,7 +69,7 @@ bool konfytProject::saveProjectAs(QString dirname)
     }
 
     // Project file:
-    QString filename = dirname + "/" + projectName + PROJECT_FILENAME_EXTENSION;
+    QString filename = dirname + "/" + sanitiseFilename(projectName) + PROJECT_FILENAME_EXTENSION;
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         userMessage("saveProjectAs: Could not open file for writing: " + filename);
@@ -98,7 +98,7 @@ bool konfytProject::saveProjectAs(QString dirname)
         stream.writeStartElement(XML_PRJ_PATCH);
         // Patch properties
         konfytPatch* pat = patchList.at(i);
-        QString patchFilename = QString(PROJECT_PATCH_DIR) + "/" + n2s(i) + "_" + pat->getName() + "." + KONFYT_PATCH_SUFFIX;
+        QString patchFilename = QString(PROJECT_PATCH_DIR) + "/" + n2s(i) + "_" + sanitiseFilename(pat->getName()) + "." + KONFYT_PATCH_SUFFIX;
         stream.writeTextElement(XML_PRJ_PATCH_FILENAME, patchFilename);
 
         // Save the patch file in the same directory as the project file
