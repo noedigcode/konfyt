@@ -3243,7 +3243,7 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
 
     } else if (action == ui->actionGlobal_Transpose_Zero) {
 
-        if (ev.data2 > 0) { setMasterInTranspose(0,true); }
+        if (ev.data2 > 0) { setMasterInTranspose(0,false); }
 
     }
 
