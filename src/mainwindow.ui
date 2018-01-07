@@ -333,6 +333,14 @@ QTreeView {
 	border-color: rgb(77, 77, 77);
 }
 
+QTreeView::branch {
+	border-image: none;
+	image: none;
+}
+
+
+
+
 /********************************************************
 /* Tool Buttons
 /*******************************************************/
@@ -1197,6 +1205,31 @@ border-color: rgb(40, 40, 40);
                      <string>Soundfonts</string>
                     </property>
                    </column>
+                   <item>
+                    <property name="text">
+                     <string>Patches</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>SFZ</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Soundfonts</string>
+                    </property>
+                    <item>
+                     <property name="text">
+                      <string>GM</string>
+                     </property>
+                    </item>
+                    <item>
+                     <property name="text">
+                      <string>Piano</string>
+                     </property>
+                    </item>
+                   </item>
                   </widget>
                  </item>
                 </layout>
