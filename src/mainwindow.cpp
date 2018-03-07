@@ -45,6 +45,9 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     midiFilter_lastData1 = 0;
     midiFilter_lastData2 = 0;
 
+    lastBankSelectMSB = -1;
+    lastBankSelectLSB = -1;
+
     // Initialise console dialog
     this->consoleDiag = new ConsoleDialog(this);
 
@@ -3171,21 +3174,29 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
     } else {
         key = hashMidiEventToInt(ev.type, ev.channel, ev.data1, -1, -1);
     }
+    // Determine if event passes as button press
+    bool buttonPass = 0;
+    if (ev.type == MIDI_EVENT_TYPE_PROGRAM) {
+        buttonPass = true;
+    } else {
+        buttonPass = ev.data2 > 0;
+    }
+
     // Get the appropriate action based on the key
     QAction* action = triggersMidiActionHash[key];
 
     // Perform the action
     if (action == ui->actionPanic) {
 
-        if (ev.data2 > 0) { ui->actionPanic->trigger(); }
+        if (buttonPass) { ui->actionPanic->trigger(); }
 
     } else if (action == ui->actionNext_Patch) {
 
-        if (ev.data2 > 0) { setCurrentPatch( currentPatchIndex+1 ); }
+        if (buttonPass) { setCurrentPatch( currentPatchIndex+1 ); }
 
     } else if (action == ui->actionPrevious_Patch) {
 
-        if (ev.data2 > 0) { setCurrentPatch( currentPatchIndex-1 ); }
+        if (buttonPass) { setCurrentPatch( currentPatchIndex-1 ); }
 
     } else if (action == ui->actionMaster_Volume_Slider) {
 
@@ -3195,19 +3206,19 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
 
     } else if (action == ui->actionMaster_Volume_Up) {
 
-        if (ev.data2 > 0) { ui->actionMaster_Volume_Up->trigger(); }
+        if (buttonPass) { ui->actionMaster_Volume_Up->trigger(); }
 
     } else if (action == ui->actionMaster_Volume_Down) {
 
-        if (ev.data2 > 0) { ui->actionMaster_Volume_Down->trigger(); }
+        if (buttonPass) { ui->actionMaster_Volume_Down->trigger(); }
 
     } else if (action == ui->actionSave_Patch) {
 
-        if (ev.data2 > 0) { ui->actionSave_Patch->trigger(); }
+        if (buttonPass) { ui->actionSave_Patch->trigger(); }
 
     } else if (action == ui->actionProject_save) {
 
-        if (ev.data2 > 0) { ui->actionProject_save->trigger(); }
+        if (buttonPass) { ui->actionProject_save->trigger(); }
 
     } else if (channelGainActions.contains(action)) {
 
@@ -3227,23 +3238,23 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
 
     } else if (action == ui->actionGlobal_Transpose_12_Down) {
 
-        if (ev.data2 > 0) { setMasterInTranspose(-12,true); }
+        if (buttonPass) { setMasterInTranspose(-12,true); }
 
     } else if (action == ui->actionGlobal_Transpose_12_Up) {
 
-        if (ev.data2 > 0) { setMasterInTranspose(12,true); }
+        if (buttonPass) { setMasterInTranspose(12,true); }
 
     } else if (action == ui->actionGlobal_Transpose_1_Down) {
 
-        if (ev.data2 > 0) { setMasterInTranspose(-1,true); }
+        if (buttonPass) { setMasterInTranspose(-1,true); }
 
     } else if (action == ui->actionGlobal_Transpose_1_Up) {
 
-        if (ev.data2 > 0) { setMasterInTranspose(1,true); }
+        if (buttonPass) { setMasterInTranspose(1,true); }
 
     } else if (action == ui->actionGlobal_Transpose_Zero) {
 
-        if (ev.data2 > 0) { setMasterInTranspose(0,false); }
+        if (buttonPass) { setMasterInTranspose(0,false); }
 
     }
 
