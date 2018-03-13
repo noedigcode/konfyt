@@ -315,7 +315,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     if ( (projectsDir == "") || (patchesDir == "") || (soundfontsDir == "") || (sfzDir == "") ) {
         showSettingsDialog();
     } else {
-        ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
     }
     currentPatchIndex = -1;
 
@@ -490,7 +490,7 @@ void MainWindow::showSettingsDialog()
     }
 
     // Switch to settings page
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_SETTINGS);
+    ui->stackedWidget->setCurrentWidget(ui->SettingsPage);
 }
 
 void MainWindow::updateMidiFilterEditorLastRx()
@@ -532,7 +532,7 @@ void MainWindow::showMidiFilterEditor()
     updateMidiFilterEditorLastRx();
 
     // Switch to midi filter page
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_FILTER);
+    ui->stackedWidget->setCurrentWidget(ui->FilterPage);
 }
 
 // This slot is called when the settings dialog sends a signal to
@@ -763,7 +763,7 @@ void MainWindow::gui_updatePatchList()
 
 void MainWindow::showConnectionsPage()
 {
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_CONNECTIONS);
+    ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
 
     // Adjust column widths
     int RLwidth = 30;
@@ -1230,7 +1230,7 @@ void MainWindow::initTriggers()
 
 void MainWindow::showTriggersPage()
 {
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_TRIGGERS);
+    ui->stackedWidget->setCurrentWidget(ui->triggersPage);
 
     ui->tree_Triggers->setColumnWidth(0, ui->tree_Triggers->width()/2);
     ui->tree_Triggers->setColumnWidth(1, ui->tree_Triggers->width()/2 - 16); // -16 is quick and dirty fix to accomodate scroll bar
@@ -1412,13 +1412,14 @@ void MainWindow::setCurrentProject(int i)
     masterPatch = NULL;
     gui_updatePatchView();
 
-    if (ui->stackedWidget->currentIndex() == STACKED_WIDGET_PAGE_CONNECTIONS) {
+
+    if (ui->stackedWidget->currentWidget() == ui->connectionsPage) {
         showConnectionsPage();
     }
-    if (ui->stackedWidget->currentIndex() == STACKED_WIDGET_PAGE_TRIGGERS) {
+    if (ui->stackedWidget->currentWidget() == ui->triggersPage) {
         showTriggersPage();
     }
-    if (ui->stackedWidget->currentIndex() == STACKED_WIDGET_PAGE_JACK) {
+    if (ui->stackedWidget->currentWidget() == ui->otherJackConsPage) {
         showJackPage();
     }
 
@@ -2562,7 +2563,7 @@ void MainWindow::on_toolButton_ExtAppsMenu_clicked()
 void MainWindow::showWaitingPage(QString title)
 {
     ui->label_WaitingTitle->setText(title);
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_WAITING);
+    ui->stackedWidget->setCurrentWidget(ui->page_Waiting);
 }
 
 void MainWindow::startWaiter(QString msg)
@@ -2654,7 +2655,7 @@ void MainWindow::database_scanDirsFinished()
 
     fillTreeWithAll();
     stopWaiter();
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 }
 
 bool MainWindow::saveDatabase()
@@ -2690,7 +2691,7 @@ void MainWindow::database_returnSfont(konfytSoundfont *sf)
 // Rescan database button pressed.
 void MainWindow::on_pushButtonSettings_RescanLibrary_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_WAITING);
+    ui->stackedWidget->setCurrentWidget(ui->page_Waiting);
     applySettings();
 
     db.clearDatabase();
@@ -2711,12 +2712,8 @@ void MainWindow::on_pushButtonSettings_QuickRescanLibrary_clicked()
 
 void MainWindow::scanThreadFihishedSlot()
 {
-    // Return to patch view
-    //ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
-
     userMessage("ScanThread finished!");
 }
-
 
 
 void MainWindow::on_tabWidget_Projects_currentChanged(int index)
@@ -3135,7 +3132,7 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
         lastBankSelectLSB = -1;
     }
 
-    if (ui->stackedWidget->currentIndex() == STACKED_WIDGET_PAGE_TRIGGERS) {
+    if (ui->stackedWidget->currentWidget() == ui->triggersPage) {
 
         // Add event to last received events list
         ui->listWidget_triggers_eventList->addItem( ev.toString() );
@@ -3608,13 +3605,13 @@ void MainWindow::clearLayerItems_GUIonly()
 
 void MainWindow::on_pushButton_Settings_Cancel_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 }
 
 void MainWindow::on_pushButton_Settings_Apply_clicked()
 {
     applySettings();
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 }
 
 void MainWindow::on_pushButton_settings_Projects_clicked()
@@ -3921,7 +3918,7 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
 
 void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 }
 
 // The user has been editing the midi filter and has now clicked apply.
@@ -3961,7 +3958,7 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     setProjectModified();
 
     // Switch back to patch view
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 
 }
 
@@ -4512,13 +4509,13 @@ void MainWindow::setupExtAppMenu()
 
 void MainWindow::on_pushButton_connectionsPage_OK_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 }
 
 void MainWindow::on_pushButton_ShowConnections_clicked()
 {
-    if (ui->stackedWidget->currentIndex() == STACKED_WIDGET_PAGE_CONNECTIONS) {
-        ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    if (ui->stackedWidget->currentWidget() == ui->connectionsPage) {
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
     } else {
         showConnectionsPage();
     }
@@ -4979,8 +4976,8 @@ void MainWindow::on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int colu
 
 void MainWindow::on_pushButton_ShowTriggersPage_clicked()
 {
-    if (ui->stackedWidget->currentIndex() == STACKED_WIDGET_PAGE_TRIGGERS) {
-        ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    if (ui->stackedWidget->currentWidget() == ui->triggersPage) {
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
     } else {
         showTriggersPage();
     }
@@ -4988,7 +4985,7 @@ void MainWindow::on_pushButton_ShowTriggersPage_clicked()
 
 void MainWindow::on_pushButton_triggersPage_OK_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 }
 
 void MainWindow::on_pushButton_triggersPage_assign_clicked()
@@ -5223,8 +5220,8 @@ void MainWindow::on_pushButton_MasterIn_TransposeZero_clicked()
 
 void MainWindow::on_pushButton_ShowJackPage_clicked()
 {
-    if (ui->stackedWidget->currentIndex() == STACKED_WIDGET_PAGE_JACK) {
-        ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_PATCHES);
+    if (ui->stackedWidget->currentWidget() == ui->otherJackConsPage) {
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
     } else {
         showJackPage();
     }
@@ -5232,16 +5229,13 @@ void MainWindow::on_pushButton_ShowJackPage_clicked()
 
 void MainWindow::showJackPage()
 {
-    ui->stackedWidget->setCurrentIndex(STACKED_WIDGET_PAGE_JACK);
+    ui->stackedWidget->setCurrentWidget(ui->otherJackConsPage);
 
     // Update JACK output ports
     ui->treeWidget_jackPortsOut->clear();
     QStringList mo = jack->getMidiOutputPortsList();
     for (int i=0; i<mo.count(); i++) {
         QString client_port = mo[i];
-//        QString client = client_port.split(":").at(0);
-//        QString port = client_port;
-//        port.replace(client + ":", ""); */
         QTreeWidgetItem* item = new QTreeWidgetItem();
         item->setText(0,client_port);
         ui->treeWidget_jackPortsOut->addTopLevelItem(item);
