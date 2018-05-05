@@ -97,8 +97,13 @@
         <property name="styleSheet">
          <string notr="true">QGroupBox {
 	border: 2px solid white;
-	border-radius: 5px;
+	border-radius: 0px;
 	background-color: rgb(120,120,120);
+
+	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
+	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
+	border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+	border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
 }</string>
         </property>
         <property name="title">
@@ -128,8 +133,8 @@
 	
 	border: 0px;
 	color: white;
-	border-top-left-radius: 5px;
-	border-top-right-radius: 5px;
+	border-top-left-radius: 0px;
+	border-top-right-radius: 0px;
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
 }</string>
@@ -159,8 +164,8 @@ p, li { white-space: pre-wrap; }
 	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
-	border-bottom-left-radius: 5px;
-	border-bottom-right-radius: 5px;
+	border-bottom-left-radius: 0px;
+	border-bottom-right-radius: 0px;
 }</string>
            </property>
            <property name="frameShape">

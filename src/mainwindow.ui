@@ -55,6 +55,8 @@ QComboBox::drop-down {
      border-left-style: solid; /* just a single line */
      border-top-right-radius: 3px; /* same radius as the QComboBox */
      border-bottom-right-radius: 3px;
+	
+	image: url(:/icons/down.png);
  }
 
 QComboBox QAbstractItemView {
@@ -111,6 +113,7 @@ QMainWindow {
 /*******************************************************/
 
 QPushButton{
+
 	border-top: 1px solid rgb(100,100,100);
     border-left: 1px solid rgb(100,100,100);
     border-right: 1px solid rgb(90,90,90);
@@ -190,40 +193,50 @@ QSpinBox {
 }
 
 QSpinBox::up-button {
-	background-color: grey;
+	background-color: rgb(77, 77, 77);
      subcontrol-origin: border;
      subcontrol-position: top right; /* position at the top right corner */
 
     width: 16px; /* 16 + 2*1px border-width = 15px padding + 3px parent border */
-    border: 1px solid rgb(77, 77, 77);
+    border: 1px solid transparent; /*rgb(77, 77, 77);*/
+	margin-top: 1px;
+	margin-right: 1px;
+	
+	image: url(:/icons/up.png);
  }
 
 QSpinBox::down-button {
-  background-color: grey;
+  	background-color: rgb(77, 77, 77);
      subcontrol-origin: border;
      subcontrol-position: bottom right; /* position at bottom right corner */
 
      width: 16px;
-     
-     border: 1px solid rgb(77, 77, 77);
+     border: 1px solid transparent;
+	margin-bottom: 1px;
+	margin-right: 1px;
+
+	
+	image: url(:/icons/down.png);
  }
 
 /********************************************************
 /* Scroll bars
 /*******************************************************/
 QScrollBar:vertical {
-      border: 0px solid grey;
+      border: 0px transparent;
       background: rgb(75,75,75);
       width: 14px;
       margin: 0 0 0 0;
-	  padding: 14px 0 14px 0;
+	  /*padding: 14px 0 14px 0;*/
+	padding: 0 0 0 0;
 }
 QScrollBar:horizontal {
-      border: 0px solid grey;
+      border: 0px transparent;
       background: rgb(75,75,75);
       height: 14px;
       margin: 0 0 0 0;
-	  padding: 0px 14px 0px 14px;
+	  /*padding: 0px 14px 0px 14px;*/
+	padding: 0 0 0 0;
 }
 QScrollBar::handle:vertical {
 	background: rgb(120,120,120);
@@ -244,28 +257,33 @@ QScrollBar::handle:hover:horizontal {
 /* Top scrollbar button */
 QScrollBar::sub-line:vertical {
 	background: rgb(100,100,100);
-    height: 14px;
+    /*height: 14px;*/
+	height: 0;
     subcontrol-position: top;
     subcontrol-origin: padding;
+	
 }
 /* Bottom scrollbar button */
 QScrollBar::add-line:vertical {
       background: rgb(100,100,100);
-      height: 14px;
+      /*height: 14px;*/
+	 height: 0;
       subcontrol-position: bottom;
       subcontrol-origin: padding;
 }
 /* Left scrollbar button */
 QScrollBar::sub-line:horizontal {
       background: rgb(100,100,100);
-      width: 14px;
+      /*width: 14px;*/
+	  width: 0;
       subcontrol-position: left;
       subcontrol-origin: padding;
 }
 /* Right scrollbar button */
 QScrollBar::add-line:horizontal {
 	background: rgb(100,100,100);
-	width: 14px;
+	/*width: 14px;*/
+	width: 0;
 	subcontrol-position: right;
 	subcontrol-origin: padding;
 }
@@ -408,15 +426,20 @@ QToolButton[popupMode=&quot;1&quot;] { /* only for MenuButtonPopup */
      background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
  }
 
-/*
+
  QToolButton::menu-arrow {
-     image: url(downarrow.png);
+	border-image: url(:/icons/down.png);
  }
-*/
+
 
  QToolButton::menu-arrow:open {
      top: 1px; left: 1px; /* shift it a bit */
  }
+
+QToolButton::menu-indicator {
+	width: 0;
+}
+
 /*******************************************************/
 
 QToolTip {
@@ -630,10 +653,6 @@ border-bottom-left-radius: 0;</string>
             </property>
             <property name="text">
              <string>Settings</string>
-            </property>
-            <property name="icon">
-             <iconset resource="../images.qrc">
-              <normaloff>:/icons/settings.png</normaloff>:/icons/settings.png</iconset>
             </property>
             <property name="toolButtonStyle">
              <enum>Qt::ToolButtonTextBesideIcon</enum>
@@ -1172,9 +1191,15 @@ border-bottom-left-radius: 0;</string>
                    </property>
                    <property name="styleSheet">
                     <string notr="true">QTreeWidget {
-background-color: rgb(38, 38, 38);
-border-color: rgb(40, 40, 40);
-}</string>
+	background-color: rgb(38, 38, 38);
+	border-color: rgb(40, 40, 40);
+}
+
+/* No horizontal scrollbar used; Hide ugly line below vertical scrollbar. */
+QScrollBar:horizontal {
+	height: 0;
+}
+</string>
                    </property>
                    <property name="verticalScrollBarPolicy">
                     <enum>Qt::ScrollBarAlwaysOn</enum>
@@ -1681,7 +1706,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>6</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
@@ -1713,8 +1738,8 @@ td
 	
 	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
 	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+	border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+	border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
 }</string>
             </property>
             <property name="title">
@@ -2199,8 +2224,11 @@ color: white;</string>
                         <property name="bottomMargin">
                          <number>0</number>
                         </property>
-                        <property name="spacing">
+                        <property name="horizontalSpacing">
                          <number>0</number>
+                        </property>
+                        <property name="verticalSpacing">
+                         <number>2</number>
                         </property>
                         <item row="3" column="0">
                          <widget class="QTextBrowser" name="textBrowser_patchNote">
@@ -2365,7 +2393,7 @@ border-bottom-right-radius: 0;
                               <enum>QToolButton::InstantPopup</enum>
                              </property>
                              <property name="toolButtonStyle">
-                              <enum>Qt::ToolButtonTextBesideIcon</enum>
+                              <enum>Qt::ToolButtonTextOnly</enum>
                              </property>
                              <property name="arrowType">
                               <enum>Qt::NoArrow</enum>
@@ -2390,7 +2418,7 @@ border-top-right-radius: 0;
 border-bottom-right-radius: 0;</string>
                              </property>
                              <property name="text">
-                              <string>MIDI Port</string>
+                              <string>Add MIDI Port</string>
                              </property>
                              <property name="popupMode">
                               <enum>QToolButton::InstantPopup</enum>
@@ -2419,7 +2447,7 @@ border-bottom-right-radius: 0;</string>
 border-bottom-left-radius: 0;</string>
                              </property>
                              <property name="text">
-                              <string>Audio In</string>
+                              <string>Add Audio In Port</string>
                              </property>
                              <property name="popupMode">
                               <enum>QToolButton::InstantPopup</enum>
@@ -5207,6 +5235,12 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                  </item>
                  <item>
                   <widget class="QTreeWidget" name="tree_Triggers">
+                   <property name="styleSheet">
+                    <string notr="true">/* No horizontal scrollbar used; Hide ugly line below vertical scrollbar. */
+QScrollBar:horizontal {
+	height: 0;
+}</string>
+                   </property>
                    <property name="alternatingRowColors">
                     <bool>false</bool>
                    </property>
@@ -5543,24 +5577,30 @@ QPushButton::checked{
                    <property name="frameShadow">
                     <enum>QFrame::Raised</enum>
                    </property>
-                   <layout class="QGridLayout" name="gridLayout_39">
-                    <property name="leftMargin">
-                     <number>1</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>1</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>1</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>1</number>
-                    </property>
+                   <layout class="QVBoxLayout" name="verticalLayout_10">
                     <property name="spacing">
                      <number>1</number>
                     </property>
-                    <item row="0" column="0">
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
                      <widget class="QPushButton" name="pushButton_jackConAdd">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
                       <property name="styleSheet">
                        <string notr="true">
 border-bottom-right-radius: 0;
@@ -5572,8 +5612,14 @@ border-bottom-left-radius: 0;</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="1" column="0">
+                    <item>
                      <widget class="QPushButton" name="pushButton_jackConRemove">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
                       <property name="styleSheet">
                        <string notr="true">border-top-right-radius: 0;
 border-bottom-right-radius: 0;
@@ -5585,8 +5631,20 @@ border-bottom-left-radius: 0;</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="2" column="0">
+                    <item>
                      <widget class="QPushButton" name="pushButton_jackConRefresh">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
                       <property name="styleSheet">
                        <string notr="true">border-top-right-radius: 0;
 
@@ -5732,15 +5790,18 @@ border-top-left-radius: 0;
             </property>
             <property name="styleSheet">
              <string notr="true">QTextBrowser{
-	
 	background-color: rgb(30,30,30);
 	color: rgb(150,150,150);
 	border: 1px solid;
-	
 	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
 	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+	border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+	border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+}
+
+/* No horizontal scrollbar used; Hide ugly line below vertical scrollbar. */
+QScrollBar:horizontal {
+	height: 0;
 }</string>
             </property>
             <property name="html">
@@ -6336,12 +6397,19 @@ border-bottom-right-radius: 0;</string>
                </item>
                <item>
                 <widget class="QToolButton" name="toolButton_ExtAppsMenu">
+                 <property name="toolTip">
+                  <string>Choose from list of applications</string>
+                 </property>
                  <property name="styleSheet">
                   <string notr="true">border-top-left-radius: 0;
 border-bottom-left-radius: 0;</string>
                  </property>
                  <property name="text">
                   <string>...</string>
+                 </property>
+                 <property name="icon">
+                  <iconset resource="../images.qrc">
+                   <normaloff>:/icons/down.png</normaloff>:/icons/down.png</iconset>
                  </property>
                 </widget>
                </item>
@@ -6490,8 +6558,7 @@ border-bottom-right-radius: 0;</string>
 
 border-top-left-radius: 0;
 border-bottom-left-radius: 0;
-border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
+</string>
                  </property>
                  <property name="text">
                   <string>All</string>
@@ -6840,24 +6907,6 @@ QPushButton:pressed{
      </widget>
     </item>
    </layout>
-  </widget>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>1148</width>
-     <height>18</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QToolBar" name="mainToolBar">
-   <attribute name="toolBarArea">
-    <enum>TopToolBarArea</enum>
-   </attribute>
-   <attribute name="toolBarBreak">
-    <bool>false</bool>
-   </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar">
    <property name="enabled">

@@ -308,9 +308,6 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     connect(&layerMidiOutChannelMenu, SIGNAL(triggered(QAction*)),
             this, SLOT(onLayerMidiOutChannelMenu_ActionTrigger(QAction*)));
 
-    // Hide main toolbar
-    ui->mainToolBar->hide();
-
     // If one of the paths are not set, show settings. Else, switch to patch view.
     if ( (projectsDir == "") || (patchesDir == "") || (soundfontsDir == "") || (sfzDir == "") ) {
         showSettingsDialog();
