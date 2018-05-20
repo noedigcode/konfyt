@@ -28,8 +28,11 @@
 #define APP_VERSION "1.0.0-testing"
 
 #define n2s(x) QString::number(x)
+#define bool2int(x) (x ? 1 : 0)
+#define bool2str(x) (x ? "1" : "0")
+#define int2bool(x) (x!=0)
+#define Qstr2bool(x) (x!="0")
 #define STRING_PROJECT_DIR "$PROJ_DIR$"
-
 #define KONFYT_PATCH_SUFFIX "konfytpatch"
 
 QString sanitiseFilename(QString path);

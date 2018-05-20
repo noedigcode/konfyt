@@ -706,6 +706,8 @@ private slots:
 
     void on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem *item, int column);
 
+    void on_checkBox_Triggers_ProgSwitchPatches_clicked();
+
     // ========================================================================
     // Console
 

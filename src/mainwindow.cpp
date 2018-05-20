@@ -740,7 +740,13 @@ void MainWindow::gui_updatePatchList()
     bool allPatchesLoaded = true;
     for (int j=0; j<pl.count(); j++) {
         konfytPatch* pat = pl.at(j);
-        QListWidgetItem* item = new QListWidgetItem(n2s(j+1) + " " + pat->getName());
+
+        // quick add for jam TODO
+        QString notenames = "CDEFGAB";
+        QString patchnote = notenames.at(j%7);
+
+
+        QListWidgetItem* item = new QListWidgetItem(n2s(j+1) + " " + patchnote + " " + pat->getName());
         // If patch has been loaded, mark it white. Else, gray.
         if (prj->isPatchLoaded(pat->id_in_project)) {
             item->setTextColor(Qt::white);
@@ -1251,6 +1257,9 @@ void MainWindow::showTriggersPage()
             }
         }
     }
+
+    // Program change text box
+    ui->checkBox_Triggers_ProgSwitchPatches->setChecked( prj->isProgramChangeSwitchPatches() );
 
 }
 
@@ -3161,6 +3170,18 @@ void MainWindow::midiEventSlot(konfytMidiEvent ev)
 
     }
 
+    // If program change without bank select, switch patch if checkbox is checked.
+    if (ev.type == MIDI_EVENT_TYPE_PROGRAM) {
+        if ( (lastBankSelectLSB == -1) && (lastBankSelectMSB == -1) ) {
+            konfytProject* prj = getCurrentProject();
+            if (prj != NULL) {
+                if (prj->isProgramChangeSwitchPatches()) {
+                    setCurrentPatch(ev.data1);
+                }
+            }
+        }
+    }
+
     // Hash midi event to a key
     int key;
     if (ev.type == MIDI_EVENT_TYPE_PROGRAM) {
@@ -5046,9 +5067,13 @@ void MainWindow::on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem *item, int c
     on_pushButton_triggersPage_assign_clicked();
 }
 
+void MainWindow::on_checkBox_Triggers_ProgSwitchPatches_clicked()
+{
+    konfytProject* prj = getCurrentProject();
+    if (prj == NULL) { return; }
 
-
-
+    prj->setProgramChangeSwitchPatches( ui->checkBox_Triggers_ProgSwitchPatches->isChecked() );
+}
 
 void MainWindow::on_checkBox_ConsoleShowMidiMessages_clicked()
 {

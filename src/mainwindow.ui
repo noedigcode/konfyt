@@ -1706,7 +1706,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>6</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
@@ -5218,8 +5218,89 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
             <property name="title">
              <string/>
             </property>
-            <layout class="QGridLayout" name="gridLayout_34">
-             <item row="1" column="0">
+            <layout class="QVBoxLayout" name="verticalLayout_11">
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_22">
+               <item>
+                <spacer name="horizontalSpacer_2">
+                 <property name="orientation">
+                  <enum>Qt::Horizontal</enum>
+                 </property>
+                 <property name="sizeHint" stdset="0">
+                  <size>
+                   <width>40</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                </spacer>
+               </item>
+               <item>
+                <widget class="QFrame" name="frame_33">
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>26</height>
+                  </size>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">QFrame{
+	background: rgb(40,40,40);
+    padding: 1px;
+	border-radius: 3px;
+}
+
+</string>
+                 </property>
+                 <property name="frameShape">
+                  <enum>QFrame::StyledPanel</enum>
+                 </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Raised</enum>
+                 </property>
+                 <layout class="QHBoxLayout" name="horizontalLayout_30">
+                  <property name="spacing">
+                   <number>1</number>
+                  </property>
+                  <property name="leftMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="topMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="rightMargin">
+                   <number>0</number>
+                  </property>
+                  <property name="bottomMargin">
+                   <number>0</number>
+                  </property>
+                  <item>
+                   <widget class="QPushButton" name="pushButton_triggersPage_clear">
+                    <property name="styleSheet">
+                     <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                    </property>
+                    <property name="text">
+                     <string>Clear Selected Action</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="pushButton_triggersPage_assign">
+                    <property name="styleSheet">
+                     <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                    </property>
+                    <property name="text">
+                     <string>Assign MIDI Event to Action</string>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
               <layout class="QHBoxLayout" name="horizontalLayout_24" stretch="1,0">
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -5287,7 +5368,14 @@ QScrollBar:horizontal {
                </item>
               </layout>
              </item>
-             <item row="2" column="0">
+             <item>
+              <widget class="QCheckBox" name="checkBox_Triggers_ProgSwitchPatches">
+               <property name="text">
+                <string>Program Change messages with no bank select switch patches.</string>
+               </property>
+              </widget>
+             </item>
+             <item>
               <layout class="QHBoxLayout" name="horizontalLayout_25">
                <item>
                 <spacer name="horizontalSpacer_3">
@@ -5379,87 +5467,6 @@ QPushButton:pressed{
                     </property>
                     <property name="text">
                      <string>OK</string>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </widget>
-               </item>
-              </layout>
-             </item>
-             <item row="0" column="0">
-              <layout class="QHBoxLayout" name="horizontalLayout_22">
-               <item>
-                <spacer name="horizontalSpacer_2">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
-                <widget class="QFrame" name="frame_33">
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>26</height>
-                  </size>
-                 </property>
-                 <property name="styleSheet">
-                  <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-</string>
-                 </property>
-                 <property name="frameShape">
-                  <enum>QFrame::StyledPanel</enum>
-                 </property>
-                 <property name="frameShadow">
-                  <enum>QFrame::Raised</enum>
-                 </property>
-                 <layout class="QHBoxLayout" name="horizontalLayout_30">
-                  <property name="spacing">
-                   <number>1</number>
-                  </property>
-                  <property name="leftMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="topMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="rightMargin">
-                   <number>0</number>
-                  </property>
-                  <property name="bottomMargin">
-                   <number>0</number>
-                  </property>
-                  <item>
-                   <widget class="QPushButton" name="pushButton_triggersPage_clear">
-                    <property name="styleSheet">
-                     <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                    </property>
-                    <property name="text">
-                     <string>Clear Selected Action</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <widget class="QPushButton" name="pushButton_triggersPage_assign">
-                    <property name="styleSheet">
-                     <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                    </property>
-                    <property name="text">
-                     <string>Assign MIDI Event to Action</string>
                     </property>
                    </widget>
                   </item>
@@ -6006,7 +6013,7 @@ border-top-right-radius: 0;
         <enum>QTabWidget::South</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tab_15">
         <attribute name="title">

@@ -28,6 +28,7 @@ konfytProject::konfytProject(QObject *parent) :
     // Initialise variables
     projectName = "New Project";
     patch_id_counter = 0;
+    programChangeSwitchPatches = true;
     modified = false;
 
     // Project has to have a minimum 1 bus
@@ -194,6 +195,7 @@ bool konfytProject::saveProjectAs(QString dirname)
 
     // Write trigger list
     stream.writeStartElement(XML_PRJ_TRIGGERLIST);
+    stream.writeTextElement(XML_PRJ_PROG_CHANGE_SWITCH_PATCHES, bool2str(programChangeSwitchPatches));
     QList<konfytTrigger> trigs = triggerHash.values();
     for (int i=0; i<trigs.count(); i++) {
         stream.writeStartElement(XML_PRJ_TRIGGER);
@@ -418,7 +420,10 @@ bool konfytProject::loadProject(QString filename)
             } else if (r.name() == XML_PRJ_TRIGGERLIST) {
 
                 while (r.readNextStartElement()) {
-                    if (r.name() == XML_PRJ_TRIGGER) {
+
+                    if (r.name() == XML_PRJ_PROG_CHANGE_SWITCH_PATCHES) {
+                        programChangeSwitchPatches = Qstr2bool(r.readElementText());
+                    } else if (r.name() == XML_PRJ_TRIGGER) {
 
                         konfytTrigger trig;
                         while (r.readNextStartElement()) {
@@ -1074,6 +1079,17 @@ void konfytProject::removeTrigger(QString actionText)
 QList<konfytTrigger> konfytProject::getTriggerList()
 {
     return triggerHash.values();
+}
+
+bool konfytProject::isProgramChangeSwitchPatches()
+{
+    return programChangeSwitchPatches;
+}
+
+void konfytProject::setProgramChangeSwitchPatches(bool value)
+{
+    programChangeSwitchPatches = value;
+    setModified(true);
 }
 
 konfytJackConPair konfytProject::addJackCon(QString srcPort, QString destPort)

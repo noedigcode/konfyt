@@ -79,6 +79,7 @@
 #define XML_PRJ_TRIGGER_DATA1 "data1"
 #define XML_PRJ_TRIGGER_BANKMSB "bankMSB"
 #define XML_PRJ_TRIGGER_BANKLSB "bankLSB"
+#define XML_PRJ_PROG_CHANGE_SWITCH_PATCHES "programChangeSwitchPatches"
 #define XML_PRJ_OTHERJACKCON_LIST "otherJackConList"
 #define XML_PRJ_OTHERJACKCON "otherJackCon"
 #define XML_PRJ_OTHERJACKCON_SRC "srcPort"
@@ -222,6 +223,8 @@ public:
     void addAndReplaceTrigger(konfytTrigger newTrigger);
     void removeTrigger(QString actionText);
     QList<konfytTrigger> getTriggerList();
+    bool isProgramChangeSwitchPatches();
+    void setProgramChangeSwitchPatches(bool value);
 
     // Other JACK connections
     konfytJackConPair addJackCon(QString srcPort, QString destPort);
@@ -252,6 +255,7 @@ private:
 
     QList<konfytProcess*> processList;
     QHash<QString, konfytTrigger> triggerHash;
+    bool programChangeSwitchPatches;
 
     QList<konfytJackConPair> jackConList;
 
