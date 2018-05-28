@@ -1706,7 +1706,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>6</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
@@ -1920,43 +1920,33 @@ QToolButton:pressed{
                     <property name="spacing">
                      <number>1</number>
                     </property>
-                    <item row="0" column="4">
-                     <widget class="QPushButton" name="pushButton_RemovePatch">
+                    <item row="0" column="0">
+                     <widget class="QPushButton" name="pushButton_LoadAll">
                       <property name="minimumSize">
                        <size>
-                        <width>23</width>
+                        <width>0</width>
                         <height>23</height>
                        </size>
                       </property>
                       <property name="maximumSize">
                        <size>
-                        <width>23</width>
+                        <width>16777215</width>
                         <height>23</height>
                        </size>
                       </property>
                       <property name="toolTip">
-                       <string>Remove selected patch</string>
+                       <string>Load all patches into memory</string>
                       </property>
                       <property name="styleSheet">
-                       <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
+                       <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
                       </property>
                       <property name="text">
-                       <string/>
-                      </property>
-                      <property name="icon">
-                       <iconset resource="../images.qrc">
-                        <normaloff>:/icons/remove.png</normaloff>:/icons/remove.png</iconset>
-                      </property>
-                      <property name="iconSize">
-                       <size>
-                        <width>22</width>
-                        <height>22</height>
-                       </size>
+                       <string>Ld All</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="0" column="1">
+                    <item row="0" column="2">
                      <widget class="QToolButton" name="toolButton_AddPatch">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -2003,7 +1993,43 @@ border-bottom-left-radius: 0;</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="0" column="2">
+                    <item row="0" column="5">
+                     <widget class="QPushButton" name="pushButton_RemovePatch">
+                      <property name="minimumSize">
+                       <size>
+                        <width>23</width>
+                        <height>23</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>23</width>
+                        <height>23</height>
+                       </size>
+                      </property>
+                      <property name="toolTip">
+                       <string>Remove selected patch</string>
+                      </property>
+                      <property name="styleSheet">
+                       <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                      </property>
+                      <property name="text">
+                       <string/>
+                      </property>
+                      <property name="icon">
+                       <iconset resource="../images.qrc">
+                        <normaloff>:/icons/remove.png</normaloff>:/icons/remove.png</iconset>
+                      </property>
+                      <property name="iconSize">
+                       <size>
+                        <width>22</width>
+                        <height>22</height>
+                       </size>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="3">
                      <widget class="QPushButton" name="pushButton_PatchDown">
                       <property name="minimumSize">
                        <size>
@@ -2041,7 +2067,7 @@ border-bottom-right-radius: 0;</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="0" column="3">
+                    <item row="0" column="4">
                      <widget class="QPushButton" name="pushButton_PatchUp">
                       <property name="minimumSize">
                        <size>
@@ -2079,29 +2105,16 @@ border-bottom-right-radius: 0;</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="0" column="0">
-                     <widget class="QPushButton" name="pushButton_LoadAll">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>23</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>23</height>
-                       </size>
-                      </property>
+                    <item row="0" column="1">
+                     <widget class="QToolButton" name="toolButton_PatchListMenu">
                       <property name="toolTip">
-                       <string>Load all patches into memory</string>
+                       <string>Patch List Menu</string>
                       </property>
                       <property name="styleSheet">
-                       <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
+                       <string notr="true">border-radius: 0;</string>
                       </property>
                       <property name="text">
-                       <string>Ld All</string>
+                       <string>...</string>
                       </property>
                      </widget>
                     </item>

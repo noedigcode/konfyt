@@ -738,15 +738,16 @@ void MainWindow::gui_updatePatchList()
     // Populate patch list for current project
     QList<konfytPatch*> pl = prj->getPatchList();
     bool allPatchesLoaded = true;
+    QString notenames = "CDEFGAB";
     for (int j=0; j<pl.count(); j++) {
         konfytPatch* pat = pl.at(j);
 
-        // quick add for jam TODO
-        QString notenames = "CDEFGAB";
-        QString patchnote = notenames.at(j%7);
-
-
-        QListWidgetItem* item = new QListWidgetItem(n2s(j+1) + " " + patchnote + " " + pat->getName());
+        // Add number and/or note name to patch name based on project settings.
+        QString txt;
+        if (prj->getShowPatchListNumbers()) { txt.append(n2s(j+1) + " "); }
+        if (prj->getShowPatchListNotes()) { txt.append(QString(notenames.at(j%7)) + " "); }
+        txt.append(pat->getName());
+        QListWidgetItem* item = new QListWidgetItem(txt);
         // If patch has been loaded, mark it white. Else, gray.
         if (prj->isPatchLoaded(pat->id_in_project)) {
             item->setTextColor(Qt::white);
@@ -2750,7 +2751,7 @@ void MainWindow::on_pushButton_PatchUp_clicked()
 
 void MainWindow::on_listWidget_Patches_indexesMoved(const QModelIndexList &indexes)
 {
-    userMessage("moved.");
+    userMessage("moved."); // TODO
 }
 
 void MainWindow::on_pushButton_PatchDown_clicked()
@@ -5343,5 +5344,43 @@ void MainWindow::on_pushButton_LavaMonster_clicked()
     showAboutDialog();
 }
 
+void MainWindow::on_toolButton_PatchListMenu_clicked()
+{
+    konfytProject* prj = this->getCurrentProject();
+    if (prj == NULL) { return; }
 
+    // Build patch list menu (first time only)
+    if (patchListMenu.isEmpty()) {
+        patchListMenu_NumbersAction = patchListMenu.addAction("Show patch numbers");
+        patchListMenu_NumbersAction->setCheckable(true);
+        connect(patchListMenu_NumbersAction, SIGNAL(triggered(bool)),
+                this, SLOT(toggleShowPatchListNumbers()));
+        patchListMenu_NotesAction = patchListMenu.addAction("Show notes next to patches");
+        patchListMenu_NotesAction->setCheckable(true);
+        connect(patchListMenu_NotesAction, SIGNAL(triggered(bool)),
+                this, SLOT(toggleShowPatchListNotes()));
+    }
+    // Refresh menu items
+    patchListMenu_NumbersAction->setChecked( prj->getShowPatchListNumbers() );
+    patchListMenu_NotesAction->setChecked( prj->getShowPatchListNotes() );
 
+    // Show menu
+    patchListMenu.popup(QCursor::pos());
+}
+
+void MainWindow::toggleShowPatchListNumbers()
+{
+    konfytProject* prj = this->getCurrentProject();
+    if (prj == NULL) { return; }
+    prj->setShowPatchListNumbers( !prj->getShowPatchListNumbers() );
+    gui_updatePatchList();
+}
+
+void MainWindow::toggleShowPatchListNotes()
+{
+    // Toggle option in project
+    konfytProject* prj = this->getCurrentProject();
+    if (prj == NULL) { return; }
+    prj->setShowPatchListNotes( !prj->getShowPatchListNotes() );
+    gui_updatePatchList();
+}

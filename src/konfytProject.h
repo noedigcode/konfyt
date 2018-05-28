@@ -42,6 +42,8 @@
 #define XML_PRJ_NAME "name"
 #define XML_PRJ_PATCH "patch"
 #define XML_PRJ_PATCH_FILENAME "filename"
+#define XML_PRJ_PATCH_LIST_NUMBERS "patchListNumbers"
+#define XML_PRJ_PATCH_LIST_NOTES "patchListNotes"
 #define XML_PRJ_MIDI_IN_AUTOCON_LIST "midiAutoConnectList"
 #define XML_PRJ_MIDI_IN_AUTOCON_LIST_PORT "port"
 #define XML_PRJ_MIDI_OUT_PORTLIST "midiOutPortList"
@@ -161,6 +163,10 @@ public:
     void setDirname(QString newDirname);
     QString getProjectName();
     void setProjectName(QString newName);
+    bool getShowPatchListNumbers();
+    void setShowPatchListNumbers(bool show);
+    bool getShowPatchListNotes();
+    void setShowPatchListNotes(bool show);
 
     // midiAutoConnectList - list of ports to auto connect to our main midi input
     QStringList midiInPort_getClients();
@@ -180,7 +186,6 @@ public:
     QStringList midiOutPort_getClients(int portId);  // Get client list of single port
     void midiOutPort_addClient(int portId, QString client);
     void midiOutPort_removeClient(int portId, QString client);
-
 
     // Audio input ports
     QList<int> audioInPort_getAllPortIds(); // Get list of port ids
@@ -256,6 +261,8 @@ private:
     QList<konfytProcess*> processList;
     QHash<QString, konfytTrigger> triggerHash;
     bool programChangeSwitchPatches;
+    bool patchListNumbers;
+    bool patchListNotes;
 
     QList<konfytJackConPair> jackConList;
 

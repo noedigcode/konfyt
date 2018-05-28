@@ -287,6 +287,11 @@ public:
     QMap<QAction*, int> layerBusMenu_actionsBusIdsMap; // Map menu actions to bus ids
     QMap<QAction*, int> layerMidiOutChannelMenu_map;
 
+    // Patch list menu
+    QMenu patchListMenu;
+    QAction* patchListMenu_NumbersAction;
+    QAction* patchListMenu_NotesAction;
+
     // ========================================================================
     // Connections page (Ports and busses)
     // ========================================================================
@@ -580,6 +585,9 @@ private slots:
     void on_toolButton_AddPatch_clicked();
     void on_listWidget_Patches_itemClicked(QListWidgetItem *item);
     void on_pushButton_LoadAll_clicked();
+    void on_toolButton_PatchListMenu_clicked();
+    void toggleShowPatchListNumbers();
+    void toggleShowPatchListNotes();
 
     void on_listWidget_Patches_indexesMoved(const QModelIndexList &indexes);
 
@@ -757,9 +765,6 @@ private slots:
     void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
 
     void on_pushButton_LavaMonster_clicked();
-
-
-
 
 private:
     Ui::MainWindow *ui;

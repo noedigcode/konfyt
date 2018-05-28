@@ -28,6 +28,8 @@ konfytProject::konfytProject(QObject *parent) :
     // Initialise variables
     projectName = "New Project";
     patch_id_counter = 0;
+    patchListNumbers = true;
+    patchListNotes = false;
     programChangeSwitchPatches = true;
     modified = false;
 
@@ -92,6 +94,10 @@ bool konfytProject::saveProjectAs(QString dirname)
 
     stream.writeStartElement(XML_PRJ);
     stream.writeAttribute(XML_PRJ_NAME,this->projectName);
+
+    // Write misc settings
+    stream.writeTextElement(XML_PRJ_PATCH_LIST_NUMBERS, bool2str(patchListNumbers));
+    stream.writeTextElement(XML_PRJ_PATCH_LIST_NOTES, bool2str(patchListNotes));
 
     // Write patches
     for (int i=0; i<patchList.count(); i++) {
@@ -259,7 +265,7 @@ bool konfytProject::loadProject(QString filename)
     audioBusMap.clear();
     audioInPortMap.clear();
 
-    while (r.readNextStartElement()) { // sfproject
+    while (r.readNextStartElement()) { // project
 
         // Get the project name attribute
         QXmlStreamAttributes ats =  r.attributes();
@@ -267,9 +273,9 @@ bool konfytProject::loadProject(QString filename)
             this->projectName = ats.at(0).value().toString(); // Project name
         }
 
-        while (r.readNextStartElement()) { // patch
+        while (r.readNextStartElement()) {
 
-            if (r.name() == XML_PRJ_PATCH) {
+            if (r.name() == XML_PRJ_PATCH) { // patch
 
                 while (r.readNextStartElement()) { // patch properties
 
@@ -293,6 +299,14 @@ bool konfytProject::loadProject(QString filename)
                     // Error message on loading patch.
                     userMessage("loadProject: Error loading patch: " + patchFilename);
                 }
+
+            } else if (r.name() == XML_PRJ_PATCH_LIST_NUMBERS) {
+
+                patchListNumbers = Qstr2bool(r.readElementText());
+
+            } else if (r.name() == XML_PRJ_PATCH_LIST_NOTES) {
+
+                patchListNotes = Qstr2bool(r.readElementText());
 
             } else if (r.name() == XML_PRJ_MIDI_IN_AUTOCON_LIST) {
 
@@ -508,6 +522,28 @@ bool konfytProject::loadProject(QString filename)
 void konfytProject::setProjectName(QString newName)
 {
     projectName = newName;
+    setModified(true);
+}
+
+bool konfytProject::getShowPatchListNumbers()
+{
+    return patchListNumbers;
+}
+
+void konfytProject::setShowPatchListNumbers(bool show)
+{
+    patchListNumbers = show;
+    setModified(true);
+}
+
+bool konfytProject::getShowPatchListNotes()
+{
+    return patchListNotes;
+}
+
+void konfytProject::setShowPatchListNotes(bool show)
+{
+    patchListNotes = show;
     setModified(true);
 }
 
