@@ -130,18 +130,18 @@ public:
     // Project related
     // ========================================================================
     QList<QFileInfo> projectDirList;
-    QList<konfytProject*> projectList;
+    QList<KonfytProject*> projectList;
     int currentProject;
     bool startupProject;
-    konfytProject* getCurrentProject();
+    KonfytProject* getCurrentProject();
     bool scanDirForProjects(QString dirname);
     void newProject();
     bool openProject(QString filename);
-    void addProject(konfytProject *prj);
+    void addProject(KonfytProject *prj);
     void removeProject(int i);
     void setCurrentProject(int i);
     bool saveCurrentProject();
-    bool saveProject(konfytProject *p);
+    bool saveProject(KonfytProject *p);
 
     void newPatchToProject();
     void removePatchFromProject(int i);
@@ -261,30 +261,34 @@ public:
     void removeLayerItem_GUIonly(konfytLayerWidget *layerItem);
     void clearLayerItems_GUIonly();
 
-    // TODO 2018-05-30
-    // patchMidiInPortsMenu: Midi input port menu in layer in patch view
-    QMenu patchMidiInPortsMenu;
-    QAction* patchMidiInPortsMenu_newPortAction;
-    QMap<QAction*, int> patchMidiInPortsMenu_map; // Map menu actions to project port ids
-    void gui_updatePatchMidiInPortsMenu();
+    // TODO MIDI IN remove MidiInPorts stuff in cpp similar to midiOutPorts stuff below
 
     // patchMidiOutPortsMenu: Context menu when user clicks button to add a new MIDI output layer.
-    //   When an item is clicked: on_patchMidiOutPortsMenu_ActionTrigger()
+    //   When an item is clicked: onPatchMidiOutPortsMenu_ActionTrigger()
     QMenu patchMidiOutPortsMenu;
     QAction* patchMidiOutPortsMenu_NewPortAction;
     QMap<QAction*, int> patchMidiOutPortsMenu_map; // Map menu actions to project port ids
     void gui_updatePatchMidiOutPortsMenu();
 
     // patchAudioInPortsMenu: Context menu when user clicks button to add new audio input port layer.
-    //    When item is clicked: on_patchAudioInPortsMenu_ActionTrigger()
+    //    When item is clicked: onPatchAudioInPortsMenu_ActionTrigger()
     QMenu patchAudioInPortsMenu;
     QAction* patchAudioInPortsMenu_NewPortAction;
     QMap<QAction*, int> patchAudioInPortsMenu_map; // Map menu actions to project port ids
     void gui_updatePatchAudioInPortsMenu();
 
+    // layerMidiInMenu: Midi-In menu in the layers in patch view
+    //   Opened when user clicks on layer item midi in button, see onlayer_midiIn_clicked() // TODO MIDI IN
+    //   When a menu item is clicked: onLayerMidiInMenu_ActionTrigger() // TODO MIDI IN
+    void gui_updateLayerMidiInPortsMenu();
+    QMenu layerMidiInPortsMenu;
+    QAction* layerhMidiInPortsMenu_newPortAction;
+    konfytLayerWidget* layerMidiInMenu_sourceItem;
+    QMap<QAction*, int> layerMidiInPortsMenu_map; // Map menu actions to project port ids
+
     // layerBusMenu: Bus menu in the layers in patch view.
     //   Opened when user clicks on layer item bus button, see onlayer_bus_clicked()
-    //   When a menu item is clicked: onlayerBusMenu_ActionTrigger
+    //   When a menu item is clicked: onlayerBusMenu_ActionTrigger()
     void gui_updateLayerBusMenu();
     void gui_updateLayerMidiOutChannelMenu();
     QMenu layerBusMenu;
@@ -361,10 +365,10 @@ public:
     // Jack
     // ========================================================================
     konfytJackEngine* jack;
-    void addAudioBusToJack(int busNo, konfytJackPort **leftPort, konfytJackPort **rightPort);
-    void addAudioInPortsToJack(int portNo, konfytJackPort **leftPort, konfytJackPort **rightPort);
-    void addMidiOutPortToJack(int portId, konfytJackPort **jackPort);
-    void addMidiInPortTojack(int portId, konfytJackPort **jackPort);
+    void addAudioBusToJack(int busNo, KonfytJackPort **leftPort, KonfytJackPort **rightPort);
+    void addAudioInPortsToJack(int portNo, KonfytJackPort **leftPort, KonfytJackPort **rightPort);
+    void addMidiOutPortToJack(int portId, KonfytJackPort **jackPort);
+    void addMidiInPortToJack(int portId, KonfytJackPort **jackPort);
 
     // ========================================================================
     // Processes (External apps)
@@ -382,6 +386,7 @@ public:
     // ========================================================================
     int addBus();
     int addAudioInPort();
+    int addMidiInPort();
     int addMidiOutPort();
 
     // ========================================================================
@@ -568,6 +573,7 @@ private slots:
     // Patch related
     void on_lineEdit_PatchName_returnPressed();
     void on_lineEdit_PatchName_editingFinished();
+    void onPatchMidiInPortsMenu_ActionTrigger(QAction* action);
     void onPatchMidiOutPortsMenu_ActionTrigger(QAction* action);
     void onPatchAudioInPortsMenu_ActionTrigger(QAction* action);
     void on_lineEdit_ProjectName_editingFinished();
@@ -581,6 +587,7 @@ private slots:
     void onLayer_solo_clicked(konfytLayerWidget* layerItem, bool solo);
     void onLayer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
     void onLayer_bus_clicked(konfytLayerWidget* layerItem);
+    void onLayer_midiIn_clicked(konfytLayerWidget* layerItem); // TODO MIDI IN connect
     void onLayer_reload_clicked(konfytLayerWidget* layerItem);
     void onLayer_openInFileManager_clicked(konfytLayerWidget* layerItem, QString filepath);
     void onLayerBusMenu_ActionTrigger(QAction* action);

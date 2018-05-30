@@ -48,7 +48,7 @@ public:
     float getMasterGain();
     void setMasterGain(float newGain);
 
-    void setProject(konfytProject* project);
+    void setProject(KonfytProject* project);
 
     // ----------------------------------------------------
     // Loading patches and programs
@@ -106,7 +106,7 @@ public:
     
 private:
     konfytPatch* currentPatch;
-    konfytProject* currentProject;
+    KonfytProject* currentProject;
     float masterGain;
     float convertGain(float linearGain);
 

@@ -24,14 +24,14 @@
 
 #include "konfytMidiFilter.h"
 
-enum konfytJackPortType {
+enum KonfytJackPortType {
     KonfytJackPortType_AudioIn  = 0,
     KonfytJackPortType_AudioOut = 1,
     KonfytJackPortType_MidiIn   = 2,
     KonfytJackPortType_MidiOut  = 3,
 };
 
-struct konfytJackPort {
+struct KonfytJackPort {
     jack_port_t* jack_pointer;
     bool active;
     bool prev_active;
@@ -41,14 +41,14 @@ struct konfytJackPort {
     bool mute;
     float gain;
     QStringList connectionList;
-    konfytJackPort* destinationPort; // For audio input ports, the destination output port (bus).
+    KonfytJackPort* destinationPort; // For audio input ports, the destination output port (bus).
     int noteOns;
     bool sustainNonZero;
     bool pitchbendNonZero;
     unsigned int fadeoutCounter;
     bool fadingOut;
 
-    konfytJackPort() : jack_pointer(NULL),
+    KonfytJackPort() : jack_pointer(NULL),
                        active(false),
                        prev_active(false),
                        solo(false),
@@ -63,25 +63,25 @@ struct konfytJackPort {
 
 };
 
-struct konfytJackPluginPorts {
+struct KonfytJackPluginPorts {
     int plugin_id;
-    konfytJackPort* midi_out;    // Send midi output to plugin
-    konfytJackPort* audio_in_l;  // Receive plugin audio
-    konfytJackPort* audio_in_r;
+    KonfytJackPort* midi_out;    // Send midi output to plugin
+    KonfytJackPort* audio_in_l;  // Receive plugin audio
+    KonfytJackPort* audio_in_r;
 
 };
 
-struct konfytJackNoteOnRecord {
+struct KonfytJackNoteOnRecord {
     int note;
     bool jackPortNotFluidsynth; // true for jack port, false for Fluidsynth
     int fluidsynthID;
-    konfytJackPort* port;
-    konfytJackPort* relatedPort;
+    KonfytJackPort* port;
+    KonfytJackPort* relatedPort;
     konfytMidiFilter filter;
     int globalTranspose;
 };
 
-struct konfytJackConPair {
+struct KonfytJackConPair {
     QString srcPort;
     QString destPort;
 
@@ -90,7 +90,7 @@ struct konfytJackConPair {
         return srcPort + " --> " + destPort;
     }
 
-    bool equals(const konfytJackConPair &a) {
+    bool equals(const KonfytJackConPair &a) {
         return ( (this->srcPort == a.srcPort) && (this->destPort == a.destPort) );
     }
 };

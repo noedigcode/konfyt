@@ -62,7 +62,7 @@ void konfytPatchEngine::panic(bool p)
     jack->panic(p);
 }
 
-void konfytPatchEngine::setProject(konfytProject *project)
+void konfytPatchEngine::setProject(KonfytProject *project)
 {
     this->currentProject = project;
 }

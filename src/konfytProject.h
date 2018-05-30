@@ -92,18 +92,18 @@
 
 struct PrjAudioBus {
     QString busName;
-    konfytJackPort* leftJackPort;
+    KonfytJackPort* leftJackPort;
     float leftGain;
     QStringList leftOutClients;
-    konfytJackPort* rightJackPort;
+    KonfytJackPort* rightJackPort;
     float rightGain;
     QStringList rightOutClients;
 };
 
 struct PrjAudioInPort {
     QString portName;
-    konfytJackPort* leftJackPort;
-    konfytJackPort* rightJackPort;
+    KonfytJackPort* leftJackPort;
+    KonfytJackPort* rightJackPort;
     float leftGain;
     float rightGain;
     QStringList leftInClients;
@@ -114,7 +114,7 @@ struct PrjAudioInPort {
 struct PrjMidiPort {
     QString portName;
     QStringList clients;
-    konfytJackPort* jackPort;
+    KonfytJackPort* jackPort;
 
     PrjMidiPort() : jackPort(NULL) {}
 };
@@ -146,11 +146,11 @@ struct KonfytTrigger {
 
 enum portLeftRight { leftPort, rightPort };
 
-class konfytProject : public QObject
+class KonfytProject : public QObject
 {
     Q_OBJECT
 public:
-    explicit konfytProject(QObject *parent = 0);
+    explicit KonfytProject(QObject *parent = 0);
 
     bool loadProject(QString filename);
     bool saveProject();
@@ -212,7 +212,7 @@ public:
     void audioInPort_removeClient(int portId, portLeftRight leftRight, QString client);
 
     // Audio busses
-    int audioBus_add(QString busName, konfytJackPort *leftJackPort, konfytJackPort *rightJackPort);
+    int audioBus_add(QString busName, KonfytJackPort *leftJackPort, KonfytJackPort *rightJackPort);
     void audioBus_remove(int busId);
     int audioBus_count();
     bool audioBus_exists(int busId);
@@ -244,9 +244,9 @@ public:
     void setProgramChangeSwitchPatches(bool value);
 
     // Other JACK connections
-    konfytJackConPair addJackCon(QString srcPort, QString destPort);
-    QList<konfytJackConPair> getJackConList();
-    konfytJackConPair removeJackCon(int i);
+    KonfytJackConPair addJackCon(QString srcPort, QString destPort);
+    QList<KonfytJackConPair> getJackConList();
+    KonfytJackConPair removeJackCon(int i);
 
     bool isModified(); // Returns whether the project has been modified since last load/save.
     void setModified(bool mod);
@@ -278,7 +278,7 @@ private:
     bool patchListNumbers;
     bool patchListNotes;
 
-    QList<konfytJackConPair> jackConList;
+    QList<KonfytJackConPair> jackConList;
 
     bool modified; // Whether project has been modified since last load/save.
 
