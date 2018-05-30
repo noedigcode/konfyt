@@ -197,7 +197,7 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
     for (int i=0; i<l.count(); i++) {
         int portId = l[i].portIdInProject;
         if (currentProject->midiOutPort_exists( portId )) {
-            prjMidiOutPort projectPort = currentProject->midiOutPort_getPort( portId );
+            PrjMidiPort projectPort = currentProject->midiOutPort_getPort( portId );
             jack->setPortFilter(KonfytJackPortType_MidiOut, projectPort.jackPort, l[i].filter);
         } else {
             userMessage("WARNING: MIDI out port layer refers to project port that does not exist: " + n2s( portId ));
@@ -406,7 +406,7 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
             continue;
         }
 
-        prjAudioBus bus;
+        PrjAudioBus bus;
         if ( !currentProject->audioBus_exists(layer.busIdInProject) ) {
             // Invalid bus. Default to the first one.
             userMessage("WARNING: Layer " + n2s(i+1) + " invalid bus " + n2s(layer.busIdInProject));
@@ -450,7 +450,7 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
             // Set solo and mute in jack client
             layerMidiOutStruct portData = layer.midiOutputPortData;
             if (currentProject->midiOutPort_exists(portData.portIdInProject)) {
-                prjMidiOutPort projectPort = currentProject->midiOutPort_getPort( portData.portIdInProject );
+                PrjMidiPort projectPort = currentProject->midiOutPort_getPort( portData.portIdInProject );
                 jack->setPortSolo(KonfytJackPortType_MidiOut, projectPort.jackPort, portData.solo);
                 jack->setPortMute(KonfytJackPortType_MidiOut, projectPort.jackPort, portData.mute);
             }
@@ -464,7 +464,7 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
             // We have to retrieve the port pair and bus from the project in order to get the left and right port Jack port numbers.
             layerAudioInStruct audioPortData = layer.audioInPortData;
             if (currentProject->audioInPort_exists(audioPortData.portIdInProject)) {
-                prjAudioInPort portPair = currentProject->audioInPort_getPort(audioPortData.portIdInProject);
+                PrjAudioInPort portPair = currentProject->audioInPort_getPort(audioPortData.portIdInProject);
                 // Left channel
                 jack->setPortSolo(KonfytJackPortType_AudioIn, portPair.leftJackPort, audioPortData.solo);
                 jack->setPortMute(KonfytJackPortType_AudioIn, portPair.leftJackPort, audioPortData.mute);
@@ -635,7 +635,7 @@ void konfytPatchEngine::setLayerFilter(konfytPatchLayer *layerItem, konfytMidiFi
     } else if (layerItem->getLayerType() == KonfytLayerType_MidiOut) {
 
         layerMidiOutStruct layerPort = layerItem->midiOutputPortData;
-        prjMidiOutPort projectPort = currentProject->midiOutPort_getPort( layerPort.portIdInProject );
+        PrjMidiPort projectPort = currentProject->midiOutPort_getPort( layerPort.portIdInProject );
         this->jack->setPortFilter( KonfytJackPortType_MidiOut, projectPort.jackPort, layerPort.filter );
 
     }

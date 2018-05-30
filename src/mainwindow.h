@@ -261,6 +261,13 @@ public:
     void removeLayerItem_GUIonly(konfytLayerWidget *layerItem);
     void clearLayerItems_GUIonly();
 
+    // TODO 2018-05-30
+    // patchMidiInPortsMenu: Midi input port menu in layer in patch view
+    QMenu patchMidiInPortsMenu;
+    QAction* patchMidiInPortsMenu_newPortAction;
+    QMap<QAction*, int> patchMidiInPortsMenu_map; // Map menu actions to project port ids
+    void gui_updatePatchMidiInPortsMenu();
+
     // patchMidiOutPortsMenu: Context menu when user clicks button to add a new MIDI output layer.
     //   When an item is clicked: on_patchMidiOutPortsMenu_ActionTrigger()
     QMenu patchMidiOutPortsMenu;
@@ -357,6 +364,7 @@ public:
     void addAudioBusToJack(int busNo, konfytJackPort **leftPort, konfytJackPort **rightPort);
     void addAudioInPortsToJack(int portNo, konfytJackPort **leftPort, konfytJackPort **rightPort);
     void addMidiOutPortToJack(int portId, konfytJackPort **jackPort);
+    void addMidiInPortTojack(int portId, konfytJackPort **jackPort);
 
     // ========================================================================
     // Processes (External apps)

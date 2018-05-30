@@ -128,16 +128,18 @@ void konfytJackEngine::refreshPortConnections()
 {
     if (!clientIsActive()) { return; }
 
-    // Refresh connections to our midi input port
-    for (int i=0; i<midiConnectList.count(); i++) {
-        QString port = midiConnectList.at(i);
+    // Refresh connections to each midi input port
+    for (int i=0; i < midi_in_ports.count(); i++) {
 
-        // Get our port
-        jack_port_t* p = jack_port_by_name(client, ourMidiInputPortName.toLocal8Bit());
-        if (p == NULL) { return; }
+        konfytJackPort* port = midi_in_ports.at(i);
+        const char* portname = jack_port_name( port->jack_pointer );
 
-        if (!jack_port_connected_to( p, port.toLocal8Bit() ) ) {
-            jack_connect(client, port.toLocal8Bit(), ourMidiInputPortName.toLocal8Bit());
+        for (int j=0; j < port->connectionList.count(); j++) {
+            QString clientname = port->connectionList.at(j);
+
+            if (!jack_port_connected_to( port->jack_pointer, clientname.toLocal8Bit() )) {
+                int success = jack_connect(client, clientname.toLocal8Bit(), portname); // NB order of ports important; First source, then dest.
+            }
         }
     }
 
@@ -621,6 +623,18 @@ void konfytJackEngine::removeAllAudioInAndOutPorts()
     pauseJackProcessing(false);
 }
 
+void konfytJackEngine::removeAllMidiInPorts()
+{
+    pauseJackProcessing(true);
+
+    while (midi_in_ports.count()) {
+        konfytJackPort* p = midi_in_ports[0];
+        removePort(KonfytJackPortType_MidiIn, p);
+    }
+
+    pauseJackProcessing(false);
+}
+
 void konfytJackEngine::removeAllMidiOutPorts()
 {
     pauseJackProcessing(true);
@@ -712,6 +726,9 @@ void konfytJackEngine::removePort(konfytJackPortType type, konfytJackPort *port)
         break;
     case KonfytJackPortType_MidiOut:
         l = &midi_out_ports;
+        break;
+    case KonfytJackPortType_MidiIn:
+        l = &midi_in_ports;
         break;
     default:
         error_abort("removePort: invalid port type");
@@ -807,6 +824,12 @@ konfytJackPort* konfytJackEngine::addPort(konfytJackPortType type, QString port_
     konfytJackPort* ret = NULL;
 
     switch (type) {
+    case KonfytJackPortType_MidiIn:
+
+        newPort = jack_port_register (client, port_name.toLocal8Bit(), JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+        listToAddTo = &midi_in_ports;
+
+        break;
     case KonfytJackPortType_MidiOut:
 
         newPort = jack_port_register (client, port_name.toLocal8Bit(), JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
@@ -936,7 +959,7 @@ void konfytJackEngine::addPortClient(konfytJackPortType type, konfytJackPort* po
 
     switch (type) {
     case KonfytJackPortType_MidiIn:
-        error_abort("not implemented yet");
+        l = &midi_in_ports;
         break;
     case KonfytJackPortType_MidiOut:
         l = &midi_out_ports;
@@ -2112,7 +2135,7 @@ void konfytJackEngine::activatePortsForPatch(const konfytPatch* patch, const kon
         int id = l[i];
         if (project->midiOutPort_exists(id)) {
             // Using port id in patch, get project port
-            prjMidiOutPort projectPort = project->midiOutPort_getPort(id);
+            PrjMidiPort projectPort = project->midiOutPort_getPort(id);
             // The project port contains the reference to the Jack port, which we can now use.
             setPortActive(KonfytJackPortType_MidiOut, projectPort.jackPort, true);
         } else {
@@ -2168,7 +2191,7 @@ void konfytJackEngine::activatePortsForPatch(const konfytPatch* patch, const kon
     for (int i=0; i<audioInIds.count(); i++) {
         int id = audioInIds[i];
         if (project->audioInPort_exists(id)) {
-            prjAudioInPort portPair = project->audioInPort_getPort(id);
+            PrjAudioInPort portPair = project->audioInPort_getPort(id);
             setPortActive(KonfytJackPortType_AudioIn, portPair.leftJackPort, true);
             setPortActive(KonfytJackPortType_AudioIn, portPair.rightJackPort, true);
         } else {

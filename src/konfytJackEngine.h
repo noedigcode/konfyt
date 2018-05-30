@@ -97,6 +97,7 @@ public:
     bool timer_busy;
     bool timer_disabled;
 
+    QList<konfytJackPort*> midi_in_ports;
     QList<konfytJackPort*> midi_out_ports;
     QList<konfytJackPort*> audio_out_ports;
     QList<konfytJackPort*> audio_in_ports;
@@ -140,6 +141,7 @@ public:
     konfytJackPort* addPort(konfytJackPortType type, QString port_name);
     void removePort(konfytJackPortType type, konfytJackPort* port);
     void removeAllAudioInAndOutPorts();
+    void removeAllMidiInPorts();
     void removeAllMidiOutPorts();
     void nullDestinationPorts_pointingTo(konfytJackPort* port);
     void nullDestinationPorts_all();
