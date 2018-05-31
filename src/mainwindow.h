@@ -280,7 +280,7 @@ public:
     //   When a menu item is clicked: onLayerMidiInMenu_ActionTrigger()
     void gui_updateLayerMidiInPortsMenu();
     QMenu layerMidiInPortsMenu;
-    QAction* layerhMidiInPortsMenu_newPortAction;
+    QAction* layerMidiInPortsMenu_newPortAction;
     konfytLayerWidget* layerMidiInMenu_sourceItem;
     QMap<QAction*, int> layerMidiInPortsMenu_map; // Map menu actions to project port ids
 
@@ -707,13 +707,13 @@ private slots:
 
     void on_actionAdd_Audio_In_Port_triggered();
 
-    // TODO MIDI IN add action to add midi in port
+    void on_actionAdd_MIDI_In_Port_triggered();
 
     void on_actionAdd_MIDI_Out_Port_triggered();
 
-    void on_actionRemove_BusPort_triggered(); // TODO MIDI IN
+    void on_actionRemove_BusPort_triggered();
 
-    void on_actionRename_BusPort_triggered(); // TODO MIDI IN
+    void on_actionRename_BusPort_triggered();
 
     void on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int column);
 
@@ -781,6 +781,8 @@ private slots:
     void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
 
     void on_pushButton_LavaMonster_clicked();
+
+
 
 private:
     Ui::MainWindow *ui;

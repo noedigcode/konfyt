@@ -625,8 +625,8 @@ void konfytPatchEngine::setLayerBus(konfytPatch *patch, KonfytPatchLayer *layerI
 
 void konfytPatchEngine::setLayerMidiInPort(KonfytPatchLayer *layerItem, int portId)
 {
-    Q_ASSERT( currentpatch != NULL );
-    setLayerMidiInPort(currentPatch, layreItem, portId);
+    Q_ASSERT( currentPatch != NULL );
+    setLayerMidiInPort(currentPatch, layerItem, portId);
 }
 
 void konfytPatchEngine::setLayerMidiInPort(konfytPatch *patch, KonfytPatchLayer *layerItem, int portId)

@@ -44,6 +44,7 @@
 #define XML_PATCH_SFLAYER_BUS "bus"
 #define XML_PATCH_SFLAYER_SOLO "solo"
 #define XML_PATCH_SFLAYER_MUTE "mute"
+#define XML_PATCH_SFLAYER_MIDI_IN "midiIn"
 
 #define XML_PATCH_SFZLAYER "sfzLayer"
 #define XML_PATCH_SFZLAYER_NAME "name"
@@ -52,11 +53,13 @@
 #define XML_PATCH_SFZLAYER_BUS "bus"
 #define XML_PATCH_SFZLAYER_SOLO "solo"
 #define XML_PATCH_SFZLAYER_MUTE "mute"
+#define XML_PATCH_SFZLAYER_MIDI_IN "midiIn"
 
 #define XML_PATCH_MIDIOUT "midiOutputPortLayer"
 #define XML_PATCH_MIDIOUT_PORT "port"
 #define XML_PATCH_MIDIOUT_SOLO "solo"
 #define XML_PATCH_MIDIOUT_MUTE "mute"
+#define XML_PATCH_MIDIOUT_MIDI_IN "midiIn"
 
 #define XML_PATCH_AUDIOIN "audioInPortLayer"
 #define XML_PATCH_AUDIOIN_NAME "name"

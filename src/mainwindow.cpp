@@ -79,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     jack = new KonfytJackEngine();
     connect(jack, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
     connect(jack, SIGNAL(jackPortRegisterOrConnectCallback()), this, SLOT(jackPortRegisterOrConnectCallback()));
-    qRegisterMetaType<KonfytMidiEvent>("konfytMidiEvent"); // To be able to use konfytMidiEvent in the Qt signal/slot system
+    qRegisterMetaType<KonfytMidiEvent>("KonfytMidiEvent"); // To be able to use konfytMidiEvent in the Qt signal/slot system
     connect(jack, SIGNAL(midiEventSignal(KonfytMidiEvent)), this, SLOT(midiEventSlot(KonfytMidiEvent)));
     connect(jack, SIGNAL(xrunSignal()), this, SLOT(jackXrun()));
 
@@ -1135,16 +1135,20 @@ void MainWindow::checkboxes_signalmap_slot(QWidget *widget)
 
     } else if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
         // Midi input is selected
+        int portId = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
+        PrjMidiPort p = prj->midiInPort_getPort(portId);
+
+        KonfytJackPort* jackPort = p.jackPort;
         if (c->isChecked()) {
             // Connect
-            jack->addPortToAutoConnectList(portString);
+            jack->addPortClient(KonfytJackPortType_MidiIn, jackPort, portString);
             // Also add in project
-            prj->midiInPort_addClient(portString);
+            prj->midiInPort_addClient(portId, portString);
         } else {
             // Disconnect
-            jack->removePortFromAutoConnectList_andDisconnect(portString);
+            jack->removePortClient_andDisconnect(KonfytJackPortType_MidiIn, jackPort, portString);
             // Also remove in project
-            prj->midiInPort_removeClient(portString);
+            prj->midiInPort_removeClient(portId, portString);
         }
     }
 
@@ -1163,9 +1167,7 @@ void MainWindow::tree_portsBusses_Menu(const QPoint &pos)
     portsBussesTreeMenuItem = item;
     QList<QAction*> l;
     if (item != NULL) {
-        if ( (item->parent() == busParent) ||
-                    (item->parent() == audioInParent) ||
-                    (item->parent() == midiOutParent) ){
+        if (item->parent() != NULL) {
             l.append(ui->actionRename_BusPort);
             l.append(ui->actionRemove_BusPort);
         }
@@ -1173,6 +1175,7 @@ void MainWindow::tree_portsBusses_Menu(const QPoint &pos)
     l.append(ui->actionAdd_Bus);
     l.append(ui->actionAdd_Audio_In_Port);
     l.append(ui->actionAdd_MIDI_Out_Port);
+    l.append(ui->actionAdd_MIDI_In_Port);
     portsBussesTreeMenu.addActions(l);
     portsBussesTreeMenu.popup(QCursor::pos());
 }
@@ -1306,10 +1309,6 @@ void MainWindow::setCurrentProject(int i)
     ui->lineEdit_ProjectName->setText(prj->getProjectName());
     // Populate patch list for current project
     gui_updatePatchList();
-
-    // And also update the midi input autoconnect list in the jack client
-    jack->clearAutoConnectList_andDisconnect();
-    jack->addAutoConnectList(prj->midiInPort_getClients());
 
     jack->pauseJackProcessing(true);
 
@@ -2967,27 +2966,33 @@ void MainWindow::updateGUIWarnings()
 
     // Check warnings
 
-    // MIDI input port: no connecions
-    if ( prj->midiInPort_getClients().count() == 0 ) {
-        addWarning("MIDI input port not connected");
-    } else {
-        // MIDI input port: client(s) not running
-        QStringList miclients = prj->midiInPort_getClients();
-        int notRunning = 0;
-        for (int i=0; i<miclients.count(); i++) {
-            if ( !moports.contains(miclients[i]) ) {
-                notRunning++;
+    // MIDI input ports
+    QList<int> midiInIds = prj->midiInPort_getAllPortIds();
+    for (int i=0; i < midiInIds.count(); i++) {
+        PrjMidiPort prjPort = prj->midiInPort_getPort(midiInIds[i]);
+        // Check for no connections
+        if (prjPort.clients.count() == 0) {
+            addWarning("MIDI-in \"" + prjPort.portName + "\" not connected");
+        } else {
+            // Check if clients are available
+            bool notRunning = false;
+            for (int j=0; j < prjPort.clients.count(); j++) {
+                if ( !moports.contains(prjPort.clients[j]) ) {
+                    notRunning = true;
+                    break;
+                }
             }
-        }
-        if (notRunning) {
-            addWarning("MIDI input port: " + n2s(notRunning) + " client(s) inactive");
+            if (notRunning) {
+                addWarning("MIDI-in \"" + prjPort.portName + "\" client(s) inactive");
+            }
         }
     }
 
-    // Bus ports: no connections
+    // Busses
     QList<int> busIds = prj->audioBus_getAllBusIds();
     for (int i=0; i<busIds.count(); i++) {
         PrjAudioBus bus = prj->audioBus_getBus(busIds[i]);
+        // Check for no connections
         bool left = (bus.leftOutClients.count() == 0);
         bool right = (bus.rightOutClients.count() == 0);
         if (left && right) {
@@ -2997,17 +3002,17 @@ void MainWindow::updateGUIWarnings()
         } else if (right) {
             addWarning("Bus \"" + bus.busName + "\" right not connected");
         }
-        // Bus: client(s) not running
+        // Check if clients are available
         bool notRunning = false;
-        for (int i=0; i<bus.leftOutClients.count(); i++) {
-            if ( !aiports.contains(bus.leftOutClients[i]) ) {
+        for (int j=0; j < bus.leftOutClients.count(); j++) {
+            if ( !aiports.contains(bus.leftOutClients[j]) ) {
                 notRunning = true;
                 break;
             }
         }
         if (!notRunning) {
-            for (int i=0; i<bus.rightOutClients.count(); i++) {
-                if ( !aiports.contains(bus.rightOutClients[i]) ) {
+            for (int j=0; j < bus.rightOutClients.count(); j++) {
+                if ( !aiports.contains(bus.rightOutClients[j]) ) {
                     notRunning = true;
                     break;
                 }
@@ -3019,23 +3024,23 @@ void MainWindow::updateGUIWarnings()
     }
 
     // MIDI out ports
-    QList<int> moIds = prj->midiOutPort_getAllPortIds();
-    for (int i=0; i<moIds.count(); i++) {
-        PrjMidiPort moport = prj->midiOutPort_getPort(moIds[i]);
+    QList<int> midiOutIds = prj->midiOutPort_getAllPortIds();
+    for (int i=0; i<midiOutIds.count(); i++) {
+        PrjMidiPort prjPort = prj->midiOutPort_getPort(midiOutIds[i]);
         // Check for no connections
-        if (moport.clients.count() == 0) {
-            addWarning("MIDI-out \"" + moport.portName + "\" not connected");
+        if (prjPort.clients.count() == 0) {
+            addWarning("MIDI-out \"" + prjPort.portName + "\" not connected");
         } else {
-            // Check if clients are running
+            // Check if clients are available
             bool notRunning = false;
-            for (int i=0; i<moport.clients.count(); i++) {
-                if ( !miports.contains(moport.clients[i]) ) {
+            for (int j=0; j < prjPort.clients.count(); j++) {
+                if ( !miports.contains(prjPort.clients[j]) ) {
                     notRunning = true;
                     break;
                 }
             }
             if (notRunning) {
-                addWarning("MIDI-out \"" + moport.portName + "\" client(s) inactive");
+                addWarning("MIDI-out \"" + prjPort.portName + "\" client(s) inactive");
             }
         }
     }
@@ -3043,35 +3048,35 @@ void MainWindow::updateGUIWarnings()
     // Audio in ports
     QList<int> aiIds = prj->audioInPort_getAllPortIds();
     for (int i=0; i<aiIds.count(); i++) {
-        PrjAudioInPort aiport = prj->audioInPort_getPort(aiIds[i]);
+        PrjAudioInPort prjPort = prj->audioInPort_getPort(aiIds[i]);
         // Check for no connections
-        bool left = (aiport.leftInClients.count() == 0);
-        bool right = (aiport.rightInClients.count() == 0);
+        bool left = (prjPort.leftInClients.count() == 0);
+        bool right = (prjPort.rightInClients.count() == 0);
         if (left && right) {
-            addWarning("Audio-in \"" + aiport.portName + "\" not connected");
+            addWarning("Audio-in \"" + prjPort.portName + "\" not connected");
         } else if (left) {
-            addWarning("Audio-in \"" + aiport.portName + "\" left not connected");
+            addWarning("Audio-in \"" + prjPort.portName + "\" left not connected");
         } else if (right) {
-            addWarning("Audio-in \"" + aiport.portName + "\" right not connected");
+            addWarning("Audio-in \"" + prjPort.portName + "\" right not connected");
         }
-        // Check for clients not running
+        // Check for clients not available
         bool notRunning = false;
-        for (int i=0; i<aiport.leftInClients.count(); i++) {
-            if ( !aoports.contains(aiport.leftInClients[i]) ) {
+        for (int j=0; j < prjPort.leftInClients.count(); j++) {
+            if ( !aoports.contains(prjPort.leftInClients[j]) ) {
                 notRunning = true;
                 break;
             }
         }
         if (!notRunning) {
-            for (int i=0; i<aiport.rightInClients.count(); i++) {
-                if ( !aoports.contains(aiport.rightInClients[i]) ) {
+            for (int j=0; j < prjPort.rightInClients.count(); j++) {
+                if ( !aoports.contains(prjPort.rightInClients[j]) ) {
                     notRunning = true;
                     break;
                 }
             }
         }
         if (notRunning) {
-            addWarning("Audio-in \"" + aiport.portName + "\" client(s) inactive");
+            addWarning("Audio-in \"" + prjPort.portName + "\" client(s) inactive");
         }
 
     }
@@ -3147,7 +3152,6 @@ void MainWindow::midiEventSlot(KonfytMidiEvent ev)
 {
     // Show in console if enabled.
     if (console_showMidiMessages) {
-
         userMessage("MIDI EVENT " + midiEventToString(ev.type, ev.channel, ev.data1, ev.data2, lastBankSelectMSB, lastBankSelectLSB));
     }
 
@@ -3395,10 +3399,13 @@ void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
 void MainWindow::onLayerMidiInMenu_ActionTrigger(QAction *action)
 {
     int portId;
-    if (action == layerhMidiInPortsMenu_newPortAction) {
+    if (action == layerMidiInPortsMenu_newPortAction) {
         // Add new MIDI in port
         portId = addMidiInPort();
         if (portId < 0) { return; }
+        // Open the connections page and show port.
+        showConnectionsPage();
+        ui->tree_portsBusses->setCurrentItem( tree_midiInMap.key(portId) );
     } else {
         // User chose a MIDI-in port
         portId = layerMidiInPortsMenu_map.value(action);
@@ -3414,12 +3421,6 @@ void MainWindow::onLayerMidiInMenu_ActionTrigger(QAction *action)
     pengine->setLayerMidiInPort( &layer, portId );
 
     setPatchModified(true);
-
-    // If the user added a new MIDI-in port, open the connections page and show port.
-    if (action == layerhMidiInPortsMenu_newPortAction) {
-        showConnectionsPage();
-        ui->tree_portsBusses->setCurrentItem( tree_midiInMap.key(portId) );
-    }
 }
 
 /* Layer bus menu item has been clicked. */
@@ -3430,6 +3431,9 @@ void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
         // Add new bus
         busId = addBus();
         if (busId < 0) { return; }
+        // Open the connections page and show bus.
+        showConnectionsPage();
+        ui->tree_portsBusses->setCurrentItem( tree_busMap.key(busId) );
     } else {
         // User chose a bus
         busId = layerBusMenu_actionsBusIdsMap.value(action);
@@ -3445,16 +3449,7 @@ void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
     pengine->setLayerBus( &g, busId );
 
     setPatchModified(true);
-
-    // If the user added a new bus, open the connections page and show bus.
-    if (action == layerBusMenu_NewBusAction) {
-        showConnectionsPage();
-        ui->tree_portsBusses->setCurrentItem( tree_busMap.key(busId) );
-    }
 }
-
-
-
 
 void MainWindow::on_pushButton_ExtApp_add_clicked()
 {
@@ -3717,18 +3712,18 @@ void MainWindow::gui_updateLayerMidiInPortsMenu()
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
 
-    patchMidiInPortsMenu.clear();
-    patchMidiInPortsMenu_map.clear();
+    layerMidiInPortsMenu.clear();
+    layerMidiInPortsMenu_map.clear();
 
     QList<int> midiInIds = prj->midiInPort_getAllPortIds();
     for (int i=0; i < midiInIds.count(); i++) {
         int id = midiInIds[i];
         PrjMidiPort projectPort = prj->midiInPort_getPort(id);
-        QAction* action = patchMidiInPortsMenu.addAction( n2s(id) + " " + projectPort.portName);
-        patchMidiInPortsMenu_map.insert(action, id);
+        QAction* action = layerMidiInPortsMenu.addAction( n2s(id) + " " + projectPort.portName);
+        layerMidiInPortsMenu_map.insert(action, id);
     }
-    patchMidiInPortsMenu.addSeparator();
-    patchMidiInPortsMenu_newPortAction = patchMidiInPortsMenu.addAction("New Port");
+    layerMidiInPortsMenu.addSeparator();
+    layerMidiInPortsMenu_newPortAction = layerMidiInPortsMenu.addAction("New Port");
 
 }
 
@@ -4594,6 +4589,12 @@ void MainWindow::on_actionAdd_Audio_In_Port_triggered()
     showConnectionsPage();
 }
 
+void MainWindow::on_actionAdd_MIDI_In_Port_triggered()
+{
+    addMidiInPort();
+    showConnectionsPage();
+}
+
 /* Adds new midi output port to project and Jack. Returns the port index.
  *  Returns -1 on error. */
 int MainWindow::addMidiOutPort()
@@ -4765,7 +4766,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 if ( (layer.getLayerType() == KonfytLayerType_CarlaPlugin)
                      || ( layer.getLayerType() == KonfytLayerType_MidiOut)
                      || ( layer.getLayerType() == KonfytLayerType_SoundfontProgram) ) {
-                    append = layer.busIdInProject == id;
+                    append = layer.midiInPortIdInProject == id;
                 }
             }
             if (append) {
@@ -4797,7 +4798,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             int ret = msgbox.exec();
             if (ret == QMessageBox::Yes) {
                 // User chose to remove bus
-                // Set the bus for all layers still using this one to zero
+                // Change the bus for all layers still using this one
                 for (int i=0; i<usingPatches.count(); i++) {
                     konfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KonfytPatchLayer layer = patch->getLayerItems()[usingLayers[i]];
@@ -4843,28 +4844,24 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         // ------------------------------------------------------------------------------
         } else if (midiInSelected) {
 
-            // TODO MIDI IN: ADAPT BELOW FOR MIDI IN PORT, FROM HERE...
-
-            int busToChangeTo = prj->audioBus_getFirstBusId(id);
-            msgbox.setText("The selected bus " + selectedText + " is used by some patches."
-                           + " Are you sure you want to delete the bus?"
-                           + " All layers using this bus will be assigned to bus "
-                           + n2s(busToChangeTo) + " - "
-                           + prj->audioBus_getBus(busToChangeTo).busName + ".");
+            int portToChangeTo = prj->midiInPort_getFirstPortId(id);
+            msgbox.setText("The selected MIDI input port " + selectedText + " is used by some patches."
+                           + " Are you sure you want to delete the port?"
+                           + " All layers using this port will be assigned to port "
+                           + n2s(portToChangeTo) + " - "
+                           + prj->midiInPort_getPort(portToChangeTo).portName + ".");
             int ret = msgbox.exec();
             if (ret == QMessageBox::Yes) {
-                // User chose to remove bus
-                // Set the bus for all layers still using this one to zero
+                // User chose to remove port
+                // Change the port for all layers still using this one
                 for (int i=0; i<usingPatches.count(); i++) {
                     konfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KonfytPatchLayer layer = patch->getLayerItems()[usingLayers[i]];
-                    pengine->setLayerBus( patch, &layer, busToChangeTo );
+                    pengine->setLayerMidiInPort( patch, &layer, portToChangeTo );
                 }
                 // Removal will be done below.
 
             } else { return; } // Do not remove port
-
-            // TODO MIDI IN: ... TO HERE.
 
         }
     } // end usingPatches.count()
@@ -4883,16 +4880,19 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         jack->removePort(KonfytJackPortType_AudioIn, audioInPort.rightJackPort);
         prj->audioInPort_remove(id);
         tree_audioInMap.remove(item);
-        gui_updatePatchAudioInPortsMenu();
+        gui_updatePatchAudioInPortsMenu(); // TODO: why not just do this when opening the menu
     }
     else if (midiOutSelected) {
         // Remove the port
         jack->removePort(KonfytJackPortType_MidiOut, midiOutPort.jackPort);
         prj->midiOutPort_removePort(id);
         tree_midiOutMap.remove(item);
-        gui_updatePatchMidiOutPortsMenu();
+        gui_updatePatchMidiOutPortsMenu(); // TODO: why not just do this when opening the menu
     } else if (midiInSelected) {
-        // TODO MIDI IN
+        // Remove the port
+        jack->removePort(KonfytJackPortType_MidiIn, midiInPort.jackPort);
+        prj->midiInPort_removePort(id);
+        tree_midiInMap.remove(item);
     }
 
     delete item;
@@ -5129,19 +5129,19 @@ void MainWindow::on_actionRename_BusPort_triggered()
 
     if (item->parent() == busParent) {
         // Bus selected
-
         ui->tree_portsBusses->editItem(item, 0);
 
     } else if (item->parent() == audioInParent) {
         // Audio input port selected
-
         ui->tree_portsBusses->editItem(item, 0);
 
     } else if (item->parent() == midiOutParent) {
         // MIDI Output port selected
-
         ui->tree_portsBusses->editItem(item, 0);
 
+    } else if (item->parent() == midiInParent) {
+        // MIDI Input port selected
+        ui->tree_portsBusses->editItem(item, 0);
     }
 }
 
@@ -5175,10 +5175,17 @@ void MainWindow::on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int colu
         p.portName = item->text(0);
         prj->midiOutPort_replace(id, p);
 
+    } else if (item->parent() == midiInParent) {
+        // MIDI Input port selected
+        int id = tree_midiInMap.value(item);
+        PrjMidiPort p = prj->midiInPort_getPort(id);
+
+        p.portName = item->text(0);
+        prj->midiInPort_replace(id, p);
     }
 
-    gui_updatePatchAudioInPortsMenu();
-    gui_updatePatchMidiOutPortsMenu();
+    gui_updatePatchAudioInPortsMenu(); // TODO why not just do this when menu is opened?
+    gui_updatePatchMidiOutPortsMenu(); // TODO why not just do this when menu is opened?
 
 }
 
@@ -5575,3 +5582,4 @@ void MainWindow::toggleShowPatchListNotes()
     prj->setShowPatchListNotes( !prj->getShowPatchListNotes() );
     gui_updatePatchList();
 }
+

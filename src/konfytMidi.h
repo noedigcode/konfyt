@@ -61,8 +61,8 @@ struct KonfytMidiEvent {
     int bankLSB;
 
     KonfytMidiEvent() : type(MIDI_EVENT_TYPE_NOTEON), channel(0),
-                        data1(0), data2(0), bankMSB(-1), bankLSB(-1), port(0) {}
-    KonfytMidiEvent(QByteArray buffer, int sourcePort) {
+                        data1(0), data2(0), bankMSB(-1), bankLSB(-1) {}
+    KonfytMidiEvent(QByteArray buffer) {
         type = MIDI_TYPE_FROM_BUFFER(buffer);
         channel = MIDI_CHANNEL_FROM_BUFFER(buffer);
         data1 = MIDI_DATA1_FROM_BUFFER(buffer);
@@ -70,7 +70,6 @@ struct KonfytMidiEvent {
         else { data2 = -1; }
         bankMSB = -1;
         bankLSB = -1;
-        port = 0;
     }
 
     int toBuffer(unsigned char* buffer) {

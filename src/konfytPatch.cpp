@@ -100,6 +100,7 @@ bool konfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_SFLAYER_BUS, n2s(g.busIdInProject));
             stream.writeTextElement(XML_PATCH_SFLAYER_SOLO, bool_to_10_string(sfLayer.solo));
             stream.writeTextElement(XML_PATCH_SFLAYER_MUTE, bool_to_10_string(sfLayer.mute));
+            stream.writeTextElement(XML_PATCH_SFLAYER_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
             konfytMidiFilter f = sfLayer.filter;
@@ -122,6 +123,7 @@ bool konfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_SFZLAYER_BUS, n2s(g.busIdInProject) );
             stream.writeTextElement(XML_PATCH_SFZLAYER_SOLO, bool_to_10_string(p.solo));
             stream.writeTextElement(XML_PATCH_SFZLAYER_MUTE, bool_to_10_string(p.mute));
+            stream.writeTextElement(XML_PATCH_SFZLAYER_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
             konfytMidiFilter f = p.midiFilter;
@@ -141,6 +143,7 @@ bool konfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_MIDIOUT_PORT, n2s( m.portIdInProject ));
             stream.writeTextElement(XML_PATCH_MIDIOUT_SOLO, bool_to_10_string(m.solo));
             stream.writeTextElement(XML_PATCH_MIDIOUT_MUTE, bool_to_10_string(m.mute));
+            stream.writeTextElement(XML_PATCH_MIDIOUT_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
             konfytMidiFilter f = m.filter;
@@ -271,18 +274,6 @@ bool konfytPatch::loadPatchFromFile(QString filename)
         return false;
     }
 
-    // Midi filter variables
-    int outport_port;
-    bool port_solo;
-    bool port_mute;
-
-    // SFZ Layer variables
-    QString sfz_name;
-    QString sfz_path;
-    float sfz_gain;
-    bool sfz_solo;
-    bool sfz_mute;
-
 
     this->clearLayers();
 
@@ -307,6 +298,7 @@ bool konfytPatch::loadPatchFromFile(QString filename)
 
                 LayerSoundfontStruct sfLayer = LayerSoundfontStruct();
                 int bus = 0;
+                int midiIn = 0;
 
                 while (r.readNextStartElement()) { // layer properties
 
@@ -328,6 +320,8 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                         sfLayer.filter = readMidiFilterFromXMLStream(&r);
                     } else if (r.name() == XML_PATCH_SFLAYER_BUS) {
                         bus = r.readElementText().toInt();
+                    } else if (r.name() == XML_PATCH_SFLAYER_MIDI_IN) {
+                        midiIn = r.readElementText().toInt();
                     } else {
                         userMessage("konfytPatch::loadPatchFromFile: "
                                     "Unrecognized sfLayer element: " + r.name().toString() );
@@ -338,12 +332,14 @@ bool konfytPatch::loadPatchFromFile(QString filename)
 
                 KonfytPatchLayer newLayer = this->addSfLayer(sfLayer);
                 this->setLayerBus(&newLayer, bus);
+                this->setLayerMidiInPort(&newLayer, midiIn);
 
 
             } else if (r.name() == XML_PATCH_SFZLAYER) { // SFZ Layer
 
                 LayerCarlaPluginStruct p = LayerCarlaPluginStruct();
                 int bus = 0;
+                int midiIn = 0;
 
                 while (r.readNextStartElement()) {
 
@@ -355,6 +351,8 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                         p.gain = r.readElementText().toFloat();
                     } else if (r.name() == XML_PATCH_SFZLAYER_BUS) {
                         bus = r.readElementText().toInt();
+                    } else if (r.name() == XML_PATCH_SFZLAYER_MIDI_IN) {
+                        midiIn = r.readElementText().toInt();
                     } else if (r.name() == XML_PATCH_SFZLAYER_SOLO) {
                         p.solo = (r.readElementText() == "1");
                     } else if (r.name() == XML_PATCH_SFZLAYER_MUTE) {
@@ -373,12 +371,14 @@ bool konfytPatch::loadPatchFromFile(QString filename)
 
                 KonfytPatchLayer newLayer = this->addPlugin(p);
                 this->setLayerBus(&newLayer, bus);
+                this->setLayerMidiInPort(&newLayer, midiIn);
 
 
             } else if (r.name() == XML_PATCH_MIDIOUT) {
 
                 konfytMidiFilter f;
                 LayerMidiOutStruct mp;
+                int midiIn = 0;
 
                 while (r.readNextStartElement()) { // port
                     if (r.name() == XML_PATCH_MIDIOUT_PORT) {
@@ -389,6 +389,8 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                         mp.mute = (r.readElementText() == "1");
                     } else if (r.name() == XML_MIDIFILTER) {
                         mp.filter = readMidiFilterFromXMLStream(&r);
+                    } else if (r.name() == XML_PATCH_MIDIOUT_MIDI_IN) {
+                        midiIn = r.readElementText().toInt();
                     } else {
                         userMessage("konfytPatch::loadPatchFromFile: "
                                     "Unrecognized midiOutputPortLayer element: " + r.name().toString() );
@@ -397,7 +399,8 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                 }
 
                 // Add new midi port
-                this->addMidiOutputPort(mp);
+                KonfytPatchLayer newLayer = this->addMidiOutputPort(mp);
+                this->setLayerMidiInPort(&newLayer, midiIn);
 
             } else if (r.name() == XML_PATCH_AUDIOIN) {
 

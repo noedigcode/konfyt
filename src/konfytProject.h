@@ -179,6 +179,7 @@ public:
     void midiInPort_removePort(int portId);
     bool midiInPort_exists(int portId);
     PrjMidiPort midiInPort_getPort(int portId);
+    int midiInPort_getFirstPortId(int skipId);
     int midiInPort_count();
     void midiInPort_replace(int portId, PrjMidiPort port);
     void midiInPort_replace_noModify(int portId, PrjMidiPort port);

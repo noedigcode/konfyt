@@ -271,7 +271,7 @@ bool KonfytProject::loadProject(QString filename)
 
     QString patchFilename;
     patchList.clear();
-    midiAutoConnectList.clear();
+    midiInPortMap.clear();
     midiOutPortMap.clear();
     processList.clear();
     audioBusMap.clear();
@@ -328,9 +328,9 @@ bool KonfytProject::loadProject(QString filename)
                     while (r.readNextStartElement()) {
                         if (r.name() == XML_PRJ_MIDI_IN_PORT_ID) {
                             id = r.readElementText().toInt();
-                        } else if (r.name == XML_PRJ_MIDI_IN_PORT_NAME) {
+                        } else if (r.name() == XML_PRJ_MIDI_IN_PORT_NAME) {
                             p.portName = r.readElementText();
-                        } else if (r.name == XML_PRJ_MIDI_IN_PORT_CLIENT) {
+                        } else if (r.name() == XML_PRJ_MIDI_IN_PORT_CLIENT) {
                             p.clients.append( r.readElementText() );
                         } else {
                             userMessage("loadProject: "
@@ -538,6 +538,11 @@ bool KonfytProject::loadProject(QString filename)
         this->audioBus_add("Master Bus", NULL, NULL); // Ports will be assigned later when loading project
     }
 
+    // Check if we have at least one Midi input port. If not, create a default one.
+    if (midiInPort_count() == 0) {
+        midiInPort_addPort("MIDI In");
+    }
+
     setModified(false);
 
     return true;
@@ -688,6 +693,25 @@ PrjMidiPort KonfytProject::midiInPort_getPort(int portId)
         return midiInPortMap.value(portId);
     } else {
         error_abort("midiInPort_getPort: port with id " + n2s(portId) + " does not exist.");
+    }
+}
+
+/* Gets the first MIDI Input Port Id that is not skipId. */
+int KonfytProject::midiInPort_getFirstPortId(int skipId)
+{
+    int ret = -1;
+    QList<int> l = midiInPortMap.keys();
+    if (l.count()) {
+        for (int i=0; i<l.count(); i++) {
+            if (l[i] != skipId) {
+                ret = l[i];
+                break;
+            }
+        }
+        return ret;
+    } else {
+        error_abort("midiInPort_getFirstBusId: no MIDI Input ports in project!");
+        return -1;
     }
 }
 
