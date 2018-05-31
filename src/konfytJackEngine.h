@@ -54,11 +54,11 @@
 
 typedef void (*send_midi_to_fluidsynth_t)(unsigned char* data, int size);
 
-class konfytJackEngine : public QObject
+class KonfytJackEngine : public QObject
 {
     Q_OBJECT
 public:
-    explicit konfytJackEngine(QObject *parent = 0);
+    explicit KonfytJackEngine(QObject *parent = 0);
 
     void panic(bool p);
 
@@ -68,13 +68,19 @@ public:
     static int jackProcessCallback(jack_nframes_t nframes, void *arg);
     static int jackXrunCallback(void *arg);
     // Helper functions
+    void handleNoteoffEvent(KonfytMidiEvent &ev, KonfytJackPort* sourcePort);
+    void handleSustainoffEvent(KonfytMidiEvent &ev, KonfytJackPort *sourcePort);
+    void handlePitchbendZeroEvent(KonfytMidiEvent &ev, KonfytJackPort *sourcePort);
+    void processMidiEventForFluidsynth(KonfytJackPort *sourcePort, KonfytMidiEvent &ev, bool recordNoteon, bool recordSustain, bool recordPitchbend);
+    void processMidiEventForMidiOutPorts(KonfytJackPort *sourcePort, KonfytMidiEvent &ev, bool recordNoteon, bool recordSustain, bool recordPitchbend);
+    void processMidiEventForPlugins(KonfytJackPort *sourcePort, KonfytMidiEvent &ev, bool recordNoteon, bool recordSustain, bool recordPitchbend);
     bool passMuteSoloActiveCriteria(KonfytJackPort* port);
     bool passMuteSoloCriteria(KonfytJackPort* port);
     void mixBufferToDestinationPort(KonfytJackPort* port, jack_nframes_t nframes, bool applyGain);
     void sendMidiClosureEvents(KonfytJackPort* port, int channel);
     void sendMidiClosureEvents_chanZeroOnly(KonfytJackPort* port);
     void sendMidiClosureEvents_allChannels(KonfytJackPort* port);
-    bool passMidiMuteSoloActiveFilterAndModify(KonfytJackPort* port, const konfytMidiEvent* ev, konfytMidiEvent* evToSend);
+    bool passMidiMuteSoloActiveFilterAndModify(KonfytJackPort* port, const KonfytMidiEvent* ev, KonfytMidiEvent* evToSend);
 
     bool connectCallback;
     bool registerCallback;
@@ -85,9 +91,9 @@ public:
     unsigned int fadeOutValuesCount;
     float fadeOutSecs;
 
-    konfytMidiEvent evAllNotesOff;
-    konfytMidiEvent evSustainZero;
-    konfytMidiEvent evPitchbendZero;
+    KonfytMidiEvent evAllNotesOff;
+    KonfytMidiEvent evSustainZero;
+    KonfytMidiEvent evPitchbendZero;
     void initMidiClosureEvents();
 
     bool soloFlag;
@@ -108,10 +114,6 @@ public:
     konfytArrayList<KonfytJackNoteOnRecord> noteOnList;
     konfytArrayList<KonfytJackNoteOnRecord> sustainList;
     konfytArrayList<KonfytJackNoteOnRecord> pitchBendList;
-
-    // Our main midi input port
-    jack_port_t *midi_input_port; // TODO MIDI IN: remove
-
 
     bool InitJackClient(QString name);
     void stopJackClient();
@@ -163,7 +165,7 @@ public:
     void setAllPortsActive(KonfytJackPortType type, bool active);
 
     // Carla plugins
-    void addPluginPortsAndConnect(layerCarlaPluginStruct plugin);
+    void addPluginPortsAndConnect(LayerCarlaPluginStruct plugin);
     void removePlugin(int indexInEngine);
     void setPluginMidiFilter(int indexInEngine, konfytMidiFilter filter);
     void setPluginSolo(int indexInEngine, bool solo);
@@ -174,7 +176,7 @@ public:
     void setAllPluginPortsActive(bool active);
 
     // Fluidsynth
-    void addSoundfont(layerSoundfontStruct sf);
+    void addSoundfont(LayerSoundfontStruct sf);
     void removeSoundfont(int indexInEngine);
     void setSoundfontMidiFilter(int indexInEngine, konfytMidiFilter filter);
     void setSoundfontSolo(int indexInEngine, bool solo);
@@ -237,7 +239,7 @@ private:
 signals:
     void userMessage(QString msg);
     void jackPortRegisterOrConnectCallback();
-    void midiEventSignal(konfytMidiEvent event);
+    void midiEventSignal(KonfytMidiEvent event);
     void xrunSignal();
 
     

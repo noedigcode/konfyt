@@ -34,7 +34,7 @@
 
 
 
-enum konfytLayerType {
+enum KonfytLayerType {
     KonfytLayerType_Uninitialized    = -1,
     KonfytLayerType_SoundfontProgram = 0,
     KonfytLayerType_CarlaPlugin      = 1, // for sfz, lv2, internal, etc.
@@ -42,7 +42,7 @@ enum konfytLayerType {
     KonfytLayerType_AudioIn          = 3
 };
 
-enum konfytCarlaPluginType {
+enum KonfytCarlaPluginType {
     KonfytCarlaPluginType_SFZ = 1,
     KonfytCarlaPluginType_LV2 = 2,
     KonfytCarlaPluginType_Internal = 3
@@ -51,7 +51,7 @@ enum konfytCarlaPluginType {
 // ----------------------------------------------------
 // Structure for soundfont program layer
 // ----------------------------------------------------
-struct layerSoundfontStruct {
+struct LayerSoundfontStruct {
     konfytSoundfontProgram program;
     float gain;
     konfytMidiFilter filter;
@@ -59,7 +59,7 @@ struct layerSoundfontStruct {
     bool solo;
     bool mute;
 
-    layerSoundfontStruct() : gain(1),
+    LayerSoundfontStruct() : gain(1),
                              indexInEngine(-1),
                              solo(true),
                              mute(true) {}
@@ -69,10 +69,10 @@ struct layerSoundfontStruct {
 // ----------------------------------------------------
 // Structure for carla plugin
 // ----------------------------------------------------
-struct layerCarlaPluginStruct {
+struct LayerCarlaPluginStruct {
     QString name;
     QString path;
-    konfytCarlaPluginType pluginType;
+    KonfytCarlaPluginType pluginType;
     QString midi_in_port;
     QString audio_out_port_left;
     QString audio_out_port_right;
@@ -85,7 +85,7 @@ struct layerCarlaPluginStruct {
     bool solo;
     bool mute;
 
-    layerCarlaPluginStruct() : indexInEngine(-1),
+    LayerCarlaPluginStruct() : indexInEngine(-1),
                                gain(1),
                                solo(false),
                                mute(false) {}
@@ -96,13 +96,13 @@ struct layerCarlaPluginStruct {
 // ----------------------------------------------------
 // Structure for midi output port layer
 // ----------------------------------------------------
-struct layerMidiOutStruct {
+struct LayerMidiOutStruct {
     int portIdInProject;
     konfytMidiFilter filter;
     bool solo;
     bool mute;
 
-    layerMidiOutStruct() : solo(false),
+    LayerMidiOutStruct() : solo(false),
                            mute(false) {}
 
 };
@@ -110,14 +110,14 @@ struct layerMidiOutStruct {
 // ----------------------------------------------------
 // Structure for audio input port layer
 // ----------------------------------------------------
-struct layerAudioInStruct {
+struct LayerAudioInStruct {
     QString name;
     int portIdInProject;   // Index of audio input port in project
     float gain;
     bool solo;
     bool mute;
 
-    layerAudioInStruct() : gain(1),
+    LayerAudioInStruct() : gain(1),
                            solo(false),
                            mute(false) {}
 
@@ -127,20 +127,20 @@ struct layerAudioInStruct {
 // ----------------------------------------------------
 // Class
 // ----------------------------------------------------
-class konfytPatchLayer
+class KonfytPatchLayer
 {
 public:
-    explicit konfytPatchLayer();
+    explicit KonfytPatchLayer();
 
     int ID_in_patch; // ID used in patch to uniquely identify layeritems within a patch.
 
-    konfytLayerType getLayerType();
+    KonfytLayerType getLayerType();
 
     // Use to initialize layer
-    void initLayer(int id, layerSoundfontStruct newLayerData);
-    void initLayer(int id, layerCarlaPluginStruct newLayerData);
-    void initLayer(int id, layerMidiOutStruct newLayerData);
-    void initLayer(int id, layerAudioInStruct newLayerData);
+    void initLayer(int id, LayerSoundfontStruct newLayerData);
+    void initLayer(int id, LayerCarlaPluginStruct newLayerData);
+    void initLayer(int id, LayerMidiOutStruct newLayerData);
+    void initLayer(int id, LayerAudioInStruct newLayerData);
 
     QString getName();
     float getGain();
@@ -161,14 +161,14 @@ public:
     QString getErrorMessage();
 
     // Depending on the layer type, one of the following is used:
-    layerSoundfontStruct    sfData;
-    layerCarlaPluginStruct  carlaPluginData;
-    layerMidiOutStruct      midiOutputPortData;
-    layerAudioInStruct      audioInPortData;
+    LayerSoundfontStruct    sfData;
+    LayerCarlaPluginStruct  carlaPluginData;
+    LayerMidiOutStruct      midiOutputPortData;
+    LayerAudioInStruct      audioInPortData;
 
 
 private:
-    konfytLayerType layerType;
+    KonfytLayerType layerType;
 
     QString errorMessage;
     

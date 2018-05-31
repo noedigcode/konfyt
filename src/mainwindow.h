@@ -256,7 +256,7 @@ public:
 
     // Layers
     QList<konfytLayerWidget*> guiLayerItemList;
-    void addLayerItemToGUI(konfytPatchLayer layerItem);
+    void addLayerItemToGUI(KonfytPatchLayer layerItem);
     void removeLayerItem(konfytLayerWidget *layerItem);
     void removeLayerItem_GUIonly(konfytLayerWidget *layerItem);
     void clearLayerItems_GUIonly();
@@ -364,7 +364,7 @@ public:
     // ========================================================================
     // Jack
     // ========================================================================
-    konfytJackEngine* jack;
+    KonfytJackEngine* jack;
     void addAudioBusToJack(int busNo, KonfytJackPort **leftPort, KonfytJackPort **rightPort);
     void addAudioInPortsToJack(int portNo, KonfytJackPort **leftPort, KonfytJackPort **rightPort);
     void addMidiOutPortToJack(int portId, KonfytJackPort **jackPort);
@@ -402,10 +402,10 @@ public:
     QHash<int, QAction*> triggersMidiActionHash; // Map midi status and data1 bytes to action for fast midi event to action lookup
     void initTriggers();
     void showTriggersPage();
-    konfytMidiEvent triggersLastEvent;
+    KonfytMidiEvent triggersLastEvent;
     int lastBankSelectMSB;
     int lastBankSelectLSB;
-    QList<konfytMidiEvent> triggersLastEvents;
+    QList<KonfytMidiEvent> triggersLastEvents;
 
     QList<QAction*> channelGainActions;
     QList<QAction*> channelSoloActions;
@@ -493,7 +493,7 @@ private slots:
     void userMessage(QString message);
 
     // Midi / Jack
-    void midiEventSlot(konfytMidiEvent ev);
+    void midiEventSlot(KonfytMidiEvent ev);
     void jackXrun();
     void jackPortRegisterOrConnectCallback();
 

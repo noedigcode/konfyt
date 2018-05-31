@@ -87,7 +87,7 @@ void konfytLayerWidget::on_toolButton_clicked()
 }
 
 // This function has to be called before the object can be used.
-void konfytLayerWidget::initLayer(konfytPatchLayer newg, QListWidgetItem *newItem)
+void konfytLayerWidget::initLayer(KonfytPatchLayer newg, QListWidgetItem *newItem)
 {
     this->g = newg;
     this->listWidgetItem = newItem;
@@ -96,7 +96,7 @@ void konfytLayerWidget::initLayer(konfytPatchLayer newg, QListWidgetItem *newIte
     setUpGUI();
 }
 
-void konfytLayerWidget::setLayerItem(konfytPatchLayer newg)
+void konfytLayerWidget::setLayerItem(KonfytPatchLayer newg)
 {
     this->g = newg;
     setUpGUI();
@@ -265,7 +265,7 @@ void konfytLayerWidget::changeBackground(int min, int max)
     this->repaint();
 }
 
-konfytPatchLayer konfytLayerWidget::getPatchLayerItem()
+KonfytPatchLayer konfytLayerWidget::getPatchLayerItem()
 {
     return this->g;
 }

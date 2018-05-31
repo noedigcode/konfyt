@@ -21,7 +21,7 @@
 
 #include "konfytPatchLayer.h"
 
-konfytPatchLayer::konfytPatchLayer()
+KonfytPatchLayer::KonfytPatchLayer()
 {
     // ----------------------------------------------------
     // Initialise variables
@@ -32,12 +32,12 @@ konfytPatchLayer::konfytPatchLayer()
     midiInPortIdInProject = 0;
 }
 
-void konfytPatchLayer::setErrorMessage(QString msg)
+void KonfytPatchLayer::setErrorMessage(QString msg)
 {
     this->errorMessage = msg;
 }
 
-bool konfytPatchLayer::hasError()
+bool KonfytPatchLayer::hasError()
 {
     if ( this->errorMessage.length() ) {
         return true;
@@ -46,7 +46,7 @@ bool konfytPatchLayer::hasError()
     }
 }
 
-QString konfytPatchLayer::getErrorMessage()
+QString KonfytPatchLayer::getErrorMessage()
 {
     return this->errorMessage;
 }
@@ -54,35 +54,35 @@ QString konfytPatchLayer::getErrorMessage()
 
 // Use to initialise the layer object.
 // Accepts an ID which will later be used by the patch class to uniquely identify it.
-void konfytPatchLayer::initLayer(int id, layerSoundfontStruct newLayerData)
+void KonfytPatchLayer::initLayer(int id, LayerSoundfontStruct newLayerData)
 {
     this->ID_in_patch = id;
     this->layerType = KonfytLayerType_SoundfontProgram;
     this->sfData = newLayerData;
 }
 
-void konfytPatchLayer::initLayer(int id, layerCarlaPluginStruct newLayerData)
+void KonfytPatchLayer::initLayer(int id, LayerCarlaPluginStruct newLayerData)
 {
     this->ID_in_patch = id;
     this->layerType = KonfytLayerType_CarlaPlugin;
     this->carlaPluginData = newLayerData;
 }
 
-void konfytPatchLayer::initLayer(int id, layerMidiOutStruct newLayerData)
+void KonfytPatchLayer::initLayer(int id, LayerMidiOutStruct newLayerData)
 {
     this->ID_in_patch = id;
     this->layerType = KonfytLayerType_MidiOut;
     this->midiOutputPortData = newLayerData;
 }
 
-void konfytPatchLayer::initLayer(int id, layerAudioInStruct newLayerData)
+void KonfytPatchLayer::initLayer(int id, LayerAudioInStruct newLayerData)
 {
     this->ID_in_patch = id;
     this->layerType = KonfytLayerType_AudioIn;
     this->audioInPortData = newLayerData;
 }
 
-QString konfytPatchLayer::getName()
+QString KonfytPatchLayer::getName()
 {
     switch (layerType) {
     case KonfytLayerType_AudioIn:
@@ -105,7 +105,7 @@ QString konfytPatchLayer::getName()
     }
 }
 
-float konfytPatchLayer::getGain()
+float KonfytPatchLayer::getGain()
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         return this->sfData.gain;
@@ -118,7 +118,7 @@ float konfytPatchLayer::getGain()
     }
 }
 
-void konfytPatchLayer::setGain(float newGain)
+void KonfytPatchLayer::setGain(float newGain)
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         this->sfData.gain = newGain;
@@ -129,7 +129,7 @@ void konfytPatchLayer::setGain(float newGain)
     }
 }
 
-void konfytPatchLayer::setSolo(bool newSolo)
+void KonfytPatchLayer::setSolo(bool newSolo)
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         this->sfData.solo = newSolo;
@@ -142,7 +142,7 @@ void konfytPatchLayer::setSolo(bool newSolo)
     }
 }
 
-void konfytPatchLayer::setMute(bool newMute)
+void KonfytPatchLayer::setMute(bool newMute)
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         this->sfData.mute = newMute;
@@ -155,7 +155,7 @@ void konfytPatchLayer::setMute(bool newMute)
     }
 }
 
-bool konfytPatchLayer::isSolo()
+bool KonfytPatchLayer::isSolo()
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         return this->sfData.solo;
@@ -169,7 +169,7 @@ bool konfytPatchLayer::isSolo()
     return false;
 }
 
-bool konfytPatchLayer::isMute()
+bool KonfytPatchLayer::isMute()
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         return this->sfData.mute;
@@ -183,7 +183,7 @@ bool konfytPatchLayer::isMute()
     return false;
 }
 
-konfytMidiFilter konfytPatchLayer::getMidiFilter()
+konfytMidiFilter KonfytPatchLayer::getMidiFilter()
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         return this->sfData.filter;
@@ -194,7 +194,7 @@ konfytMidiFilter konfytPatchLayer::getMidiFilter()
     }
 }
 
-void konfytPatchLayer::setMidiFilter(konfytMidiFilter newFilter)
+void KonfytPatchLayer::setMidiFilter(konfytMidiFilter newFilter)
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         this->sfData.filter = newFilter;
@@ -207,7 +207,7 @@ void konfytPatchLayer::setMidiFilter(konfytMidiFilter newFilter)
 
 
 
-konfytLayerType konfytPatchLayer::getLayerType()
+KonfytLayerType KonfytPatchLayer::getLayerType()
 {
     return layerType;
 }

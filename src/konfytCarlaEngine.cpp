@@ -217,7 +217,7 @@ QStringList konfytCarlaEngine::audioOutPorts(int ID)
     return ret;
 }
 
-void konfytCarlaEngine::InitCarlaEngine(konfytJackEngine* jackEngine, QString carlaJackClientName)
+void konfytCarlaEngine::InitCarlaEngine(KonfytJackEngine* jackEngine, QString carlaJackClientName)
 {
     userMessage("Carla version " + QString(CARLA_VERSION_STRING));
     this->jack = jackEngine;

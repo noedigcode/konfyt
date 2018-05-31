@@ -43,7 +43,7 @@ public:
     // ----------------------------------------------------
     // Engine related functions
     // ----------------------------------------------------
-    void initPatchEngine(konfytJackEngine* newJackClient);
+    void initPatchEngine(KonfytJackEngine* newJackClient);
     void panic(bool p);
     float getMasterGain();
     void setMasterGain(float newGain);
@@ -56,8 +56,8 @@ public:
     bool loadPatch(konfytPatch* newPatch);  // Load new patch, replacing current patch.
     void reloadPatch();                     // Reload the current patch (e.g. use if patch changed)
     void unloadPatch(konfytPatch* patch);
-    void unloadLayer(konfytPatch*patch, konfytPatchLayer *item);
-    konfytPatchLayer reloadLayer(konfytPatchLayer *item);
+    void unloadLayer(konfytPatch*patch, KonfytPatchLayer *item);
+    KonfytPatchLayer reloadLayer(KonfytPatchLayer *item);
 
     // ----------------------------------------------------
     // Modify current patch
@@ -73,36 +73,36 @@ public:
     // ----------------------------------------------------
 
     // General use for any type of layer
-    void setLayerFilter(konfytPatchLayer* layerItem, konfytMidiFilter filter);
-    void setLayerGain(konfytPatchLayer* layerItem, float newGain);
+    void setLayerFilter(KonfytPatchLayer* layerItem, konfytMidiFilter filter);
+    void setLayerGain(KonfytPatchLayer* layerItem, float newGain);
     void setLayerGain(int layerIndex, float newGain);
-    void setLayerSolo(konfytPatchLayer* layerItem, bool solo);
+    void setLayerSolo(KonfytPatchLayer* layerItem, bool solo);
     void setLayerSolo(int layerIndex, bool solo);
-    void setLayerMute(konfytPatchLayer* layerItem, bool mute);
+    void setLayerMute(KonfytPatchLayer* layerItem, bool mute);
     void setLayerMute(int layerIndex, bool mute);
-    void setLayerBus(konfytPatchLayer* layerItem, int bus); // currentPatch
-    void setLayerBus(konfytPatch* patch, konfytPatchLayer* layerItem, int bus);
-    void setLayerMidiInPort(konfytPatchLayer* layerItem, int portId); // currentPatch
-    void setLayerMidiInPort(konfytPatch* patch, konfytPatchLayer* layerItem, int portId);
+    void setLayerBus(KonfytPatchLayer* layerItem, int bus); // currentPatch
+    void setLayerBus(konfytPatch* patch, KonfytPatchLayer* layerItem, int bus);
+    void setLayerMidiInPort(KonfytPatchLayer* layerItem, int portId); // currentPatch
+    void setLayerMidiInPort(konfytPatch* patch, KonfytPatchLayer* layerItem, int portId);
 
     int getNumLayers();
-    void removeLayer(konfytPatchLayer *item); // Perform action on currentPatch
-    void removeLayer(konfytPatch* patch, konfytPatchLayer* item);
+    void removeLayer(KonfytPatchLayer *item); // Perform action on currentPatch
+    void removeLayer(konfytPatch* patch, KonfytPatchLayer* item);
 
 
     // Soundfont / Fluidsynth layers
-    konfytPatchLayer addProgramLayer(konfytSoundfontProgram newProgram);
+    KonfytPatchLayer addProgramLayer(konfytSoundfontProgram newProgram);
 
     // Plugin layers
-    konfytPatchLayer addSfzLayer(QString path);
-    konfytPatchLayer addLV2Layer(QString path);
-    konfytPatchLayer addCarlaInternalLayer(QString URI);
+    KonfytPatchLayer addSfzLayer(QString path);
+    KonfytPatchLayer addLV2Layer(QString path);
+    KonfytPatchLayer addCarlaInternalLayer(QString URI);
 
     // Midi output port layers
-    konfytPatchLayer addMidiOutPortToPatch(int port);
+    KonfytPatchLayer addMidiOutPortToPatch(int port);
 
     // Audio input layers
-    konfytPatchLayer addAudioInPortToPatch(int port);
+    KonfytPatchLayer addAudioInPortToPatch(int port);
 
     void error_abort(QString msg);
     
@@ -129,7 +129,7 @@ private:
     // ----------------------------------------------------
     // Jack
     // ----------------------------------------------------
-    konfytJackEngine* jack;
+    KonfytJackEngine* jack;
 
 
 signals:

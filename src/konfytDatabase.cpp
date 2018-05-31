@@ -806,7 +806,7 @@ void konfytDatabase::searchProgram(QString str)
             patchResults.append(pt);
         } else {
             // Else check patch layers
-            QList<konfytPatchLayer> layers = pt.getLayerItems();
+            QList<KonfytPatchLayer> layers = pt.getLayerItems();
             for (int j=0; j<layers.count(); j++) {
                 if (layers[j].getName().toLower().contains(str.toLower())) {
                     patchResults.append(pt);

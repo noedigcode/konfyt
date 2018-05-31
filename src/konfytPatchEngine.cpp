@@ -36,7 +36,7 @@ void konfytPatchEngine::userMessageFromEngine(QString msg)
     userMessage("patchEngine: " + msg);
 }
 
-void konfytPatchEngine::initPatchEngine(konfytJackEngine* newJackClient)
+void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient)
 {
     // Jack client (probably received from MainWindow) so we can directly create ports
     this->jack = newJackClient;
@@ -78,9 +78,9 @@ void konfytPatchEngine::unloadPatch(konfytPatch *patch)
 {
     if ( !patches.contains(patch) ) { return; }
 
-    QList<konfytPatchLayer> l = patch->getLayerItems();
+    QList<KonfytPatchLayer> l = patch->getLayerItems();
     for (int i=0; i<l.count(); i++) {
-        konfytPatchLayer layer = l[i];
+        KonfytPatchLayer layer = l[i];
         unloadLayer(patch, &layer);
     }
 
@@ -107,10 +107,10 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
     // ---------------------------------------------------
 
     // For each carla plugin in the patch...
-    QList<konfytPatchLayer> pluginList = currentPatch->getPluginLayerList();
+    QList<KonfytPatchLayer> pluginList = currentPatch->getPluginLayerList();
     for (int i=0; i<pluginList.count(); i++) {
         // If layer indexInEngine is -1, the layer hasn't been loaded yet.
-        konfytPatchLayer layer = pluginList[i];
+        KonfytPatchLayer layer = pluginList[i];
         if (patchIsNew) { layer.carlaPluginData.indexInEngine = -1; }
         if ( layer.carlaPluginData.indexInEngine == -1 ) {
             // Load in Carla engine
@@ -163,10 +163,10 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
     // ---------------------------------------------------
 
     // For each soundfont program in the patch...
-    QList<konfytPatchLayer> sflist = currentPatch->getSfLayerList();
+    QList<KonfytPatchLayer> sflist = currentPatch->getSfLayerList();
     for (int i=0; i<sflist.count(); i++) {
         // If layer indexInEngine is -1, layer hasn't been loaded yet.
-        konfytPatchLayer layer = sflist[i];
+        KonfytPatchLayer layer = sflist[i];
         if (patchIsNew) { layer.sfData.indexInEngine = -1; }
         if ( layer.sfData.indexInEngine == -1 ) {
             // Load in Fluidsynth engine
@@ -193,7 +193,7 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
     // ---------------------------------------------------
 
     // Set midi filters for midi output ports
-    QList<layerMidiOutStruct> l = currentPatch->getMidiOutputPortList_struct();
+    QList<LayerMidiOutStruct> l = currentPatch->getMidiOutputPortList_struct();
     for (int i=0; i<l.count(); i++) {
         int portId = l[i].portIdInProject;
         if (currentProject->midiOutPort_exists( portId )) {
@@ -218,11 +218,11 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
     return r;
 }
 
-konfytPatchLayer konfytPatchEngine::addProgramLayer(konfytSoundfontProgram newProgram)
+KonfytPatchLayer konfytPatchEngine::addProgramLayer(konfytSoundfontProgram newProgram)
 {
     if (currentPatch == NULL) { return; }
 
-    konfytPatchLayer g = currentPatch->addProgram(newProgram);
+    KonfytPatchLayer g = currentPatch->addProgram(newProgram);
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
@@ -236,14 +236,14 @@ konfytPatchLayer konfytPatchEngine::addProgramLayer(konfytSoundfontProgram newPr
     return g;
 }
 
-void konfytPatchEngine::removeLayer(konfytPatchLayer* item)
+void konfytPatchEngine::removeLayer(KonfytPatchLayer* item)
 {
     Q_ASSERT( currentPatch != NULL );
 
     removeLayer(currentPatch, item);
 }
 
-void konfytPatchEngine::removeLayer(konfytPatch *patch, konfytPatchLayer *item)
+void konfytPatchEngine::removeLayer(konfytPatch *patch, KonfytPatchLayer *item)
 {
     // Unload from respective engine
     unloadLayer(patch, item);
@@ -252,9 +252,9 @@ void konfytPatchEngine::removeLayer(konfytPatch *patch, konfytPatchLayer *item)
     if (patch == currentPatch) { reloadPatch(); }
 }
 
-void konfytPatchEngine::unloadLayer(konfytPatch *patch, konfytPatchLayer *item)
+void konfytPatchEngine::unloadLayer(konfytPatch *patch, KonfytPatchLayer *item)
 {
-    konfytPatchLayer layer = patch->getLayerItem( *item );
+    KonfytPatchLayer layer = patch->getLayerItem( *item );
     if (layer.getLayerType() == KonfytLayerType_SoundfontProgram) {
         if (layer.sfData.indexInEngine >= 0) {
             // First remove from jack
@@ -278,7 +278,7 @@ void konfytPatchEngine::unloadLayer(konfytPatch *patch, konfytPatchLayer *item)
     }
 }
 
-konfytPatchLayer konfytPatchEngine::reloadLayer(konfytPatchLayer *item)
+KonfytPatchLayer konfytPatchEngine::reloadLayer(KonfytPatchLayer *item)
 {
     unloadLayer(currentPatch, item);
     reloadPatch();
@@ -288,11 +288,11 @@ konfytPatchLayer konfytPatchEngine::reloadLayer(konfytPatchLayer *item)
 }
 
 
-konfytPatchLayer konfytPatchEngine::addSfzLayer(QString path)
+KonfytPatchLayer konfytPatchEngine::addSfzLayer(QString path)
 {
     Q_ASSERT( currentPatch != NULL );
 
-    layerCarlaPluginStruct plugin = layerCarlaPluginStruct();
+    LayerCarlaPluginStruct plugin = LayerCarlaPluginStruct();
     plugin.pluginType = KonfytCarlaPluginType_SFZ;
     plugin.gain = DEFAULT_GAIN_FOR_NEW_LAYER;
     plugin.mute = false;
@@ -301,7 +301,7 @@ konfytPatchLayer konfytPatchEngine::addSfzLayer(QString path)
     plugin.path = path;
 
     // Add the plugin to the patch
-    konfytPatchLayer g = currentPatch->addPlugin(plugin);
+    KonfytPatchLayer g = currentPatch->addPlugin(plugin);
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
@@ -319,11 +319,11 @@ konfytPatchLayer konfytPatchEngine::addSfzLayer(QString path)
     return currentPatch->getLayerItem(g);
 }
 
-konfytPatchLayer konfytPatchEngine::addLV2Layer(QString path)
+KonfytPatchLayer konfytPatchEngine::addLV2Layer(QString path)
 {
     Q_ASSERT( currentPatch != NULL );
 
-    layerCarlaPluginStruct plugin = layerCarlaPluginStruct();
+    LayerCarlaPluginStruct plugin = LayerCarlaPluginStruct();
     plugin.pluginType = KonfytCarlaPluginType_LV2;
     plugin.gain = DEFAULT_GAIN_FOR_NEW_LAYER;
     plugin.mute = false;
@@ -332,7 +332,7 @@ konfytPatchLayer konfytPatchEngine::addLV2Layer(QString path)
     plugin.path = path;
 
     // Add the plugin to the patch
-    konfytPatchLayer g = currentPatch->addPlugin(plugin);
+    KonfytPatchLayer g = currentPatch->addPlugin(plugin);
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
@@ -349,11 +349,11 @@ konfytPatchLayer konfytPatchEngine::addLV2Layer(QString path)
     return currentPatch->getLayerItem(g);
 }
 
-konfytPatchLayer konfytPatchEngine::addCarlaInternalLayer(QString URI)
+KonfytPatchLayer konfytPatchEngine::addCarlaInternalLayer(QString URI)
 {
     Q_ASSERT( currentPatch != NULL );
 
-    layerCarlaPluginStruct plugin = layerCarlaPluginStruct();
+    LayerCarlaPluginStruct plugin = LayerCarlaPluginStruct();
     plugin.pluginType = KonfytCarlaPluginType_Internal;
     plugin.gain = DEFAULT_GAIN_FOR_NEW_LAYER;
     plugin.mute = false;
@@ -362,7 +362,7 @@ konfytPatchLayer konfytPatchEngine::addCarlaInternalLayer(QString URI)
     plugin.path = URI;
 
     // Add the plugin to the patch
-    konfytPatchLayer g = currentPatch->addPlugin(plugin);
+    KonfytPatchLayer g = currentPatch->addPlugin(plugin);
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
@@ -397,10 +397,10 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
 {
     if (currentPatch == NULL) { return; }
 
-    QList<konfytPatchLayer> l = currentPatch->getLayerItems();
+    QList<KonfytPatchLayer> l = currentPatch->getLayerItems();
     for (int i=0; i<l.count(); i++) {
 
-        konfytPatchLayer layer = l[i];
+        KonfytPatchLayer layer = l[i];
 
         if (layer.hasError()) {
             continue;
@@ -437,10 +437,10 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
             midiInPort = currentProject->midiInPort_getPort(layer.midiInPortIdInProject);
         }
 
-        konfytLayerType type = layer.getLayerType();
+        KonfytLayerType type = layer.getLayerType();
         if (type ==  KonfytLayerType_SoundfontProgram) {
 
-            layerSoundfontStruct sfData = layer.sfData;
+            LayerSoundfontStruct sfData = layer.sfData;
             // Gain = layer gain * master gain
             fluidsynthEngine->setGain( sfData.indexInEngine, convertGain(sfData.gain*masterGain) );
             // Solo and mute in jack client
@@ -451,7 +451,7 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
 
         } else if (type == KonfytLayerType_CarlaPlugin) {
 
-            layerCarlaPluginStruct pluginData = layer.carlaPluginData;
+            LayerCarlaPluginStruct pluginData = layer.carlaPluginData;
             // Gain = layer gain * master gain
             carlaEngine->setGain( pluginData.indexInEngine, convertGain(pluginData.gain*masterGain) );
             // Set solo and mute in jack client
@@ -463,7 +463,7 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
         } else if (type == KonfytLayerType_MidiOut) {
 
             // Set solo and mute in jack client
-            layerMidiOutStruct portData = layer.midiOutputPortData;
+            LayerMidiOutStruct portData = layer.midiOutputPortData;
             if (currentProject->midiOutPort_exists(portData.portIdInProject)) {
                 PrjMidiPort projectPort = currentProject->midiOutPort_getPort( portData.portIdInProject );
                 jack->setPortSolo(KonfytJackPortType_MidiOut, projectPort.jackPort, portData.solo);
@@ -478,7 +478,7 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
             // The port number in audioInLayerStruct refers to a stereo port pair index in the project.
             // The bus number in audioInLayerStruct refers to a bus in the project with a left and right jack port.
             // We have to retrieve the port pair and bus from the project in order to get the left and right port Jack port numbers.
-            layerAudioInStruct audioPortData = layer.audioInPortData;
+            LayerAudioInStruct audioPortData = layer.audioInPortData;
             if (currentProject->audioInPort_exists(audioPortData.portIdInProject)) {
                 PrjAudioInPort portPair = currentProject->audioInPort_getPort(audioPortData.portIdInProject);
                 // Left channel
@@ -539,7 +539,7 @@ int konfytPatchEngine::getNumLayers()
     return currentPatch->getNumLayers();
 }
 
-void konfytPatchEngine::setLayerGain(konfytPatchLayer *layerItem, float newGain)
+void konfytPatchEngine::setLayerGain(KonfytPatchLayer *layerItem, float newGain)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -551,9 +551,9 @@ void konfytPatchEngine::setLayerGain(int layerIndex, float newGain)
 {
     Q_ASSERT( currentPatch != NULL );
 
-    QList<konfytPatchLayer> l =  currentPatch->getLayerItems();
+    QList<KonfytPatchLayer> l =  currentPatch->getLayerItems();
     if ( (layerIndex >= 0) && (layerIndex < l.count()) ) {
-        konfytPatchLayer g = l.at(layerIndex);
+        KonfytPatchLayer g = l.at(layerIndex);
         currentPatch->setLayerGain(&g, newGain);
         refreshAllGainsAndRouting();
     } else {
@@ -562,7 +562,7 @@ void konfytPatchEngine::setLayerGain(int layerIndex, float newGain)
     }
 }
 
-void konfytPatchEngine::setLayerSolo(konfytPatchLayer *layerItem, bool solo)
+void konfytPatchEngine::setLayerSolo(KonfytPatchLayer *layerItem, bool solo)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -575,9 +575,9 @@ void konfytPatchEngine::setLayerSolo(int layerIndex, bool solo)
 {
     Q_ASSERT( currentPatch != NULL );
 
-    QList<konfytPatchLayer> l =  currentPatch->getLayerItems();
+    QList<KonfytPatchLayer> l =  currentPatch->getLayerItems();
     if ( (layerIndex >= 0) && (layerIndex < l.count()) ) {
-        konfytPatchLayer g = l.at(layerIndex);
+        KonfytPatchLayer g = l.at(layerIndex);
         setLayerSolo( &g, solo );
     } else {
         // Logic error somewhere else.
@@ -587,7 +587,7 @@ void konfytPatchEngine::setLayerSolo(int layerIndex, bool solo)
 
 
 
-void konfytPatchEngine::setLayerMute(konfytPatchLayer *layerItem, bool mute)
+void konfytPatchEngine::setLayerMute(KonfytPatchLayer *layerItem, bool mute)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -600,9 +600,9 @@ void konfytPatchEngine::setLayerMute(int layerIndex, bool mute)
 {
     Q_ASSERT( currentPatch != NULL );
 
-    QList<konfytPatchLayer> l =  currentPatch->getLayerItems();
+    QList<KonfytPatchLayer> l =  currentPatch->getLayerItems();
     if ( (layerIndex >= 0) && (layerIndex < l.count()) ) {
-        konfytPatchLayer g = l.at(layerIndex);
+        KonfytPatchLayer g = l.at(layerIndex);
         currentPatch->setLayerMute(&g, mute);
         refreshAllGainsAndRouting();
     } else {
@@ -611,31 +611,31 @@ void konfytPatchEngine::setLayerMute(int layerIndex, bool mute)
     }
 }
 
-void konfytPatchEngine::setLayerBus(konfytPatchLayer *layerItem, int bus)
+void konfytPatchEngine::setLayerBus(KonfytPatchLayer *layerItem, int bus)
 {
     Q_ASSERT( currentPatch != NULL );
     setLayerBus(currentPatch, layerItem, bus);
 }
 
-void konfytPatchEngine::setLayerBus(konfytPatch *patch, konfytPatchLayer *layerItem, int bus)
+void konfytPatchEngine::setLayerBus(konfytPatch *patch, KonfytPatchLayer *layerItem, int bus)
 {
     patch->setLayerBus(layerItem, bus);
     if (patch == currentPatch) { refreshAllGainsAndRouting(); }
 }
 
-void konfytPatchEngine::setLayerMidiInPort(konfytPatchLayer *layerItem, int portId)
+void konfytPatchEngine::setLayerMidiInPort(KonfytPatchLayer *layerItem, int portId)
 {
     Q_ASSERT( currentpatch != NULL );
     setLayerMidiInPort(currentPatch, layreItem, portId);
 }
 
-void konfytPatchEngine::setLayerMidiInPort(konfytPatch *patch, konfytPatchLayer *layerItem, int portId)
+void konfytPatchEngine::setLayerMidiInPort(konfytPatch *patch, KonfytPatchLayer *layerItem, int portId)
 {
     patch->setLayerMidiInPort(layerItem, portId);
     if (patch == currentPatch) { refreshAllGainsAndRouting(); }
 }
 
-void konfytPatchEngine::setLayerFilter(konfytPatchLayer *layerItem, konfytMidiFilter filter)
+void konfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, konfytMidiFilter filter)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -654,7 +654,7 @@ void konfytPatchEngine::setLayerFilter(konfytPatchLayer *layerItem, konfytMidiFi
 
     } else if (layerItem->getLayerType() == KonfytLayerType_MidiOut) {
 
-        layerMidiOutStruct layerPort = layerItem->midiOutputPortData;
+        LayerMidiOutStruct layerPort = layerItem->midiOutputPortData;
         PrjMidiPort projectPort = currentProject->midiOutPort_getPort( layerPort.portIdInProject );
         this->jack->setPortFilter( KonfytJackPortType_MidiOut, projectPort.jackPort, layerPort.filter );
 
@@ -691,20 +691,20 @@ QString konfytPatchEngine::getPatchNote()
     return currentPatch->getNote();
 }
 
-konfytPatchLayer konfytPatchEngine::addMidiOutPortToPatch(int port)
+KonfytPatchLayer konfytPatchEngine::addMidiOutPortToPatch(int port)
 {
     Q_ASSERT( currentPatch != NULL );
 
-    konfytPatchLayer g = currentPatch->addMidiOutputPort(port);
+    KonfytPatchLayer g = currentPatch->addMidiOutputPort(port);
     reloadPatch();
     return g;
 }
 
-konfytPatchLayer konfytPatchEngine::addAudioInPortToPatch(int port)
+KonfytPatchLayer konfytPatchEngine::addAudioInPortToPatch(int port)
 {
     Q_ASSERT( currentPatch != NULL );
 
-    konfytPatchLayer g = currentPatch->addAudioInPort( port );
+    KonfytPatchLayer g = currentPatch->addAudioInPort( port );
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.

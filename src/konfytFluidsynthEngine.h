@@ -50,7 +50,7 @@ public:
     void InitFluidsynth(double SampleRate);
 
     QMutex mutex;
-    void processJackMidi(int ID, const konfytMidiEvent* ev);
+    void processJackMidi(int ID, const KonfytMidiEvent* ev);
     int fluidsynthWriteFloat(int ID, void* leftBuffer, void* rightBuffer, int len);
 
     int addSoundfontProgram(konfytSoundfontProgram p);
