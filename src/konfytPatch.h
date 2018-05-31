@@ -105,6 +105,7 @@ public:
     bool isValidLayerNumber(int layer);
     void removeLayer(konfytPatchLayer *layer);
     void clearLayers();
+    int layerListIndexFromPatchId(konfytPatchLayer* layer);
     void replaceLayer(konfytPatchLayer newLayer);
     void setLayerFilter(konfytPatchLayer* layer, konfytMidiFilter newFilter);
     float getLayerGain(konfytPatchLayer* layer);
@@ -112,6 +113,7 @@ public:
     void setLayerSolo(konfytPatchLayer* layer, bool solo);
     void setLayerMute(konfytPatchLayer* layer, bool mute);
     void setLayerBus(konfytPatchLayer* layer, int bus);
+    void setLayerMidiInPort(konfytPatchLayer* layer, int portId);
 
     // ----------------------------------------------------
     // Soundfont layer related functions

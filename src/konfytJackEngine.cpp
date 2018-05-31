@@ -162,7 +162,7 @@ void konfytJackEngine::refreshPortConnections()
     for (int i=0; i<plugin_ports.count(); i++) {
 
         // Midi out
-        KonfytJackPort* m = plugin_ports.at(i)->midi_out;
+        KonfytJackPort* m = plugin_ports.at(i)->midi;
         const char* m_src = jack_port_name( m->jack_pointer );
         for (int j=0; j<m->connectionList.count(); j++) {
 
@@ -237,8 +237,8 @@ void konfytJackEngine::addSoundfont(layerSoundfontStruct sf)
     p->audio_in_l->buffer = malloc(sizeof(jack_default_audio_sample_t)*nframes);
     p->audio_in_r->buffer = malloc(sizeof(jack_default_audio_sample_t)*nframes);
 
-    p->midi_out = new KonfytJackPort();
-    p->midi_out->filter = sf.filter;
+    p->midi = new KonfytJackPort();
+    p->midi->filter = sf.filter;
     p->plugin_id = sf.indexInEngine;
 
     soundfont_ports.append(p);
@@ -288,7 +288,7 @@ void konfytJackEngine::removeSoundfont(int indexInEngine)
     free(p->audio_in_r->buffer);
     delete p->audio_in_l;
     delete p->audio_in_r;
-    delete p->midi_out;
+    delete p->midi;
     delete p;
 
     pauseJackProcessing(false);
@@ -334,7 +334,7 @@ void konfytJackEngine::addPluginPortsAndConnect(layerCarlaPluginStruct plugin)
     } else {
         alPort->active = false;
         alPort->connectionList.append( plugin.audio_out_port_left );
-        alPort->destinationPort = NULL;
+        alPort->destOrSrcPort = NULL;
         alPort->gain = 1;
         alPort->jack_pointer = newL;
         alPort->mute = false;
@@ -351,7 +351,7 @@ void konfytJackEngine::addPluginPortsAndConnect(layerCarlaPluginStruct plugin)
     } else {
         arPort->active = false;
         arPort->connectionList.append( plugin.audio_out_port_right );
-        arPort->destinationPort = NULL;
+        arPort->destOrSrcPort = NULL;
         arPort->gain = 1;
         arPort->jack_pointer = newR;
         arPort->mute = false;
@@ -360,7 +360,7 @@ void konfytJackEngine::addPluginPortsAndConnect(layerCarlaPluginStruct plugin)
     }
 
     KonfytJackPluginPorts* p = new KonfytJackPluginPorts();
-    p->midi_out = midiPort;
+    p->midi = midiPort;
     p->audio_in_l = alPort;
     p->audio_in_r = arPort;
     p->plugin_id = plugin.indexInEngine;
@@ -383,7 +383,7 @@ void konfytJackEngine::removePlugin(int indexInEngine)
     for (int i=0; i<noteOnList.count(); i++) {
         KonfytJackNoteOnRecord *rec = noteOnList.at_ptr(i);
         if (rec->jackPortNotFluidsynth) {
-            if (rec->port == p->midi_out) {
+            if (rec->port == p->midi) {
                 noteOnList.remove(i);
                 i--; // Due to removal, have to stay at same index after for loop i++
             }
@@ -392,7 +392,7 @@ void konfytJackEngine::removePlugin(int indexInEngine)
     for (int i=0; i<sustainList.count(); i++) {
         KonfytJackNoteOnRecord *rec = sustainList.at_ptr(i);
         if (rec->jackPortNotFluidsynth) {
-            if (rec->port == p->midi_out) {
+            if (rec->port == p->midi) {
                 sustainList.remove(i);
                 i--;
             }
@@ -401,7 +401,7 @@ void konfytJackEngine::removePlugin(int indexInEngine)
     for (int i=0; i<pitchBendList.count(); i++) {
         KonfytJackNoteOnRecord *rec = pitchBendList.at_ptr(i);
         if (rec->jackPortNotFluidsynth) {
-            if (rec->port == p->midi_out) {
+            if (rec->port == p->midi) {
                 pitchBendList.remove(i);
                 i--;
             }
@@ -410,8 +410,8 @@ void konfytJackEngine::removePlugin(int indexInEngine)
 
     plugin_ports.removeAll(p);
 
-    jack_port_unregister(client, p->midi_out->jack_pointer);
-    delete p->midi_out;
+    jack_port_unregister(client, p->midi->jack_pointer);
+    delete p->midi;
 
     jack_port_unregister(client, p->audio_in_l->jack_pointer);
     delete p->audio_in_l;
@@ -427,7 +427,7 @@ void konfytJackEngine::removePlugin(int indexInEngine)
 void konfytJackEngine::setSoundfontMidiFilter(int indexInEngine, konfytMidiFilter filter)
 {
     if (soundfontPortsMap.contains(indexInEngine)) {
-        soundfontPortsMap.value(indexInEngine)->midi_out->filter = filter;
+        soundfontPortsMap.value(indexInEngine)->midi->filter = filter;
     } else {
         error_abort("setSoundfontMidiFilter: indexInEngine out of range.");
     }
@@ -437,7 +437,7 @@ void konfytJackEngine::setPluginMidiFilter(int indexInEngine, konfytMidiFilter f
 {
     if (pluginsPortsMap.contains(indexInEngine)) {
         // Map plugin's indexInEngine to port number
-        pluginsPortsMap.value(indexInEngine)->midi_out->filter = filter;
+        pluginsPortsMap.value(indexInEngine)->midi->filter = filter;
     } else {
         error_abort("setPluginMidiFilter: indexInEngine out of range.");
     }
@@ -448,7 +448,7 @@ void konfytJackEngine::setSoundfontSolo(int indexInEngine, bool solo)
     if (soundfontPortsMap.contains(indexInEngine)) {
         soundfontPortsMap.value(indexInEngine)->audio_in_l->solo = solo;
         soundfontPortsMap.value(indexInEngine)->audio_in_r->solo = solo;
-        soundfontPortsMap.value(indexInEngine)->midi_out->solo = solo;
+        soundfontPortsMap.value(indexInEngine)->midi->solo = solo;
         refreshSoloFlag();
     } else {
         error_abort("setSoundfontSolo: indexInEngine out of range.");
@@ -461,7 +461,7 @@ void konfytJackEngine::setPluginSolo(int indexInEngine, bool solo)
         // Map plugin's indexInEngine to port number
         pluginsPortsMap.value(indexInEngine)->audio_in_l->solo = solo;
         pluginsPortsMap.value(indexInEngine)->audio_in_r->solo = solo;
-        pluginsPortsMap.value(indexInEngine)->midi_out->solo = solo;
+        pluginsPortsMap.value(indexInEngine)->midi->solo = solo;
         refreshSoloFlag();
     } else {
         error_abort("setPluginSolo: indexInEngine out of range.");
@@ -473,7 +473,7 @@ void konfytJackEngine::setSoundfontMute(int indexInEngine, bool mute)
     if (soundfontPortsMap.contains(indexInEngine)) {
         soundfontPortsMap.value(indexInEngine)->audio_in_l->mute = mute;
         soundfontPortsMap.value(indexInEngine)->audio_in_r->mute = mute;
-        soundfontPortsMap.value(indexInEngine)->midi_out->mute = mute;
+        soundfontPortsMap.value(indexInEngine)->midi->mute = mute;
     } else {
         error_abort("setSoundfontMute: indexInEngine out of range.");
     }
@@ -485,17 +485,20 @@ void konfytJackEngine::setPluginMute(int indexInEngine, bool mute)
         // Map plugin's indexInEngine to port number
         pluginsPortsMap.value(indexInEngine)->audio_in_l->mute = mute;
         pluginsPortsMap.value(indexInEngine)->audio_in_r->mute = mute;
-        pluginsPortsMap.value(indexInEngine)->midi_out->mute = mute;
+        pluginsPortsMap.value(indexInEngine)->midi->mute = mute;
     } else {
         error_abort("setPluginMute: indexInEngine out of range.");
     }
 }
 
-void konfytJackEngine::setSoundfontRouting(int indexInEngine, KonfytJackPort *port_left, KonfytJackPort *port_right)
+void konfytJackEngine::setSoundfontRouting(int indexInEngine, KonfytJackPort *midi_in, KonfytJackPort *port_left, KonfytJackPort *port_right)
 {
     if (!clientIsActive()) { return; }
     pauseJackProcessing(true);
 
+    if (!midi_in_ports.contains(midi_in)) {
+        error_abort("setSoundfontRouting: invalid midi_in.");
+    }
     if (!audio_out_ports.contains(port_left)) {
         error_abort("setSoundfontRouting: invalid port_left.");
     }
@@ -505,8 +508,9 @@ void konfytJackEngine::setSoundfontRouting(int indexInEngine, KonfytJackPort *po
 
     if (soundfontPortsMap.contains(indexInEngine)) {
         KonfytJackPluginPorts* p = soundfontPortsMap.value(indexInEngine);
-        p->audio_in_l->destinationPort = port_left;
-        p->audio_in_r->destinationPort = port_right;
+        p->midi->destOrSrcPort = midi_in;
+        p->audio_in_l->destOrSrcPort = port_left;
+        p->audio_in_r->destOrSrcPort = port_right;
     } else {
         error_abort("setSoundfontRouting: indexInEngine out of range.");
     }
@@ -514,11 +518,14 @@ void konfytJackEngine::setSoundfontRouting(int indexInEngine, KonfytJackPort *po
     pauseJackProcessing(false);
 }
 
-void konfytJackEngine::setPluginRouting(int indexInEngine, KonfytJackPort* port_left, KonfytJackPort* port_right)
+void konfytJackEngine::setPluginRouting(int indexInEngine, KonfytJackPort *midi_in, KonfytJackPort* port_left, KonfytJackPort* port_right)
 {
     if (!clientIsActive()) { return; }
     pauseJackProcessing(true);
 
+    if (!midi_in_ports.contains(midi_in)) {
+        error_abort("setPluginRouting: invalid midi_in.");
+    }
     if (!audio_out_ports.contains(port_left)) {
         error_abort("setPluginRouting: invalid port_left.");
     }
@@ -528,8 +535,9 @@ void konfytJackEngine::setPluginRouting(int indexInEngine, KonfytJackPort* port_
 
     if (pluginsPortsMap.contains(indexInEngine)) {
         KonfytJackPluginPorts* p = pluginsPortsMap.value(indexInEngine);
-        p->audio_in_l->destinationPort = port_left;
-        p->audio_in_r->destinationPort = port_right;
+        p->midi->destOrSrcPort = midi_in;
+        p->audio_in_l->destOrSrcPort = port_left;
+        p->audio_in_r->destOrSrcPort = port_right;
     } else {
         error_abort("setPluginRouting: indexInEngine out of range.");
     }
@@ -554,16 +562,16 @@ bool konfytJackEngine::getSoloFlagInternal()
 {
     // Check if a plugin is solo
     for (int i=0; i<plugin_ports.count(); i++) {
-        if (plugin_ports[i]->midi_out->active) {
-            if (plugin_ports[i]->midi_out->solo == true) {
+        if (plugin_ports[i]->midi->active) {
+            if (plugin_ports[i]->midi->solo == true) {
                 return true;
             }
         }
     }
     // Check if a soundfont is solo
     for (int i=0; i<soundfont_ports.count(); i++) {
-        if (soundfont_ports[i]->midi_out->active) {
-            if (soundfont_ports[i]->midi_out->solo == true) {
+        if (soundfont_ports[i]->midi->active) {
+            if (soundfont_ports[i]->midi->solo == true) {
                 return true;
             }
         }
@@ -657,19 +665,19 @@ void konfytJackEngine::nullDestinationPorts_all()
 
     // Audio input ports
     for (int i=0; i<audio_in_ports.count(); i++) {
-        audio_in_ports[i]->destinationPort = NULL;
+        audio_in_ports[i]->destOrSrcPort = NULL;
     }
 
     // Plugin audio ports
     for (int i=0; i<plugin_ports.count(); i++) {
-        plugin_ports[i]->audio_in_l->destinationPort = NULL;
-        plugin_ports[i]->audio_in_r->destinationPort = NULL;
+        plugin_ports[i]->audio_in_l->destOrSrcPort = NULL;
+        plugin_ports[i]->audio_in_r->destOrSrcPort = NULL;
     }
 
     // Soundfont audio ports
     for (int i=0; i<soundfont_ports.count(); i++) {
-        soundfont_ports[i]->audio_in_l->destinationPort = NULL;
-        soundfont_ports[i]->audio_in_r->destinationPort = NULL;
+        soundfont_ports[i]->audio_in_l->destOrSrcPort = NULL;
+        soundfont_ports[i]->audio_in_r->destOrSrcPort = NULL;
     }
 
     pauseJackProcessing(false);
@@ -683,28 +691,28 @@ void konfytJackEngine::nullDestinationPorts_pointingTo(KonfytJackPort *port)
 
     // Audio input ports
     for (int i=0; i<audio_in_ports.count(); i++) {
-        if (audio_in_ports[i]->destinationPort == port) {
-            audio_in_ports[i]->destinationPort = NULL;
+        if (audio_in_ports[i]->destOrSrcPort == port) {
+            audio_in_ports[i]->destOrSrcPort = NULL;
         }
     }
 
     // Plugin audio ports
     for (int i=0; i<plugin_ports.count(); i++) {
-        if (plugin_ports[i]->audio_in_l->destinationPort == port) {
-            plugin_ports[i]->audio_in_l->destinationPort = NULL;
+        if (plugin_ports[i]->audio_in_l->destOrSrcPort == port) {
+            plugin_ports[i]->audio_in_l->destOrSrcPort = NULL;
         }
-        if (plugin_ports[i]->audio_in_r->destinationPort == port) {
-            plugin_ports[i]->audio_in_r->destinationPort = NULL;
+        if (plugin_ports[i]->audio_in_r->destOrSrcPort == port) {
+            plugin_ports[i]->audio_in_r->destOrSrcPort = NULL;
         }
     }
 
     // Soundfont audio ports
     for (int i=0; i<soundfont_ports.count(); i++) {
-        if (soundfont_ports[i]->audio_in_l->destinationPort == port) {
-            soundfont_ports[i]->audio_in_l->destinationPort = NULL;
+        if (soundfont_ports[i]->audio_in_l->destOrSrcPort == port) {
+            soundfont_ports[i]->audio_in_l->destOrSrcPort = NULL;
         }
-        if (soundfont_ports[i]->audio_in_r->destinationPort == port) {
-            soundfont_ports[i]->audio_in_r->destinationPort = NULL;
+        if (soundfont_ports[i]->audio_in_r->destOrSrcPort == port) {
+            soundfont_ports[i]->audio_in_r->destOrSrcPort = NULL;
         }
     }
 
@@ -869,7 +877,7 @@ KonfytJackPort* konfytJackEngine::addPort(KonfytJackPortType type, QString port_
         p->solo = false;
         p->mute = false;
         p->gain = 1;
-        p->destinationPort = NULL;
+        p->destOrSrcPort = NULL;
 
         listToAddTo->append(p);
 
@@ -1175,23 +1183,32 @@ void konfytJackEngine::setPortGain(KonfytJackPortType type, KonfytJackPort *port
     }
 }
 
-/* Route the src port to the dest port, i.e. set src destinationPort = dest. This routes audio from
- * the src port to the dest port (bus). */
-void konfytJackEngine::setPortRouting(KonfytJackPortType type, KonfytJackPort *src, KonfytJackPort *dest)
+/* Route the specified port to the port specified by route.
+ * i.e. destOrSrcPort of port is set to route. For an AudioIn type, this means
+ * that audio will be routed to the destination port (bus) specified by route.
+ * For a MidiOut type, this means that MIDI will be routed from the source port
+ * specified by route. */
+void konfytJackEngine::setPortRouting(KonfytJackPortType type, KonfytJackPort *port, KonfytJackPort *route)
 {
     if (!clientIsActive()) { return; }
     pauseJackProcessing(true);
 
     switch (type) {
     case KonfytJackPortType_AudioIn:
-        if (audio_in_ports.contains(src)) {
-            if (audio_out_ports.contains(dest)) {
-                src->destinationPort = dest;
-            } else { error_abort("invalid dest port"); }
-        } else { error_abort("invalid src port"); }
+        if (audio_in_ports.contains(port)) {
+            if (audio_out_ports.contains(route)) {
+                port->destOrSrcPort = route;
+            } else { error_abort("setPortRouting: Invalid route port."); }
+        } else { error_abort("setPortRouting: Invalid port."); }
         break;
+    case KonfytJackPortType_MidiOut:
+        if (midi_out_ports.contains(port)) {
+            if (midi_in_ports.contains(route)) {
+                port->destOrSrcPort = route;
+            } else { error_abort("setPortRouting: Invalid route port."); }
+        } else { error_abort("setPortRouting: Invalid port."); }
     default:
-        error_abort("setPortRouting: invalid Jack Port Type");
+        error_abort("setPortRouting: invalid JACK Port Type");
     }
 
     pauseJackProcessing(false);
@@ -1401,7 +1418,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
     }
     // Get buffers for midi output ports to plugins
     for (n=0; n<e->plugin_ports.count(); n++) {
-        tempPort = e->plugin_ports[n]->midi_out;
+        tempPort = e->plugin_ports[n]->midi;
         tempPort->buffer = jack_port_get_buffer( tempPort->jack_pointer, nframes );
         jack_midi_clear_buffer( tempPort->buffer );
     }
@@ -1412,7 +1429,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 
         // Send to fluidsynth
         for (n=0; n<e->soundfont_ports.count(); n++) {
-            tempPort = e->soundfont_ports.at(n)->midi_out;
+            tempPort = e->soundfont_ports.at(n)->midi;
             id = e->soundfont_ports.at(n)->plugin_id;
             // Fluidsynthengine will force event channel to zero
             e->fluidsynthEngine->processJackMidi( id, &(e->evAllNotesOff) );
@@ -1428,7 +1445,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 
         // Also give to all active plugin ports
         for (n=0; n<e->plugin_ports.count(); n++) {
-            tempPort = e->plugin_ports[n]->midi_out;
+            tempPort = e->plugin_ports[n]->midi;
             e->sendMidiClosureEvents_chanZeroOnly( tempPort ); // Only on channel zero
         }
 
@@ -1571,7 +1588,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 
                 // Send to fluidsynth
                 for (n=0; n<e->soundfont_ports.count(); n++) {
-                    tempPort = e->soundfont_ports.at(n)->midi_out;
+                    tempPort = e->soundfont_ports.at(n)->midi;
                     tempPort2 = e->soundfont_ports.at(n)->audio_in_l; // Related audio port
                     id = e->soundfont_ports.at(n)->plugin_id;
                     if ( e->passMidiMuteSoloActiveFilterAndModify(tempPort, &ev, &evToSend) ) {
@@ -1679,7 +1696,7 @@ int konfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 
                 // Also give to all active plugin ports
                 for (n=0; n<e->plugin_ports.count(); n++) {
-                    tempPort = e->plugin_ports[n]->midi_out;
+                    tempPort = e->plugin_ports[n]->midi;
                     tempPort2 = e->plugin_ports[n]->audio_in_l; // related audio port
                     if ( e->passMidiMuteSoloActiveFilterAndModify(tempPort, &ev, &evToSend) ) {
 
@@ -1783,7 +1800,7 @@ bool konfytJackEngine::passMuteSoloCriteria(KonfytJackPort *port)
 // Helper function for Jack process callback
 void konfytJackEngine::mixBufferToDestinationPort(KonfytJackPort* port, jack_nframes_t nframes, bool applyGain)
 {
-    if (port->destinationPort == NULL) { return; }
+    if (port->destOrSrcPort == NULL) { return; }
 
     float gain = 1;
     if (applyGain) {
@@ -1793,7 +1810,7 @@ void konfytJackEngine::mixBufferToDestinationPort(KonfytJackPort* port, jack_nfr
     // For each frame: bus_buffer[frame] += port_buffer[frame]
     for (int i=0; i<nframes; i++) {
 
-        ( (jack_default_audio_sample_t*)(port->destinationPort->buffer) )[i] +=
+        ( (jack_default_audio_sample_t*)(port->destOrSrcPort->buffer) )[i] +=
                 ((jack_default_audio_sample_t*)(port->buffer))[i] * gain * fadeOutValues[port->fadeoutCounter];
 
         if (port->fadingOut) {
@@ -2060,7 +2077,7 @@ void konfytJackEngine::setAllSoundfontPortsActive(bool active)
     if (!clientIsActive()) { return; }
 
     for (int i=0; i<soundfont_ports.count(); i++) {
-        soundfont_ports[i]->midi_out->active = active;
+        soundfont_ports[i]->midi->active = active;
         soundfont_ports[i]->audio_in_l->active = active;
         soundfont_ports[i]->audio_in_r->active = active;
     }
@@ -2071,7 +2088,7 @@ void konfytJackEngine::setAllPluginPortsActive(bool active)
     if (!clientIsActive()) { return; }
 
     for (int i=0; i<plugin_ports.count(); i++) {
-        plugin_ports[i]->midi_out->active = active;
+        plugin_ports[i]->midi->active = active;
         plugin_ports[i]->audio_in_l->active = active;
         plugin_ports[i]->audio_in_r->active = active;
     }
@@ -2158,7 +2175,7 @@ void konfytJackEngine::activatePortsForPatch(const konfytPatch* patch, const Kon
             KonfytJackPluginPorts* p = pluginsPortsMap.value(plugin.indexInEngine);
             p->audio_in_l->active = true;
             p->audio_in_r->active = true;
-            p->midi_out->active = true;
+            p->midi->active = true;
         } else {
             error_abort("activatePortsForPatch: Plugin indexInEngine " + n2s(plugin.indexInEngine) +
                         " not in pluginsPortsMap.");
@@ -2177,7 +2194,7 @@ void konfytJackEngine::activatePortsForPatch(const konfytPatch* patch, const Kon
             KonfytJackPluginPorts* p = soundfontPortsMap.value(sf.indexInEngine);
             p->audio_in_l->active = true;
             p->audio_in_r->active = true;
-            p->midi_out->active = true;
+            p->midi->active = true;
         } else {
             error_abort("activatePortsForPatch: Plugin indexInEngine " + n2s(sf.indexInEngine) +
                         " not in soundfontPortsMap.");

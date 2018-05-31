@@ -82,6 +82,8 @@ public:
     void setLayerMute(int layerIndex, bool mute);
     void setLayerBus(konfytPatchLayer* layerItem, int bus); // currentPatch
     void setLayerBus(konfytPatch* patch, konfytPatchLayer* layerItem, int bus);
+    void setLayerMidiInPort(konfytPatchLayer* layerItem, int portId); // currentPatch
+    void setLayerMidiInPort(konfytPatch* patch, konfytPatchLayer* layerItem, int portId);
 
     int getNumLayers();
     void removeLayer(konfytPatchLayer *item); // Perform action on currentPatch

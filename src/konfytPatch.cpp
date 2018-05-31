@@ -473,129 +473,147 @@ void konfytPatch::clearLayers()
     this->layerList.clear();
 }
 
+/* Find layer that matches ID_in_patch and return index in layerList.
+ * Return -1 if not found. */
+int konfytPatch::layerListIndexFromPatchId(konfytPatchLayer *layer)
+{
+    for (int i=0; i < layerList.count(); i++) {
+        if (layerList.at(i).ID_in_patch == layer->ID_in_patch) {
+            return i;
+        }
+    }
+    // Not found
+    return -1;
+}
+
 // Replace a layer. Layer is identified using unique patch_id in layer.
 void konfytPatch::replaceLayer(konfytPatchLayer newLayer)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == newLayer.ID_in_patch) {
-            this->layerList.replace(i, newLayer);
-            return;
-        }
-    }
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(&newLayer);
 
-    // No layer was found and replaced. This is probably a logic error somewhere.
-    error_abort("replaceLayer: Layer with patch_id " + n2s(newLayer.ID_in_patch) + " is not in the patch's layerList.");
+    if (index >= 0) {
+        this->layerList.replace(index, newLayer);
+    } else {
+        // No layer was found and replaced. This is probably a logic error somewhere.
+        error_abort("replaceLayer: Layer with id " + n2s(newLayer.ID_in_patch) + " is not in the patch's layerList.");
+    }
 }
 
 // Set the midi filter for the layer for which the patch_id matches that of
 // the specified layer item.
 void konfytPatch::setLayerFilter(konfytPatchLayer *layer, konfytMidiFilter newFilter)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            konfytPatchLayer g = this->layerList.at(i);
-            g.setMidiFilter(newFilter);
-            this->layerList.replace(i, g);
-            return;
-        }
-    }
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-    // No layer was found. This is probably a logic error somewhere.
-    error_abort("setLayerFilter: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+    if (index >= 0) {
+        konfytPatchLayer g = this->layerList.at(index);
+        g.setMidiFilter(newFilter);
+        this->layerList.replace(index, g);
+    } else {
+        // No layer was found. This is probably a logic error somewhere.
+        error_abort("setLayerFilter: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+    }
 }
 
 float konfytPatch::getLayerGain(konfytPatchLayer *layer)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            return this->layerList.at(i).getGain();
-        }
-    }
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-    // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("getLayerGain: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
-    return 0;
+    if (index >= 0) {
+        return this->layerList.at(index).getGain();
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("getLayerGain: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+        return 0;
+    }
 }
 
 void konfytPatch::setLayerGain(konfytPatchLayer *layer, float newGain)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            konfytPatchLayer g = layerList.at(i);
-            g.setGain(newGain);
-            this->replaceLayer(g);
-            return;
-        }
-    }
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-    // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("setLayerGain: Layer with patch_id " + n2s(layer->ID_in_patch) +  " is not in the patch's layerList.");
+    if (index >= 0) {
+        konfytPatchLayer g = layerList.at(index);
+        g.setGain(newGain);
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerGain: Layer with id " + n2s(layer->ID_in_patch) +  " is not in the patch's layerList.");
+    }
 }
 
 void konfytPatch::setLayerSolo(konfytPatchLayer *layer, bool solo)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            konfytPatchLayer g = layerList.at(i);
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-            g.setSolo(solo);
-
-            this->replaceLayer(g);
-            return;
-        }
+    if (index >= 0) {
+        konfytPatchLayer g = layerList.at(index);
+        g.setSolo(solo);
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerSolo: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
     }
-
-    // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("setLayerSolo: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
 }
 
 void konfytPatch::setLayerMute(konfytPatchLayer *layer, bool mute)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            konfytPatchLayer g = layerList.at(i);
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-            g.setMute(mute);
-
-            this->replaceLayer(g);
-            return;
-        }
+    if (index >= 0) {
+        konfytPatchLayer g = layerList.at(index);
+        g.setMute(mute);
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerMute: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
     }
-
-    // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("setLayerMute: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
 }
 
 void konfytPatch::setLayerBus(konfytPatchLayer *layer, int bus)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            konfytPatchLayer g = layerList.at(i);
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-            if ( (g.getLayerType() == KonfytLayerType_SoundfontProgram)
-                 || (g.getLayerType() == KonfytLayerType_AudioIn)
-                 || (g.getLayerType() == KonfytLayerType_CarlaPlugin) ) {
+    if (index >= 0) {
+        konfytPatchLayer g = layerList.at(index);
 
-                g.busIdInProject = bus;
+        if ( (g.getLayerType() == KonfytLayerType_SoundfontProgram)
+             || (g.getLayerType() == KonfytLayerType_AudioIn)
+             || (g.getLayerType() == KonfytLayerType_CarlaPlugin) ) {
 
-            } else {
-                error_abort("setLayerBus: invalid LayerType");
-            }
+            g.busIdInProject = bus;
 
-            this->replaceLayer(g);
-            return;
+        } else {
+            error_abort("setLayerBus: invalid LayerType");
         }
-    }
 
-    // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("setLayerMute: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerBus: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+    }
+}
+
+void konfytPatch::setLayerMidiInPort(konfytPatchLayer *layer, int portId)
+{
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
+
+    if (index >= 0) {
+        konfytPatchLayer g = layerList.at(index);
+        g.midiInPortIdInProject = portId;
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerMidiInPort: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+    }
 }
 
 konfytPatchLayer konfytPatch::addProgram(konfytSoundfontProgram p)

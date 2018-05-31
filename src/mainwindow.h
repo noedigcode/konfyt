@@ -587,11 +587,13 @@ private slots:
     void onLayer_solo_clicked(konfytLayerWidget* layerItem, bool solo);
     void onLayer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
     void onLayer_bus_clicked(konfytLayerWidget* layerItem);
+    // TODO MIDI IN put in layer widget
     void onLayer_midiIn_clicked(konfytLayerWidget* layerItem); // TODO MIDI IN connect
     void onLayer_reload_clicked(konfytLayerWidget* layerItem);
     void onLayer_openInFileManager_clicked(konfytLayerWidget* layerItem, QString filepath);
     void onLayerBusMenu_ActionTrigger(QAction* action);
     void onLayerMidiOutChannelMenu_ActionTrigger(QAction* action);
+    void onLayerMidiInMenu_ActionTrigger(QAction* action); // TODO MIDI IN connect
 
     // Patch List
     void on_pushButton_RemovePatch_clicked();
@@ -707,6 +709,8 @@ private slots:
     void on_actionAdd_Bus_triggered();
 
     void on_actionAdd_Audio_In_Port_triggered();
+
+    // TODO MIDI IN add action to add midi in port
 
     void on_actionAdd_MIDI_Out_Port_triggered();
 

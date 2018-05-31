@@ -798,7 +798,11 @@ void MainWindow::gui_updatePortsBussesTree()
      *  |__ port 1
      *  |__  :
      *  |__ port n
-     *etc...
+     * Midi In Ports
+     *  |__ port 1
+     *  |__  :
+     *  |__ port n
+     *
      */
 
     // Clear tree before deleting items so that the onItemChanged signal is not emitted while
@@ -854,12 +858,15 @@ void MainWindow::gui_updatePortsBussesTree()
     }
 
     midiInParent = new QTreeWidgetItem();
-    midiInParent->setText(0, "MIDI Input");
-    {
-        // currently we only have one midi input port
+    midiInParent->setText(0, "MIDI Input Ports");
+    QList<int> midiInIds = prj->midiInPort_getAllPortIds();
+    for (int i=0; i < midiInIds.count(); i++) {
+        int id = midiInIds[i];
+        PrjMidiPort p = prj->midiInPort_getPort(id);
         QTreeWidgetItem *item = new QTreeWidgetItem();
-        item->setText(0, "Midi Input Port");
-        tree_midiInMap.insert(item, 0);
+        item->setFlags(item->flags() | Qt::ItemIsEditable);
+        item->setText(0, p.portName);
+        tree_midiInMap.insert(item, id);
         midiInParent->addChild(item);
     }
 
@@ -918,6 +925,7 @@ void MainWindow::gui_updateConnectionsTree()
     } else if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
         // Midi input port is selected
         l = jack->getMidiOutputPortsList();
+        j = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
     } else {
         // One of the parents are selected.
         return;
@@ -953,7 +961,7 @@ void MainWindow::gui_updateConnectionsTree()
 
     } else if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
         // Midi input is selected
-        leftCons = prj->midiInPort_getClients();
+        leftCons = prj->midiInPort_getClients(j);
     }
 
     for (int i=0; i<leftCons.count(); i++) {
@@ -3377,6 +3385,37 @@ void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
     pengine->setLayerFilter(&layer, filter);
 
     setPatchModified(true);
+}
+
+/* Menu item has been clicked in the layer MIDI-In port menu. */
+void MainWindow::onLayerMidiInMenu_ActionTrigger(QAction *action)
+{
+    int portId;
+    if (action == layerhMidiInPortsMenu_newPortAction) {
+        // Add new MIDI in port
+        portId = addMidiInPort();
+        if (portId < 0) { return; }
+    } else {
+        // User chose a MIDI-in port
+        portId = layerMidiInPortsMenu_map.value(action);
+    }
+
+    // Set the MIDI Input port in the GUI layer item
+    konfytPatchLayer layer = layerMidiInMenu_sourceItem->getPatchLayerItem();
+    // TODO MIDI IN layer.midiInPort = portId;
+
+    // Update the layer widget
+    layerMidiInMenu_sourceItem->setLayerItem( layer );
+    // Update in pengine
+    //TODO MIDI IN pengine->setLayerMidiInPort( &layer, portId );
+
+    setPatchModified(true);
+
+    // If the user added a new MIDI-in port, open the connections page and show port.
+    if (action == layerhMidiInPortsMenu_newPortAction) {
+        showConnectionsPage();
+        ui->tree_portsBusses->setCurrentItem( tree_midiInMap.key(portId) );
+    }
 }
 
 /* Layer bus menu item has been clicked. */

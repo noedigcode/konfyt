@@ -151,6 +151,7 @@ public:
     bool isMute();
 
     int busIdInProject;
+    int midiInPortIdInProject;
 
     konfytMidiFilter getMidiFilter();
     void setMidiFilter(konfytMidiFilter newFilter);

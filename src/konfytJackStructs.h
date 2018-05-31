@@ -41,7 +41,8 @@ struct KonfytJackPort {
     bool mute;
     float gain;
     QStringList connectionList;
-    KonfytJackPort* destinationPort; // For audio input ports, the destination output port (bus).
+    // TODO MIDI IN: Handle MIDI source port in JACK process.
+    KonfytJackPort* destOrSrcPort; // Destination (bus) for audio port, or source (input) for MIDI port.
     int noteOns;
     bool sustainNonZero;
     bool pitchbendNonZero;
@@ -54,7 +55,7 @@ struct KonfytJackPort {
                        solo(false),
                        mute(false),
                        gain(1),
-                       destinationPort(NULL),
+                       destOrSrcPort(NULL),
                        noteOns(0),
                        sustainNonZero(false),
                        pitchbendNonZero(false),
@@ -65,10 +66,9 @@ struct KonfytJackPort {
 
 struct KonfytJackPluginPorts {
     int plugin_id;
-    KonfytJackPort* midi_out;    // Send midi output to plugin
+    KonfytJackPort* midi;        // Send midi output to plugin
     KonfytJackPort* audio_in_l;  // Receive plugin audio
     KonfytJackPort* audio_in_r;
-
 };
 
 struct KonfytJackNoteOnRecord {

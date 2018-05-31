@@ -29,7 +29,7 @@ konfytPatchLayer::konfytPatchLayer()
 
     this->layerType = KonfytLayerType_Uninitialized;
     busIdInProject = 0;
-
+    midiInPortIdInProject = 0;
 }
 
 void konfytPatchLayer::setErrorMessage(QString msg)

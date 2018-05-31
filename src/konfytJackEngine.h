@@ -110,7 +110,7 @@ public:
     konfytArrayList<KonfytJackNoteOnRecord> pitchBendList;
 
     // Our main midi input port
-    jack_port_t *midi_input_port;
+    jack_port_t *midi_input_port; // TODO MIDI IN: remove
 
 
     bool InitJackClient(QString name);
@@ -157,7 +157,7 @@ public:
     void setPortSolo(KonfytJackPortType type, KonfytJackPort* port, bool solo);
     void setPortMute(KonfytJackPortType type, KonfytJackPort* port, bool mute);
     void setPortGain(KonfytJackPortType type, KonfytJackPort* port, float gain);
-    void setPortRouting(KonfytJackPortType type, KonfytJackPort* src, KonfytJackPort* dest);
+    void setPortRouting(KonfytJackPortType type, KonfytJackPort* port, KonfytJackPort* route);
 
     void setPortActive(KonfytJackPortType type, KonfytJackPort* port, bool active);
     void setAllPortsActive(KonfytJackPortType type, bool active);
@@ -168,7 +168,9 @@ public:
     void setPluginMidiFilter(int indexInEngine, konfytMidiFilter filter);
     void setPluginSolo(int indexInEngine, bool solo);
     void setPluginMute(int indexInEngine, bool mute);
-    void setPluginRouting(int indexInEngine, KonfytJackPort *port_left, KonfytJackPort *port_right);
+    void setPluginRouting(int indexInEngine, KonfytJackPort *midi_in,
+                                             KonfytJackPort *port_left,
+                                             KonfytJackPort *port_right);
     void setAllPluginPortsActive(bool active);
 
     // Fluidsynth
@@ -177,7 +179,9 @@ public:
     void setSoundfontMidiFilter(int indexInEngine, konfytMidiFilter filter);
     void setSoundfontSolo(int indexInEngine, bool solo);
     void setSoundfontMute(int indexInEngine, bool mute);
-    void setSoundfontRouting(int indexInEngine, KonfytJackPort *port_left, KonfytJackPort *port_right);
+    void setSoundfontRouting(int indexInEngine, KonfytJackPort *midi_in,
+                                                KonfytJackPort *port_left,
+                                                KonfytJackPort *port_right);
     void setAllSoundfontPortsActive(bool active);
 
     // Flag indicating one or more ports or plugin ports are solo
