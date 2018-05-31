@@ -261,8 +261,6 @@ public:
     void removeLayerItem_GUIonly(konfytLayerWidget *layerItem);
     void clearLayerItems_GUIonly();
 
-    // TODO MIDI IN remove MidiInPorts stuff in cpp similar to midiOutPorts stuff below
-
     // patchMidiOutPortsMenu: Context menu when user clicks button to add a new MIDI output layer.
     //   When an item is clicked: onPatchMidiOutPortsMenu_ActionTrigger()
     QMenu patchMidiOutPortsMenu;
@@ -278,8 +276,8 @@ public:
     void gui_updatePatchAudioInPortsMenu();
 
     // layerMidiInMenu: Midi-In menu in the layers in patch view
-    //   Opened when user clicks on layer item midi in button, see onlayer_midiIn_clicked() // TODO MIDI IN
-    //   When a menu item is clicked: onLayerMidiInMenu_ActionTrigger() // TODO MIDI IN
+    //   Opened when user clicks on layer item midi in button, see onlayer_midiIn_clicked()
+    //   When a menu item is clicked: onLayerMidiInMenu_ActionTrigger()
     void gui_updateLayerMidiInPortsMenu();
     QMenu layerMidiInPortsMenu;
     QAction* layerhMidiInPortsMenu_newPortAction;
@@ -587,13 +585,12 @@ private slots:
     void onLayer_solo_clicked(konfytLayerWidget* layerItem, bool solo);
     void onLayer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
     void onLayer_bus_clicked(konfytLayerWidget* layerItem);
-    // TODO MIDI IN put in layer widget
-    void onLayer_midiIn_clicked(konfytLayerWidget* layerItem); // TODO MIDI IN connect
+    void onLayer_midiIn_clicked(konfytLayerWidget* layerItem);
     void onLayer_reload_clicked(konfytLayerWidget* layerItem);
     void onLayer_openInFileManager_clicked(konfytLayerWidget* layerItem, QString filepath);
     void onLayerBusMenu_ActionTrigger(QAction* action);
     void onLayerMidiOutChannelMenu_ActionTrigger(QAction* action);
-    void onLayerMidiInMenu_ActionTrigger(QAction* action); // TODO MIDI IN connect
+    void onLayerMidiInMenu_ActionTrigger(QAction* action);
 
     // Patch List
     void on_pushButton_RemovePatch_clicked();
@@ -714,9 +711,9 @@ private slots:
 
     void on_actionAdd_MIDI_Out_Port_triggered();
 
-    void on_actionRemove_BusPort_triggered();
+    void on_actionRemove_BusPort_triggered(); // TODO MIDI IN
 
-    void on_actionRename_BusPort_triggered();
+    void on_actionRename_BusPort_triggered(); // TODO MIDI IN
 
     void on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int column);
 

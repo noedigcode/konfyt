@@ -83,6 +83,7 @@ signals:
     void solo_clicked_signal(konfytLayerWidget* layerItem, bool solo);
     void mute_clicked_signal(konfytLayerWidget* layerItem, bool mute);
     void bus_clicked_signal(konfytLayerWidget* layerItem);
+    void midiIn_clicked_signal(konfytLayerWidget* layerItem);
     void reload_clicked_signal(konfytLayerWidget* layerItem);
     void openInFileManager_clicked_signal(konfytLayerWidget* layerItem, QString filepath);
 
@@ -98,6 +99,7 @@ private slots:
     void on_toolButton_bus_clicked();
     void on_actionReload_Layer_triggered();
     void on_actionOpen_in_File_Manager_triggered();
+    void on_toolButton_midiInPort_clicked();
 };
 
 #endif // KONFYT_LAYER_WIDGET_H

@@ -121,7 +121,8 @@ void konfytLayerWidget::setUpGUI()
         this->updateBackgroundFromFilter();
         // Volume
         ui->gainSlider->setVisible(true);
-
+        // MidiIn button
+        ui->toolButton_midiInPort->setVisible(true);
 
 
     } else if (g.getLayerType() == KonfytLayerType_CarlaPlugin) {
@@ -160,6 +161,8 @@ void konfytLayerWidget::setUpGUI()
         this->updateBackgroundFromFilter();
         // Volume
         ui->gainSlider->setVisible(true);
+        // MidiIn button
+        ui->toolButton_midiInPort->setVisible(true);
 
     } else if (g.getLayerType() == KonfytLayerType_MidiOut) {
 
@@ -189,6 +192,8 @@ void konfytLayerWidget::setUpGUI()
             ui->toolButton_bus->setText( "-" );
         }
         ui->toolButton_bus->setToolTip("MIDI Channel");
+        // MidiIn button
+        ui->toolButton_midiInPort->setVisible(true);
 
     } else if (g.getLayerType() == KonfytLayerType_AudioIn ) {
 
@@ -206,6 +211,9 @@ void konfytLayerWidget::setUpGUI()
         changeBackground(0,127);
         // Volume
         ui->gainSlider->setVisible(true);
+        // Hide MidiIn button
+        ui->toolButton_midiInPort->setVisible(false);
+
     } else {
 
         ui->lineEdit->setText("ERROR: Layer not initialised.");
@@ -229,6 +237,19 @@ void konfytLayerWidget::setUpGUI()
             ui->toolButton_bus->setText( n2s(g.busIdInProject) + "!" );
             ui->toolButton_bus->setToolTip("Bus does not exist in this project.");
             ui->toolButton_bus->setStyleSheet("background-color: red;");
+        }
+    }
+
+    // MIDI In button
+    if ( (project != NULL) && (g.getLayerType() != KonfytLayerType_AudioIn) ) {
+        if (project->midiInPort_exists(g.midiInPortIdInProject)) {
+            ui->toolButton_midiInPort->setText( n2s(g.midiInPortIdInProject) );
+            ui->toolButton_midiInPort->setToolTip("MIDI In Port: " + project->midiInPort_getPort(g.midiInPortIdInProject).portName);
+            ui->toolButton_midiInPort->setStyleSheet("");
+        } else {
+            ui->toolButton_midiInPort->setText( n2s(g.midiInPortIdInProject) + "!" );
+            ui->toolButton_midiInPort->setToolTip("MIDI In Port does not exist in this projct.");
+            ui->toolButton_midiInPort->setStyleSheet("background-color: red;");
         }
     }
 
@@ -356,4 +377,9 @@ void konfytLayerWidget::on_actionReload_Layer_triggered()
 void konfytLayerWidget::on_actionOpen_in_File_Manager_triggered()
 {
     emit openInFileManager_clicked_signal(this, filepath);
+}
+
+void konfytLayerWidget::on_toolButton_midiInPort_clicked()
+{
+    emit midiIn_clicked_signal(this);
 }

@@ -308,6 +308,10 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     connect(&layerMidiOutChannelMenu, SIGNAL(triggered(QAction*)),
             this, SLOT(onLayerMidiOutChannelMenu_ActionTrigger(QAction*)));
 
+    // Layer MIDI input port menu
+    connect(&layerMidiInPortsMenu, SIGNAL(triggered(QAction*)),
+            this, SLOT(onLayerMidiInMenu_ActionTrigger(QAction*)));
+
     // If one of the paths are not set, show settings. Else, switch to patch view.
     if ( (projectsDir == "") || (patchesDir == "") || (soundfontsDir == "") || (sfzDir == "") ) {
         showSettingsDialog();
@@ -3666,6 +3670,7 @@ void MainWindow::addLayerItemToGUI(KonfytPatchLayer layerItem)
     connect(gui, SIGNAL(filter_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_filter_clicked(konfytLayerWidget*)));
     connect(gui, SIGNAL(solo_clicked_signal(konfytLayerWidget*,bool)), this, SLOT(onLayer_solo_clicked(konfytLayerWidget*,bool)));
     connect(gui, SIGNAL(mute_clicked_signal(konfytLayerWidget*,bool)), this, SLOT(onLayer_mute_clicked(konfytLayerWidget*,bool)));
+    connect(gui, SIGNAL(midiIn_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_midiIn_clicked(konfytLayerWidget*)));
     connect(gui, SIGNAL(bus_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_bus_clicked(konfytLayerWidget*)));
     connect(gui, SIGNAL(reload_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_reload_clicked(konfytLayerWidget*)));
     connect(gui, SIGNAL(openInFileManager_clicked_signal(konfytLayerWidget*,QString)), this, SLOT(onLayer_openInFileManager_clicked(konfytLayerWidget*,QString)));
@@ -4700,12 +4705,14 @@ void MainWindow::on_actionRemove_BusPort_triggered()
     bool busSelected = item->parent() == busParent;
     bool audioInSelected = item->parent() == audioInParent;
     bool midiOutSelected = item->parent() == midiOutParent;
+    bool midiInSelected = item->parent() == midiInParent;
 
     int id = 0;
     QString name;
     PrjAudioBus bus;
     PrjAudioInPort audioInPort;
     PrjMidiPort midiOutPort;
+    PrjMidiPort midiInPort;
 
     if (busSelected) {
         if (prj->audioBus_count() == 1) { return; } // Do not remove last bus
@@ -4720,6 +4727,11 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         id = tree_midiOutMap.value(item);
         midiOutPort = prj->midiOutPort_getPort(id);
         name = midiOutPort.portName;
+    } else if (midiInSelected) {
+        if (prj->midiInPort_count() == 1) { return; } // Do not remove last MIDI in port
+        id = tree_midiInMap.value(item);
+        midiInPort = prj->midiInPort_getPort(id);
+        name = midiInPort.portName;
     }
 
     // Check if any patch layers are using this bus/port
@@ -4747,6 +4759,13 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             if (midiOutSelected) {
                 if ( layer.getLayerType() == KonfytLayerType_MidiOut ) {
                 append = layer.midiOutputPortData.portIdInProject == id;
+                }
+            }
+            if (midiInSelected) {
+                if ( (layer.getLayerType() == KonfytLayerType_CarlaPlugin)
+                     || ( layer.getLayerType() == KonfytLayerType_MidiOut)
+                     || ( layer.getLayerType() == KonfytLayerType_SoundfontProgram) ) {
+                    append = layer.busIdInProject == id;
                 }
             }
             if (append) {
@@ -4821,6 +4840,32 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // Removal will be done below
 
             } else { return; } // Do not remove port
+        // ------------------------------------------------------------------------------
+        } else if (midiInSelected) {
+
+            // TODO MIDI IN: ADAPT BELOW FOR MIDI IN PORT, FROM HERE...
+
+            int busToChangeTo = prj->audioBus_getFirstBusId(id);
+            msgbox.setText("The selected bus " + selectedText + " is used by some patches."
+                           + " Are you sure you want to delete the bus?"
+                           + " All layers using this bus will be assigned to bus "
+                           + n2s(busToChangeTo) + " - "
+                           + prj->audioBus_getBus(busToChangeTo).busName + ".");
+            int ret = msgbox.exec();
+            if (ret == QMessageBox::Yes) {
+                // User chose to remove bus
+                // Set the bus for all layers still using this one to zero
+                for (int i=0; i<usingPatches.count(); i++) {
+                    konfytPatch* patch = prj->getPatch(usingPatches[i]);
+                    KonfytPatchLayer layer = patch->getLayerItems()[usingLayers[i]];
+                    pengine->setLayerBus( patch, &layer, busToChangeTo );
+                }
+                // Removal will be done below.
+
+            } else { return; } // Do not remove port
+
+            // TODO MIDI IN: ... TO HERE.
+
         }
     } // end usingPatches.count()
 
@@ -4846,6 +4891,8 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         prj->midiOutPort_removePort(id);
         tree_midiOutMap.remove(item);
         gui_updatePatchMidiOutPortsMenu();
+    } else if (midiInSelected) {
+        // TODO MIDI IN
     }
 
     delete item;
