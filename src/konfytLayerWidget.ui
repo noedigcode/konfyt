@@ -165,6 +165,12 @@ QSlider::handle:horizontal:hover {
       </item>
       <item>
        <widget class="QToolButton" name="toolButton_midiInPort">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>23</height>
+         </size>
+        </property>
         <property name="toolTip">
          <string>MIDI In Port</string>
         </property>
