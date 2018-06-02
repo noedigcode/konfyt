@@ -203,10 +203,6 @@ bool KonfytProject::saveProjectAs(QString dirname)
         stream.writeStartElement(XML_PRJ_PROCESS);
         konfytProcess* gp = processList.at(i);
         stream.writeTextElement(XML_PRJ_PROCESS_APPNAME, gp->appname);
-        stream.writeTextElement(XML_PRJ_PROCESS_DIR, gp->dir); // TODO: NOT USED
-        for (int j=0; j<gp->args.count(); j++) {
-            stream.writeTextElement(XML_PRJ_PROCESS_ARG, gp->args.at(j)); // TODO: NOT USED
-        }
         stream.writeEndElement(); // end of process
     }
     stream.writeEndElement(); // end of processList
@@ -450,10 +446,6 @@ bool KonfytProject::loadProject(QString filename)
                     while (r.readNextStartElement()) {
                         if (r.name() == XML_PRJ_PROCESS_APPNAME) {
                             gp->appname = r.readElementText();
-                        } else if (r.name() == XML_PRJ_PROCESS_DIR) { // todo unused
-                            gp->dir = r.readElementText();
-                        } else if (r.name() == XML_PRJ_PROCESS_ARG) { // todo unused
-                            gp->args.append(r.readElementText());
                         } else {
                             userMessage("loadProject: "
                                         "Unrecognized process element: " + r.name().toString() );

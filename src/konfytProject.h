@@ -74,8 +74,6 @@
 #define XML_PRJ_PROCESSLIST "processList"
 #define XML_PRJ_PROCESS "process"
 #define XML_PRJ_PROCESS_APPNAME "appname"
-#define XML_PRJ_PROCESS_DIR "dir" // TODO: NOT USED
-#define XML_PRJ_PROCESS_ARG "argument" // TODO: NOT USED
 #define XML_PRJ_TRIGGERLIST "triggerList"
 #define XML_PRJ_TRIGGER "trigger"
 #define XML_PRJ_TRIGGER_ACTIONTEXT "actionText"

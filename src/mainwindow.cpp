@@ -688,6 +688,7 @@ void MainWindow::newProject()
 bool MainWindow::openProject(QString filename)
 {
     KonfytProject* prj = new KonfytProject();
+    connect(prj, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
 
     if (prj->loadProject(filename)) {
         // Add project to list and gui
