@@ -48,9 +48,9 @@ int konfytPatch::getNumSfLayers()
 }
 
 
-QList<konfytPatchLayer> konfytPatch::getSfLayerList()
+QList<KonfytPatchLayer> konfytPatch::getSfLayerList()
 {
-    QList<konfytPatchLayer> l;
+    QList<KonfytPatchLayer> l;
     for (int i=0; i < this->layerList.count(); i++) {
         if (this->layerList.at(i).getLayerType() == KonfytLayerType_SoundfontProgram) {
             l.append(this->layerList.at(i));
@@ -82,12 +82,12 @@ bool konfytPatch::savePatchToFile(QString filename)
     // Step through all the layers. It's important to save them in the correct order.
     for (int i=0; i<this->layerList.count(); i++) {
 
-        konfytPatchLayer g = this->layerList.at(i);
+        KonfytPatchLayer g = this->layerList.at(i);
         if (g.getLayerType() == KonfytLayerType_SoundfontProgram) {
 
             // --------------------------------------------
 
-            layerSoundfontStruct sfLayer = g.sfData;
+            LayerSoundfontStruct sfLayer = g.sfData;
 
             stream.writeStartElement(XML_PATCH_SFLAYER);
             // Layer properties
@@ -100,6 +100,7 @@ bool konfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_SFLAYER_BUS, n2s(g.busIdInProject));
             stream.writeTextElement(XML_PATCH_SFLAYER_SOLO, bool_to_10_string(sfLayer.solo));
             stream.writeTextElement(XML_PATCH_SFLAYER_MUTE, bool_to_10_string(sfLayer.mute));
+            stream.writeTextElement(XML_PATCH_SFLAYER_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
             konfytMidiFilter f = sfLayer.filter;
@@ -113,7 +114,7 @@ bool konfytPatch::savePatchToFile(QString filename)
 
             // ----------------------------------------------------------
 
-            layerCarlaPluginStruct p = g.carlaPluginData;
+            LayerCarlaPluginStruct p = g.carlaPluginData;
 
             stream.writeStartElement(XML_PATCH_SFZLAYER);
             stream.writeTextElement(XML_PATCH_SFZLAYER_NAME, p.name);
@@ -122,6 +123,7 @@ bool konfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_SFZLAYER_BUS, n2s(g.busIdInProject) );
             stream.writeTextElement(XML_PATCH_SFZLAYER_SOLO, bool_to_10_string(p.solo));
             stream.writeTextElement(XML_PATCH_SFZLAYER_MUTE, bool_to_10_string(p.mute));
+            stream.writeTextElement(XML_PATCH_SFZLAYER_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
             konfytMidiFilter f = p.midiFilter;
@@ -135,12 +137,13 @@ bool konfytPatch::savePatchToFile(QString filename)
 
             // --------------------------------------------------
 
-            layerMidiOutStruct m = g.midiOutputPortData;
+            LayerMidiOutStruct m = g.midiOutputPortData;
 
             stream.writeStartElement(XML_PATCH_MIDIOUT);
             stream.writeTextElement(XML_PATCH_MIDIOUT_PORT, n2s( m.portIdInProject ));
             stream.writeTextElement(XML_PATCH_MIDIOUT_SOLO, bool_to_10_string(m.solo));
             stream.writeTextElement(XML_PATCH_MIDIOUT_MUTE, bool_to_10_string(m.mute));
+            stream.writeTextElement(XML_PATCH_MIDIOUT_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
             konfytMidiFilter f = m.filter;
@@ -152,7 +155,7 @@ bool konfytPatch::savePatchToFile(QString filename)
 
         } else if (g.getLayerType() == KonfytLayerType_AudioIn) {
 
-            layerAudioInStruct a = g.audioInPortData;
+            LayerAudioInStruct a = g.audioInPortData;
 
             stream.writeStartElement(XML_PATCH_AUDIOIN);
 
@@ -271,18 +274,6 @@ bool konfytPatch::loadPatchFromFile(QString filename)
         return false;
     }
 
-    // Midi filter variables
-    int outport_port;
-    bool port_solo;
-    bool port_mute;
-
-    // SFZ Layer variables
-    QString sfz_name;
-    QString sfz_path;
-    float sfz_gain;
-    bool sfz_solo;
-    bool sfz_mute;
-
 
     this->clearLayers();
 
@@ -305,8 +296,9 @@ bool konfytPatch::loadPatchFromFile(QString filename)
 
             } else if (r.name() == XML_PATCH_SFLAYER) { // soundfont layer
 
-                layerSoundfontStruct sfLayer = layerSoundfontStruct();
+                LayerSoundfontStruct sfLayer = LayerSoundfontStruct();
                 int bus = 0;
+                int midiIn = 0;
 
                 while (r.readNextStartElement()) { // layer properties
 
@@ -328,6 +320,8 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                         sfLayer.filter = readMidiFilterFromXMLStream(&r);
                     } else if (r.name() == XML_PATCH_SFLAYER_BUS) {
                         bus = r.readElementText().toInt();
+                    } else if (r.name() == XML_PATCH_SFLAYER_MIDI_IN) {
+                        midiIn = r.readElementText().toInt();
                     } else {
                         userMessage("konfytPatch::loadPatchFromFile: "
                                     "Unrecognized sfLayer element: " + r.name().toString() );
@@ -336,14 +330,16 @@ bool konfytPatch::loadPatchFromFile(QString filename)
 
                 }
 
-                konfytPatchLayer newLayer = this->addSfLayer(sfLayer);
+                KonfytPatchLayer newLayer = this->addSfLayer(sfLayer);
                 this->setLayerBus(&newLayer, bus);
+                this->setLayerMidiInPort(&newLayer, midiIn);
 
 
             } else if (r.name() == XML_PATCH_SFZLAYER) { // SFZ Layer
 
-                layerCarlaPluginStruct p = layerCarlaPluginStruct();
+                LayerCarlaPluginStruct p = LayerCarlaPluginStruct();
                 int bus = 0;
+                int midiIn = 0;
 
                 while (r.readNextStartElement()) {
 
@@ -355,6 +351,8 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                         p.gain = r.readElementText().toFloat();
                     } else if (r.name() == XML_PATCH_SFZLAYER_BUS) {
                         bus = r.readElementText().toInt();
+                    } else if (r.name() == XML_PATCH_SFZLAYER_MIDI_IN) {
+                        midiIn = r.readElementText().toInt();
                     } else if (r.name() == XML_PATCH_SFZLAYER_SOLO) {
                         p.solo = (r.readElementText() == "1");
                     } else if (r.name() == XML_PATCH_SFZLAYER_MUTE) {
@@ -371,14 +369,16 @@ bool konfytPatch::loadPatchFromFile(QString filename)
 
                 p.pluginType = KonfytCarlaPluginType_SFZ;
 
-                konfytPatchLayer newLayer = this->addPlugin(p);
+                KonfytPatchLayer newLayer = this->addPlugin(p);
                 this->setLayerBus(&newLayer, bus);
+                this->setLayerMidiInPort(&newLayer, midiIn);
 
 
             } else if (r.name() == XML_PATCH_MIDIOUT) {
 
                 konfytMidiFilter f;
-                layerMidiOutStruct mp;
+                LayerMidiOutStruct mp;
+                int midiIn = 0;
 
                 while (r.readNextStartElement()) { // port
                     if (r.name() == XML_PATCH_MIDIOUT_PORT) {
@@ -389,6 +389,8 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                         mp.mute = (r.readElementText() == "1");
                     } else if (r.name() == XML_MIDIFILTER) {
                         mp.filter = readMidiFilterFromXMLStream(&r);
+                    } else if (r.name() == XML_PATCH_MIDIOUT_MIDI_IN) {
+                        midiIn = r.readElementText().toInt();
                     } else {
                         userMessage("konfytPatch::loadPatchFromFile: "
                                     "Unrecognized midiOutputPortLayer element: " + r.name().toString() );
@@ -397,11 +399,12 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                 }
 
                 // Add new midi port
-                this->addMidiOutputPort(mp);
+                KonfytPatchLayer newLayer = this->addMidiOutputPort(mp);
+                this->setLayerMidiInPort(&newLayer, midiIn);
 
             } else if (r.name() == XML_PATCH_AUDIOIN) {
 
-                layerAudioInStruct a;
+                LayerAudioInStruct a;
                 int bus = 0;
 
                 while (r.readNextStartElement()) {
@@ -418,7 +421,7 @@ bool konfytPatch::loadPatchFromFile(QString filename)
                     }
                 }
 
-                konfytPatchLayer newLayer = this->addAudioInPort(a);
+                KonfytPatchLayer newLayer = this->addAudioInPort(a);
                 this->setLayerBus(&newLayer, bus);
 
             } else {
@@ -455,7 +458,7 @@ bool konfytPatch::isValid_Sf_LayerNumber(int SfLayer)
     }
 }
 
-void konfytPatch::removeLayer(konfytPatchLayer* layer)
+void konfytPatch::removeLayer(KonfytPatchLayer* layer)
 {
     // Identify layer using the unique ID in the layeritem.
     int id = layer->ID_in_patch;
@@ -473,135 +476,153 @@ void konfytPatch::clearLayers()
     this->layerList.clear();
 }
 
-// Replace a layer. Layer is identified using unique patch_id in layer.
-void konfytPatch::replaceLayer(konfytPatchLayer newLayer)
+/* Find layer that matches ID_in_patch and return index in layerList.
+ * Return -1 if not found. */
+int konfytPatch::layerListIndexFromPatchId(KonfytPatchLayer *layer)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == newLayer.ID_in_patch) {
-            this->layerList.replace(i, newLayer);
-            return;
+    for (int i=0; i < layerList.count(); i++) {
+        if (layerList.at(i).ID_in_patch == layer->ID_in_patch) {
+            return i;
         }
     }
+    // Not found
+    return -1;
+}
 
-    // No layer was found and replaced. This is probably a logic error somewhere.
-    error_abort("replaceLayer: Layer with patch_id " + n2s(newLayer.ID_in_patch) + " is not in the patch's layerList.");
+// Replace a layer. Layer is identified using unique patch_id in layer.
+void konfytPatch::replaceLayer(KonfytPatchLayer newLayer)
+{
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(&newLayer);
+
+    if (index >= 0) {
+        this->layerList.replace(index, newLayer);
+    } else {
+        // No layer was found and replaced. This is probably a logic error somewhere.
+        error_abort("replaceLayer: Layer with id " + n2s(newLayer.ID_in_patch) + " is not in the patch's layerList.");
+    }
 }
 
 // Set the midi filter for the layer for which the patch_id matches that of
 // the specified layer item.
-void konfytPatch::setLayerFilter(konfytPatchLayer *layer, konfytMidiFilter newFilter)
+void konfytPatch::setLayerFilter(KonfytPatchLayer *layer, konfytMidiFilter newFilter)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            konfytPatchLayer g = this->layerList.at(i);
-            g.setMidiFilter(newFilter);
-            this->layerList.replace(i, g);
-            return;
-        }
-    }
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-    // No layer was found. This is probably a logic error somewhere.
-    error_abort("setLayerFilter: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+    if (index >= 0) {
+        KonfytPatchLayer g = this->layerList.at(index);
+        g.setMidiFilter(newFilter);
+        this->layerList.replace(index, g);
+    } else {
+        // No layer was found. This is probably a logic error somewhere.
+        error_abort("setLayerFilter: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+    }
 }
 
-float konfytPatch::getLayerGain(konfytPatchLayer *layer)
+float konfytPatch::getLayerGain(KonfytPatchLayer *layer)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            return this->layerList.at(i).getGain();
-        }
-    }
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-    // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("getLayerGain: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
-    return 0;
+    if (index >= 0) {
+        return this->layerList.at(index).getGain();
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("getLayerGain: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+        return 0;
+    }
 }
 
-void konfytPatch::setLayerGain(konfytPatchLayer *layer, float newGain)
+void konfytPatch::setLayerGain(KonfytPatchLayer *layer, float newGain)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            konfytPatchLayer g = layerList.at(i);
-            g.setGain(newGain);
-            this->replaceLayer(g);
-            return;
-        }
-    }
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-    // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("setLayerGain: Layer with patch_id " + n2s(layer->ID_in_patch) +  " is not in the patch's layerList.");
+    if (index >= 0) {
+        KonfytPatchLayer g = layerList.at(index);
+        g.setGain(newGain);
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerGain: Layer with id " + n2s(layer->ID_in_patch) +  " is not in the patch's layerList.");
+    }
 }
 
-void konfytPatch::setLayerSolo(konfytPatchLayer *layer, bool solo)
+void konfytPatch::setLayerSolo(KonfytPatchLayer *layer, bool solo)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            konfytPatchLayer g = layerList.at(i);
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-            g.setSolo(solo);
-
-            this->replaceLayer(g);
-            return;
-        }
+    if (index >= 0) {
+        KonfytPatchLayer g = layerList.at(index);
+        g.setSolo(solo);
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerSolo: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
     }
-
-    // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("setLayerSolo: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
 }
 
-void konfytPatch::setLayerMute(konfytPatchLayer *layer, bool mute)
+void konfytPatch::setLayerMute(KonfytPatchLayer *layer, bool mute)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            konfytPatchLayer g = layerList.at(i);
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-            g.setMute(mute);
-
-            this->replaceLayer(g);
-            return;
-        }
+    if (index >= 0) {
+        KonfytPatchLayer g = layerList.at(index);
+        g.setMute(mute);
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerMute: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
     }
-
-    // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("setLayerMute: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
 }
 
-void konfytPatch::setLayerBus(konfytPatchLayer *layer, int bus)
+void konfytPatch::setLayerBus(KonfytPatchLayer *layer, int bus)
 {
-    // Find layer that matches patch_id
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == layer->ID_in_patch) {
-            konfytPatchLayer g = layerList.at(i);
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
 
-            if ( (g.getLayerType() == KonfytLayerType_SoundfontProgram)
-                 || (g.getLayerType() == KonfytLayerType_AudioIn)
-                 || (g.getLayerType() == KonfytLayerType_CarlaPlugin) ) {
+    if (index >= 0) {
+        KonfytPatchLayer g = layerList.at(index);
 
-                g.busIdInProject = bus;
+        if ( (g.getLayerType() == KonfytLayerType_SoundfontProgram)
+             || (g.getLayerType() == KonfytLayerType_AudioIn)
+             || (g.getLayerType() == KonfytLayerType_CarlaPlugin) ) {
 
-            } else {
-                error_abort("setLayerBus: invalid LayerType");
-            }
+            g.busIdInProject = bus;
 
-            this->replaceLayer(g);
-            return;
+        } else {
+            error_abort("setLayerBus: invalid LayerType");
         }
-    }
 
-    // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("setLayerMute: Layer with patch_id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerBus: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+    }
 }
 
-konfytPatchLayer konfytPatch::addProgram(konfytSoundfontProgram p)
+void konfytPatch::setLayerMidiInPort(KonfytPatchLayer *layer, int portId)
+{
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
+
+    if (index >= 0) {
+        KonfytPatchLayer g = layerList.at(index);
+        g.midiInPortIdInProject = portId;
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerMidiInPort: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+    }
+}
+
+KonfytPatchLayer konfytPatch::addProgram(konfytSoundfontProgram p)
 {
     // Set up new soundfont program layer structure
-    layerSoundfontStruct l = layerSoundfontStruct();
+    LayerSoundfontStruct l = LayerSoundfontStruct();
     l.program = p;
     l.gain = DEFAULT_GAIN_FOR_NEW_LAYER; // default gain
     l.solo = false;
@@ -610,7 +631,7 @@ konfytPatchLayer konfytPatch::addProgram(konfytSoundfontProgram p)
     // Set up a new layer item
     // (a layer item is initialised with an unique id which will
     //  allow us to identify it later on.)
-    konfytPatchLayer g;
+    KonfytPatchLayer g;
     g.initLayer(this->id_counter++, l);
 
     // Add to layer list
@@ -619,12 +640,12 @@ konfytPatchLayer konfytPatch::addProgram(konfytSoundfontProgram p)
     return g;
 }
 
-konfytPatchLayer konfytPatch::addSfLayer(layerSoundfontStruct newSfLayer)
+KonfytPatchLayer konfytPatch::addSfLayer(LayerSoundfontStruct newSfLayer)
 {
     // Set up a new layer item
     // (a layer item is initialised with an unique id which will
     //  allow us to identify it later on.)
-    konfytPatchLayer g;
+    KonfytPatchLayer g;
     g.initLayer(this->id_counter++, newSfLayer);
 
     // add to layer list
@@ -641,12 +662,12 @@ konfytSoundfontProgram konfytPatch::getProgram(int id_in_engine)
 }
 
 // Get sfLayerStruct of the soundfont program layer with the specified index.
-layerSoundfontStruct konfytPatch::getSfLayer(int id_in_engine)
+LayerSoundfontStruct konfytPatch::getSfLayer(int id_in_engine)
 {
     return this->getSfLayer_LayerItem(id_in_engine).sfData;
 }
 
-konfytPatchLayer konfytPatch::getSfLayer_LayerItem(int id_in_engine)
+KonfytPatchLayer konfytPatch::getSfLayer_LayerItem(int id_in_engine)
 {
     for (int i=0; i < this->layerList.count(); i++) {
         if (this->layerList.at(i).getLayerType() == KonfytLayerType_SoundfontProgram) {
@@ -658,7 +679,7 @@ konfytPatchLayer konfytPatch::getSfLayer_LayerItem(int id_in_engine)
     // If we did not return, the layer was not found. This is probably a logic error.
     error_abort("getSfLayer_LayerItem: invalid id_in_engine: " + n2s(id_in_engine) );
 
-    konfytPatchLayer g;
+    KonfytPatchLayer g;
     return g;
 }
 
@@ -671,7 +692,7 @@ float konfytPatch::getSfLayerGain(int id_in_engine)
 
 void konfytPatch::setSfLayerGain(int id_in_engine, float newGain)
 {
-    konfytPatchLayer g = this->getSfLayer_LayerItem(id_in_engine);
+    KonfytPatchLayer g = this->getSfLayer_LayerItem(id_in_engine);
     g.setGain(newGain);
     this->replaceLayer(g);
 }
@@ -703,14 +724,14 @@ QString konfytPatch::getNote()
     return this->patchNote;
 }
 
-QList<konfytPatchLayer> konfytPatch::getLayerItems()
+QList<KonfytPatchLayer> konfytPatch::getLayerItems()
 {
     return this->layerList;
 }
 
 // Returns the layeritem in the patch that matches the unique ID
 // of the layerItem specified.
-konfytPatchLayer konfytPatch::getLayerItem(konfytPatchLayer item)
+KonfytPatchLayer konfytPatch::getLayerItem(KonfytPatchLayer item)
 {
     // Find layer that matches patch_id
     for (int i=0; i < this->layerList.count(); i++) {
@@ -721,7 +742,7 @@ konfytPatchLayer konfytPatch::getLayerItem(konfytPatchLayer item)
 
     // No layer was found that matches the ID. This is probably a logic error somewhere.
     error_abort("getLayerItem: LayerItem with patch_id " + n2s(item.ID_in_patch) + " is not in the patch's layerList.");
-    konfytPatchLayer l;
+    KonfytPatchLayer l;
     return l;
 }
 
@@ -749,9 +770,9 @@ QList<int> konfytPatch::getAudioInPortList_ids()
     return l;
 }
 
-QList<layerAudioInStruct> konfytPatch::getAudioInPortList_struct()
+QList<LayerAudioInStruct> konfytPatch::getAudioInPortList_struct()
 {
-    QList<layerAudioInStruct> l;
+    QList<LayerAudioInStruct> l;
     for (int i=0; i<this->layerList.count(); i++) {
         if (layerList.at(i).getLayerType() == KonfytLayerType_AudioIn) {
             l.append(layerList.at(i).audioInPortData);
@@ -761,9 +782,9 @@ QList<layerAudioInStruct> konfytPatch::getAudioInPortList_struct()
 }
 
 // Return list of midiOutputPortStruct's of the patch's midi output ports.
-QList<layerMidiOutStruct> konfytPatch::getMidiOutputPortList_struct()
+QList<LayerMidiOutStruct> konfytPatch::getMidiOutputPortList_struct()
 {
-    QList<layerMidiOutStruct> l;
+    QList<LayerMidiOutStruct> l;
     for (int i=0; i<this->layerList.count(); i++) {
         if (layerList.at(i).getLayerType() == KonfytLayerType_MidiOut) {
             l.append(layerList.at(i).midiOutputPortData);
@@ -774,10 +795,10 @@ QList<layerMidiOutStruct> konfytPatch::getMidiOutputPortList_struct()
 
 
 
-konfytPatchLayer konfytPatch::addAudioInPort(int newPort)
+KonfytPatchLayer konfytPatch::addAudioInPort(int newPort)
 {
     // Set up a default new audio input port with the specified port number
-    layerAudioInStruct a = layerAudioInStruct();
+    LayerAudioInStruct a = LayerAudioInStruct();
     a.name = "Audio Input Port " + n2s(newPort);
     a.portIdInProject = newPort;
     a.gain = DEFAULT_GAIN_FOR_NEW_LAYER;
@@ -787,9 +808,9 @@ konfytPatchLayer konfytPatch::addAudioInPort(int newPort)
     return addAudioInPort(a);
 }
 
-konfytPatchLayer konfytPatch::addAudioInPort(layerAudioInStruct newPort)
+KonfytPatchLayer konfytPatch::addAudioInPort(LayerAudioInStruct newPort)
 {
-    konfytPatchLayer g;
+    KonfytPatchLayer g;
 
     // Check if port not already in patch
     QList<int> audioInPortList = this->getAudioInPortList_ids();
@@ -811,17 +832,17 @@ konfytPatchLayer konfytPatch::addAudioInPort(layerAudioInStruct newPort)
 
 // TODO: Change so that function returns true or false for success, and takes
 // a pointer, of which the location will be set to the LayerItem.
-konfytPatchLayer konfytPatch::addMidiOutputPort(int newPort)
+KonfytPatchLayer konfytPatch::addMidiOutputPort(int newPort)
 {
-    layerMidiOutStruct m = layerMidiOutStruct();
+    LayerMidiOutStruct m = LayerMidiOutStruct();
     m.portIdInProject = newPort;
 
     return addMidiOutputPort(m);
 }
 
-konfytPatchLayer konfytPatch::addMidiOutputPort(layerMidiOutStruct newPort)
+KonfytPatchLayer konfytPatch::addMidiOutputPort(LayerMidiOutStruct newPort)
 {
-    konfytPatchLayer g;
+    KonfytPatchLayer g;
 
     QList<int> midiOutputPortList = this->getMidiOutputPortList_ids();
     if (midiOutputPortList.contains(newPort.portIdInProject) == false) {
@@ -841,12 +862,12 @@ konfytPatchLayer konfytPatch::addMidiOutputPort(layerMidiOutStruct newPort)
 }
 
 
-konfytPatchLayer konfytPatch::addPlugin(layerCarlaPluginStruct newPlugin)
+KonfytPatchLayer konfytPatch::addPlugin(LayerCarlaPluginStruct newPlugin)
 {
     // Create and initialise new layeritem.
     // Item is initialised with a unique ID, which will later be used to
     // uniquely identify it.
-    konfytPatchLayer g;
+    KonfytPatchLayer g;
     g.initLayer(this->id_counter++, newPlugin);
 
     // Add to layer list
@@ -856,12 +877,12 @@ konfytPatchLayer konfytPatch::addPlugin(layerCarlaPluginStruct newPlugin)
 }
 
 
-layerCarlaPluginStruct konfytPatch::getPlugin(int index_in_engine)
+LayerCarlaPluginStruct konfytPatch::getPlugin(int index_in_engine)
 {
     return this->getPlugin_LayerItem(index_in_engine).carlaPluginData;
 }
 
-konfytPatchLayer konfytPatch::getPlugin_LayerItem(int index_in_engine)
+KonfytPatchLayer konfytPatch::getPlugin_LayerItem(int index_in_engine)
 {
     for (int i=0; i < this->layerList.count(); i++) {
         if (this->layerList.at(i).getLayerType() == KonfytLayerType_CarlaPlugin) {
@@ -873,7 +894,7 @@ konfytPatchLayer konfytPatch::getPlugin_LayerItem(int index_in_engine)
     // If we did not return, the layer was not found. This is probably a logic error.
     error_abort("getPlugin_LayerItem: invalid index_in_engine: " + n2s(index_in_engine) );
 
-    konfytPatchLayer g;
+    KonfytPatchLayer g;
     return g;
 }
 
@@ -885,7 +906,7 @@ int konfytPatch::getPluginCount()
 
 void konfytPatch::setPluginGain(int index_in_engine, float newGain)
 {
-    konfytPatchLayer g = this->getPlugin_LayerItem(index_in_engine);
+    KonfytPatchLayer g = this->getPlugin_LayerItem(index_in_engine);
     g.setGain(newGain);
     this->replaceLayer(g);
 }
@@ -895,9 +916,9 @@ float konfytPatch::getPluginGain(int index_in_engine)
     return this->getPlugin(index_in_engine).gain;
 }
 
-QList<konfytPatchLayer> konfytPatch::getPluginLayerList()
+QList<KonfytPatchLayer> konfytPatch::getPluginLayerList()
 {
-    QList<konfytPatchLayer> l;
+    QList<KonfytPatchLayer> l;
     for (int i=0; i < this->layerList.count(); i++) {
         if ( this->layerList.at(i).getLayerType() == KonfytLayerType_CarlaPlugin ) {
             l.append(this->layerList.at(i));

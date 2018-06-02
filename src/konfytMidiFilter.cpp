@@ -52,7 +52,7 @@ void konfytMidiFilter::setZone(konfytMidiFilterZone newZone)
 
 // Returns true if midi event in specified buffer passes based on
 // filter rules (e.g. note is in the required key and velocity zone)
-bool konfytMidiFilter::passFilter(const konfytMidiEvent* ev)
+bool konfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
 {
     bool pass = false;
 
@@ -103,9 +103,9 @@ bool konfytMidiFilter::passFilter(const konfytMidiEvent* ev)
 
 // Modify buffer (containing midi event) based on filter rules, e.g.
 // transposing, midi channel, etc.
-konfytMidiEvent konfytMidiFilter::modify(const konfytMidiEvent* ev)
+KonfytMidiEvent konfytMidiFilter::modify(const KonfytMidiEvent* ev)
 {
-    konfytMidiEvent r = *ev;
+    KonfytMidiEvent r = *ev;
 
     // Set output channel if outChan >= 0; If outChan is -1, leave channel as is.
     if (outChan >= 0) {

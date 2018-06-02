@@ -47,9 +47,6 @@ void konfytProcess::processFinished(int exitCode)
 
 void konfytProcess::start()
 {
-    QFileInfo fi(dir);
-    process.setWorkingDirectory(fi.absolutePath());
-
     // Replace variables in strings
     QString runAppname = appname;
     runAppname.replace(STRING_PROJECT_DIR, projectDir);
@@ -82,8 +79,5 @@ bool konfytProcess::isRunning()
 QString konfytProcess::toString_appAndArgs()
 {
     QString out = appname;
-    for (int i=0; i<args.count(); i++) {
-        out += " " + args.at(i);
-    }
     return out;
 }

@@ -45,25 +45,25 @@ public:
     explicit konfytLayerWidget(QWidget *parent = 0);
     ~konfytLayerWidget();
 
-    konfytProject* project; // Pointer to current project to get bus and port naming info
+    KonfytProject* project; // Pointer to current project to get bus and port naming info
 
     // This function has to be called before using the object.
-    void initLayer(konfytPatchLayer newg, QListWidgetItem* newItem);
+    void initLayer(KonfytPatchLayer newg, QListWidgetItem* newItem);
 
     // This function is for updating the LayerItem
-    void setLayerItem(konfytPatchLayer newg);
+    void setLayerItem(KonfytPatchLayer newg);
 
     void updateBackgroundFromFilter();
     void setSliderGain(float newGain);
     void setSoloButton(bool solo);
     void setMuteButton(bool mute);
-    konfytPatchLayer getPatchLayerItem();
+    KonfytPatchLayer getPatchLayerItem();
     QListWidgetItem* getListWidgetItem();
     
 private:
     Ui::guiLayerItem *ui;
 
-    konfytPatchLayer g;
+    KonfytPatchLayer g;
     QListWidgetItem* listWidgetItem;
     QMenu popupMenu;
     QString filepath;
@@ -83,6 +83,7 @@ signals:
     void solo_clicked_signal(konfytLayerWidget* layerItem, bool solo);
     void mute_clicked_signal(konfytLayerWidget* layerItem, bool mute);
     void bus_clicked_signal(konfytLayerWidget* layerItem);
+    void midiIn_clicked_signal(konfytLayerWidget* layerItem);
     void reload_clicked_signal(konfytLayerWidget* layerItem);
     void openInFileManager_clicked_signal(konfytLayerWidget* layerItem, QString filepath);
 
@@ -98,6 +99,7 @@ private slots:
     void on_toolButton_bus_clicked();
     void on_actionReload_Layer_triggered();
     void on_actionOpen_in_File_Manager_triggered();
+    void on_toolButton_midiInPort_clicked();
 };
 
 #endif // KONFYT_LAYER_WIDGET_H

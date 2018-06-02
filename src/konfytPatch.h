@@ -44,6 +44,7 @@
 #define XML_PATCH_SFLAYER_BUS "bus"
 #define XML_PATCH_SFLAYER_SOLO "solo"
 #define XML_PATCH_SFLAYER_MUTE "mute"
+#define XML_PATCH_SFLAYER_MIDI_IN "midiIn"
 
 #define XML_PATCH_SFZLAYER "sfzLayer"
 #define XML_PATCH_SFZLAYER_NAME "name"
@@ -52,11 +53,13 @@
 #define XML_PATCH_SFZLAYER_BUS "bus"
 #define XML_PATCH_SFZLAYER_SOLO "solo"
 #define XML_PATCH_SFZLAYER_MUTE "mute"
+#define XML_PATCH_SFZLAYER_MIDI_IN "midiIn"
 
 #define XML_PATCH_MIDIOUT "midiOutputPortLayer"
 #define XML_PATCH_MIDIOUT_PORT "port"
 #define XML_PATCH_MIDIOUT_SOLO "solo"
 #define XML_PATCH_MIDIOUT_MUTE "mute"
+#define XML_PATCH_MIDIOUT_MIDI_IN "midiIn"
 
 #define XML_PATCH_AUDIOIN "audioInPortLayer"
 #define XML_PATCH_AUDIOIN_NAME "name"
@@ -99,63 +102,65 @@ public:
     // ----------------------------------------------------
     // General layer related functions
     // ----------------------------------------------------
-    QList<konfytPatchLayer> getLayerItems();
-    konfytPatchLayer getLayerItem(konfytPatchLayer item);
+    QList<KonfytPatchLayer> getLayerItems();
+    KonfytPatchLayer getLayerItem(KonfytPatchLayer item);
     int getNumLayers();
     bool isValidLayerNumber(int layer);
-    void removeLayer(konfytPatchLayer *layer);
+    void removeLayer(KonfytPatchLayer *layer);
     void clearLayers();
-    void replaceLayer(konfytPatchLayer newLayer);
-    void setLayerFilter(konfytPatchLayer* layer, konfytMidiFilter newFilter);
-    float getLayerGain(konfytPatchLayer* layer);
-    void setLayerGain(konfytPatchLayer* layer, float newGain);
-    void setLayerSolo(konfytPatchLayer* layer, bool solo);
-    void setLayerMute(konfytPatchLayer* layer, bool mute);
-    void setLayerBus(konfytPatchLayer* layer, int bus);
+    int layerListIndexFromPatchId(KonfytPatchLayer* layer);
+    void replaceLayer(KonfytPatchLayer newLayer);
+    void setLayerFilter(KonfytPatchLayer* layer, konfytMidiFilter newFilter);
+    float getLayerGain(KonfytPatchLayer* layer);
+    void setLayerGain(KonfytPatchLayer* layer, float newGain);
+    void setLayerSolo(KonfytPatchLayer* layer, bool solo);
+    void setLayerMute(KonfytPatchLayer* layer, bool mute);
+    void setLayerBus(KonfytPatchLayer* layer, int bus);
+    void setLayerMidiInPort(KonfytPatchLayer* layer, int portId);
 
     // ----------------------------------------------------
     // Soundfont layer related functions
     // ----------------------------------------------------
 
-    konfytPatchLayer addProgram(konfytSoundfontProgram p);
-    konfytPatchLayer addSfLayer(layerSoundfontStruct newSfLayer);
-    layerSoundfontStruct getSfLayer(int id_in_engine);
-    konfytPatchLayer getSfLayer_LayerItem(int id_in_engine);
+    KonfytPatchLayer addProgram(konfytSoundfontProgram p);
+    KonfytPatchLayer addSfLayer(LayerSoundfontStruct newSfLayer);
+    LayerSoundfontStruct getSfLayer(int id_in_engine);
+    KonfytPatchLayer getSfLayer_LayerItem(int id_in_engine);
     konfytSoundfontProgram getProgram(int id_in_engine);
     int getNumSfLayers();
     bool isValid_Sf_LayerNumber(int SfLayer);
-    QList<konfytPatchLayer> getSfLayerList();
+    QList<KonfytPatchLayer> getSfLayerList();
     float getSfLayerGain(int id_in_engine);
     void setSfLayerGain(int id_in_engine, float newGain);
 
     // ----------------------------------------------------
     // Carla Plugin functions
     // ----------------------------------------------------
-    konfytPatchLayer addPlugin(layerCarlaPluginStruct newPlugin);
-    layerCarlaPluginStruct getPlugin(int index_in_engine);
-    konfytPatchLayer getPlugin_LayerItem(int index_in_engine);
+    KonfytPatchLayer addPlugin(LayerCarlaPluginStruct newPlugin);
+    LayerCarlaPluginStruct getPlugin(int index_in_engine);
+    KonfytPatchLayer getPlugin_LayerItem(int index_in_engine);
     int getPluginCount();
     void setPluginGain(int index_in_engine, float newGain);
     float getPluginGain(int index_in_engine);
-    QList<konfytPatchLayer> getPluginLayerList();
+    QList<KonfytPatchLayer> getPluginLayerList();
 
     // ----------------------------------------------------
     // Midi routing
     // ----------------------------------------------------
 
     QList<int> getMidiOutputPortList_ids();
-    QList<layerMidiOutStruct> getMidiOutputPortList_struct();
-    konfytPatchLayer addMidiOutputPort(int newPort);
-    konfytPatchLayer addMidiOutputPort(layerMidiOutStruct newPort);
+    QList<LayerMidiOutStruct> getMidiOutputPortList_struct();
+    KonfytPatchLayer addMidiOutputPort(int newPort);
+    KonfytPatchLayer addMidiOutputPort(LayerMidiOutStruct newPort);
 
     // ----------------------------------------------------
     // Audio input ports
     // ----------------------------------------------------
 
     QList<int> getAudioInPortList_ids();
-    QList<layerAudioInStruct> getAudioInPortList_struct();
-    konfytPatchLayer addAudioInPort(int newPort);
-    konfytPatchLayer addAudioInPort(layerAudioInStruct newPort);
+    QList<LayerAudioInStruct> getAudioInPortList_struct();
+    KonfytPatchLayer addAudioInPort(int newPort);
+    KonfytPatchLayer addAudioInPort(LayerAudioInStruct newPort);
 
     // ----------------------------------------------------
     // Save/load functions
@@ -175,7 +180,7 @@ private:
     QString patchNote;  // Custom note for user instructions or to describe the patch
 
     // List of layers (all types, order is important for user in the patch)
-    QList<konfytPatchLayer> layerList;
+    QList<KonfytPatchLayer> layerList;
 
     int id_counter; // Counter for unique ID given to layeritem to uniquely identify them.
 

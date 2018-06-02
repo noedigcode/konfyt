@@ -22,7 +22,7 @@
 #include "konfytProject.h"
 #include <iostream>
 
-konfytProject::konfytProject(QObject *parent) :
+KonfytProject::KonfytProject(QObject *parent) :
     QObject(parent)
 {
     // Initialise variables
@@ -35,11 +35,13 @@ konfytProject::konfytProject(QObject *parent) :
 
     // Project has to have a minimum 1 bus
     this->audioBus_add("Master Bus", NULL, NULL); // Ports will be assigned later when loading project
+    // Add at least 1 MIDI input port also
+    this->midiInPort_addPort("MIDI In");
 }
 
 
 
-bool konfytProject::saveProject()
+bool KonfytProject::saveProject()
 {
     if (projectDirname == "") {
         return false;
@@ -51,7 +53,7 @@ bool konfytProject::saveProject()
 
 // Save project xml file containing a list of all the patches,
 // as well as all the related patch files, in the specified directory.
-bool konfytProject::saveProjectAs(QString dirname)
+bool KonfytProject::saveProjectAs(QString dirname)
 {
     // Directory in which the project will be saved (from parameter):
     QDir dir(dirname);
@@ -119,19 +121,29 @@ bool konfytProject::saveProjectAs(QString dirname)
         stream.writeEndElement();
     }
 
-    // Write midiAutoConnectList
-    stream.writeStartElement(XML_PRJ_MIDI_IN_AUTOCON_LIST);
-    for (int i=0; i<midiAutoConnectList.count(); i++) {
-        stream.writeTextElement(XML_PRJ_MIDI_IN_AUTOCON_LIST_PORT, midiAutoConnectList.at(i));
+    // Write midiInPortList
+    stream.writeStartElement(XML_PRJ_MIDI_IN_PORTLIST);
+    QList<int> midiInIds = midiInPort_getAllPortIds();
+    for (int i=0; i < midiInIds.count(); i++) {
+        int id = midiInIds[i];
+        PrjMidiPort p = midiInPort_getPort(id);
+        stream.writeStartElement(XML_PRJ_MIDI_IN_PORT);
+        stream.writeTextElement(XML_PRJ_MIDI_IN_PORT_ID, n2s(id));
+        stream.writeTextElement(XML_PRJ_MIDI_IN_PORT_NAME, p.portName);
+        QStringList l = p.clients;
+        for (int j=0; j < l.count(); j++) {
+            stream.writeTextElement(XML_PRJ_MIDI_IN_PORT_CLIENT, l.at(j));
+        }
+        stream.writeEndElement(); // end of port
     }
-    stream.writeEndElement();
+    stream.writeEndElement(); // end of midiInPortList
 
     // Write midiOutPortList
     stream.writeStartElement(XML_PRJ_MIDI_OUT_PORTLIST);
     QList<int> midiOutIds = midiOutPort_getAllPortIds();
     for (int i=0; i<midiOutIds.count(); i++) {
         int id = midiOutIds[i];
-        prjMidiOutPort p = midiOutPort_getPort(id);
+        PrjMidiPort p = midiOutPort_getPort(id);
         stream.writeStartElement(XML_PRJ_MIDI_OUT_PORT);
         stream.writeTextElement(XML_PRJ_MIDI_OUT_PORT_ID, n2s(id));
         stream.writeTextElement(XML_PRJ_MIDI_OUT_PORT_NAME, p.portName);
@@ -148,7 +160,7 @@ bool konfytProject::saveProjectAs(QString dirname)
     QList<int> busIds = audioBus_getAllBusIds();
     for (int i=0; i<busIds.count(); i++) {
         stream.writeStartElement(XML_PRJ_BUS);
-        prjAudioBus b = audioBusMap.value(busIds[i]);
+        PrjAudioBus b = audioBusMap.value(busIds[i]);
         stream.writeTextElement( XML_PRJ_BUS_ID, n2s(busIds[i]) );
         stream.writeTextElement( XML_PRJ_BUS_NAME, b.busName );
         stream.writeTextElement( XML_PRJ_BUS_LGAIN, n2s(b.leftGain) );
@@ -168,7 +180,7 @@ bool konfytProject::saveProjectAs(QString dirname)
     QList<int> audioInIds = audioInPort_getAllPortIds();
     for (int i=0; i<audioInIds.count(); i++) {
         int id = audioInIds[i];
-        prjAudioInPort p = audioInPort_getPort(id);
+        PrjAudioInPort p = audioInPort_getPort(id);
         stream.writeStartElement(XML_PRJ_AUDIOIN_PORT);
         stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_ID, n2s(id) );
         stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_NAME, p.portName );
@@ -191,10 +203,6 @@ bool konfytProject::saveProjectAs(QString dirname)
         stream.writeStartElement(XML_PRJ_PROCESS);
         konfytProcess* gp = processList.at(i);
         stream.writeTextElement(XML_PRJ_PROCESS_APPNAME, gp->appname);
-        stream.writeTextElement(XML_PRJ_PROCESS_DIR, gp->dir); // TODO: NOT USED
-        for (int j=0; j<gp->args.count(); j++) {
-            stream.writeTextElement(XML_PRJ_PROCESS_ARG, gp->args.at(j)); // TODO: NOT USED
-        }
         stream.writeEndElement(); // end of process
     }
     stream.writeEndElement(); // end of processList
@@ -202,7 +210,7 @@ bool konfytProject::saveProjectAs(QString dirname)
     // Write trigger list
     stream.writeStartElement(XML_PRJ_TRIGGERLIST);
     stream.writeTextElement(XML_PRJ_PROG_CHANGE_SWITCH_PATCHES, bool2str(programChangeSwitchPatches));
-    QList<konfytTrigger> trigs = triggerHash.values();
+    QList<KonfytTrigger> trigs = triggerHash.values();
     for (int i=0; i<trigs.count(); i++) {
         stream.writeStartElement(XML_PRJ_TRIGGER);
         stream.writeTextElement(XML_PRJ_TRIGGER_ACTIONTEXT, trigs[i].actionText);
@@ -215,15 +223,25 @@ bool konfytProject::saveProjectAs(QString dirname)
     }
     stream.writeEndElement(); // end of trigger list
 
-    // Write other JACK connections list
-    stream.writeStartElement(XML_PRJ_OTHERJACKCON_LIST);
-    for (int i=0; i<jackConList.count(); i++) {
+    // Write other JACK MIDI connections list
+    stream.writeStartElement(XML_PRJ_OTHERJACK_MIDI_CON_LIST);
+    for (int i=0; i<jackMidiConList.count(); i++) {
         stream.writeStartElement(XML_PRJ_OTHERJACKCON);
-        stream.writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackConList[i].srcPort);
-        stream.writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackConList[i].destPort);
-        stream.writeEndElement(); // JACK connection pair
+        stream.writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackMidiConList[i].srcPort);
+        stream.writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackMidiConList[i].destPort);
+        stream.writeEndElement(); // end JACK connection pair
     }
-    stream.writeEndElement(); // Other JACK connections list
+    stream.writeEndElement(); // Other JACK MIDI connections list
+
+    // Write other JACK Audio connections list
+    stream.writeStartElement(XML_PRJ_OTHERJACK_AUDIO_CON_LIST);
+    for (int i=0; i < jackAudioConList.count(); i++) {
+        stream.writeStartElement(XML_PRJ_OTHERJACKCON); // start JACK connection pair
+        stream.writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackAudioConList[i].srcPort);
+        stream.writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackAudioConList[i].destPort);
+        stream.writeEndElement(); // end JACK connection pair
+    }
+    stream.writeEndElement(); // end JACK Audio connections list
 
     stream.writeEndElement(); // project
 
@@ -238,7 +256,7 @@ bool konfytProject::saveProjectAs(QString dirname)
 
 // Load project xml file (containing list of all the patches) and
 // load all the patch files from the same directory.
-bool konfytProject::loadProject(QString filename)
+bool KonfytProject::loadProject(QString filename)
 {
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -259,7 +277,7 @@ bool konfytProject::loadProject(QString filename)
 
     QString patchFilename;
     patchList.clear();
-    midiAutoConnectList.clear();
+    midiInPortMap.clear();
     midiOutPortMap.clear();
     processList.clear();
     audioBusMap.clear();
@@ -308,22 +326,34 @@ bool konfytProject::loadProject(QString filename)
 
                 patchListNotes = Qstr2bool(r.readElementText());
 
-            } else if (r.name() == XML_PRJ_MIDI_IN_AUTOCON_LIST) {
+            } else if (r.name() == XML_PRJ_MIDI_IN_PORTLIST) {
 
                 while (r.readNextStartElement()) { // port
-                    if (r.name() == XML_PRJ_MIDI_IN_AUTOCON_LIST_PORT) {
-                        this->midiAutoConnectList.append(r.readElementText());
-                    } else {
-                        userMessage("loadProject: "
-                                    "Unrecognized midiAutoConnectList port element: " + r.name().toString() );
-                        r.skipCurrentElement();
+                    PrjMidiPort p;
+                    int id = midiInPort_getUniqueId();
+                    while (r.readNextStartElement()) {
+                        if (r.name() == XML_PRJ_MIDI_IN_PORT_ID) {
+                            id = r.readElementText().toInt();
+                        } else if (r.name() == XML_PRJ_MIDI_IN_PORT_NAME) {
+                            p.portName = r.readElementText();
+                        } else if (r.name() == XML_PRJ_MIDI_IN_PORT_CLIENT) {
+                            p.clients.append( r.readElementText() );
+                        } else {
+                            userMessage("loadProject: "
+                                        "Unrecognized midiInPortList port element: " + r.name().toString() );
+                        }
+                        if (midiInPortMap.contains(id)) {
+                            userMessage("loadProject: "
+                                        "Duplicate midi in port id detected: " + n2s(id));
+                        }
+                        this->midiInPortMap.insert(id, p);
                     }
                 }
 
             } else if (r.name() == XML_PRJ_MIDI_OUT_PORTLIST) {
 
                 while (r.readNextStartElement()) { // port
-                    prjMidiOutPort p;
+                    PrjMidiPort p;
                     int id = midiOutPort_getUniqueId();
                     while (r.readNextStartElement()) {
                         if (r.name() == XML_PRJ_MIDI_OUT_PORT_ID) {
@@ -348,7 +378,7 @@ bool konfytProject::loadProject(QString filename)
             } else if (r.name() == XML_PRJ_BUSLIST) {
 
                 while (r.readNextStartElement()) { // bus
-                    prjAudioBus b;
+                    PrjAudioBus b;
                     int id = audioBus_getUniqueId();
                     while (r.readNextStartElement()) {
                         if (r.name() == XML_PRJ_BUS_ID) {
@@ -379,7 +409,7 @@ bool konfytProject::loadProject(QString filename)
             } else if (r.name() == XML_PRJ_AUDIOINLIST) {
 
                 while (r.readNextStartElement()) { // port
-                    prjAudioInPort p;
+                    PrjAudioInPort p;
                     int id = audioInPort_getUniqueId();
                     while (r.readNextStartElement()) {
                         if (r.name() == XML_PRJ_AUDIOIN_PORT_ID) {
@@ -416,10 +446,6 @@ bool konfytProject::loadProject(QString filename)
                     while (r.readNextStartElement()) {
                         if (r.name() == XML_PRJ_PROCESS_APPNAME) {
                             gp->appname = r.readElementText();
-                        } else if (r.name() == XML_PRJ_PROCESS_DIR) { // todo unused
-                            gp->dir = r.readElementText();
-                        } else if (r.name() == XML_PRJ_PROCESS_ARG) { // todo unused
-                            gp->args.append(r.readElementText());
                         } else {
                             userMessage("loadProject: "
                                         "Unrecognized process element: " + r.name().toString() );
@@ -439,7 +465,7 @@ bool konfytProject::loadProject(QString filename)
                         programChangeSwitchPatches = Qstr2bool(r.readElementText());
                     } else if (r.name() == XML_PRJ_TRIGGER) {
 
-                        konfytTrigger trig;
+                        KonfytTrigger trig;
                         while (r.readNextStartElement()) {
                             if (r.name() == XML_PRJ_TRIGGER_ACTIONTEXT) {
                                 trig.actionText = r.readElementText();
@@ -468,9 +494,9 @@ bool konfytProject::loadProject(QString filename)
                     }
                 }
 
-            }
+            } else if (r.name() == XML_PRJ_OTHERJACK_MIDI_CON_LIST) {
 
-            else if (r.name() == XML_PRJ_OTHERJACKCON_LIST) {
+                // Other JACK MIDI connections list
 
                 while (r.readNextStartElement()) {
                     if (r.name() == XML_PRJ_OTHERJACKCON) {
@@ -487,17 +513,44 @@ bool konfytProject::loadProject(QString filename)
                                 r.skipCurrentElement();
                             }
                         }
-                        this->addJackCon(srcPort, destPort);
+                        this->addJackMidiCon(srcPort, destPort);
 
                     } else {
                         userMessage("loadProject: "
-                                    "Unrecognized otherJackConList element: " + r.name().toString() );
+                                    "Unrecognized otherJackMidiConList element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
                 }
 
-            }
-            else {
+            } else if (r.name() == XML_PRJ_OTHERJACK_AUDIO_CON_LIST) {
+
+                // Other JACK Audio connections list
+
+                while (r.readNextStartElement()) {
+                    if (r.name() == XML_PRJ_OTHERJACKCON) {
+
+                        QString srcPort, destPort;
+                        while (r.readNextStartElement()) {
+                            if (r.name() == XML_PRJ_OTHERJACKCON_SRC) {
+                                srcPort = r.readElementText();
+                            } else if (r.name() == XML_PRJ_OTHERJACKCON_DEST) {
+                                destPort = r.readElementText();
+                            } else {
+                                userMessage("loadProject: "
+                                            "Unrecognized JACK con element: " + r.name().toString() );
+                                r.skipCurrentElement();
+                            }
+                        }
+                        addJackAudioCon(srcPort, destPort);
+
+                    } else {
+                        userMessage("loadProject: "
+                                    "Unrecognized otherJackAudioConList element: " + r.name().toString() );
+                        r.skipCurrentElement();
+                    }
+                }
+
+            } else {
                 userMessage("loadProject: "
                             "Unrecognized project element: " + r.name().toString() );
                 r.skipCurrentElement();
@@ -514,45 +567,50 @@ bool konfytProject::loadProject(QString filename)
         this->audioBus_add("Master Bus", NULL, NULL); // Ports will be assigned later when loading project
     }
 
+    // Check if we have at least one Midi input port. If not, create a default one.
+    if (midiInPort_count() == 0) {
+        midiInPort_addPort("MIDI In");
+    }
+
     setModified(false);
 
     return true;
 }
 
-void konfytProject::setProjectName(QString newName)
+void KonfytProject::setProjectName(QString newName)
 {
     projectName = newName;
     setModified(true);
 }
 
-bool konfytProject::getShowPatchListNumbers()
+bool KonfytProject::getShowPatchListNumbers()
 {
     return patchListNumbers;
 }
 
-void konfytProject::setShowPatchListNumbers(bool show)
+void KonfytProject::setShowPatchListNumbers(bool show)
 {
     patchListNumbers = show;
     setModified(true);
 }
 
-bool konfytProject::getShowPatchListNotes()
+bool KonfytProject::getShowPatchListNotes()
 {
     return patchListNotes;
 }
 
-void konfytProject::setShowPatchListNotes(bool show)
+void KonfytProject::setShowPatchListNotes(bool show)
 {
     patchListNotes = show;
     setModified(true);
 }
 
-QString konfytProject::getProjectName()
+QString KonfytProject::getProjectName()
 {
     return projectName;
 }
 
-void konfytProject::addPatch(konfytPatch *newPatch)
+void KonfytProject::addPatch(konfytPatch *newPatch)
 {
     // Set unique ID, so we can later identify this patch.
     newPatch->id_in_project = this->patch_id_counter++;
@@ -565,7 +623,7 @@ void konfytProject::addPatch(konfytPatch *newPatch)
 // Removes the patch from project and returns the pointer.
 // Note that the pointer has not been freed.
 // Returns NULL if index out of bounds.
-konfytPatch *konfytProject::removePatch(int i)
+konfytPatch *KonfytProject::removePatch(int i)
 {
     if ( (i>=0) && (i<patchList.count())) {
         konfytPatch* patch = patchList[i];
@@ -579,7 +637,7 @@ konfytPatch *konfytProject::removePatch(int i)
 
 
 
-void konfytProject::movePatchUp(int i)
+void KonfytProject::movePatchUp(int i)
 {
     if ( (i>=1) && (i<patchList.count())) {
         patchList.move(i,i-1);
@@ -587,7 +645,7 @@ void konfytProject::movePatchUp(int i)
     }
 }
 
-void konfytProject::movePatchDown(int i)
+void KonfytProject::movePatchDown(int i)
 {
     if ( (i>=0) && (i<patchList.count()-1) ) {
         patchList.move(i, i+1);
@@ -595,7 +653,7 @@ void konfytProject::movePatchDown(int i)
     }
 }
 
-konfytPatch *konfytProject::getPatch(int i)
+konfytPatch *KonfytProject::getPatch(int i)
 {
     if ( (i>=0) && (i<patchList.count())) {
         return patchList.at(i);
@@ -604,55 +662,145 @@ konfytPatch *konfytProject::getPatch(int i)
     }
 }
 
-QList<konfytPatch *> konfytProject::getPatchList()
+QList<konfytPatch *> KonfytProject::getPatchList()
 {
     return patchList;
 }
 
-int konfytProject::getNumPatches()
+int KonfytProject::getNumPatches()
 {
     return patchList.count();
 }
 
-QString konfytProject::getDirname()
+QString KonfytProject::getDirname()
 {
     return projectDirname;
 }
 
-void konfytProject::setDirname(QString newDirname)
+void KonfytProject::setDirname(QString newDirname)
 {
     projectDirname = newDirname;
     setModified(true);
 }
 
-void konfytProject::midiInPort_addClient(QString port)
+QList<int> KonfytProject::midiInPort_getAllPortIds()
 {
-    this->midiAutoConnectList.append(port);
-    setModified(true);
+    return midiInPortMap.keys();
 }
 
-void konfytProject::midiInPort_removeClient(QString port)
+int KonfytProject::midiInPort_addPort(QString portName)
 {
-    this->midiAutoConnectList.removeOne(port);
-    setModified(true);
-}
-
-void konfytProject::midiInPort_clearClients()
-{
-    this->midiAutoConnectList.clear();
-    setModified(true);
-}
-
-QStringList konfytProject::midiInPort_getClients()
-{
-    return this->midiAutoConnectList;
-}
-
-int konfytProject::midiOutPort_addPort(QString portName)
-{
-    prjMidiOutPort p;
+    PrjMidiPort p;
     p.portName = portName;
-    p.jackPort = NULL;
+
+    int portId = midiInPort_getUniqueId();
+    midiInPortMap.insert(portId, p);
+
+    setModified(true);
+
+    return portId;
+}
+
+void KonfytProject::midiInPort_removePort(int portId)
+{
+    if (midiInPort_exists(portId)) {
+        midiInPortMap.remove(portId);
+        setModified(true);
+    } else {
+        error_abort("midiInPort_removePort: port with id " + n2s(portId) + " does not exist.");
+    }
+}
+
+bool KonfytProject::midiInPort_exists(int portId)
+{
+    return midiInPortMap.contains(portId);
+}
+
+PrjMidiPort KonfytProject::midiInPort_getPort(int portId)
+{
+    if (midiInPort_exists(portId)) {
+        return midiInPortMap.value(portId);
+    } else {
+        error_abort("midiInPort_getPort: port with id " + n2s(portId) + " does not exist.");
+    }
+}
+
+/* Gets the first MIDI Input Port Id that is not skipId. */
+int KonfytProject::midiInPort_getFirstPortId(int skipId)
+{
+    int ret = -1;
+    QList<int> l = midiInPortMap.keys();
+    if (l.count()) {
+        for (int i=0; i<l.count(); i++) {
+            if (l[i] != skipId) {
+                ret = l[i];
+                break;
+            }
+        }
+        return ret;
+    } else {
+        error_abort("midiInPort_getFirstBusId: no MIDI Input ports in project!");
+        return -1;
+    }
+}
+
+int KonfytProject::midiInPort_count()
+{
+    return midiInPortMap.count();
+}
+
+void KonfytProject::midiInPort_replace(int portId, PrjMidiPort port)
+{
+    midiInPort_replace_noModify(portId, port);
+    setModified(true);
+}
+
+void KonfytProject::midiInPort_replace_noModify(int portId, PrjMidiPort port)
+{
+    if (midiInPort_exists(portId)) {
+        midiInPortMap.insert(portId, port);
+    } else {
+        error_abort("midiInPort_replace_noModify: Port with id " + n2s(portId) + " does not exist.");
+    }
+}
+
+QStringList KonfytProject::midiInPort_getClients(int portId)
+{
+    if (midiInPort_exists(portId)) {
+        return midiInPortMap.value(portId).clients;
+    } else {
+        error_abort("midiInPort_getClients: port with id " + n2s(portId) + " does not exist.");
+    }
+}
+
+void KonfytProject::midiInPort_addClient(int portId, QString client)
+{
+    if (midiInPort_exists(portId)) {
+        PrjMidiPort p = midiInPortMap.value(portId);
+        p.clients.append(client);
+        midiInPortMap.insert(portId, p);
+        setModified(true);
+    } else {
+        error_abort("midiInPort_addClient: port with id " + n2s(portId) + " does not exist.");
+    }
+}
+
+void KonfytProject::midiInPort_removeClient(int portId, QString client)
+{
+    if (midiInPort_exists(portId)) {
+        PrjMidiPort p = midiInPortMap.value(portId);
+        p.clients.removeAll(client);
+        midiInPortMap.insert(portId, p);
+        setModified(true);
+    } else {
+        error_abort("midiInPort_removeClient: port with id " + n2s(portId) + " does not exist.");
+    }
+}
+
+int KonfytProject::midiOutPort_addPort(QString portName)
+{
+    PrjMidiPort p;
+    p.portName = portName;
 
     int portId = midiOutPort_getUniqueId();
     midiOutPortMap.insert(portId, p);
@@ -662,25 +810,31 @@ int konfytProject::midiOutPort_addPort(QString portName)
     return portId;
 }
 
-int konfytProject::audioBus_getUniqueId()
+int KonfytProject::audioBus_getUniqueId()
 {
     QList<int> l = audioBusMap.keys();
     return getUniqueIdHelper( l );
 }
 
-int konfytProject::midiOutPort_getUniqueId()
+int KonfytProject::midiInPort_getUniqueId()
+{
+    QList<int> l = midiInPortMap.keys();
+    return getUniqueIdHelper( l );
+}
+
+int KonfytProject::midiOutPort_getUniqueId()
 {
     QList<int> l = midiOutPortMap.keys();
     return getUniqueIdHelper( l );
 }
 
-int konfytProject::audioInPort_getUniqueId()
+int KonfytProject::audioInPort_getUniqueId()
 {
     QList<int> l = audioInPortMap.keys();
     return getUniqueIdHelper( l );
 }
 
-int konfytProject::getUniqueIdHelper(QList<int> ids)
+int KonfytProject::getUniqueIdHelper(QList<int> ids)
 {
     /* Given the list of ids, find the highest id and add one. */
     int id=-1;
@@ -691,9 +845,9 @@ int konfytProject::getUniqueIdHelper(QList<int> ids)
 }
 
 /* Adds bus and returns unique bus id. */
-int konfytProject::audioBus_add(QString busName, konfytJackPort* leftJackPort, konfytJackPort* rightJackPort)
+int KonfytProject::audioBus_add(QString busName, KonfytJackPort* leftJackPort, KonfytJackPort* rightJackPort)
 {
-    prjAudioBus bus;
+    PrjAudioBus bus;
     bus.busName = busName;
     bus.leftGain = 1;
     bus.rightGain = 1;
@@ -708,7 +862,7 @@ int konfytProject::audioBus_add(QString busName, konfytJackPort* leftJackPort, k
     return busId;
 }
 
-void konfytProject::audioBus_remove(int busId)
+void KonfytProject::audioBus_remove(int busId)
 {
     if (audioBusMap.contains(busId)) {
         audioBusMap.remove(busId);
@@ -718,17 +872,17 @@ void konfytProject::audioBus_remove(int busId)
     }
 }
 
-int konfytProject::audioBus_count()
+int KonfytProject::audioBus_count()
 {
     return audioBusMap.count();
 }
 
-bool konfytProject::audioBus_exists(int busId)
+bool KonfytProject::audioBus_exists(int busId)
 {
     return audioBusMap.contains(busId);
 }
 
-prjAudioBus konfytProject::audioBus_getBus(int busId)
+PrjAudioBus KonfytProject::audioBus_getBus(int busId)
 {
     if (audioBusMap.contains(busId)) {
         return audioBusMap.value(busId);
@@ -738,7 +892,7 @@ prjAudioBus konfytProject::audioBus_getBus(int busId)
 }
 
 /* Gets the first bus Id that is not skipId. */
-int konfytProject::audioBus_getFirstBusId(int skipId)
+int KonfytProject::audioBus_getFirstBusId(int skipId)
 {
     int ret = -1;
     QList<int> l = audioBusMap.keys();
@@ -756,19 +910,19 @@ int konfytProject::audioBus_getFirstBusId(int skipId)
     }
 }
 
-QList<int> konfytProject::audioBus_getAllBusIds()
+QList<int> KonfytProject::audioBus_getAllBusIds()
 {
     return audioBusMap.keys();
 }
 
-void konfytProject::audioBus_replace(int busId, prjAudioBus newBus)
+void KonfytProject::audioBus_replace(int busId, PrjAudioBus newBus)
 {
     audioBus_replace_noModify(busId, newBus);
     setModified(true);
 }
 
 /* Do not change the project's modified state. */
-void konfytProject::audioBus_replace_noModify(int busId, prjAudioBus newBus)
+void KonfytProject::audioBus_replace_noModify(int busId, PrjAudioBus newBus)
 {
     if (audioBusMap.contains(busId)) {
         audioBusMap.insert(busId, newBus);
@@ -778,10 +932,10 @@ void konfytProject::audioBus_replace_noModify(int busId, prjAudioBus newBus)
 }
 
 
-void konfytProject::audioBus_addClient(int busId, portLeftRight leftRight, QString client)
+void KonfytProject::audioBus_addClient(int busId, portLeftRight leftRight, QString client)
 {
     if (audioBusMap.contains(busId)) {
-        prjAudioBus b = audioBusMap.value(busId);
+        PrjAudioBus b = audioBusMap.value(busId);
         if (leftRight == leftPort) {
             if (!b.leftOutClients.contains(client)) {
                 b.leftOutClients.append(client);
@@ -799,10 +953,10 @@ void konfytProject::audioBus_addClient(int busId, portLeftRight leftRight, QStri
 
 }
 
-void konfytProject::audioBus_removeClient(int busId, portLeftRight leftRight, QString client)
+void KonfytProject::audioBus_removeClient(int busId, portLeftRight leftRight, QString client)
 {
     if (audioBusMap.contains(busId)) {
-        prjAudioBus b = audioBusMap.value(busId);
+        PrjAudioBus b = audioBusMap.value(busId);
         if (leftRight == leftPort) {
             b.leftOutClients.removeAll(client);
         } else {
@@ -816,14 +970,14 @@ void konfytProject::audioBus_removeClient(int busId, portLeftRight leftRight, QS
 
 }
 
-QList<int> konfytProject::audioInPort_getAllPortIds()
+QList<int> KonfytProject::audioInPort_getAllPortIds()
 {
     return audioInPortMap.keys();
 }
 
-int konfytProject::audioInPort_add(QString portName)
+int KonfytProject::audioInPort_add(QString portName)
 {
-    prjAudioInPort port;
+    PrjAudioInPort port;
     port.portName = portName;
     port.destinationBus = 0;
     port.leftGain = 1;
@@ -839,7 +993,7 @@ int konfytProject::audioInPort_add(QString portName)
     return portId;
 }
 
-void konfytProject::audioInPort_remove(int portId)
+void KonfytProject::audioInPort_remove(int portId)
 {
     if (audioInPortMap.contains(portId)) {
         audioInPortMap.remove(portId);
@@ -849,17 +1003,17 @@ void konfytProject::audioInPort_remove(int portId)
     }
 }
 
-int konfytProject::audioInPort_count()
+int KonfytProject::audioInPort_count()
 {
     return audioInPortMap.count();
 }
 
-bool konfytProject::audioInPort_exists(int portId)
+bool KonfytProject::audioInPort_exists(int portId)
 {
     return audioInPortMap.contains(portId);
 }
 
-prjAudioInPort konfytProject::audioInPort_getPort(int portId)
+PrjAudioInPort KonfytProject::audioInPort_getPort(int portId)
 {
     if (audioInPortMap.contains(portId)) {
         return audioInPortMap.value(portId);
@@ -868,14 +1022,14 @@ prjAudioInPort konfytProject::audioInPort_getPort(int portId)
     }
 }
 
-void konfytProject::audioInPort_replace(int portId, prjAudioInPort newPort)
+void KonfytProject::audioInPort_replace(int portId, PrjAudioInPort newPort)
 {
     audioInPort_replace_noModify(portId, newPort);
     setModified(true);
 }
 
 /* Do not change the project's modify state. */
-void konfytProject::audioInPort_replace_noModify(int portId, prjAudioInPort newPort)
+void KonfytProject::audioInPort_replace_noModify(int portId, PrjAudioInPort newPort)
 {
     if (audioInPortMap.contains(portId)) {
         audioInPortMap.insert(portId, newPort);
@@ -884,10 +1038,10 @@ void konfytProject::audioInPort_replace_noModify(int portId, prjAudioInPort newP
     }
 }
 
-void konfytProject::audioInPort_addClient(int portId, portLeftRight leftRight, QString client)
+void KonfytProject::audioInPort_addClient(int portId, portLeftRight leftRight, QString client)
 {
     if (audioInPortMap.contains(portId)) {
-        prjAudioInPort p = audioInPortMap.value(portId);
+        PrjAudioInPort p = audioInPortMap.value(portId);
         if (leftRight == leftPort) {
             if (!p.leftInClients.contains(client)) {
                 p.leftInClients.append(client);
@@ -904,10 +1058,10 @@ void konfytProject::audioInPort_addClient(int portId, portLeftRight leftRight, Q
     }
 }
 
-void konfytProject::audioInPort_removeClient(int portId, portLeftRight leftRight, QString client)
+void KonfytProject::audioInPort_removeClient(int portId, portLeftRight leftRight, QString client)
 {
     if (audioInPortMap.contains(portId)) {
-        prjAudioInPort p = audioInPortMap.value(portId);
+        PrjAudioInPort p = audioInPortMap.value(portId);
         if (leftRight == leftPort) {
             p.leftInClients.removeAll(client);
         } else {
@@ -921,39 +1075,39 @@ void konfytProject::audioInPort_removeClient(int portId, portLeftRight leftRight
 
 }
 
-void konfytProject::midiOutPort_removePort(int portId)
+void KonfytProject::midiOutPort_removePort(int portId)
 {
     if (midiOutPortMap.contains(portId)) {
         midiOutPortMap.remove(portId);
         setModified(true);
     } else {
-        error_abort("midiOutPortList_removePort: port with id " + n2s(portId) + " does not exist.");
+        error_abort("midiOutPort_removePort: port with id " + n2s(portId) + " does not exist.");
     }
 }
 
-int konfytProject::midiOutPort_count()
+int KonfytProject::midiOutPort_count()
 {
     return midiOutPortMap.count();
 }
 
-bool konfytProject::midiOutPort_exists(int portId)
+bool KonfytProject::midiOutPort_exists(int portId)
 {
     return midiOutPortMap.contains(portId);
 }
 
-prjMidiOutPort konfytProject::midiOutPort_getPort(int portId)
+PrjMidiPort KonfytProject::midiOutPort_getPort(int portId)
 {
     if (midiOutPortMap.contains(portId)) {
         return midiOutPortMap.value(portId);
     } else {
-        error_abort("midiOutPortList_getPort: port with id " + n2s(portId) + " does not exist.");
+        error_abort("midiOutPort_getPort: port with id " + n2s(portId) + " does not exist.");
     }
 }
 
-void konfytProject::midiOutPort_addClient(int portId, QString client)
+void KonfytProject::midiOutPort_addClient(int portId, QString client)
 {
     if (midiOutPortMap.contains(portId)) {
-        prjMidiOutPort p = midiOutPortMap.value(portId);
+        PrjMidiPort p = midiOutPortMap.value(portId);
         p.clients.append(client);
         midiOutPortMap.insert(portId, p);
         setModified(true);
@@ -963,26 +1117,26 @@ void konfytProject::midiOutPort_addClient(int portId, QString client)
 }
 
 
-void konfytProject::midiOutPort_removeClient(int portId, QString client)
+void KonfytProject::midiOutPort_removeClient(int portId, QString client)
 {
     if (midiOutPortMap.contains(portId)) {
-        prjMidiOutPort p = midiOutPortMap.value(portId);
+        PrjMidiPort p = midiOutPortMap.value(portId);
         p.clients.removeAll(client);
         midiOutPortMap.insert(portId, p);
         setModified(true);
     } else {
-        error_abort("midiOutPortList_removeClient: port with id " + n2s(portId) + " does not exist.");
+        error_abort("midiOutPort_removeClient: port with id " + n2s(portId) + " does not exist.");
     }
 }
 
-void konfytProject::midiOutPort_replace(int portId, prjMidiOutPort port)
+void KonfytProject::midiOutPort_replace(int portId, PrjMidiPort port)
 {
     midiOutPort_replace_noModify(portId, port);
     setModified(true);
 }
 
 /* Do not change the project's modify state. */
-void konfytProject::midiOutPort_replace_noModify(int portId, prjMidiOutPort port)
+void KonfytProject::midiOutPort_replace_noModify(int portId, PrjMidiPort port)
 {
     if (midiOutPortMap.contains(portId)) {
         midiOutPortMap.insert(portId, port);
@@ -991,22 +1145,22 @@ void konfytProject::midiOutPort_replace_noModify(int portId, prjMidiOutPort port
     }
 }
 
-QList<int> konfytProject::midiOutPort_getAllPortIds()
+QList<int> KonfytProject::midiOutPort_getAllPortIds()
 {
     return midiOutPortMap.keys();
 }
 
-QStringList konfytProject::midiOutPort_getClients(int portId)
+QStringList KonfytProject::midiOutPort_getClients(int portId)
 {
     if (midiOutPortMap.contains(portId)) {
         return midiOutPortMap.value(portId).clients;
     } else {
-        error_abort("midiOutPortList_getClients: port with id " + n2s(portId) + " does not exist.");
+        error_abort("midiOutPort_getClients: port with id " + n2s(portId) + " does not exist.");
     }
 }
 
 // Add process (External program) to GUI and current project.
-void konfytProject::addProcess(konfytProcess* process)
+void KonfytProject::addProcess(konfytProcess* process)
 {
     // Add to internal list
     process->projectDir = this->getDirname();
@@ -1017,7 +1171,7 @@ void konfytProject::addProcess(konfytProcess* process)
     setModified(true);
 }
 
-bool konfytProject::isProcessRunning(int index)
+bool KonfytProject::isProcessRunning(int index)
 {
     if ( (index>=0) && (index < processList.count()) ) {
         return processList.at(index)->isRunning();
@@ -1026,7 +1180,7 @@ bool konfytProject::isProcessRunning(int index)
     }
 }
 
-void konfytProject::runProcess(int index)
+void KonfytProject::runProcess(int index)
 {
     if ( (index>=0) && (index < processList.count()) ) {
         // Start process
@@ -1037,7 +1191,7 @@ void konfytProject::runProcess(int index)
     }
 }
 
-void konfytProject::stopProcess(int index)
+void KonfytProject::stopProcess(int index)
 {
     if ( (index>=0) && (index < processList.count()) ) {
         // Stop process
@@ -1048,7 +1202,7 @@ void konfytProject::stopProcess(int index)
     }
 }
 
-void konfytProject::removeProcess(int index)
+void KonfytProject::removeProcess(int index)
 {
     if ( (index>=0) && (index < processList.count()) ) {
         processList.removeAt(index);
@@ -1059,37 +1213,37 @@ void konfytProject::removeProcess(int index)
 }
 
 // Slot for signal from Process object, when the process was started.
-void konfytProject::processStartedSlot(konfytProcess *process)
+void KonfytProject::processStartedSlot(konfytProcess *process)
 {
     int index = processList.indexOf(process);
     processStartedSignal(index, process);
 }
 
-void konfytProject::processFinishedSlot(konfytProcess *process)
+void KonfytProject::processFinishedSlot(konfytProcess *process)
 {
     int index = processList.indexOf(process);
     processFinishedSignal(index, process);
 }
 
-QList<konfytProcess*> konfytProject::getProcessList()
+QList<konfytProcess*> KonfytProject::getProcessList()
 {
     return processList;
 }
 
 // Used to determine whether patches are loaded. Uses unique patch id.
 // This addes the patch id to the loaded_patch_ids list.
-void konfytProject::markPatchLoaded(int patch_id)
+void KonfytProject::markPatchLoaded(int patch_id)
 {
     this->loaded_patch_ids.append(patch_id);
 }
 
 // Used to determine whether patches are loaded. Uses unique patch id.
-bool konfytProject::isPatchLoaded(int patch_id)
+bool KonfytProject::isPatchLoaded(int patch_id)
 {
     return this->loaded_patch_ids.contains(patch_id);
 }
 
-void konfytProject::addAndReplaceTrigger(konfytTrigger newTrigger)
+void KonfytProject::addAndReplaceTrigger(KonfytTrigger newTrigger)
 {
     // Remove any action that has the same trigger
     int trigint = newTrigger.toInt();
@@ -1104,7 +1258,7 @@ void konfytProject::addAndReplaceTrigger(konfytTrigger newTrigger)
     setModified(true);
 }
 
-void konfytProject::removeTrigger(QString actionText)
+void KonfytProject::removeTrigger(QString actionText)
 {
     if (triggerHash.contains(actionText)) {
         triggerHash.remove(actionText);
@@ -1112,65 +1266,94 @@ void konfytProject::removeTrigger(QString actionText)
     }
 }
 
-QList<konfytTrigger> konfytProject::getTriggerList()
+QList<KonfytTrigger> KonfytProject::getTriggerList()
 {
     return triggerHash.values();
 }
 
-bool konfytProject::isProgramChangeSwitchPatches()
+bool KonfytProject::isProgramChangeSwitchPatches()
 {
     return programChangeSwitchPatches;
 }
 
-void konfytProject::setProgramChangeSwitchPatches(bool value)
+void KonfytProject::setProgramChangeSwitchPatches(bool value)
 {
     programChangeSwitchPatches = value;
     setModified(true);
 }
 
-konfytJackConPair konfytProject::addJackCon(QString srcPort, QString destPort)
+KonfytJackConPair KonfytProject::addJackMidiCon(QString srcPort, QString destPort)
 {
-    konfytJackConPair a;
+    KonfytJackConPair a;
     a.srcPort = srcPort;
     a.destPort = destPort;
-    this->jackConList.append(a);
+    this->jackMidiConList.append(a);
     setModified(true);
     return a;
 }
 
-QList<konfytJackConPair> konfytProject::getJackConList()
+QList<KonfytJackConPair> KonfytProject::getJackMidiConList()
 {
-    return this->jackConList;
+    return this->jackMidiConList;
 }
 
-konfytJackConPair konfytProject::removeJackCon(int i)
+KonfytJackConPair KonfytProject::removeJackMidiCon(int i)
 {
-    if ( (i<0) || (i>= jackConList.count()) ) {
-        error_abort("Invalid other JACK connection index: " + n2s(i));
+    if ( (i<0) || (i>= jackMidiConList.count()) ) {
+        error_abort("removeJackMidiCon Invalid other JACK MIDI connection index: " + n2s(i));
         return;
     }
-    konfytJackConPair p = jackConList[i];
-    jackConList.removeAt(i);
+    KonfytJackConPair p = jackMidiConList[i];
+    jackMidiConList.removeAt(i);
     setModified(true);
     return p;
 }
 
-void konfytProject::setModified(bool mod)
+KonfytJackConPair KonfytProject::addJackAudioCon(QString srcPort, QString destPort)
+{
+    KonfytJackConPair a;
+    a.srcPort = srcPort;
+    a.destPort = destPort;
+    jackAudioConList.append(a);
+    setModified(true);
+    return a;
+}
+
+QList<KonfytJackConPair> KonfytProject::getJackAudioConList()
+{
+    return jackAudioConList;
+}
+
+KonfytJackConPair KonfytProject::removeJackAudioCon(int i)
+{
+    if ( (i<0) || (i >= jackAudioConList.count()) ) {
+        error_abort("removeJackAudioCon: Invalid other JACK Audio connection index: " + n2s(i));
+        return;
+    }
+    KonfytJackConPair p = jackAudioConList[i];
+    jackAudioConList.removeAt(i);
+    setModified(true);
+    return p;
+}
+
+void KonfytProject::setModified(bool mod)
 {
     this->modified = mod;
     emit projectModifiedChanged(mod);
 }
 
-bool konfytProject::isModified()
+bool KonfytProject::isModified()
 {
     return this->modified;
 }
 
 
 // Print error message to stdout, and abort app.
-void konfytProject::error_abort(QString msg)
+void KonfytProject::error_abort(QString msg)
 {
     std::cout << "\n" << "Konfyt ERROR, ABORTING: konfytProject:" << msg.toLocal8Bit().constData();
     abort();
 }
+
+
 

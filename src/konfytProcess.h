@@ -46,9 +46,7 @@ public:
 
     QProcess process;
     QString appname;
-    QString dir;
     QString projectDir;
-    QStringList args;
 
     void start();
     void stop();

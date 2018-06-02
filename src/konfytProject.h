@@ -44,8 +44,11 @@
 #define XML_PRJ_PATCH_FILENAME "filename"
 #define XML_PRJ_PATCH_LIST_NUMBERS "patchListNumbers"
 #define XML_PRJ_PATCH_LIST_NOTES "patchListNotes"
-#define XML_PRJ_MIDI_IN_AUTOCON_LIST "midiAutoConnectList"
-#define XML_PRJ_MIDI_IN_AUTOCON_LIST_PORT "port"
+#define XML_PRJ_MIDI_IN_PORTLIST "midiInPortList"
+#define XML_PRJ_MIDI_IN_PORT "port"
+#define XML_PRJ_MIDI_IN_PORT_ID "portId"
+#define XML_PRJ_MIDI_IN_PORT_NAME "portName"
+#define XML_PRJ_MIDI_IN_PORT_CLIENT "client"
 #define XML_PRJ_MIDI_OUT_PORTLIST "midiOutPortList"
 #define XML_PRJ_MIDI_OUT_PORT "port"
 #define XML_PRJ_MIDI_OUT_PORT_ID "portId"
@@ -71,8 +74,6 @@
 #define XML_PRJ_PROCESSLIST "processList"
 #define XML_PRJ_PROCESS "process"
 #define XML_PRJ_PROCESS_APPNAME "appname"
-#define XML_PRJ_PROCESS_DIR "dir" // TODO: NOT USED
-#define XML_PRJ_PROCESS_ARG "argument" // TODO: NOT USED
 #define XML_PRJ_TRIGGERLIST "triggerList"
 #define XML_PRJ_TRIGGER "trigger"
 #define XML_PRJ_TRIGGER_ACTIONTEXT "actionText"
@@ -82,25 +83,26 @@
 #define XML_PRJ_TRIGGER_BANKMSB "bankMSB"
 #define XML_PRJ_TRIGGER_BANKLSB "bankLSB"
 #define XML_PRJ_PROG_CHANGE_SWITCH_PATCHES "programChangeSwitchPatches"
-#define XML_PRJ_OTHERJACKCON_LIST "otherJackConList"
+#define XML_PRJ_OTHERJACK_MIDI_CON_LIST "otherJackMidiConList"
+#define XML_PRJ_OTHERJACK_AUDIO_CON_LIST "otherJackAudioConList"
 #define XML_PRJ_OTHERJACKCON "otherJackCon"
 #define XML_PRJ_OTHERJACKCON_SRC "srcPort"
 #define XML_PRJ_OTHERJACKCON_DEST "destPort"
 
-struct prjAudioBus {
+struct PrjAudioBus {
     QString busName;
-    konfytJackPort* leftJackPort;
+    KonfytJackPort* leftJackPort;
     float leftGain;
     QStringList leftOutClients;
-    konfytJackPort* rightJackPort;
+    KonfytJackPort* rightJackPort;
     float rightGain;
     QStringList rightOutClients;
 };
 
-struct prjAudioInPort {
+struct PrjAudioInPort {
     QString portName;
-    konfytJackPort* leftJackPort;
-    konfytJackPort* rightJackPort;
+    KonfytJackPort* leftJackPort;
+    KonfytJackPort* rightJackPort;
     float leftGain;
     float rightGain;
     QStringList leftInClients;
@@ -108,13 +110,15 @@ struct prjAudioInPort {
     int destinationBus;
 };
 
-struct prjMidiOutPort {
+struct PrjMidiPort {
     QString portName;
     QStringList clients;
-    konfytJackPort* jackPort;
+    KonfytJackPort* jackPort;
+
+    PrjMidiPort() : jackPort(NULL) {}
 };
 
-struct konfytTrigger {
+struct KonfytTrigger {
     QString actionText;
     int type;
     int channel;
@@ -122,7 +126,7 @@ struct konfytTrigger {
     int bankMSB;
     int bankLSB;
 
-    konfytTrigger() : type(-1),
+    KonfytTrigger() : type(-1),
                       channel(0),
                       data1(-1),
                       bankMSB(-1),
@@ -141,11 +145,11 @@ struct konfytTrigger {
 
 enum portLeftRight { leftPort, rightPort };
 
-class konfytProject : public QObject
+class KonfytProject : public QObject
 {
     Q_OBJECT
 public:
-    explicit konfytProject(QObject *parent = 0);
+    explicit KonfytProject(QObject *parent = 0);
 
     bool loadProject(QString filename);
     bool saveProject();
@@ -168,21 +172,29 @@ public:
     bool getShowPatchListNotes();
     void setShowPatchListNotes(bool show);
 
-    // midiAutoConnectList - list of ports to auto connect to our main midi input
-    QStringList midiInPort_getClients();
-    void midiInPort_addClient(QString port);
-    void midiInPort_removeClient(QString port);
-    void midiInPort_clearClients();
+    // MIDI input ports
+    QList<int> midiInPort_getAllPortIds();  // Get list of port ids
+    int midiInPort_addPort(QString portName);
+    void midiInPort_removePort(int portId);
+    bool midiInPort_exists(int portId);
+    PrjMidiPort midiInPort_getPort(int portId);
+    int midiInPort_getFirstPortId(int skipId);
+    int midiInPort_count();
+    void midiInPort_replace(int portId, PrjMidiPort port);
+    void midiInPort_replace_noModify(int portId, PrjMidiPort port);
+    QStringList midiInPort_getClients(int portId);  // Get client list of single port
+    void midiInPort_addClient(int portId, QString client);
+    void midiInPort_removeClient(int portId, QString client);
 
-    // Midi output ports
+    // MIDI output ports
     QList<int> midiOutPort_getAllPortIds();  // Get list of port ids
     int midiOutPort_addPort(QString portName);
     void midiOutPort_removePort(int portId);
     bool midiOutPort_exists(int portId);
-    prjMidiOutPort midiOutPort_getPort(int portId);
+    PrjMidiPort midiOutPort_getPort(int portId);
     int midiOutPort_count();
-    void midiOutPort_replace(int portId, prjMidiOutPort port);
-    void midiOutPort_replace_noModify(int portId, prjMidiOutPort port);
+    void midiOutPort_replace(int portId, PrjMidiPort port);
+    void midiOutPort_replace_noModify(int portId, PrjMidiPort port);
     QStringList midiOutPort_getClients(int portId);  // Get client list of single port
     void midiOutPort_addClient(int portId, QString client);
     void midiOutPort_removeClient(int portId, QString client);
@@ -192,23 +204,23 @@ public:
     int audioInPort_add(QString portName);
     void audioInPort_remove(int portId);
     bool audioInPort_exists(int portId);
-    prjAudioInPort audioInPort_getPort(int portId);
+    PrjAudioInPort audioInPort_getPort(int portId);
     int audioInPort_count();
-    void audioInPort_replace(int portId, prjAudioInPort newPort);
-    void audioInPort_replace_noModify(int portId, prjAudioInPort newPort);
+    void audioInPort_replace(int portId, PrjAudioInPort newPort);
+    void audioInPort_replace_noModify(int portId, PrjAudioInPort newPort);
     void audioInPort_addClient(int portId, portLeftRight leftRight, QString client);
     void audioInPort_removeClient(int portId, portLeftRight leftRight, QString client);
 
     // Audio busses
-    int audioBus_add(QString busName, konfytJackPort *leftJackPort, konfytJackPort *rightJackPort);
+    int audioBus_add(QString busName, KonfytJackPort *leftJackPort, KonfytJackPort *rightJackPort);
     void audioBus_remove(int busId);
     int audioBus_count();
     bool audioBus_exists(int busId);
-    prjAudioBus audioBus_getBus(int busId);
+    PrjAudioBus audioBus_getBus(int busId);
     int audioBus_getFirstBusId(int skipId);
     QList<int> audioBus_getAllBusIds();
-    void audioBus_replace(int busId, prjAudioBus newBus);
-    void audioBus_replace_noModify(int busId, prjAudioBus newBus);
+    void audioBus_replace(int busId, PrjAudioBus newBus);
+    void audioBus_replace_noModify(int busId, PrjAudioBus newBus);
     void audioBus_addClient(int busId, portLeftRight leftRight, QString client);
     void audioBus_removeClient(int busId, portLeftRight leftRight, QString client);
 
@@ -225,16 +237,20 @@ public:
     bool isPatchLoaded(int patch_id);
 
     // Triggers
-    void addAndReplaceTrigger(konfytTrigger newTrigger);
+    void addAndReplaceTrigger(KonfytTrigger newTrigger);
     void removeTrigger(QString actionText);
-    QList<konfytTrigger> getTriggerList();
+    QList<KonfytTrigger> getTriggerList();
     bool isProgramChangeSwitchPatches();
     void setProgramChangeSwitchPatches(bool value);
 
-    // Other JACK connections
-    konfytJackConPair addJackCon(QString srcPort, QString destPort);
-    QList<konfytJackConPair> getJackConList();
-    konfytJackConPair removeJackCon(int i);
+    // Other JACK MIDI connections
+    KonfytJackConPair addJackMidiCon(QString srcPort, QString destPort);
+    QList<KonfytJackConPair> getJackMidiConList();
+    KonfytJackConPair removeJackMidiCon(int i);
+    // Other JACK Audio connections
+    KonfytJackConPair addJackAudioCon(QString srcPort, QString destPort);
+    QList<KonfytJackConPair> getJackAudioConList();
+    KonfytJackConPair removeJackAudioCon(int i);
 
     bool isModified(); // Returns whether the project has been modified since last load/save.
     void setModified(bool mod);
@@ -245,26 +261,29 @@ private:
     QList<konfytPatch*> patchList;
     QString projectDirname;
     QString projectName;
-    QStringList midiAutoConnectList;
 
-    QMap<int, prjMidiOutPort> midiOutPortMap;
+    QMap<int, PrjMidiPort> midiInPortMap;
+    int midiInPort_getUniqueId();
+
+    QMap<int, PrjMidiPort> midiOutPortMap;
     int midiOutPort_getUniqueId();
 
-    QMap<int, prjAudioInPort> audioInPortMap;
+    QMap<int, PrjAudioInPort> audioInPortMap;
     int audioInPort_getUniqueId();
 
-    QMap<int, prjAudioBus> audioBusMap;
+    QMap<int, PrjAudioBus> audioBusMap;
     int audioBus_getUniqueId();
 
     int getUniqueIdHelper(QList<int> ids);
 
     QList<konfytProcess*> processList;
-    QHash<QString, konfytTrigger> triggerHash;
+    QHash<QString, KonfytTrigger> triggerHash;
     bool programChangeSwitchPatches;
     bool patchListNumbers;
     bool patchListNotes;
 
-    QList<konfytJackConPair> jackConList;
+    QList<KonfytJackConPair> jackMidiConList;
+    QList<KonfytJackConPair> jackAudioConList;
 
     bool modified; // Whether project has been modified since last load/save.
 

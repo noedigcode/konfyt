@@ -119,7 +119,7 @@ QSlider::handle:horizontal:hover {
      <property name="title">
       <string/>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1,0,0,0,0">
+     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,1,0,0,0,0">
       <property name="spacing">
        <number>1</number>
       </property>
@@ -160,6 +160,22 @@ QSlider::handle:horizontal:hover {
           <width>18</width>
           <height>18</height>
          </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolButton_midiInPort">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>23</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>MIDI In Port</string>
+        </property>
+        <property name="text">
+         <string>0</string>
         </property>
        </widget>
       </item>

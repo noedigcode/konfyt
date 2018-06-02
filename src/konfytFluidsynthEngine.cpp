@@ -33,7 +33,7 @@ konfytFluidsynthEngine::konfytFluidsynthEngine(QObject *parent) :
 
 
 // Generate fluidsynth MIDI events based on buffer from Jack midi input.
-void konfytFluidsynthEngine::processJackMidi(int ID, const konfytMidiEvent *ev)
+void konfytFluidsynthEngine::processJackMidi(int ID, const KonfytMidiEvent *ev)
 {
     // TODO NB: handle case where we are in panic mode, and all-note-off etc. messages are
     // received, but the mutex is already locked. We have to queue it somehow for until the

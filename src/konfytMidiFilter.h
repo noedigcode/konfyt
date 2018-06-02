@@ -52,8 +52,8 @@ public:
     void setZone(int lowNote, int highNote, int multiply, int add, int lowVel, int highVel);
     void setZone(konfytMidiFilterZone newZone);
 
-    bool passFilter(const konfytMidiEvent *ev);
-    konfytMidiEvent modify(const konfytMidiEvent* ev);
+    bool passFilter(const KonfytMidiEvent *ev);
+    KonfytMidiEvent modify(const KonfytMidiEvent* ev);
 
     QList<int> passCC;
     bool passAllCC;

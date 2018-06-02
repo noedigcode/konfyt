@@ -52,7 +52,7 @@ public:
     explicit konfytCarlaEngine(QObject *parent = 0);
 
     static void carlaEngineCallback(void* ptr, EngineCallbackOpcode action, uint pluginId, int value1, int value2, float value3, const char* valueStr);
-    void InitCarlaEngine(konfytJackEngine *jackEngine, QString carlaJackClientName);
+    void InitCarlaEngine(KonfytJackEngine *jackEngine, QString carlaJackClientName);
 
     int addSFZ(QString path);
     void removeSFZ(int ID);
@@ -68,7 +68,7 @@ public:
 private:
     int pluginUniqueIDCounter;
     QString jackClientName;
-    konfytJackEngine* jack;
+    KonfytJackEngine* jack;
     QMap<int, konfytCarlaPluginData> pluginDataMap;
     QList<int> pluginList; // List with indexes matching id's in Carla engine, i.e. maps this class' unique IDs to pluginIds in Carla engine.
     
