@@ -2183,12 +2183,10 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *curre
             // Fill programList variable with program results of selected soundfont
             konfytSoundfont* sf = library_getSelectedSfont();
             programList = db.getResults_sfontPrograms(sf);
-            // TODO: Track sf, might be a memory leak.
         } else {
             // Fill programList variable with all programs of selected soundfont
             konfytSoundfont* sf = library_getSelectedSfont();
             programList = sf->programlist;
-            // TODO: Track sf, might be a memory leak.
         }
         // Refresh the GUI program list with programs (if any).
         ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_ProgramList);

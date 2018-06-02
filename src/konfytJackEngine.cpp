@@ -2149,11 +2149,15 @@ void KonfytJackEngine::removeOtherJackConPair(KonfytJackConPair p)
     for (int i=0; i<otherConsList.count(); i++) {
         if (p.equals(otherConsList[i])) {
             otherConsList.removeAt(i);
+
+            // Disconnect JACK ports
+            if (clientIsActive()) {
+                jack_disconnect(client, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
+            }
+
             break;
         }
     }
-
-    // TODO: Disconnect ports also.
 
     pauseJackProcessing(false);
     refreshPortConnections();
