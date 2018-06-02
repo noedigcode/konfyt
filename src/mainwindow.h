@@ -416,6 +416,7 @@ public:
     // ========================================================================
     // Other JACK connections
     // ========================================================================
+    bool jackPage_audio; // True to display audio ports, false for MIDI
     void showJackPage();
 
     // ========================================================================
@@ -783,6 +784,10 @@ private slots:
     void on_pushButton_LavaMonster_clicked();
 
 
+
+    void on_pushButton_JackAudioPorts_clicked();
+
+    void on_pushButton_JackMidiPorts_clicked();
 
 private:
     Ui::MainWindow *ui;

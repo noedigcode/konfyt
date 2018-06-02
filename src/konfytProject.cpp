@@ -227,15 +227,25 @@ bool KonfytProject::saveProjectAs(QString dirname)
     }
     stream.writeEndElement(); // end of trigger list
 
-    // Write other JACK connections list
-    stream.writeStartElement(XML_PRJ_OTHERJACKCON_LIST);
-    for (int i=0; i<jackConList.count(); i++) {
+    // Write other JACK MIDI connections list
+    stream.writeStartElement(XML_PRJ_OTHERJACK_MIDI_CON_LIST);
+    for (int i=0; i<jackMidiConList.count(); i++) {
         stream.writeStartElement(XML_PRJ_OTHERJACKCON);
-        stream.writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackConList[i].srcPort);
-        stream.writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackConList[i].destPort);
-        stream.writeEndElement(); // JACK connection pair
+        stream.writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackMidiConList[i].srcPort);
+        stream.writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackMidiConList[i].destPort);
+        stream.writeEndElement(); // end JACK connection pair
     }
-    stream.writeEndElement(); // Other JACK connections list
+    stream.writeEndElement(); // Other JACK MIDI connections list
+
+    // Write other JACK Audio connections list
+    stream.writeStartElement(XML_PRJ_OTHERJACK_AUDIO_CON_LIST);
+    for (int i=0; i < jackAudioConList.count(); i++) {
+        stream.writeStartElement(XML_PRJ_OTHERJACKCON); // start JACK connection pair
+        stream.writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackAudioConList[i].srcPort);
+        stream.writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackAudioConList[i].destPort);
+        stream.writeEndElement(); // end JACK connection pair
+    }
+    stream.writeEndElement(); // end JACK Audio connections list
 
     stream.writeEndElement(); // project
 
@@ -492,9 +502,9 @@ bool KonfytProject::loadProject(QString filename)
                     }
                 }
 
-            }
+            } else if (r.name() == XML_PRJ_OTHERJACK_MIDI_CON_LIST) {
 
-            else if (r.name() == XML_PRJ_OTHERJACKCON_LIST) {
+                // Other JACK MIDI connections list
 
                 while (r.readNextStartElement()) {
                     if (r.name() == XML_PRJ_OTHERJACKCON) {
@@ -511,17 +521,44 @@ bool KonfytProject::loadProject(QString filename)
                                 r.skipCurrentElement();
                             }
                         }
-                        this->addJackCon(srcPort, destPort);
+                        this->addJackMidiCon(srcPort, destPort);
 
                     } else {
                         userMessage("loadProject: "
-                                    "Unrecognized otherJackConList element: " + r.name().toString() );
+                                    "Unrecognized otherJackMidiConList element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
                 }
 
-            }
-            else {
+            } else if (r.name() == XML_PRJ_OTHERJACK_AUDIO_CON_LIST) {
+
+                // Other JACK Audio connections list
+
+                while (r.readNextStartElement()) {
+                    if (r.name() == XML_PRJ_OTHERJACKCON) {
+
+                        QString srcPort, destPort;
+                        while (r.readNextStartElement()) {
+                            if (r.name() == XML_PRJ_OTHERJACKCON_SRC) {
+                                srcPort = r.readElementText();
+                            } else if (r.name() == XML_PRJ_OTHERJACKCON_DEST) {
+                                destPort = r.readElementText();
+                            } else {
+                                userMessage("loadProject: "
+                                            "Unrecognized JACK con element: " + r.name().toString() );
+                                r.skipCurrentElement();
+                            }
+                        }
+                        addJackAudioCon(srcPort, destPort);
+
+                    } else {
+                        userMessage("loadProject: "
+                                    "Unrecognized otherJackAudioConList element: " + r.name().toString() );
+                        r.skipCurrentElement();
+                    }
+                }
+
+            } else {
                 userMessage("loadProject: "
                             "Unrecognized project element: " + r.name().toString() );
                 r.skipCurrentElement();
@@ -1253,29 +1290,56 @@ void KonfytProject::setProgramChangeSwitchPatches(bool value)
     setModified(true);
 }
 
-KonfytJackConPair KonfytProject::addJackCon(QString srcPort, QString destPort)
+KonfytJackConPair KonfytProject::addJackMidiCon(QString srcPort, QString destPort)
 {
     KonfytJackConPair a;
     a.srcPort = srcPort;
     a.destPort = destPort;
-    this->jackConList.append(a);
+    this->jackMidiConList.append(a);
     setModified(true);
     return a;
 }
 
-QList<KonfytJackConPair> KonfytProject::getJackConList()
+QList<KonfytJackConPair> KonfytProject::getJackMidiConList()
 {
-    return this->jackConList;
+    return this->jackMidiConList;
 }
 
-KonfytJackConPair KonfytProject::removeJackCon(int i)
+KonfytJackConPair KonfytProject::removeJackMidiCon(int i)
 {
-    if ( (i<0) || (i>= jackConList.count()) ) {
-        error_abort("Invalid other JACK connection index: " + n2s(i));
+    if ( (i<0) || (i>= jackMidiConList.count()) ) {
+        error_abort("removeJackMidiCon Invalid other JACK MIDI connection index: " + n2s(i));
         return;
     }
-    KonfytJackConPair p = jackConList[i];
-    jackConList.removeAt(i);
+    KonfytJackConPair p = jackMidiConList[i];
+    jackMidiConList.removeAt(i);
+    setModified(true);
+    return p;
+}
+
+KonfytJackConPair KonfytProject::addJackAudioCon(QString srcPort, QString destPort)
+{
+    KonfytJackConPair a;
+    a.srcPort = srcPort;
+    a.destPort = destPort;
+    jackAudioConList.append(a);
+    setModified(true);
+    return a;
+}
+
+QList<KonfytJackConPair> KonfytProject::getJackAudioConList()
+{
+    return jackAudioConList;
+}
+
+KonfytJackConPair KonfytProject::removeJackAudioCon(int i)
+{
+    if ( (i<0) || (i >= jackAudioConList.count()) ) {
+        error_abort("removeJackAudioCon: Invalid other JACK Audio connection index: " + n2s(i));
+        return;
+    }
+    KonfytJackConPair p = jackAudioConList[i];
+    jackAudioConList.removeAt(i);
     setModified(true);
     return p;
 }

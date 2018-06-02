@@ -85,7 +85,8 @@
 #define XML_PRJ_TRIGGER_BANKMSB "bankMSB"
 #define XML_PRJ_TRIGGER_BANKLSB "bankLSB"
 #define XML_PRJ_PROG_CHANGE_SWITCH_PATCHES "programChangeSwitchPatches"
-#define XML_PRJ_OTHERJACKCON_LIST "otherJackConList"
+#define XML_PRJ_OTHERJACK_MIDI_CON_LIST "otherJackMidiConList"
+#define XML_PRJ_OTHERJACK_AUDIO_CON_LIST "otherJackAudioConList"
 #define XML_PRJ_OTHERJACKCON "otherJackCon"
 #define XML_PRJ_OTHERJACKCON_SRC "srcPort"
 #define XML_PRJ_OTHERJACKCON_DEST "destPort"
@@ -244,10 +245,14 @@ public:
     bool isProgramChangeSwitchPatches();
     void setProgramChangeSwitchPatches(bool value);
 
-    // Other JACK connections
-    KonfytJackConPair addJackCon(QString srcPort, QString destPort);
-    QList<KonfytJackConPair> getJackConList();
-    KonfytJackConPair removeJackCon(int i);
+    // Other JACK MIDI connections
+    KonfytJackConPair addJackMidiCon(QString srcPort, QString destPort);
+    QList<KonfytJackConPair> getJackMidiConList();
+    KonfytJackConPair removeJackMidiCon(int i);
+    // Other JACK Audio connections
+    KonfytJackConPair addJackAudioCon(QString srcPort, QString destPort);
+    QList<KonfytJackConPair> getJackAudioConList();
+    KonfytJackConPair removeJackAudioCon(int i);
 
     bool isModified(); // Returns whether the project has been modified since last load/save.
     void setModified(bool mod);
@@ -279,7 +284,8 @@ private:
     bool patchListNumbers;
     bool patchListNotes;
 
-    QList<KonfytJackConPair> jackConList;
+    QList<KonfytJackConPair> jackMidiConList;
+    QList<KonfytJackConPair> jackAudioConList;
 
     bool modified; // Whether project has been modified since last load/save.
 

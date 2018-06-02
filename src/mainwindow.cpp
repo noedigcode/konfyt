@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     previewPatch = NULL;
     previewMode = false;
     patchNote_ignoreChange = false;
+    jackPage_audio = true;
 
     midiFilter_lastChan = 0;
     midiFilter_lastData1 = 0;
@@ -1442,8 +1443,14 @@ void MainWindow::setCurrentProject(int i)
 
     // Update other JACK connections in Jack
     jack->clearOtherJackConPair();
-    QList<KonfytJackConPair> jackCons = prj->getJackConList();
-    for (int i=0; i<jackCons.count(); i++) {
+    // MIDI
+    QList<KonfytJackConPair> jackCons = prj->getJackMidiConList();
+    for (int i=0; i < jackCons.count(); i++) {
+        jack->addOtherJackConPair( jackCons[i] );
+    }
+    // Audio
+    jackCons = prj->getJackAudioConList();
+    for (int i=0; i < jackCons.count(); i++) {
         jack->addOtherJackConPair( jackCons[i] );
     }
 
@@ -3081,23 +3088,43 @@ void MainWindow::updateGUIWarnings()
 
     }
 
-    // Other JACK connections
+    // Other JACK MIDI connections
     bool first = true;
-    QList<KonfytJackConPair> cons = prj->getJackConList();
-    for (int i=0; i<cons.count(); i++) {
-        if ( !moports.contains(cons[i].srcPort) ) {
+    QList<KonfytJackConPair> midiCons = prj->getJackMidiConList();
+    for (int i=0; i<midiCons.count(); i++) {
+        if ( !moports.contains(midiCons[i].srcPort) ) {
             if (first) {
-                addWarning("Missing Other JACK Ports:");
+                addWarning("Missing Other JACK MIDI Ports:");
                 first = false;
             }
-            addWarning(" -TX:  " + cons[i].srcPort);
+            addWarning(" -TX:  " + midiCons[i].srcPort);
         }
-        if ( !miports.contains(cons[i].destPort) ) {
+        if ( !miports.contains(midiCons[i].destPort) ) {
             if (first) {
-                addWarning("Missing Other JACK Ports:");
+                addWarning("Missing Other JACK MIDI Ports:");
                 first = false;
             }
-            addWarning(" -RX: " + cons[i].destPort);
+            addWarning(" -RX: " + midiCons[i].destPort);
+        }
+    }
+
+    // Other JACK Audio connections
+    first = true;
+    QList<KonfytJackConPair> audioCons = prj->getJackAudioConList();
+    for (int i=0; i<audioCons.count(); i++) {
+        if ( !aoports.contains(audioCons[i].srcPort) ) {
+            if (first) {
+                addWarning("Missing Other JACK Audio Ports:");
+                first = false;
+            }
+            addWarning(" -TX:  " + audioCons[i].srcPort);
+        }
+        if ( !aiports.contains(audioCons[i].destPort) ) {
+            if (first) {
+                addWarning("Missing Other JACK Audio Ports:");
+                first = false;
+            }
+            addWarning(" -RX: " + audioCons[i].destPort);
         }
     }
 
@@ -5451,12 +5478,31 @@ void MainWindow::on_pushButton_ShowJackPage_clicked()
 void MainWindow::showJackPage()
 {
     ui->stackedWidget->setCurrentWidget(ui->otherJackConsPage);
+    ui->pushButton_JackAudioPorts->setChecked(jackPage_audio);
+    ui->pushButton_JackMidiPorts->setChecked(!jackPage_audio);
+
+    KonfytProject* prj = getCurrentProject();
+    if (prj == NULL) { return; }
+
+    QStringList outPorts;
+    QStringList inPorts;
+    QList<KonfytJackConPair> conList;
+    if (jackPage_audio) {
+        // Audio Jack ports
+        outPorts = jack->getAudioOutputPortsList();
+        inPorts = jack->getAudioInputPortsList();
+        conList = prj->getJackAudioConList();
+    } else {
+        // MIDI Jack ports
+        outPorts = jack->getMidiOutputPortsList();
+        inPorts = jack->getMidiInputPortsList();
+        conList = prj->getJackMidiConList();
+    }
 
     // Update JACK output ports
     ui->treeWidget_jackPortsOut->clear();
-    QStringList mo = jack->getMidiOutputPortsList();
-    for (int i=0; i<mo.count(); i++) {
-        QString client_port = mo[i];
+    for (int i=0; i < outPorts.count(); i++) {
+        QString client_port = outPorts[i];
         QTreeWidgetItem* item = new QTreeWidgetItem();
         item->setText(0,client_port);
         ui->treeWidget_jackPortsOut->addTopLevelItem(item);
@@ -5464,9 +5510,8 @@ void MainWindow::showJackPage()
 
     // Update JACK input ports
     ui->treeWidget_jackportsIn->clear();
-    QStringList mi = jack->getMidiInputPortsList();
-    for (int i=0; i<mi.count(); i++) {
-        QString client_port = mi[i];
+    for (int i=0; i < inPorts.count(); i++) {
+        QString client_port = inPorts[i];
         QTreeWidgetItem* item = new QTreeWidgetItem();
         item->setText(0,client_port);
         ui->treeWidget_jackportsIn->addTopLevelItem(item);
@@ -5474,13 +5519,11 @@ void MainWindow::showJackPage()
 
     // Fill connections list with connections from project
     ui->listWidget_jackConnections->clear();
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
-    QList<KonfytJackConPair> l = prj->getJackConList();
-    for (int i=0; i<l.count(); i++) {
-        QListWidgetItem* item = new QListWidgetItem( l[i].toString() );
+    for (int i=0; i < conList.count(); i++) {
+        KonfytJackConPair portPair = conList[i];
+        QListWidgetItem* item = new QListWidgetItem( portPair.toString() );
         // Colour red if one of the ports aren't present in JACK.
-        if ( !mo.contains(l[i].srcPort) || !mi.contains(l[i].destPort) ) {
+        if ( !outPorts.contains(portPair.srcPort) || !inPorts.contains(portPair.destPort) ) {
             item->setBackgroundColor(Qt::red);
         }
         ui->listWidget_jackConnections->addItem( item );
@@ -5501,17 +5544,24 @@ void MainWindow::on_pushButton_jackConAdd_clicked()
     QTreeWidgetItem* itemIn = ui->treeWidget_jackportsIn->currentItem();
     if ( (itemOut==NULL) || (itemIn==NULL) ) { return; }
 
-    // Add new connection pair to project
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
-    KonfytJackConPair p = prj->addJackCon(itemOut->text(0), itemIn->text(0));
+
+    KonfytJackConPair p;
+    if (jackPage_audio) {
+        // Add Audio Jack port to project
+        p = prj->addJackAudioCon(itemOut->text(0), itemIn->text(0));
+    } else {
+        // Add MIDI Jack port to project
+        p = prj->addJackMidiCon(itemOut->text(0), itemIn->text(0));
+    }
+
     // Add to Jack engine
     jack->addOtherJackConPair(p);
     // Add to jack connections GUI list
     ui->listWidget_jackConnections->addItem( p.toString() );
 
     updateGUIWarnings();
-
 }
 
 void MainWindow::on_pushButton_jackConRemove_clicked()
@@ -5522,7 +5572,14 @@ void MainWindow::on_pushButton_jackConRemove_clicked()
     if (prj == NULL) { return; }
 
     // Remove from project
-    KonfytJackConPair p = prj->removeJackCon(row);
+    KonfytJackConPair p;
+    if (jackPage_audio) {
+        // Audio
+        p = prj->removeJackAudioCon(row);
+    } else {
+        // MIDI
+        p = prj->removeJackMidiCon(row);
+    }
     // Remove from JACK
     jack->removeOtherJackConPair(p);
     // Remove from GUI
@@ -5583,3 +5640,15 @@ void MainWindow::toggleShowPatchListNotes()
     gui_updatePatchList();
 }
 
+
+void MainWindow::on_pushButton_JackAudioPorts_clicked()
+{
+    jackPage_audio = true;
+    showJackPage();
+}
+
+void MainWindow::on_pushButton_JackMidiPorts_clicked()
+{
+    jackPage_audio = false;
+    showJackPage();
+}
