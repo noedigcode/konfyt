@@ -1514,8 +1514,10 @@ void KonfytJackEngine::handleNoteoffEvent(KonfytMidiEvent &ev, jack_midi_event_t
                 if (rec->jackPortNotFluidsynth) {
                     // Get output buffer, based on size and time of input event
                     unsigned char* out_buffer = jack_midi_event_reserve( rec->port->buffer, inEvent_jack.time, inEvent_jack.size);
-                    // Copy input event to output buffer
-                    newEv.toBuffer( out_buffer );
+                    if (out_buffer) {
+                        // Copy input event to output buffer
+                        newEv.toBuffer( out_buffer );
+                    }
                 } else {
                     fluidsynthEngine->processJackMidi( rec->fluidsynthID, &newEv );
                 }
@@ -1547,8 +1549,10 @@ void KonfytJackEngine::handleSustainoffEvent(KonfytMidiEvent &ev, jack_midi_even
             if (rec->jackPortNotFluidsynth) {
                 // Get output buffer, based on size and time of input event
                 unsigned char* out_buffer = jack_midi_event_reserve( rec->port->buffer, inEvent_jack.time, inEvent_jack.size);
-                // Copy input event to output buffer
-                newEv.toBuffer( out_buffer );
+                if (out_buffer) {
+                    // Copy input event to output buffer
+                    newEv.toBuffer( out_buffer );
+                }
             } else {
                 fluidsynthEngine->processJackMidi( rec->fluidsynthID, &newEv );
             }
@@ -1576,8 +1580,10 @@ void KonfytJackEngine::handlePitchbendZeroEvent(KonfytMidiEvent &ev, jack_midi_e
             if (rec->jackPortNotFluidsynth) {
                 // Get output buffer, based on size and time of input event
                 unsigned char* out_buffer = jack_midi_event_reserve( rec->port->buffer, inEvent_jack.time, inEvent_jack.size);
-                // Copy input event to output buffer
-                newEv.toBuffer( out_buffer );
+                if (out_buffer) {
+                    // Copy input event to output buffer
+                    newEv.toBuffer( out_buffer );
+                }
             } else {
                 fluidsynthEngine->processJackMidi( rec->fluidsynthID, &newEv );
             }
@@ -1689,6 +1695,10 @@ void KonfytJackEngine::processMidiEventForMidiOutPorts(KonfytJackPort *sourcePor
 
             // Get output buffer, based on size and time of input event
             out_buffer = jack_midi_event_reserve( tempPort->buffer, inEvent_jack.time, inEvent_jack.size);
+            if (out_buffer == 0) {
+                // JACK error
+                continue;
+            }
 
             // Copy input event to output buffer
             evToSend.toBuffer( out_buffer );
@@ -1763,6 +1773,10 @@ void KonfytJackEngine::processMidiEventForPlugins(KonfytJackPort *sourcePort,
 
             // Get output buffer, based on size and time of input event
             out_buffer = jack_midi_event_reserve( tempPort->buffer, inEvent_jack.time, inEvent_jack.size);
+            if (out_buffer == 0) {
+                // JACK error
+                continue;
+            }
 
             // Force MIDI channel 0
             evToSend.channel = 0;
@@ -1892,16 +1906,22 @@ void KonfytJackEngine::sendMidiClosureEvents(KonfytJackPort *port, int channel)
 
     // All notes off
     out_buffer = jack_midi_event_reserve( port->buffer, 0, 3);
-    evAllNotesOff.channel = channel;
-    evAllNotesOff.toBuffer(out_buffer);
+    if (out_buffer) {
+        evAllNotesOff.channel = channel;
+        evAllNotesOff.toBuffer(out_buffer);
+    }
     // Also send sustain off message
     out_buffer = jack_midi_event_reserve( port->buffer, 0, 3 );
-    evSustainZero.channel = channel;
-    evSustainZero.toBuffer(out_buffer);
+    if (out_buffer) {
+        evSustainZero.channel = channel;
+        evSustainZero.toBuffer(out_buffer);
+    }
     // And also pitchbend zero
     out_buffer = jack_midi_event_reserve( port->buffer, 0, 3 );
-    evPitchbendZero.channel = channel;
-    evPitchbendZero.toBuffer(out_buffer);
+    if (out_buffer) {
+        evPitchbendZero.channel = channel;
+        evPitchbendZero.toBuffer(out_buffer);
+    }
 }
 
 // Helper function for Jack process callback
