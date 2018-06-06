@@ -1,4 +1,4 @@
-![Konfyt Logo](icons/konfyt64.png)
+![Konfyt Logo](icons/konfytReadmeLogo.png)
 Konfyt
 ======
 Digital Keyboard Workstation for Linux
