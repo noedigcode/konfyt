@@ -506,13 +506,19 @@ void MainWindow::showMidiFilterEditor()
 {
     // Switch to midi filter view
 
-    KonfytPatchLayer g = midiFilterEditItem->getPatchLayerItem();
+    konfytMidiFilter f;
+    if (midiFilterEditType == MidiFilterEditPort) {
+        KonfytProject* prj = getCurrentProject();
+        if (prj == NULL) { return; }
+        f = prj->midiInPort_getPort(midiFilterEditPort).filter;
+    } else {
+        KonfytPatchLayer g = midiFilterEditItem->getPatchLayerItem();
+        f = g.getMidiFilter();
+    }
 
-    konfytMidiFilter f = g.getMidiFilter();
     konfytMidiFilterZone z = f.zone;
     ui->spinBox_midiFilter_LowNote->setValue(z.lowNote);
     ui->spinBox_midiFilter_HighNote->setValue(z.highNote);
-    ui->spinBox_midiFilter_Multiply->setValue(z.multiply);
     ui->spinBox_midiFilter_Add->setValue(z.add);
     ui->spinBox_midiFilter_LowVel->setValue(z.lowVel);
     ui->spinBox_midiFilter_HighVel->setValue(z.highVel);
@@ -774,6 +780,7 @@ void MainWindow::gui_updatePatchList()
 void MainWindow::showConnectionsPage()
 {
     ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
+    ui->pushButton_connectionsPage_MidiFilter->setVisible(false);
 
     // Adjust column widths
     int RLwidth = 30;
@@ -1333,6 +1340,9 @@ void MainWindow::setCurrentProject(int i)
         for (int k=0; k < c.count(); k++) {
             jack->addPortClient(KonfytJackPortType_MidiIn, jackPort, c.at(k));
         }
+
+        // Set port midi filter in Jack
+        jack->setPortFilter(KonfytJackPortType_MidiIn, jackPort, projectPort.filter);
     }
 
 
@@ -3555,6 +3565,7 @@ void MainWindow::onLayer_remove_clicked(konfytLayerWidget *layerItem)
 /* Slot: on layer item filter button clicked. */
 void MainWindow::onLayer_filter_clicked(konfytLayerWidget *layerItem)
 {
+    midiFilterEditType = MidiFilterEditLayer;
     midiFilterEditItem = layerItem;
     showMidiFilterEditor();
 }
@@ -4070,19 +4081,39 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
 
 void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+    // Switch back to previous view
+    if (midiFilterEditType == MidiFilterEditPort) {
+        ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
+    } else {
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+    }
 }
 
 // The user has been editing the midi filter and has now clicked apply.
 void MainWindow::on_pushButton_midiFilter_Apply_clicked()
 {
-    KonfytPatchLayer g = midiFilterEditItem->getPatchLayerItem();
-    konfytMidiFilter f = g.getMidiFilter();
+    konfytMidiFilter f;
+    KonfytProject* prj = getCurrentProject();
+    if (prj == NULL) {
+        userMessage("ERROR: No current project.");
+        return;
+    }
+
+    if (midiFilterEditType == MidiFilterEditPort) {
+        if (prj->midiInPort_exists(midiFilterEditPort)) {
+            f = prj->midiInPort_getPort(midiFilterEditPort).filter;
+        } else {
+            userMessage("ERROR: Port does not exist in project.");
+            return;
+        }
+    } else {
+        KonfytPatchLayer g = midiFilterEditItem->getPatchLayerItem();
+        f = g.getMidiFilter();
+    }
 
     // Update the filter from the GUI
     f.setZone( ui->spinBox_midiFilter_LowNote->value(),
                ui->spinBox_midiFilter_HighNote->value(),
-               ui->spinBox_midiFilter_Multiply->value(),
                ui->spinBox_midiFilter_Add->value(),
                ui->spinBox_midiFilter_LowVel->value(),
                ui->spinBox_midiFilter_HighVel->value());
@@ -4100,18 +4131,31 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
         f.passCC.append( ui->listWidget_midiFilter_CC->item(i)->text().toInt() );
     }
 
-    // Update filter in gui layer item
-    g.setMidiFilter(f);
-    midiFilterEditItem->setLayerItem(g);
-    // and also in engine.
-    pengine->setLayerFilter(&g, f);
+    if (midiFilterEditType == MidiFilterEditPort) {
+        // Update filter in project
+        prj->midiInPort_setPortFilter(midiFilterEditPort, f);
+        // And also in Jack.
+        jack->setPortFilter(KonfytJackPortType_MidiIn,
+                            prj->midiInPort_getPort(midiFilterEditPort).jackPort,
+                            f);
+    } else {
+        // Update filter in gui layer item
+        KonfytPatchLayer g = midiFilterEditItem->getPatchLayerItem();
+        g.setMidiFilter(f);
+        midiFilterEditItem->setLayerItem(g);
+        // and also in engine.
+        pengine->setLayerFilter(&g, f);
+    }
 
     // Indicate project needs to be saved
     setProjectModified();
 
-    // Switch back to patch view
-    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
-
+    // Switch back to previous view
+    if (midiFilterEditType == MidiFilterEditPort) {
+        ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
+    } else {
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+    }
 }
 
 
@@ -4124,11 +4168,6 @@ void MainWindow::on_toolButton_MidiFilter_lowNote_clicked()
 void MainWindow::on_toolButton_MidiFilter_HighNote_clicked()
 {
     ui->spinBox_midiFilter_HighNote->setValue(midiFilter_lastData1);
-}
-
-void MainWindow::on_toolButton_MidiFilter_Multiply_clicked()
-{
-    ui->spinBox_midiFilter_Multiply->setValue(midiFilter_lastData1);
 }
 
 void MainWindow::on_toolButton_MidiFilter_Add_clicked()
@@ -4596,6 +4635,9 @@ int MainWindow::addMidiInPort()
         p.jackPort = jackPort;
         prj->midiInPort_replace(portId, p);
 
+        // Update filter in Jack
+        jack->setPortFilter(KonfytJackPortType_MidiIn, jackPort, p.filter);
+
         // Add to GUI
         gui_updateLayerMidiInPortsMenu();
 
@@ -4718,6 +4760,16 @@ void MainWindow::on_pushButton_ShowConnections_clicked()
 
 void MainWindow::on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
 {
+    if (current == NULL){ return; }
+
+    // Enable MIDI Filter button if MIDI in port selected
+    if ( current->parent() == midiInParent ) {
+        // Midi input port is selected
+        ui->pushButton_connectionsPage_MidiFilter->setVisible(true);
+    } else {
+        ui->pushButton_connectionsPage_MidiFilter->setVisible(false);
+    }
+
     gui_updateConnectionsTree();
 }
 
@@ -5650,4 +5702,14 @@ void MainWindow::on_pushButton_JackMidiPorts_clicked()
 {
     jackPage_audio = false;
     showJackPage();
+}
+
+void MainWindow::on_pushButton_connectionsPage_MidiFilter_clicked()
+{
+    if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
+        // Midi input port is selected
+        midiFilterEditPort = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
+        midiFilterEditType = MidiFilterEditPort;
+        showMidiFilterEditor();
+    }
 }

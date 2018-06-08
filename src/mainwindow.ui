@@ -1706,7 +1706,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>7</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
@@ -3843,124 +3843,6 @@ border-bottom-left-radius: 0;</string>
                    </layout>
                   </widget>
                  </item>
-                 <item row="7" column="0">
-                  <widget class="QFrame" name="frame_21">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_11">
-                    <property name="spacing">
-                     <number>1</number>
-                    </property>
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QSpinBox" name="spinBox_midiFilter_Multiply">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>23</height>
-                       </size>
-                      </property>
-                      <property name="maximum">
-                       <number>127</number>
-                      </property>
-                      <property name="value">
-                       <number>1</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QToolButton" name="toolButton_MidiFilter_Multiply">
-                      <property name="styleSheet">
-                       <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                      </property>
-                      <property name="text">
-                       <string>last</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item row="6" column="0">
-                  <widget class="QLabel" name="label_13">
-                   <property name="text">
-                    <string>Multiply Note</string>
-                   </property>
-                  </widget>
-                 </item>
                  <item row="8" column="0">
                   <widget class="QLabel" name="label_15">
                    <property name="text">
@@ -5093,7 +4975,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                </item>
                <item>
                 <layout class="QGridLayout" name="gridLayout_31">
-                 <item row="0" column="1">
+                 <item row="0" column="2">
                   <widget class="QFrame" name="frame_13">
                    <property name="styleSheet">
                     <string notr="true">QFrame{
@@ -5176,7 +5058,7 @@ QPushButton:pressed{
                    </layout>
                   </widget>
                  </item>
-                 <item row="0" column="0">
+                 <item row="0" column="1">
                   <spacer name="horizontalSpacer">
                    <property name="orientation">
                     <enum>Qt::Horizontal</enum>
@@ -5188,6 +5070,89 @@ QPushButton:pressed{
                     </size>
                    </property>
                   </spacer>
+                 </item>
+                 <item row="0" column="0">
+                  <widget class="QFrame" name="frame_35">
+                   <property name="styleSheet">
+                    <string notr="true">QFrame{
+	background: rgb(40,40,40);
+    padding: 1px;
+	border-radius: 3px;
+}
+
+QPushButton{
+	border-top: 1px solid rgb(100,100,100);
+    border-left: 1px solid rgb(100,100,100);
+    border-right: 1px solid rgb(90,90,90);
+    border-bottom: 1px solid rgb(75,75,75);
+	
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
+
+	border-radius: 2px;
+}
+
+QPushButton:hover{
+	border-top: 1px solid rgb(100,100,100);
+    border-left: 1px solid rgb(100,100,100);
+    border-right: 1px solid rgb(90,90,90);
+    border-bottom: 1px solid rgb(75,75,75);
+	
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
+
+	border-radius: 2px;
+}
+
+QPushButton:pressed{
+	border-top: 1px solid rgb(100,100,100);
+    border-left: 1px solid rgb(100,100,100);
+    border-right: 1px solid rgb(90,90,90);
+    border-bottom: 1px solid rgb(75,75,75);
+	
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
+
+	border-radius: 2px;
+}</string>
+                   </property>
+                   <property name="frameShape">
+                    <enum>QFrame::StyledPanel</enum>
+                   </property>
+                   <property name="frameShadow">
+                    <enum>QFrame::Raised</enum>
+                   </property>
+                   <layout class="QHBoxLayout" name="horizontalLayout_33">
+                    <property name="spacing">
+                     <number>1</number>
+                    </property>
+                    <property name="leftMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="topMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QPushButton" name="pushButton_connectionsPage_MidiFilter">
+                      <property name="minimumSize">
+                       <size>
+                        <width>80</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                      <property name="styleSheet">
+                       <string notr="true"/>
+                      </property>
+                      <property name="text">
+                       <string>MIDI Filter...</string>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </widget>
                  </item>
                 </layout>
                </item>
@@ -6136,7 +6101,7 @@ border-top-right-radius: 0;
         <enum>QTabWidget::South</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_15">
         <attribute name="title">

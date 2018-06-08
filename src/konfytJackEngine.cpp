@@ -1050,6 +1050,9 @@ void KonfytJackEngine::setPortFilter(KonfytJackPortType type, KonfytJackPort *po
     case KonfytJackPortType_MidiOut:
         l = &midi_out_ports;
         break;
+    case KonfytJackPortType_MidiIn:
+        l = &midi_in_ports;
+        break;
     default:
         error_abort( "Unknown Jack Port Type." );
     }
@@ -1424,6 +1427,14 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 
             QByteArray inEvent_jack_tempBuffer(inEvent_jack.buffer, (int)inEvent_jack.size);
             KonfytMidiEvent ev( inEvent_jack_tempBuffer );
+
+            // Apply input MIDI port filter
+            if (sourcePort->filter.passFilter(&ev)) {
+                ev = sourcePort->filter.modify(&ev);
+            } else {
+                // Event doesn't pass filter. Skip.
+                continue;
+            }
 
             // Send to GUI
             if (ev.type != MIDI_EVENT_TYPE_SYSTEM) {

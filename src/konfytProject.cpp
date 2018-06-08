@@ -130,6 +130,7 @@ bool KonfytProject::saveProjectAs(QString dirname)
         stream.writeStartElement(XML_PRJ_MIDI_IN_PORT);
         stream.writeTextElement(XML_PRJ_MIDI_IN_PORT_ID, n2s(id));
         stream.writeTextElement(XML_PRJ_MIDI_IN_PORT_NAME, p.portName);
+        p.filter.writeToXMLStream(&stream);
         QStringList l = p.clients;
         for (int j=0; j < l.count(); j++) {
             stream.writeTextElement(XML_PRJ_MIDI_IN_PORT_CLIENT, l.at(j));
@@ -338,6 +339,8 @@ bool KonfytProject::loadProject(QString filename)
                             p.portName = r.readElementText();
                         } else if (r.name() == XML_PRJ_MIDI_IN_PORT_CLIENT) {
                             p.clients.append( r.readElementText() );
+                        } else if (r.name() == XML_MIDIFILTER) {
+                            p.filter.readFromXMLStream(&r);
                         } else {
                             userMessage("loadProject: "
                                         "Unrecognized midiInPortList port element: " + r.name().toString() );
@@ -693,6 +696,9 @@ int KonfytProject::midiInPort_addPort(QString portName)
     PrjMidiPort p;
     p.portName = portName;
 
+    // Default filter for MIDI in port should allow all
+    p.filter.setPassAll();
+
     int portId = midiInPort_getUniqueId();
     midiInPortMap.insert(portId, p);
 
@@ -794,6 +800,18 @@ void KonfytProject::midiInPort_removeClient(int portId, QString client)
         setModified(true);
     } else {
         error_abort("midiInPort_removeClient: port with id " + n2s(portId) + " does not exist.");
+    }
+}
+
+void KonfytProject::midiInPort_setPortFilter(int portId, konfytMidiFilter filter)
+{
+    if (midiInPort_exists(portId)) {
+        PrjMidiPort p = midiInPortMap.value(portId);
+        p.filter = filter;
+        midiInPortMap.insert(portId, p);
+        setModified(true);
+    } else {
+        error_abort("midiInPort_setPortFilter: port with id " + n2s(portId) + " does not exist.");
     }
 }
 

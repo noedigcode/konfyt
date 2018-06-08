@@ -35,11 +35,23 @@ konfytMidiFilter::konfytMidiFilter()
 
 }
 
-void konfytMidiFilter::setZone(int lowNote, int highNote, int multiply, int add, int lowVel, int highVel)
+void konfytMidiFilter::setPassAll()
+{
+    this->passAllCC = true;
+    this->passProg = true;
+    this->passPitchbend = true;
+    this->inChan = -1;
+    this->outChan = -1;
+    this->zone.lowNote = 0;
+    this->zone.highNote = 127;
+    this->zone.lowVel = 0;
+    this->zone.highVel = 127;
+}
+
+void konfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, int highVel)
 {
     zone.lowNote = lowNote;
     zone.highNote = highNote;
-    zone.multiply = multiply;
     zone.add = add;
     zone.lowVel = lowVel;
     zone.highVel = highVel;
@@ -50,8 +62,8 @@ void konfytMidiFilter::setZone(konfytMidiFilterZone newZone)
     zone = newZone;
 }
 
-// Returns true if midi event in specified buffer passes based on
-// filter rules (e.g. note is in the required key and velocity zone)
+/* Returns true if midi event in specified buffer passes based on
+ * filter rules (e.g. note is in the required key and velocity zone). */
 bool konfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
 {
     bool pass = false;
@@ -88,11 +100,18 @@ bool konfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
             // If NoteOn, check velocity
             if (ev->type == MIDI_EVENT_TYPE_NOTEON) {
                 if ( (ev->data2>=zone.lowVel) && (ev->data2<=zone.highVel) ) {
-                    pass = true;
+                    // Check if note will still be valid after addition
+                    int note = ev->data1 + zone.add;
+                    if ( (note <= 127) && (note >= 0) ) {
+                        pass = true;
+                    }
                 }
             } else {
-                // else, if note off, always pass
-                pass = true;
+                // else, if note off, pass if note will be valid after addition
+                int note = ev->data1 + zone.add;
+                if ( (note <= 127) && (note >= 0) ) {
+                    pass = true;
+                }
             }
         }
 
@@ -101,8 +120,9 @@ bool konfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
     return pass;
 }
 
-// Modify buffer (containing midi event) based on filter rules, e.g.
-// transposing, midi channel, etc.
+/* Modify buffer (containing midi event) based on filter rules,
+ * e.g. transposing, midi channel, etc.
+ * It is assumed that passFilter() has already been called and returned true. */
 KonfytMidiEvent konfytMidiFilter::modify(const KonfytMidiEvent* ev)
 {
     KonfytMidiEvent r = *ev;
@@ -113,16 +133,88 @@ KonfytMidiEvent konfytMidiFilter::modify(const KonfytMidiEvent* ev)
     }
 
     if ( (r.type == MIDI_EVENT_TYPE_NOTEON) || (r.type == MIDI_EVENT_TYPE_NOTEOFF) ) {
-
-        if ( (r.data1>=zone.lowNote) && (r.data1<=zone.highNote) ) { // Check if in zone
-            // Modify based on multiplification and addition
-            r.data1 = r.data1*zone.multiply + zone.add;
-            // TODO: In the following cases the note shouldn't actually be passed.
-            //       We don't want an unexpected note with value 0 or 127.
-            //       For now, velocity is just made zero.
-            if (r.data1<0) { r.data1 = 0; r.data2 = 0; }
-            if (r.data1 > 127) { r.data1 = 127; r.data2 = 0; }
-        }
+        // Modify based on addition
+        r.data1 = r.data1 + zone.add;
     }
     return r;
+}
+
+void konfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
+{
+    stream->writeStartElement(XML_MIDIFILTER);
+
+    // Note / velocity zone
+    konfytMidiFilterZone z = this->zone;
+    stream->writeStartElement(XML_MIDIFILTER_ZONE);
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_LOWNOTE, n2s(z.lowNote));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_HINOTE, n2s(z.highNote));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_ADD, n2s(z.add));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_LOWVEL, n2s(z.lowVel));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_HIVEL, n2s(z.highVel));
+    stream->writeEndElement();
+
+    // passAllCC
+    QString tempBool;
+    if (this->passAllCC) { tempBool = "1"; } else { tempBool = "0"; }
+    stream->writeTextElement(XML_MIDIFILTER_PASSALLCC, tempBool);
+
+    // passPitchbend
+    if (this->passPitchbend) { tempBool = "1"; } else { tempBool = "0"; }
+    stream->writeTextElement(XML_MIDIFILTER_PASSPB, tempBool);
+
+    // passProg
+    if (this->passProg) { tempBool = "1"; } else { tempBool = "0"; }
+    stream->writeTextElement(XML_MIDIFILTER_PASSPROG, tempBool);
+
+    // CC list
+    for (int i=0; i<this->passCC.count(); i++) {
+        stream->writeTextElement(XML_MIDIFILTER_CC, n2s(this->passCC.at(i)));
+    }
+
+    // Input/output channels
+    stream->writeTextElement(XML_MIDIFILTER_INCHAN, n2s(this->inChan));
+    stream->writeTextElement(XML_MIDIFILTER_OUTCHAN, n2s(this->outChan));
+
+    stream->writeEndElement(); // midiFilter
+}
+
+void konfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
+{
+    this->passCC.clear();
+
+    while (r->readNextStartElement()) { // Filter properties
+        if (r->name() == XML_MIDIFILTER_ZONE) {
+            konfytMidiFilterZone z;
+            while (r->readNextStartElement()) { // zone properties
+                if (r->name() == XML_MIDIFILTER_ZONE_LOWNOTE) {
+                    z.lowNote = r->readElementText().toInt();
+                } else if (r->name() == XML_MIDIFILTER_ZONE_HINOTE) {
+                    z.highNote = r->readElementText().toInt();
+                } else if (r->name() == XML_MIDIFILTER_ZONE_ADD) {
+                    z.add = r->readElementText().toInt();
+                } else if (r->name() ==  XML_MIDIFILTER_ZONE_LOWVEL) {
+                    z.lowVel = r->readElementText().toInt();
+                } else if (r->name() == XML_MIDIFILTER_ZONE_HIVEL) {
+                    z.highVel = r->readElementText().toInt();
+                } else {
+                    r->skipCurrentElement();
+                }
+            } // end zone while
+            this->setZone(z);
+        } else if (r->name() == XML_MIDIFILTER_PASSALLCC) {
+            this->passAllCC = (r->readElementText() == "1");
+        } else if (r->name() == XML_MIDIFILTER_PASSPB) {
+            this->passPitchbend = (r->readElementText() == "1");
+        } else if (r->name() == XML_MIDIFILTER_PASSPROG) {
+            this->passProg = (r->readElementText() == "1");
+        } else if (r->name() == XML_MIDIFILTER_CC) {
+            this->passCC.append(r->readElementText().toInt());
+        } else if (r->name() == XML_MIDIFILTER_INCHAN) {
+            this->inChan = r->readElementText().toInt();
+        } else if (r->name() == XML_MIDIFILTER_OUTCHAN) {
+            this->outChan = r->readElementText().toInt();
+        } else {
+            r->skipCurrentElement();
+        }
+    } // end filter while
 }

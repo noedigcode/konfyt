@@ -23,21 +23,36 @@
 #define KONFYT_MIDI_FILTER_H
 
 #include <QList>
+#include <QXmlStreamWriter>
+#include <QXmlStreamReader>
 #include "konfytDefines.h"
 #include "konfytStructs.h"
 #include "konfytMidi.h"
 
+#define XML_MIDIFILTER "midiFilter"
+#define XML_MIDIFILTER_ZONE "zone"
+#define XML_MIDIFILTER_ZONE_LOWNOTE "lowNote"
+#define XML_MIDIFILTER_ZONE_HINOTE "highNote"
+#define XML_MIDIFILTER_ZONE_ADD "add"
+#define XML_MIDIFILTER_ZONE_LOWVEL "lowVel"
+#define XML_MIDIFILTER_ZONE_HIVEL "highVel"
+#define XML_MIDIFILTER_PASSALLCC "passAllCC"
+#define XML_MIDIFILTER_PASSPB "passPitchbend"
+#define XML_MIDIFILTER_PASSPROG "passProg"
+#define XML_MIDIFILTER_CC "cc"
+#define XML_MIDIFILTER_INCHAN "inChan"
+#define XML_MIDIFILTER_OUTCHAN "outChan"
+
+
 struct konfytMidiFilterZone {
     int lowNote;
     int highNote;
-    int multiply;
     int add;
     int lowVel;
     int highVel;
 
     konfytMidiFilterZone() : lowNote(0),
                              highNote(127),
-                             multiply(1),
                              add(0),
                              lowVel(0),
                              highVel(127) {}
@@ -47,9 +62,10 @@ class konfytMidiFilter
 {
 public:
     konfytMidiFilter();
+    void setPassAll();
 
     konfytMidiFilterZone zone;
-    void setZone(int lowNote, int highNote, int multiply, int add, int lowVel, int highVel);
+    void setZone(int lowNote, int highNote, int add, int lowVel, int highVel);
     void setZone(konfytMidiFilterZone newZone);
 
     bool passFilter(const KonfytMidiEvent *ev);
@@ -61,6 +77,9 @@ public:
     bool passPitchbend;
     int inChan;
     int outChan;
+
+    void writeToXMLStream(QXmlStreamWriter* stream);
+    void readFromXMLStream(QXmlStreamReader *r);
 
 };
 

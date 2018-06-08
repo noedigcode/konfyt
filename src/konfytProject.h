@@ -114,6 +114,7 @@ struct PrjMidiPort {
     QString portName;
     QStringList clients;
     KonfytJackPort* jackPort;
+    konfytMidiFilter filter;
 
     PrjMidiPort() : jackPort(NULL) {}
 };
@@ -185,6 +186,7 @@ public:
     QStringList midiInPort_getClients(int portId);  // Get client list of single port
     void midiInPort_addClient(int portId, QString client);
     void midiInPort_removeClient(int portId, QString client);
+    void midiInPort_setPortFilter(int portId, konfytMidiFilter filter);
 
     // MIDI output ports
     QList<int> midiOutPort_getAllPortIds();  // Get list of port ids

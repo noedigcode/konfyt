@@ -112,6 +112,11 @@ enum libraryTreeItemType { libTreeInvalid,
                            libTreeSoundfontFolder,
                            libTreeSoundfont };
 
+enum MidiFilterEditType {
+    MidiFilterEditPort,
+    MidiFilterEditLayer
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -355,7 +360,9 @@ public:
     int midiFilter_lastChan;
     int midiFilter_lastData1;
     int midiFilter_lastData2;
+    MidiFilterEditType midiFilterEditType;
     konfytLayerWidget* midiFilterEditItem;
+    int midiFilterEditPort;
     void showMidiFilterEditor();
     void updateMidiFilterEditorLastRx();
 
@@ -617,8 +624,6 @@ private slots:
 
     void on_toolButton_MidiFilter_HighNote_clicked();
 
-    void on_toolButton_MidiFilter_Multiply_clicked();
-
     void on_toolButton_MidiFilter_Add_clicked();
 
     void on_toolButton_MidiFilter_Add_Plus12_clicked();
@@ -788,6 +793,8 @@ private slots:
     void on_pushButton_JackAudioPorts_clicked();
 
     void on_pushButton_JackMidiPorts_clicked();
+
+    void on_pushButton_connectionsPage_MidiFilter_clicked();
 
 private:
     Ui::MainWindow *ui;

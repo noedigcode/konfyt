@@ -69,20 +69,6 @@
 #define XML_PATCH_AUDIOIN_SOLO "solo"
 #define XML_PATCH_AUDIOIN_MUTE "mute"
 
-#define XML_MIDIFILTER "midiFilter"
-#define XML_MIDIFILTER_ZONE "zone"
-#define XML_MIDIFILTER_ZONE_LOWNOTE "lowNote"
-#define XML_MIDIFILTER_ZONE_HINOTE "highNote"
-#define XML_MIDIFILTER_ZONE_MULT "multiply"
-#define XML_MIDIFILTER_ZONE_ADD "add"
-#define XML_MIDIFILTER_ZONE_LOWVEL "lowVel"
-#define XML_MIDIFILTER_ZONE_HIVEL "highVel"
-#define XML_MIDIFILTER_PASSALLCC "passAllCC"
-#define XML_MIDIFILTER_PASSPB "passPitchbend"
-#define XML_MIDIFILTER_PASSPROG "passProg"
-#define XML_MIDIFILTER_CC "cc"
-#define XML_MIDIFILTER_INCHAN "inChan"
-#define XML_MIDIFILTER_OUTCHAN "outChan"
 
 
 class konfytPatch
@@ -168,8 +154,6 @@ public:
 
     bool savePatchToFile(QString filename);
     bool loadPatchFromFile(QString filename);
-    void writeMidiFilterToXMLStream(QXmlStreamWriter* stream, konfytMidiFilter f);
-    konfytMidiFilter readMidiFilterFromXMLStream(QXmlStreamReader *r);
 
 
     void userMessage(QString msg);
