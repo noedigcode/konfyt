@@ -50,12 +50,14 @@ struct konfytMidiFilterZone {
     int add;
     int lowVel;
     int highVel;
+    int velLimitMin;
 
     konfytMidiFilterZone() : lowNote(0),
                              highNote(127),
                              add(0),
                              lowVel(0),
-                             highVel(127) {}
+                             highVel(127),
+                             velLimitMin(0) {}
 };
 
 class konfytMidiFilter
@@ -65,7 +67,7 @@ public:
     void setPassAll();
 
     konfytMidiFilterZone zone;
-    void setZone(int lowNote, int highNote, int add, int lowVel, int highVel);
+    void setZone(int lowNote, int highNote, int add, int lowVel, int highVel, int velLimitMin);
     void setZone(konfytMidiFilterZone newZone);
 
     bool passFilter(const KonfytMidiEvent *ev);

@@ -796,6 +796,8 @@ private slots:
 
     void on_pushButton_connectionsPage_MidiFilter_clicked();
 
+    void on_toolButton_MidiFilter_VelLimitMin_last_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

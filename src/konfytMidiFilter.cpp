@@ -48,13 +48,14 @@ void konfytMidiFilter::setPassAll()
     this->zone.highVel = 127;
 }
 
-void konfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, int highVel)
+void konfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, int highVel, int velLimitMin)
 {
     zone.lowNote = lowNote;
     zone.highNote = highNote;
     zone.add = add;
     zone.lowVel = lowVel;
     zone.highVel = highVel;
+    zone.velLimitMin = velLimitMin;
 }
 
 void konfytMidiFilter::setZone(konfytMidiFilterZone newZone)
@@ -135,6 +136,12 @@ KonfytMidiEvent konfytMidiFilter::modify(const KonfytMidiEvent* ev)
     if ( (r.type == MIDI_EVENT_TYPE_NOTEON) || (r.type == MIDI_EVENT_TYPE_NOTEOFF) ) {
         // Modify based on addition
         r.data1 = r.data1 + zone.add;
+        // Limit velocity
+        if (r.type == MIDI_EVENT_TYPE_NOTEON) {
+            if (r.data2 < zone.velLimitMin) {
+                r.data2 = zone.velLimitMin;
+            }
+        }
     }
     return r;
 }

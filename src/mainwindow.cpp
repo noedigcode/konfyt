@@ -522,6 +522,7 @@ void MainWindow::showMidiFilterEditor()
     ui->spinBox_midiFilter_Add->setValue(z.add);
     ui->spinBox_midiFilter_LowVel->setValue(z.lowVel);
     ui->spinBox_midiFilter_HighVel->setValue(z.highVel);
+    ui->spinBox_midiFilter_VelLimitMin->setValue(z.velLimitMin);
     // Midi in channel combo box
     if (f.inChan<0) {
         // <0 means all channels
@@ -4116,7 +4117,8 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
                ui->spinBox_midiFilter_HighNote->value(),
                ui->spinBox_midiFilter_Add->value(),
                ui->spinBox_midiFilter_LowVel->value(),
-               ui->spinBox_midiFilter_HighVel->value());
+               ui->spinBox_midiFilter_HighVel->value(),
+               ui->spinBox_midiFilter_VelLimitMin->value());
     if (ui->comboBox_midiFilter_inChannel->currentIndex() == 0) {
         // Index zero is all channels
         f.inChan = -1;
@@ -5712,4 +5714,9 @@ void MainWindow::on_pushButton_connectionsPage_MidiFilter_clicked()
         midiFilterEditType = MidiFilterEditPort;
         showMidiFilterEditor();
     }
+}
+
+void MainWindow::on_toolButton_MidiFilter_VelLimitMin_last_clicked()
+{
+    ui->spinBox_midiFilter_VelLimitMin->setValue( midiFilter_lastData2 );
 }
