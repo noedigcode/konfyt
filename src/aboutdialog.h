@@ -5,6 +5,7 @@
 #include "konfytDefines.h"
 
 #define REPLACE_TXT_APP_VERSION "%APP_VERSION%"
+#define REPLACE_TXT_MORE_VERSION "%MORE_VERSION_TEXT%"
 
 namespace Ui {
 class AboutDialog;
@@ -17,6 +18,7 @@ class AboutDialog : public QWidget
 public:
     explicit AboutDialog(QWidget *parent = 0);
     ~AboutDialog();
+    void setExtraVersionText(QStringList txtList);
 
 private slots:
     void on_pushButton_clicked();

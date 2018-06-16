@@ -2676,6 +2676,12 @@ void MainWindow::timerEvent(QTimerEvent *ev)
 
 void MainWindow::initAboutDialog()
 {
+    // Add additional version text to about dialog
+    QStringList txt;
+    txt.append( "Compiled with Fluidsynth " + QString(fluid_version_str()) );
+    txt.append( "Compiled with Carla " + QString(CARLA_VERSION_STRING) );
+    aboutDialog.setExtraVersionText(txt);
+
     aboutDialog.setParent(this);
     aboutDialog.hide();
     resizeAboutDialog();
