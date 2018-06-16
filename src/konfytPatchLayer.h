@@ -134,7 +134,7 @@ public:
 
     int ID_in_patch; // ID used in patch to uniquely identify layeritems within a patch.
 
-    KonfytLayerType getLayerType();
+    KonfytLayerType getLayerType() const;
 
     // Use to initialize layer
     void initLayer(int id, LayerSoundfontStruct newLayerData);
@@ -143,12 +143,12 @@ public:
     void initLayer(int id, LayerAudioInStruct newLayerData);
 
     QString getName();
-    float getGain();
+    float getGain() const;
     void setGain(float newGain);
     void setSolo(bool newSolo);
     void setMute(bool newMute);
-    bool isSolo();
-    bool isMute();
+    bool isSolo() const;
+    bool isMute() const;
 
     int busIdInProject;
     int midiInPortIdInProject;

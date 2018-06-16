@@ -766,7 +766,7 @@ border-bottom-left-radius: 0;</string>
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <property name="elideMode">
           <enum>Qt::ElideNone</enum>
@@ -1706,7 +1706,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
@@ -2123,7 +2123,7 @@ border-bottom-right-radius: 0;</string>
                  </item>
                 </layout>
                </widget>
-               <widget class="QWidget" name="layoutWidget">
+               <widget class="QWidget" name="layoutWidget_2">
                 <layout class="QVBoxLayout" name="verticalLayout_4">
                  <property name="spacing">
                   <number>0</number>
@@ -6253,7 +6253,7 @@ border-top-right-radius: 0;
         <enum>QTabWidget::South</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_15">
         <attribute name="title">

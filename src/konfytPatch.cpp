@@ -48,7 +48,7 @@ int konfytPatch::getNumSfLayers()
 }
 
 
-QList<KonfytPatchLayer> konfytPatch::getSfLayerList()
+QList<KonfytPatchLayer> konfytPatch::getSfLayerList() const
 {
     QList<KonfytPatchLayer> l;
     for (int i=0; i < this->layerList.count(); i++) {
@@ -660,7 +660,7 @@ KonfytPatchLayer konfytPatch::getLayerItem(KonfytPatchLayer item)
 }
 
 // Return list of port ids of the patch's midi output ports.
-QList<int> konfytPatch::getMidiOutputPortList_ids()
+QList<int> konfytPatch::getMidiOutputPortList_ids() const
 {
     QList<int> l;
     for (int i=0; i<this->layerList.count(); i++) {
@@ -672,7 +672,7 @@ QList<int> konfytPatch::getMidiOutputPortList_ids()
 }
 
 // Return list of port ids of patch's audio input ports.
-QList<int> konfytPatch::getAudioInPortList_ids()
+QList<int> konfytPatch::getAudioInPortList_ids() const
 {
     QList<int> l;
     for (int i=0; i<this->layerList.count(); i++) {
@@ -829,7 +829,7 @@ float konfytPatch::getPluginGain(int index_in_engine)
     return this->getPlugin(index_in_engine).gain;
 }
 
-QList<KonfytPatchLayer> konfytPatch::getPluginLayerList()
+QList<KonfytPatchLayer> konfytPatch::getPluginLayerList() const
 {
     QList<KonfytPatchLayer> l;
     for (int i=0; i < this->layerList.count(); i++) {

@@ -788,8 +788,6 @@ private slots:
 
     void on_pushButton_LavaMonster_clicked();
 
-
-
     void on_pushButton_JackAudioPorts_clicked();
 
     void on_pushButton_JackMidiPorts_clicked();

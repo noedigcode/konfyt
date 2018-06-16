@@ -82,7 +82,7 @@ struct KonfytMidiEvent {
     }
 
     // Return pitchbend value between -8192 and 8191
-    int pitchbendValue_signed()
+    int pitchbendValue_signed() const
     {
         return pitchbendDataToInt_signed(data1, data2);
     }

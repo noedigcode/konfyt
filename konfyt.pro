@@ -81,6 +81,9 @@ QMAKE_CFLAGS += -fpermissive
 QMAKE_CXXFLAGS += -fpermissive
 QMAKE_LFLAGS += -fpermissive
 
+# Suppress unused parameter warnings
+QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter
+
 RESOURCES += \
     images.qrc
 

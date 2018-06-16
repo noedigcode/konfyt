@@ -132,7 +132,7 @@ struct KonfytTrigger {
                       data1(-1),
                       bankMSB(-1),
                       bankLSB(-1) {}
-    int toInt()
+    int toInt() const
     {
         return hashMidiEventToInt(type, channel, data1, bankMSB, bankLSB);
     }
@@ -192,8 +192,8 @@ public:
     QList<int> midiOutPort_getAllPortIds();  // Get list of port ids
     int midiOutPort_addPort(QString portName);
     void midiOutPort_removePort(int portId);
-    bool midiOutPort_exists(int portId);
-    PrjMidiPort midiOutPort_getPort(int portId);
+    bool midiOutPort_exists(int portId) const;
+    PrjMidiPort midiOutPort_getPort(int portId) const;
     int midiOutPort_count();
     void midiOutPort_replace(int portId, PrjMidiPort port);
     void midiOutPort_replace_noModify(int portId, PrjMidiPort port);
@@ -205,8 +205,8 @@ public:
     QList<int> audioInPort_getAllPortIds(); // Get list of port ids
     int audioInPort_add(QString portName);
     void audioInPort_remove(int portId);
-    bool audioInPort_exists(int portId);
-    PrjAudioInPort audioInPort_getPort(int portId);
+    bool audioInPort_exists(int portId) const;
+    PrjAudioInPort audioInPort_getPort(int portId) const;
     int audioInPort_count();
     void audioInPort_replace(int portId, PrjAudioInPort newPort);
     void audioInPort_replace_noModify(int portId, PrjAudioInPort newPort);
@@ -257,7 +257,7 @@ public:
     bool isModified(); // Returns whether the project has been modified since last load/save.
     void setModified(bool mod);
 
-    void error_abort(QString msg);
+    void error_abort(QString msg) const;
     
 private:
     QList<konfytPatch*> patchList;

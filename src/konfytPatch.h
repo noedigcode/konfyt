@@ -115,7 +115,7 @@ public:
     konfytSoundfontProgram getProgram(int id_in_engine);
     int getNumSfLayers();
     bool isValid_Sf_LayerNumber(int SfLayer);
-    QList<KonfytPatchLayer> getSfLayerList();
+    QList<KonfytPatchLayer> getSfLayerList() const;
     float getSfLayerGain(int id_in_engine);
     void setSfLayerGain(int id_in_engine, float newGain);
 
@@ -128,13 +128,13 @@ public:
     int getPluginCount();
     void setPluginGain(int index_in_engine, float newGain);
     float getPluginGain(int index_in_engine);
-    QList<KonfytPatchLayer> getPluginLayerList();
+    QList<KonfytPatchLayer> getPluginLayerList() const;
 
     // ----------------------------------------------------
     // Midi routing
     // ----------------------------------------------------
 
-    QList<int> getMidiOutputPortList_ids();
+    QList<int> getMidiOutputPortList_ids() const;
     QList<LayerMidiOutStruct> getMidiOutputPortList_struct();
     KonfytPatchLayer addMidiOutputPort(int newPort);
     KonfytPatchLayer addMidiOutputPort(LayerMidiOutStruct newPort);
@@ -143,7 +143,7 @@ public:
     // Audio input ports
     // ----------------------------------------------------
 
-    QList<int> getAudioInPortList_ids();
+    QList<int> getAudioInPortList_ids() const;
     QList<LayerAudioInStruct> getAudioInPortList_struct();
     KonfytPatchLayer addAudioInPort(int newPort);
     KonfytPatchLayer addAudioInPort(LayerAudioInStruct newPort);

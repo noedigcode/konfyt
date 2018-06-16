@@ -105,7 +105,7 @@ QString KonfytPatchLayer::getName()
     }
 }
 
-float KonfytPatchLayer::getGain()
+float KonfytPatchLayer::getGain() const
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         return this->sfData.gain;
@@ -155,7 +155,7 @@ void KonfytPatchLayer::setMute(bool newMute)
     }
 }
 
-bool KonfytPatchLayer::isSolo()
+bool KonfytPatchLayer::isSolo() const
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         return this->sfData.solo;
@@ -169,7 +169,7 @@ bool KonfytPatchLayer::isSolo()
     return false;
 }
 
-bool KonfytPatchLayer::isMute()
+bool KonfytPatchLayer::isMute() const
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         return this->sfData.mute;
@@ -207,7 +207,7 @@ void KonfytPatchLayer::setMidiFilter(konfytMidiFilter newFilter)
 
 
 
-KonfytLayerType KonfytPatchLayer::getLayerType()
+KonfytLayerType KonfytPatchLayer::getLayerType() const
 {
     return layerType;
 }

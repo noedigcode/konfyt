@@ -87,7 +87,7 @@ void KonfytJackEngine::refreshPortConnections()
             QString clientname = port->connectionList.at(j);
 
             if (!jack_port_connected_to( port->jack_pointer, clientname.toLocal8Bit() )) {
-                int success = jack_connect(client, clientname.toLocal8Bit(), portname); // NB order of ports important; First source, then dest.
+                jack_connect(client, clientname.toLocal8Bit(), portname); // NB order of ports important; First source, then dest.
             }
         }
     }
@@ -102,7 +102,7 @@ void KonfytJackEngine::refreshPortConnections()
             QString clientname = port->connectionList.at(j);
 
             if (!jack_port_connected_to( port->jack_pointer, clientname.toLocal8Bit())) {
-                int success = jack_connect(client, portname, clientname.toLocal8Bit()); // NB order of ports important; First source, then dest.
+                jack_connect(client, portname, clientname.toLocal8Bit()); // NB order of ports important; First source, then dest.
             }
         }
     }
@@ -201,7 +201,7 @@ void KonfytJackEngine::removeSoundfont(int indexInEngine)
     // Delete all objects created in addSoundfont()
 
     KonfytJackPluginPorts* p = soundfontPortsMap.value(indexInEngine);
-    soundfontPortsMap.remove(p);
+    soundfontPortsMap.remove( soundfontPortsMap.key(p) );
 
     // Remove all recorded noteon, sustain and pitchbend events related to this Fluidsynth ID.
     for (int i=0; i<noteOnList.count(); i++) {
@@ -294,7 +294,7 @@ void KonfytJackEngine::addPluginPortsAndConnect(LayerCarlaPluginStruct plugin)
     // Add right audio input port
     QString nameR = plugin.name + "_in_R";
     jack_port_t* newR = jack_port_register(client, nameR.toLocal8Bit(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-    if (newR < 0) {
+    if (newR == NULL) {
         userMessage("Failed to create right audio input port.");
         error_abort("Failed to create right Jack audio input port for plugin, " + nameR); // TODO: handle this more gracefully
     } else {
@@ -326,7 +326,7 @@ void KonfytJackEngine::removePlugin(int indexInEngine)
     // Remove everything created in addPluginPortsAndConnect()
 
     KonfytJackPluginPorts* p = pluginsPortsMap.value(indexInEngine);
-    pluginsPortsMap.remove(p);
+    pluginsPortsMap.remove( pluginsPortsMap.key(p) );
 
     // Remove all recorded noteon, sustain and pitchbend events related to this midi out port
     for (int i=0; i<noteOnList.count(); i++) {
@@ -976,7 +976,7 @@ void KonfytJackEngine::removePortClient_andDisconnect(KonfytJackPortType type, K
 
         if (port->connectionList.contains( cname )) {
             // Disconnect in Jack
-            char* ourPort = jack_port_name( port->jack_pointer );
+            const char* ourPort = jack_port_name( port->jack_pointer );
             // NB the order of ports in the jack_disconnect function matters:
             if (order == 0) {
                 jack_disconnect(client, ourPort, cname.toLocal8Bit() );
@@ -1013,32 +1013,35 @@ QStringList KonfytJackEngine::getPortClients(KonfytJackPortType type, KonfytJack
         error_abort( "Unknown Jack Port Type." );
     }
 
-    if (l->contains(port)) {
-        return port->connectionList;
-    } else {
+    if (!l->contains(port)) {
         error_abort("Invalid port.");
     }
 
+    return port->connectionList;
 }
 
 int KonfytJackEngine::getPortCount(KonfytJackPortType type)
 {
+    int ret = 0;
+
     switch (type) {
     case KonfytJackPortType_MidiIn:
         error_abort("not implemented yet.");
         break;
     case KonfytJackPortType_MidiOut:
-        return midi_out_ports.count();
+        ret = midi_out_ports.count();
         break;
     case KonfytJackPortType_AudioIn:
-        return audio_in_ports.count();
+        ret = audio_in_ports.count();
         break;
     case KonfytJackPortType_AudioOut:
-        return audio_out_ports.count();
+        ret = audio_out_ports.count();
         break;
     default:
         error_abort("getPortCount: invalid JackPortType");
     }
+
+    return ret;
 }
 
 void KonfytJackEngine::setPortFilter(KonfytJackPortType type, KonfytJackPort *port, konfytMidiFilter filter)
@@ -1239,7 +1242,8 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
     }
     // ----------------------------------------
 
-    int n, i, id;
+    int n, id;
+    uint32_t i;
     KonfytJackPort* tempPort;
     KonfytJackPort* tempPort2;
 
@@ -1425,7 +1429,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
             // Get input event
             jack_midi_event_get(&inEvent_jack, input_port_buf, i);
 
-            QByteArray inEvent_jack_tempBuffer(inEvent_jack.buffer, (int)inEvent_jack.size);
+            QByteArray inEvent_jack_tempBuffer((const char*)inEvent_jack.buffer, (int)inEvent_jack.size);
             KonfytMidiEvent ev( inEvent_jack_tempBuffer );
 
             // Apply input MIDI port filter
@@ -1875,7 +1879,7 @@ void KonfytJackEngine::mixBufferToDestinationPort(KonfytJackPort* port, jack_nfr
     }
 
     // For each frame: bus_buffer[frame] += port_buffer[frame]
-    for (int i=0; i<nframes; i++) {
+    for (uint32_t i=0; i<nframes; i++) {
 
         ( (jack_default_audio_sample_t*)(port->destOrSrcPort->buffer) )[i] +=
                 ((jack_default_audio_sample_t*)(port->buffer))[i] * gain * fadeOutValues[port->fadeoutCounter];
@@ -1972,7 +1976,7 @@ bool KonfytJackEngine::passMidiMuteSoloActiveFilterAndModify(KonfytJackPort* por
 bool KonfytJackEngine::InitJackClient(QString name)
 {
     // Try to become a client of the jack server
-    if ( (client = jack_client_open(name.toLocal8Bit(), 0, NULL)) == NULL) {
+    if ( (client = jack_client_open(name.toLocal8Bit(), JackNullOption, NULL)) == NULL) {
         userMessage("JACK: Error becoming client.");
         this->clientActive = false;
         return false;
@@ -2009,8 +2013,8 @@ bool KonfytJackEngine::InitJackClient(QString name)
     fadeOutSecs = 1;
     fadeOutValuesCount = samplerate*fadeOutSecs;
     // Linear fadeout
-    fadeOutValues = malloc(sizeof(float)*fadeOutValuesCount);
-    for (int i=0; i<fadeOutValuesCount; i++) {
+    fadeOutValues = (float*)malloc(sizeof(float)*fadeOutValuesCount);
+    for (unsigned int i=0; i<fadeOutValuesCount; i++) {
         fadeOutValues[i] = 1 - ((float)i/(float)fadeOutValuesCount);
     }
 

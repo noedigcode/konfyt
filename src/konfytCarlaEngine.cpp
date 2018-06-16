@@ -253,6 +253,9 @@ void konfytCarlaEngine::carlaEngineCallback(void *ptr, EngineCallbackOpcode acti
         break;
     case ENGINE_CALLBACK_PARAMETER_VALUE_CHANGED:
         e->userMessage(msg + "Plugin parameter value changed, pluginId " + n2s(pluginId) + ", param " + n2s(value1) + ", value " + n2s(value3));
+        break;
+    default:
+        break;
     }
 
 

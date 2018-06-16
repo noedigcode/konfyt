@@ -750,7 +750,6 @@ void MainWindow::gui_updatePatchList()
 
     // Populate patch list for current project
     QList<konfytPatch*> pl = prj->getPatchList();
-    bool allPatchesLoaded = true;
     QString notenames = "CDEFGAB";
     for (int j=0; j<pl.count(); j++) {
         konfytPatch* pat = pl.at(j);
@@ -766,7 +765,6 @@ void MainWindow::gui_updatePatchList()
             item->setTextColor(Qt::white);
         } else {
             item->setTextColor(Qt::gray);
-            allPatchesLoaded = false;
         }
 
         ui->listWidget_Patches->addItem(item);
@@ -5084,9 +5082,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
             }
         }
     }
-
-    KonfytProject* prj = getCurrentProject();
-
 
     event->accept();
 }
