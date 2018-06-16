@@ -248,7 +248,7 @@ void konfytLayerWidget::setUpGUI()
             ui->toolButton_midiInPort->setStyleSheet("");
         } else {
             ui->toolButton_midiInPort->setText( n2s(g.midiInPortIdInProject) + "!" );
-            ui->toolButton_midiInPort->setToolTip("MIDI In Port does not exist in this projct.");
+            ui->toolButton_midiInPort->setToolTip("MIDI In Port does not exist in this project.");
             ui->toolButton_midiInPort->setStyleSheet("background-color: red;");
         }
     }

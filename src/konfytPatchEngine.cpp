@@ -220,13 +220,19 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
 
 KonfytPatchLayer konfytPatchEngine::addProgramLayer(konfytSoundfontProgram newProgram)
 {
-    if (currentPatch == NULL) { return; }
+    KonfytPatchLayer g;
 
-    KonfytPatchLayer g = currentPatch->addProgram(newProgram);
+    if (currentPatch == NULL) { return g; }
+
+    g = currentPatch->addProgram(newProgram);
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
     currentPatch->setLayerBus(&g, currentProject->audioBus_getFirstBusId(-1));
+
+    // The MIDI in port defaults to 0, but the project may not have a port 0.
+    // Find the first port in the project.
+    currentPatch->setLayerMidiInPort(&g, currentProject->midiInPort_getFirstPortId(-1));
 
     reloadPatch();
     // When loading the patch, the LayerItem.sfData.indexInEngine is set.
@@ -307,6 +313,10 @@ KonfytPatchLayer konfytPatchEngine::addSfzLayer(QString path)
     // Set the layer bus to the first one in the project.
     currentPatch->setLayerBus(&g, currentProject->audioBus_getFirstBusId(-1));
 
+    // The MIDI in port defaults to 0, but the project may not have a port 0.
+    // Find the first port in the project.
+    currentPatch->setLayerMidiInPort(&g, currentProject->midiInPort_getFirstPortId(-1));
+
     reloadPatch();
 
 
@@ -338,6 +348,10 @@ KonfytPatchLayer konfytPatchEngine::addLV2Layer(QString path)
     // Set the layer bus to the first one in the project.
     currentPatch->setLayerBus(&g, currentProject->audioBus_getFirstBusId(-1));
 
+    // The MIDI in port defaults to 0, but the project may not have a port 0.
+    // Find the first port in the project.
+    currentPatch->setLayerMidiInPort(&g, currentProject->midiInPort_getFirstPortId(-1));
+
     reloadPatch();
 
     // Note that the LayerItem g we created above does not have the correct
@@ -367,6 +381,10 @@ KonfytPatchLayer konfytPatchEngine::addCarlaInternalLayer(QString URI)
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
     currentPatch->setLayerBus(&g, currentProject->audioBus_getFirstBusId(-1));
+
+    // The MIDI in port defaults to 0, but the project may not have a port 0.
+    // Find the first port in the project.
+    currentPatch->setLayerMidiInPort(&g, currentProject->midiInPort_getFirstPortId(-1));
 
     reloadPatch();
 
@@ -696,8 +714,15 @@ KonfytPatchLayer konfytPatchEngine::addMidiOutPortToPatch(int port)
     Q_ASSERT( currentPatch != NULL );
 
     KonfytPatchLayer g = currentPatch->addMidiOutputPort(port);
+
+    // The MIDI in port defaults to 0, but the project may not have a port 0.
+    // Find the first port in the project.
+    currentPatch->setLayerMidiInPort(&g, currentProject->midiInPort_getFirstPortId(-1));
+
     reloadPatch();
-    return g;
+
+    // Layer might have been updated, return up to date one from patch
+    return currentPatch->getLayerItem(g);
 }
 
 KonfytPatchLayer konfytPatchEngine::addAudioInPortToPatch(int port)
@@ -711,6 +736,8 @@ KonfytPatchLayer konfytPatchEngine::addAudioInPortToPatch(int port)
     currentPatch->setLayerBus(&g, currentProject->audioBus_getFirstBusId(-1));
 
     reloadPatch();
+
+    // Layer might have been updated, return up to date one from patch
     return currentPatch->getLayerItem(g);
 }
 
