@@ -158,6 +158,7 @@ void konfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
     stream->writeTextElement(XML_MIDIFILTER_ZONE_ADD, n2s(z.add));
     stream->writeTextElement(XML_MIDIFILTER_ZONE_LOWVEL, n2s(z.lowVel));
     stream->writeTextElement(XML_MIDIFILTER_ZONE_HIVEL, n2s(z.highVel));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN, n2s(z.velLimitMin));
     stream->writeEndElement();
 
     // passAllCC
@@ -203,6 +204,8 @@ void konfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
                     z.lowVel = r->readElementText().toInt();
                 } else if (r->name() == XML_MIDIFILTER_ZONE_HIVEL) {
                     z.highVel = r->readElementText().toInt();
+                } else if (r->name() == XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN) {
+                    z.velLimitMin = r->readElementText().toInt();
                 } else {
                     r->skipCurrentElement();
                 }

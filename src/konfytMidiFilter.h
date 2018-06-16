@@ -36,6 +36,7 @@
 #define XML_MIDIFILTER_ZONE_ADD "add"
 #define XML_MIDIFILTER_ZONE_LOWVEL "lowVel"
 #define XML_MIDIFILTER_ZONE_HIVEL "highVel"
+#define XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN "velLimitMin"
 #define XML_MIDIFILTER_PASSALLCC "passAllCC"
 #define XML_MIDIFILTER_PASSPB "passPitchbend"
 #define XML_MIDIFILTER_PASSPROG "passProg"
