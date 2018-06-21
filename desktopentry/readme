@@ -1,0 +1,2 @@
+Edit the .desktop file to point to the Konfyt executable and icon, and place in
+~/.local/share/applications/
