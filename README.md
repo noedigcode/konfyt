@@ -39,7 +39,7 @@ All versions are not guaranteed to work since Carla is under active development 
 
 Tested with version
 ```
-1.9.8 (2.0-beta6) (KXStudio Package version 2:1.9.8+git20180610.2v5)
+1.9.8 (2.0-beta6) (KXStudio Package version 2:1.9.8+git20180628v5)
 ```
 
 
