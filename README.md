@@ -45,6 +45,9 @@ Tested with version
 
 Building:
 ---------
+See the testing branch for the latest features. Although it's still technically
+under testing, it should be quite stable.
+
 The following are required to build:
 
 * Qt4: Ensure that the Qt4 development packages are installed.
