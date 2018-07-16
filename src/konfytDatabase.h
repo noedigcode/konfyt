@@ -80,6 +80,7 @@ class konfytDatabase : public QObject
 
 public:
     konfytDatabase();
+    ~konfytDatabase();
 
     QList<konfytSoundfont*> getSfontList();
     int getNumSfonts();

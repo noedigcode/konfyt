@@ -227,6 +227,12 @@ konfytDatabase::konfytDatabase()
 
 }
 
+konfytDatabase::~konfytDatabase()
+{
+    workerThread.quit();
+    workerThread.wait();
+}
+
 void konfytDatabase::userMessageFromWorker(QString msg)
 {
     userMessage(msg);
