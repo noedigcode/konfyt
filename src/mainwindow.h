@@ -22,22 +22,23 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+
+#include <QAction>
+#include <QCheckBox>
+#include <QCloseEvent>
+#include <QDesktopServices>
+#include <QFileDialog>
+#include <QKeyEvent>
+#include <QListWidgetItem>
 #include <QMainWindow>
 #include <QMap>
 #include <QMenu>
-#include <QListWidgetItem>
-#include <QTreeWidgetItem>
-#include <QKeyEvent>
-#include <QCheckBox>
-#include <QSignalMapper>
-#include <QDesktopServices>
-#include <QCloseEvent>
-#include <QAction>
-#include <QShortcut>
-#include <QScrollBar>
-#include <QTreeWidgetItem>
-#include <QFileDialog>
 #include <QMessageBox>
+#include <QScrollBar>
+#include <QShortcut>
+#include <QSignalMapper>
+#include <QTimer>
+#include <QTreeWidgetItem>
 
 #include <fluidsynth.h>
 #include <carla/CarlaHost.h>
@@ -795,6 +796,8 @@ private slots:
     void on_pushButton_connectionsPage_MidiFilter_clicked();
 
     void on_toolButton_MidiFilter_VelLimitMin_last_clicked();
+
+    void on_pushButton_Panic_customContextMenuRequested(const QPoint &pos);
 
 private:
     Ui::MainWindow *ui;

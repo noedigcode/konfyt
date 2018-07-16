@@ -344,8 +344,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
 
     // Right Sidebar
     // Hide the bottom tabs used for experimentation
-    QTabBar* rightTabBar = qFindChild<QTabBar*>( ui->tabWidget_right );
-    rightTabBar->setVisible(false);
+    ui->tabWidget_right->tabBar()->setVisible(false);
     ui->tabWidget_right->setCurrentIndex(0);
 
 
@@ -5720,4 +5719,19 @@ void MainWindow::on_pushButton_connectionsPage_MidiFilter_clicked()
 void MainWindow::on_toolButton_MidiFilter_VelLimitMin_last_clicked()
 {
     ui->spinBox_midiFilter_VelLimitMin->setValue( midiFilter_lastData2 );
+}
+
+/* User right-clicked on panic button. */
+void MainWindow::on_pushButton_Panic_customContextMenuRequested(const QPoint &pos)
+{
+    // Momentary panic
+
+    on_actionPanic_triggered();
+
+    QTimer* t = new QTimer(this);
+    connect(t, &QTimer::timeout, [this, t](){
+        this->on_actionPanic_triggered();
+        t->deleteLater();
+    });
+    t->start(100);
 }

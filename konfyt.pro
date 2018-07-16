@@ -9,6 +9,8 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
+CONFIG += C++11
+
 TARGET = konfyt
 TEMPLATE = app
 

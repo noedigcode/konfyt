@@ -42,11 +42,10 @@ void konfytSfLoaderRunner::run()
         more = sf->iteration_next(sf, preset);
         if (more) {
             // Get preset name
-            char* presetname = preset->get_name(preset);
-            QString qpresetname = QString::fromAscii(presetname);
+            QString presetName = QString(QByteArray( preset->get_name(preset) ));
             int banknum = preset->get_banknum(preset);
             int num = preset->get_num(preset);
-            userMessage("Preset " + qpresetname + " " + QString::number(banknum)
+            userMessage("Preset " + presetName + " " + QString::number(banknum)
                         + ", " + QString::number(num));
         }
     }

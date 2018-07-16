@@ -168,12 +168,11 @@ konfytSoundfont* konfytDatabaseWorker::_sfontFromFile(QString filename)
         more = sf->iteration_next(sf, preset);
         if (more) {
             // Get preset name
-            char* presetname = preset->get_name(preset);
-            QString qpresetname = QString::fromAscii(presetname);
+            QString presetName = QString(QByteArray( preset->get_name(preset) ));
             int banknum = preset->get_banknum(preset);
             int num = preset->get_num(preset);
             konfytSoundfontProgram sfp;
-            sfp.name = qpresetname;
+            sfp.name = presetName;
             sfp.bank = banknum;
             sfp.program = num;
             sfp.parent_soundfont = newSfont->filename;
