@@ -7412,9 +7412,9 @@ QPushButton:pressed{
     <string>Open Projects Directory</string>
    </property>
   </action>
-  <action name="actionPanic">
+  <action name="actionPanicToggle">
    <property name="text">
-    <string>Panic</string>
+    <string>Toggle Panic State</string>
    </property>
   </action>
   <action name="actionLayer_5_Gain">
@@ -7508,6 +7508,11 @@ QPushButton:pressed{
    </property>
    <property name="toolTip">
     <string>Add MIDI In Port</string>
+   </property>
+  </action>
+  <action name="actionPanic">
+   <property name="text">
+    <string>Panic</string>
    </property>
   </action>
  </widget>

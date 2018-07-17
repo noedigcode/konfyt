@@ -687,6 +687,8 @@ private slots:
 
     void on_actionPanic_triggered();
 
+    void on_actionPanicToggle_triggered();
+
     void on_actionProject_save_triggered();
 
     void on_actionProject_New_triggered();

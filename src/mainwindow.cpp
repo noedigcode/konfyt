@@ -388,7 +388,7 @@ void MainWindow::shortcut_save_activated()
 
 void MainWindow::shortcut_panic_activated()
 {
-    ui->actionPanic->trigger();
+    ui->actionPanicToggle->trigger();
 }
 
 // Build project-open menu with an Open action and a list of projects in the projects dir.
@@ -1193,6 +1193,7 @@ void MainWindow::initTriggers()
     // Create a list of actions we will be adding to the triggers list
     QList<QAction*> l;
     l << ui->actionPanic
+      << ui->actionPanicToggle
       << ui->actionNext_Patch
       << ui->actionPrevious_Patch
       << ui->actionMaster_Volume_Slider
@@ -3297,6 +3298,10 @@ void MainWindow::midiEventSlot(KonfytMidiEvent ev)
 
         if (buttonPass) { ui->actionPanic->trigger(); }
 
+    } else if (action == ui->actionPanicToggle) {
+
+        if (buttonPass) { ui->actionPanicToggle->trigger(); }
+
     } else if (action == ui->actionNext_Patch) {
 
         if (buttonPass) { setCurrentPatch( currentPatchIndex+1 ); }
@@ -3988,7 +3993,7 @@ bool MainWindow::eventFilter(QObject *object, QEvent *event)
 
             switch (keyEvent->key()) {
             case Qt::Key_Escape:
-                ui->actionPanic->trigger();
+                ui->actionPanicToggle->trigger();
                 break;
             case Qt::Key_Plus:
                 ui->actionMaster_Volume_Up->trigger();
@@ -5434,10 +5439,26 @@ void MainWindow::on_actionProject_SaveAs_triggered()
 
 void MainWindow::on_pushButton_Panic_clicked()
 {
-    ui->actionPanic->trigger();
+    ui->actionPanicToggle->trigger();
 }
 
 void MainWindow::on_actionPanic_triggered()
+{
+    // Momentary panic
+    // Enable panic state and disable after short time delay
+
+    panicState = false;
+    on_actionPanicToggle_triggered();
+
+    QTimer* t = new QTimer(this);
+    connect(t, &QTimer::timeout, [this, t](){
+        this->on_actionPanicToggle_triggered();
+        t->deleteLater();
+    });
+    t->start(100);
+}
+
+void MainWindow::on_actionPanicToggle_triggered()
 {
     // Toggle panic state
     panicState = !panicState;
@@ -5725,13 +5746,5 @@ void MainWindow::on_toolButton_MidiFilter_VelLimitMin_last_clicked()
 void MainWindow::on_pushButton_Panic_customContextMenuRequested(const QPoint &pos)
 {
     // Momentary panic
-
     on_actionPanic_triggered();
-
-    QTimer* t = new QTimer(this);
-    connect(t, &QTimer::timeout, [this, t](){
-        this->on_actionPanic_triggered();
-        t->deleteLater();
-    });
-    t->start(100);
 }
