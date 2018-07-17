@@ -67,9 +67,15 @@ void konfytSfLoader::loadSoundfont(fluid_synth_t *synth, QString filename)
     static bool firstRun = true;
     if (firstRun) {
         runner = new konfytSfLoaderRunner();
-        connect(runner, SIGNAL(finished()), this, SLOT(on_runner_finished()));
-        connect(runner, SIGNAL(userMessage(QString)), this, SLOT(on_runner_userMessage(QString)));
-        connect(this, SIGNAL(operate()), runner, SLOT(run()));
+
+        connect(runner, &konfytSfLoaderRunner::finished,
+                this, &konfytSfLoader::on_runner_finished);
+
+        connect(runner, &konfytSfLoaderRunner::userMessage,
+                this, &konfytSfLoader::on_runner_userMessage);
+
+        connect(this, &konfytSfLoader::operate, runner, &konfytSfLoaderRunner::run);
+
         runner->moveToThread(&workerThread);
         workerThread.start();
         firstRun = false;

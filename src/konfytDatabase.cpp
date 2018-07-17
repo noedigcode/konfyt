@@ -204,18 +204,24 @@ konfytDatabase::konfytDatabase()
     sfzTree_results = new konfytDbTree();
 
     qRegisterMetaType<QList<konfytSoundfont*> >("QList<konfytSoundfont*>");
-    connect(&worker, SIGNAL(userMessage(QString)),
-            this, SLOT(userMessageFromWorker(QString)));
-    connect(&worker, SIGNAL(scanDirsStatus(QString)),
-            this, SLOT(scanDirsStatusFromWorker(QString)));
-    connect(&worker, SIGNAL(scanDirsFihished(QList<konfytSoundfont*>,QStringList,QStringList)),
-            this, SLOT(scanDirsFinished(QList<konfytSoundfont*>,QStringList,QStringList)));
-    connect(this, SIGNAL(start_scanDirs(QString,QString,QString,QList<konfytSoundfont*>)),
-            &worker, SLOT(scanDirs(QString,QString,QString,QList<konfytSoundfont*>)));
-    connect(this, SIGNAL(start_sfontFromFile(QString, int)),
-            &worker, SLOT(sfontFromFile(QString, int)));
-    connect(&worker, SIGNAL(sfontFromFileFinished(konfytSoundfont*, int)),
-            this, SLOT(sfontFromFileFinished(konfytSoundfont*, int)));
+
+    connect(&worker, &konfytDatabaseWorker::userMessage,
+            this, &konfytDatabase::userMessageFromWorker);
+
+    connect(&worker, &konfytDatabaseWorker::scanDirsStatus,
+            this, &konfytDatabase::scanDirsStatusFromWorker);
+
+    connect(&worker, &konfytDatabaseWorker::scanDirsFihished,
+            this, &konfytDatabase::scanDirsFinished);
+
+    connect(this, &konfytDatabase::start_scanDirs,
+            &worker, &konfytDatabaseWorker::scanDirs);
+
+    connect(this, &konfytDatabase::start_sfontFromFile,
+            &worker, &konfytDatabaseWorker::sfontFromFile);
+
+    connect(&worker, &konfytDatabaseWorker::sfontFromFileFinished,
+            this, &konfytDatabase::sfontFromFileFinished);
 
     worker.moveToThread(&workerThread);
     workerThread.start();

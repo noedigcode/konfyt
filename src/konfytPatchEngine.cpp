@@ -43,14 +43,16 @@ void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient)
 
     // Fluidsynth Engine
     konfytFluidsynthEngine* e = new konfytFluidsynthEngine();
-    connect(e, SIGNAL(userMessage(QString)), this, SLOT(userMessageFromEngine(QString)));
+    connect(e, &konfytFluidsynthEngine::userMessage,
+            this, &konfytPatchEngine::userMessageFromEngine);
     e->InitFluidsynth(jack->getSampleRate());
     fluidsynthEngine = e;
     jack->fluidsynthEngine = e; // Give to Jack so it can get sound out of it.
 
     // Initialise Carla Backend
     carlaEngine = new konfytCarlaEngine();
-    connect(carlaEngine, SIGNAL(userMessage(QString)), this, SLOT(userMessageFromEngine(QString)));
+    connect(carlaEngine, &konfytCarlaEngine::userMessage,
+            this, &konfytPatchEngine::userMessageFromEngine);
     QString carlaJackClientName = jack->clientName() + CARLA_CLIENT_POSTFIX;
     carlaEngine->InitCarlaEngine( jack, carlaJackClientName );
 

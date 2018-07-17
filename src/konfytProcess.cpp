@@ -23,8 +23,9 @@
 
 konfytProcess::konfytProcess()
 {
-    connect(&process, SIGNAL(started()), this, SLOT(processStarted()));
-    connect(&process, SIGNAL(finished(int)), this, SLOT(processFinished(int)));
+    connect(&process, &QProcess::started, this, &konfytProcess::processStarted);
+    connect(&process, static_cast<void (QProcess::*)(int)>(&QProcess::finished),
+            this, &konfytProcess::processFinished);
 
     state = KONFYTPROCESS_NOT_STARTED;
 }

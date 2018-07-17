@@ -1183,8 +1183,8 @@ void KonfytProject::addProcess(konfytProcess* process)
     process->projectDir = this->getDirname();
     processList.append(process);
     // Connect signals
-    connect(process, SIGNAL(started(konfytProcess*)), this, SLOT(processStartedSlot(konfytProcess*)));
-    connect(process, SIGNAL(finished(konfytProcess*)), this, SLOT(processFinishedSlot(konfytProcess*)));
+    connect(process, &konfytProcess::started, this, &KonfytProject::processStartedSlot);
+    connect(process, &konfytProcess::finished, this, &KonfytProject::processFinishedSlot);
     setModified(true);
 }
 

@@ -36,7 +36,6 @@
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QShortcut>
-#include <QSignalMapper>
 #include <QTimer>
 #include <QTreeWidgetItem>
 
@@ -212,7 +211,6 @@ public:
     QMap<QTreeWidgetItem*, QFileInfo> fsMap;
     QMenu fsViewMenu;
     QTreeWidgetItem* fsViewMenuItem;
-    QSignalMapper filemanProcessSignalMapper;
 
     void openFileManager(QString path);
 
@@ -332,7 +330,6 @@ public:
 
     void addClientPortToTree(QString jackport, bool active);
 
-    QSignalMapper conSigMap;
     QMap<QTreeWidgetItem*, QString> conPortsMap; // Mapping of tree items to Jack port strings
     QMap<QString, QTreeWidgetItem*> conClientsMap; // Mapping of Jack clients to tree items
     QMap<QCheckBox*, QTreeWidgetItem*> conChecksMap1; // Map column 1 checkboxes to tree items
@@ -536,9 +533,6 @@ private slots:
     // Thread for scanning folders
     void scanThreadFihishedSlot();
 
-    // Filemanager process
-    void filemanProcessSignalMapperSlot(QObject *object);
-
     // Handle application closing
     void closeEvent(QCloseEvent *);
 
@@ -702,7 +696,7 @@ private slots:
     // ========================================================================
     // Connections (ports and busses) Page
 
-    void checkboxes_signalmap_slot(QWidget* widget);
+    void checkboxes_clicked_slot(QCheckBox* c);
 
     void tree_portsBusses_Menu(const QPoint &pos);
 

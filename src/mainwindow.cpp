@@ -78,11 +78,16 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // ----------------------------------------------------
 
     jack = new KonfytJackEngine();
-    connect(jack, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
-    connect(jack, SIGNAL(jackPortRegisterOrConnectCallback()), this, SLOT(jackPortRegisterOrConnectCallback()));
+
+    connect(jack, &KonfytJackEngine::userMessage, this, &MainWindow::userMessage);
+
+    connect(jack, &KonfytJackEngine::jackPortRegisterOrConnectCallback,
+            this, &MainWindow::jackPortRegisterOrConnectCallback);
+
     qRegisterMetaType<KonfytMidiEvent>("KonfytMidiEvent"); // To be able to use konfytMidiEvent in the Qt signal/slot system
-    connect(jack, SIGNAL(midiEventSignal(KonfytMidiEvent)), this, SLOT(midiEventSlot(KonfytMidiEvent)));
-    connect(jack, SIGNAL(xrunSignal()), this, SLOT(jackXrun()));
+    connect(jack, &KonfytJackEngine::midiEventSignal, this, &MainWindow::midiEventSlot);
+
+    connect(jack, &KonfytJackEngine::xrunSignal, this, &MainWindow::jackXrun);
 
     if (jackClientName.isEmpty()) {
         jackClientName = KONFYT_JACK_DEFAULT_CLIENT_NAME;
@@ -114,7 +119,9 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // Initialise patch engine
     // ----------------------------------------------------
     pengine = new konfytPatchEngine();
-    connect(pengine, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
+
+    connect(pengine, &konfytPatchEngine::userMessage, this, &MainWindow::userMessage);
+
     pengine->initPatchEngine(this->jack);
     this->masterGain = 0.8;
     pengine->setMasterGain(masterGain);
@@ -136,10 +143,18 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // ----------------------------------------------------
     // Initialise soundfont database
     // ----------------------------------------------------
-    connect(&db, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
-    connect(&db, SIGNAL(scanDirs_finished()), this, SLOT(database_scanDirsFinished()));
-    connect(&db, SIGNAL(scanDirs_status(QString)), this, SLOT(database_scanDirsStatus(QString)));
-    connect(&db, SIGNAL(returnSfont_finished(konfytSoundfont*)), this, SLOT(database_returnSfont(konfytSoundfont*)));
+
+    connect(&db, &konfytDatabase::userMessage, this, &MainWindow::userMessage);
+
+    connect(&db, &konfytDatabase::scanDirs_finished,
+            this, &MainWindow::database_scanDirsFinished);
+
+    connect(&db, &konfytDatabase::scanDirs_status,
+            this, &MainWindow::database_scanDirsStatus);
+
+    connect(&db, &konfytDatabase::returnSfont_finished,
+            this, &MainWindow::database_returnSfont);
+
     // Check if database file exists. Otherwise, scan directories.
     if (db.loadDatabaseFromFile(settingsDir + "/" + DATABASE_FILE)) {
         userMessage("Database loaded from file. Rescan to refresh.");
@@ -284,7 +299,8 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     QMenu* projectButtonMenu = new QMenu();
     projectButtonMenu->addAction(ui->actionProject_save);
     updateProjectsMenu();
-    connect(&projectsMenu, SIGNAL(triggered(QAction*)), this, SLOT(onprojectMenu_ActionTrigger(QAction*)));
+    connect(&projectsMenu, &QMenu::triggered,
+            this, &MainWindow::onprojectMenu_ActionTrigger);
     projectButtonMenu->addMenu(&projectsMenu);
     projectButtonMenu->addAction(ui->actionProject_New);
     //projectButtonMenu->addAction(ui->actionProject_SaveAs); // TODO: SaveAs menu entry disabled for now until it is implemented.
@@ -292,26 +308,26 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
 
 
     // Add-midi-port-to-patch button
-    connect(&patchMidiOutPortsMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(onPatchMidiOutPortsMenu_ActionTrigger(QAction*)));
+    connect(&patchMidiOutPortsMenu, &QMenu::triggered,
+            this, &MainWindow::onPatchMidiOutPortsMenu_ActionTrigger);
     ui->toolButton_layer_AddMidiPort->setMenu(&patchMidiOutPortsMenu);
 
     // Button: add audio input port to patch
-    connect(&patchAudioInPortsMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(onPatchAudioInPortsMenu_ActionTrigger(QAction*)));
+    connect(&patchAudioInPortsMenu, &QMenu::triggered,
+            this, &MainWindow::onPatchAudioInPortsMenu_ActionTrigger);
     ui->toolButton_layer_AddAudioInput->setMenu(&patchAudioInPortsMenu);
 
     // Layer bus menu
-    connect(&layerBusMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(onLayerBusMenu_ActionTrigger(QAction*)));
+    connect(&layerBusMenu, &QMenu::triggered,
+            this, &MainWindow::onLayerBusMenu_ActionTrigger);
 
     // Layer MIDI output channel menu
-    connect(&layerMidiOutChannelMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(onLayerMidiOutChannelMenu_ActionTrigger(QAction*)));
+    connect(&layerMidiOutChannelMenu, &QMenu::triggered,
+            this, &MainWindow::onLayerMidiOutChannelMenu_ActionTrigger);
 
     // Layer MIDI input port menu
-    connect(&layerMidiInPortsMenu, SIGNAL(triggered(QAction*)),
-            this, SLOT(onLayerMidiInMenu_ActionTrigger(QAction*)));
+    connect(&layerMidiInPortsMenu, &QMenu::triggered,
+            this, &MainWindow::onLayerMidiInMenu_ActionTrigger);
 
     // If one of the paths are not set, show settings. Else, switch to patch view.
     if ( (projectsDir == "") || (patchesDir == "") || (soundfontsDir == "") || (sfzDir == "") ) {
@@ -329,13 +345,10 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     audioInParent = NULL;
     midiOutParent = NULL;
 
-    // Checkboxes in connections treeWidget are mapped to a signal mapper
-    connect( &conSigMap, SIGNAL(mapped(QWidget*)), this, SLOT(checkboxes_signalmap_slot(QWidget*)) );
-
     // Set up portsBusses tree context menu
     ui->tree_portsBusses->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->tree_portsBusses, SIGNAL(customContextMenuRequested(QPoint)),
-            this, SLOT(tree_portsBusses_Menu(QPoint)));
+    connect(ui->tree_portsBusses, &QTreeWidget::customContextMenuRequested,
+            this, &MainWindow::tree_portsBusses_Menu);
 
     // Resize some layouts
     QList<int> sizes;
@@ -347,18 +360,14 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     ui->tabWidget_right->tabBar()->setVisible(false);
     ui->tabWidget_right->setCurrentIndex(0);
 
-
-    // Filemanager processes (when a process is finished, it will be mapped to the
-    // signal mapper, so that we can get the process object that emitted the signal
-    // end destroy it.
-    connect( &filemanProcessSignalMapper, SIGNAL(mapped(QObject*)), this, SLOT(filemanProcessSignalMapperSlot(QObject*)));
-
     // Set up keyboard shortcuts
     shortcut_save = new QShortcut(QKeySequence("Ctrl+S"), this);
-    connect(shortcut_save, SIGNAL(activated()), this, SLOT(shortcut_save_activated()));
+    connect(shortcut_save, &QShortcut::activated,
+            this, &MainWindow::shortcut_save_activated);
 
     shortcut_panic = new QShortcut(QKeySequence("Ctrl+P"), this);
-    connect(shortcut_panic, SIGNAL(activated()), this, SLOT(shortcut_panic_activated()));
+    connect(shortcut_panic, &QShortcut::activated,
+            this, &MainWindow::shortcut_panic_activated);
     ui->pushButton_Panic->setToolTip( ui->pushButton_Panic->toolTip() + " [" + shortcut_panic->key().toString() + "]");
 
     // Set up external apps combo box
@@ -694,7 +703,7 @@ void MainWindow::newProject()
 bool MainWindow::openProject(QString filename)
 {
     KonfytProject* prj = new KonfytProject();
-    connect(prj, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
+    connect(prj, &KonfytProject::userMessage, this, &MainWindow::userMessage);
 
     if (prj->loadProject(filename)) {
         // Add project to list and gui
@@ -727,7 +736,7 @@ void MainWindow::addProject(KonfytProject* prj)
         startupProject = false;
     }
 
-    connect(prj, SIGNAL(userMessage(QString)), this, SLOT(userMessage(QString)));
+    connect(prj, &KonfytProject::userMessage, this, &MainWindow::userMessage);
     projectList.append(prj);
     // Add to tabs
     QLabel* lbl = new QLabel();
@@ -1035,14 +1044,12 @@ void MainWindow::addClientPortToTree(QString jackport, bool active)
     QCheckBox* cbl = new QCheckBox();
     QCheckBox* cbr = new QCheckBox();
     ui->tree_Connections->setItemWidget(portItem, TREECON_COL_L, cbl);
-    conSigMap.setMapping(cbl, cbl); // Map checkbox signal
-    connect( cbl, SIGNAL(clicked()), &conSigMap, SLOT(map()) );
+    connect(cbl, &QCheckBox::clicked, [this, cbl](){ checkboxes_clicked_slot(cbl); });
     conChecksMap1.insert(cbl, portItem); // Map the checkbox to the tree item
     if ( ui->tree_portsBusses->currentItem()->parent() != midiOutParent ) { // Midi ports only have one checkbox
         if (ui->tree_portsBusses->currentItem()->parent() != midiInParent) {
             ui->tree_Connections->setItemWidget(portItem, TREECON_COL_R, cbr);
-            conSigMap.setMapping(cbr, cbr);
-            connect( cbr, SIGNAL(clicked()), &conSigMap, SLOT(map()) );
+            connect(cbr, &QCheckBox::clicked, [this, cbr](){ checkboxes_clicked_slot(cbr); });
             conChecksMap2.insert(cbr, portItem); // Map the checkbox to the tree item
         }
     }
@@ -1054,15 +1061,11 @@ void MainWindow::addClientPortToTree(QString jackport, bool active)
     }
 }
 
-/* The clicked signals of the connections treeWidget checkboxes are mapped to a signal mapper,
- * which signal is connected to this slot so that we know which checkbox emitted the signal.
- * (In hindsight, QObject::sender() could probably just have been used.) */
-void MainWindow::checkboxes_signalmap_slot(QWidget *widget)
+/* One of the connections page ports checkboxes have been clicked. */
+void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
 {
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
-
-    QCheckBox* c = (QCheckBox*)widget;
 
     QTreeWidgetItem* t;
     portLeftRight leftRight;
@@ -1301,12 +1304,7 @@ void MainWindow::setCurrentProject(int i)
     // First, disconnect signals from current project.
     KonfytProject* oldprj = getCurrentProject();
     if (oldprj != NULL) {
-        // Process started signal
-        disconnect(oldprj, SIGNAL(processStartedSignal(int,konfytProcess*)), this, SLOT(processStartedSlot(int,konfytProcess*)));
-        // Process stopped signal
-        disconnect(oldprj, SIGNAL(processFinishedSignal(int,konfytProcess*)), this, SLOT(processFinishedSlot(int,konfytProcess*)));
-        // Project modified signal
-        disconnect(oldprj, SIGNAL(projectModifiedChanged(bool)), this, SLOT(projectModifiedStateChanged(bool)));
+        oldprj->disconnect();
     }
     // Set up the current project
 
@@ -1435,9 +1433,9 @@ void MainWindow::setCurrentProject(int i)
         ui->listWidget_ExtApps->addItem(temp);
     }
     // Connect signals
-    connect(prj, SIGNAL(processStartedSignal(int,konfytProcess*)), this, SLOT(processStartedSlot(int,konfytProcess*)));
-    connect(prj, SIGNAL(processFinishedSignal(int,konfytProcess*)), this, SLOT(processFinishedSlot(int,konfytProcess*)));
-    connect(prj, SIGNAL(projectModifiedChanged(bool)), this, SLOT(projectModifiedStateChanged(bool)));
+    connect(prj, &KonfytProject::processStartedSignal, this, &MainWindow::processStartedSlot);
+    connect(prj, &KonfytProject::processFinishedSignal, this, &MainWindow::processFinishedSlot);
+    connect(prj, &KonfytProject::projectModifiedChanged, this, &MainWindow::projectModifiedStateChanged);
 
     // Get triggers from project and add to quick lookup hash
     QList<KonfytTrigger> trigs = prj->getTriggerList();
@@ -3706,15 +3704,32 @@ void MainWindow::addLayerItemToGUI(KonfytPatchLayer layerItem)
     ui->listWidget_Layers->setItemWidget(item, gui);
 
     // Make all connections
-    connect(gui, SIGNAL(slider_moved_signal(konfytLayerWidget*,float)), this, SLOT(onLayer_slider_moved(konfytLayerWidget*,float)));
-    connect(gui, SIGNAL(remove_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_remove_clicked(konfytLayerWidget*)));
-    connect(gui, SIGNAL(filter_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_filter_clicked(konfytLayerWidget*)));
-    connect(gui, SIGNAL(solo_clicked_signal(konfytLayerWidget*,bool)), this, SLOT(onLayer_solo_clicked(konfytLayerWidget*,bool)));
-    connect(gui, SIGNAL(mute_clicked_signal(konfytLayerWidget*,bool)), this, SLOT(onLayer_mute_clicked(konfytLayerWidget*,bool)));
-    connect(gui, SIGNAL(midiIn_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_midiIn_clicked(konfytLayerWidget*)));
-    connect(gui, SIGNAL(bus_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_bus_clicked(konfytLayerWidget*)));
-    connect(gui, SIGNAL(reload_clicked_signal(konfytLayerWidget*)), this, SLOT(onLayer_reload_clicked(konfytLayerWidget*)));
-    connect(gui, SIGNAL(openInFileManager_clicked_signal(konfytLayerWidget*,QString)), this, SLOT(onLayer_openInFileManager_clicked(konfytLayerWidget*,QString)));
+    connect(gui, &konfytLayerWidget::slider_moved_signal,
+            this, &MainWindow::onLayer_slider_moved);
+
+    connect(gui, &konfytLayerWidget::remove_clicked_signal,
+            this, &MainWindow::onLayer_remove_clicked);
+
+    connect(gui, &konfytLayerWidget::filter_clicked_signal,
+            this, &MainWindow::onLayer_filter_clicked);
+
+    connect(gui, &konfytLayerWidget::solo_clicked_signal,
+            this, &MainWindow::onLayer_solo_clicked);
+
+    connect(gui, &konfytLayerWidget::mute_clicked_signal,
+            this, &MainWindow::onLayer_mute_clicked);
+
+    connect(gui, &konfytLayerWidget::midiIn_clicked_signal,
+            this, &MainWindow::onLayer_midiIn_clicked);
+
+    connect(gui, &konfytLayerWidget::bus_clicked_signal,
+            this, &MainWindow::onLayer_bus_clicked);
+
+    connect(gui, &konfytLayerWidget::reload_clicked_signal,
+            this, &MainWindow::onLayer_reload_clicked);
+
+    connect(gui, &konfytLayerWidget::openInFileManager_clicked_signal,
+            this, &MainWindow::onLayer_openInFileManager_clicked);
 
 }
 
@@ -4750,7 +4765,7 @@ void MainWindow::setupExtAppMenu()
     extAppsMenuActions.insert( extAppsMenu.addAction("Carla"),
                                "carla " );
 
-    connect(&extAppsMenu, SIGNAL(triggered(QAction*)), this, SLOT(extAppsMenuTriggered(QAction*)));
+    connect(&extAppsMenu, &QMenu::triggered, this, &MainWindow::extAppsMenuTriggered);
 }
 
 
@@ -5063,11 +5078,6 @@ void MainWindow::on_actionOpen_In_File_Manager_fsview_triggered()
     openFileManager(path);
 }
 
-void MainWindow::filemanProcessSignalMapperSlot(QObject *object)
-{
-    // We should probabaly destroy the qprocess here.
-}
-
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     // Go through list of projects and ask to save for modified projects.
@@ -5157,9 +5167,14 @@ void MainWindow::openFileManager(QString path)
 {
     if (this->filemanager.length()) {
         QProcess* process = new QProcess();
-        filemanProcessSignalMapper.setMapping(process, process);
-        connect( process, SIGNAL(finished(int)), &filemanProcessSignalMapper, SLOT(map()) );
+
+        connect(process, static_cast<void (QProcess::*)(int)>(&QProcess::finished),
+                [this, process](int exitCode){
+            process->deleteLater();
+        });
+
         process->start( this->filemanager, QStringList() << path );
+
     } else {
         QDesktopServices::openUrl( path );
     }
@@ -5682,12 +5697,12 @@ void MainWindow::on_toolButton_PatchListMenu_clicked()
     if (patchListMenu.isEmpty()) {
         patchListMenu_NumbersAction = patchListMenu.addAction("Show patch numbers");
         patchListMenu_NumbersAction->setCheckable(true);
-        connect(patchListMenu_NumbersAction, SIGNAL(triggered(bool)),
-                this, SLOT(toggleShowPatchListNumbers()));
+        connect(patchListMenu_NumbersAction, &QAction::triggered,
+                this, &MainWindow::toggleShowPatchListNumbers);
         patchListMenu_NotesAction = patchListMenu.addAction("Show notes next to patches");
         patchListMenu_NotesAction->setCheckable(true);
-        connect(patchListMenu_NotesAction, SIGNAL(triggered(bool)),
-                this, SLOT(toggleShowPatchListNotes()));
+        connect(patchListMenu_NotesAction, &QAction::triggered,
+                this, &MainWindow::toggleShowPatchListNotes);
     }
     // Refresh menu items
     patchListMenu_NumbersAction->setChecked( prj->getShowPatchListNumbers() );
