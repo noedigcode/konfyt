@@ -436,6 +436,7 @@ public:
     // ========================================================================
 
     bool panicState;
+    void triggerPanic(bool panic);
 
     // Thread for scanning folders
     konfytSfLoader sfLoader;

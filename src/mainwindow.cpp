@@ -3147,6 +3147,16 @@ void MainWindow::addWarning(QString warning)
     ui->listWidget_Warnings->addItem(warning);
 }
 
+void MainWindow::triggerPanic(bool panic)
+{
+    panicState = panic;
+
+    pengine->panic(panicState);
+
+    // Update in GUI
+    ui->pushButton_Panic->setChecked(panicState);
+}
+
 
 
 
@@ -5462,12 +5472,11 @@ void MainWindow::on_actionPanic_triggered()
     // Momentary panic
     // Enable panic state and disable after short time delay
 
-    panicState = false;
-    on_actionPanicToggle_triggered();
+    triggerPanic(true);
 
     QTimer* t = new QTimer(this);
     connect(t, &QTimer::timeout, [this, t](){
-        this->on_actionPanicToggle_triggered();
+        triggerPanic(false);
         t->deleteLater();
     });
     t->start(100);
@@ -5476,12 +5485,7 @@ void MainWindow::on_actionPanic_triggered()
 void MainWindow::on_actionPanicToggle_triggered()
 {
     // Toggle panic state
-    panicState = !panicState;
-
-    pengine->panic( panicState );
-
-    // Update GUI
-    ui->pushButton_Panic->setChecked(panicState);
+    triggerPanic( !panicState );
 }
 
 void MainWindow::on_pushButton_LoadAll_clicked()
