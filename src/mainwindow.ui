@@ -1727,7 +1727,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>3</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <layout class="QGridLayout" name="gridLayout_9">
@@ -4474,15 +4474,15 @@ border-bottom-left-radius: 0;</string>
                     </layout>
                    </item>
                    <item>
-                    <layout class="QHBoxLayout" name="horizontalLayout_34">
-                     <item>
+                    <layout class="QGridLayout" name="gridLayout_24">
+                     <item row="0" column="1">
                       <widget class="QLabel" name="label_25">
                        <property name="text">
                         <string>Velocity Limit Min</string>
                        </property>
                       </widget>
                      </item>
-                     <item>
+                     <item row="1" column="1">
                       <widget class="QFrame" name="frame_36">
                        <property name="minimumSize">
                         <size>
@@ -4588,6 +4588,121 @@ border-bottom-left-radius: 0;</string>
                          </widget>
                         </item>
                        </layout>
+                      </widget>
+                     </item>
+                     <item row="1" column="2">
+                      <widget class="QFrame" name="frame_37">
+                       <property name="minimumSize">
+                        <size>
+                         <width>0</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>25</height>
+                        </size>
+                       </property>
+                       <property name="styleSheet">
+                        <string notr="true">QFrame{
+	background: rgb(40,40,40);
+    padding: 1px;
+	border-radius: 3px;
+}
+
+QPushButton{
+	border-top: 1px solid rgb(100,100,100);
+    border-left: 1px solid rgb(100,100,100);
+    border-right: 1px solid rgb(90,90,90);
+    border-bottom: 1px solid rgb(75,75,75);
+	
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
+
+	border-radius: 2px;
+}
+
+QPushButton:hover{
+	border-top: 1px solid rgb(100,100,100);
+    border-left: 1px solid rgb(100,100,100);
+    border-right: 1px solid rgb(90,90,90);
+    border-bottom: 1px solid rgb(75,75,75);
+	
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
+
+	border-radius: 2px;
+}
+
+QPushButton:pressed{
+	border-top: 1px solid rgb(100,100,100);
+    border-left: 1px solid rgb(100,100,100);
+    border-right: 1px solid rgb(90,90,90);
+    border-bottom: 1px solid rgb(75,75,75);
+	
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
+
+	border-radius: 2px;
+}
+
+QPushButton::checked{
+	color: red;
+	background-color: rgb(54, 54, 54);
+}</string>
+                       </property>
+                       <property name="frameShape">
+                        <enum>QFrame::StyledPanel</enum>
+                       </property>
+                       <property name="frameShadow">
+                        <enum>QFrame::Raised</enum>
+                       </property>
+                       <layout class="QHBoxLayout" name="horizontalLayout_34">
+                        <property name="spacing">
+                         <number>1</number>
+                        </property>
+                        <property name="leftMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="topMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="rightMargin">
+                         <number>0</number>
+                        </property>
+                        <property name="bottomMargin">
+                         <number>0</number>
+                        </property>
+                        <item>
+                         <widget class="QSpinBox" name="spinBox_midiFilter_VelLimitMax">
+                          <property name="minimumSize">
+                           <size>
+                            <width>0</width>
+                            <height>23</height>
+                           </size>
+                          </property>
+                          <property name="maximum">
+                           <number>127</number>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QToolButton" name="toolButton_MidiFilter_VelLimitMax_last">
+                          <property name="styleSheet">
+                           <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                          </property>
+                          <property name="text">
+                           <string>last</string>
+                          </property>
+                         </widget>
+                        </item>
+                       </layout>
+                      </widget>
+                     </item>
+                     <item row="0" column="2">
+                      <widget class="QLabel" name="label_27">
+                       <property name="text">
+                        <string>Max</string>
+                       </property>
                       </widget>
                      </item>
                     </layout>
@@ -6274,7 +6389,7 @@ border-top-right-radius: 0;
         <enum>QTabWidget::South</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tab_15">
         <attribute name="title">

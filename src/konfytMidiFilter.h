@@ -37,6 +37,7 @@
 #define XML_MIDIFILTER_ZONE_LOWVEL "lowVel"
 #define XML_MIDIFILTER_ZONE_HIVEL "highVel"
 #define XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN "velLimitMin"
+#define XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX "velLimitMax"
 #define XML_MIDIFILTER_PASSALLCC "passAllCC"
 #define XML_MIDIFILTER_PASSPB "passPitchbend"
 #define XML_MIDIFILTER_PASSPROG "passProg"
@@ -52,13 +53,15 @@ struct konfytMidiFilterZone {
     int lowVel;
     int highVel;
     int velLimitMin;
+    int velLimitMax;
 
     konfytMidiFilterZone() : lowNote(0),
                              highNote(127),
                              add(0),
                              lowVel(0),
                              highVel(127),
-                             velLimitMin(0) {}
+                             velLimitMin(0),
+                             velLimitMax(127) {}
 };
 
 class konfytMidiFilter
@@ -68,7 +71,8 @@ public:
     void setPassAll();
 
     konfytMidiFilterZone zone;
-    void setZone(int lowNote, int highNote, int add, int lowVel, int highVel, int velLimitMin);
+    void setZone(int lowNote, int highNote, int add, int lowVel, int highVel,
+                 int velLimitMin, int velLimitMax);
     void setZone(konfytMidiFilterZone newZone);
 
     bool passFilter(const KonfytMidiEvent *ev);

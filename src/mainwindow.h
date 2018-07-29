@@ -796,6 +796,8 @@ private slots:
 
     void on_pushButton_Panic_customContextMenuRequested(const QPoint &pos);
 
+    void on_toolButton_MidiFilter_VelLimitMax_last_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

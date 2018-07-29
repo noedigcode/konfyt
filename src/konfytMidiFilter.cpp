@@ -48,7 +48,7 @@ void konfytMidiFilter::setPassAll()
     this->zone.highVel = 127;
 }
 
-void konfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, int highVel, int velLimitMin)
+void konfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, int highVel, int velLimitMin, int velLimitMax)
 {
     zone.lowNote = lowNote;
     zone.highNote = highNote;
@@ -56,6 +56,7 @@ void konfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, i
     zone.lowVel = lowVel;
     zone.highVel = highVel;
     zone.velLimitMin = velLimitMin;
+    zone.velLimitMax = velLimitMax;
 }
 
 void konfytMidiFilter::setZone(konfytMidiFilterZone newZone)
@@ -141,6 +142,9 @@ KonfytMidiEvent konfytMidiFilter::modify(const KonfytMidiEvent* ev)
             if (r.data2 < zone.velLimitMin) {
                 r.data2 = zone.velLimitMin;
             }
+            if (r.data2 > zone.velLimitMax) {
+                r.data2 = zone.velLimitMax;
+            }
         }
     }
     return r;
@@ -159,6 +163,7 @@ void konfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
     stream->writeTextElement(XML_MIDIFILTER_ZONE_LOWVEL, n2s(z.lowVel));
     stream->writeTextElement(XML_MIDIFILTER_ZONE_HIVEL, n2s(z.highVel));
     stream->writeTextElement(XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN, n2s(z.velLimitMin));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX, n2s(z.velLimitMax));
     stream->writeEndElement();
 
     // passAllCC
@@ -206,6 +211,8 @@ void konfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
                     z.highVel = r->readElementText().toInt();
                 } else if (r->name() == XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN) {
                     z.velLimitMin = r->readElementText().toInt();
+                } else if (r->name() == XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX) {
+                    z.velLimitMax = r->readElementText().toInt();
                 } else {
                     r->skipCurrentElement();
                 }
