@@ -30,7 +30,7 @@ Requirements:
 -------------
 Konfyt was developed and tested with the following:
 * Linux Mint 18.3 (based on Ubuntu 16.04).
-* Qt4
+* Qt 5
 * Fluidsynth 1.1.6 (Version 1.1.5 has a nasty polyphony bug)
 * Carla
 
@@ -39,7 +39,8 @@ All versions are not guaranteed to work since Carla is under active development 
 
 Tested with version
 ```
-1.9.8 (2.0-beta6) (KXStudio Package version 2:1.9.8+git20180628v5)
+1.9.9 (2.0-beta7)
+(KXStudio Package version 2:1.9.9+git20180721v5)
 ```
 
 
@@ -50,15 +51,15 @@ under testing, it should be quite stable.
 
 The following are required to build:
 
-* Qt4: Ensure that the Qt4 development packages are installed.
+* Qt5: Ensure that the Qt5 development packages are installed.
 Check the Qt version that qmake uses with:
 ```
 qmake -v
 ```
 
-Sometimes, if both Qt5 and Qt4 are installed, the Qt4 qmake command is:
+If qmake uses Qt4 by default, force it to use Qt5 with:
 ```
-qmake-qt4
+qmake --qt=5
 ```
 
 * pkg-config
@@ -67,7 +68,7 @@ qmake-qt4
 
 * Carla
 
-* g++-4.8
+* g++
 
 
 The Konfyt .pro file can be opened with QtCreator and configured and built by following
