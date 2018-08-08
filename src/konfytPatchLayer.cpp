@@ -183,7 +183,7 @@ bool KonfytPatchLayer::isMute() const
     return false;
 }
 
-konfytMidiFilter KonfytPatchLayer::getMidiFilter()
+KonfytMidiFilter KonfytPatchLayer::getMidiFilter()
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         return this->sfData.filter;
@@ -194,7 +194,7 @@ konfytMidiFilter KonfytPatchLayer::getMidiFilter()
     }
 }
 
-void KonfytPatchLayer::setMidiFilter(konfytMidiFilter newFilter)
+void KonfytPatchLayer::setMidiFilter(KonfytMidiFilter newFilter)
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         this->sfData.filter = newFilter;

@@ -21,7 +21,7 @@
 
 #include "konfytMidiFilter.h"
 
-konfytMidiFilter::konfytMidiFilter()
+KonfytMidiFilter::KonfytMidiFilter()
 {
     this->passAllCC = false;
 
@@ -35,7 +35,7 @@ konfytMidiFilter::konfytMidiFilter()
 
 }
 
-void konfytMidiFilter::setPassAll()
+void KonfytMidiFilter::setPassAll()
 {
     this->passAllCC = true;
     this->passProg = true;
@@ -48,7 +48,7 @@ void konfytMidiFilter::setPassAll()
     this->zone.highVel = 127;
 }
 
-void konfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, int highVel, int velLimitMin, int velLimitMax)
+void KonfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, int highVel, int velLimitMin, int velLimitMax)
 {
     zone.lowNote = lowNote;
     zone.highNote = highNote;
@@ -59,14 +59,14 @@ void konfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, i
     zone.velLimitMax = velLimitMax;
 }
 
-void konfytMidiFilter::setZone(konfytMidiFilterZone newZone)
+void KonfytMidiFilter::setZone(KonfytMidiFilterZone newZone)
 {
     zone = newZone;
 }
 
 /* Returns true if midi event in specified buffer passes based on
  * filter rules (e.g. note is in the required key and velocity zone). */
-bool konfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
+bool KonfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
 {
     bool pass = false;
 
@@ -125,7 +125,7 @@ bool konfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
 /* Modify buffer (containing midi event) based on filter rules,
  * e.g. transposing, midi channel, etc.
  * It is assumed that passFilter() has already been called and returned true. */
-KonfytMidiEvent konfytMidiFilter::modify(const KonfytMidiEvent* ev)
+KonfytMidiEvent KonfytMidiFilter::modify(const KonfytMidiEvent* ev)
 {
     KonfytMidiEvent r = *ev;
 
@@ -150,12 +150,12 @@ KonfytMidiEvent konfytMidiFilter::modify(const KonfytMidiEvent* ev)
     return r;
 }
 
-void konfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
+void KonfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
 {
     stream->writeStartElement(XML_MIDIFILTER);
 
     // Note / velocity zone
-    konfytMidiFilterZone z = this->zone;
+    KonfytMidiFilterZone z = this->zone;
     stream->writeStartElement(XML_MIDIFILTER_ZONE);
     stream->writeTextElement(XML_MIDIFILTER_ZONE_LOWNOTE, n2s(z.lowNote));
     stream->writeTextElement(XML_MIDIFILTER_ZONE_HINOTE, n2s(z.highNote));
@@ -191,13 +191,13 @@ void konfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
     stream->writeEndElement(); // midiFilter
 }
 
-void konfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
+void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
 {
     this->passCC.clear();
 
     while (r->readNextStartElement()) { // Filter properties
         if (r->name() == XML_MIDIFILTER_ZONE) {
-            konfytMidiFilterZone z;
+            KonfytMidiFilterZone z;
             while (r->readNextStartElement()) { // zone properties
                 if (r->name() == XML_MIDIFILTER_ZONE_LOWNOTE) {
                     z.lowNote = r->readElementText().toInt();

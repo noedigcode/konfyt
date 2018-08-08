@@ -51,6 +51,8 @@
 
 #define KONFYT_JACK_SUSTAIN_THRESH 63
 
+#define KONFYT_JACK_PORT_ERROR -1
+
 
 typedef void (*send_midi_to_fluidsynth_t)(unsigned char* data, int size);
 
@@ -103,6 +105,7 @@ public:
     bool timer_busy;
     bool timer_disabled;
 
+    // Port data structures (public for Jack process access)
     QList<KonfytJackPort*> midi_in_ports;
     QList<KonfytJackPort*> midi_out_ports;
     QList<KonfytJackPort*> audio_out_ports;
@@ -133,50 +136,50 @@ public:
 
     void refreshPortConnections();
 
-    KonfytJackPort* addPort(KonfytJackPortType type, QString port_name);
-    void removePort(KonfytJackPortType type, KonfytJackPort* port);
+    int addPort(KonfytJackPortType type, QString port_name);
+    void removePort(int portId);
     void removeAllAudioInAndOutPorts();
     void removeAllMidiInPorts();
     void removeAllMidiOutPorts();
     void nullDestinationPorts_pointingTo(KonfytJackPort* port);
     void nullDestinationPorts_all();
-
-    void setPortClients(KonfytJackPortType type, KonfytJackPort* port, QStringList newClientList);
-    void clearPortClients(KonfytJackPortType type, KonfytJackPort* port);
-    void clearPortClients_andDisconnect(KonfytJackPortType type, KonfytJackPort* port);
-    void addPortClient(KonfytJackPortType type, KonfytJackPort *port, QString newClient);
-    void removePortClient_andDisconnect(KonfytJackPortType type, KonfytJackPort* port, QString cname);
-    QStringList getPortClients(KonfytJackPortType type, KonfytJackPort* port);
+    QList<KonfytJackPort*>* getListContainingPort(int portId);
+    void setPortClients(int portId, QStringList newClientList);
+    void clearPortClients(int portId);
+    void clearPortClients_andDisconnect(int portId);
+    void addPortClient(int portId, QString newClient);
+    void removePortClient_andDisconnect(int portId, QString cname);
+    QStringList getPortClients(int portId);
     int getPortCount(KonfytJackPortType type);
-    void setPortFilter(KonfytJackPortType type, KonfytJackPort* port, konfytMidiFilter filter);
-    void setPortSolo(KonfytJackPortType type, KonfytJackPort* port, bool solo);
-    void setPortMute(KonfytJackPortType type, KonfytJackPort* port, bool mute);
-    void setPortGain(KonfytJackPortType type, KonfytJackPort* port, float gain);
-    void setPortRouting(KonfytJackPortType type, KonfytJackPort* port, KonfytJackPort* route);
+    void setPortFilter(int portId, KonfytMidiFilter filter);
+    void setPortSolo(int portId, bool solo);
+    void setPortMute(int portId, bool mute);
+    void setPortGain(int portId, float gain);
+    void setPortRouting(int basePortId, int routePortId);
 
-    void setPortActive(KonfytJackPortType type, KonfytJackPort* port, bool active);
+    void setPortActive(int portId, bool active);
     void setAllPortsActive(KonfytJackPortType type, bool active);
 
     // Carla plugins
-    void addPluginPortsAndConnect(LayerCarlaPluginStruct plugin);
-    void removePlugin(int indexInEngine);
-    void setPluginMidiFilter(int indexInEngine, konfytMidiFilter filter);
-    void setPluginSolo(int indexInEngine, bool solo);
-    void setPluginMute(int indexInEngine, bool mute);
-    void setPluginRouting(int indexInEngine, KonfytJackPort *midi_in,
-                                             KonfytJackPort *port_left,
-                                             KonfytJackPort *port_right);
+    int addPluginPortsAndConnect(const KonfytJackPortsSpec &spec);
+    void removePlugin(int id);
+    void setPluginMidiFilter(int id, KonfytMidiFilter filter);
+    void setPluginSolo(int id, bool solo);
+    void setPluginMute(int id, bool mute);
+    void setPluginRouting(int pluginId, int midiInPortId,
+                                  int leftPortId,
+                                  int rightPortId);
     void setAllPluginPortsActive(bool active);
 
     // Fluidsynth
     void addSoundfont(LayerSoundfontStruct sf);
     void removeSoundfont(int indexInEngine);
-    void setSoundfontMidiFilter(int indexInEngine, konfytMidiFilter filter);
+    void setSoundfontMidiFilter(int indexInEngine, KonfytMidiFilter filter);
     void setSoundfontSolo(int indexInEngine, bool solo);
     void setSoundfontMute(int indexInEngine, bool mute);
-    void setSoundfontRouting(int indexInEngine, KonfytJackPort *midi_in,
-                                                KonfytJackPort *port_left,
-                                                KonfytJackPort *port_right);
+    void setSoundfontRouting(int indexInEngine, int midiInPortId,
+                                                int leftPortId,
+                                                int rightPortId);
     void setAllSoundfontPortsActive(bool active);
 
     // Flag indicating one or more ports or plugin ports are solo
@@ -206,6 +209,10 @@ private:
 
     QString ourJackClientName;
 
+    // Private port data structures
+    int portIdCounter;
+    QMap<int, KonfytJackPort*> portIdMap;
+
     // Timer for handling port register and connect callbacks
     QBasicTimer timer;
     void timerEvent(QTimerEvent *event);
@@ -213,7 +220,8 @@ private:
 
     int globalTranspose;
 
-    // Map plugin index in engine to port structure
+    // Map plugin id to port structure
+    int pluginIdCounter;
     QMap<int, KonfytJackPluginPorts*> pluginsPortsMap;
     QMap<int, KonfytJackPluginPorts*> soundfontPortsMap;
 

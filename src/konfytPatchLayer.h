@@ -54,7 +54,7 @@ enum KonfytCarlaPluginType {
 struct LayerSoundfontStruct {
     konfytSoundfontProgram program;
     float gain;
-    konfytMidiFilter filter;
+    KonfytMidiFilter filter;
     int indexInEngine;
     bool solo;
     bool mute;
@@ -63,6 +63,15 @@ struct LayerSoundfontStruct {
                              indexInEngine(-1),
                              solo(true),
                              mute(true) {}
+
+};
+
+struct KonfytPortSpec
+{
+    QString name;
+    QString midi_in_port;
+    QString audio_out_port_left;
+    QString audio_out_port_right;
 
 };
 
@@ -76,8 +85,9 @@ struct LayerCarlaPluginStruct {
     QString midi_in_port;
     QString audio_out_port_left;
     QString audio_out_port_right;
+    int portsIdInJackEngine;
 
-    konfytMidiFilter midiFilter;
+    KonfytMidiFilter midiFilter;
 
     int indexInEngine;
 
@@ -85,10 +95,12 @@ struct LayerCarlaPluginStruct {
     bool solo;
     bool mute;
 
-    LayerCarlaPluginStruct() : indexInEngine(-1),
+    LayerCarlaPluginStruct() : portsIdInJackEngine(-1),
+                               indexInEngine(-1),
                                gain(1),
                                solo(false),
-                               mute(false) {}
+                               mute(false)
+                               {}
 
 };
 
@@ -98,7 +110,7 @@ struct LayerCarlaPluginStruct {
 // ----------------------------------------------------
 struct LayerMidiOutStruct {
     int portIdInProject;
-    konfytMidiFilter filter;
+    KonfytMidiFilter filter;
     bool solo;
     bool mute;
 
@@ -153,8 +165,8 @@ public:
     int busIdInProject;
     int midiInPortIdInProject;
 
-    konfytMidiFilter getMidiFilter();
-    void setMidiFilter(konfytMidiFilter newFilter);
+    KonfytMidiFilter getMidiFilter();
+    void setMidiFilter(KonfytMidiFilter newFilter);
 
     void setErrorMessage(QString msg);
     bool hasError();

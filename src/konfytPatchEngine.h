@@ -73,7 +73,7 @@ public:
     // ----------------------------------------------------
 
     // General use for any type of layer
-    void setLayerFilter(KonfytPatchLayer* layerItem, konfytMidiFilter filter);
+    void setLayerFilter(KonfytPatchLayer* layerItem, KonfytMidiFilter filter);
     void setLayerGain(KonfytPatchLayer* layerItem, float newGain);
     void setLayerGain(int layerIndex, float newGain);
     void setLayerSolo(KonfytPatchLayer* layerItem, bool solo);
@@ -97,6 +97,9 @@ public:
     KonfytPatchLayer addSfzLayer(QString path);
     KonfytPatchLayer addLV2Layer(QString path);
     KonfytPatchLayer addCarlaInternalLayer(QString URI);
+
+    // Debug testing
+    KonfytPatchLayer addRemoteLayer(QString path);
 
     // Midi output port layers
     KonfytPatchLayer addMidiOutPortToPatch(int port);

@@ -91,32 +91,38 @@
 
 struct PrjAudioBus {
     QString busName;
-    KonfytJackPort* leftJackPort;
+    int leftJackPortId;
     float leftGain;
     QStringList leftOutClients;
-    KonfytJackPort* rightJackPort;
+    int rightJackPortId;
     float rightGain;
     QStringList rightOutClients;
+
+    PrjAudioBus() : leftJackPortId(-1), leftGain(1),
+                    rightJackPortId(-1), rightGain(1) {}
 };
 
 struct PrjAudioInPort {
     QString portName;
-    KonfytJackPort* leftJackPort;
-    KonfytJackPort* rightJackPort;
+    int leftJackPortId;
+    int rightJackPortId;
     float leftGain;
     float rightGain;
     QStringList leftInClients;
     QStringList rightInClients;
     int destinationBus;
+
+    PrjAudioInPort() : leftJackPortId(-1), rightJackPortId(-1),
+                       leftGain(1), rightGain(1), destinationBus(-1) {}
 };
 
 struct PrjMidiPort {
     QString portName;
     QStringList clients;
-    KonfytJackPort* jackPort;
-    konfytMidiFilter filter;
+    int jackPortId;
+    KonfytMidiFilter filter;
 
-    PrjMidiPort() : jackPort(NULL) {}
+    PrjMidiPort() : jackPortId(-1) {}
 };
 
 struct KonfytTrigger {
@@ -186,7 +192,7 @@ public:
     QStringList midiInPort_getClients(int portId);  // Get client list of single port
     void midiInPort_addClient(int portId, QString client);
     void midiInPort_removeClient(int portId, QString client);
-    void midiInPort_setPortFilter(int portId, konfytMidiFilter filter);
+    void midiInPort_setPortFilter(int portId, KonfytMidiFilter filter);
 
     // MIDI output ports
     QList<int> midiOutPort_getAllPortIds();  // Get list of port ids
@@ -214,7 +220,7 @@ public:
     void audioInPort_removeClient(int portId, portLeftRight leftRight, QString client);
 
     // Audio busses
-    int audioBus_add(QString busName, KonfytJackPort *leftJackPort, KonfytJackPort *rightJackPort);
+    int audioBus_add(QString busName);
     void audioBus_remove(int busId);
     int audioBus_count();
     bool audioBus_exists(int busId);

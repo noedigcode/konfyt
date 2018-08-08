@@ -368,10 +368,10 @@ public:
     // Jack
     // ========================================================================
     KonfytJackEngine* jack;
-    void addAudioBusToJack(int busNo, KonfytJackPort **leftPort, KonfytJackPort **rightPort);
-    void addAudioInPortsToJack(int portNo, KonfytJackPort **leftPort, KonfytJackPort **rightPort);
-    void addMidiOutPortToJack(int portId, KonfytJackPort **jackPort);
-    void addMidiInPortToJack(int portId, KonfytJackPort **jackPort);
+    void addAudioBusToJack(int busNo, int *leftPortId, int *rightPortId);
+    void addAudioInPortsToJack(int portNo, int *leftPortId, int *rightPortId);
+    int addMidiOutPortToJack(int portId);
+    int addMidiInPortToJack(int portId);
 
     // ========================================================================
     // Processes (External apps)
@@ -797,6 +797,8 @@ private slots:
     void on_pushButton_Panic_customContextMenuRequested(const QPoint &pos);
 
     void on_toolButton_MidiFilter_VelLimitMax_last_clicked();
+
+    void on_pushButton_Test_clicked();
 
 private:
     Ui::MainWindow *ui;
