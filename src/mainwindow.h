@@ -123,10 +123,13 @@ class MainWindow : public QMainWindow
     
 public:
 
-    explicit MainWindow(QWidget *parent, QApplication* application, QStringList filesToLoad, QString jackClientName);
+    explicit MainWindow(QWidget *parent, QApplication* application,
+                        QStringList filesToLoad, QString jackClientName,
+                        bool bridge);
     ~MainWindow();
 
     QApplication* app;
+    KonfytAppInfo appInfo;
 
     bool eventFilter(QObject *object, QEvent *event);
     int eventFilterMode;

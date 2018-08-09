@@ -48,6 +48,11 @@ struct konfytSoundfont {
 
 };
 
+struct KonfytAppInfo {
+    QString exePath;
+    bool bridge;
+};
+
 
 
 

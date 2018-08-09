@@ -25,7 +25,9 @@
 #include <iostream>
 
 
-MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList filesToLoad, QString jackClientName) :
+MainWindow::MainWindow(QWidget *parent, QApplication* application,
+                       QStringList filesToLoad, QString jackClientName,
+                       bool bridge) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
@@ -34,6 +36,12 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // Initialise variables
 
     app = application;
+    appInfo.bridge =  bridge;
+    appInfo.exePath = app->arguments()[0];
+    if (bridge) {
+        userMessage("Bridging is enabled.");
+    }
+
     currentProject = -1;
     panicState = false;
     masterPatch = NULL;
@@ -122,7 +130,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
 
     connect(pengine, &konfytPatchEngine::userMessage, this, &MainWindow::userMessage);
 
-    pengine->initPatchEngine(this->jack);
+    pengine->initPatchEngine(this->jack, appInfo);
     this->masterGain = 0.8;
     pengine->setMasterGain(masterGain);
     this->previewGain = 0.8;

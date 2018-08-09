@@ -26,7 +26,7 @@
 
 konfytPatch::konfytPatch()
 {
-    this->id_counter = 0; // Initialise ID counter for layeritem unique ids.
+    this->id_counter = 200; // Initialise ID counter for layeritem unique ids.
 }
 
 

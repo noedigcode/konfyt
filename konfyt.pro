@@ -37,7 +37,9 @@ SOURCES += src/main.cpp\
     src/konfytCarlaEngine.cpp \
     src/konfytsfloader.cpp \
     src/konfytArrayList.cpp \
-    src/aboutdialog.cpp
+    src/aboutdialog.cpp \
+    src/konfytBridgeEngine.cpp \
+    src/konfytBaseSoundEngine.cpp
 
 HEADERS  += src/mainwindow.h \
     src/toetsdialog.h \
@@ -61,7 +63,9 @@ HEADERS  += src/mainwindow.h \
     src/konfytCarlaEngine.h \
     src/konfytsfloader.h \
     src/konfytArrayList.h \
-    src/aboutdialog.h
+    src/aboutdialog.h \
+    src/konfytBridgeEngine.h \
+    src/konfytBaseSoundEngine.h
 
 FORMS    += src/mainwindow.ui \
     src/toetsdialog.ui \

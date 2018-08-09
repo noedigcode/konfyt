@@ -39,7 +39,7 @@ KonfytJackEngine::KonfytJackEngine(QObject *parent) :
     panicCmd = false;
     panicState = 0;
     globalTranspose = 0;
-    pluginIdCounter = 200;
+    pluginIdCounter = 150;
 
     fadeOutSecs = 0;
     fadeOutValuesCount = 0;

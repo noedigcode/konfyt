@@ -27,17 +27,17 @@
 
 #include <carla/CarlaHost.h>
 
+#include "konfytBaseSoundEngine.h"
 #include "konfytDefines.h"
-#include "konfytDatabase.h"
-#include "konfytJackEngine.h"
 
+#define CARLA_CLIENT_POSTFIX "_plugins"
 #define CARLA_MIDI_IN_PORT_POSTFIX "events-in"
 #define CARLA_OUT_LEFT_PORT_POSTFIX "out-left"
 #define CARLA_OUT_RIGHT_PORT_POSTFIX "out-right"
 
 CARLA_BACKEND_USE_NAMESPACE
 
-class konfytCarlaEngine : public QObject
+class konfytCarlaEngine : public KonfytBaseSoundEngine
 {
     Q_OBJECT
 public:
@@ -51,17 +51,18 @@ public:
 
     explicit konfytCarlaEngine(QObject *parent = 0);
 
-    static void carlaEngineCallback(void* ptr, EngineCallbackOpcode action, uint pluginId, int value1, int value2, float value3, const char* valueStr);
-    void InitCarlaEngine(KonfytJackEngine *jackEngine, QString carlaJackClientName);
-
-    int addSFZ(QString path);
-    void removeSFZ(int ID);
-    QString pluginName(int ID);
-    QString carlaJackClientName();
-    QString midiInPort(int ID);
-    QStringList audioOutPorts(int ID);
-
+    // KonfytBaseSoundEngine interface
+    void initEngine(KonfytJackEngine *jackEngine);
+    int addSfz(QString path);
+    QString midiInJackPortName(int id);
+    QStringList audioOutJackPortNames(int id);
+    void removeSfz(int id);
     void setGain(int ID, float newGain);
+    QString pluginName(int ID);
+
+    static void carlaEngineCallback(void* ptr, EngineCallbackOpcode action,
+                                    uint pluginId, int value1, int value2,
+                                    float value3, const char* valueStr);
 
     void error_abort(QString msg);
 
@@ -71,12 +72,6 @@ private:
     KonfytJackEngine* jack;
     QMap<int, konfytCarlaPluginData> pluginDataMap;
     QList<int> pluginList; // List with indexes matching id's in Carla engine, i.e. maps this class' unique IDs to pluginIds in Carla engine.
-    
-signals:
-    void userMessage(QString msg);
-    
-public slots:
-    
 };
 
 #endif // KONFYT_CARLA_ENGINE_H

@@ -26,13 +26,12 @@
 
 #include <jack/jack.h>
 
+#include "konfytBridgeEngine.h"
 #include "konfytPatch.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackEngine.h"
 #include "konfytProject.h"
 #include "konfytCarlaEngine.h"
-
-#define CARLA_CLIENT_POSTFIX "_plugins"
 
 class konfytPatchEngine : public QObject
 {
@@ -43,7 +42,7 @@ public:
     // ----------------------------------------------------
     // Engine related functions
     // ----------------------------------------------------
-    void initPatchEngine(KonfytJackEngine* newJackClient);
+    void initPatchEngine(KonfytJackEngine* newJackClient, KonfytAppInfo appInfo);
     void panic(bool p);
     float getMasterGain();
     void setMasterGain(float newGain);
@@ -98,9 +97,6 @@ public:
     KonfytPatchLayer addLV2Layer(QString path);
     KonfytPatchLayer addCarlaInternalLayer(QString URI);
 
-    // Debug testing
-    KonfytPatchLayer addRemoteLayer(QString path);
-
     // Midi output port layers
     KonfytPatchLayer addMidiOutPortToPatch(int port);
 
@@ -127,7 +123,8 @@ private:
     // ----------------------------------------------------
     // Carla plugins
     // ----------------------------------------------------
-    konfytCarlaEngine* carlaEngine;
+    KonfytBaseSoundEngine* carlaEngine;
+    bool bridge;
 
     // ----------------------------------------------------
     // Jack

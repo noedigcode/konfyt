@@ -40,11 +40,6 @@
 #include "konfytJackStructs.h"
 #include "konfytArrayList.h"
 
-#define KONFYT_JACK_MIDI_IN_PORT_NAME "midi_in"
-#define KONFYT_JACK_MIDI_OUT_PORT_NAME "midi_out_"
-#define KONFYT_JACK_AUDIO_IN_PORT_NAME "audio_in_"
-#define KONFYT_JACK_AUDIO_BUS_PORT_NAME "audio_bus_"
-#define KONFYT_JACK_AUDIO_OUT_PORT_NAME "audio_out_"
 #define KONFYT_JACK_DEFAULT_CLIENT_NAME "Konfyt"   // Default client name. Actual name is set in the Jack client.
 #define KONFYT_JACK_SYSTEM_OUT_LEFT "system:playback_1"
 #define KONFYT_JACK_SYSTEM_OUT_RIGHT "system:playback_2"

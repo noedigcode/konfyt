@@ -41,7 +41,8 @@ void printUsage()
     std::cout << std::endl;
 }
 
-enum KonfytArgument {KonfytArg_Help, KonfytArg_Version, KonfytArg_Jackname};
+enum KonfytArgument {KonfytArg_Help, KonfytArg_Version, KonfytArg_Jackname,
+                    KonfytArg_Bridge};
 
 bool matchArgument(QString arg, KonfytArgument expected)
 {
@@ -54,6 +55,9 @@ bool matchArgument(QString arg, KonfytArgument expected)
         break;
     case KonfytArg_Jackname:
         return ( (arg=="-j") || (arg=="--jackname") );
+        break;
+    case KonfytArg_Bridge:
+        return ( (arg=="-b") || (arg=="--bridge") );
         break;
     }
     return false;
@@ -74,6 +78,7 @@ int main(int argc, char *argv[])
         QString prevArg;
         QStringList filesToLoad;
         QString jackClientName;
+        bool bridge = false;
 
         for (int i=1; i<a.arguments().count(); i++) {
             QString arg = a.arguments()[i];
@@ -93,6 +98,10 @@ int main(int argc, char *argv[])
                     nextIsValue = true;
                     prevArg = arg;
 
+                } else if ( matchArgument(arg, KonfytArg_Bridge) ) {
+
+                    bridge = true;
+
                 } else {
                     if (arg[0] == '-') {
                         std::cout << "Invalid argument \"" << arg.toLocal8Bit().constData() << "\". Ignoring it." << std::endl;
@@ -110,7 +119,7 @@ int main(int argc, char *argv[])
 
         // Create MainWindow
 
-        MainWindow w(0, &a, filesToLoad, jackClientName);
+        MainWindow w(0, &a, filesToLoad, jackClientName, bridge);
         w.show();
         return_code = a.exec();
 

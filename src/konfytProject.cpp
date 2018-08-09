@@ -27,7 +27,7 @@ KonfytProject::KonfytProject(QObject *parent) :
 {
     // Initialise variables
     projectName = "New Project";
-    patch_id_counter = 30;
+    patch_id_counter = 250;
     patchListNumbers = true;
     patchListNotes = false;
     programChangeSwitchPatches = true;

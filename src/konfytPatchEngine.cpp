@@ -27,6 +27,7 @@ konfytPatchEngine::konfytPatchEngine(QObject *parent) :
 {
     currentProject = NULL;
     currentPatch = NULL;
+    bridge = false;
 }
 
 
@@ -36,7 +37,7 @@ void konfytPatchEngine::userMessageFromEngine(QString msg)
     userMessage("patchEngine: " + msg);
 }
 
-void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient)
+void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytAppInfo appInfo)
 {
     // Jack client (probably received from MainWindow) so we can directly create ports
     this->jack = newJackClient;
@@ -50,12 +51,23 @@ void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient)
     jack->fluidsynthEngine = e; // Give to Jack so it can get sound out of it.
 
     // Initialise Carla Backend
-    carlaEngine = new konfytCarlaEngine();
-    connect(carlaEngine, &konfytCarlaEngine::userMessage,
-            this, &konfytPatchEngine::userMessageFromEngine);
-    QString carlaJackClientName = jack->clientName() + CARLA_CLIENT_POSTFIX;
-    carlaEngine->InitCarlaEngine( jack, carlaJackClientName );
 
+    bridge = appInfo.bridge;
+    if (bridge) {
+        // Create bridge engine (each plugin is hosted in new Konfyt process)
+        carlaEngine = new KonfytBridgeEngine();
+        static_cast<KonfytBridgeEngine*>(carlaEngine)->setKonfytExePath(appInfo.exePath);
+    } else {
+        // Just use local Carla engine
+        carlaEngine = new konfytCarlaEngine();
+    }
+
+    connect(carlaEngine, &KonfytBaseSoundEngine::userMessage,
+            this, &konfytPatchEngine::userMessageFromEngine);
+    connect(carlaEngine, &KonfytBaseSoundEngine::statusInfo,
+            this, &konfytPatchEngine::userMessageFromEngine);
+
+    carlaEngine->initEngine(jack);
 }
 
 void konfytPatchEngine::panic(bool p)
@@ -123,7 +135,7 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
 
             } else if ( layer.carlaPluginData.pluginType == KonfytCarlaPluginType_SFZ ) {
 
-                ID = carlaEngine->addSFZ( layer.carlaPluginData.path );
+                ID = carlaEngine->addSfz( layer.carlaPluginData.path );
 
             } else if ( layer.carlaPluginData.pluginType == KonfytCarlaPluginType_Internal ) {
 
@@ -139,10 +151,10 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
                 // Add to jack engine
 
                 // Find the plugin midi input port
-                layer.carlaPluginData.midi_in_port = carlaEngine->midiInPort(ID);
+                layer.carlaPluginData.midi_in_port = carlaEngine->midiInJackPortName(ID);
 
                 // Find the plugin audio output ports
-                QStringList audioLR = carlaEngine->audioOutPorts(ID);
+                QStringList audioLR = carlaEngine->audioOutJackPortNames(ID);
                 layer.carlaPluginData.audio_out_port_left = audioLR[0];
                 layer.carlaPluginData.audio_out_port_right = audioLR[1];
 
@@ -285,7 +297,7 @@ void konfytPatchEngine::unloadLayer(konfytPatch *patch, KonfytPatchLayer *item)
             // First remove from jack
             jack->removePlugin(layer.carlaPluginData.portsIdInJackEngine);
             // Then from carlaEngine
-            carlaEngine->removeSFZ(layer.carlaPluginData.indexInEngine);
+            carlaEngine->removeSfz(layer.carlaPluginData.indexInEngine);
             // Set unloaded in patch
             layer.carlaPluginData.indexInEngine = -1;
             patch->replaceLayer(layer);
@@ -404,11 +416,6 @@ KonfytPatchLayer konfytPatchEngine::addCarlaInternalLayer(QString URI)
     // LayerItem from the loaded patch:
 
     return currentPatch->getLayerItem(g);
-}
-
-KonfytPatchLayer konfytPatchEngine::addRemoteLayer(QString path)
-{
-    // TODO 2018-08-08
 }
 
 
