@@ -4,3 +4,8 @@ KonfytBaseSoundEngine::KonfytBaseSoundEngine(QObject *parent) : QObject(parent)
 {
 
 }
+
+KonfytBaseSoundEngine::~KonfytBaseSoundEngine()
+{
+
+}

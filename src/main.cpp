@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 #include "mainwindow.h"
+#include "konfytStructs.h"
 #include <QApplication>
 #include <iostream>
 
@@ -42,7 +43,7 @@ void printUsage()
 }
 
 enum KonfytArgument {KonfytArg_Help, KonfytArg_Version, KonfytArg_Jackname,
-                    KonfytArg_Bridge};
+                    KonfytArg_Bridge, KonfytArg_Headless};
 
 bool matchArgument(QString arg, KonfytArgument expected)
 {
@@ -58,6 +59,9 @@ bool matchArgument(QString arg, KonfytArgument expected)
         break;
     case KonfytArg_Bridge:
         return ( (arg=="-b") || (arg=="--bridge") );
+        break;
+    case KonfytArg_Headless:
+        return ( (arg=="-q") );
         break;
     }
     return false;
@@ -76,9 +80,9 @@ int main(int argc, char *argv[])
 
         bool nextIsValue = false;
         QString prevArg;
-        QStringList filesToLoad;
-        QString jackClientName;
-        bool bridge = false;
+        KonfytAppInfo appInfo;
+
+        appInfo.exePath = a.arguments()[0];
 
         for (int i=1; i<a.arguments().count(); i++) {
             QString arg = a.arguments()[i];
@@ -100,27 +104,32 @@ int main(int argc, char *argv[])
 
                 } else if ( matchArgument(arg, KonfytArg_Bridge) ) {
 
-                    bridge = true;
+                    appInfo.bridge = true;
+
+                } else if ( matchArgument(arg, KonfytArg_Headless) ) {
+
+                    appInfo.headless = true;
 
                 } else {
                     if (arg[0] == '-') {
                         std::cout << "Invalid argument \"" << arg.toLocal8Bit().constData() << "\". Ignoring it." << std::endl;
                     } else {
-                        filesToLoad.append(arg);
+                        appInfo.filesToLoad.append(arg);
                     }
                 }
             } else {
                 // nextIsValue is true; So this argument is a value related to prevArg.
                 if ( matchArgument(prevArg, KonfytArg_Jackname) ) {
-                    jackClientName = arg;
+                    appInfo.jackClientName = arg;
                 }
+                nextIsValue = false;
             }
         }
 
         // Create MainWindow
 
-        MainWindow w(0, &a, filesToLoad, jackClientName, bridge);
-        w.show();
+        MainWindow w(0, appInfo);
+        if (!appInfo.headless) { w.show(); }
         return_code = a.exec();
 
     } while (return_code == APP_RESTART_CODE);

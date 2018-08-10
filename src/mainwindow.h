@@ -123,12 +123,9 @@ class MainWindow : public QMainWindow
     
 public:
 
-    explicit MainWindow(QWidget *parent, QApplication* application,
-                        QStringList filesToLoad, QString jackClientName,
-                        bool bridge);
+    explicit MainWindow(QWidget *parent, KonfytAppInfo appInfoArg);
     ~MainWindow();
 
-    QApplication* app;
     KonfytAppInfo appInfo;
 
     bool eventFilter(QObject *object, QEvent *event);
@@ -800,8 +797,6 @@ private slots:
     void on_pushButton_Panic_customContextMenuRequested(const QPoint &pos);
 
     void on_toolButton_MidiFilter_VelLimitMax_last_clicked();
-
-    void on_pushButton_Test_clicked();
 
 private:
     Ui::MainWindow *ui;

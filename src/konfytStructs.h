@@ -22,6 +22,7 @@
 #ifndef KONFYT_STRUCTS_H
 #define KONFYT_STRUCTS_H
 
+#include <QApplication>
 #include <QString>
 #include <jack/jack.h>
 
@@ -51,6 +52,12 @@ struct konfytSoundfont {
 struct KonfytAppInfo {
     QString exePath;
     bool bridge;
+    bool headless;
+    QStringList filesToLoad;
+    QString jackClientName;
+    QApplication *a;
+
+    KonfytAppInfo() : bridge(false), headless(false), a(NULL) {}
 };
 
 

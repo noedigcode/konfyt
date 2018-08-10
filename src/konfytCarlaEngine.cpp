@@ -30,6 +30,11 @@ konfytCarlaEngine::konfytCarlaEngine(QObject *parent) :
 
 }
 
+konfytCarlaEngine::~konfytCarlaEngine()
+{
+
+}
+
 /************************************************************************
  * OLD CODE FOR LOADING OTHER TYPES OF PLUGINS
  *

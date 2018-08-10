@@ -10,6 +10,7 @@ class KonfytBaseSoundEngine : public QObject
     Q_OBJECT
 public:
     explicit KonfytBaseSoundEngine(QObject *parent = 0);
+    virtual ~KonfytBaseSoundEngine();
 
     virtual void initEngine(KonfytJackEngine* jackEngine) = 0;
     virtual int addSfz(QString path) = 0;

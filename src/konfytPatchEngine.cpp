@@ -30,6 +30,11 @@ konfytPatchEngine::konfytPatchEngine(QObject *parent) :
     bridge = false;
 }
 
+konfytPatchEngine::~konfytPatchEngine()
+{
+    delete carlaEngine;
+}
+
 
 // Get a userMessage signal from an engine, and pass it on to the gui.
 void konfytPatchEngine::userMessageFromEngine(QString msg)
@@ -65,7 +70,7 @@ void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytA
     connect(carlaEngine, &KonfytBaseSoundEngine::userMessage,
             this, &konfytPatchEngine::userMessageFromEngine);
     connect(carlaEngine, &KonfytBaseSoundEngine::statusInfo,
-            this, &konfytPatchEngine::userMessageFromEngine);
+            this, &konfytPatchEngine::statusInfo);
 
     carlaEngine->initEngine(jack);
 }

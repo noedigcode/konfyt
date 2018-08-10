@@ -50,6 +50,7 @@ public:
     };
 
     explicit konfytCarlaEngine(QObject *parent = 0);
+    ~konfytCarlaEngine();
 
     // KonfytBaseSoundEngine interface
     void initEngine(KonfytJackEngine *jackEngine);

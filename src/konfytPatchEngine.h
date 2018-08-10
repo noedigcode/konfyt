@@ -38,6 +38,7 @@ class konfytPatchEngine : public QObject
     Q_OBJECT
 public:
     explicit konfytPatchEngine(QObject *parent = 0);
+    ~konfytPatchEngine();
 
     // ----------------------------------------------------
     // Engine related functions
@@ -134,6 +135,7 @@ private:
 
 signals:
     void userMessage(QString msg);
+    void statusInfo(QString msg);
     
 public slots:
     void userMessageFromEngine(QString msg);

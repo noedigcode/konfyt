@@ -25,9 +25,7 @@
 #include <iostream>
 
 
-MainWindow::MainWindow(QWidget *parent, QApplication* application,
-                       QStringList filesToLoad, QString jackClientName,
-                       bool bridge) :
+MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
@@ -35,12 +33,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application,
 
     // Initialise variables
 
-    app = application;
-    appInfo.bridge =  bridge;
-    appInfo.exePath = app->arguments()[0];
-    if (bridge) {
-        userMessage("Bridging is enabled.");
-    }
+    appInfo = appInfoArg;
 
     currentProject = -1;
     panicState = false;
@@ -60,7 +53,16 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application,
     // Initialise console dialog
     this->consoleDiag = new ConsoleDialog(this);
 
+    // USER MESSAGES CAN HAPPEN AFTER THIS POINT
+
     userMessage(QString(APP_NAME) + " " + APP_VERSION);
+    userMessage("Arguments:");
+    if (appInfo.bridge) { userMessage(" - Bridging is enabled."); }
+    userMessage(" - Files to load:");
+    for (int i=0; i < appInfo.filesToLoad.count(); i++) {
+        userMessage("   - " + appInfo.filesToLoad[i]);
+    }
+    userMessage(" - JackClientName: " + appInfo.jackClientName);
 
     // Initialise About Dialog
     initAboutDialog();
@@ -97,6 +99,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application,
 
     connect(jack, &KonfytJackEngine::xrunSignal, this, &MainWindow::jackXrun);
 
+    QString jackClientName = appInfo.jackClientName;
     if (jackClientName.isEmpty()) {
         jackClientName = KONFYT_JACK_DEFAULT_CLIENT_NAME;
     }
@@ -129,6 +132,9 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application,
     pengine = new konfytPatchEngine();
 
     connect(pengine, &konfytPatchEngine::userMessage, this, &MainWindow::userMessage);
+    connect(pengine, &konfytPatchEngine::statusInfo, [this](QString msg){
+        ui->textBrowser_Testing->setText(msg);
+    });
 
     pengine->initPatchEngine(this->jack, appInfo);
     this->masterGain = 0.8;
@@ -192,8 +198,8 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application,
         userMessage("No project directory " + projectsDir);
     }
     // Load project if one was passed as an argument
-    for (int i=0; i<filesToLoad.count(); i++) {
-        QString file = filesToLoad[i];
+    for (int i=0; i < appInfo.filesToLoad.count(); i++) {
+        QString file = appInfo.filesToLoad[i];
         if ( fileIsPatch(file) || fileIsSfzOrGig(file) || fileIsSoundfont(file) ) {
             // If no project loaded, create a new project
             if (projectList.count() == 0) {
@@ -392,7 +398,8 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application,
 
 MainWindow::~MainWindow()
 {
-    carla_engine_close();
+    carla_engine_close(); // TODO BRIDGE PUT IN CARLA ENGINE
+    delete pengine;
     jack->stopJackClient();
 
     delete ui;
@@ -2643,7 +2650,7 @@ void MainWindow::startWaiter(QString msg)
 {
     // Disable all input (install event filter)
     eventFilterMode = EVENT_FILTER_MODE_WAITER;
-    app->installEventFilter(this);
+    appInfo.a->installEventFilter(this);
     // Start waiterTimer
     waiterMessage = msg;
     waiterState = 0;
@@ -2659,7 +2666,7 @@ void MainWindow::stopWaiter()
     ui->statusBar->showMessage("Done.", 3000);
 
     // Re-enable all input (remove event filter)
-    app->removeEventFilter(this);
+    appInfo.a->removeEventFilter(this);
 }
 
 void MainWindow::timerEvent(QTimerEvent *ev)
@@ -4241,12 +4248,12 @@ void MainWindow::on_pushButton_LiveMode_clicked()
         ui->stackedWidget_left->setCurrentIndex(STACKED_WIDGET_LEFT_LIVE);
         // Install event filter to catch all global key presses
         eventFilterMode = EVENT_FILTER_MODE_LIVE;
-        app->installEventFilter(this);
+        appInfo.a->installEventFilter(this);
     } else {
         // Switch out of live mode to normal
         ui->stackedWidget_left->setCurrentIndex(STACKED_WIDGET_LEFT_LIBRARY);
         // Remove event filter
-        app->removeEventFilter(this);
+        appInfo.a->removeEventFilter(this);
 
     }
 }
@@ -5101,23 +5108,26 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     // Go through list of projects and ask to save for modified projects.
 
-    for (int i=0; i<this->projectList.count(); i++) {
-        KonfytProject* prj = projectList[i];
-        if (prj->isModified()) {
-            QMessageBox msgbox;
-            msgbox.setText("Do you want to save the changes to project " + prj->getProjectName() + "?");
-            msgbox.setIcon(QMessageBox::Question);
-            msgbox.setStandardButtons(QMessageBox::Cancel | QMessageBox::Yes | QMessageBox::No);
-            msgbox.setDefaultButton(QMessageBox::Cancel);
-            int ret = msgbox.exec();
-            if (ret == QMessageBox::Yes) {
-                if ( saveProject(prj) == false ) {
+    if (!appInfo.headless) {
+
+        for (int i=0; i<this->projectList.count(); i++) {
+            KonfytProject* prj = projectList[i];
+            if (prj->isModified()) {
+                QMessageBox msgbox;
+                msgbox.setText("Do you want to save the changes to project " + prj->getProjectName() + "?");
+                msgbox.setIcon(QMessageBox::Question);
+                msgbox.setStandardButtons(QMessageBox::Cancel | QMessageBox::Yes | QMessageBox::No);
+                msgbox.setDefaultButton(QMessageBox::Cancel);
+                int ret = msgbox.exec();
+                if (ret == QMessageBox::Yes) {
+                    if ( saveProject(prj) == false ) {
+                        event->ignore();
+                        return;
+                    }
+                } else if (ret == QMessageBox::Cancel) {
                     event->ignore();
                     return;
                 }
-            } else if (ret == QMessageBox::Cancel) {
-                event->ignore();
-                return;
             }
         }
     }
@@ -5782,24 +5792,4 @@ void MainWindow::on_toolButton_MidiFilter_VelLimitMax_last_clicked()
     ui->spinBox_midiFilter_VelLimitMax->setValue( midiFilter_lastData2 );
 }
 
-void MainWindow::on_pushButton_Test_clicked()
-{
-    userMessage("Test button: Launching another Konfyt instance.");
 
-    // TODO 2018-08-08
-
-    /*
-    newPatchIfMasterNull();
-
-    QString path = app->arguments().at(0);
-    // Create process and launch
-
-    // Add layer to engine
-    KonfytPatchLayer g = pengine->addSfzLayer(sfzPath);
-
-    // Add layer to GUI
-    addLayerItemToGUI(g);
-
-    setPatchModified(true);
-    */
-}
