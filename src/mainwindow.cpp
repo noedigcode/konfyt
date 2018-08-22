@@ -58,6 +58,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     userMessage(QString(APP_NAME) + " " + APP_VERSION);
     userMessage("Arguments:");
     if (appInfo.bridge) { userMessage(" - Bridging is enabled."); }
+    ui->groupBox_Testing->setVisible(appInfo.bridge);
     userMessage(" - Files to load:");
     for (int i=0; i < appInfo.filesToLoad.count(); i++) {
         userMessage("   - " + appInfo.filesToLoad[i]);

@@ -39,6 +39,8 @@ void printUsage()
     std::cout << "      -v, --version          Print version information" << std::endl;
     std::cout << "      -h, --help             Print usage information" << std::endl;
     std::cout << "      -j, --jackname <name>  Set name of JACK client" << std::endl;
+    std::cout << "      -q, --headless         Hide GUI" << std::endl;
+    std::cout << "      -b, --bridge           Load sfz's in separate processes (experimental feature)" << std::endl;
     std::cout << std::endl;
 }
 
@@ -61,7 +63,7 @@ bool matchArgument(QString arg, KonfytArgument expected)
         return ( (arg=="-b") || (arg=="--bridge") );
         break;
     case KonfytArg_Headless:
-        return ( (arg=="-q") );
+        return ( (arg=="-q") || (arg=="--headless") );
         break;
     }
     return false;

@@ -6415,7 +6415,7 @@ border-top-right-radius: 0;
           <number>8</number>
          </property>
          <item row="5" column="0">
-          <widget class="QGroupBox" name="groupBox_6">
+          <widget class="QGroupBox" name="groupBox_Testing">
            <property name="styleSheet">
             <string notr="true">QGroupBox{
 
@@ -6432,16 +6432,9 @@ border-top-right-radius: 0;
 </string>
            </property>
            <property name="title">
-            <string>Testing</string>
+            <string>Bridges (Experimental)</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_39">
-            <item row="1" column="0">
-             <widget class="QPushButton" name="pushButton_Test">
-              <property name="text">
-               <string>Launch</string>
-              </property>
-             </widget>
-            </item>
             <item row="0" column="0">
              <widget class="QTextBrowser" name="textBrowser_Testing"/>
             </item>
