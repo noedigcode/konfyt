@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
         bool nextIsValue = false;
         QString prevArg;
         KonfytAppInfo appInfo;
-
+        appInfo.a = &a;
         appInfo.exePath = a.arguments()[0];
 
         for (int i=1; i<a.arguments().count(); i++) {
