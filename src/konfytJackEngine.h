@@ -23,10 +23,12 @@
 #define KONFYT_JACK_ENGINE_H
 
 #include <QObject>
-#include <QStringList>
 #include <QBasicTimer>
-#include <QTimerEvent>
+#include <QElapsedTimer>
 #include <QMap>
+#include <QStringList>
+#include <QTimer>
+#include <QTimerEvent>
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
@@ -207,6 +209,13 @@ private:
     // Private port data structures
     int portIdCounter;
     QMap<int, KonfytJackPort*> portIdMap;
+
+    jack_port_t* registerJackPort(KonfytJackPort* portStruct,
+                                  jack_client_t *client,
+                                  QString port_name,
+                                  QString port_type,
+                                  unsigned long flags,
+                                  unsigned long buffer_size);
 
     // Timer for handling port register and connect callbacks
     QBasicTimer timer;

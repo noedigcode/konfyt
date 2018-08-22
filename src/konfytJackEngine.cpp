@@ -258,53 +258,53 @@ int KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPortsSpec &spec)
     KonfytJackPort* arPort = new KonfytJackPort();
 
     // Add a new midi output port which will be connected to the plugin midi input
-    jack_port_t* newPortPointer = jack_port_register(client, spec.name.toLocal8Bit(), JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+    jack_port_t* newPortPointer = registerJackPort(midiPort, client, spec.name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
     if (newPortPointer == NULL) {
         userMessage("Failed to create Jack MIDI output port for plugin.");
-        error_abort("Failed to create Jack MIDI output port for plugin " + spec.name); // TODO: handle this more gracefully
-    } else {
+        //error_abort("Failed to create Jack MIDI output port for plugin " + spec.name); // TODO: handle this more gracefully
+    } //else {
         midiPort->active = false;
         midiPort->connectionList.append( spec.midiOutConnectTo );
-        midiPort->jack_pointer = newPortPointer;
+        //midiPort->jack_pointer = newPortPointer;
         midiPort->mute = false;
         midiPort->prev_active = false;
         midiPort->solo = false;
         midiPort->filter = spec.midiFilter;
-    }
+    //}
 
     // Add left audio input port where we will receive plugin audio
     QString nameL = spec.name + "_in_L";
-    jack_port_t* newL = jack_port_register(client, nameL.toLocal8Bit(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+    jack_port_t* newL = registerJackPort(alPort, client, nameL, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
     if (newL == NULL) {
         userMessage("Failed to create left audio input port.");
-        error_abort("Failed to create left Jack audio input port for plugin, " + nameL); // TODO: handle this more gracefully
-    } else {
+        //error_abort("Failed to create left Jack audio input port for plugin, " + nameL); // TODO: handle this more gracefully
+    } //else {
         alPort->active = false;
         alPort->connectionList.append( spec.audioInLeftConnectTo );
         alPort->destOrSrcPort = NULL;
         alPort->gain = 1;
-        alPort->jack_pointer = newL;
+        //alPort->jack_pointer = newL;
         alPort->mute = false;
         alPort->prev_active = false;
         alPort->solo = false;
-    }
+    //}
 
     // Add right audio input port
     QString nameR = spec.name + "_in_R";
-    jack_port_t* newR = jack_port_register(client, nameR.toLocal8Bit(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+    jack_port_t* newR = registerJackPort(arPort, client, nameR, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
     if (newR == NULL) {
         userMessage("Failed to create right audio input port.");
-        error_abort("Failed to create right Jack audio input port for plugin, " + nameR); // TODO: handle this more gracefully
-    } else {
+        //error_abort("Failed to create right Jack audio input port for plugin, " + nameR); // TODO: handle this more gracefully
+    } //else {
         arPort->active = false;
         arPort->connectionList.append( spec.audioInRightConnectTo );
         arPort->destOrSrcPort = NULL;
         arPort->gain = 1;
-        arPort->jack_pointer = newR;
+        //arPort->jack_pointer = newR;
         arPort->mute = false;
         arPort->prev_active = false;
         arPort->solo = false;
-    }
+    //}
 
     KonfytJackPluginPorts* p = new KonfytJackPluginPorts();
     p->midi = midiPort;
@@ -813,41 +813,43 @@ int KonfytJackEngine::addPort(KonfytJackPortType type, QString port_name)
     QList<KonfytJackPort*> *listToAddTo;
     int ret = KONFYT_JACK_PORT_ERROR;
 
+    KonfytJackPort* p = new KonfytJackPort();
+
     switch (type) {
     case KonfytJackPortType_MidiIn:
 
-        newPort = jack_port_register (client, port_name.toLocal8Bit(), JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
+        newPort = registerJackPort (p, client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
         listToAddTo = &midi_in_ports;
 
         break;
     case KonfytJackPortType_MidiOut:
 
-        newPort = jack_port_register (client, port_name.toLocal8Bit(), JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
+        newPort = registerJackPort (p, client, port_name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
         listToAddTo = &midi_out_ports;
 
         break;
     case KonfytJackPortType_AudioOut:
 
-        newPort = jack_port_register (client, port_name.toLocal8Bit(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
+        newPort = registerJackPort (p, client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
         listToAddTo = &audio_out_ports;
 
         break;
     case KonfytJackPortType_AudioIn:
 
 
-        newPort = jack_port_register (client, port_name.toLocal8Bit(), JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
+        newPort = registerJackPort (p, client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
         listToAddTo = &audio_in_ports;
 
         break;
     }
 
     if (newPort == NULL) {
-        error_abort("konfytJackEngine::addPort: could not add jack port. Have to handle this better!");
+        //error_abort("konfytJackEngine::addPort: could not add jack port. Have to handle this better!");
         ret = KONFYT_JACK_PORT_ERROR;
-    } else {
+    } //else {
 
-        KonfytJackPort* p = new KonfytJackPort();
-        p->jack_pointer = newPort;
+//        KonfytJackPort* p = new KonfytJackPort();
+        //p->jack_pointer = newPort;
         if (type == KonfytJackPortType_AudioOut) {
             p->active = true;
             p->prev_active = true;
@@ -865,7 +867,7 @@ int KonfytJackEngine::addPort(KonfytJackPortType type, QString port_name)
         // Create unique ID for port
         ret = portIdCounter++;
         portIdMap.insert(ret, p);
-    }
+    //}
 
     pauseJackProcessing(false);
     return ret;
@@ -1278,6 +1280,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
         // For each plugin audio in port, mix to destination bus
         for (n=0; n<e->plugin_ports.count(); n++) {
             tempPort = e->plugin_ports[n]->audio_in_l; // Left
+            if (tempPort->jack_pointer == NULL) { continue; } // debug
             if ( e->passMuteSoloCriteria( tempPort ) ) { // Don't check if port is active, only solo and mute
                 // Left
                 tempPort->buffer = jack_port_get_buffer( tempPort->jack_pointer, nframes );
@@ -2216,6 +2219,40 @@ void KonfytJackEngine::activatePortsForPatch(const konfytPatch* patch, const Kon
 void KonfytJackEngine::setGlobalTranspose(int transpose)
 {
     this->globalTranspose = transpose;
+}
+
+jack_port_t *KonfytJackEngine::registerJackPort(KonfytJackPort* portStruct, jack_client_t *client, QString port_name, QString port_type, unsigned long flags, unsigned long buffer_size)
+{
+    jack_port_t* port = NULL;
+
+    port = jack_port_by_name(client, port_name.toLocal8Bit());
+    if (port != NULL) {
+        userMessage("Got port by name!");
+    } else {
+
+        port = jack_port_register(client, port_name.toLocal8Bit(), port_type.toLocal8Bit(), flags, buffer_size);
+
+    }
+
+    if (port == NULL) {
+
+        userMessage("Failed to create Jack port " + port_name);
+
+        QTimer* retryTimer = new QTimer();
+        connect(retryTimer, &QTimer::timeout, [this, portStruct, retryTimer, client, port_name, port_type, flags, buffer_size](){
+            //static int counter = 0;
+            retryTimer->deleteLater();
+            userMessage("Retrying register jack port");
+            //registerJackPort(portStruct, client, port_name, port_type, flags, buffer_size);
+        });
+        retryTimer->setSingleShot(true);
+        retryTimer->start(1000);
+
+    }
+
+    portStruct->jack_pointer = port;
+
+    return port;
 }
 
 
