@@ -32,6 +32,7 @@
 #include "konfytJackEngine.h"
 #include "konfytProject.h"
 #include "konfytCarlaEngine.h"
+#include "konfytLscpEngine.h"
 
 class konfytPatchEngine : public QObject
 {

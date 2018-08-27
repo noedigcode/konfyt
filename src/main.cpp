@@ -40,12 +40,13 @@ void printUsage()
     std::cout << "      -h, --help             Print usage information" << std::endl;
     std::cout << "      -j, --jackname <name>  Set name of JACK client" << std::endl;
     std::cout << "      -q, --headless         Hide GUI" << std::endl;
-    std::cout << "      -b, --bridge           Load sfz's in separate processes (experimental feature)" << std::endl;
+    std::cout << "      -b, --bridge           Load sfz's in separate processes (experimental feature, uses Carla)" << std::endl;
+    std::cout << "      -c, --carla            Use Carla to load sfz's and not Linuxsampler" << std::endl;
     std::cout << std::endl;
 }
 
 enum KonfytArgument {KonfytArg_Help, KonfytArg_Version, KonfytArg_Jackname,
-                    KonfytArg_Bridge, KonfytArg_Headless};
+                    KonfytArg_Bridge, KonfytArg_Headless, KonfytArg_Carla};
 
 bool matchArgument(QString arg, KonfytArgument expected)
 {
@@ -64,6 +65,9 @@ bool matchArgument(QString arg, KonfytArgument expected)
         break;
     case KonfytArg_Headless:
         return ( (arg=="-q") || (arg=="--headless") );
+        break;
+    case KonfytArg_Carla:
+        return ( (arg=="-c") || (arg=="--carla") );
         break;
     }
     return false;
@@ -111,6 +115,10 @@ int main(int argc, char *argv[])
                 } else if ( matchArgument(arg, KonfytArg_Headless) ) {
 
                     appInfo.headless = true;
+
+                } else if ( matchArgument(arg, KonfytArg_Carla) ) {
+
+                    appInfo.carla = true;
 
                 } else {
                     if (arg[0] == '-') {

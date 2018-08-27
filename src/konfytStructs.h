@@ -53,11 +53,12 @@ struct KonfytAppInfo {
     QString exePath;
     bool bridge;
     bool headless;
+    bool carla;
     QStringList filesToLoad;
     QString jackClientName;
     QApplication *a;
 
-    KonfytAppInfo() : bridge(false), headless(false), a(NULL) {}
+    KonfytAppInfo() : bridge(false), headless(false), carla(false), a(NULL) {}
 };
 
 

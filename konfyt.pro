@@ -39,7 +39,9 @@ SOURCES += src/main.cpp\
     src/konfytArrayList.cpp \
     src/aboutdialog.cpp \
     src/konfytBridgeEngine.cpp \
-    src/konfytBaseSoundEngine.cpp
+    src/konfytBaseSoundEngine.cpp \
+    src/konfytLscpEngine.cpp \
+    src/gidls.cpp
 
 HEADERS  += src/mainwindow.h \
     src/toetsdialog.h \
@@ -65,7 +67,9 @@ HEADERS  += src/mainwindow.h \
     src/konfytArrayList.h \
     src/aboutdialog.h \
     src/konfytBridgeEngine.h \
-    src/konfytBaseSoundEngine.h
+    src/konfytBaseSoundEngine.h \
+    src/konfytLscpEngine.h \
+    src/gidls.h
 
 FORMS    += src/mainwindow.ui \
     src/toetsdialog.ui \
@@ -73,13 +77,20 @@ FORMS    += src/mainwindow.ui \
     src/konfytLayerWidget.ui \
     src/aboutdialog.ui
 
+# For pkgconfig
 unix: CONFIG += link_pkgconfig
+
+# libLSCP stuff
+unix: PKGCONFIG += lscp
+
 # Carla stuff
 LIBS += -Wl,-rpath=/usr/lib/carla -L/usr/lib/carla -lcarla_standalone2
 QMAKE_CXXFLAGS += -DREAL_BUILD -I/usr/include/carla -I/usr/include/carla/includes
+
 # Fluidsynth
 unix: PKGCONFIG += fluidsynth
-# Jack
+
+# JACK
 unix: PKGCONFIG += jack
 
 # -fpermissive flags (making on Ubuntu Studio complains without this)
