@@ -964,7 +964,7 @@ void KonfytJackEngine::removePortClient_andDisconnect(int portId, QString cname)
         // Disconnect in Jack
         const char* ourPort = jack_port_name( port->jack_pointer );
         // NB the order of ports in the jack_disconnect function matters:
-        if (order == 0) {
+        if (order) {
             jack_disconnect(client, ourPort, cname.toLocal8Bit() );
         } else {
             jack_disconnect(client, cname.toLocal8Bit(), ourPort );
