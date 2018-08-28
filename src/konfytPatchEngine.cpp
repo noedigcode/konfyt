@@ -500,7 +500,9 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
 
             LayerCarlaPluginStruct pluginData = layer.carlaPluginData;
             // Gain = layer gain * master gain
-            carlaEngine->setGain( pluginData.indexInEngine, convertGain(pluginData.gain*masterGain) );
+            //carlaEngine->setGain( pluginData.indexInEngine, convertGain(pluginData.gain*masterGain) );
+            // Set gain of JACK ports instead of carlaEngine->setGain() since this isn't implemented for all engine types yet.
+            jack->setPluginGain(pluginData.portsIdInJackEngine, convertGain(pluginData.gain*masterGain) );
             // Set solo and mute in jack client
             jack->setPluginSolo(pluginData.portsIdInJackEngine, pluginData.solo);
             jack->setPluginMute(pluginData.portsIdInJackEngine, pluginData.mute);

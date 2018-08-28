@@ -163,6 +163,7 @@ public:
     void setPluginMidiFilter(int id, KonfytMidiFilter filter);
     void setPluginSolo(int id, bool solo);
     void setPluginMute(int id, bool mute);
+    void setPluginGain(int id, float gain);
     void setPluginRouting(int pluginId, int midiInPortId,
                                   int leftPortId,
                                   int rightPortId);

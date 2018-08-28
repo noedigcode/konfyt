@@ -441,6 +441,17 @@ void KonfytJackEngine::setPluginMute(int id, bool mute)
     }
 }
 
+void KonfytJackEngine::setPluginGain(int id, float gain)
+{
+    if (pluginsPortsMap.contains(id)) {
+        KonfytJackPluginPorts* p = pluginsPortsMap.value(id);
+        p->audio_in_l->gain = gain;
+        p->audio_in_r->gain = gain;
+    } else {
+        error_abort("setPluginGain: id " + n2s(id) + " out of range.");
+    }
+}
+
 void KonfytJackEngine::setSoundfontRouting(int indexInEngine, int midiInPortId, int leftPortId, int rightPortId)
 {
     if (!clientIsActive()) { return; }
@@ -1284,11 +1295,11 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
             if ( e->passMuteSoloCriteria( tempPort ) ) { // Don't check if port is active, only solo and mute
                 // Left
                 tempPort->buffer = jack_port_get_buffer( tempPort->jack_pointer, nframes );
-                e->mixBufferToDestinationPort( tempPort, nframes, false );
+                e->mixBufferToDestinationPort( tempPort, nframes, true );
                 // Right
                 tempPort = e->plugin_ports[n]->audio_in_r;
                 tempPort->buffer = jack_port_get_buffer( tempPort->jack_pointer, nframes );
-                e->mixBufferToDestinationPort( tempPort, nframes, false );
+                e->mixBufferToDestinationPort( tempPort, nframes, true );
             }
         }
 
