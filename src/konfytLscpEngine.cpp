@@ -50,12 +50,10 @@ QStringList KonfytLscpEngine::audioOutJackPortNames(int id)
 
 void KonfytLscpEngine::removeSfz(int id)
 {
-    // TODO LSCP
-    userMessage("TODO: removeSfz " + n2s(id));
+    ls.removeSfzChannel(id);
 }
 
 void KonfytLscpEngine::setGain(int id, float newGain)
 {
-    // TODO LSCP
     userMessage("TODO: setGain " + n2s(id) + " to " + n2s(newGain));
 }

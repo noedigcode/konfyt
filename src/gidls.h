@@ -177,7 +177,7 @@ public:
     bool addSfzChannel(QString file);
     int addSfzChannelAndPorts(QString file);
     GidLsChannel getSfzChannelInfo(int id);
-
+    void removeSfzChannel(int id);
 
 private:
     QString devName;

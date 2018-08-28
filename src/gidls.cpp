@@ -316,6 +316,14 @@ GidLsChannel GidLs::getSfzChannelInfo(int id)
     return chans.value(id);
 }
 
+void GidLs::removeSfzChannel(int id)
+{
+    if (chans.contains(id)) {
+        chans.remove(id);
+        lscp_remove_channel(client, id);
+    }
+}
+
 void GidLs::clientInitialised()
 {
     QString errString;
