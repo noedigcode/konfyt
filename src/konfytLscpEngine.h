@@ -14,6 +14,7 @@ public:
     ~KonfytLscpEngine();
 
     void initEngine(KonfytJackEngine *jackEngine);
+    QString jackClientName();
     int addSfz(QString path);
     QString pluginName(int id);
     QString midiInJackPortName(int id);

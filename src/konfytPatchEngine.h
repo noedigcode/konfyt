@@ -45,6 +45,7 @@ public:
     // Engine related functions
     // ----------------------------------------------------
     void initPatchEngine(KonfytJackEngine* newJackClient, KonfytAppInfo appInfo);
+    QStringList ourJackClientNames();
     void panic(bool p);
     float getMasterGain();
     void setMasterGain(float newGain);

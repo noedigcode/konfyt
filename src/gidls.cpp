@@ -458,6 +458,11 @@ int GidLs::addMidiPort()
     return port;
 }
 
+QString GidLs::jackClientName()
+{
+    return devName;
+}
+
 QString indentString(QString s, QString indent)
 {
     QStringList l = s.split("\n");

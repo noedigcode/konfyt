@@ -13,6 +13,7 @@ public:
     virtual ~KonfytBaseSoundEngine();
 
     virtual void initEngine(KonfytJackEngine* jackEngine) = 0;
+    virtual QString jackClientName() { return ""; }
     virtual int addSfz(QString path) = 0;
     virtual QString pluginName(int id) = 0;
     virtual QString midiInJackPortName(int id) = 0;

@@ -23,6 +23,11 @@ void KonfytLscpEngine::initEngine(KonfytJackEngine *jackEngine)
     ls.init( jackEngine->clientName() + "_LS" );
 }
 
+QString KonfytLscpEngine::jackClientName()
+{
+    return ls.jackClientName();
+}
+
 int KonfytLscpEngine::addSfz(QString path)
 {
     return ls.addSfzChannelAndPorts(path);

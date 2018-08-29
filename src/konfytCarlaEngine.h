@@ -54,6 +54,7 @@ public:
 
     // KonfytBaseSoundEngine interface
     void initEngine(KonfytJackEngine *jackEngine);
+    QString jackClientName();
     int addSfz(QString path);
     QString midiInJackPortName(int id);
     QStringList audioOutJackPortNames(int id);
@@ -69,7 +70,7 @@ public:
 
 private:
     int pluginUniqueIDCounter;
-    QString jackClientName;
+    QString jack_client_name;
     KonfytJackEngine* jack;
     QMap<int, konfytCarlaPluginData> pluginDataMap;
     QList<int> pluginList; // List with indexes matching id's in Carla engine, i.e. maps this class' unique IDs to pluginIds in Carla engine.

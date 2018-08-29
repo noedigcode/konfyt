@@ -104,8 +104,5 @@ QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter
 RESOURCES += \
     images.qrc
 
-OTHER_FILES += \
-    TODO_newfeats.txt
-
 
 

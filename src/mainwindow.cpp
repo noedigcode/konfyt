@@ -399,7 +399,6 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
 
 MainWindow::~MainWindow()
 {
-    carla_engine_close(); // TODO BRIDGE PUT IN CARLA ENGINE
     delete pengine;
     jack->stopJackClient();
 
@@ -968,11 +967,25 @@ void MainWindow::gui_updateConnectionsTree()
         return;
     }
 
-    // TODO: do not show ports of our (Konfyt's) client.
+    QStringList ourJackClients;
+    ourJackClients.append(jack->clientName());
+    ourJackClients.append(pengine->ourJackClientNames());
 
     // We have a list of JACK client:port. Fill the connection tree.
-    for (int i=0; i<l.count(); i++) {
-        addClientPortToTree(l[i], true);
+    for (int i=0; i < l.count(); i++) {
+        QString port = l[i];
+        // Skip our client ports
+        bool ours = false;
+        for (int i=0; i < ourJackClients.count(); i++) {
+            QString name = ourJackClients[i] + ":";
+            if (port.startsWith(name)) {
+                ours = true;
+                break;
+            }
+        }
+        if (!ours) {
+            addClientPortToTree(l[i], true);
+        }
     }
 
     // Tick the appropriate checkboxes according to the selected item in the

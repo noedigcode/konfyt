@@ -171,6 +171,7 @@ public:
     bool addMidiDevice(QString name);
     int addMidiPort();
 
+    QString jackClientName();
     QString printDevices();
 
     QString printChannels();

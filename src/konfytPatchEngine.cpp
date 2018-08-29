@@ -78,6 +78,14 @@ void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytA
     carlaEngine->initEngine(jack);
 }
 
+/* Returns names of JACK clients that refer to engines in use by us. */
+QStringList konfytPatchEngine::ourJackClientNames()
+{
+    QStringList ret;
+    ret.append(carlaEngine->jackClientName());
+    return ret;
+}
+
 void konfytPatchEngine::panic(bool p)
 {
     // indicate panic situation to Jack

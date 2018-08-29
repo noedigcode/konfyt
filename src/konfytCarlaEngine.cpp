@@ -32,7 +32,7 @@ konfytCarlaEngine::konfytCarlaEngine(QObject *parent) :
 
 konfytCarlaEngine::~konfytCarlaEngine()
 {
-
+    carla_engine_close();
 }
 
 /************************************************************************
@@ -194,7 +194,7 @@ QString konfytCarlaEngine::midiInJackPortName(int ID)
     // TODO: This depends on Carla naming the ports as we expect. A better way would be
     // to get the port names from a Carla callback.
 
-    return jackClientName + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_MIDI_IN_PORT_POSTFIX);
+    return jack_client_name + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_MIDI_IN_PORT_POSTFIX);
 }
 
 QStringList konfytCarlaEngine::audioOutJackPortNames(int ID)
@@ -206,8 +206,8 @@ QStringList konfytCarlaEngine::audioOutJackPortNames(int ID)
 
     QStringList ret;
 
-    ret.append( jackClientName + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_OUT_LEFT_PORT_POSTFIX) );
-    ret.append( jackClientName + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_OUT_RIGHT_PORT_POSTFIX) );
+    ret.append( jack_client_name + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_OUT_LEFT_PORT_POSTFIX) );
+    ret.append( jack_client_name + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_OUT_RIGHT_PORT_POSTFIX) );
 
     return ret;
 }
@@ -215,7 +215,7 @@ QStringList konfytCarlaEngine::audioOutJackPortNames(int ID)
 void konfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
 {
     jack = jackEngine;
-    jackClientName = jack->clientName() + CARLA_CLIENT_POSTFIX;
+    jack_client_name = jack->clientName() + CARLA_CLIENT_POSTFIX;
 
     userMessage("Carla version " + QString(CARLA_VERSION_STRING));
 
@@ -228,7 +228,12 @@ void konfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
     // Set the engine callback
     carla_set_engine_callback(konfytCarlaEngine::carlaEngineCallback, this);
     // TODO: Handle the case where this name is already taken.
-    carla_engine_init("JACK", jackClientName.toLocal8Bit().constData());
+    carla_engine_init("JACK", jack_client_name.toLocal8Bit().constData());
+}
+
+QString konfytCarlaEngine::jackClientName()
+{
+    return jack_client_name;
 }
 
 void konfytCarlaEngine::carlaEngineCallback(void *ptr, EngineCallbackOpcode action, uint pluginId, int value1, int value2, float value3, const char *valueStr)
