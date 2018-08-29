@@ -96,7 +96,7 @@ public:
     void clearLayers();
     int layerListIndexFromPatchId(KonfytPatchLayer* layer);
     void replaceLayer(KonfytPatchLayer newLayer);
-    void setLayerFilter(KonfytPatchLayer* layer, konfytMidiFilter newFilter);
+    void setLayerFilter(KonfytPatchLayer* layer, KonfytMidiFilter newFilter);
     float getLayerGain(KonfytPatchLayer* layer);
     void setLayerGain(KonfytPatchLayer* layer, float newGain);
     void setLayerSolo(KonfytPatchLayer* layer, bool solo);

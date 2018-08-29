@@ -27,6 +27,12 @@ konfytPatchEngine::konfytPatchEngine(QObject *parent) :
 {
     currentProject = NULL;
     currentPatch = NULL;
+    bridge = false;
+}
+
+konfytPatchEngine::~konfytPatchEngine()
+{
+    delete carlaEngine;
 }
 
 
@@ -36,7 +42,7 @@ void konfytPatchEngine::userMessageFromEngine(QString msg)
     userMessage("patchEngine: " + msg);
 }
 
-void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient)
+void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytAppInfo appInfo)
 {
     // Jack client (probably received from MainWindow) so we can directly create ports
     this->jack = newJackClient;
@@ -50,12 +56,26 @@ void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient)
     jack->fluidsynthEngine = e; // Give to Jack so it can get sound out of it.
 
     // Initialise Carla Backend
-    carlaEngine = new konfytCarlaEngine();
-    connect(carlaEngine, &konfytCarlaEngine::userMessage,
-            this, &konfytPatchEngine::userMessageFromEngine);
-    QString carlaJackClientName = jack->clientName() + CARLA_CLIENT_POSTFIX;
-    carlaEngine->InitCarlaEngine( jack, carlaJackClientName );
 
+    bridge = appInfo.bridge;
+    if (bridge) {
+        // Create bridge engine (each plugin is hosted in new Konfyt process)
+        carlaEngine = new KonfytBridgeEngine();
+        static_cast<KonfytBridgeEngine*>(carlaEngine)->setKonfytExePath(appInfo.exePath);
+    } else if (appInfo.carla) {
+        // Use local Carla engine
+        carlaEngine = new konfytCarlaEngine();
+    } else {
+        // Use Linuxsampler via LSCP
+        carlaEngine = new KonfytLscpEngine();
+    }
+
+    connect(carlaEngine, &KonfytBaseSoundEngine::userMessage,
+            this, &konfytPatchEngine::userMessageFromEngine);
+    connect(carlaEngine, &KonfytBaseSoundEngine::statusInfo,
+            this, &konfytPatchEngine::statusInfo);
+
+    carlaEngine->initEngine(jack);
 }
 
 void konfytPatchEngine::panic(bool p)
@@ -123,7 +143,7 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
 
             } else if ( layer.carlaPluginData.pluginType == KonfytCarlaPluginType_SFZ ) {
 
-                ID = carlaEngine->addSFZ( layer.carlaPluginData.path );
+                ID = carlaEngine->addSfz( layer.carlaPluginData.path );
 
             } else if ( layer.carlaPluginData.pluginType == KonfytCarlaPluginType_Internal ) {
 
@@ -139,10 +159,10 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
                 // Add to jack engine
 
                 // Find the plugin midi input port
-                layer.carlaPluginData.midi_in_port = carlaEngine->midiInPort(ID);
+                layer.carlaPluginData.midi_in_port = carlaEngine->midiInJackPortName(ID);
 
                 // Find the plugin audio output ports
-                QStringList audioLR = carlaEngine->audioOutPorts(ID);
+                QStringList audioLR = carlaEngine->audioOutJackPortNames(ID);
                 layer.carlaPluginData.audio_out_port_left = audioLR[0];
                 layer.carlaPluginData.audio_out_port_right = audioLR[1];
 
@@ -151,7 +171,14 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
                 // - create a midi output port and connect it to the plugin midi input port,
                 // - create audio input ports and connect it to the plugin audio output ports.
                 // - assigns the midi filter
-                jack->addPluginPortsAndConnect( layer.carlaPluginData );
+                KonfytJackPortsSpec spec;
+                spec.name = layer.carlaPluginData.name;
+                spec.midiOutConnectTo = layer.carlaPluginData.midi_in_port;
+                spec.midiFilter = layer.carlaPluginData.midiFilter;
+                spec.audioInLeftConnectTo = layer.carlaPluginData.audio_out_port_left;
+                spec.audioInRightConnectTo = layer.carlaPluginData.audio_out_port_right;
+                int jackId = jack->addPluginPortsAndConnect( spec );
+                layer.carlaPluginData.portsIdInJackEngine = jackId;
 
                 // Gain, solo, mute and bus are set later in refershAllGainsAndRouting()
             }
@@ -200,7 +227,7 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
         int portId = l[i].portIdInProject;
         if (currentProject->midiOutPort_exists( portId )) {
             PrjMidiPort projectPort = currentProject->midiOutPort_getPort( portId );
-            jack->setPortFilter(KonfytJackPortType_MidiOut, projectPort.jackPort, l[i].filter);
+            jack->setPortFilter(projectPort.jackPortId, l[i].filter);
         } else {
             userMessage("WARNING: MIDI out port layer refers to project port that does not exist: " + n2s( portId ));
         }
@@ -276,9 +303,9 @@ void konfytPatchEngine::unloadLayer(konfytPatch *patch, KonfytPatchLayer *item)
     } else if (layer.getLayerType() == KonfytLayerType_CarlaPlugin) {
         if (layer.carlaPluginData.indexInEngine >= 0) {
             // First remove from jack
-            jack->removePlugin(layer.carlaPluginData.indexInEngine);
+            jack->removePlugin(layer.carlaPluginData.portsIdInJackEngine);
             // Then from carlaEngine
-            carlaEngine->removeSFZ(layer.carlaPluginData.indexInEngine);
+            carlaEngine->removeSfz(layer.carlaPluginData.indexInEngine);
             // Set unloaded in patch
             layer.carlaPluginData.indexInEngine = -1;
             patch->replaceLayer(layer);
@@ -467,18 +494,22 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
             jack->setSoundfontSolo( sfData.indexInEngine, sfData.solo );
             jack->setSoundfontMute( sfData.indexInEngine, sfData.mute );
             // Set routing to bus
-            jack->setSoundfontRouting( sfData.indexInEngine, midiInPort.jackPort, bus.leftJackPort, bus.rightJackPort );
+            jack->setSoundfontRouting( sfData.indexInEngine, midiInPort.jackPortId, bus.leftJackPortId, bus.rightJackPortId );
 
         } else if (type == KonfytLayerType_CarlaPlugin) {
 
             LayerCarlaPluginStruct pluginData = layer.carlaPluginData;
             // Gain = layer gain * master gain
-            carlaEngine->setGain( pluginData.indexInEngine, convertGain(pluginData.gain*masterGain) );
+            //carlaEngine->setGain( pluginData.indexInEngine, convertGain(pluginData.gain*masterGain) );
+            // Set gain of JACK ports instead of carlaEngine->setGain() since this isn't implemented for all engine types yet.
+            jack->setPluginGain(pluginData.portsIdInJackEngine, convertGain(pluginData.gain*masterGain) );
             // Set solo and mute in jack client
-            jack->setPluginSolo(pluginData.indexInEngine, pluginData.solo);
-            jack->setPluginMute(pluginData.indexInEngine, pluginData.mute);
+            jack->setPluginSolo(pluginData.portsIdInJackEngine, pluginData.solo);
+            jack->setPluginMute(pluginData.portsIdInJackEngine, pluginData.mute);
             // Set routing to bus
-            jack->setPluginRouting(pluginData.indexInEngine, midiInPort.jackPort, bus.leftJackPort, bus.rightJackPort);
+            jack->setPluginRouting(pluginData.portsIdInJackEngine,
+                                   midiInPort.jackPortId,
+                                   bus.leftJackPortId, bus.rightJackPortId);
 
         } else if (type == KonfytLayerType_MidiOut) {
 
@@ -486,9 +517,9 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
             LayerMidiOutStruct portData = layer.midiOutputPortData;
             if (currentProject->midiOutPort_exists(portData.portIdInProject)) {
                 PrjMidiPort projectPort = currentProject->midiOutPort_getPort( portData.portIdInProject );
-                jack->setPortSolo(KonfytJackPortType_MidiOut, projectPort.jackPort, portData.solo);
-                jack->setPortMute(KonfytJackPortType_MidiOut, projectPort.jackPort, portData.mute);
-                jack->setPortRouting(KonfytJackPortType_MidiOut, projectPort.jackPort, midiInPort.jackPort);
+                jack->setPortSolo(projectPort.jackPortId, portData.solo);
+                jack->setPortMute(projectPort.jackPortId, portData.mute);
+                jack->setPortRouting(projectPort.jackPortId, midiInPort.jackPortId);
             }
 
         } else if (type == KonfytLayerType_AudioIn) {
@@ -502,15 +533,15 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
             if (currentProject->audioInPort_exists(audioPortData.portIdInProject)) {
                 PrjAudioInPort portPair = currentProject->audioInPort_getPort(audioPortData.portIdInProject);
                 // Left channel
-                jack->setPortSolo(KonfytJackPortType_AudioIn, portPair.leftJackPort, audioPortData.solo);
-                jack->setPortMute(KonfytJackPortType_AudioIn, portPair.leftJackPort, audioPortData.mute);
-                jack->setPortGain(KonfytJackPortType_AudioIn, portPair.leftJackPort, convertGain(audioPortData.gain*masterGain));
-                jack->setPortRouting(KonfytJackPortType_AudioIn, portPair.leftJackPort, bus.leftJackPort);
+                jack->setPortSolo(portPair.leftJackPortId, audioPortData.solo);
+                jack->setPortMute(portPair.leftJackPortId, audioPortData.mute);
+                jack->setPortGain( portPair.leftJackPortId, convertGain(audioPortData.gain*masterGain));
+                jack->setPortRouting(portPair.leftJackPortId, bus.leftJackPortId);
                 // Right channel
-                jack->setPortSolo(KonfytJackPortType_AudioIn, portPair.rightJackPort, audioPortData.solo);
-                jack->setPortMute(KonfytJackPortType_AudioIn, portPair.rightJackPort, audioPortData.mute);
-                jack->setPortGain(KonfytJackPortType_AudioIn, portPair.rightJackPort, convertGain(audioPortData.gain*masterGain));
-                jack->setPortRouting(KonfytJackPortType_AudioIn, portPair.rightJackPort, bus.rightJackPort);
+                jack->setPortSolo(portPair.rightJackPortId, audioPortData.solo);
+                jack->setPortMute(portPair.rightJackPortId, audioPortData.mute);
+                jack->setPortGain(portPair.rightJackPortId, convertGain(audioPortData.gain*masterGain));
+                jack->setPortRouting(portPair.rightJackPortId, bus.rightJackPortId);
             }
 
         } else if (type == KonfytLayerType_Uninitialized) {
@@ -655,7 +686,7 @@ void konfytPatchEngine::setLayerMidiInPort(konfytPatch *patch, KonfytPatchLayer 
     if (patch == currentPatch) { refreshAllGainsAndRouting(); }
 }
 
-void konfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, konfytMidiFilter filter)
+void konfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, KonfytMidiFilter filter)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -669,14 +700,14 @@ void konfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, konfytMidiFi
 
     } else if (layerItem->getLayerType() == KonfytLayerType_CarlaPlugin) {
 
-        this->jack->setPluginMidiFilter( layerItem->carlaPluginData.indexInEngine,
+        this->jack->setPluginMidiFilter( layerItem->carlaPluginData.portsIdInJackEngine,
                                          layerItem->carlaPluginData.midiFilter);
 
     } else if (layerItem->getLayerType() == KonfytLayerType_MidiOut) {
 
         LayerMidiOutStruct layerPort = layerItem->midiOutputPortData;
         PrjMidiPort projectPort = currentProject->midiOutPort_getPort( layerPort.portIdInProject );
-        this->jack->setPortFilter( KonfytJackPortType_MidiOut, projectPort.jackPort, layerPort.filter );
+        this->jack->setPortFilter( projectPort.jackPortId, layerPort.filter );
 
     }
 }

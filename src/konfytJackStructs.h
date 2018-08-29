@@ -31,12 +31,21 @@ enum KonfytJackPortType {
     KonfytJackPortType_MidiOut  = 3,
 };
 
+struct KonfytJackPortsSpec
+{
+    QString name;
+    QString midiOutConnectTo;
+    KonfytMidiFilter midiFilter;
+    QString audioInLeftConnectTo;
+    QString audioInRightConnectTo;
+};
+
 struct KonfytJackPort {
     jack_port_t* jack_pointer;
     bool active;
     bool prev_active;
     void* buffer;
-    konfytMidiFilter filter;
+    KonfytMidiFilter filter;
     bool solo;
     bool mute;
     float gain;
@@ -64,7 +73,7 @@ struct KonfytJackPort {
 };
 
 struct KonfytJackPluginPorts {
-    int plugin_id;
+    int id;
     KonfytJackPort* midi;        // Send midi output to plugin
     KonfytJackPort* audio_in_l;  // Receive plugin audio
     KonfytJackPort* audio_in_r;
@@ -77,7 +86,7 @@ struct KonfytJackNoteOnRecord {
     KonfytJackPort* port;
     KonfytJackPort* relatedPort;
     KonfytJackPort* sourcePort;
-    konfytMidiFilter filter;
+    KonfytMidiFilter filter;
     int globalTranspose;
 };
 

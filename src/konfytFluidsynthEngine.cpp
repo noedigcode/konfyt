@@ -27,7 +27,7 @@
 konfytFluidsynthEngine::konfytFluidsynthEngine(QObject *parent) :
     QObject(parent)
 {
-    synthUniqueIDCounter = 0;
+    synthUniqueIDCounter = 50;
     samplerate = 44100;
 }
 

@@ -27,14 +27,14 @@ KonfytProject::KonfytProject(QObject *parent) :
 {
     // Initialise variables
     projectName = "New Project";
-    patch_id_counter = 0;
+    patch_id_counter = 250;
     patchListNumbers = true;
     patchListNotes = false;
     programChangeSwitchPatches = true;
     modified = false;
 
     // Project has to have a minimum 1 bus
-    this->audioBus_add("Master Bus", NULL, NULL); // Ports will be assigned later when loading project
+    this->audioBus_add("Master Bus"); // Ports will be assigned later when loading project
     // Add at least 1 MIDI input port also
     this->midiInPort_addPort("MIDI In");
 }
@@ -567,7 +567,7 @@ bool KonfytProject::loadProject(QString filename)
     // Check if we have at least one audio output bus. If not, create a default one.
     if (audioBus_count() == 0) {
         // Project has to have a minimum 1 bus
-        this->audioBus_add("Master Bus", NULL, NULL); // Ports will be assigned later when loading project
+        this->audioBus_add("Master Bus"); // Ports will be assigned later when loading project
     }
 
     // Check if we have at least one Midi input port. If not, create a default one.
@@ -804,7 +804,7 @@ void KonfytProject::midiInPort_removeClient(int portId, QString client)
     }
 }
 
-void KonfytProject::midiInPort_setPortFilter(int portId, konfytMidiFilter filter)
+void KonfytProject::midiInPort_setPortFilter(int portId, KonfytMidiFilter filter)
 {
     if (midiInPort_exists(portId)) {
         PrjMidiPort p = midiInPortMap.value(portId);
@@ -864,14 +864,14 @@ int KonfytProject::getUniqueIdHelper(QList<int> ids)
 }
 
 /* Adds bus and returns unique bus id. */
-int KonfytProject::audioBus_add(QString busName, KonfytJackPort* leftJackPort, KonfytJackPort* rightJackPort)
+int KonfytProject::audioBus_add(QString busName)
 {
     PrjAudioBus bus;
     bus.busName = busName;
     bus.leftGain = 1;
     bus.rightGain = 1;
-    bus.leftJackPort = leftJackPort;
-    bus.rightJackPort = rightJackPort;
+    bus.leftJackPortId = -1;
+    bus.rightJackPortId = -1;
 
     int busId = audioBus_getUniqueId();
     audioBusMap.insert(busId, bus);
@@ -999,8 +999,8 @@ int KonfytProject::audioInPort_add(QString portName)
     port.portName = portName;
     port.destinationBus = 0;
     port.leftGain = 1;
-    port.leftJackPort = NULL;
-    port.rightJackPort = NULL;
+    port.leftJackPortId = -1;
+    port.rightJackPortId = -1;
     port.rightGain = 1;
 
     int portId = audioInPort_getUniqueId();

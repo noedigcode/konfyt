@@ -26,7 +26,7 @@
 
 konfytPatch::konfytPatch()
 {
-    this->id_counter = 0; // Initialise ID counter for layeritem unique ids.
+    this->id_counter = 200; // Initialise ID counter for layeritem unique ids.
 }
 
 
@@ -103,7 +103,7 @@ bool konfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_SFLAYER_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
-            konfytMidiFilter f = sfLayer.filter;
+            KonfytMidiFilter f = sfLayer.filter;
             f.writeToXMLStream(&stream);
 
             stream.writeEndElement(); // sfLayer
@@ -126,7 +126,7 @@ bool konfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_SFZLAYER_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
-            konfytMidiFilter f = p.midiFilter;
+            KonfytMidiFilter f = p.midiFilter;
             f.writeToXMLStream(&stream);
 
             stream.writeEndElement();
@@ -146,7 +146,7 @@ bool konfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_MIDIOUT_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
-            konfytMidiFilter f = m.filter;
+            KonfytMidiFilter f = m.filter;
             f.writeToXMLStream(&stream);
 
             stream.writeEndElement();
@@ -418,7 +418,7 @@ void konfytPatch::replaceLayer(KonfytPatchLayer newLayer)
 
 // Set the midi filter for the layer for which the patch_id matches that of
 // the specified layer item.
-void konfytPatch::setLayerFilter(KonfytPatchLayer *layer, konfytMidiFilter newFilter)
+void konfytPatch::setLayerFilter(KonfytPatchLayer *layer, KonfytMidiFilter newFilter)
 {
     // Find layer that matches ID_in_patch
     int index = layerListIndexFromPatchId(layer);

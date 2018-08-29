@@ -123,10 +123,10 @@ class MainWindow : public QMainWindow
     
 public:
 
-    explicit MainWindow(QWidget *parent, QApplication* application, QStringList filesToLoad, QString jackClientName);
+    explicit MainWindow(QWidget *parent, KonfytAppInfo appInfoArg);
     ~MainWindow();
 
-    QApplication* app;
+    KonfytAppInfo appInfo;
 
     bool eventFilter(QObject *object, QEvent *event);
     int eventFilterMode;
@@ -368,10 +368,10 @@ public:
     // Jack
     // ========================================================================
     KonfytJackEngine* jack;
-    void addAudioBusToJack(int busNo, KonfytJackPort **leftPort, KonfytJackPort **rightPort);
-    void addAudioInPortsToJack(int portNo, KonfytJackPort **leftPort, KonfytJackPort **rightPort);
-    void addMidiOutPortToJack(int portId, KonfytJackPort **jackPort);
-    void addMidiInPortToJack(int portId, KonfytJackPort **jackPort);
+    void addAudioBusToJack(int busNo, int *leftPortId, int *rightPortId);
+    void addAudioInPortsToJack(int portNo, int *leftPortId, int *rightPortId);
+    int addMidiOutPortToJack(int portId);
+    int addMidiInPortToJack(int portId);
 
     // ========================================================================
     // Processes (External apps)

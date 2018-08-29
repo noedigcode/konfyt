@@ -25,7 +25,7 @@
 #include <iostream>
 
 
-MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList filesToLoad, QString jackClientName) :
+MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
@@ -33,7 +33,8 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
 
     // Initialise variables
 
-    app = application;
+    appInfo = appInfoArg;
+
     currentProject = -1;
     panicState = false;
     masterPatch = NULL;
@@ -52,7 +53,17 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     // Initialise console dialog
     this->consoleDiag = new ConsoleDialog(this);
 
+    // USER MESSAGES CAN HAPPEN AFTER THIS POINT
+
     userMessage(QString(APP_NAME) + " " + APP_VERSION);
+    userMessage("Arguments:");
+    if (appInfo.bridge) { userMessage(" - Bridging is enabled."); }
+    ui->groupBox_Testing->setVisible(appInfo.bridge);
+    userMessage(" - Files to load:");
+    for (int i=0; i < appInfo.filesToLoad.count(); i++) {
+        userMessage("   - " + appInfo.filesToLoad[i]);
+    }
+    userMessage(" - JackClientName: " + appInfo.jackClientName);
 
     // Initialise About Dialog
     initAboutDialog();
@@ -89,6 +100,7 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
 
     connect(jack, &KonfytJackEngine::xrunSignal, this, &MainWindow::jackXrun);
 
+    QString jackClientName = appInfo.jackClientName;
     if (jackClientName.isEmpty()) {
         jackClientName = KONFYT_JACK_DEFAULT_CLIENT_NAME;
     }
@@ -121,8 +133,11 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
     pengine = new konfytPatchEngine();
 
     connect(pengine, &konfytPatchEngine::userMessage, this, &MainWindow::userMessage);
+    connect(pengine, &konfytPatchEngine::statusInfo, [this](QString msg){
+        ui->textBrowser_Testing->setText(msg);
+    });
 
-    pengine->initPatchEngine(this->jack);
+    pengine->initPatchEngine(this->jack, appInfo);
     this->masterGain = 0.8;
     pengine->setMasterGain(masterGain);
     this->previewGain = 0.8;
@@ -184,8 +199,8 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
         userMessage("No project directory " + projectsDir);
     }
     // Load project if one was passed as an argument
-    for (int i=0; i<filesToLoad.count(); i++) {
-        QString file = filesToLoad[i];
+    for (int i=0; i < appInfo.filesToLoad.count(); i++) {
+        QString file = appInfo.filesToLoad[i];
         if ( fileIsPatch(file) || fileIsSfzOrGig(file) || fileIsSoundfont(file) ) {
             // If no project loaded, create a new project
             if (projectList.count() == 0) {
@@ -384,7 +399,8 @@ MainWindow::MainWindow(QWidget *parent, QApplication* application, QStringList f
 
 MainWindow::~MainWindow()
 {
-    carla_engine_close();
+    carla_engine_close(); // TODO BRIDGE PUT IN CARLA ENGINE
+    delete pengine;
     jack->stopJackClient();
 
     delete ui;
@@ -514,7 +530,7 @@ void MainWindow::showMidiFilterEditor()
 {
     // Switch to midi filter view
 
-    konfytMidiFilter f;
+    KonfytMidiFilter f;
     if (midiFilterEditType == MidiFilterEditPort) {
         KonfytProject* prj = getCurrentProject();
         if (prj == NULL) { return; }
@@ -524,7 +540,7 @@ void MainWindow::showMidiFilterEditor()
         f = g.getMidiFilter();
     }
 
-    konfytMidiFilterZone z = f.zone;
+    KonfytMidiFilterZone z = f.zone;
     ui->spinBox_midiFilter_LowNote->setValue(z.lowNote);
     ui->spinBox_midiFilter_HighNote->setValue(z.highNote);
     ui->spinBox_midiFilter_Add->setValue(z.add);
@@ -1088,18 +1104,18 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
         int busId = tree_busMap.value( ui->tree_portsBusses->currentItem() );
         PrjAudioBus bus = prj->audioBus_getBus(busId);
 
-        KonfytJackPort* jackPort;
-        if (leftRight == leftPort) { jackPort = bus.leftJackPort; }
-        else { jackPort = bus.rightJackPort; }
+        int jackPort;
+        if (leftRight == leftPort) { jackPort = bus.leftJackPortId; }
+        else { jackPort = bus.rightJackPortId; }
 
         if (c->isChecked()) {
             // Connect
-            jack->addPortClient(KonfytJackPortType_AudioOut, jackPort, portString);
+            jack->addPortClient(jackPort, portString);
             // Also add in project
             prj->audioBus_addClient(busId, leftRight, portString);
         } else {
             // Disconnect
-            jack->removePortClient_andDisconnect(KonfytJackPortType_AudioOut, jackPort, portString);
+            jack->removePortClient_andDisconnect(jackPort, portString);
             // Also remove in project
             prj->audioBus_removeClient(busId, leftRight, portString);
         }
@@ -1110,18 +1126,18 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
         int portId = tree_audioInMap.value( ui->tree_portsBusses->currentItem() );
         PrjAudioInPort p = prj->audioInPort_getPort(portId);
 
-        KonfytJackPort* jackPort;
-        if (leftRight == leftPort) { jackPort = p.leftJackPort; }
-        else { jackPort = p.rightJackPort; }
+        int jackPort;
+        if (leftRight == leftPort) { jackPort = p.leftJackPortId; }
+        else { jackPort = p.rightJackPortId; }
 
         if (c->isChecked()) {
             // Connect
-            jack->addPortClient(KonfytJackPortType_AudioIn, jackPort, portString);
+            jack->addPortClient(jackPort, portString);
             // Also add in project
             prj->audioInPort_addClient(portId, leftRight, portString);
         } else {
             // Disconnect
-            jack->removePortClient_andDisconnect(KonfytJackPortType_AudioIn, jackPort, portString);
+            jack->removePortClient_andDisconnect(jackPort, portString);
             // Also remove in project
             prj->audioInPort_removeClient(portId, leftRight, portString);
         }
@@ -1131,15 +1147,15 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
         int portId = tree_midiOutMap.value( ui->tree_portsBusses->currentItem() );
         PrjMidiPort p = prj->midiOutPort_getPort(portId);
 
-        KonfytJackPort* jackPort = p.jackPort;
+        int jackPort = p.jackPortId;
         if (c->isChecked()) {
             // Connect
-            jack->addPortClient(KonfytJackPortType_MidiOut, jackPort, portString);
+            jack->addPortClient(jackPort, portString);
             // Also add in project
             prj->midiOutPort_addClient(portId, portString);
         } else {
             // Disconnect
-            jack->removePortClient_andDisconnect(KonfytJackPortType_MidiOut, jackPort, portString);
+            jack->removePortClient_andDisconnect(jackPort, portString);
             // Also remove in project
             prj->midiOutPort_removeClient(portId, portString);
         }
@@ -1149,15 +1165,15 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
         int portId = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
         PrjMidiPort p = prj->midiInPort_getPort(portId);
 
-        KonfytJackPort* jackPort = p.jackPort;
+        int jackPort = p.jackPortId;
         if (c->isChecked()) {
             // Connect
-            jack->addPortClient(KonfytJackPortType_MidiIn, jackPort, portString);
+            jack->addPortClient(jackPort, portString);
             // Also add in project
             prj->midiInPort_addClient(portId, portString);
         } else {
             // Disconnect
-            jack->removePortClient_andDisconnect(KonfytJackPortType_MidiIn, jackPort, portString);
+            jack->removePortClient_andDisconnect(jackPort, portString);
             // Also remove in project
             prj->midiInPort_removeClient(portId, portString);
         }
@@ -1325,22 +1341,21 @@ void MainWindow::setCurrentProject(int i)
 
     QList<int> midiInIds = prj->midiInPort_getAllPortIds();
     for (int j=0; j < midiInIds.count(); j++) {
-        int id = midiInIds[j];
+        int prjPortId = midiInIds[j];
         // Add to Jack, and update Jack port reference in project
-        PrjMidiPort projectPort = prj->midiInPort_getPort(id);
-        KonfytJackPort* jackPort;
-        addMidiInPortToJack(id, &jackPort);
-        projectPort.jackPort = jackPort;
-        prj->midiInPort_replace_noModify(id, projectPort); // Replace in project since the port has been updated with the jackPort
+        PrjMidiPort projectPort = prj->midiInPort_getPort(prjPortId);
+        int jackPortId = addMidiInPortToJack(prjPortId);
+        projectPort.jackPortId = jackPortId;
+        prj->midiInPort_replace_noModify(prjPortId, projectPort); // Replace in project since the port has been updated with the jackPort
 
         // Also add port clients to Jack
         QStringList c = projectPort.clients;
         for (int k=0; k < c.count(); k++) {
-            jack->addPortClient(KonfytJackPortType_MidiIn, jackPort, c.at(k));
+            jack->addPortClient(jackPortId, c.at(k));
         }
 
         // Set port midi filter in Jack
-        jack->setPortFilter(KonfytJackPortType_MidiIn, jackPort, projectPort.filter);
+        jack->setPortFilter(jackPortId, projectPort.filter);
     }
 
 
@@ -1350,18 +1365,17 @@ void MainWindow::setCurrentProject(int i)
 
     QList<int> midiOutIds = prj->midiOutPort_getAllPortIds();
     for (int j=0; j<midiOutIds.count(); j++) {
-        int id = midiOutIds[j];
+        int prjPortId = midiOutIds[j];
         // Add to Jack, and update Jack port reference in project
-        PrjMidiPort projectPort = prj->midiOutPort_getPort(id);
-        KonfytJackPort* jackPort;
-        addMidiOutPortToJack(id, &jackPort);
-        projectPort.jackPort = jackPort;
-        prj->midiOutPort_replace_noModify(id, projectPort); // Replace in project since the port has been updated with the jackPort
+        PrjMidiPort projectPort = prj->midiOutPort_getPort(prjPortId);
+        int jackPortId = addMidiOutPortToJack(prjPortId);
+        projectPort.jackPortId = jackPortId;
+        prj->midiOutPort_replace_noModify(prjPortId, projectPort); // Replace in project since the port has been updated with the jackPort
 
         // Also add port clients to Jack
         QStringList c = projectPort.clients;
         for (int k=0; k<c.count(); k++) {
-            jack->addPortClient(KonfytJackPortType_MidiOut, jackPort, c.at(k));
+            jack->addPortClient(jackPortId, c.at(k));
         }
 
     }
@@ -1383,16 +1397,16 @@ void MainWindow::setCurrentProject(int i)
         PrjAudioBus b =  prj->audioBus_getBus(id);
 
         // Add audio bus ports to jack client
-        KonfytJackPort *left, *right;
+        int left, right;
         addAudioBusToJack( id, &left, &right);
-        if ( (left != NULL) && (right != NULL) ) {
+        if ( (left != KONFYT_JACK_PORT_ERROR) && (right != KONFYT_JACK_PORT_ERROR) ) {
             // Update left and right port references of bus in project
-            b.leftJackPort = left;
-            b.rightJackPort = right;
+            b.leftJackPortId = left;
+            b.rightJackPortId = right;
             prj->audioBus_replace_noModify( id, b ); // use noModify function as to not change the project's modified state.
             // Add port clients to jack client
-            jack->setPortClients(KonfytJackPortType_AudioOut, b.leftJackPort, b.leftOutClients);
-            jack->setPortClients( KonfytJackPortType_AudioOut, b.rightJackPort, b.rightOutClients );
+            jack->setPortClients( b.leftJackPortId, b.leftOutClients);
+            jack->setPortClients( b.rightJackPortId, b.rightOutClients );
         } else {
             userMessage("ERROR: setCurrentProject: Failed to create audio bus Jack port(s).");
         }
@@ -1406,16 +1420,16 @@ void MainWindow::setCurrentProject(int i)
         PrjAudioInPort p = prj->audioInPort_getPort(id);
 
         // Add audio ports to jack client
-        KonfytJackPort *left, *right;
+        int left, right;
         addAudioInPortsToJack( id, &left, &right );
-        if ((left != NULL) && (right != NULL)) {
+        if ((left != KONFYT_JACK_PORT_ERROR) && (right != KONFYT_JACK_PORT_ERROR)) {
             // Update left and right port numbers in project
-            p.leftJackPort = left;
-            p.rightJackPort = right;
+            p.leftJackPortId = left;
+            p.rightJackPortId = right;
             prj->audioInPort_replace_noModify( id, p );
             // Add port clients to jack client
-            jack->setPortClients( KonfytJackPortType_AudioIn, p.leftJackPort, p.leftInClients );
-            jack->setPortClients( KonfytJackPortType_AudioIn, p.rightJackPort, p.rightInClients );
+            jack->setPortClients( p.leftJackPortId, p.leftInClients );
+            jack->setPortClients( p.rightJackPortId, p.rightInClients );
         } else {
             userMessage("ERROR: setCurrentProject: Failed to create audio input Jack port(s).");
         }
@@ -2637,7 +2651,7 @@ void MainWindow::startWaiter(QString msg)
 {
     // Disable all input (install event filter)
     eventFilterMode = EVENT_FILTER_MODE_WAITER;
-    app->installEventFilter(this);
+    appInfo.a->installEventFilter(this);
     // Start waiterTimer
     waiterMessage = msg;
     waiterState = 0;
@@ -2653,7 +2667,7 @@ void MainWindow::stopWaiter()
     ui->statusBar->showMessage("Done.", 3000);
 
     // Re-enable all input (remove event filter)
-    app->removeEventFilter(this);
+    appInfo.a->removeEventFilter(this);
 }
 
 void MainWindow::timerEvent(QTimerEvent *ev)
@@ -3437,7 +3451,7 @@ void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
     int channel = layerMidiOutChannelMenu_map.value(action);
 
     KonfytPatchLayer layer = layerBusMenu_sourceItem->getPatchLayerItem();
-    konfytMidiFilter filter = layer.getMidiFilter();
+    KonfytMidiFilter filter = layer.getMidiFilter();
     filter.outChan = channel;
     layer.setMidiFilter(filter);
 
@@ -4127,7 +4141,7 @@ void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
 // The user has been editing the midi filter and has now clicked apply.
 void MainWindow::on_pushButton_midiFilter_Apply_clicked()
 {
-    konfytMidiFilter f;
+    KonfytMidiFilter f;
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) {
         userMessage("ERROR: No current project.");
@@ -4172,8 +4186,7 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
         // Update filter in project
         prj->midiInPort_setPortFilter(midiFilterEditPort, f);
         // And also in Jack.
-        jack->setPortFilter(KonfytJackPortType_MidiIn,
-                            prj->midiInPort_getPort(midiFilterEditPort).jackPort,
+        jack->setPortFilter(prj->midiInPort_getPort(midiFilterEditPort).jackPortId,
                             f);
     } else {
         // Update filter in gui layer item
@@ -4236,12 +4249,12 @@ void MainWindow::on_pushButton_LiveMode_clicked()
         ui->stackedWidget_left->setCurrentIndex(STACKED_WIDGET_LEFT_LIVE);
         // Install event filter to catch all global key presses
         eventFilterMode = EVENT_FILTER_MODE_LIVE;
-        app->installEventFilter(this);
+        appInfo.a->installEventFilter(this);
     } else {
         // Switch out of live mode to normal
         ui->stackedWidget_left->setCurrentIndex(STACKED_WIDGET_LEFT_LIBRARY);
         // Remove event filter
-        app->removeEventFilter(this);
+        appInfo.a->removeEventFilter(this);
 
     }
 }
@@ -4579,10 +4592,10 @@ void MainWindow::on_lineEdit_filesystem_path_returnPressed()
 // Add left and right audio output ports to Jack client for a bus, named
 // according to the given bus number. The left and right port references in Jack
 // are assigned to the leftPort and rightPort parameters.
-void MainWindow::addAudioBusToJack(int busNo, KonfytJackPort** leftPort, KonfytJackPort** rightPort)
+void MainWindow::addAudioBusToJack(int busNo, int *leftPortId, int *rightPortId)
 {
-    *leftPort = jack->addPort( KonfytJackPortType_AudioOut, "bus_" + n2s( busNo ) + "_L" );
-    *rightPort = jack->addPort( KonfytJackPortType_AudioOut, "bus_" + n2s( busNo ) + "_R" );
+    *leftPortId = jack->addPort( KonfytJackPortType_AudioOut, "bus_" + n2s( busNo ) + "_L" );
+    *rightPortId = jack->addPort( KonfytJackPortType_AudioOut, "bus_" + n2s( busNo ) + "_R" );
 }
 
 /* Adds an audio bus to the current project and Jack. Returns bus index.
@@ -4597,14 +4610,14 @@ int MainWindow::addBus()
 
     // Add to project
     QString busName = "AudioBus_" + n2s( prj->audioBus_count() );
-    int busId = prj->audioBus_add( busName, NULL, NULL );
+    int busId = prj->audioBus_add(busName);
 
-    KonfytJackPort *left, *right;
+    int left, right;
     addAudioBusToJack( busId, &left, &right );
-    if ( (left != NULL) && (right != NULL) ) {
+    if ( (left != KONFYT_JACK_PORT_ERROR) && (right != KONFYT_JACK_PORT_ERROR) ) {
         PrjAudioBus bus = prj->audioBus_getBus(busId);
-        bus.leftJackPort = left;
-        bus.rightJackPort = right;
+        bus.leftJackPortId = left;
+        bus.rightJackPortId = right;
         prj->audioBus_replace(busId, bus);
         return busId;
     } else {
@@ -4634,13 +4647,13 @@ int MainWindow::addAudioInPort()
 
 
     int portId = prj->audioInPort_add( "New Audio In Port" );
-    KonfytJackPort *left, *right;
+    int left, right;
     addAudioInPortsToJack( portId, &left, &right );
-    if ( (left != NULL) && (right != NULL) ) {
+    if ( (left != KONFYT_JACK_PORT_ERROR) && (right != KONFYT_JACK_PORT_ERROR) ) {
         // Update in project
         PrjAudioInPort p = prj->audioInPort_getPort(portId);
-        p.leftJackPort = left;
-        p.rightJackPort = right;
+        p.leftJackPortId = left;
+        p.rightJackPortId = right;
         prj->audioInPort_replace(portId, p);
 
         // Add to GUI
@@ -4663,27 +4676,26 @@ int MainWindow::addMidiInPort()
         return -1;
     }
 
-    int portId = prj->midiInPort_addPort("New MIDI In Port");
-    KonfytJackPort* jackPort;
-    addMidiInPortToJack(portId, &jackPort);
-    if (jackPort != NULL) {
+    int prjPortId = prj->midiInPort_addPort("New MIDI In Port");
+    int jackPortId = addMidiInPortToJack(prjPortId);
+    if (jackPortId != KONFYT_JACK_PORT_ERROR) {
 
-        PrjMidiPort p = prj->midiInPort_getPort(portId);
-        p.jackPort = jackPort;
-        prj->midiInPort_replace(portId, p);
+        PrjMidiPort p = prj->midiInPort_getPort(prjPortId);
+        p.jackPortId = jackPortId;
+        prj->midiInPort_replace(prjPortId, p);
 
         // Update filter in Jack
-        jack->setPortFilter(KonfytJackPortType_MidiIn, jackPort, p.filter);
+        jack->setPortFilter(jackPortId, p.filter);
 
         // Add to GUI
         gui_updateLayerMidiInPortsMenu();
 
-        return portId;
+        return prjPortId;
 
     } else {
         // Could not create Jack port. Remove port from project again.
         userMessage("ERROR: Could not add MIDI input port. Failed to create JACK port.");
-        prj->midiInPort_removePort(portId);
+        prj->midiInPort_removePort(prjPortId);
         return -1;
     }
 }
@@ -4711,23 +4723,22 @@ int MainWindow::addMidiOutPort()
     }
 
 
-    int portId = prj->midiOutPort_addPort("New MIDI Out Port"); // Add to current project
-    KonfytJackPort* jackPort;
-    addMidiOutPortToJack(portId, &jackPort);
-    if (jackPort != NULL) {
+    int prjPortId = prj->midiOutPort_addPort("New MIDI Out Port"); // Add to current project
+    int jackPortId = addMidiOutPortToJack(prjPortId);
+    if (jackPortId != KONFYT_JACK_PORT_ERROR) {
 
-        PrjMidiPort p = prj->midiOutPort_getPort(portId);
-        p.jackPort = jackPort;
-        prj->midiOutPort_replace(portId, p);
+        PrjMidiPort p = prj->midiOutPort_getPort(prjPortId);
+        p.jackPortId = jackPortId;
+        prj->midiOutPort_replace(prjPortId, p);
 
         // Add to GUI
         gui_updatePatchMidiOutPortsMenu();
 
-        return portId;
+        return prjPortId;
     } else {
         // Could not create Jack port. Remove port from project again.
         userMessage("ERROR: Could not add MIDI output port. Failed to create JACK port.");
-        prj->midiOutPort_removePort(portId);
+        prj->midiOutPort_removePort(prjPortId);
         return -1;
     }
 }
@@ -4742,22 +4753,26 @@ void MainWindow::on_actionAdd_MIDI_Out_Port_triggered()
 
 /* An audio input port in the project consists of a left and right Jack port.
  * This function adds the left and right Jack audio input ports, named according
- * to the given port number. The resulting Jack port numbers are assigned to the
- * leftPort and rightPort function parameters. */
-void MainWindow::addAudioInPortsToJack(int portNo, KonfytJackPort **leftPort, KonfytJackPort **rightPort)
+ * to the given port number. The resulting Jack port IDs are assigned to the
+ * leftPortId and rightPortId function parameters. */
+void MainWindow::addAudioInPortsToJack(int portNo, int *leftPortId, int *rightPortId)
 {
-    *leftPort = jack->addPort(KonfytJackPortType_AudioIn, "audio_in_" + n2s(portNo) + "_L");
-    *rightPort = jack->addPort(KonfytJackPortType_AudioIn, "audio_in_" + n2s(portNo) + "_R");
+    *leftPortId = jack->addPort(KonfytJackPortType_AudioIn, "audio_in_" + n2s(portNo) + "_L");
+    *rightPortId = jack->addPort(KonfytJackPortType_AudioIn, "audio_in_" + n2s(portNo) + "_R");
 }
 
-void MainWindow::addMidiOutPortToJack(int portId, KonfytJackPort **jackPort)
+/* Adds a new MIDI output port to JACK, named with the specified port ID. The
+ * JACK engine port ID is returned, and -1 if an error occured. */
+int MainWindow::addMidiOutPortToJack(int portId)
 {
-    *jackPort = jack->addPort(KonfytJackPortType_MidiOut, "midi_out_" + n2s(portId));
+    return jack->addPort(KonfytJackPortType_MidiOut, "midi_out_" + n2s(portId));
 }
 
-void MainWindow::addMidiInPortToJack(int portId, KonfytJackPort **jackPort)
+/* Adds a new MIDI port to JACK, named with the specified port ID. The JACK
+ * engine port ID is returned, and -1 if an error occured. */
+int MainWindow::addMidiInPortToJack(int portId)
 {
-    *jackPort = jack->addPort(KonfytJackPortType_MidiIn, "midi_in_" + n2s(portId));
+    return jack->addPort(KonfytJackPortType_MidiIn, "midi_in_" + n2s(portId));
 }
 
 void MainWindow::setupExtAppMenu()
@@ -4984,28 +4999,28 @@ void MainWindow::on_actionRemove_BusPort_triggered()
     // Remove the bus/port
     if (busSelected) {
         // Remove the bus
-        jack->removePort(KonfytJackPortType_AudioOut, bus.leftJackPort);
-        jack->removePort(KonfytJackPortType_AudioOut, bus.rightJackPort);
+        jack->removePort(bus.leftJackPortId);
+        jack->removePort(bus.rightJackPortId);
         prj->audioBus_remove(id);
         tree_busMap.remove(item);
     }
     else if (audioInSelected) {
         // Remove the port
-        jack->removePort(KonfytJackPortType_AudioIn, audioInPort.leftJackPort);
-        jack->removePort(KonfytJackPortType_AudioIn, audioInPort.rightJackPort);
+        jack->removePort(audioInPort.leftJackPortId);
+        jack->removePort(audioInPort.rightJackPortId);
         prj->audioInPort_remove(id);
         tree_audioInMap.remove(item);
         gui_updatePatchAudioInPortsMenu(); // TODO: why not just do this when opening the menu
     }
     else if (midiOutSelected) {
         // Remove the port
-        jack->removePort(KonfytJackPortType_MidiOut, midiOutPort.jackPort);
+        jack->removePort(midiOutPort.jackPortId);
         prj->midiOutPort_removePort(id);
         tree_midiOutMap.remove(item);
         gui_updatePatchMidiOutPortsMenu(); // TODO: why not just do this when opening the menu
     } else if (midiInSelected) {
         // Remove the port
-        jack->removePort(KonfytJackPortType_MidiIn, midiInPort.jackPort);
+        jack->removePort(midiInPort.jackPortId);
         prj->midiInPort_removePort(id);
         tree_midiInMap.remove(item);
     }
@@ -5094,23 +5109,26 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     // Go through list of projects and ask to save for modified projects.
 
-    for (int i=0; i<this->projectList.count(); i++) {
-        KonfytProject* prj = projectList[i];
-        if (prj->isModified()) {
-            QMessageBox msgbox;
-            msgbox.setText("Do you want to save the changes to project " + prj->getProjectName() + "?");
-            msgbox.setIcon(QMessageBox::Question);
-            msgbox.setStandardButtons(QMessageBox::Cancel | QMessageBox::Yes | QMessageBox::No);
-            msgbox.setDefaultButton(QMessageBox::Cancel);
-            int ret = msgbox.exec();
-            if (ret == QMessageBox::Yes) {
-                if ( saveProject(prj) == false ) {
+    if (!appInfo.headless) {
+
+        for (int i=0; i<this->projectList.count(); i++) {
+            KonfytProject* prj = projectList[i];
+            if (prj->isModified()) {
+                QMessageBox msgbox;
+                msgbox.setText("Do you want to save the changes to project " + prj->getProjectName() + "?");
+                msgbox.setIcon(QMessageBox::Question);
+                msgbox.setStandardButtons(QMessageBox::Cancel | QMessageBox::Yes | QMessageBox::No);
+                msgbox.setDefaultButton(QMessageBox::Cancel);
+                int ret = msgbox.exec();
+                if (ret == QMessageBox::Yes) {
+                    if ( saveProject(prj) == false ) {
+                        event->ignore();
+                        return;
+                    }
+                } else if (ret == QMessageBox::Cancel) {
                     event->ignore();
                     return;
                 }
-            } else if (ret == QMessageBox::Cancel) {
-                event->ignore();
-                return;
             }
         }
     }
@@ -5774,3 +5792,5 @@ void MainWindow::on_toolButton_MidiFilter_VelLimitMax_last_clicked()
 {
     ui->spinBox_midiFilter_VelLimitMax->setValue( midiFilter_lastData2 );
 }
+
+

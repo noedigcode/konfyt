@@ -46,7 +46,7 @@
 #define XML_MIDIFILTER_OUTCHAN "outChan"
 
 
-struct konfytMidiFilterZone {
+struct KonfytMidiFilterZone {
     int lowNote;
     int highNote;
     int add;
@@ -55,7 +55,7 @@ struct konfytMidiFilterZone {
     int velLimitMin;
     int velLimitMax;
 
-    konfytMidiFilterZone() : lowNote(0),
+    KonfytMidiFilterZone() : lowNote(0),
                              highNote(127),
                              add(0),
                              lowVel(0),
@@ -64,16 +64,16 @@ struct konfytMidiFilterZone {
                              velLimitMax(127) {}
 };
 
-class konfytMidiFilter
+class KonfytMidiFilter
 {
 public:
-    konfytMidiFilter();
+    KonfytMidiFilter();
     void setPassAll();
 
-    konfytMidiFilterZone zone;
+    KonfytMidiFilterZone zone;
     void setZone(int lowNote, int highNote, int add, int lowVel, int highVel,
                  int velLimitMin, int velLimitMax);
-    void setZone(konfytMidiFilterZone newZone);
+    void setZone(KonfytMidiFilterZone newZone);
 
     bool passFilter(const KonfytMidiEvent *ev);
     KonfytMidiEvent modify(const KonfytMidiEvent* ev);

@@ -26,24 +26,25 @@
 
 #include <jack/jack.h>
 
+#include "konfytBridgeEngine.h"
 #include "konfytPatch.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackEngine.h"
 #include "konfytProject.h"
 #include "konfytCarlaEngine.h"
-
-#define CARLA_CLIENT_POSTFIX "_plugins"
+#include "konfytLscpEngine.h"
 
 class konfytPatchEngine : public QObject
 {
     Q_OBJECT
 public:
     explicit konfytPatchEngine(QObject *parent = 0);
+    ~konfytPatchEngine();
 
     // ----------------------------------------------------
     // Engine related functions
     // ----------------------------------------------------
-    void initPatchEngine(KonfytJackEngine* newJackClient);
+    void initPatchEngine(KonfytJackEngine* newJackClient, KonfytAppInfo appInfo);
     void panic(bool p);
     float getMasterGain();
     void setMasterGain(float newGain);
@@ -73,7 +74,7 @@ public:
     // ----------------------------------------------------
 
     // General use for any type of layer
-    void setLayerFilter(KonfytPatchLayer* layerItem, konfytMidiFilter filter);
+    void setLayerFilter(KonfytPatchLayer* layerItem, KonfytMidiFilter filter);
     void setLayerGain(KonfytPatchLayer* layerItem, float newGain);
     void setLayerGain(int layerIndex, float newGain);
     void setLayerSolo(KonfytPatchLayer* layerItem, bool solo);
@@ -124,7 +125,8 @@ private:
     // ----------------------------------------------------
     // Carla plugins
     // ----------------------------------------------------
-    konfytCarlaEngine* carlaEngine;
+    KonfytBaseSoundEngine* carlaEngine;
+    bool bridge;
 
     // ----------------------------------------------------
     // Jack
@@ -134,6 +136,7 @@ private:
 
 signals:
     void userMessage(QString msg);
+    void statusInfo(QString msg);
     
 public slots:
     void userMessageFromEngine(QString msg);

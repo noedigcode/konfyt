@@ -270,8 +270,8 @@ void konfytLayerWidget::setUpGUI()
 // Change the background to indicate midi filter zone.
 void konfytLayerWidget::updateBackgroundFromFilter()
 {
-    konfytMidiFilter filter = g.getMidiFilter();
-    konfytMidiFilterZone z = filter.zone;
+    KonfytMidiFilter filter = g.getMidiFilter();
+    KonfytMidiFilterZone z = filter.zone;
     this->changeBackground(z.lowNote, z.highNote);
 }
 

@@ -24,9 +24,15 @@
 
 
 konfytCarlaEngine::konfytCarlaEngine(QObject *parent) :
-    QObject(parent)
+    KonfytBaseSoundEngine(parent),
+    pluginUniqueIDCounter(10)
 {
-    pluginUniqueIDCounter = 0;
+
+}
+
+konfytCarlaEngine::~konfytCarlaEngine()
+{
+
 }
 
 /************************************************************************
@@ -102,7 +108,7 @@ konfytCarlaEngine::konfytCarlaEngine(QObject *parent) :
 
 
 // Adds a new plugin and returns the unique ID. Returns -1 on error.
-int konfytCarlaEngine::addSFZ(QString path)
+int konfytCarlaEngine::addSfz(QString path)
 {
     konfytCarlaPluginData pluginData;
     pluginData.ID = pluginUniqueIDCounter;
@@ -113,12 +119,6 @@ int konfytCarlaEngine::addSFZ(QString path)
 
     bool returnValue;
     userMessage("Loading sfz: " + pluginData.path + ", " + pluginData.name);
-    PluginType carlaPluginType;
-    if (path.right(3).toLower() == "gig") {
-        carlaPluginType = PLUGIN_GIG;
-    } else {
-        carlaPluginType = PLUGIN_SFZ;
-    }
     #if CARLA_VERSION_HEX < 0x01095
     // Old carla used PLUGIN_FILE_SFZ below.
     returnValue = carla_add_plugin(BINARY_NATIVE, PLUGIN_FILE_SFZ,pluginData.path.toLocal8Bit(),
@@ -130,7 +130,7 @@ int konfytCarlaEngine::addSFZ(QString path)
     #else
     // 2015-03-28 Updated to Carla 1.9.6 (2.0-beta4). carla_add_plugin now has an additional parameter.
     // 2017-01-06 Tested with Carla 1.9.7 (2.0-beta5) (0x01097) as well.
-    returnValue = carla_add_plugin(BINARY_NATIVE, carlaPluginType,pluginData.path.toLocal8Bit(),
+    returnValue = carla_add_plugin(BINARY_NATIVE, PLUGIN_SFZ, pluginData.path.toLocal8Bit(),
                                       pluginData.name.toLocal8Bit(),"sfz",0,NULL,0);
     #endif
 
@@ -164,7 +164,7 @@ int konfytCarlaEngine::addSFZ(QString path)
     return pluginData.ID; // Return the unique ID used by this class to distinguish the plugin
 }
 
-void konfytCarlaEngine::removeSFZ(int ID)
+void konfytCarlaEngine::removeSfz(int ID)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
     Q_ASSERT( pluginList.contains(ID) );
@@ -187,12 +187,7 @@ QString konfytCarlaEngine::pluginName(int ID)
     return pluginDataMap[ID].name;
 }
 
-QString konfytCarlaEngine::carlaJackClientName()
-{
-    return jackClientName;
-}
-
-QString konfytCarlaEngine::midiInPort(int ID)
+QString konfytCarlaEngine::midiInJackPortName(int ID)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
 
@@ -202,7 +197,7 @@ QString konfytCarlaEngine::midiInPort(int ID)
     return jackClientName + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_MIDI_IN_PORT_POSTFIX);
 }
 
-QStringList konfytCarlaEngine::audioOutPorts(int ID)
+QStringList konfytCarlaEngine::audioOutJackPortNames(int ID)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
 
@@ -217,11 +212,13 @@ QStringList konfytCarlaEngine::audioOutPorts(int ID)
     return ret;
 }
 
-void konfytCarlaEngine::InitCarlaEngine(KonfytJackEngine* jackEngine, QString carlaJackClientName)
+void konfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
 {
+    jack = jackEngine;
+    jackClientName = jack->clientName() + CARLA_CLIENT_POSTFIX;
+
     userMessage("Carla version " + QString(CARLA_VERSION_STRING));
-    this->jack = jackEngine;
-    this->jackClientName = carlaJackClientName;
+
     // Initialise Carla Backend
     carla_set_engine_option(ENGINE_OPTION_PROCESS_MODE, ENGINE_PROCESS_MODE_SINGLE_CLIENT, NULL);
     // Set path to the resource files.
@@ -231,7 +228,7 @@ void konfytCarlaEngine::InitCarlaEngine(KonfytJackEngine* jackEngine, QString ca
     // Set the engine callback
     carla_set_engine_callback(konfytCarlaEngine::carlaEngineCallback, this);
     // TODO: Handle the case where this name is already taken.
-    carla_engine_init("JACK", carlaJackClientName.toLocal8Bit().constData());
+    carla_engine_init("JACK", jackClientName.toLocal8Bit().constData());
 }
 
 void konfytCarlaEngine::carlaEngineCallback(void *ptr, EngineCallbackOpcode action, uint pluginId, int value1, int value2, float value3, const char *valueStr)

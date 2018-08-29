@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 #include "mainwindow.h"
+#include "konfytStructs.h"
 #include <QApplication>
 #include <iostream>
 
@@ -38,10 +39,14 @@ void printUsage()
     std::cout << "      -v, --version          Print version information" << std::endl;
     std::cout << "      -h, --help             Print usage information" << std::endl;
     std::cout << "      -j, --jackname <name>  Set name of JACK client" << std::endl;
+    std::cout << "      -q, --headless         Hide GUI" << std::endl;
+    std::cout << "      -b, --bridge           Load sfz's in separate processes (experimental feature, uses Carla)" << std::endl;
+    std::cout << "      -c, --carla            Use Carla to load sfz's and not Linuxsampler" << std::endl;
     std::cout << std::endl;
 }
 
-enum KonfytArgument {KonfytArg_Help, KonfytArg_Version, KonfytArg_Jackname};
+enum KonfytArgument {KonfytArg_Help, KonfytArg_Version, KonfytArg_Jackname,
+                    KonfytArg_Bridge, KonfytArg_Headless, KonfytArg_Carla};
 
 bool matchArgument(QString arg, KonfytArgument expected)
 {
@@ -54,6 +59,15 @@ bool matchArgument(QString arg, KonfytArgument expected)
         break;
     case KonfytArg_Jackname:
         return ( (arg=="-j") || (arg=="--jackname") );
+        break;
+    case KonfytArg_Bridge:
+        return ( (arg=="-b") || (arg=="--bridge") );
+        break;
+    case KonfytArg_Headless:
+        return ( (arg=="-q") || (arg=="--headless") );
+        break;
+    case KonfytArg_Carla:
+        return ( (arg=="-c") || (arg=="--carla") );
         break;
     }
     return false;
@@ -72,8 +86,9 @@ int main(int argc, char *argv[])
 
         bool nextIsValue = false;
         QString prevArg;
-        QStringList filesToLoad;
-        QString jackClientName;
+        KonfytAppInfo appInfo;
+        appInfo.a = &a;
+        appInfo.exePath = a.arguments()[0];
 
         for (int i=1; i<a.arguments().count(); i++) {
             QString arg = a.arguments()[i];
@@ -93,25 +108,38 @@ int main(int argc, char *argv[])
                     nextIsValue = true;
                     prevArg = arg;
 
+                } else if ( matchArgument(arg, KonfytArg_Bridge) ) {
+
+                    appInfo.bridge = true;
+
+                } else if ( matchArgument(arg, KonfytArg_Headless) ) {
+
+                    appInfo.headless = true;
+
+                } else if ( matchArgument(arg, KonfytArg_Carla) ) {
+
+                    appInfo.carla = true;
+
                 } else {
                     if (arg[0] == '-') {
                         std::cout << "Invalid argument \"" << arg.toLocal8Bit().constData() << "\". Ignoring it." << std::endl;
                     } else {
-                        filesToLoad.append(arg);
+                        appInfo.filesToLoad.append(arg);
                     }
                 }
             } else {
                 // nextIsValue is true; So this argument is a value related to prevArg.
                 if ( matchArgument(prevArg, KonfytArg_Jackname) ) {
-                    jackClientName = arg;
+                    appInfo.jackClientName = arg;
                 }
+                nextIsValue = false;
             }
         }
 
         // Create MainWindow
 
-        MainWindow w(0, &a, filesToLoad, jackClientName);
-        w.show();
+        MainWindow w(0, appInfo);
+        if (!appInfo.headless) { w.show(); }
         return_code = a.exec();
 
     } while (return_code == APP_RESTART_CODE);
