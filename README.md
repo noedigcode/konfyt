@@ -19,9 +19,9 @@ While I have used Konfyt successfully in various "live" environments, and do try
 to test it thoroughly, use it at your own risk. I am not responsible for any trauma
 due to failures during live performances.
 
-Konfyt is open source under the GPL license and makes use of Qt, JACK, Carla and
-Fluidsynth. Note however that Linuxsampler is used to load SFZ files (via Carla)
-which is licensed under GPL with a commercial exception.
+Konfyt is open source under the GPL license and makes use of Qt, JACK, Carla,
+liblscp and Fluidsynth. Note however that Linuxsampler is used to load SFZ files
+(via liblscp) which is licensed under GPL with a commercial exception.
 
 More information is available at www.noedig.co.za/konfyt/
 
@@ -32,6 +32,7 @@ Konfyt was developed and tested with the following:
 * Linux Mint 18.3 (based on Ubuntu 16.04).
 * Qt 5
 * Fluidsynth 1.1.6 (Version 1.1.5 has a nasty polyphony bug)
+* liblscp 0.5.6
 * Carla
 
 Carla is available in the KXStudio repositories (http://kxstudio.linuxaudio.org/Repositories).
@@ -40,7 +41,7 @@ All versions are not guaranteed to work since Carla is under active development 
 Tested with version
 ```
 1.9.9 (2.0-beta7)
-(KXStudio Package version 2:1.9.9+git20180721v5)
+(KXStudio Package version 2:1.9.9+git20180824v5)
 ```
 
 
@@ -64,11 +65,13 @@ qmake --qt=5
 
 * pkg-config
 
-* Fluidsynth: Ensure the development files are installed (libfluidsynth-dev in Ubuntu).
+* Fluidsynth development files (libfluidsynth-dev in Ubuntu).
 
 * Carla
 
 * g++
+
+* liblscp development files (liblscp-dev in Ubuntu)
 
 
 The Konfyt .pro file can be opened with QtCreator and configured and built by following
