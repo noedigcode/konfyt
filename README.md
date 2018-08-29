@@ -20,8 +20,9 @@ to test it thoroughly, use it at your own risk. I am not responsible for any tra
 due to failures during live performances.
 
 Konfyt is open source under the GPL license and makes use of Qt, JACK, Carla,
-liblscp and Fluidsynth. Note however that Linuxsampler is used to load SFZ files
-(via liblscp) which is licensed under GPL with a commercial exception.
+liblscp and Fluidsynth. You have the option (see command line arguments) of
+loading SFZ files with Carla (which uses SFZero), or with Linuxsampler (which
+is licensed under GPL with a commercial exception).
 
 More information is available at www.noedig.co.za/konfyt/
 
@@ -32,7 +33,7 @@ Konfyt was developed and tested with the following:
 * Linux Mint 18.3 (based on Ubuntu 16.04).
 * Qt 5
 * Fluidsynth 1.1.6 (Version 1.1.5 has a nasty polyphony bug)
-* liblscp 0.5.6
+* liblscp 0.5.6 and thus Linuxsampler
 * Carla
 
 Carla is available in the KXStudio repositories (http://kxstudio.linuxaudio.org/Repositories).
