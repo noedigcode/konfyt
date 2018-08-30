@@ -328,7 +328,8 @@ public:
     QMap<QTreeWidgetItem*, int> tree_audioInMap;
     QMap<QTreeWidgetItem*, int> tree_midiInMap;
 
-    void addClientPortToTree(QString jackport, bool active);
+    void clearConnectionsTree();
+    void addClientPortToTree(QString jackport);
 
     QMap<QTreeWidgetItem*, QString> conPortsMap; // Mapping of tree items to Jack port strings
     QMap<QString, QTreeWidgetItem*> conClientsMap; // Mapping of Jack clients to tree items

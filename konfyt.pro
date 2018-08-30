@@ -18,7 +18,6 @@ INCLUDEPATH += src
 
 SOURCES += src/main.cpp\
         src/mainwindow.cpp \
-    src/toetsdialog.cpp \
     src/consoledialog.cpp \
     src/konfytPatchEngine.cpp \
     src/konfytPatch.cpp \
@@ -44,7 +43,6 @@ SOURCES += src/main.cpp\
     src/gidls.cpp
 
 HEADERS  += src/mainwindow.h \
-    src/toetsdialog.h \
     src/consoledialog.h \
     src/konfytPatchEngine.h \
     src/konfytPatch.h \
@@ -72,7 +70,6 @@ HEADERS  += src/mainwindow.h \
     src/gidls.h
 
 FORMS    += src/mainwindow.ui \
-    src/toetsdialog.ui \
     src/consoledialog.ui \
     src/konfytLayerWidget.ui \
     src/aboutdialog.ui

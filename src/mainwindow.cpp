@@ -459,8 +459,7 @@ void MainWindow::jackXrun()
 void MainWindow::jackPortRegisterOrConnectCallback()
 {
     // Refresh ports/connections tree
-    //gui_updateConnectionsTree(); // Disabled for now to prevent connections list from scrolling to top
-                                   // when user ticks checkbox; TODO Fix
+    gui_updateConnectionsTree();
 
     // Update warnings section
     updateGUIWarnings();
@@ -918,30 +917,16 @@ void MainWindow::gui_updatePortsBussesTree()
 
 void MainWindow::gui_updateConnectionsTree()
 {
-    // First, clear everything
-
-    QList<QCheckBox*> ll = conChecksMap1.keys();
-    for (int i=0; i<ll.count(); i++) {
-        delete ll[i];
-    }
-    conChecksMap1.clear();
-    ll = conChecksMap2.keys();
-    for (int i=0; i<ll.count(); i++) {
-        delete ll[i];
-    }
-    conChecksMap2.clear();
-
-    ui->tree_Connections->clear();
-    conClientsMap.clear();
-    conPortsMap.clear();
-
-
-    // Get current project and exit function if null
     KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    if (prj == NULL) {
+        clearConnectionsTree();
+        return;
+    }
 
-    // Exit function if current ports/busses item is null
-    if (ui->tree_portsBusses->currentItem() == NULL) { return; }
+    if (ui->tree_portsBusses->currentItem() == NULL) {
+        clearConnectionsTree();
+        return;
+    }
 
     // Get list of JACK ports, depending on the selected tree item.
     QStringList l; // List of Jack client:ports
@@ -964,32 +949,9 @@ void MainWindow::gui_updateConnectionsTree()
         j = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
     } else {
         // One of the parents are selected.
+        clearConnectionsTree();
         return;
     }
-
-    QStringList ourJackClients;
-    ourJackClients.append(jack->clientName());
-    ourJackClients.append(pengine->ourJackClientNames());
-
-    // We have a list of JACK client:port. Fill the connection tree.
-    for (int i=0; i < l.count(); i++) {
-        QString port = l[i];
-        // Skip our client ports
-        bool ours = false;
-        for (int i=0; i < ourJackClients.count(); i++) {
-            QString name = ourJackClients[i] + ":";
-            if (port.startsWith(name)) {
-                ours = true;
-                break;
-            }
-        }
-        if (!ours) {
-            addClientPortToTree(l[i], true);
-        }
-    }
-
-    // Tick the appropriate checkboxes according to the selected item in the
-    // ports/busses tree widget
 
     QStringList leftCons;
     QStringList rightCons;
@@ -1014,38 +976,139 @@ void MainWindow::gui_updateConnectionsTree()
         leftCons = prj->midiInPort_getClients(j);
     }
 
-    for (int i=0; i<leftCons.count(); i++) {
-        if (conPortsMap.values().contains( leftCons[i] ) == false) {
-            // The port is not currently in Jack's list (client probably not running)
-            // Add to tree and mark with background colour
-            addClientPortToTree(leftCons[i], false);
+    QList<QString> portsInTree = conPortsMap.values();
+
+    // Determine which JACK ports to add to tree
+    QStringList toAdd;
+    for (int i=0; i < l.count(); i++) {
+        if (!portsInTree.contains(l[i])) {
+            toAdd.append(l[i]);
         }
-        QTreeWidgetItem* item = conPortsMap.key( leftCons[i] );
-        QCheckBox* cb = conChecksMap1.key(item);
-        cb->setChecked(true);
-    }
-    for (int i=0; i<rightCons.count(); i++) {
-        if (conPortsMap.values().contains( rightCons[i] ) == false) {
-            // The port is not currently in Jack's list (client probably not running)
-            // Add to tree and mark with background colour
-            addClientPortToTree(rightCons[i], false);
-        }
-        QTreeWidgetItem* item = conPortsMap.key( rightCons[i] );
-        QCheckBox* cb = conChecksMap2.key(item);
-        cb->setChecked(true);
     }
 
+    // Also add ports marked as connected in project, but which are not in tree
+    for (int i=0; i < leftCons.count(); i++) {
+        QString p = leftCons[i];
+        if (!portsInTree.contains(p) && !toAdd.contains(p)) {
+            toAdd.append(p);
+        }
+    }
+    for (int i=0; i < rightCons.count(); i++) {
+        QString p = rightCons[i];
+        if (!portsInTree.contains(p) && !toAdd.contains(p)) {
+            toAdd.append(p);
+        }
+    }
 
-    ui->tree_Connections->expandAll();
-}
+    // Determine which JACK ports to remove from tree
+    QStringList toRemTemp;
+    for (int i=0; i < portsInTree.count(); i++) {
+        if (!l.contains(portsInTree[i])) {
+            toRemTemp.append(portsInTree[i]);
+        }
+    }
 
-/* Helper function to add a Jack client:port string to the connections tree and
- * mark it if active is false. */
-void MainWindow::addClientPortToTree(QString jackport, bool active)
-{
+    // Don't remove ports which have connections in the project
+    QStringList toRem;
+    for (int i=0; i < toRemTemp.count(); i++) {
+        QString port = toRemTemp[i];
+        if ( (!leftCons.contains(port)) && (!rightCons.contains(port)) ) {
+            toRem.append(toRemTemp[i]);
+        }
+    }
+
+
+    // Now, remove all ports that are in toRem
+    for (int i=0; i < toRem.count(); i++) {
+        QString rem = toRem[i];
+        QTreeWidgetItem* item = conPortsMap.key(rem);
+        conPortsMap.remove(item);
+        QCheckBox* c = conChecksMap1.key(item);
+        conChecksMap1.remove(c);
+        c = conChecksMap2.key(item);
+        conChecksMap2.remove(c);
+        delete item;
+    }
+
+    QStringList ourJackClients;
+    ourJackClients.append(jack->clientName());
+    ourJackClients.append(pengine->ourJackClientNames());
+
+    // Add all ports that are in toAdd
+    for (int i=0; i < toAdd.count(); i++) {
+        QString add = toAdd[i];
+        // Skip our client ports
+        bool ours = false;
+        for (int i=0; i < ourJackClients.count(); i++) {
+            QString name = ourJackClients[i] + ":";
+            if (add.startsWith(name)) {
+                ours = true;
+                break;
+            }
+        }
+        if (!ours) {
+            addClientPortToTree(add);
+        }
+    }
+
+    // Remove empty clients
+    QList<QTreeWidgetItem*> clients = conClientsMap.values();
+    for (int i=0; i < clients.count(); i++) {
+        QTreeWidgetItem* client = clients[i];
+        if (client->childCount() == 0) {
+            QString c = conClientsMap.key(client);
+            conClientsMap.remove(c);
+            delete client;
+        }
+    }
+
     QColor activeColor = QColor(Qt::transparent);
     QColor inactiveColor = QColor(Qt::red);
 
+    // Mark items red if not active and set checkboxes
+    QList<QTreeWidgetItem*> items = conPortsMap.keys();
+    for (int i=0; i < items.count(); i++) {
+        QTreeWidgetItem* item = items[i];
+        QString port = conPortsMap[item];
+        if ( !l.contains(port) ) {
+            // Mark red
+            item->setBackgroundColor(0, inactiveColor);
+        } else {
+            // Do not mark red
+            item->setBackgroundColor(0, activeColor);
+        }
+        QCheckBox* cb = conChecksMap1.key(item, NULL);
+        if (cb != NULL) { cb->setChecked(leftCons.contains(port)); }
+        cb = conChecksMap2.key(item, NULL);
+        if (cb != NULL) { cb->setChecked(rightCons.contains(port)); }
+    }
+
+    ui->tree_Connections->sortItems(0, Qt::AscendingOrder);
+    ui->tree_Connections->expandAll();
+
+}
+
+void MainWindow::clearConnectionsTree()
+{
+    QList<QCheckBox*> ll = conChecksMap1.keys();
+    for (int i=0; i<ll.count(); i++) {
+        delete ll[i];
+    }
+    conChecksMap1.clear();
+    ll = conChecksMap2.keys();
+    for (int i=0; i<ll.count(); i++) {
+        delete ll[i];
+    }
+    conChecksMap2.clear();
+
+    ui->tree_Connections->clear();
+    conClientsMap.clear();
+    conPortsMap.clear();
+}
+
+/* Helper function to add a Jack client:port string to the connections tree. */
+void MainWindow::addClientPortToTree(QString jackport)
+{
     // Extract client name
     QString client = jackport.split(":").at(0);
     QTreeWidgetItem* clientItem;
@@ -1056,10 +1119,6 @@ void MainWindow::addClientPortToTree(QString jackport, bool active)
         clientItem = new QTreeWidgetItem();
         clientItem->setText(TREECON_COL_PORT, client);
         conClientsMap.insert(client, clientItem);
-        // If active is false, mark the client item
-        if (!active) {
-            clientItem->setBackgroundColor(0, inactiveColor );
-        }
     }
     // Add client tree item to treeWidget
     ui->tree_Connections->addTopLevelItem(clientItem);
@@ -1082,12 +1141,6 @@ void MainWindow::addClientPortToTree(QString jackport, bool active)
             connect(cbr, &QCheckBox::clicked, [this, cbr](){ checkboxes_clicked_slot(cbr); });
             conChecksMap2.insert(cbr, portItem); // Map the checkbox to the tree item
         }
-    }
-    // If active is false, mark the port item. Else, ensure client item is unmarked.
-    if (active) {
-        clientItem->setBackgroundColor(0, activeColor);
-    } else {
-        portItem->setBackgroundColor(0, inactiveColor);
     }
 }
 
