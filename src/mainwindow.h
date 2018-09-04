@@ -373,6 +373,7 @@ public:
     void addAudioInPortsToJack(int portNo, int *leftPortId, int *rightPortId);
     int addMidiOutPortToJack(int portId);
     int addMidiInPortToJack(int portId);
+    bool jackPortBelongstoUs(QString jackPortName);
 
     // ========================================================================
     // Processes (External apps)
@@ -424,6 +425,7 @@ public:
     // ========================================================================
     bool jackPage_audio; // True to display audio ports, false for MIDI
     void showJackPage();
+    void updateJackPage();
 
     // ========================================================================
     // Warnings
@@ -798,6 +800,8 @@ private slots:
     void on_pushButton_Panic_customContextMenuRequested(const QPoint &pos);
 
     void on_toolButton_MidiFilter_VelLimitMax_last_clicked();
+
+    void on_pushButton_jackCon_OK_clicked();
 
 private:
     Ui::MainWindow *ui;

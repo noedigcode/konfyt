@@ -461,6 +461,9 @@ void MainWindow::jackPortRegisterOrConnectCallback()
     // Refresh ports/connections tree
     gui_updateConnectionsTree();
 
+    // Refresh the other JACK connections page
+    updateJackPage();
+
     // Update warnings section
     updateGUIWarnings();
 }
@@ -802,7 +805,7 @@ void MainWindow::gui_updatePatchList()
 void MainWindow::showConnectionsPage()
 {
     ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
-    ui->pushButton_connectionsPage_MidiFilter->setVisible(false);
+    ui->frame_connectionsPage_MidiFilter->setVisible(false);
 
     // Adjust column widths
     int RLwidth = 30;
@@ -1038,15 +1041,7 @@ void MainWindow::gui_updateConnectionsTree()
     for (int i=0; i < toAdd.count(); i++) {
         QString add = toAdd[i];
         // Skip our client ports
-        bool ours = false;
-        for (int i=0; i < ourJackClients.count(); i++) {
-            QString name = ourJackClients[i] + ":";
-            if (add.startsWith(name)) {
-                ours = true;
-                break;
-            }
-        }
-        if (!ours) {
+        if (!jackPortBelongstoUs(add)) {
             addClientPortToTree(add);
         }
     }
@@ -4841,6 +4836,25 @@ int MainWindow::addMidiInPortToJack(int portId)
     return jack->addPort(KonfytJackPortType_MidiIn, "midi_in_" + n2s(portId));
 }
 
+bool MainWindow::jackPortBelongstoUs(QString jackPortName)
+{
+    bool ret = false;
+
+    QStringList ourJackClients;
+    ourJackClients.append(jack->clientName());
+    ourJackClients.append(pengine->ourJackClientNames());
+
+    for (int i=0; i < ourJackClients.count(); i++) {
+        QString name = ourJackClients[i] + ":";
+        if (jackPortName.startsWith(name)) {
+            ret = true;
+            break;
+        }
+    }
+
+    return ret;
+}
+
 void MainWindow::setupExtAppMenu()
 {
     extAppsMenuActions.insert( extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)"),
@@ -4883,9 +4897,9 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current
     // Enable MIDI Filter button if MIDI in port selected
     if ( current->parent() == midiInParent ) {
         // Midi input port is selected
-        ui->pushButton_connectionsPage_MidiFilter->setVisible(true);
+        ui->frame_connectionsPage_MidiFilter->setVisible(true);
     } else {
-        ui->pushButton_connectionsPage_MidiFilter->setVisible(false);
+        ui->frame_connectionsPage_MidiFilter->setVisible(false);
     }
 
     gui_updateConnectionsTree();
@@ -5660,6 +5674,11 @@ void MainWindow::showJackPage()
     ui->pushButton_JackAudioPorts->setChecked(jackPage_audio);
     ui->pushButton_JackMidiPorts->setChecked(!jackPage_audio);
 
+    updateJackPage();
+}
+
+void MainWindow::updateJackPage()
+{
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
 
@@ -5682,6 +5701,7 @@ void MainWindow::showJackPage()
     ui->treeWidget_jackPortsOut->clear();
     for (int i=0; i < outPorts.count(); i++) {
         QString client_port = outPorts[i];
+        if (jackPortBelongstoUs(client_port)) { continue; }
         QTreeWidgetItem* item = new QTreeWidgetItem();
         item->setText(0,client_port);
         ui->treeWidget_jackPortsOut->addTopLevelItem(item);
@@ -5691,6 +5711,7 @@ void MainWindow::showJackPage()
     ui->treeWidget_jackportsIn->clear();
     for (int i=0; i < inPorts.count(); i++) {
         QString client_port = inPorts[i];
+        if (jackPortBelongstoUs(client_port)) { continue; }
         QTreeWidgetItem* item = new QTreeWidgetItem();
         item->setText(0,client_port);
         ui->treeWidget_jackportsIn->addTopLevelItem(item);
@@ -5707,9 +5728,6 @@ void MainWindow::showJackPage()
         }
         ui->listWidget_jackConnections->addItem( item );
     }
-
-    updateGUIWarnings();
-
 }
 
 void MainWindow::on_pushButton_jackConRefresh_clicked()
@@ -5819,7 +5837,6 @@ void MainWindow::toggleShowPatchListNotes()
     gui_updatePatchList();
 }
 
-
 void MainWindow::on_pushButton_JackAudioPorts_clicked()
 {
     jackPage_audio = true;
@@ -5859,4 +5876,7 @@ void MainWindow::on_toolButton_MidiFilter_VelLimitMax_last_clicked()
     ui->spinBox_midiFilter_VelLimitMax->setValue( midiFilter_lastData2 );
 }
 
-
+void MainWindow::on_pushButton_jackCon_OK_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+}
