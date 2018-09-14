@@ -471,6 +471,8 @@ void MainWindow::jackPortRegisterOrConnectCallback()
 // Scan given directory recursively and add project files to list.
 bool MainWindow::scanDirForProjects(QString dirname)
 {
+    if (dirname.isEmpty()) { return false; }
+
     QDir dir(dirname);
     if (!dir.exists()) {
         emit userMessage("scanDirForProjects: Dir does not exist.");
