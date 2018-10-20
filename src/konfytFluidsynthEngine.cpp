@@ -40,12 +40,14 @@ void konfytFluidsynthEngine::processJackMidi(int ID, const KonfytMidiEvent *ev)
     // mutex is unlocked, othewise the events are thrown away and panic mode doesn't do what
     // it's supposed to.
 
+    if (!synthDataMap.contains(ID)) {
+        error_abort("processJackMidi: synthDataMap does not contain ID " + n2s(ID));
+    }
+
     // If we don't get the mutex immediately, don't block and wait for it.
     if ( !mutex.tryLock() ) {
         return;
     }
-
-    Q_ASSERT( synthDataMap.contains(ID) );
 
     if ( (ev->type != MIDI_EVENT_TYPE_PROGRAM) || (ev->type != MIDI_EVENT_TYPE_SYSTEM) ) {
 
@@ -74,12 +76,14 @@ void konfytFluidsynthEngine::processJackMidi(int ID, const KonfytMidiEvent *ev)
 // the fluidsynth's return value.
 int konfytFluidsynthEngine::fluidsynthWriteFloat(int ID, void *leftBuffer, void *rightBuffer, int len)
 {
+    if (!synthDataMap.contains(ID)) {
+        error_abort("fluidsynthWriteFloat: synthDataMap does not contain ID " + n2s(ID));
+    }
+
     // If we don't get the mutex immediately, don't block and wait for it.
     if ( !mutex.tryLock() ) {
         return 0;
     }
-
-    Q_ASSERT( synthDataMap.contains(ID) );
 
     int ret =  fluid_synth_write_float( synthDataMap.value(ID).synth, len,
                                     leftBuffer, 0, 1,
@@ -135,7 +139,9 @@ int konfytFluidsynthEngine::addSoundfontProgram(konfytSoundfontProgram p)
 
 void konfytFluidsynthEngine::removeSoundfontProgram(int ID)
 {
-    Q_ASSERT( synthDataMap.contains(ID) );
+    if (!synthDataMap.contains(ID)) {
+        error_abort("removeSoundfontProgram: synthDataMap does not contain ID " + n2s(ID));
+    }
 
     konfytFluidSynthData s = synthDataMap.value(ID);
 
@@ -157,14 +163,18 @@ void konfytFluidsynthEngine::InitFluidsynth(double SampleRate)
 
 float konfytFluidsynthEngine::getGain(int ID)
 {
-    Q_ASSERT( synthDataMap.contains(ID) );
+    if (!synthDataMap.contains(ID)) {
+        error_abort("getGain: synthDataMap does not contain ID " + n2s(ID));
+    }
 
     return fluid_synth_get_gain( synthDataMap.value(ID).synth );
 }
 
 void konfytFluidsynthEngine::setGain(int ID, float newGain)
 {
-    Q_ASSERT( synthDataMap.contains(ID) );
+    if (!synthDataMap.contains(ID)) {
+        error_abort("setGain: synthDataMap does not contain ID " + n2s(ID));
+    }
 
     fluid_synth_set_gain( synthDataMap.value(ID).synth, newGain );
 }

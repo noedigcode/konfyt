@@ -97,7 +97,7 @@ public:
 
     bool soloFlag;
 
-    bool jack_process_busy;
+    volatile bool jack_process_busy;
     int jack_process_disable; // Non-zero value = disabled
     bool timer_busy;
     bool timer_disabled;
