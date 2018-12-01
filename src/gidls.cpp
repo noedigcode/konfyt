@@ -357,6 +357,8 @@ void GidLs::clientInitialised()
         print("Error resetting sampler.");
     }
 
+    lscp_set_volume(client, 1);
+
     if (audioDeviceExists(devName)) {
         print("Audio device '" + devName + "' already exists.");
     } else {
