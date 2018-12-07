@@ -4859,6 +4859,11 @@ bool MainWindow::jackPortBelongstoUs(QString jackPortName)
 
 void MainWindow::setupExtAppMenu()
 {
+    extAppsMenuActions.insert( extAppsMenu.addAction("Project Directory Reference: " + QString(STRING_PROJECT_DIR)),
+                               STRING_PROJECT_DIR );
+
+    extAppsMenu.addSeparator();
+
     extAppsMenuActions.insert( extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)"),
                                "a2jmidid -ue" );
     extAppsMenuActions.insert( extAppsMenu.addAction("zynaddsubfx -l (Load .xmz state file)"),
