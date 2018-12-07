@@ -219,6 +219,12 @@ QSpinBox::down-button {
 	image: url(:/icons/down.png);
  }
 
+QSplitter::handle {
+   background: transparent;
+}
+
+
+
 /********************************************************
 /* Scroll bars
 /*******************************************************/
