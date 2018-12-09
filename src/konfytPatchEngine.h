@@ -126,7 +126,7 @@ private:
     // ----------------------------------------------------
     // Carla plugins
     // ----------------------------------------------------
-    KonfytBaseSoundEngine* carlaEngine;
+    KonfytBaseSoundEngine* sfzEngine;
     bool bridge;
 
     // ----------------------------------------------------

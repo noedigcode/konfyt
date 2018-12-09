@@ -19,8 +19,8 @@
  *
  *****************************************************************************/
 
-#ifndef KONFYG_PROJECT_H
-#define KONFYG_PROJECT_H
+#ifndef KONFYT_PROJECT_H
+#define KONFYT_PROJECT_H
 
 #include <QDir>
 #include <QFile>
@@ -318,4 +318,4 @@ private slots:
     
 };
 
-#endif // KONFYG_PROJECT_H
+#endif // KONFYT_PROJECT_H

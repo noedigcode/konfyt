@@ -217,8 +217,6 @@ QString GidLs::printChannels()
 
 bool GidLs::addSfzChannel(QString file)
 {
-    file = file.replace(" ", "\\x20"); // debug remove?
-
     lscp_status_t status;
 
     int chan = lscp_add_channel(client);
@@ -254,8 +252,6 @@ bool GidLs::addSfzChannel(QString file)
         print("Result: " + QString( lscp_client_get_result(client) ));
         return false;
     }
-
-
 
     return true;
 }
