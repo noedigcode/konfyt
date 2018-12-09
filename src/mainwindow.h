@@ -378,7 +378,8 @@ public:
     // ========================================================================
     // Processes (External apps)
     // ========================================================================
-    QHash<QAction*, QString> extAppsMenuActions;
+    QHash<QAction*, QString> extAppsMenuActions_Append;
+    QHash<QAction*, QString> extAppsMenuActions_Set;
     QMenu extAppsMenu;
     void setupExtAppMenu();
     void addProcess(konfytProcess *process);
@@ -571,6 +572,7 @@ private slots:
     void on_actionOpen_In_File_Manager_library_triggered();
     void on_actionAdd_Path_To_External_App_Box_triggered();
     void on_actionOpen_In_File_Manager_fsview_triggered();
+    void on_actionAdd_Path_to_External_App_Box_Relative_to_Project_triggered();
 
     // ========================================================================
     // Patch view area

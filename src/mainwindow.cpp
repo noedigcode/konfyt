@@ -2694,7 +2694,13 @@ void MainWindow::processFinishedSlot(int index, konfytProcess *process)
 
 void MainWindow::extAppsMenuTriggered(QAction *action)
 {
-    ui->lineEdit_ExtApp->setText( extAppsMenuActions.value(action, "") );
+    if (extAppsMenuActions_Append.contains(action)) {
+        // Append to external apps text box
+        ui->lineEdit_ExtApp->setText( ui->lineEdit_ExtApp->text() + extAppsMenuActions_Append.value(action, ""));
+    } else {
+        // Replace text of external apps text box
+        ui->lineEdit_ExtApp->setText( extAppsMenuActions_Set.value(action, "") );
+    }
 }
 
 
@@ -4859,24 +4865,25 @@ bool MainWindow::jackPortBelongstoUs(QString jackPortName)
 
 void MainWindow::setupExtAppMenu()
 {
-    extAppsMenuActions.insert( extAppsMenu.addAction("Project Directory Reference: " + QString(STRING_PROJECT_DIR)),
+    extAppsMenuActions_Append.insert( extAppsMenu.addAction("Project Directory Reference: "
+                                                            + QString(STRING_PROJECT_DIR)),
                                STRING_PROJECT_DIR );
 
     extAppsMenu.addSeparator();
 
-    extAppsMenuActions.insert( extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)"),
+    extAppsMenuActions_Set.insert( extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)"),
                                "a2jmidid -ue" );
-    extAppsMenuActions.insert( extAppsMenu.addAction("zynaddsubfx -l (Load .xmz state file)"),
+    extAppsMenuActions_Set.insert( extAppsMenu.addAction("zynaddsubfx -l (Load .xmz state file)"),
                                "zynaddsubfx -l " );
-    extAppsMenuActions.insert( extAppsMenu.addAction("zynaddsubfx -L (Load .xiz instrument file)"),
+    extAppsMenuActions_Set.insert( extAppsMenu.addAction("zynaddsubfx -L (Load .xiz instrument file)"),
                                "zynaddsubfx -L " );
-    extAppsMenuActions.insert( extAppsMenu.addAction("jack-keyboard"),
+    extAppsMenuActions_Set.insert( extAppsMenu.addAction("jack-keyboard"),
                                "jack-keyboard" );
-    extAppsMenuActions.insert( extAppsMenu.addAction("VMPK (Virtual Keyboard)"),
+    extAppsMenuActions_Set.insert( extAppsMenu.addAction("VMPK (Virtual Keyboard)"),
                                "vmpk" );
-    extAppsMenuActions.insert( extAppsMenu.addAction("Ardour"),
+    extAppsMenuActions_Set.insert( extAppsMenu.addAction("Ardour"),
                                "ardour " );
-    extAppsMenuActions.insert( extAppsMenu.addAction("Carla"),
+    extAppsMenuActions_Set.insert( extAppsMenu.addAction("Carla"),
                                "carla " );
 
     connect(&extAppsMenu, &QMenu::triggered, this, &MainWindow::extAppsMenuTriggered);
@@ -5124,6 +5131,7 @@ void MainWindow::on_treeWidget_filesystem_customContextMenuRequested(const QPoin
 
     QList<QAction*> actions;
     actions.append( ui->actionAdd_Path_To_External_App_Box );
+    actions.append( ui->actionAdd_Path_to_External_App_Box_Relative_to_Project );
     actions.append( ui->actionOpen_In_File_Manager_fsview );
     fsViewMenu.addActions(actions);
 
@@ -5143,15 +5151,6 @@ void MainWindow::on_actionAdd_Path_To_External_App_Box_triggered()
         // Get item's path
         QFileInfo info = fsMap.value(fsViewMenuItem);
         path = info.filePath();
-    }
-
-    // Replace project path with variable, if present
-    KonfytProject* prj = getCurrentProject();
-    if (prj != NULL) {
-        QString projPath = prj->getDirname();
-        if (projPath.length() > 0) {
-            path.replace(projPath, STRING_PROJECT_DIR);
-        }
     }
 
     // Add quotes
@@ -5190,6 +5189,35 @@ void MainWindow::on_actionOpen_In_File_Manager_fsview_triggered()
     }
 
     openFileManager(path);
+}
+
+void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_triggered()
+{
+    QString path;
+
+    if (fsViewMenuItem == NULL) {
+        // No item is selected in the filesystem list. Use current path
+        path = fsview_currentPath;
+    } else {
+        // Get item's path
+        QFileInfo info = fsMap.value(fsViewMenuItem);
+        path = info.filePath();
+    }
+
+    // Make relative to project directory
+    KonfytProject* prj = getCurrentProject();
+    if (prj != NULL) {
+        QString projPath = prj->getDirname();
+        QDir projDir(projPath);
+        path = QString(STRING_PROJECT_DIR) + "/" + projDir.relativeFilePath(path);
+    }
+
+    // Add quotes
+    path = "\"" + path + "\"";
+
+    ui->lineEdit_ExtApp->setText( ui->lineEdit_ExtApp->text()
+                                  + path);
+    ui->lineEdit_ExtApp->setFocus();
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -5887,3 +5915,5 @@ void MainWindow::on_pushButton_jackCon_OK_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 }
+
+
