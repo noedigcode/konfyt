@@ -58,11 +58,13 @@ struct LayerSoundfontStruct {
     int indexInEngine;
     bool solo;
     bool mute;
+    int idInJackEngine;
 
     LayerSoundfontStruct() : gain(1),
                              indexInEngine(-1),
                              solo(true),
-                             mute(true) {}
+                             mute(true),
+                             idInJackEngine(0) {}
 
 };
 

@@ -111,9 +111,10 @@ public:
     QList<KonfytJackPluginPorts*> plugin_ports;
     QList<KonfytJackPluginPorts*> soundfont_ports;
 
-    konfytArrayList<KonfytJackNoteOnRecord> noteOnList;
-    konfytArrayList<KonfytJackNoteOnRecord> sustainList;
-    konfytArrayList<KonfytJackNoteOnRecord> pitchBendList;
+    KonfytArrayList<KonfytJackNoteOnRecord> noteOnList;
+    KonfytArrayList<KonfytJackNoteOnRecord> sustainList;
+    KonfytArrayList<KonfytJackNoteOnRecord> pitchBendList;
+
 
     bool InitJackClient(QString name);
     void stopJackClient();
@@ -170,14 +171,14 @@ public:
     void setAllPluginPortsActive(bool active);
 
     // Fluidsynth
-    void addSoundfont(LayerSoundfontStruct sf);
-    void removeSoundfont(int indexInEngine);
-    void setSoundfontMidiFilter(int indexInEngine, KonfytMidiFilter filter);
-    void setSoundfontSolo(int indexInEngine, bool solo);
-    void setSoundfontMute(int indexInEngine, bool mute);
-    void setSoundfontRouting(int indexInEngine, int midiInPortId,
-                                                int leftPortId,
-                                                int rightPortId);
+    int addSoundfont(LayerSoundfontStruct sf);
+    void removeSoundfont(int id);
+    void setSoundfontMidiFilter(int id, KonfytMidiFilter filter);
+    void setSoundfontSolo(int id, bool solo);
+    void setSoundfontMute(int id, bool mute);
+    void setSoundfontRouting(int id, int midiInPortId,
+                                     int leftPortId,
+                                     int rightPortId);
     void setAllSoundfontPortsActive(bool active);
 
     // Flag indicating one or more ports or plugin ports are solo
@@ -206,9 +207,9 @@ private:
     int panicState; // Internal panic state
 
     QString ourJackClientName;
+    int idCounter;
 
     // Private port data structures
-    int portIdCounter;
     QMap<int, KonfytJackPort*> portIdMap;
 
     jack_port_t* registerJackPort(KonfytJackPort* portStruct,
@@ -226,7 +227,6 @@ private:
     int globalTranspose;
 
     // Map plugin id to port structure
-    int pluginIdCounter;
     QMap<int, KonfytJackPluginPorts*> pluginsPortsMap;
     QMap<int, KonfytJackPluginPorts*> soundfontPortsMap;
 
@@ -240,7 +240,7 @@ private:
 signals:
     void userMessage(QString msg);
     void jackPortRegisterOrConnectCallback();
-    void midiEventSignal(KonfytMidiEvent event);
+    void midiEventSignal(KonfytMidiEvent event, int portId);
     void xrunSignal();
 
     

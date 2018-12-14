@@ -41,6 +41,7 @@ struct KonfytJackPortsSpec
 };
 
 struct KonfytJackPort {
+    int id;
     jack_port_t* jack_pointer;
     bool active;
     bool prev_active;
@@ -57,7 +58,8 @@ struct KonfytJackPort {
     unsigned int fadeoutCounter;
     bool fadingOut;
 
-    KonfytJackPort() : jack_pointer(NULL),
+    KonfytJackPort() : id(0),
+                       jack_pointer(NULL),
                        active(false),
                        prev_active(false),
                        solo(false),
@@ -74,6 +76,7 @@ struct KonfytJackPort {
 
 struct KonfytJackPluginPorts {
     int id;
+    int idInPluginEngine; // Id in plugin's respective engine (used for Fluidsynth)
     KonfytJackPort* midi;        // Send midi output to plugin
     KonfytJackPort* audio_in_l;  // Receive plugin audio
     KonfytJackPort* audio_in_r;

@@ -33,13 +33,12 @@ KonfytJackEngine::KonfytJackEngine(QObject *parent) :
     jack_process_disable = 0; // Non-zero value = disabled
     timer_busy = false;
     timer_disabled = false;
-    portIdCounter = 100; // Start at different value from project to catch bugs quicker.
     fluidsynthEngine = NULL;
     initMidiClosureEvents();
     panicCmd = false;
     panicState = 0;
+    idCounter = 150;
     globalTranspose = 0;
-    pluginIdCounter = 150;
 
     fadeOutSecs = 0;
     fadeOutValuesCount = 0;
@@ -173,7 +172,7 @@ void KonfytJackEngine::refreshPortConnections()
 }
 
 // Add new soundfont ports. Also assigns midi filter.
-void KonfytJackEngine::addSoundfont(LayerSoundfontStruct sf)
+int KonfytJackEngine::addSoundfont(LayerSoundfontStruct sf)
 {
     /* Soundfonts use the same structures as Carla plugins for now, but are much simpler
      * as midi is given to the fluidsynth engine and audio is recieved from it without
@@ -190,26 +189,33 @@ void KonfytJackEngine::addSoundfont(LayerSoundfontStruct sf)
 
     p->midi = new KonfytJackPort();
     p->midi->filter = sf.filter;
-    p->id = sf.indexInEngine;
+    p->id = idCounter++;
+    p->idInPluginEngine = sf.indexInEngine;
 
     soundfont_ports.append(p);
-    soundfontPortsMap.insert(sf.indexInEngine, p);
+    soundfontPortsMap.insert(p->id, p);
+
+    return p->id;
 }
 
-void KonfytJackEngine::removeSoundfont(int indexInEngine)
+void KonfytJackEngine::removeSoundfont(int id)
 {
+    if (!soundfontPortsMap.contains(id)) {
+        error_abort("removeSoundfont: id out of range: " + n2s(id));
+    }
+
     pauseJackProcessing(true);
 
     // Delete all objects created in addSoundfont()
 
-    KonfytJackPluginPorts* p = soundfontPortsMap.value(indexInEngine);
+    KonfytJackPluginPorts* p = soundfontPortsMap.value(id);
     soundfontPortsMap.remove( soundfontPortsMap.key(p) );
 
     // Remove all recorded noteon, sustain and pitchbend events related to this Fluidsynth ID.
     for (int i=0; i<noteOnList.count(); i++) {
         KonfytJackNoteOnRecord *rec = noteOnList.at_ptr(i);
         if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidsynthID == indexInEngine) {
+            if (rec->fluidsynthID == id) {
                 noteOnList.remove(i);
                 i--; // Due to removal, have to stay at same index after for loop i++
             }
@@ -218,7 +224,7 @@ void KonfytJackEngine::removeSoundfont(int indexInEngine)
     for (int i=0; i<sustainList.count(); i++) {
         KonfytJackNoteOnRecord *rec = sustainList.at_ptr(i);
         if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidsynthID == indexInEngine) {
+            if (rec->fluidsynthID == id) {
                 sustainList.remove(i);
                 i--;
             }
@@ -227,7 +233,7 @@ void KonfytJackEngine::removeSoundfont(int indexInEngine)
     for (int i=0; i<pitchBendList.count(); i++) {
         KonfytJackNoteOnRecord *rec = pitchBendList.at_ptr(i);
         if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidsynthID == indexInEngine) {
+            if (rec->fluidsynthID == id) {
                 pitchBendList.remove(i);
                 i--;
             }
@@ -303,7 +309,7 @@ int KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPortsSpec &spec)
     p->audio_in_r = arPort;
 
     // Create new unique id
-    p->id = pluginIdCounter++;
+    p->id = idCounter++;
 
     pauseJackProcessing(true);
     plugin_ports.append(p);
@@ -367,34 +373,33 @@ void KonfytJackEngine::removePlugin(int id)
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::setSoundfontMidiFilter(int indexInEngine, KonfytMidiFilter filter)
+void KonfytJackEngine::setSoundfontMidiFilter(int id, KonfytMidiFilter filter)
 {
-    if (soundfontPortsMap.contains(indexInEngine)) {
-        soundfontPortsMap.value(indexInEngine)->midi->filter = filter;
+    if (soundfontPortsMap.contains(id)) {
+        soundfontPortsMap.value(id)->midi->filter = filter;
     } else {
-        error_abort("setSoundfontMidiFilter: indexInEngine out of range.");
+        error_abort("setSoundfontMidiFilter: id out of range: " + n2s(id));
     }
 }
 
 void KonfytJackEngine::setPluginMidiFilter(int id, KonfytMidiFilter filter)
 {
     if (pluginsPortsMap.contains(id)) {
-        // Map plugin's indexInEngine to port number
         pluginsPortsMap.value(id)->midi->filter = filter;
     } else {
         error_abort("setPluginMidiFilter: id " + n2s(id) + " out of range.");
     }
 }
 
-void KonfytJackEngine::setSoundfontSolo(int indexInEngine, bool solo)
+void KonfytJackEngine::setSoundfontSolo(int id, bool solo)
 {
-    if (soundfontPortsMap.contains(indexInEngine)) {
-        soundfontPortsMap.value(indexInEngine)->audio_in_l->solo = solo;
-        soundfontPortsMap.value(indexInEngine)->audio_in_r->solo = solo;
-        soundfontPortsMap.value(indexInEngine)->midi->solo = solo;
+    if (soundfontPortsMap.contains(id)) {
+        soundfontPortsMap.value(id)->audio_in_l->solo = solo;
+        soundfontPortsMap.value(id)->audio_in_r->solo = solo;
+        soundfontPortsMap.value(id)->midi->solo = solo;
         refreshSoloFlag();
     } else {
-        error_abort("setSoundfontSolo: indexInEngine out of range.");
+        error_abort("setSoundfontSolo: id out of range: " + n2s(id));
     }
 }
 
@@ -410,14 +415,14 @@ void KonfytJackEngine::setPluginSolo(int id, bool solo)
     }
 }
 
-void KonfytJackEngine::setSoundfontMute(int indexInEngine, bool mute)
+void KonfytJackEngine::setSoundfontMute(int id, bool mute)
 {
-    if (soundfontPortsMap.contains(indexInEngine)) {
-        soundfontPortsMap.value(indexInEngine)->audio_in_l->mute = mute;
-        soundfontPortsMap.value(indexInEngine)->audio_in_r->mute = mute;
-        soundfontPortsMap.value(indexInEngine)->midi->mute = mute;
+    if (soundfontPortsMap.contains(id)) {
+        soundfontPortsMap.value(id)->audio_in_l->mute = mute;
+        soundfontPortsMap.value(id)->audio_in_r->mute = mute;
+        soundfontPortsMap.value(id)->midi->mute = mute;
     } else {
-        error_abort("setSoundfontMute: indexInEngine out of range.");
+        error_abort("setSoundfontMute: id out of range: " + n2s(id));
     }
 }
 
@@ -443,7 +448,7 @@ void KonfytJackEngine::setPluginGain(int id, float gain)
     }
 }
 
-void KonfytJackEngine::setSoundfontRouting(int indexInEngine, int midiInPortId, int leftPortId, int rightPortId)
+void KonfytJackEngine::setSoundfontRouting(int id, int midiInPortId, int leftPortId, int rightPortId)
 {
     if (!clientIsActive()) { return; }
 
@@ -465,8 +470,8 @@ void KonfytJackEngine::setSoundfontRouting(int indexInEngine, int midiInPortId, 
         return;
     }
 
-    if (soundfontPortsMap.contains(indexInEngine)) {
-        KonfytJackPluginPorts* p = soundfontPortsMap.value(indexInEngine);
+    if (soundfontPortsMap.contains(id)) {
+        KonfytJackPluginPorts* p = soundfontPortsMap.value(id);
 
         pauseJackProcessing(true);
         p->midi->destOrSrcPort = midiPort;
@@ -475,7 +480,7 @@ void KonfytJackEngine::setSoundfontRouting(int indexInEngine, int midiInPortId, 
         pauseJackProcessing(false);
 
     } else {
-        error_abort("setSoundfontRouting: indexInEngine out of range.");
+        error_abort("setSoundfontRouting: id out of range: " + n2s(id));
     }
 }
 
@@ -804,7 +809,7 @@ void KonfytJackEngine::dummyFunction(KonfytJackPortType type)
 }
 
 /* Adds a new port to JACK with the specified type and name. Returns a unique
- * port ID or KONFYT_JACK_PORT_ERROR on error. */
+ * port ID. */
 int KonfytJackEngine::addPort(KonfytJackPortType type, QString port_name)
 {
     if (!clientIsActive()) { return KONFYT_JACK_PORT_ERROR; }
@@ -813,7 +818,6 @@ int KonfytJackEngine::addPort(KonfytJackPortType type, QString port_name)
 
     jack_port_t* newPort;
     QList<KonfytJackPort*> *listToAddTo;
-    int ret = KONFYT_JACK_PORT_ERROR;
 
     KonfytJackPort* p = new KonfytJackPort();
 
@@ -838,7 +842,6 @@ int KonfytJackEngine::addPort(KonfytJackPortType type, QString port_name)
         break;
     case KonfytJackPortType_AudioIn:
 
-
         newPort = registerJackPort (p, client, port_name, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
         listToAddTo = &audio_in_ports;
 
@@ -847,7 +850,6 @@ int KonfytJackEngine::addPort(KonfytJackPortType type, QString port_name)
 
     if (newPort == NULL) {
         userMessage("Failed to add JACK port " + port_name);
-        ret = KONFYT_JACK_PORT_ERROR;
     }
 
     if (type == KonfytJackPortType_AudioOut) {
@@ -862,14 +864,14 @@ int KonfytJackEngine::addPort(KonfytJackPortType type, QString port_name)
     p->gain = 1;
     p->destOrSrcPort = NULL;
 
-    listToAddTo->append(p);
-
     // Create unique ID for port
-    ret = portIdCounter++;
-    portIdMap.insert(ret, p);
+    p->id = idCounter++;
+
+    listToAddTo->append(p);
+    portIdMap.insert(p->id, p);
 
     pauseJackProcessing(false);
-    return ret;
+    return p->id;
 }
 
 void KonfytJackEngine::setPortClients(int portId, QStringList newClientList)
@@ -1261,7 +1263,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
                     // The buffers have already been allocated when we added the soundfont layer to the engine.
                     // Get data from fluidsynth
 
-                    e->fluidsynthEngine->fluidsynthWriteFloat( e->soundfont_ports[n]->id,
+                    e->fluidsynthEngine->fluidsynthWriteFloat( e->soundfont_ports[n]->idInPluginEngine,
                                                                ((jack_default_audio_sample_t*)tempPort->buffer),
                                                                ((jack_default_audio_sample_t*)tempPort2->buffer), nframes );
 
@@ -1329,7 +1331,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
         // Send to fluidsynth
         for (n=0; n<e->soundfont_ports.count(); n++) {
             tempPort = e->soundfont_ports.at(n)->midi;
-            id = e->soundfont_ports.at(n)->id;
+            id = e->soundfont_ports.at(n)->idInPluginEngine;
             // Fluidsynthengine will force event channel to zero
             e->fluidsynthEngine->processJackMidi( id, &(e->evAllNotesOff) );
             e->fluidsynthEngine->processJackMidi( id, &(e->evSustainZero) );
@@ -1380,7 +1382,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 
             // Send to GUI
             if (ev.type != MIDI_EVENT_TYPE_SYSTEM) {
-                emit e->midiEventSignal( ev );
+                emit e->midiEventSignal( ev, sourcePort->id );
             }
 
             bool passEvent = true;
@@ -1569,7 +1571,7 @@ void KonfytJackEngine::processMidiEventForFluidsynth(KonfytJackPort* sourcePort,
         tempPort = soundfont_ports.at(n)->midi;
         if (tempPort->destOrSrcPort != sourcePort) { continue; }
         tempPort2 = soundfont_ports.at(n)->audio_in_l; // Related audio port
-        id = soundfont_ports.at(n)->id;
+        id = soundfont_ports.at(n)->idInPluginEngine;
         if ( passMidiMuteSoloActiveFilterAndModify(tempPort, &ev, &evToSend) ) {
 
             fluidsynthEngine->processJackMidi( id, &evToSend );
@@ -2184,13 +2186,13 @@ void KonfytJackEngine::activatePortsForPatch(const konfytPatch* patch, const Kon
     for (int i=0; i<sflayers.count(); i++) {
         if (sflayers[i].hasError()) { continue; }
         LayerSoundfontStruct sf = sflayers[i].sfData;
-        if ( soundfontPortsMap.contains( sf.indexInEngine ) ) {
-            KonfytJackPluginPorts* p = soundfontPortsMap.value(sf.indexInEngine);
+        if ( soundfontPortsMap.contains( sf.idInJackEngine ) ) {
+            KonfytJackPluginPorts* p = soundfontPortsMap.value(sf.idInJackEngine);
             p->audio_in_l->active = true;
             p->audio_in_r->active = true;
             p->midi->active = true;
         } else {
-            error_abort("activatePortsForPatch: Plugin indexInEngine " + n2s(sf.indexInEngine) +
+            error_abort("activatePortsForPatch: Soundfont id " + n2s(sf.idInJackEngine) +
                         " not in soundfontPortsMap.");
         }
     }

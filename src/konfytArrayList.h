@@ -25,11 +25,11 @@
 #define KONFYT_ARLIST_SIZE 1000
 
 template <typename T>
-class konfytArrayList
+class KonfytArrayList
 {
 public:
 
-    konfytArrayList();
+    KonfytArrayList();
     bool add(T item);
     int count();
     T at(int index);

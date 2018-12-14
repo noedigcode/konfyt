@@ -53,6 +53,7 @@ QString midiEventToString(int type, int channel, int data1, int data2, int bankM
 
 
 struct KonfytMidiEvent {
+    int sourceId;
     int type;   // Status bit without channel (i.e. same as channel=0)
     int channel;
     int data1;
@@ -60,7 +61,8 @@ struct KonfytMidiEvent {
     int bankMSB;
     int bankLSB;
 
-    KonfytMidiEvent() : type(MIDI_EVENT_TYPE_NOTEON), channel(0),
+    KonfytMidiEvent() : sourceId(-1),
+                        type(MIDI_EVENT_TYPE_NOTEON), channel(0),
                         data1(0), data2(0), bankMSB(-1), bankLSB(-1) {}
     KonfytMidiEvent(QByteArray buffer) {
         type = MIDI_TYPE_FROM_BUFFER(buffer);

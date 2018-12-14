@@ -214,7 +214,8 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
             } else {
                 layer.sfData.indexInEngine = ID;
                 // Add to Jack engine (this also assigns the midi filter)
-                jack->addSoundfont( layer.sfData );
+                int jackId = jack->addSoundfont( layer.sfData );
+                layer.sfData.idInJackEngine = jackId;
                 // Gain, solo, mute and bus are set later in refreshAllGainsAndRouting()
             }
             // Update layer in patch
@@ -301,7 +302,7 @@ void konfytPatchEngine::unloadLayer(konfytPatch *patch, KonfytPatchLayer *item)
     if (layer.getLayerType() == KonfytLayerType_SoundfontProgram) {
         if (layer.sfData.indexInEngine >= 0) {
             // First remove from jack
-            jack->removeSoundfont(layer.sfData.indexInEngine);
+            jack->removeSoundfont(layer.sfData.idInJackEngine);
             // Then from fluidsynthEngine
             fluidsynthEngine->removeSoundfontProgram(layer.sfData.indexInEngine);
             // Set unloaded in patch
@@ -499,10 +500,10 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
             // Gain = layer gain * master gain
             fluidsynthEngine->setGain( sfData.indexInEngine, convertGain(sfData.gain*masterGain) );
             // Solo and mute in jack client
-            jack->setSoundfontSolo( sfData.indexInEngine, sfData.solo );
-            jack->setSoundfontMute( sfData.indexInEngine, sfData.mute );
+            jack->setSoundfontSolo( sfData.idInJackEngine, sfData.solo );
+            jack->setSoundfontMute( sfData.idInJackEngine, sfData.mute );
             // Set routing to bus
-            jack->setSoundfontRouting( sfData.indexInEngine, midiInPort.jackPortId, bus.leftJackPortId, bus.rightJackPortId );
+            jack->setSoundfontRouting( sfData.idInJackEngine, midiInPort.jackPortId, bus.leftJackPortId, bus.rightJackPortId );
 
         } else if (type == KonfytLayerType_CarlaPlugin) {
 
@@ -704,7 +705,7 @@ void konfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, KonfytMidiFi
     // And also in the respective engine.
     if (layerItem->getLayerType() == KonfytLayerType_SoundfontProgram) {
 
-        jack->setSoundfontMidiFilter(layerItem->sfData.indexInEngine, filter);
+        jack->setSoundfontMidiFilter(layerItem->sfData.idInJackEngine, filter);
 
     } else if (layerItem->getLayerType() == KonfytLayerType_CarlaPlugin) {
 

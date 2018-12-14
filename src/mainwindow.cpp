@@ -3281,11 +3281,17 @@ void MainWindow::midi_setLayerSolo(int layer, int midiValue)
 }
 
 // Get midi event signal from patchengine.
-void MainWindow::midiEventSlot(KonfytMidiEvent ev)
-{
+void MainWindow::midiEventSlot(KonfytMidiEvent ev, int portIdInJackEngine)
+{   
     // Show in console if enabled.
     if (console_showMidiMessages) {
-        userMessage("MIDI EVENT " + midiEventToString(ev.type, ev.channel, ev.data1, ev.data2, lastBankSelectMSB, lastBankSelectLSB));
+        PrjMidiPort p;
+        KonfytProject* prj = getCurrentProject();
+        if (prj) {
+            p = prj->midiInPort_getPortWithJackId(portIdInJackEngine);
+        }
+        userMessage("MIDI EVENT " + midiEventToString(ev.type, ev.channel, ev.data1, ev.data2, lastBankSelectMSB, lastBankSelectLSB)
+                    + " from port " + p.portName);
     }
 
     if ( !midiIndicatorTimer.isActive() ) {

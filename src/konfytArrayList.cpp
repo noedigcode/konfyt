@@ -26,7 +26,7 @@
 
 
 template <typename T>
-konfytArrayList<T>::konfytArrayList()
+KonfytArrayList<T>::KonfytArrayList()
 {
     arrayEnd = 0;
     arrayStart = 0;
@@ -38,7 +38,7 @@ konfytArrayList<T>::konfytArrayList()
 }
 
 template <typename T>
-bool konfytArrayList<T>::add(T item)
+bool KonfytArrayList<T>::add(T item)
 {
     if (arrayCount >= KONFYT_ARLIST_SIZE) {
         return false;
@@ -50,13 +50,13 @@ bool konfytArrayList<T>::add(T item)
 }
 
 template <typename T>
-int konfytArrayList<T>::count()
+int KonfytArrayList<T>::count()
 {
     return arrayCount;
 }
 
 template <typename T>
-T konfytArrayList<T>::at(int index)
+T KonfytArrayList<T>::at(int index)
 {
     if ( (index<0) || (index>=arrayCount)) { abort(); }
 
@@ -64,7 +64,7 @@ T konfytArrayList<T>::at(int index)
 }
 
 template <typename T>
-T* konfytArrayList<T>::at_ptr(int index)
+T* KonfytArrayList<T>::at_ptr(int index)
 {
     if ( (index<0) || (index>=arrayCount)) { abort(); }
 
@@ -72,7 +72,7 @@ T* konfytArrayList<T>::at_ptr(int index)
 }
 
 template <typename T>
-void konfytArrayList<T>::remove(int index)
+void KonfytArrayList<T>::remove(int index)
 {
     if ( (index<0) || (index>=arrayCount)) { abort(); }
 
@@ -84,7 +84,7 @@ void konfytArrayList<T>::remove(int index)
 }
 
 template <typename T>
-int konfytArrayList<T>::getFreeIndex()
+int KonfytArrayList<T>::getFreeIndex()
 {
     int i;
     if (freeCount>0) {
@@ -106,7 +106,7 @@ int konfytArrayList<T>::getFreeIndex()
 }
 
 template <typename T>
-void konfytArrayList<T>::releaseIndex(int i)
+void KonfytArrayList<T>::releaseIndex(int i)
 {
     if (i == (arrayEnd-1)) {
         arrayEnd--;
