@@ -67,7 +67,8 @@ HEADERS  += src/mainwindow.h \
     src/konfytBridgeEngine.h \
     src/konfytBaseSoundEngine.h \
     src/konfytLscpEngine.h \
-    src/gidls.h
+    src/gidls.h \
+    src/ringbufferqmutex.h
 
 FORMS    += src/mainwindow.ui \
     src/consoledialog.ui \

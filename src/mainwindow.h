@@ -502,7 +502,8 @@ private slots:
     void userMessage(QString message);
 
     // Midi / Jack
-    void midiEventSlot(KonfytMidiEvent ev, int portIdInJackEngine);
+    void midiEventSlot();
+    void handleMidiEvent(KonfytMidiEvent ev);
     void jackXrun();
     void jackPortRegisterOrConnectCallback();
 

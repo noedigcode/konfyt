@@ -24,7 +24,8 @@
 
 
 KonfytJackEngine::KonfytJackEngine(QObject *parent) :
-    QObject(parent)
+    QObject(parent),
+    eventsBuffer(1000)
 {
     this->clientActive = false;
     connectCallback = false;
@@ -1371,6 +1372,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 
             QByteArray inEvent_jack_tempBuffer((const char*)inEvent_jack.buffer, (int)inEvent_jack.size);
             KonfytMidiEvent ev( inEvent_jack_tempBuffer );
+            ev.sourceId = sourcePort->id;
 
             // Apply input MIDI port filter
             if (sourcePort->filter.passFilter(&ev)) {
@@ -1382,7 +1384,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 
             // Send to GUI
             if (ev.type != MIDI_EVENT_TYPE_SYSTEM) {
-                emit e->midiEventSignal( ev, sourcePort->id );
+                e->eventsBuffer.stash(ev);
             }
 
             bool passEvent = true;
@@ -1433,6 +1435,11 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
         } // end for each midi input event
 
     } // end for each midi input port
+
+    if (e->eventsBuffer.commit()) {
+        // Inform GUI there are events waiting
+        emit e->midiEventSignal();
+    }
 
 
     // Unlock jack_process --------------------

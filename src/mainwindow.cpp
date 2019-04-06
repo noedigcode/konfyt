@@ -3280,15 +3280,23 @@ void MainWindow::midi_setLayerSolo(int layer, int midiValue)
     }
 }
 
-// Get midi event signal from patchengine.
-void MainWindow::midiEventSlot(KonfytMidiEvent ev, int portIdInJackEngine)
+/* MIDI events are waiting in the JACK engine. */
+void MainWindow::midiEventSlot()
 {   
+    QList<KonfytMidiEvent> events = jack->eventsBuffer.readAll();
+    for (int i=0; i < events.count(); i++) {
+        handleMidiEvent(events[i]);
+    }
+}
+
+void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
+{
     // Show in console if enabled.
     if (console_showMidiMessages) {
         PrjMidiPort p;
         KonfytProject* prj = getCurrentProject();
         if (prj) {
-            p = prj->midiInPort_getPortWithJackId(portIdInJackEngine);
+            p = prj->midiInPort_getPortWithJackId(ev.sourceId);
         }
         userMessage("MIDI EVENT " + midiEventToString(ev.type, ev.channel, ev.data1, ev.data2, lastBankSelectMSB, lastBankSelectLSB)
                     + " from port " + p.portName);
@@ -3472,13 +3480,10 @@ void MainWindow::midiEventSlot(KonfytMidiEvent ev, int portIdInJackEngine)
 
 
 
-
 void MainWindow::on_pushButton_ClearConsole_clicked()
 {
     ui->textBrowser->clear();
 }
-
-
 
 
 /* Patch midi output port menu item has been clicked. */

@@ -41,6 +41,7 @@
 #include "konfytStructs.h"
 #include "konfytJackStructs.h"
 #include "konfytArrayList.h"
+#include "ringbufferqmutex.h"
 
 #define KONFYT_JACK_DEFAULT_CLIENT_NAME "Konfyt"   // Default client name. Actual name is set in the Jack client.
 #define KONFYT_JACK_SYSTEM_OUT_LEFT "system:playback_1"
@@ -89,6 +90,8 @@ public:
     float *fadeOutValues;
     unsigned int fadeOutValuesCount;
     float fadeOutSecs;
+
+    RingbufferQMutex<KonfytMidiEvent> eventsBuffer;
 
     KonfytMidiEvent evAllNotesOff;
     KonfytMidiEvent evSustainZero;
@@ -240,7 +243,7 @@ private:
 signals:
     void userMessage(QString msg);
     void jackPortRegisterOrConnectCallback();
-    void midiEventSignal(KonfytMidiEvent event, int portId);
+    void midiEventSignal();
     void xrunSignal();
 
     
