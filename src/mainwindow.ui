@@ -23,11 +23,12 @@
 	border-color: rgb(77, 77, 77);
 	background-color: rgba(0,0,0,0);
 	
-	font: 8pt &quot;Lucida Sans&quot;;
+/*	font: 8pt &quot;Lucida Sans&quot;; */
 
-	outline: none; /* Remove focus rectangle. */s
+	outline: none; /* Remove focus rectangle. */
 }
 
+/* ---------------------------------------------------------------------- */
 QCheckBox::indicator {
 	border: 1px solid grey;
     width: 13px;
@@ -35,9 +36,22 @@ QCheckBox::indicator {
 }
 
 QCheckBox::indicator:checked {
-	
 	background-color: rgb(19, 236, 47);
 }
+
+/* ---------------------------------------------------------------------- */
+/* MIDI Indicator */
+QCheckBox#MIDI_indicator::indicator {
+	border: 1px solid grey;
+	border-radius: 4px;
+}
+
+QCheckBox#MIDI_indicator::indicator:checked {
+	background-color: rgb(19, 236, 47);
+}
+
+/* ---------------------------------------------------------------------- */
+/* ComboBox */
 
 QComboBox {
 	background-color: rgb(54, 54, 54);
@@ -62,7 +76,18 @@ QComboBox::drop-down {
 QComboBox QAbstractItemView {
      border: 2px solid darkgray;
      selection-background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(45, 62, 109, 255), stop:1 rgba(65, 97, 145, 255));
- }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Frames that hold buttons */
+QFrame[buttonFrame=true] {
+	background: rgb(40,40,40);
+    padding: 1px;
+	border-radius: 3px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* GroupBox */
 
 QGroupBox{
 	margin-top: 2ex;	
@@ -79,38 +104,124 @@ QGroupBox::title {
 	padding-top: 2px;
 }
 
+/* ---------------------------------------------------------------------- */
+/* Main toolbar groupbox*/
+QGroupBox#groupBox_MainToolbar{
+	margin-top: 0px;
+	border: 0px;
+	border-radius: 0px;
+	background-color: rgb(80, 80, 80);
+}
 
-/* Header of tree widghets */
+/* ---------------------------------------------------------------------- */
+/* Patch page groupbox */
+QGroupBox#groupBox_PatchPage {	
+	margin-top: 0ex;
+
+	background-color: rgb(4, 59, 93);
+	
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0.403, y2:0.0965909, stop:0 rgba(2, 33, 56, 255), stop:1 rgba(0, 0, 0, 255));
+	
+	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
+	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
+	border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+	border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+}
+
+/* ---------------------------------------------------------------------- */
+/* Patch Layers Groupbox */
+QGroupBox#groupBox_PatchLayers {
+	background-color:  rgba(107, 107, 107, 80);
+	border: 2px solid;
+	border-color: rgba(255,255,255,50);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Settings page groupbox */
+QGroupBox#groupBox_SettingsPage {
+	margin-top: 0ex;
+
+	background-color: rgb(4, 59, 93);
+	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
+	
+	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
+	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
+    border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+    border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+}
+
+QGroupBox#groupBox_Settings{
+	background-color: rgba(100,100,100, 255);
+	border: 0px solid;
+	border-radius: 4px;
+	margin-top: 0ex;
+	padding-top: 2ex;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Header of tree widgets */
 QHeaderView::section {
     background-color: rgb(38, 38, 38);
     border: 0px;
 }
 
+/* ---------------------------------------------------------------------- */
 QLabel{
 	background: rgba(0,0,0,0);
 }
 
+/* ---------------------------------------------------------------------- */
 QLineEdit {
 	background-color: rgb(54, 54, 54);
 	border: 1px solid grey;
 	border-radius: 2px;
 }
 
+/* Patch Name */
+QLineEdit#lineEdit_PatchName {
+	background-color: rgba(255, 255, 255, 0);
+	font: 16pt &quot;Lucida Sans&quot;;
+	border: 0pt;
+}
+
+/* Project Name */
+QLineEdit#lineEdit_ProjectName {
+	background-color: rgba(255, 255, 255, 0);
+	font: 14pt &quot;Lucida Sans&quot;;
+	border: 0pt;
+}
+
+/* ---------------------------------------------------------------------- */
 QListView{
 	background-color: rgb(50, 50, 50);
 	border: 1px solid;
 	border-color: rgb(77, 77, 77);
 }
 
+/* Patch List */
+QListView#listWidget_Patches {
+	background-color: rgba(38, 38, 38,50);
+	border: 1px solid rgba(255, 255, 255,80);
+	border-radius: 5px;
+}
+
+/* Layers list widget */
+QListView#listWidget_Layers {
+	background-color:  rgba(107, 107, 107, 0);
+	border: 0px solid;
+	border-color: rgba(255,255,255,50);
+}
+
+/* ---------------------------------------------------------------------- */
 QMainWindow {
 	background-color: rgb(59, 59, 59);
 	margin-top: 0px;
 	padding-top: 0px;
 }
 
-/********************************************************
-/* Push Buttons
-/*******************************************************/
+/* ---------------------------------------------------------------------- */
+
+/* Push Buttons */
 
 QPushButton{
 
@@ -152,11 +263,9 @@ QPushButton::checked{
 	color: red;
 	background-color: rgb(54, 54, 54);
 }
-/*******************************************************/
 
-/********************************************************
-/* Sliders
-/*******************************************************/
+/* ---------------------------------------------------------------------- */
+/* Sliders */
 
 QSlider{
 	background: rgba(0,0,0,0);
@@ -186,10 +295,12 @@ QSlider::handle:horizontal:hover {
 	border-radius: 2px;
 	border: 1px solid grey;
  }
-/*******************************************************/
+
+/* ---------------------------------------------------------------------- */
 
 QSpinBox {
-	border: 1px solid grey;
+    border: 1px solid grey;
+    border-radius: 2px;
 }
 
 QSpinBox::up-button {
@@ -219,15 +330,15 @@ QSpinBox::down-button {
 	image: url(:/icons/down.png);
  }
 
+ /* ---------------------------------------------------------------------- */
+
 QSplitter::handle {
    background: transparent;
 }
 
+/* ---------------------------------------------------------------------- */
+/* Scroll bars */
 
-
-/********************************************************
-/* Scroll bars
-/*******************************************************/
 QScrollBar:vertical {
       border: 0px transparent;
       background: rgb(75,75,75);
@@ -301,11 +412,9 @@ QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
 	background: none;
 }
 
-/*******************************************************/
 
-/********************************************************
-/* Tab widget
-/*******************************************************/
+/* ---------------------------------------------------------------------- */
+/* Tab widget */
 
 QTabWidget::pane { /* The tab widget frame */
      border-top: 0px solid grey;
@@ -343,14 +452,22 @@ QTabWidget::pane { /* The tab widget frame */
 	height: 18px;
 	margin-top: 1px;
  }
-/*******************************************************/
 
+
+/* ---------------------------------------------------------------------- */
 QTextBrowser {
 	background-color: rgb(50, 50, 50);
 	border: 1px solid;
 	border-color: rgb(77, 77, 77);
 }
 
+/* Patch note textbrowser */
+QTextBrowser#textBrowser_patchNote {
+	border: 1px solid grey;
+	background-color: rgba(0,0,0,0);
+}
+
+/* ---------------------------------------------------------------------- */
 QTreeView {
 	background-color: rgb(50, 50, 50);
 	border: 1px solid;
@@ -362,12 +479,8 @@ QTreeView::branch {
 	image: none;
 }
 
-
-
-
-/********************************************************
-/* Tool Buttons
-/*******************************************************/
+/* ---------------------------------------------------------------------- */
+/* Tool Buttons */
 
 QToolButton {
 	border-top: 1px solid rgb(100,100,100);
@@ -379,7 +492,7 @@ QToolButton {
 
 	border-radius: 2px;
 	padding: 0px;
-height: 23px;
+    height: 23px; /* TODO */
 
 }
 
@@ -415,7 +528,7 @@ QToolButton[popupMode=&quot;1&quot;] { /* only for MenuButtonPopup */
      padding-right: 17px; /* make way for the popup button */
  }
 
- /* the subcontrols below are used only in the MenuButtonPopup mode */
+ /* The subcontrols below are used only in the MenuButtonPopup mode */
  QToolButton::menu-button {
      border: 0px solid gray;
      border-left: 1px solid gray;
@@ -446,7 +559,7 @@ QToolButton::menu-indicator {
 	width: 0;
 }
 
-/*******************************************************/
+/* ---------------------------------------------------------------------- */
 
 QToolTip {
 	font: 9pt;
@@ -455,9 +568,13 @@ QToolTip {
 
 }
 
+/* ---------------------------------------------------------------------- */
+
 QStatusBar {
     background-color: rgb(80, 80, 80);
-}</string>
+}
+
+</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <property name="styleSheet">
@@ -491,13 +608,7 @@ QStatusBar {
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">QGroupBox {
-	margin-top: 0px;
-	border: 0px;
-	border-radius: 0px;
-	background-color: rgb(80, 80, 80);
-	
-}</string>
+       <string notr="true"/>
       </property>
       <property name="title">
        <string/>
@@ -550,50 +661,16 @@ QStatusBar {
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+          <string notr="true"/>
          </property>
          <property name="frameShape">
           <enum>QFrame::StyledPanel</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
+         </property>
+         <property name="buttonFrame" stdset="0">
+          <bool>true</bool>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <property name="spacing">
@@ -616,7 +693,7 @@ QPushButton:pressed{
             <property name="maximumSize">
              <size>
               <width>16777215</width>
-              <height>25</height>
+              <height>16777215</height>
              </size>
             </property>
             <property name="styleSheet">
@@ -772,7 +849,7 @@ border-bottom-left-radius: 0;</string>
           <enum>QTabWidget::Rounded</enum>
          </property>
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <property name="elideMode">
           <enum>Qt::ElideNone</enum>
@@ -858,15 +935,7 @@ border-bottom-left-radius: 0;</string>
        <item>
         <widget class="QCheckBox" name="MIDI_indicator">
          <property name="styleSheet">
-          <string notr="true">QCheckBox::indicator {
-	border: 1px solid grey;
-	border-radius: 4px;
-}
-
-QCheckBox::indicator:checked {
-	
-	background-color: rgb(19, 236, 47);
-}</string>
+          <string notr="true"/>
          </property>
          <property name="text">
           <string>MIDI</string>
@@ -885,19 +954,16 @@ QCheckBox::indicator:checked {
           </size>
          </property>
          <property name="styleSheet">
-          <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-</string>
+          <string notr="true"/>
          </property>
          <property name="frameShape">
           <enum>QFrame::StyledPanel</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Raised</enum>
+         </property>
+         <property name="buttonFrame" stdset="0">
+          <bool>true</bool>
          </property>
          <layout class="QHBoxLayout" name="horizontalLayout_27">
           <property name="spacing">
@@ -920,7 +986,7 @@ QCheckBox::indicator:checked {
             <property name="maximumSize">
              <size>
               <width>16777215</width>
-              <height>25</height>
+              <height>16777215</height>
              </size>
             </property>
             <property name="contextMenuPolicy">
@@ -1058,19 +1124,16 @@ QCheckBox::indicator:checked {
                     </size>
                    </property>
                    <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-</string>
+                    <string notr="true"/>
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::StyledPanel</enum>
                    </property>
                    <property name="frameShadow">
                     <enum>QFrame::Raised</enum>
+                   </property>
+                   <property name="buttonFrame" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout">
                     <property name="spacing">
@@ -1303,19 +1366,16 @@ QScrollBar:horizontal {
                     </size>
                    </property>
                    <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-</string>
+                    <string notr="true"/>
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::StyledPanel</enum>
                    </property>
                    <property name="frameShadow">
                     <enum>QFrame::Raised</enum>
+                   </property>
+                   <property name="buttonFrame" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_15">
                     <property name="spacing">
@@ -1733,9 +1793,12 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>2</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="PatchPage">
+         <property name="konfytGradient" stdset="0">
+          <number>1</number>
+         </property>
          <layout class="QGridLayout" name="gridLayout_9">
           <property name="leftMargin">
            <number>0</number>
@@ -1750,24 +1813,9 @@ td
            <number>0</number>
           </property>
           <item row="0" column="0">
-           <widget class="QGroupBox" name="groupBox_2">
+           <widget class="QGroupBox" name="groupBox_PatchPage">
             <property name="styleSheet">
-             <string notr="true">QGroupBox{
-	
-	margin-top: 0ex;
-
-
-	background-color: rgb(4, 59, 93);
-	
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0.403, y2:0.0965909, stop:0 rgba(2, 33, 56, 255), stop:1 rgba(0, 0, 0, 255));
-	
-	
-	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-	border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-}</string>
+             <string notr="true"/>
             </property>
             <property name="title">
              <string/>
@@ -1814,11 +1862,7 @@ td
                     </size>
                    </property>
                    <property name="styleSheet">
-                    <string notr="true">QListView{
-	background-color: rgba(38, 38, 38,50);
-	border: 1px solid rgba(255, 255, 255,80);
-	border-radius: 5px;
-}</string>
+                    <string notr="true"/>
                    </property>
                    <property name="dragEnabled">
                     <bool>false</bool>
@@ -1849,87 +1893,16 @@ td
                     </size>
                    </property>
                    <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-/* PUSH BUTTONS */
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-/* TOOL BUTTONS */
-
-QToolButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QToolButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QToolButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+                    <string notr="true"/>
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::StyledPanel</enum>
                    </property>
                    <property name="frameShadow">
                     <enum>QFrame::Raised</enum>
+                   </property>
+                   <property name="buttonFrame" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_23">
                     <property name="leftMargin">
@@ -2163,11 +2136,7 @@ border-bottom-right-radius: 0;</string>
                       <string>Project name (click to edit)</string>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">QLineEdit {
-	background-color: rgba(255, 255, 255, 0);
-	font: 14pt &quot;Lucida Sans&quot;;
-	border: 0pt;
-}
+                      <string notr="true">
 
 </string>
                      </property>
@@ -2199,11 +2168,7 @@ color: white;</string>
                       <string>Patch name (click to edit)</string>
                      </property>
                      <property name="styleSheet">
-                      <string notr="true">QLineEdit {
-	background-color: rgba(255, 255, 255, 0);
-	font: 16pt &quot;Lucida Sans&quot;;
-	border: 0pt;
-}
+                      <string notr="true">
 
 </string>
                      </property>
@@ -2220,7 +2185,7 @@ color: white;</string>
                  <item>
                   <widget class="QStackedWidget" name="stackedWidget_patchLayers">
                    <property name="currentIndex">
-                    <number>0</number>
+                    <number>1</number>
                    </property>
                    <widget class="QWidget" name="page_patchLayers">
                     <layout class="QGridLayout" name="gridLayout_4">
@@ -2242,11 +2207,7 @@ color: white;</string>
                      <item row="0" column="0">
                       <widget class="QGroupBox" name="groupBox_PatchLayers">
                        <property name="styleSheet">
-                        <string notr="true">QGroupBox{
-	background-color:  rgba(107, 107, 107, 80);
-	border: 2px solid;
-	border-color: rgba(255,255,255,50);
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="title">
                         <string/>
@@ -2279,8 +2240,7 @@ color: white;</string>
                            </size>
                           </property>
                           <property name="styleSheet">
-                           <string notr="true">border: 1px solid grey;
-background-color: rgba(0,0,0,0);</string>
+                           <string notr="true"/>
                           </property>
                           <property name="readOnly">
                            <bool>false</bool>
@@ -2289,8 +2249,8 @@ background-color: rgba(0,0,0,0);</string>
                            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Lucida Sans'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Type a note here to be associated with the current patch.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Noto Sans'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Lucida Sans'; font-size:8pt;&quot;&gt;Type a note here to be associated with the current patch.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                           </property>
                          </widget>
                         </item>
@@ -2315,87 +2275,16 @@ p, li { white-space: pre-wrap; }
                            </size>
                           </property>
                           <property name="styleSheet">
-                           <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-/* PUSH BUTTONS */
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-/* TOOL BUTTONS */
-
-QToolButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QToolButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QToolButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+                           <string notr="true"/>
                           </property>
                           <property name="frameShape">
                            <enum>QFrame::StyledPanel</enum>
                           </property>
                           <property name="frameShadow">
                            <enum>QFrame::Raised</enum>
+                          </property>
+                          <property name="buttonFrame" stdset="0">
+                           <bool>true</bool>
                           </property>
                           <layout class="QGridLayout" name="gridLayout_25">
                            <property name="leftMargin">
@@ -2506,11 +2395,7 @@ border-bottom-left-radius: 0;</string>
                         <item row="1" column="0">
                          <widget class="QListWidget" name="listWidget_Layers">
                           <property name="styleSheet">
-                           <string notr="true">QListView{
-	background-color:  rgba(107, 107, 107, 0);
-	border: 0px solid;
-	border-color: rgba(255,255,255,50);
-}</string>
+                           <string notr="true"/>
                           </property>
                           <property name="verticalScrollMode">
                            <enum>QAbstractItemView::ScrollPerPixel</enum>
@@ -2576,32 +2461,51 @@ border-bottom-left-radius: 0;</string>
            <number>0</number>
           </property>
           <item row="0" column="0">
-           <widget class="QGroupBox" name="groupBox_17">
+           <widget class="QGroupBox" name="groupBox_SettingsPage">
             <property name="styleSheet">
-             <string notr="true">
-
-QGroupBox{
-	
-	margin-top: 0ex;
-
-
-	background-color: rgb(4, 59, 93);
-	
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
-	
-	
-	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-}</string>
+             <string notr="true"/>
             </property>
             <property name="title">
              <string/>
             </property>
+            <property name="konfytGradient" stdset="0">
+             <number>0</number>
+            </property>
             <layout class="QGridLayout" name="gridLayout_21">
-             <item row="0" column="0">
-              <widget class="QGroupBox" name="groupBox_14">
+             <item row="2" column="1">
+              <spacer name="verticalSpacer_3">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="1" column="0">
+              <spacer name="horizontalSpacer_8">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="1" column="1">
+              <widget class="QGroupBox" name="groupBox_Settings">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
                <property name="minimumSize">
                 <size>
                  <width>0</width>
@@ -2610,33 +2514,21 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>431</width>
-                 <height>371</height>
+                 <width>16777215</width>
+                 <height>10000</height>
                 </size>
                </property>
                <property name="styleSheet">
-                <string notr="true">QGroupBox{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-radius: 4px;
-	margin-top: 0ex;
-	padding-top: 2ex;
-}</string>
+                <string notr="true"/>
                </property>
                <property name="title">
                 <string>Settings</string>
                </property>
-               <widget class="QGroupBox" name="groupBox_9">
-                <property name="geometry">
-                 <rect>
-                  <x>10</x>
-                  <y>20</y>
-                  <width>408</width>
-                  <height>271</height>
-                 </rect>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QGroupBox{
+               <layout class="QVBoxLayout" name="verticalLayout_17">
+                <item>
+                 <widget class="QGroupBox" name="groupBox_SubSettings">
+                  <property name="styleSheet">
+                   <string notr="true">QGroupBox{
 	margin-top: 2ex;	
 	background-color:  rgba(107, 107, 107, 255);
 	border: 2px solid rgb(212, 212, 212);
@@ -2644,900 +2536,645 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
 	padding: 1px;
 }
 
-
-
 QGroupBox::title {
 	subcontrol-position: top left;
 	subcontrol-origin: margin;
 	padding: 0 3px;
 }</string>
-                </property>
-                <property name="title">
-                 <string/>
-                </property>
-                <layout class="QGridLayout" name="gridLayout_20">
-                 <item row="9" column="0">
-                  <widget class="QLabel" name="label_24">
-                   <property name="text">
-                    <string>File manager (leave empty for default)</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="0" column="0">
-                  <widget class="QLabel" name="label_2">
-                   <property name="text">
-                    <string>Projects directory</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="1" column="0">
-                  <widget class="QFrame" name="frame_14">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_6">
-                    <property name="spacing">
-                     <number>1</number>
-                    </property>
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QLineEdit" name="lineEdit_Settings_ProjectsDir">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
+                  </property>
+                  <property name="title">
+                   <string/>
+                  </property>
+                  <layout class="QGridLayout" name="gridLayout_20">
+                   <item row="9" column="0">
+                    <widget class="QLabel" name="label_24">
+                     <property name="text">
+                      <string>File manager (leave empty for default)</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_2">
+                     <property name="text">
+                      <string>Projects directory</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QFrame" name="frame_14">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true"/>
+                     </property>
+                     <property name="frameShape">
+                      <enum>QFrame::StyledPanel</enum>
+                     </property>
+                     <property name="frameShadow">
+                      <enum>QFrame::Raised</enum>
+                     </property>
+                     <property name="buttonFrame" stdset="0">
+                      <bool>true</bool>
+                     </property>
+                     <layout class="QHBoxLayout" name="horizontalLayout_6">
+                      <property name="spacing">
+                       <number>1</number>
                       </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
+                      <property name="leftMargin">
+                       <number>0</number>
                       </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
+                      <property name="topMargin">
+                       <number>0</number>
                       </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
+                      <property name="rightMargin">
+                       <number>0</number>
                       </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="pushButton_settings_Projects">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                      </property>
-                      <property name="text">
-                       <string>...</string>
-                      </property>
-                      <property name="checkable">
-                       <bool>false</bool>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item row="6" column="0">
-                  <widget class="QFrame" name="frame_16">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_8">
-                    <property name="spacing">
-                     <number>1</number>
-                    </property>
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QLineEdit" name="lineEdit_Settings_PatchesDir">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="pushButton_Settings_Patches">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                      </property>
-                      <property name="text">
-                       <string>...</string>
-                      </property>
-                      <property name="checkable">
-                       <bool>false</bool>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item row="4" column="0">
-                  <widget class="QFrame" name="frame_15">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_7">
-                    <property name="spacing">
-                     <number>1</number>
-                    </property>
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QLineEdit" name="lineEdit_Settings_SoundfontsDir">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="pushButton_Settings_Soundfonts">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                      </property>
-                      <property name="text">
-                       <string>...</string>
-                      </property>
-                      <property name="checkable">
-                       <bool>false</bool>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item row="5" column="0">
-                  <widget class="QLabel" name="label_8">
-                   <property name="text">
-                    <string>Patches directory</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="7" column="0">
-                  <widget class="QLabel" name="label_9">
-                   <property name="text">
-                    <string>Samples (SFZ and GIG) directory</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="3" column="0">
-                  <widget class="QLabel" name="label_6">
-                   <property name="text">
-                    <string>Soundfonts directory</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item row="8" column="0">
-                  <widget class="QFrame" name="frame_17">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_9">
-                    <property name="spacing">
-                     <number>1</number>
-                    </property>
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QLineEdit" name="lineEdit_Settings_SfzDir">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QPushButton" name="pushButton_Settings_Sfz">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                      </property>
-                      <property name="text">
-                       <string>...</string>
-                      </property>
-                      <property name="checkable">
-                       <bool>false</bool>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                 <item row="10" column="0">
-                  <widget class="QFrame" name="frame_25">
-                   <property name="minimumSize">
-                    <size>
-                     <width>0</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="maximumSize">
-                    <size>
-                     <width>16777215</width>
-                     <height>25</height>
-                    </size>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
-                   </property>
-                   <property name="frameShape">
-                    <enum>QFrame::StyledPanel</enum>
-                   </property>
-                   <property name="frameShadow">
-                    <enum>QFrame::Raised</enum>
-                   </property>
-                   <layout class="QHBoxLayout" name="horizontalLayout_20">
-                    <property name="spacing">
-                     <number>1</number>
-                    </property>
-                    <property name="leftMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="topMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="rightMargin">
-                     <number>0</number>
-                    </property>
-                    <property name="bottomMargin">
-                     <number>0</number>
-                    </property>
-                    <item>
-                     <widget class="QComboBox" name="comboBox_Settings_filemanager">
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>23</height>
-                       </size>
-                      </property>
-                      <property name="editable">
-                       <bool>true</bool>
+                      <property name="bottomMargin">
+                       <number>0</number>
                       </property>
                       <item>
-                       <property name="text">
-                        <string>thunar</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>pcmanfm</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>nautilus</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string>dolphin</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                   </layout>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-               <widget class="QFrame" name="frame_2">
-                <property name="geometry">
-                 <rect>
-                  <x>70</x>
-                  <y>330</y>
-                  <width>351</width>
-                  <height>25</height>
-                 </rect>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
-                </property>
-                <property name="frameShape">
-                 <enum>QFrame::StyledPanel</enum>
-                </property>
-                <property name="frameShadow">
-                 <enum>QFrame::Raised</enum>
-                </property>
-                <layout class="QHBoxLayout" name="horizontalLayout_2">
-                 <property name="spacing">
-                  <number>1</number>
-                 </property>
-                 <property name="leftMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="topMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="rightMargin">
-                  <number>0</number>
-                 </property>
-                 <property name="bottomMargin">
-                  <number>0</number>
-                 </property>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_Settings_Cancel">
-                   <property name="styleSheet">
-                    <string notr="true">border-top-right-radius: 0;
+                       <widget class="QLineEdit" name="lineEdit_Settings_ProjectsDir">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">border-top-right-radius: 0;
 border-bottom-right-radius: 0;</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="pushButton_settings_Projects">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                        </property>
+                        <property name="text">
+                         <string>...</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>false</bool>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item row="6" column="0">
+                    <widget class="QFrame" name="frame_16">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">
+</string>
+                     </property>
+                     <property name="frameShape">
+                      <enum>QFrame::StyledPanel</enum>
+                     </property>
+                     <property name="frameShadow">
+                      <enum>QFrame::Raised</enum>
+                     </property>
+                     <property name="buttonFrame" stdset="0">
+                      <bool>true</bool>
+                     </property>
+                     <layout class="QHBoxLayout" name="horizontalLayout_8">
+                      <property name="spacing">
+                       <number>1</number>
+                      </property>
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QLineEdit" name="lineEdit_Settings_PatchesDir">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="pushButton_Settings_Patches">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                        </property>
+                        <property name="text">
+                         <string>...</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>false</bool>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item row="4" column="0">
+                    <widget class="QFrame" name="frame_15">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true"/>
+                     </property>
+                     <property name="frameShape">
+                      <enum>QFrame::StyledPanel</enum>
+                     </property>
+                     <property name="frameShadow">
+                      <enum>QFrame::Raised</enum>
+                     </property>
+                     <property name="buttonFrame" stdset="0">
+                      <bool>true</bool>
+                     </property>
+                     <layout class="QHBoxLayout" name="horizontalLayout_7">
+                      <property name="spacing">
+                       <number>1</number>
+                      </property>
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QLineEdit" name="lineEdit_Settings_SoundfontsDir">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="pushButton_Settings_Soundfonts">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                        </property>
+                        <property name="text">
+                         <string>...</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>false</bool>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item row="5" column="0">
+                    <widget class="QLabel" name="label_8">
+                     <property name="text">
+                      <string>Patches directory</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="7" column="0">
+                    <widget class="QLabel" name="label_9">
+                     <property name="text">
+                      <string>Samples (SFZ and GIG) directory</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="3" column="0">
+                    <widget class="QLabel" name="label_6">
+                     <property name="text">
+                      <string>Soundfonts directory</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="8" column="0">
+                    <widget class="QFrame" name="frame_17">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true"/>
+                     </property>
+                     <property name="frameShape">
+                      <enum>QFrame::StyledPanel</enum>
+                     </property>
+                     <property name="frameShadow">
+                      <enum>QFrame::Raised</enum>
+                     </property>
+                     <property name="buttonFrame" stdset="0">
+                      <bool>true</bool>
+                     </property>
+                     <layout class="QHBoxLayout" name="horizontalLayout_9">
+                      <property name="spacing">
+                       <number>1</number>
+                      </property>
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QLineEdit" name="lineEdit_Settings_SfzDir">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>0</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item>
+                       <widget class="QPushButton" name="pushButton_Settings_Sfz">
+                        <property name="sizePolicy">
+                         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                          <horstretch>0</horstretch>
+                          <verstretch>0</verstretch>
+                         </sizepolicy>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>16777215</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                        </property>
+                        <property name="text">
+                         <string>...</string>
+                        </property>
+                        <property name="checkable">
+                         <bool>false</bool>
+                        </property>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                   <item row="10" column="0">
+                    <widget class="QFrame" name="frame_25">
+                     <property name="minimumSize">
+                      <size>
+                       <width>0</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>25</height>
+                      </size>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true"/>
+                     </property>
+                     <property name="frameShape">
+                      <enum>QFrame::StyledPanel</enum>
+                     </property>
+                     <property name="frameShadow">
+                      <enum>QFrame::Raised</enum>
+                     </property>
+                     <property name="buttonFrame" stdset="0">
+                      <bool>true</bool>
+                     </property>
+                     <layout class="QHBoxLayout" name="horizontalLayout_20">
+                      <property name="spacing">
+                       <number>1</number>
+                      </property>
+                      <property name="leftMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="topMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="rightMargin">
+                       <number>0</number>
+                      </property>
+                      <property name="bottomMargin">
+                       <number>0</number>
+                      </property>
+                      <item>
+                       <widget class="QComboBox" name="comboBox_Settings_filemanager">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>23</height>
+                         </size>
+                        </property>
+                        <property name="editable">
+                         <bool>true</bool>
+                        </property>
+                        <item>
+                         <property name="text">
+                          <string>thunar</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>pcmanfm</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>nautilus</string>
+                         </property>
+                        </item>
+                        <item>
+                         <property name="text">
+                          <string>dolphin</string>
+                         </property>
+                        </item>
+                       </widget>
+                      </item>
+                     </layout>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QLabel" name="label_SettingsPath">
+                  <property name="text">
+                   <string>Settings and database files are saved in </string>
+                  </property>
+                  <property name="wordWrap">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QFrame" name="frame_2">
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
+                  <property name="frameShape">
+                   <enum>QFrame::StyledPanel</enum>
+                  </property>
+                  <property name="frameShadow">
+                   <enum>QFrame::Raised</enum>
+                  </property>
+                  <property name="buttonFrame" stdset="0">
+                   <bool>true</bool>
+                  </property>
+                  <layout class="QHBoxLayout" name="horizontalLayout_2">
+                   <property name="spacing">
+                    <number>1</number>
                    </property>
-                   <property name="text">
-                    <string>Cancel</string>
+                   <property name="leftMargin">
+                    <number>0</number>
                    </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButtonSettings_QuickRescanLibrary">
-                   <property name="toolTip">
-                    <string>Do not re-scan soundfonts already in library.</string>
+                   <property name="topMargin">
+                    <number>0</number>
                    </property>
-                   <property name="styleSheet">
-                    <string notr="true">border-top-left-radius: 0;
+                   <property name="rightMargin">
+                    <number>0</number>
+                   </property>
+                   <property name="bottomMargin">
+                    <number>0</number>
+                   </property>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_Settings_Cancel">
+                     <property name="styleSheet">
+                      <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                     </property>
+                     <property name="text">
+                      <string>Cancel</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButtonSettings_QuickRescanLibrary">
+                     <property name="toolTip">
+                      <string>Do not re-scan soundfonts already in library.</string>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">border-top-left-radius: 0;
 border-bottom-left-radius: 0;
 border-top-right-radius: 0;
 border-bottom-right-radius: 0;</string>
-                   </property>
-                   <property name="text">
-                    <string>Apply and Quick Scan</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButtonSettings_RescanLibrary">
-                   <property name="styleSheet">
-                    <string notr="true">border-top-left-radius: 0;
+                     </property>
+                     <property name="text">
+                      <string>Apply and Quick Scan</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButtonSettings_RescanLibrary">
+                     <property name="styleSheet">
+                      <string notr="true">border-top-left-radius: 0;
 border-bottom-left-radius: 0;
 border-top-right-radius: 0;
 border-bottom-right-radius: 0;</string>
-                   </property>
-                   <property name="text">
-                    <string>Apply and Rescan</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QPushButton" name="pushButton_Settings_Apply">
-                   <property name="styleSheet">
-                    <string notr="true">border-top-left-radius: 0;
+                     </property>
+                     <property name="text">
+                      <string>Apply and Rescan</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="pushButton_Settings_Apply">
+                     <property name="styleSheet">
+                      <string notr="true">border-top-left-radius: 0;
 border-bottom-left-radius: 0;</string>
-                   </property>
-                   <property name="text">
-                    <string>Apply</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </widget>
-               <widget class="QLabel" name="label_SettingsPath">
-                <property name="geometry">
-                 <rect>
-                  <x>10</x>
-                  <y>300</y>
-                  <width>401</width>
-                  <height>17</height>
-                 </rect>
-                </property>
-                <property name="text">
-                 <string>Settings and database files are saved in </string>
-                </property>
-               </widget>
+                     </property>
+                     <property name="text">
+                      <string>Apply</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </widget>
+                </item>
+               </layout>
               </widget>
              </item>
+             <item row="0" column="1">
+              <spacer name="verticalSpacer_4">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+             <item row="1" column="2">
+              <spacer name="horizontalSpacer_9">
+               <property name="orientation">
+                <enum>Qt::Horizontal</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>40</width>
+                 <height>20</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
             </layout>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-        <widget class="QWidget" name="ConsolePage">
-         <layout class="QGridLayout" name="gridLayout_22">
-          <property name="leftMargin">
-           <number>0</number>
-          </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
-          <property name="rightMargin">
-           <number>0</number>
-          </property>
-          <property name="bottomMargin">
-           <number>0</number>
-          </property>
-          <item row="0" column="0">
-           <widget class="QGroupBox" name="groupBox_18">
-            <property name="styleSheet">
-             <string notr="true">
-
-QGroupBox{
-	
-	margin-top: 0ex;
-
-
-	background-color: rgb(4, 59, 93);
-
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(31, 65, 30, 255));
-	
-
-	
-	
-	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-}</string>
-            </property>
-            <property name="title">
-             <string/>
-            </property>
            </widget>
           </item>
          </layout>
@@ -3557,7 +3194,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
            <number>0</number>
           </property>
           <item row="0" column="0">
-           <widget class="QGroupBox" name="groupBox_19">
+           <widget class="QGroupBox" name="groupBox_FilterPage">
             <property name="styleSheet">
              <string notr="true">
 
@@ -3679,55 +3316,16 @@ QGroupBox::title {
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="frameShape">
                         <enum>QFrame::StyledPanel</enum>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Raised</enum>
+                       </property>
+                       <property name="buttonFrame" stdset="0">
+                        <bool>true</bool>
                        </property>
                        <layout class="QHBoxLayout" name="horizontalLayout_17">
                         <property name="spacing">
@@ -3752,6 +3350,10 @@ QPushButton::checked{
                             <width>0</width>
                             <height>23</height>
                            </size>
+                          </property>
+                          <property name="styleSheet">
+                           <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
                           </property>
                           <property name="maximum">
                            <number>127</number>
@@ -3794,55 +3396,16 @@ border-bottom-left-radius: 0;</string>
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="frameShape">
                         <enum>QFrame::StyledPanel</enum>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Raised</enum>
+                       </property>
+                       <property name="buttonFrame" stdset="0">
+                        <bool>true</bool>
                        </property>
                        <layout class="QHBoxLayout" name="horizontalLayout_10">
                         <property name="spacing">
@@ -3867,6 +3430,10 @@ QPushButton::checked{
                             <width>0</width>
                             <height>23</height>
                            </size>
+                          </property>
+                          <property name="styleSheet">
+                           <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
                           </property>
                           <property name="maximum">
                            <number>127</number>
@@ -3902,55 +3469,16 @@ border-bottom-left-radius: 0;</string>
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="frameShape">
                         <enum>QFrame::StyledPanel</enum>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Raised</enum>
+                       </property>
+                       <property name="buttonFrame" stdset="0">
+                        <bool>true</bool>
                        </property>
                        <layout class="QHBoxLayout" name="horizontalLayout_12">
                         <property name="spacing">
@@ -3975,6 +3503,10 @@ QPushButton::checked{
                             <width>0</width>
                             <height>23</height>
                            </size>
+                          </property>
+                          <property name="styleSheet">
+                           <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
                           </property>
                           <property name="maximum">
                            <number>127</number>
@@ -4013,55 +3545,16 @@ border-bottom-left-radius: 0;</string>
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="frameShape">
                         <enum>QFrame::StyledPanel</enum>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Raised</enum>
+                       </property>
+                       <property name="buttonFrame" stdset="0">
+                        <bool>true</bool>
                        </property>
                        <layout class="QHBoxLayout" name="horizontalLayout_18">
                         <property name="spacing">
@@ -4086,6 +3579,10 @@ QPushButton::checked{
                             <width>0</width>
                             <height>23</height>
                            </size>
+                          </property>
+                          <property name="styleSheet">
+                           <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
                           </property>
                           <property name="maximum">
                            <number>127</number>
@@ -4145,55 +3642,16 @@ border-bottom-left-radius: 0;</string>
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="frameShape">
                         <enum>QFrame::StyledPanel</enum>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Raised</enum>
+                       </property>
+                       <property name="buttonFrame" stdset="0">
+                        <bool>true</bool>
                        </property>
                        <layout class="QHBoxLayout" name="horizontalLayout_14">
                         <property name="spacing">
@@ -4220,12 +3678,8 @@ QPushButton::checked{
                            </size>
                           </property>
                           <property name="styleSheet">
-                           <string notr="true">QComboBox {
-	border-top-right-radius: 0;
-	border-bottom-right-radius: 0;
-	color: white;
-	padding: 2px; /* This makes text colour work */
-}
+                           <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;
 </string>
                           </property>
                           <item>
@@ -4355,55 +3809,16 @@ border-bottom-left-radius: 0;</string>
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="frameShape">
                         <enum>QFrame::StyledPanel</enum>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Raised</enum>
+                       </property>
+                       <property name="buttonFrame" stdset="0">
+                        <bool>true</bool>
                        </property>
                        <layout class="QHBoxLayout" name="horizontalLayout_13">
                         <property name="spacing">
@@ -4428,6 +3843,10 @@ QPushButton::checked{
                             <width>0</width>
                             <height>23</height>
                            </size>
+                          </property>
+                          <property name="styleSheet">
+                           <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
                           </property>
                           <property name="minimum">
                            <number>-127</number>
@@ -4503,55 +3922,17 @@ border-bottom-left-radius: 0;</string>
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+                        <string notr="true">
+</string>
                        </property>
                        <property name="frameShape">
                         <enum>QFrame::StyledPanel</enum>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Raised</enum>
+                       </property>
+                       <property name="buttonFrame" stdset="0">
+                        <bool>true</bool>
                        </property>
                        <layout class="QHBoxLayout" name="horizontalLayout_32">
                         <property name="spacing">
@@ -4576,6 +3957,10 @@ QPushButton::checked{
                             <width>0</width>
                             <height>23</height>
                            </size>
+                          </property>
+                          <property name="styleSheet">
+                           <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
                           </property>
                           <property name="maximum">
                            <number>127</number>
@@ -4611,55 +3996,16 @@ border-bottom-left-radius: 0;</string>
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="frameShape">
                         <enum>QFrame::StyledPanel</enum>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Raised</enum>
+                       </property>
+                       <property name="buttonFrame" stdset="0">
+                        <bool>true</bool>
                        </property>
                        <layout class="QHBoxLayout" name="horizontalLayout_34">
                         <property name="spacing">
@@ -4684,6 +4030,10 @@ QPushButton::checked{
                             <width>0</width>
                             <height>23</height>
                            </size>
+                          </property>
+                          <property name="styleSheet">
+                           <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
                           </property>
                           <property name="maximum">
                            <number>127</number>
@@ -4737,55 +4087,16 @@ border-bottom-left-radius: 0;</string>
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="frameShape">
                         <enum>QFrame::StyledPanel</enum>
                        </property>
                        <property name="frameShadow">
                         <enum>QFrame::Raised</enum>
+                       </property>
+                       <property name="buttonFrame" stdset="0">
+                        <bool>true</bool>
                        </property>
                        <layout class="QHBoxLayout" name="horizontalLayout_19">
                         <property name="spacing">
@@ -4921,50 +4232,17 @@ border-bottom-left-radius: 0;</string>
                   <item>
                    <widget class="QFrame" name="frame_9">
                     <property name="styleSheet">
-                     <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+                     <string notr="true">
+</string>
                     </property>
                     <property name="frameShape">
                      <enum>QFrame::StyledPanel</enum>
                     </property>
                     <property name="frameShadow">
                      <enum>QFrame::Raised</enum>
+                    </property>
+                    <property name="buttonFrame" stdset="0">
+                     <bool>true</bool>
                     </property>
                     <layout class="QHBoxLayout" name="horizontalLayout_5">
                      <property name="spacing">
@@ -5279,50 +4557,16 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                  <item row="0" column="2">
                   <widget class="QFrame" name="frame_13">
                    <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+                    <string notr="true"/>
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::StyledPanel</enum>
                    </property>
                    <property name="frameShadow">
                     <enum>QFrame::Raised</enum>
+                   </property>
+                   <property name="buttonFrame" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_16">
                     <property name="spacing">
@@ -5375,50 +4619,16 @@ QPushButton:pressed{
                  <item row="0" column="0">
                   <widget class="QFrame" name="frame_connectionsPage_MidiFilter">
                    <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+                    <string notr="true"/>
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::StyledPanel</enum>
                    </property>
                    <property name="frameShadow">
                     <enum>QFrame::Raised</enum>
+                   </property>
+                   <property name="buttonFrame" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QHBoxLayout" name="horizontalLayout_33">
                     <property name="spacing">
@@ -5522,19 +4732,16 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-</string>
+                  <string notr="true"/>
                  </property>
                  <property name="frameShape">
                   <enum>QFrame::StyledPanel</enum>
                  </property>
                  <property name="frameShadow">
                   <enum>QFrame::Raised</enum>
+                 </property>
+                 <property name="buttonFrame" stdset="0">
+                  <bool>true</bool>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_30">
                   <property name="spacing">
@@ -5672,50 +4879,16 @@ QScrollBar:horizontal {
                <item>
                 <widget class="QFrame" name="frame_31">
                  <property name="styleSheet">
-                  <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+                  <string notr="true"/>
                  </property>
                  <property name="frameShape">
                   <enum>QFrame::StyledPanel</enum>
                  </property>
                  <property name="frameShadow">
                   <enum>QFrame::Raised</enum>
+                 </property>
+                 <property name="buttonFrame" stdset="0">
+                  <bool>true</bool>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_21">
                   <property name="spacing">
@@ -5813,55 +4986,16 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                  <item>
                   <widget class="QFrame" name="frame">
                    <property name="styleSheet">
-                    <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+                    <string notr="true"/>
                    </property>
                    <property name="frameShape">
                     <enum>QFrame::StyledPanel</enum>
                    </property>
                    <property name="frameShadow">
                     <enum>QFrame::Raised</enum>
+                   </property>
+                   <property name="buttonFrame" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_10">
                     <property name="spacing">
@@ -6002,19 +5136,16 @@ border-top-left-radius: 0;
                   </sizepolicy>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-</string>
+                  <string notr="true"/>
                  </property>
                  <property name="frameShape">
                   <enum>QFrame::StyledPanel</enum>
                  </property>
                  <property name="frameShadow">
                   <enum>QFrame::Raised</enum>
+                 </property>
+                 <property name="buttonFrame" stdset="0">
+                  <bool>true</bool>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_23">
                   <property name="spacing">
@@ -6119,50 +5250,16 @@ border-top-left-radius: 0;
                <item>
                 <widget class="QFrame" name="frame_38">
                  <property name="styleSheet">
-                  <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+                  <string notr="true"/>
                  </property>
                  <property name="frameShape">
                   <enum>QFrame::StyledPanel</enum>
                  </property>
                  <property name="frameShadow">
                   <enum>QFrame::Raised</enum>
+                 </property>
+                 <property name="buttonFrame" stdset="0">
+                  <bool>true</bool>
                  </property>
                  <layout class="QHBoxLayout" name="horizontalLayout_38">
                   <property name="spacing">
@@ -6343,19 +5440,16 @@ p, li { white-space: pre-wrap; }
                </sizepolicy>
               </property>
               <property name="styleSheet">
-               <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-</string>
+               <string notr="true"/>
               </property>
               <property name="frameShape">
                <enum>QFrame::StyledPanel</enum>
               </property>
               <property name="frameShadow">
                <enum>QFrame::Raised</enum>
+              </property>
+              <property name="buttonFrame" stdset="0">
+               <bool>true</bool>
               </property>
               <layout class="QGridLayout" name="gridLayout_38">
                <property name="leftMargin">
@@ -6583,19 +5677,16 @@ border-top-right-radius: 0;
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-</string>
+               <string notr="true"/>
               </property>
               <property name="frameShape">
                <enum>QFrame::StyledPanel</enum>
               </property>
               <property name="frameShadow">
                <enum>QFrame::Raised</enum>
+              </property>
+              <property name="buttonFrame" stdset="0">
+               <bool>true</bool>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_28" stretch="0,0,0,0">
                <property name="spacing">
@@ -6813,41 +5904,7 @@ QSlider::handle:horizontal:hover {
 	margin-top: 0ex;
 	padding-top: 2ex;
 }
-
-
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+</string>
            </property>
            <property name="title">
             <string>Warnings</string>
@@ -6913,40 +5970,7 @@ QPushButton:pressed{
 	padding-top: 2ex;
 }
 
-
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+</string>
            </property>
            <property name="title">
             <string>External Applications</string>
@@ -6982,55 +6006,16 @@ QPushButton:pressed{
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton::checked{
-	color: red;
-	background-color: rgb(54, 54, 54);
-}</string>
+               <string notr="true"/>
               </property>
               <property name="frameShape">
                <enum>QFrame::StyledPanel</enum>
               </property>
               <property name="frameShadow">
                <enum>QFrame::Raised</enum>
+              </property>
+              <property name="buttonFrame" stdset="0">
+               <bool>true</bool>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_4">
                <property name="spacing">
@@ -7119,50 +6104,16 @@ border-bottom-left-radius: 0;</string>
                </size>
               </property>
               <property name="styleSheet">
-               <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+               <string notr="true"/>
               </property>
               <property name="frameShape">
                <enum>QFrame::StyledPanel</enum>
               </property>
               <property name="frameShadow">
                <enum>QFrame::Raised</enum>
+              </property>
+              <property name="buttonFrame" stdset="0">
+               <bool>true</bool>
               </property>
               <layout class="QGridLayout" name="gridLayout_35">
                <property name="leftMargin">
@@ -7287,50 +6238,16 @@ border-bottom-right-radius: 0;</string>
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+                 <string notr="true"/>
                 </property>
                 <property name="frameShape">
                  <enum>QFrame::StyledPanel</enum>
                 </property>
                 <property name="frameShadow">
                  <enum>QFrame::Raised</enum>
+                </property>
+                <property name="buttonFrame" stdset="0">
+                 <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_19">
                  <property name="leftMargin">
@@ -7414,50 +6331,16 @@ border-bottom-right-radius: 0;</string>
                  </size>
                 </property>
                 <property name="styleSheet">
-                 <string notr="true">QFrame{
-	background: rgb(40,40,40);
-    padding: 1px;
-	border-radius: 3px;
-}
-
-QPushButton{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(75, 75, 75, 255), stop:1 rgba(85,85,85, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:hover{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(85,85,85, 255), stop:1 rgba(100,100,100, 255));
-
-	border-radius: 2px;
-}
-
-QPushButton:pressed{
-	border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-	
-	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(50,50,50, 255), stop:1 rgba(65,65,65, 255));
-
-	border-radius: 2px;
-}</string>
+                 <string notr="true"/>
                 </property>
                 <property name="frameShape">
                  <enum>QFrame::StyledPanel</enum>
                 </property>
                 <property name="frameShadow">
                  <enum>QFrame::Raised</enum>
+                </property>
+                <property name="buttonFrame" stdset="0">
+                 <bool>true</bool>
                 </property>
                 <layout class="QGridLayout" name="gridLayout_46">
                  <property name="leftMargin">
