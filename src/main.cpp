@@ -111,6 +111,7 @@ int main(int argc, char *argv[])
                 } else if ( matchArgument(arg, KonfytArg_Bridge) ) {
 
                     appInfo.bridge = true;
+                    appInfo.carla = true;
 
                 } else if ( matchArgument(arg, KonfytArg_Headless) ) {
 

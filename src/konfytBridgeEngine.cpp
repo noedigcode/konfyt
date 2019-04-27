@@ -62,7 +62,7 @@ int KonfytBridgeEngine::addSfz(QString soundfilePath)
     int id = idCounter++;
     item.jackname = jack->clientName() + "_subclient_" + n2s(id);
 
-    item.cmd = exePath + " -q " + " -j " + item.jackname + " \"" + soundfilePath + "\"";
+    item.cmd = exePath + " -q -c -j " + item.jackname + " \"" + soundfilePath + "\"";
 
     item.process = new QProcess();
     connect(item.process, &QProcess::started, [this, id](){
