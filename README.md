@@ -4,7 +4,7 @@ Konfyt
 Digital Keyboard Workstation for Linux
 --------------------------------------
 
-2014-2018 Gideon van der Kolf, noedigcode@gmail.com
+2014-2019 Gideon van der Kolf, noedigcode@gmail.com
 
 Welkom by Konfyt.
 
@@ -30,20 +30,14 @@ More information is available at www.noedig.co.za/konfyt/
 Requirements:
 -------------
 Konfyt was developed and tested with the following:
-* Linux Mint 18.3 (based on Ubuntu 16.04).
+* Linux Mint 19.1 (based on Ubuntu 18.04).
 * Qt 5
 * Fluidsynth 1.1.6 (Version 1.1.5 has a nasty polyphony bug)
 * liblscp 0.5.6 and thus Linuxsampler
-* Carla
+* Carla 2.0.0
 
 Carla is available in the KXStudio repositories (http://kxstudio.linuxaudio.org/Repositories).
 All versions are not guaranteed to work since Carla is under active development and the API is still subject to change.
-
-Tested with version
-```
-1.9.9 (2.0-beta7)
-(KXStudio Package version 2:1.9.9+git20180824v5)
-```
 
 
 Building:
@@ -75,12 +69,11 @@ qmake --qt=5
 * liblscp development files (liblscp-dev in Ubuntu)
 
 
-The Konfyt .pro file can be opened with QtCreator and configured and built by following
-the steps in the IDE.
-
-To build from the command line, run the following:
+To build from the command line, run the following from the source code directory:
 ```
-qmake konfyt.pro
+mkdir build
+cd build
+qmake ../konfyt.pro
 make
 ```
 
