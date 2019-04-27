@@ -6,46 +6,43 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>306</width>
-    <height>37</height>
+    <width>311</width>
+    <height>43</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>16777215</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QGroupBox{
+   <string notr="true">QWidget#guiLayerItem{
+	min-height: 2.5em;
+	max-height: 2.5em;
+}
 
-/*
-    border-top: 1px solid rgb(100,100,100);
-    border-left: 1px solid rgb(100,100,100);
-    border-right: 1px solid rgb(90,90,90);
-    border-bottom: 1px solid rgb(75,75,75);
-
-background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(45, 62, 109, 255), stop:1 rgba(65, 97, 145, 255));
-	border: 1px solid grey;
-	border-radius: 2px;
-*/
+QGroupBox {
 	border: 0px;	
-
+	background-color: transparent;
 	color: white;
 
 	padding: 4px;
 	margin: 2px;
 }
 
-
-
-QPushButton{
-	color: rgba(255,255,255,200);
-	background-color: rgb(80,80,80);
-	border: 1px solid rgba(255,255,255,100);
-	border-radius: 2px;
-}
-
-QPushButton::hover{
-	color: rgba(255,255,255,255);
-	background-color: rgb(100,100,100);
+QLineEdit {
+	min-height: 1.2em;
+	max-height: 1.2em;
 }
 
 QToolButton{
@@ -53,6 +50,11 @@ QToolButton{
 	background-color: rgb(80,80,80);
 	border: 1px solid rgba(255,255,255,100);
 	border-radius: 2px;
+
+	min-width: 1.2em;
+	min-height: 1.2em;
+	max-width: 1.2em;
+	max-height: 1.2em;
 }
 
 QToolButton::hover{
@@ -139,14 +141,14 @@ QSlider::handle:horizontal:hover {
        <widget class="QToolButton" name="toolButton">
         <property name="minimumSize">
          <size>
-          <width>23</width>
-          <height>23</height>
+          <width>0</width>
+          <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>23</width>
-          <height>23</height>
+          <width>16777215</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="toolTip">
@@ -168,7 +170,7 @@ QSlider::handle:horizontal:hover {
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>23</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="toolTip">
@@ -182,21 +184,21 @@ QSlider::handle:horizontal:hover {
       <item>
        <widget class="QLineEdit" name="lineEdit">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="minimumSize">
          <size>
-          <width>75</width>
-          <height>23</height>
+          <width>0</width>
+          <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>23</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="readOnly">
@@ -206,6 +208,12 @@ QSlider::handle:horizontal:hover {
       </item>
       <item>
        <widget class="QSlider" name="gainSlider">
+        <property name="minimumSize">
+         <size>
+          <width>25</width>
+          <height>0</height>
+         </size>
+        </property>
         <property name="maximumSize">
          <size>
           <width>75</width>
@@ -225,7 +233,7 @@ QSlider::handle:horizontal:hover {
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>23</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="styleSheet">
@@ -251,7 +259,7 @@ QSlider::handle:horizontal:hover {
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>23</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="styleSheet">
@@ -277,7 +285,7 @@ QSlider::handle:horizontal:hover {
         <property name="maximumSize">
          <size>
           <width>16777215</width>
-          <height>23</height>
+          <height>16777215</height>
          </size>
         </property>
         <property name="styleSheet">

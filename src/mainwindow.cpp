@@ -2314,7 +2314,7 @@ void MainWindow::on_lineEdit_Search_returnPressed()
 }
 
 /* Clear search button clicked. */
-void MainWindow::on_pushButton_ClearSearch_clicked()
+void MainWindow::on_toolButton_ClearSearch_clicked()
 {
     ui->lineEdit_Search->clear();
 
@@ -2879,13 +2879,13 @@ void MainWindow::on_tabWidget_Projects_currentChanged(int index)
     }
 }
 
-void MainWindow::on_pushButton_RemovePatch_clicked()
+void MainWindow::on_toolButton_RemovePatch_clicked()
 {
     // Remove patch
     removePatchFromProject(ui->listWidget_Patches->currentRow());
 }
 
-void MainWindow::on_pushButton_PatchUp_clicked()
+void MainWindow::on_toolButton_PatchUp_clicked()
 {
     int row = ui->listWidget_Patches->currentRow();
     if ( row >= 1 ) {
@@ -2903,7 +2903,7 @@ void MainWindow::on_listWidget_Patches_indexesMoved(const QModelIndexList &index
     userMessage("moved."); // TODO
 }
 
-void MainWindow::on_pushButton_PatchDown_clicked()
+void MainWindow::on_toolButton_PatchDown_clicked()
 {
     int row = ui->listWidget_Patches->currentRow();
     if ( (row >= 0) && (row < ui->listWidget_Patches->count()-1)  ) {
@@ -3807,6 +3807,7 @@ void MainWindow::addLayerItemToGUI(KonfytPatchLayer layerItem)
     // and set the item widget
     item->setSizeHint(gui->size());
     ui->listWidget_Layers->setItemWidget(item, gui);
+    item->setSizeHint(gui->size()); // Put after setItemWidget() so size is accurate since widget is already displayed.
 
     // Make all connections
     connect(gui, &konfytLayerWidget::slider_moved_signal,

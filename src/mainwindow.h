@@ -555,7 +555,7 @@ private slots:
     void on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem *item);
 
     void on_lineEdit_Search_returnPressed();
-    void on_pushButton_ClearSearch_clicked();
+    void on_toolButton_ClearSearch_clicked();
     void on_pushButton_LibraryPreview_clicked();
 
     void on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
@@ -603,9 +603,9 @@ private slots:
     void onLayerMidiInMenu_ActionTrigger(QAction* action);
 
     // Patch List
-    void on_pushButton_RemovePatch_clicked();
-    void on_pushButton_PatchUp_clicked();
-    void on_pushButton_PatchDown_clicked();
+    void on_toolButton_RemovePatch_clicked();
+    void on_toolButton_PatchUp_clicked();
+    void on_toolButton_PatchDown_clicked();
     void on_toolButton_AddPatch_clicked();
     void on_listWidget_Patches_itemClicked(QListWidgetItem *item);
     void on_pushButton_LoadAll_clicked();
