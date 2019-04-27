@@ -3786,10 +3786,6 @@ void MainWindow::gui_updateLayerMidiOutChannelMenu()
 }
 
 
-
-
-
-
 /* Add a layer item to the GUI layer list. */
 void MainWindow::addLayerItemToGUI(KonfytPatchLayer layerItem)
 {
@@ -3805,9 +3801,10 @@ void MainWindow::addLayerItemToGUI(KonfytPatchLayer layerItem)
     // Add to gui layer list
     ui->listWidget_Layers->addItem(item);
     // and set the item widget
-    item->setSizeHint(gui->size());
     ui->listWidget_Layers->setItemWidget(item, gui);
-    item->setSizeHint(gui->size()); // Put after setItemWidget() so size is accurate since widget is already displayed.
+    // Put setSizeHint() after setItemWidget() so size is accurate since widget is already displayed.
+    // Use zero width so that horizontal scrollbars don't appear when shrinking.
+    item->setSizeHint(QSize(0, gui->size().height()));
 
     // Make all connections
     connect(gui, &konfytLayerWidget::slider_moved_signal,

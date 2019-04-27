@@ -6,21 +6,9 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>311</width>
+    <width>354</width>
     <height>43</height>
    </rect>
-  </property>
-  <property name="minimumSize">
-   <size>
-    <width>0</width>
-    <height>0</height>
-   </size>
-  </property>
-  <property name="maximumSize">
-   <size>
-    <width>16777215</width>
-    <height>16777215</height>
-   </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
@@ -31,18 +19,8 @@
 	max-height: 2.5em;
 }
 
-QGroupBox {
-	border: 0px;	
+QFrame {
 	background-color: transparent;
-	color: white;
-
-	padding: 4px;
-	margin: 2px;
-}
-
-QLineEdit {
-	min-height: 1.2em;
-	max-height: 1.2em;
 }
 
 QToolButton{
@@ -50,11 +28,8 @@ QToolButton{
 	background-color: rgb(80,80,80);
 	border: 1px solid rgba(255,255,255,100);
 	border-radius: 2px;
-
+	
 	min-width: 1.2em;
-	min-height: 1.2em;
-	max-width: 1.2em;
-	max-height: 1.2em;
 }
 
 QToolButton::hover{
@@ -94,62 +69,56 @@ QSlider::handle:horizontal:hover {
 	border-radius: 5px;
  }</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_2">
+  <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="leftMargin">
-    <number>0</number>
+    <number>2</number>
    </property>
    <property name="topMargin">
     <number>0</number>
    </property>
    <property name="rightMargin">
-    <number>0</number>
+    <number>2</number>
    </property>
    <property name="bottomMargin">
     <number>0</number>
    </property>
-   <property name="spacing">
-    <number>2</number>
-   </property>
-   <item row="0" column="0">
-    <widget class="QGroupBox" name="groupBox">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
+   <item>
+    <widget class="QFrame" name="frame">
+     <property name="styleSheet">
+      <string notr="true"/>
      </property>
-     <property name="title">
-      <string/>
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,0,1,0,0,0,0">
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <property name="buttonFrame" stdset="0">
+      <bool>true</bool>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
       <property name="spacing">
        <number>1</number>
       </property>
       <property name="leftMargin">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="topMargin">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="rightMargin">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="bottomMargin">
-       <number>0</number>
+       <number>1</number>
       </property>
       <item>
        <widget class="QToolButton" name="toolButton">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
         <property name="toolTip">
          <string>Click for layer menu</string>
@@ -167,11 +136,11 @@ QSlider::handle:horizontal:hover {
       </item>
       <item>
        <widget class="QToolButton" name="toolButton_midiInPort">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
         <property name="toolTip">
          <string>MIDI In Port</string>
@@ -184,22 +153,10 @@ QSlider::handle:horizontal:hover {
       <item>
        <widget class="QLineEdit" name="lineEdit">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+         <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
         </property>
         <property name="readOnly">
          <bool>true</bool>
@@ -210,7 +167,7 @@ QSlider::handle:horizontal:hover {
        <widget class="QSlider" name="gainSlider">
         <property name="minimumSize">
          <size>
-          <width>25</width>
+          <width>30</width>
           <height>0</height>
          </size>
         </property>
@@ -230,11 +187,11 @@ QSlider::handle:horizontal:hover {
       </item>
       <item>
        <widget class="QToolButton" name="toolButton_solo">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
         <property name="styleSheet">
          <string notr="true">QToolButton::Checked {
@@ -256,11 +213,11 @@ QSlider::handle:horizontal:hover {
       </item>
       <item>
        <widget class="QToolButton" name="toolButton_mute">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
         <property name="styleSheet">
          <string notr="true">QToolButton::Checked {
@@ -282,11 +239,11 @@ QSlider::handle:horizontal:hover {
       </item>
       <item>
        <widget class="QToolButton" name="toolButton_bus">
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
         </property>
         <property name="styleSheet">
          <string notr="true"/>
