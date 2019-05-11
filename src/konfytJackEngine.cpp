@@ -216,7 +216,7 @@ void KonfytJackEngine::removeSoundfont(int id)
     for (int i=0; i<noteOnList.count(); i++) {
         KonfytJackNoteOnRecord *rec = noteOnList.at_ptr(i);
         if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidsynthID == id) {
+            if (rec->fluidsynthID == p->idInPluginEngine) {
                 noteOnList.remove(i);
                 i--; // Due to removal, have to stay at same index after for loop i++
             }
@@ -225,7 +225,7 @@ void KonfytJackEngine::removeSoundfont(int id)
     for (int i=0; i<sustainList.count(); i++) {
         KonfytJackNoteOnRecord *rec = sustainList.at_ptr(i);
         if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidsynthID == id) {
+            if (rec->fluidsynthID == p->idInPluginEngine) {
                 sustainList.remove(i);
                 i--;
             }
@@ -234,7 +234,7 @@ void KonfytJackEngine::removeSoundfont(int id)
     for (int i=0; i<pitchBendList.count(); i++) {
         KonfytJackNoteOnRecord *rec = pitchBendList.at_ptr(i);
         if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidsynthID == id) {
+            if (rec->fluidsynthID == p->idInPluginEngine) {
                 pitchBendList.remove(i);
                 i--;
             }
