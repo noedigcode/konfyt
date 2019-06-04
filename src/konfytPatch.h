@@ -71,10 +71,10 @@
 
 
 
-class konfytPatch
+class KonfytPatch
 {
 public:
-    konfytPatch();
+    KonfytPatch();
 
     // ----------------------------------------------------
     // Patch Info
@@ -108,11 +108,11 @@ public:
     // Soundfont layer related functions
     // ----------------------------------------------------
 
-    KonfytPatchLayer addProgram(konfytSoundfontProgram p);
+    KonfytPatchLayer addProgram(KonfytSoundfontProgram p);
     KonfytPatchLayer addSfLayer(LayerSoundfontStruct newSfLayer);
     LayerSoundfontStruct getSfLayer(int id_in_engine);
     KonfytPatchLayer getSfLayer_LayerItem(int id_in_engine);
-    konfytSoundfontProgram getProgram(int id_in_engine);
+    KonfytSoundfontProgram getProgram(int id_in_engine);
     int getNumSfLayers();
     bool isValid_Sf_LayerNumber(int SfLayer);
     QList<KonfytPatchLayer> getSfLayerList() const;

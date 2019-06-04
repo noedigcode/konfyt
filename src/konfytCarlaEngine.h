@@ -37,20 +37,20 @@
 
 CARLA_BACKEND_USE_NAMESPACE
 
-class konfytCarlaEngine : public KonfytBaseSoundEngine
+class KonfytCarlaEngine : public KonfytBaseSoundEngine
 {
     Q_OBJECT
 public:
 
-    struct konfytCarlaPluginData
+    struct KonfytCarlaPluginData
     {
         int ID; // ID in konfytCarlaEngine (this class)
         QString path;
         QString name;
     };
 
-    explicit konfytCarlaEngine(QObject *parent = 0);
-    ~konfytCarlaEngine();
+    explicit KonfytCarlaEngine(QObject *parent = 0);
+    ~KonfytCarlaEngine();
 
     // KonfytBaseSoundEngine interface
     void initEngine(KonfytJackEngine *jackEngine);
@@ -64,7 +64,8 @@ public:
 
     static void carlaEngineCallback(void* ptr, EngineCallbackOpcode action,
                                     uint pluginId, int value1, int value2,
-                                    float value3, const char* valueStr);
+                                    int value3, float valuef,
+                                    const char* valueStr);
 
     void error_abort(QString msg);
 
@@ -72,7 +73,7 @@ private:
     int pluginUniqueIDCounter;
     QString jack_client_name;
     KonfytJackEngine* jack;
-    QMap<int, konfytCarlaPluginData> pluginDataMap;
+    QMap<int, KonfytCarlaPluginData> pluginDataMap;
     QList<int> pluginList; // List with indexes matching id's in Carla engine, i.e. maps this class' unique IDs to pluginIds in Carla engine.
 };
 

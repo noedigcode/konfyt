@@ -106,7 +106,7 @@ bool KonfytProject::saveProjectAs(QString dirname)
 
         stream.writeStartElement(XML_PRJ_PATCH);
         // Patch properties
-        konfytPatch* pat = patchList.at(i);
+        KonfytPatch* pat = patchList.at(i);
         QString patchFilename = QString(PROJECT_PATCH_DIR) + "/" + n2s(i) + "_" + sanitiseFilename(pat->getName()) + "." + KONFYT_PATCH_SUFFIX;
         stream.writeTextElement(XML_PRJ_PATCH_FILENAME, patchFilename);
 
@@ -309,7 +309,7 @@ bool KonfytProject::loadProject(QString filename)
                 }
 
                 // Add new patch
-                konfytPatch* pt = new konfytPatch();
+                KonfytPatch* pt = new KonfytPatch();
                 patchFilename = dir.path() + "/" + patchFilename;
                 userMessage("loadProject: Loading patch " + patchFilename);
                 if (pt->loadPatchFromFile(patchFilename)) {
@@ -613,7 +613,7 @@ QString KonfytProject::getProjectName()
     return projectName;
 }
 
-void KonfytProject::addPatch(konfytPatch *newPatch)
+void KonfytProject::addPatch(KonfytPatch *newPatch)
 {
     // Set unique ID, so we can later identify this patch.
     newPatch->id_in_project = this->patch_id_counter++;
@@ -626,10 +626,10 @@ void KonfytProject::addPatch(konfytPatch *newPatch)
 // Removes the patch from project and returns the pointer.
 // Note that the pointer has not been freed.
 // Returns NULL if index out of bounds.
-konfytPatch *KonfytProject::removePatch(int i)
+KonfytPatch *KonfytProject::removePatch(int i)
 {
     if ( (i>=0) && (i<patchList.count())) {
-        konfytPatch* patch = patchList[i];
+        KonfytPatch* patch = patchList[i];
         patchList.removeAt(i);
         setModified(true);
         return patch;
@@ -656,7 +656,7 @@ void KonfytProject::movePatchDown(int i)
     }
 }
 
-konfytPatch *KonfytProject::getPatch(int i)
+KonfytPatch *KonfytProject::getPatch(int i)
 {
     if ( (i>=0) && (i<patchList.count())) {
         return patchList.at(i);
@@ -665,7 +665,7 @@ konfytPatch *KonfytProject::getPatch(int i)
     }
 }
 
-QList<konfytPatch *> KonfytProject::getPatchList()
+QList<KonfytPatch *> KonfytProject::getPatchList()
 {
     return patchList;
 }

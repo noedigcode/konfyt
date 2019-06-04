@@ -195,7 +195,7 @@ public:
     void removeOtherJackConPair(KonfytJackConPair p);
     void clearOtherJackConPair();
 
-    void activatePortsForPatch(const konfytPatch *patch, const KonfytProject *project);
+    void activatePortsForPatch(const KonfytPatch *patch, const KonfytProject *project);
 
     void setGlobalTranspose(int transpose);
 

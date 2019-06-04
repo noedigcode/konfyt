@@ -55,18 +55,18 @@ public:
     fluid_synth_t* synth;
 
 public slots:
-    void scanDirs(QString sfontDir, QString sfzDir, QString patchesDir, QList<konfytSoundfont*> sfontIgnoreList);
+    void scanDirs(QString sfontDir, QString sfzDir, QString patchesDir, QList<KonfytSoundfont*> sfontIgnoreList);
     void sfontFromFile(QString filename, int source);
 
 private:
     void scanDirForFiles(QString dirname, QStringList suffixes, QStringList &list);
-    konfytSoundfont* _sfontFromFile(QString filename);
+    KonfytSoundfont* _sfontFromFile(QString filename);
 
 signals:
     void userMessage(QString msg);
-    void scanDirsFihished(QList<konfytSoundfont*> sfonts, QStringList sfzs, QStringList patches);
+    void scanDirsFihished(QList<KonfytSoundfont*> sfonts, QStringList sfzs, QStringList patches);
     void scanDirsStatus(QString msg);
-    void sfontFromFileFinished(konfytSoundfont* sfont, int source);
+    void sfontFromFileFinished(KonfytSoundfont* sfont, int source);
 
 };
 
@@ -82,9 +82,9 @@ public:
     konfytDatabase();
     ~konfytDatabase();
 
-    QList<konfytSoundfont*> getSfontList();
+    QList<KonfytSoundfont*> getSfontList();
     int getNumSfonts();
-    QList<konfytPatch> getPatchList();
+    QList<KonfytPatch> getPatchList();
     int getNumPatches();
     QStringList getSfzList();
     int getNumSfz();
@@ -102,7 +102,7 @@ public:
 
     // General-use operations to return sfont objects
     void returnSfont(QString filename);
-    void returnSfont(konfytSoundfontProgram p);
+    void returnSfont(KonfytSoundfontProgram p);
 
     void clearDatabase();
     void clearDatabase_exceptSoundfonts();
@@ -114,11 +114,11 @@ public:
     void searchProgram(QString str);    // Search all programs in all soundfonts and patches.
     int getNumSfontsResults();
     int getNumSfontProgramResults();
-    QList<konfytSoundfont*>       getResults_sfonts();
-    QList<konfytSoundfontProgram>    getResults_sfontPrograms(konfytSoundfont *sf);
-    QList<konfytSoundfontProgram>    getResults_allPrograms();
+    QList<KonfytSoundfont*>       getResults_sfonts();
+    QList<KonfytSoundfontProgram>    getResults_sfontPrograms(KonfytSoundfont *sf);
+    QList<KonfytSoundfontProgram>    getResults_allPrograms();
     int getNumPatchesResults();
-    QList<konfytPatch>      getResults_patches();
+    QList<KonfytPatch>      getResults_patches();
     int getNumSfzResults();
     QStringList         getResults_sfz();
 
@@ -126,8 +126,8 @@ public:
 
 public slots:
 
-    void scanDirsFinished(QList<konfytSoundfont*> sfonts, QStringList sfzs, QStringList patches);
-    void sfontFromFileFinished(konfytSoundfont* sfont, int source);
+    void scanDirsFinished(QList<KonfytSoundfont*> sfonts, QStringList sfzs, QStringList patches);
+    void sfontFromFileFinished(KonfytSoundfont* sfont, int source);
     void userMessageFromWorker(QString msg);
     void scanDirsStatusFromWorker(QString msg);
 
@@ -136,16 +136,16 @@ signals:
     void userMessage(QString message);
     void scanDirs_status(QString msg);
     void scanDirs_finished();
-    void returnSfont_finished(konfytSoundfont* sf);
+    void returnSfont_finished(KonfytSoundfont* sf);
     // Signals intended for worker thread
-    void start_scanDirs(QString sfontDir, QString sfzDir, QString patchesDir, QList<konfytSoundfont*> sfontIgnoreList);
+    void start_scanDirs(QString sfontDir, QString sfzDir, QString patchesDir, QList<KonfytSoundfont*> sfontIgnoreList);
     void start_sfontFromFile(QString filename, int source);
 
 
 
 private:
-    QList<konfytSoundfont*> sfontlist;
-    QList<konfytPatch> patchList;
+    QList<KonfytSoundfont*> sfontlist;
+    QList<KonfytPatch> patchList;
     QList<QString> patchFilenameList;
     QStringList sfzList;
 
@@ -153,8 +153,8 @@ private:
     fluid_synth_t* synth;
     int initFluidsynth();
 
-    QMap<QString, konfytSoundfont*> sfontResults;      // Map (soundfont filename:soundfont pointer) holding search results
-    QList<konfytPatch> patchResults;
+    QMap<QString, KonfytSoundfont*> sfontResults;      // Map (soundfont filename:soundfont pointer) holding search results
+    QList<KonfytPatch> patchResults;
     QStringList sfzResults;
 
     QThread workerThread;
@@ -163,7 +163,7 @@ private:
     QString _sfzDir;
     QString _patchesDir;
 
-    void addSfont(konfytSoundfont *sf);
+    void addSfont(KonfytSoundfont *sf);
     void addSfz(QString filename);
 
 };

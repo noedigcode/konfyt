@@ -94,7 +94,7 @@ int konfytFluidsynthEngine::fluidsynthWriteFloat(int ID, void *leftBuffer, void 
 }
 
 // Adds a new soundfont engine and returns the unique ID. Returns -1 on error.
-int konfytFluidsynthEngine::addSoundfontProgram(konfytSoundfontProgram p)
+int konfytFluidsynthEngine::addSoundfontProgram(KonfytSoundfontProgram p)
 {
     konfytFluidSynthData s;
 

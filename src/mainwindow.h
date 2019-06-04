@@ -102,7 +102,7 @@ class MainWindow;
 
 
 
-enum libraryTreeItemType { libTreeInvalid,
+enum LibraryTreeItemType { libTreeInvalid,
                            libTreePatchesRoot,
                            libTreePatch,
                            libTreeSFZRoot,
@@ -150,8 +150,8 @@ public:
 
     void newPatchToProject();
     void removePatchFromProject(int i);
-    void addPatchToProject(konfytPatch *newPatch);
-    bool savePatchToLibrary(konfytPatch* patch);
+    void addPatchToProject(KonfytPatch *newPatch);
+    bool savePatchToLibrary(KonfytPatch* patch);
 
     QMenu projectsMenu;
     QMap<QAction*, QFileInfo> projectsMenuMap;
@@ -167,21 +167,21 @@ public:
     // GUI Representation of library
     // ========================================================================
     bool library_isProgramSelected();
-    konfytSoundfontProgram library_getSelectedProgram();
+    KonfytSoundfontProgram library_getSelectedProgram();
 
-    libraryTreeItemType library_getTreeItemType(QTreeWidgetItem* item);
-    libraryTreeItemType library_getSelectedTreeItemType();
+    LibraryTreeItemType library_getTreeItemType(QTreeWidgetItem* item);
+    LibraryTreeItemType library_getSelectedTreeItemType();
 
-    konfytPatch library_getSelectedPatch();
-    konfytSoundfont* library_getSelectedSfont();
+    KonfytPatch library_getSelectedPatch();
+    KonfytSoundfont* library_getSelectedSfont();
     QString library_selectedSfz;
 
     // Library tree items
     QTreeWidgetItem*                         library_sfRoot;
     QMap<QTreeWidgetItem*, QString>          library_sfFolders; // All intermediate (non-root, non-bottom) items in soundfont tree and item path
-    QMap<QTreeWidgetItem*, konfytSoundfont*> library_sfMap;     // Bottom-most items in soundfont tree
+    QMap<QTreeWidgetItem*, KonfytSoundfont*> library_sfMap;     // Bottom-most items in soundfont tree
     QTreeWidgetItem*                    library_patchRoot;
-    QMap<QTreeWidgetItem*, konfytPatch> library_patchMap;
+    QMap<QTreeWidgetItem*, KonfytPatch> library_patchMap;
     QTreeWidgetItem*                 library_sfzRoot;
     QMap<QTreeWidgetItem*, QString>  library_sfzFolders; // All the non-root and non-bottom items in the sfz tree and item path
     QMap<QTreeWidgetItem*, QString>  library_sfzMap;     // Bottom-most items in the sfz tree with corresponding path
@@ -191,7 +191,7 @@ public:
     konfytDatabase db;
     bool saveDatabase();
     int returnSfontRequester;
-    QList<konfytSoundfontProgram> programList; // List of programs currently displayed in program list view in library.
+    QList<KonfytSoundfontProgram> programList; // List of programs currently displayed in program list view in library.
     void library_refreshGUIProgramList();      // Refresh the GUI program list to match programList
 
     bool searchMode;
@@ -220,10 +220,10 @@ public:
     // ========================================================================
     // Patches
     // ========================================================================
-    konfytPatchEngine* pengine;
-    konfytPatch* masterPatch;   // Current patch being played
+    KonfytPatchEngine* pengine;
+    KonfytPatch* masterPatch;   // Current patch being played
     float masterGain;           // Master gain when not in preview mode
-    konfytPatch* previewPatch;  // Patch played when in preview mode
+    KonfytPatch previewPatch;   // Patch played when in preview mode
     float previewGain;          // Gain when in preview mode
 
     bool fileSuffixIs(QString file, QString suffix);
@@ -236,13 +236,13 @@ public:
     // Current patch functions
     int currentPatchIndex;
     void setCurrentPatch(int index);
-    void setCurrentPatch(konfytPatch *newPatch);
+    void setCurrentPatch(KonfytPatch *newPatch);
     void setCurrentPatchIcon();
     void unsetCurrentPatchIcon();
 
     void newPatchIfMasterNull();
     void addSfzToCurrentPatch(QString sfzPath);
-    void addProgramToCurrentPatch(konfytSoundfontProgram p);
+    void addProgramToCurrentPatch(KonfytSoundfontProgram p);
     void addMidiPortToCurrentPatch(int port);
     void addAudioInPortToCurrentPatch(int port);
     void addLV2ToCurrentPatch(QString lv2Path);
@@ -496,7 +496,7 @@ private slots:
     // Database
     void database_scanDirsFinished();
     void database_scanDirsStatus(QString msg);
-    void database_returnSfont(konfytSoundfont* sf);
+    void database_returnSfont(KonfytSoundfont* sf);
 
     // Display info to user
     void userMessage(QString message);

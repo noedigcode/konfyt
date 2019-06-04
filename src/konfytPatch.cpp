@@ -24,31 +24,31 @@
 
 #define bool_to_10_string(x) x ? "1" : "0"
 
-konfytPatch::konfytPatch()
+KonfytPatch::KonfytPatch()
 {
     this->id_counter = 200; // Initialise ID counter for layeritem unique ids.
 }
 
 
-void konfytPatch::userMessage(QString msg)
+void KonfytPatch::userMessage(QString msg)
 {
     // dummy function at the moment to handle all userMessage calls.
 }
 
-void konfytPatch::error_abort(QString msg)
+void KonfytPatch::error_abort(QString msg)
 {
     std::cout << "\n\n" << "Konfyt ERROR, ABORTING: konfytPatch:"
               << msg.toLocal8Bit().constData() << "\n\n";
     abort();
 }
 
-int konfytPatch::getNumSfLayers()
+int KonfytPatch::getNumSfLayers()
 {
     return this->getSfLayerList().count();
 }
 
 
-QList<KonfytPatchLayer> konfytPatch::getSfLayerList() const
+QList<KonfytPatchLayer> KonfytPatch::getSfLayerList() const
 {
     QList<KonfytPatchLayer> l;
     for (int i=0; i < this->layerList.count(); i++) {
@@ -60,7 +60,7 @@ QList<KonfytPatchLayer> konfytPatch::getSfLayerList() const
 }
 
 // Saves the patch to a xml patch file.
-bool konfytPatch::savePatchToFile(QString filename)
+bool KonfytPatch::savePatchToFile(QString filename)
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -91,7 +91,7 @@ bool konfytPatch::savePatchToFile(QString filename)
 
             stream.writeStartElement(XML_PATCH_SFLAYER);
             // Layer properties
-            konfytSoundfontProgram p = sfLayer.program;
+            KonfytSoundfontProgram p = sfLayer.program;
             stream.writeTextElement(XML_PATCH_SFLAYER_FILENAME, p.parent_soundfont);
             stream.writeTextElement(XML_PATCH_SFLAYER_BANK, n2s(p.bank));
             stream.writeTextElement(XML_PATCH_SFLAYER_PROGRAM, n2s(p.program));
@@ -180,7 +180,7 @@ bool konfytPatch::savePatchToFile(QString filename)
 }
 
 // Loads a pach from an patch xml file.
-bool konfytPatch::loadPatchFromFile(QString filename)
+bool KonfytPatch::loadPatchFromFile(QString filename)
 {
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -353,7 +353,7 @@ bool konfytPatch::loadPatchFromFile(QString filename)
 
 // Returns true if the layer number represents a valid layer.
 // This includes all types of layers.
-bool konfytPatch::isValidLayerNumber(int layer)
+bool KonfytPatch::isValidLayerNumber(int layer)
 {
     if ( (layer>=0) && (layer < layerList.count()) ) {
         return true;
@@ -362,7 +362,7 @@ bool konfytPatch::isValidLayerNumber(int layer)
     }
 }
 
-bool konfytPatch::isValid_Sf_LayerNumber(int SfLayer)
+bool KonfytPatch::isValid_Sf_LayerNumber(int SfLayer)
 {
     if ( (SfLayer>=0) && (SfLayer < this->getNumSfLayers()) ) {
         return true;
@@ -371,7 +371,7 @@ bool konfytPatch::isValid_Sf_LayerNumber(int SfLayer)
     }
 }
 
-void konfytPatch::removeLayer(KonfytPatchLayer* layer)
+void KonfytPatch::removeLayer(KonfytPatchLayer* layer)
 {
     // Identify layer using the unique ID in the layeritem.
     int id = layer->ID_in_patch;
@@ -384,14 +384,14 @@ void konfytPatch::removeLayer(KonfytPatchLayer* layer)
 }
 
 // Removes all the layers in the patch.
-void konfytPatch::clearLayers()
+void KonfytPatch::clearLayers()
 {
     this->layerList.clear();
 }
 
 /* Find layer that matches ID_in_patch and return index in layerList.
  * Return -1 if not found. */
-int konfytPatch::layerListIndexFromPatchId(KonfytPatchLayer *layer)
+int KonfytPatch::layerListIndexFromPatchId(KonfytPatchLayer *layer)
 {
     for (int i=0; i < layerList.count(); i++) {
         if (layerList.at(i).ID_in_patch == layer->ID_in_patch) {
@@ -403,7 +403,7 @@ int konfytPatch::layerListIndexFromPatchId(KonfytPatchLayer *layer)
 }
 
 // Replace a layer. Layer is identified using unique patch_id in layer.
-void konfytPatch::replaceLayer(KonfytPatchLayer newLayer)
+void KonfytPatch::replaceLayer(KonfytPatchLayer newLayer)
 {
     // Find layer that matches ID_in_patch
     int index = layerListIndexFromPatchId(&newLayer);
@@ -418,7 +418,7 @@ void konfytPatch::replaceLayer(KonfytPatchLayer newLayer)
 
 // Set the midi filter for the layer for which the patch_id matches that of
 // the specified layer item.
-void konfytPatch::setLayerFilter(KonfytPatchLayer *layer, KonfytMidiFilter newFilter)
+void KonfytPatch::setLayerFilter(KonfytPatchLayer *layer, KonfytMidiFilter newFilter)
 {
     // Find layer that matches ID_in_patch
     int index = layerListIndexFromPatchId(layer);
@@ -433,7 +433,7 @@ void konfytPatch::setLayerFilter(KonfytPatchLayer *layer, KonfytMidiFilter newFi
     }
 }
 
-float konfytPatch::getLayerGain(KonfytPatchLayer *layer)
+float KonfytPatch::getLayerGain(KonfytPatchLayer *layer)
 {
     // Find layer that matches ID_in_patch
     int index = layerListIndexFromPatchId(layer);
@@ -447,7 +447,7 @@ float konfytPatch::getLayerGain(KonfytPatchLayer *layer)
     }
 }
 
-void konfytPatch::setLayerGain(KonfytPatchLayer *layer, float newGain)
+void KonfytPatch::setLayerGain(KonfytPatchLayer *layer, float newGain)
 {
     // Find layer that matches ID_in_patch
     int index = layerListIndexFromPatchId(layer);
@@ -462,7 +462,7 @@ void konfytPatch::setLayerGain(KonfytPatchLayer *layer, float newGain)
     }
 }
 
-void konfytPatch::setLayerSolo(KonfytPatchLayer *layer, bool solo)
+void KonfytPatch::setLayerSolo(KonfytPatchLayer *layer, bool solo)
 {
     // Find layer that matches ID_in_patch
     int index = layerListIndexFromPatchId(layer);
@@ -477,7 +477,7 @@ void konfytPatch::setLayerSolo(KonfytPatchLayer *layer, bool solo)
     }
 }
 
-void konfytPatch::setLayerMute(KonfytPatchLayer *layer, bool mute)
+void KonfytPatch::setLayerMute(KonfytPatchLayer *layer, bool mute)
 {
     // Find layer that matches ID_in_patch
     int index = layerListIndexFromPatchId(layer);
@@ -492,7 +492,7 @@ void konfytPatch::setLayerMute(KonfytPatchLayer *layer, bool mute)
     }
 }
 
-void konfytPatch::setLayerBus(KonfytPatchLayer *layer, int bus)
+void KonfytPatch::setLayerBus(KonfytPatchLayer *layer, int bus)
 {
     // Find layer that matches ID_in_patch
     int index = layerListIndexFromPatchId(layer);
@@ -517,7 +517,7 @@ void konfytPatch::setLayerBus(KonfytPatchLayer *layer, int bus)
     }
 }
 
-void konfytPatch::setLayerMidiInPort(KonfytPatchLayer *layer, int portId)
+void KonfytPatch::setLayerMidiInPort(KonfytPatchLayer *layer, int portId)
 {
     // Find layer that matches ID_in_patch
     int index = layerListIndexFromPatchId(layer);
@@ -532,7 +532,7 @@ void konfytPatch::setLayerMidiInPort(KonfytPatchLayer *layer, int portId)
     }
 }
 
-KonfytPatchLayer konfytPatch::addProgram(konfytSoundfontProgram p)
+KonfytPatchLayer KonfytPatch::addProgram(KonfytSoundfontProgram p)
 {
     // Set up new soundfont program layer structure
     LayerSoundfontStruct l = LayerSoundfontStruct();
@@ -553,7 +553,7 @@ KonfytPatchLayer konfytPatch::addProgram(konfytSoundfontProgram p)
     return g;
 }
 
-KonfytPatchLayer konfytPatch::addSfLayer(LayerSoundfontStruct newSfLayer)
+KonfytPatchLayer KonfytPatch::addSfLayer(LayerSoundfontStruct newSfLayer)
 {
     // Set up a new layer item
     // (a layer item is initialised with an unique id which will
@@ -569,18 +569,18 @@ KonfytPatchLayer konfytPatch::addSfLayer(LayerSoundfontStruct newSfLayer)
 
 
 // Get soundfont program of the soundfont program layer with the specified index.
-konfytSoundfontProgram konfytPatch::getProgram(int id_in_engine)
+KonfytSoundfontProgram KonfytPatch::getProgram(int id_in_engine)
 {
     return this->getSfLayer(id_in_engine).program;
 }
 
 // Get sfLayerStruct of the soundfont program layer with the specified index.
-LayerSoundfontStruct konfytPatch::getSfLayer(int id_in_engine)
+LayerSoundfontStruct KonfytPatch::getSfLayer(int id_in_engine)
 {
     return this->getSfLayer_LayerItem(id_in_engine).sfData;
 }
 
-KonfytPatchLayer konfytPatch::getSfLayer_LayerItem(int id_in_engine)
+KonfytPatchLayer KonfytPatch::getSfLayer_LayerItem(int id_in_engine)
 {
     for (int i=0; i < this->layerList.count(); i++) {
         if (this->layerList.at(i).getLayerType() == KonfytLayerType_SoundfontProgram) {
@@ -598,53 +598,53 @@ KonfytPatchLayer konfytPatch::getSfLayer_LayerItem(int id_in_engine)
 
 
 
-float konfytPatch::getSfLayerGain(int id_in_engine)
+float KonfytPatch::getSfLayerGain(int id_in_engine)
 {
     return this->getSfLayer(id_in_engine).gain;
 }
 
-void konfytPatch::setSfLayerGain(int id_in_engine, float newGain)
+void KonfytPatch::setSfLayerGain(int id_in_engine, float newGain)
 {
     KonfytPatchLayer g = this->getSfLayer_LayerItem(id_in_engine);
     g.setGain(newGain);
     this->replaceLayer(g);
 }
 
-int konfytPatch::getNumLayers()
+int KonfytPatch::getNumLayers()
 {
     return this->layerList.count();
 }
 
 
 
-void konfytPatch::setName(QString newName)
+void KonfytPatch::setName(QString newName)
 {
     this->patchName = newName;
 }
 
-QString konfytPatch::getName()
+QString KonfytPatch::getName()
 {
     return this->patchName;
 }
 
-void konfytPatch::setNote(QString newNote)
+void KonfytPatch::setNote(QString newNote)
 {
     this->patchNote = newNote;
 }
 
-QString konfytPatch::getNote()
+QString KonfytPatch::getNote()
 {
     return this->patchNote;
 }
 
-QList<KonfytPatchLayer> konfytPatch::getLayerItems()
+QList<KonfytPatchLayer> KonfytPatch::getLayerItems()
 {
     return this->layerList;
 }
 
 // Returns the layeritem in the patch that matches the unique ID
 // of the layerItem specified.
-KonfytPatchLayer konfytPatch::getLayerItem(KonfytPatchLayer item)
+KonfytPatchLayer KonfytPatch::getLayerItem(KonfytPatchLayer item)
 {
     // Find layer that matches patch_id
     for (int i=0; i < this->layerList.count(); i++) {
@@ -660,7 +660,7 @@ KonfytPatchLayer konfytPatch::getLayerItem(KonfytPatchLayer item)
 }
 
 // Return list of port ids of the patch's midi output ports.
-QList<int> konfytPatch::getMidiOutputPortList_ids() const
+QList<int> KonfytPatch::getMidiOutputPortList_ids() const
 {
     QList<int> l;
     for (int i=0; i<this->layerList.count(); i++) {
@@ -672,7 +672,7 @@ QList<int> konfytPatch::getMidiOutputPortList_ids() const
 }
 
 // Return list of port ids of patch's audio input ports.
-QList<int> konfytPatch::getAudioInPortList_ids() const
+QList<int> KonfytPatch::getAudioInPortList_ids() const
 {
     QList<int> l;
     for (int i=0; i<this->layerList.count(); i++) {
@@ -683,7 +683,7 @@ QList<int> konfytPatch::getAudioInPortList_ids() const
     return l;
 }
 
-QList<LayerAudioInStruct> konfytPatch::getAudioInPortList_struct()
+QList<LayerAudioInStruct> KonfytPatch::getAudioInPortList_struct()
 {
     QList<LayerAudioInStruct> l;
     for (int i=0; i<this->layerList.count(); i++) {
@@ -695,7 +695,7 @@ QList<LayerAudioInStruct> konfytPatch::getAudioInPortList_struct()
 }
 
 // Return list of midiOutputPortStruct's of the patch's midi output ports.
-QList<LayerMidiOutStruct> konfytPatch::getMidiOutputPortList_struct()
+QList<LayerMidiOutStruct> KonfytPatch::getMidiOutputPortList_struct()
 {
     QList<LayerMidiOutStruct> l;
     for (int i=0; i<this->layerList.count(); i++) {
@@ -708,7 +708,7 @@ QList<LayerMidiOutStruct> konfytPatch::getMidiOutputPortList_struct()
 
 
 
-KonfytPatchLayer konfytPatch::addAudioInPort(int newPort)
+KonfytPatchLayer KonfytPatch::addAudioInPort(int newPort)
 {
     // Set up a default new audio input port with the specified port number
     LayerAudioInStruct a = LayerAudioInStruct();
@@ -721,7 +721,7 @@ KonfytPatchLayer konfytPatch::addAudioInPort(int newPort)
     return addAudioInPort(a);
 }
 
-KonfytPatchLayer konfytPatch::addAudioInPort(LayerAudioInStruct newPort)
+KonfytPatchLayer KonfytPatch::addAudioInPort(LayerAudioInStruct newPort)
 {
     KonfytPatchLayer g;
 
@@ -745,7 +745,7 @@ KonfytPatchLayer konfytPatch::addAudioInPort(LayerAudioInStruct newPort)
 
 // TODO: Change so that function returns true or false for success, and takes
 // a pointer, of which the location will be set to the LayerItem.
-KonfytPatchLayer konfytPatch::addMidiOutputPort(int newPort)
+KonfytPatchLayer KonfytPatch::addMidiOutputPort(int newPort)
 {
     LayerMidiOutStruct m = LayerMidiOutStruct();
     m.portIdInProject = newPort;
@@ -753,7 +753,7 @@ KonfytPatchLayer konfytPatch::addMidiOutputPort(int newPort)
     return addMidiOutputPort(m);
 }
 
-KonfytPatchLayer konfytPatch::addMidiOutputPort(LayerMidiOutStruct newPort)
+KonfytPatchLayer KonfytPatch::addMidiOutputPort(LayerMidiOutStruct newPort)
 {
     KonfytPatchLayer g;
 
@@ -775,7 +775,7 @@ KonfytPatchLayer konfytPatch::addMidiOutputPort(LayerMidiOutStruct newPort)
 }
 
 
-KonfytPatchLayer konfytPatch::addPlugin(LayerCarlaPluginStruct newPlugin)
+KonfytPatchLayer KonfytPatch::addPlugin(LayerCarlaPluginStruct newPlugin)
 {
     // Create and initialise new layeritem.
     // Item is initialised with a unique ID, which will later be used to
@@ -790,12 +790,12 @@ KonfytPatchLayer konfytPatch::addPlugin(LayerCarlaPluginStruct newPlugin)
 }
 
 
-LayerCarlaPluginStruct konfytPatch::getPlugin(int index_in_engine)
+LayerCarlaPluginStruct KonfytPatch::getPlugin(int index_in_engine)
 {
     return this->getPlugin_LayerItem(index_in_engine).carlaPluginData;
 }
 
-KonfytPatchLayer konfytPatch::getPlugin_LayerItem(int index_in_engine)
+KonfytPatchLayer KonfytPatch::getPlugin_LayerItem(int index_in_engine)
 {
     for (int i=0; i < this->layerList.count(); i++) {
         if (this->layerList.at(i).getLayerType() == KonfytLayerType_CarlaPlugin) {
@@ -811,25 +811,25 @@ KonfytPatchLayer konfytPatch::getPlugin_LayerItem(int index_in_engine)
     return g;
 }
 
-int konfytPatch::getPluginCount()
+int KonfytPatch::getPluginCount()
 {
     return this->getPluginLayerList().count();
 }
 
 
-void konfytPatch::setPluginGain(int index_in_engine, float newGain)
+void KonfytPatch::setPluginGain(int index_in_engine, float newGain)
 {
     KonfytPatchLayer g = this->getPlugin_LayerItem(index_in_engine);
     g.setGain(newGain);
     this->replaceLayer(g);
 }
 
-float konfytPatch::getPluginGain(int index_in_engine)
+float KonfytPatch::getPluginGain(int index_in_engine)
 {
     return this->getPlugin(index_in_engine).gain;
 }
 
-QList<KonfytPatchLayer> konfytPatch::getPluginLayerList() const
+QList<KonfytPatchLayer> KonfytPatch::getPluginLayerList() const
 {
     QList<KonfytPatchLayer> l;
     for (int i=0; i < this->layerList.count(); i++) {

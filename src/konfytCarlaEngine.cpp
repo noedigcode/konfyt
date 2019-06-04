@@ -23,14 +23,14 @@
 #include <iostream>
 
 
-konfytCarlaEngine::konfytCarlaEngine(QObject *parent) :
+KonfytCarlaEngine::KonfytCarlaEngine(QObject *parent) :
     KonfytBaseSoundEngine(parent),
     pluginUniqueIDCounter(10)
 {
 
 }
 
-konfytCarlaEngine::~konfytCarlaEngine()
+KonfytCarlaEngine::~KonfytCarlaEngine()
 {
     carla_engine_close();
 }
@@ -108,9 +108,9 @@ konfytCarlaEngine::~konfytCarlaEngine()
 
 
 // Adds a new plugin and returns the unique ID. Returns -1 on error.
-int konfytCarlaEngine::addSfz(QString path)
+int KonfytCarlaEngine::addSfz(QString path)
 {
-    konfytCarlaPluginData pluginData;
+    KonfytCarlaPluginData pluginData;
     pluginData.ID = pluginUniqueIDCounter;
     int pluginIdInCarla = pluginList.count();
     pluginData.path = path;
@@ -164,12 +164,12 @@ int konfytCarlaEngine::addSfz(QString path)
     return pluginData.ID; // Return the unique ID used by this class to distinguish the plugin
 }
 
-void konfytCarlaEngine::removeSfz(int ID)
+void KonfytCarlaEngine::removeSfz(int ID)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
     Q_ASSERT( pluginList.contains(ID) );
 
-    konfytCarlaPluginData pluginData = pluginDataMap.value(ID);
+    KonfytCarlaPluginData pluginData = pluginDataMap.value(ID);
     pluginDataMap.remove(ID);
     int pluginIdInCarla = pluginList.indexOf(ID);
     pluginList.removeAt(pluginIdInCarla);
@@ -180,14 +180,14 @@ void konfytCarlaEngine::removeSfz(int ID)
     }
 }
 
-QString konfytCarlaEngine::pluginName(int ID)
+QString KonfytCarlaEngine::pluginName(int ID)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
 
     return pluginDataMap[ID].name;
 }
 
-QString konfytCarlaEngine::midiInJackPortName(int ID)
+QString KonfytCarlaEngine::midiInJackPortName(int ID)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
 
@@ -197,7 +197,7 @@ QString konfytCarlaEngine::midiInJackPortName(int ID)
     return jack_client_name + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_MIDI_IN_PORT_POSTFIX);
 }
 
-QStringList konfytCarlaEngine::audioOutJackPortNames(int ID)
+QStringList KonfytCarlaEngine::audioOutJackPortNames(int ID)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
 
@@ -212,7 +212,7 @@ QStringList konfytCarlaEngine::audioOutJackPortNames(int ID)
     return ret;
 }
 
-void konfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
+void KonfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
 {
     jack = jackEngine;
     jack_client_name = jack->clientName() + CARLA_CLIENT_POSTFIX;
@@ -226,21 +226,21 @@ void konfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
     // Must be set for some internal plugins to work
     carla_set_engine_option(ENGINE_OPTION_PATH_RESOURCES, 0, "/usr/lib/lv2/carla.lv2/resources/");
     // Set the engine callback
-    carla_set_engine_callback(konfytCarlaEngine::carlaEngineCallback, this);
+    carla_set_engine_callback(KonfytCarlaEngine::carlaEngineCallback, this);
     // TODO: Handle the case where this name is already taken.
     carla_engine_init("JACK", jack_client_name.toLocal8Bit().constData());
 }
 
-QString konfytCarlaEngine::jackClientName()
+QString KonfytCarlaEngine::jackClientName()
 {
     return jack_client_name;
 }
 
-void konfytCarlaEngine::carlaEngineCallback(void *ptr, EngineCallbackOpcode action, uint pluginId, int value1, int value2, float value3, const char *valueStr)
+void KonfytCarlaEngine::carlaEngineCallback(void *ptr, EngineCallbackOpcode action, uint pluginId, int value1, int value2, int value3, float valuef, const char *valueStr)
 {
     return;
 
-    konfytCarlaEngine* e = (konfytCarlaEngine*)ptr;
+    KonfytCarlaEngine* e = (KonfytCarlaEngine*)ptr;
 
     e->userMessage("Carla callback, action " + n2s(action) + ", plugin " + n2s(pluginId));
 
@@ -254,7 +254,7 @@ void konfytCarlaEngine::carlaEngineCallback(void *ptr, EngineCallbackOpcode acti
         e->userMessage(msg + "Plugin removed, pluginId " + n2s(pluginId));
         break;
     case ENGINE_CALLBACK_PARAMETER_VALUE_CHANGED:
-        e->userMessage(msg + "Plugin parameter value changed, pluginId " + n2s(pluginId) + ", param " + n2s(value1) + ", value " + n2s(value3));
+        e->userMessage(msg + "Plugin parameter value changed, pluginId " + n2s(pluginId) + ", param " + n2s(value1) + ", value " + n2s(valuef));
         break;
     default:
         break;
@@ -264,7 +264,7 @@ void konfytCarlaEngine::carlaEngineCallback(void *ptr, EngineCallbackOpcode acti
 }
 
 
-void konfytCarlaEngine::setGain(int ID, float newGain)
+void KonfytCarlaEngine::setGain(int ID, float newGain)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
     Q_ASSERT( pluginList.contains(ID) );
@@ -278,7 +278,7 @@ void konfytCarlaEngine::setGain(int ID, float newGain)
 
 
 // Print error message to stdout, and abort app.
-void konfytCarlaEngine::error_abort(QString msg)
+void KonfytCarlaEngine::error_abort(QString msg)
 {
     std::cout << "\n" << "Konfyt ERROR, ABORTING: sfengine:" << msg.toLocal8Bit().constData();
     abort();

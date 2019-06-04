@@ -28,7 +28,7 @@
 
 
 /* This represents a program/preset within a soundfont (i.e. a single voice/instrument). */
-struct konfytSoundfontProgram {
+struct KonfytSoundfontProgram {
 
     QString name;               // Program name
     int bank;                   // Bank number
@@ -36,16 +36,16 @@ struct konfytSoundfontProgram {
     QString parent_soundfont;   // Filename of parent soundfont
 
     // Constructor
-    konfytSoundfontProgram() : bank(0), program(0) {}
+    KonfytSoundfontProgram() : bank(0), program(0) {}
 
 };
 
-struct konfytSoundfont {
+struct KonfytSoundfont {
 
     QString filename;
     QString name;
-    QList<konfytSoundfontProgram> programlist;
-    QList<konfytSoundfontProgram> searchResults;
+    QList<KonfytSoundfontProgram> programlist;
+    QList<KonfytSoundfontProgram> searchResults;
 
 };
 

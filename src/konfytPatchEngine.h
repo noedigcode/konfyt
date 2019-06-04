@@ -34,12 +34,12 @@
 #include "konfytCarlaEngine.h"
 #include "konfytLscpEngine.h"
 
-class konfytPatchEngine : public QObject
+class KonfytPatchEngine : public QObject
 {
     Q_OBJECT
 public:
-    explicit konfytPatchEngine(QObject *parent = 0);
-    ~konfytPatchEngine();
+    explicit KonfytPatchEngine(QObject *parent = 0);
+    ~KonfytPatchEngine();
 
     // ----------------------------------------------------
     // Engine related functions
@@ -55,16 +55,16 @@ public:
     // ----------------------------------------------------
     // Loading patches and programs
     // ----------------------------------------------------
-    bool loadPatch(konfytPatch* newPatch);  // Load new patch, replacing current patch.
+    bool loadPatch(KonfytPatch* newPatch);  // Load new patch, replacing current patch.
     void reloadPatch();                     // Reload the current patch (e.g. use if patch changed)
-    void unloadPatch(konfytPatch* patch);
-    void unloadLayer(konfytPatch*patch, KonfytPatchLayer *item);
+    void unloadPatch(KonfytPatch* patch);
+    void unloadLayer(KonfytPatch*patch, KonfytPatchLayer *item);
     KonfytPatchLayer reloadLayer(KonfytPatchLayer *item);
 
     // ----------------------------------------------------
     // Modify current patch
     // ----------------------------------------------------
-    konfytPatch* getPatch();
+    KonfytPatch* getPatch();
     void setPatchName(QString newName);
     QString getPatchName();
     void setPatchNote(QString newNote);
@@ -83,17 +83,17 @@ public:
     void setLayerMute(KonfytPatchLayer* layerItem, bool mute);
     void setLayerMute(int layerIndex, bool mute);
     void setLayerBus(KonfytPatchLayer* layerItem, int bus); // currentPatch
-    void setLayerBus(konfytPatch* patch, KonfytPatchLayer* layerItem, int bus);
+    void setLayerBus(KonfytPatch* patch, KonfytPatchLayer* layerItem, int bus);
     void setLayerMidiInPort(KonfytPatchLayer* layerItem, int portId); // currentPatch
-    void setLayerMidiInPort(konfytPatch* patch, KonfytPatchLayer* layerItem, int portId);
+    void setLayerMidiInPort(KonfytPatch* patch, KonfytPatchLayer* layerItem, int portId);
 
     int getNumLayers();
     void removeLayer(KonfytPatchLayer *item); // Perform action on currentPatch
-    void removeLayer(konfytPatch* patch, KonfytPatchLayer* item);
+    void removeLayer(KonfytPatch* patch, KonfytPatchLayer* item);
 
 
     // Soundfont / Fluidsynth layers
-    KonfytPatchLayer addProgramLayer(konfytSoundfontProgram newProgram);
+    KonfytPatchLayer addProgramLayer(KonfytSoundfontProgram newProgram);
 
     // Plugin layers
     KonfytPatchLayer addSfzLayer(QString path);
@@ -109,12 +109,12 @@ public:
     void error_abort(QString msg);
     
 private:
-    konfytPatch* currentPatch;
+    KonfytPatch* currentPatch;
     KonfytProject* currentProject;
     float masterGain;
     float convertGain(float linearGain);
 
-    QList<konfytPatch*> patches;
+    QList<KonfytPatch*> patches;
 
     void refreshAllGainsAndRouting();
 

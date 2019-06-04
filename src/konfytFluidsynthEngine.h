@@ -41,7 +41,7 @@ public:
         int ID; // ID in konfytFluidsynthEngine
         fluid_synth_t* synth;
         fluid_settings_t* settings;
-        konfytSoundfontProgram program;
+        KonfytSoundfontProgram program;
         int soundfontIDinSynth;
     };
 
@@ -53,7 +53,7 @@ public:
     void processJackMidi(int ID, const KonfytMidiEvent* ev);
     int fluidsynthWriteFloat(int ID, void* leftBuffer, void* rightBuffer, int len);
 
-    int addSoundfontProgram(konfytSoundfontProgram p);
+    int addSoundfontProgram(KonfytSoundfontProgram p);
     void removeSoundfontProgram(int ID);
 
     float getGain(int ID);

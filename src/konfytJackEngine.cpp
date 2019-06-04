@@ -2140,7 +2140,7 @@ void KonfytJackEngine::clearOtherJackConPair()
 
 /* Activate all the necessary Jack ports for the given patch.
  * Project is required for some of the patch ports that refer to ports set up in the project. */
-void KonfytJackEngine::activatePortsForPatch(const konfytPatch* patch, const KonfytProject* project)
+void KonfytJackEngine::activatePortsForPatch(const KonfytPatch* patch, const KonfytProject* project)
 {
     if (!clientIsActive()) { return; }
 

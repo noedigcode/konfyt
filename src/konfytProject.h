@@ -162,12 +162,12 @@ public:
     bool saveProject();
     bool saveProjectAs(QString dirname);
 
-    void addPatch(konfytPatch* newPatch);
-    konfytPatch* removePatch(int i);
+    void addPatch(KonfytPatch* newPatch);
+    KonfytPatch* removePatch(int i);
     void movePatchUp(int i);
     void movePatchDown(int i);
-    konfytPatch* getPatch(int i);
-    QList<konfytPatch*> getPatchList();
+    KonfytPatch* getPatch(int i);
+    QList<KonfytPatch*> getPatchList();
     int getNumPatches();
 
     QString getDirname();
@@ -267,7 +267,7 @@ public:
     void error_abort(QString msg) const;
     
 private:
-    QList<konfytPatch*> patchList;
+    QList<KonfytPatch*> patchList;
     QString projectDirname;
     QString projectName;
 

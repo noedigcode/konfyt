@@ -52,7 +52,7 @@ enum KonfytCarlaPluginType {
 // Structure for soundfont program layer
 // ----------------------------------------------------
 struct LayerSoundfontStruct {
-    konfytSoundfontProgram program;
+    KonfytSoundfontProgram program;
     float gain;
     KonfytMidiFilter filter;
     int indexInEngine;

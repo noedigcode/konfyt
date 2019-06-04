@@ -22,7 +22,7 @@
 #include "konfytPatchEngine.h"
 #include <iostream>
 
-konfytPatchEngine::konfytPatchEngine(QObject *parent) :
+KonfytPatchEngine::KonfytPatchEngine(QObject *parent) :
     QObject(parent)
 {
     currentProject = NULL;
@@ -30,19 +30,19 @@ konfytPatchEngine::konfytPatchEngine(QObject *parent) :
     bridge = false;
 }
 
-konfytPatchEngine::~konfytPatchEngine()
+KonfytPatchEngine::~KonfytPatchEngine()
 {
     delete sfzEngine;
 }
 
 
 // Get a userMessage signal from an engine, and pass it on to the gui.
-void konfytPatchEngine::userMessageFromEngine(QString msg)
+void KonfytPatchEngine::userMessageFromEngine(QString msg)
 {
     userMessage("patchEngine: " + msg);
 }
 
-void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytAppInfo appInfo)
+void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytAppInfo appInfo)
 {
     // Jack client (probably received from MainWindow) so we can directly create ports
     this->jack = newJackClient;
@@ -50,7 +50,7 @@ void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytA
     // Fluidsynth Engine
     konfytFluidsynthEngine* e = new konfytFluidsynthEngine();
     connect(e, &konfytFluidsynthEngine::userMessage,
-            this, &konfytPatchEngine::userMessageFromEngine);
+            this, &KonfytPatchEngine::userMessageFromEngine);
     e->InitFluidsynth(jack->getSampleRate());
     fluidsynthEngine = e;
     jack->fluidsynthEngine = e; // Give to Jack so it can get sound out of it.
@@ -64,47 +64,47 @@ void konfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytA
         static_cast<KonfytBridgeEngine*>(sfzEngine)->setKonfytExePath(appInfo.exePath);
     } else if (appInfo.carla) {
         // Use local Carla engine
-        sfzEngine = new konfytCarlaEngine();
+        sfzEngine = new KonfytCarlaEngine();
     } else {
         // Use Linuxsampler via LSCP
         sfzEngine = new KonfytLscpEngine();
     }
 
     connect(sfzEngine, &KonfytBaseSoundEngine::userMessage,
-            this, &konfytPatchEngine::userMessageFromEngine);
+            this, &KonfytPatchEngine::userMessageFromEngine);
     connect(sfzEngine, &KonfytBaseSoundEngine::statusInfo,
-            this, &konfytPatchEngine::statusInfo);
+            this, &KonfytPatchEngine::statusInfo);
 
     sfzEngine->initEngine(jack);
 }
 
 /* Returns names of JACK clients that refer to engines in use by us. */
-QStringList konfytPatchEngine::ourJackClientNames()
+QStringList KonfytPatchEngine::ourJackClientNames()
 {
     QStringList ret;
     ret.append(sfzEngine->jackClientName());
     return ret;
 }
 
-void konfytPatchEngine::panic(bool p)
+void KonfytPatchEngine::panic(bool p)
 {
     // indicate panic situation to Jack
     jack->panic(p);
 }
 
-void konfytPatchEngine::setProject(KonfytProject *project)
+void KonfytPatchEngine::setProject(KonfytProject *project)
 {
     this->currentProject = project;
 }
 
 // Reload current patch (e.g. if patch changed).
-void konfytPatchEngine::reloadPatch()
+void KonfytPatchEngine::reloadPatch()
 {
     loadPatch( currentPatch );
 }
 
 // Ensure patch and all layers are unloaded from their respective engines
-void konfytPatchEngine::unloadPatch(konfytPatch *patch)
+void KonfytPatchEngine::unloadPatch(KonfytPatch *patch)
 {
     if ( !patches.contains(patch) ) { return; }
 
@@ -119,7 +119,7 @@ void konfytPatchEngine::unloadPatch(konfytPatch *patch)
 }
 
 // Load patch, replacing the current patch
-bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
+bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
 {
     if (newPatch == NULL) { return false; }
 
@@ -256,7 +256,7 @@ bool konfytPatchEngine::loadPatch(konfytPatch *newPatch)
     return r;
 }
 
-KonfytPatchLayer konfytPatchEngine::addProgramLayer(konfytSoundfontProgram newProgram)
+KonfytPatchLayer KonfytPatchEngine::addProgramLayer(KonfytSoundfontProgram newProgram)
 {
     KonfytPatchLayer g;
 
@@ -280,14 +280,14 @@ KonfytPatchLayer konfytPatchEngine::addProgramLayer(konfytSoundfontProgram newPr
     return g;
 }
 
-void konfytPatchEngine::removeLayer(KonfytPatchLayer* item)
+void KonfytPatchEngine::removeLayer(KonfytPatchLayer* item)
 {
     Q_ASSERT( currentPatch != NULL );
 
     removeLayer(currentPatch, item);
 }
 
-void konfytPatchEngine::removeLayer(konfytPatch *patch, KonfytPatchLayer *item)
+void KonfytPatchEngine::removeLayer(KonfytPatch *patch, KonfytPatchLayer *item)
 {
     // Unload from respective engine
     unloadLayer(patch, item);
@@ -296,7 +296,7 @@ void konfytPatchEngine::removeLayer(konfytPatch *patch, KonfytPatchLayer *item)
     if (patch == currentPatch) { reloadPatch(); }
 }
 
-void konfytPatchEngine::unloadLayer(konfytPatch *patch, KonfytPatchLayer *item)
+void KonfytPatchEngine::unloadLayer(KonfytPatch *patch, KonfytPatchLayer *item)
 {
     KonfytPatchLayer layer = patch->getLayerItem( *item );
     if (layer.getLayerType() == KonfytLayerType_SoundfontProgram) {
@@ -322,7 +322,7 @@ void konfytPatchEngine::unloadLayer(konfytPatch *patch, KonfytPatchLayer *item)
     }
 }
 
-KonfytPatchLayer konfytPatchEngine::reloadLayer(KonfytPatchLayer *item)
+KonfytPatchLayer KonfytPatchEngine::reloadLayer(KonfytPatchLayer *item)
 {
     unloadLayer(currentPatch, item);
     reloadPatch();
@@ -332,7 +332,7 @@ KonfytPatchLayer konfytPatchEngine::reloadLayer(KonfytPatchLayer *item)
 }
 
 
-KonfytPatchLayer konfytPatchEngine::addSfzLayer(QString path)
+KonfytPatchLayer KonfytPatchEngine::addSfzLayer(QString path)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -367,7 +367,7 @@ KonfytPatchLayer konfytPatchEngine::addSfzLayer(QString path)
     return currentPatch->getLayerItem(g);
 }
 
-KonfytPatchLayer konfytPatchEngine::addLV2Layer(QString path)
+KonfytPatchLayer KonfytPatchEngine::addLV2Layer(QString path)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -401,7 +401,7 @@ KonfytPatchLayer konfytPatchEngine::addLV2Layer(QString path)
     return currentPatch->getLayerItem(g);
 }
 
-KonfytPatchLayer konfytPatchEngine::addCarlaInternalLayer(QString URI)
+KonfytPatchLayer KonfytPatchEngine::addCarlaInternalLayer(QString URI)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -438,7 +438,7 @@ KonfytPatchLayer konfytPatchEngine::addCarlaInternalLayer(QString URI)
 
 /* Converts gain between 0 and 1 from linear to an exponential function that is more
  * suited for human hearing. Input is clipped between 0 and 1. */
-float konfytPatchEngine::convertGain(float linearGain)
+float KonfytPatchEngine::convertGain(float linearGain)
 {
     if (linearGain < 0) { linearGain = 0; }
     if (linearGain > 1) { linearGain = 1; }
@@ -449,7 +449,7 @@ float konfytPatchEngine::convertGain(float linearGain)
 
 /* Ensure that all engine gains, solos, mutes and audio out routing are set
  * according to current patch and masterGain. */
-void konfytPatchEngine::refreshAllGainsAndRouting()
+void KonfytPatchEngine::refreshAllGainsAndRouting()
 {
     if (currentPatch == NULL) { return; }
 
@@ -575,31 +575,31 @@ void konfytPatchEngine::refreshAllGainsAndRouting()
 }
 
 // Return the current patch
-konfytPatch *konfytPatchEngine::getPatch()
+KonfytPatch *KonfytPatchEngine::getPatch()
 {
     return currentPatch;
 }
 
 
-float konfytPatchEngine::getMasterGain()
+float KonfytPatchEngine::getMasterGain()
 {
     return masterGain;
 }
 
-void konfytPatchEngine::setMasterGain(float newGain)
+void KonfytPatchEngine::setMasterGain(float newGain)
 {
     masterGain = newGain;
     refreshAllGainsAndRouting();
 }
 
-int konfytPatchEngine::getNumLayers()
+int KonfytPatchEngine::getNumLayers()
 {
     Q_ASSERT( currentPatch != NULL );
 
     return currentPatch->getNumLayers();
 }
 
-void konfytPatchEngine::setLayerGain(KonfytPatchLayer *layerItem, float newGain)
+void KonfytPatchEngine::setLayerGain(KonfytPatchLayer *layerItem, float newGain)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -607,7 +607,7 @@ void konfytPatchEngine::setLayerGain(KonfytPatchLayer *layerItem, float newGain)
     refreshAllGainsAndRouting();
 }
 
-void konfytPatchEngine::setLayerGain(int layerIndex, float newGain)
+void KonfytPatchEngine::setLayerGain(int layerIndex, float newGain)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -622,7 +622,7 @@ void konfytPatchEngine::setLayerGain(int layerIndex, float newGain)
     }
 }
 
-void konfytPatchEngine::setLayerSolo(KonfytPatchLayer *layerItem, bool solo)
+void KonfytPatchEngine::setLayerSolo(KonfytPatchLayer *layerItem, bool solo)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -631,7 +631,7 @@ void konfytPatchEngine::setLayerSolo(KonfytPatchLayer *layerItem, bool solo)
 }
 
 /* Set layer solo, using layer index as parameter. */
-void konfytPatchEngine::setLayerSolo(int layerIndex, bool solo)
+void KonfytPatchEngine::setLayerSolo(int layerIndex, bool solo)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -647,7 +647,7 @@ void konfytPatchEngine::setLayerSolo(int layerIndex, bool solo)
 
 
 
-void konfytPatchEngine::setLayerMute(KonfytPatchLayer *layerItem, bool mute)
+void KonfytPatchEngine::setLayerMute(KonfytPatchLayer *layerItem, bool mute)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -656,7 +656,7 @@ void konfytPatchEngine::setLayerMute(KonfytPatchLayer *layerItem, bool mute)
 }
 
 /* Set layer mute, using layer index as parameter. */
-void konfytPatchEngine::setLayerMute(int layerIndex, bool mute)
+void KonfytPatchEngine::setLayerMute(int layerIndex, bool mute)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -671,31 +671,31 @@ void konfytPatchEngine::setLayerMute(int layerIndex, bool mute)
     }
 }
 
-void konfytPatchEngine::setLayerBus(KonfytPatchLayer *layerItem, int bus)
+void KonfytPatchEngine::setLayerBus(KonfytPatchLayer *layerItem, int bus)
 {
     Q_ASSERT( currentPatch != NULL );
     setLayerBus(currentPatch, layerItem, bus);
 }
 
-void konfytPatchEngine::setLayerBus(konfytPatch *patch, KonfytPatchLayer *layerItem, int bus)
+void KonfytPatchEngine::setLayerBus(KonfytPatch *patch, KonfytPatchLayer *layerItem, int bus)
 {
     patch->setLayerBus(layerItem, bus);
     if (patch == currentPatch) { refreshAllGainsAndRouting(); }
 }
 
-void konfytPatchEngine::setLayerMidiInPort(KonfytPatchLayer *layerItem, int portId)
+void KonfytPatchEngine::setLayerMidiInPort(KonfytPatchLayer *layerItem, int portId)
 {
     Q_ASSERT( currentPatch != NULL );
     setLayerMidiInPort(currentPatch, layerItem, portId);
 }
 
-void konfytPatchEngine::setLayerMidiInPort(konfytPatch *patch, KonfytPatchLayer *layerItem, int portId)
+void KonfytPatchEngine::setLayerMidiInPort(KonfytPatch *patch, KonfytPatchLayer *layerItem, int portId)
 {
     patch->setLayerMidiInPort(layerItem, portId);
     if (patch == currentPatch) { refreshAllGainsAndRouting(); }
 }
 
-void konfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, KonfytMidiFilter filter)
+void KonfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, KonfytMidiFilter filter)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -723,35 +723,35 @@ void konfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, KonfytMidiFi
 
 
 
-void konfytPatchEngine::setPatchName(QString newName)
+void KonfytPatchEngine::setPatchName(QString newName)
 {
     Q_ASSERT( currentPatch != NULL );
 
     currentPatch->setName(newName);
 }
 
-QString konfytPatchEngine::getPatchName()
+QString KonfytPatchEngine::getPatchName()
 {
     Q_ASSERT( currentPatch != NULL );
 
     return currentPatch->getName();
 }
 
-void konfytPatchEngine::setPatchNote(QString newNote)
+void KonfytPatchEngine::setPatchNote(QString newNote)
 {
     Q_ASSERT( currentPatch != NULL );
 
     currentPatch->setNote(newNote);
 }
 
-QString konfytPatchEngine::getPatchNote()
+QString KonfytPatchEngine::getPatchNote()
 {
     Q_ASSERT( currentPatch != NULL );
 
     return currentPatch->getNote();
 }
 
-KonfytPatchLayer konfytPatchEngine::addMidiOutPortToPatch(int port)
+KonfytPatchLayer KonfytPatchEngine::addMidiOutPortToPatch(int port)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -767,7 +767,7 @@ KonfytPatchLayer konfytPatchEngine::addMidiOutPortToPatch(int port)
     return currentPatch->getLayerItem(g);
 }
 
-KonfytPatchLayer konfytPatchEngine::addAudioInPortToPatch(int port)
+KonfytPatchLayer KonfytPatchEngine::addAudioInPortToPatch(int port)
 {
     Q_ASSERT( currentPatch != NULL );
 
@@ -784,7 +784,7 @@ KonfytPatchLayer konfytPatchEngine::addAudioInPortToPatch(int port)
 }
 
 // Print error message to stdout, and abort app.
-void konfytPatchEngine::error_abort(QString msg)
+void KonfytPatchEngine::error_abort(QString msg)
 {
     std::cout << "\n" << "Konfyt ERROR, ABORTING: patchEngine:" << msg.toLocal8Bit().constData();
     abort();

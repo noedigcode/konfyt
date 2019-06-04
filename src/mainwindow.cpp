@@ -38,7 +38,6 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     currentProject = -1;
     panicState = false;
     masterPatch = NULL;
-    previewPatch = NULL;
     previewMode = false;
     patchNote_ignoreChange = false;
     jackPage_audio = true;
@@ -130,10 +129,10 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     // ----------------------------------------------------
     // Initialise patch engine
     // ----------------------------------------------------
-    pengine = new konfytPatchEngine();
+    pengine = new KonfytPatchEngine();
 
-    connect(pengine, &konfytPatchEngine::userMessage, this, &MainWindow::userMessage);
-    connect(pengine, &konfytPatchEngine::statusInfo, [this](QString msg){
+    connect(pengine, &KonfytPatchEngine::userMessage, this, &MainWindow::userMessage);
+    connect(pengine, &KonfytPatchEngine::statusInfo, [this](QString msg){
         ui->textBrowser_Testing->setText(msg);
     });
 
@@ -212,7 +211,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
             if (fileIsPatch(file)) {
                 // Load patch into current project and switch to patch
 
-                konfytPatch* pt = new konfytPatch();
+                KonfytPatch* pt = new KonfytPatch();
                 if (pt->loadPatchFromFile(file)) {
                     addPatchToProject(pt);
                     setCurrentPatch(prj->getNumPatches()-1);
@@ -777,10 +776,10 @@ void MainWindow::gui_updatePatchList()
     }
 
     // Populate patch list for current project
-    QList<konfytPatch*> pl = prj->getPatchList();
+    QList<KonfytPatch*> pl = prj->getPatchList();
     QString notenames = "CDEFGAB";
     for (int j=0; j<pl.count(); j++) {
-        konfytPatch* pat = pl.at(j);
+        KonfytPatch* pat = pl.at(j);
 
         // Add number and/or note name to patch name based on project settings.
         QString txt;
@@ -1612,7 +1611,7 @@ void MainWindow::gui_updatePatchAudioInPortsMenu()
 // Create a new patch, and add it to the current project. (and update the gui).
 void MainWindow::newPatchToProject()
 {
-    konfytPatch* pt = new konfytPatch();
+    KonfytPatch* pt = new KonfytPatch();
     pt->setName("New Patch");
 
     addPatchToProject(pt);
@@ -1627,7 +1626,7 @@ void MainWindow::removePatchFromProject(int i)
     if ( (i>=0) && (i<prj->getNumPatches()) ) {
 
         // Remove from project
-        konfytPatch* patch = prj->removePatch(i);
+        KonfytPatch* patch = prj->removePatch(i);
 
         // Remove from patch engine
         pengine->unloadPatch(patch);
@@ -1648,7 +1647,7 @@ void MainWindow::removePatchFromProject(int i)
 
 
 // Add a patch to the current project, and update the gui.
-void MainWindow::addPatchToProject(konfytPatch* newPatch)
+void MainWindow::addPatchToProject(KonfytPatch* newPatch)
 {
     KonfytProject *prj = getCurrentProject();
     if (prj == NULL) {
@@ -1697,21 +1696,21 @@ bool MainWindow::library_isProgramSelected()
 
 // Returns the currently selected program, or a blank one
 // if nothing is selected.
-konfytSoundfontProgram MainWindow::library_getSelectedProgram()
+KonfytSoundfontProgram MainWindow::library_getSelectedProgram()
 {
     if (library_isProgramSelected()) {
-        konfytSoundfontProgram p = programList.at(ui->listWidget_LibraryBottom->currentRow());
+        KonfytSoundfontProgram p = programList.at(ui->listWidget_LibraryBottom->currentRow());
         return p;
     } else {
         // Return blank one
-        konfytSoundfontProgram p;
+        KonfytSoundfontProgram p;
         return p;
     }
 }
 
 
 /* Returns the type of item in the library tree. */
-libraryTreeItemType MainWindow::library_getTreeItemType(QTreeWidgetItem *item)
+LibraryTreeItemType MainWindow::library_getTreeItemType(QTreeWidgetItem *item)
 {
     if (item == library_patchRoot) { return libTreePatchesRoot; }
     else if (library_patchMap.contains(item)) { return libTreePatch; }
@@ -1724,7 +1723,7 @@ libraryTreeItemType MainWindow::library_getTreeItemType(QTreeWidgetItem *item)
     else { return libTreeInvalid; }
 }
 
-libraryTreeItemType MainWindow::library_getSelectedTreeItemType()
+LibraryTreeItemType MainWindow::library_getSelectedTreeItemType()
 {
     return library_getTreeItemType( ui->treeWidget_Library->currentItem() );
 }
@@ -1732,14 +1731,14 @@ libraryTreeItemType MainWindow::library_getSelectedTreeItemType()
 
 // Returns the currently selected patch, or a blank one
 // if nothing is selected.
-konfytPatch MainWindow::library_getSelectedPatch()
+KonfytPatch MainWindow::library_getSelectedPatch()
 {
     if ( library_getSelectedTreeItemType() == libTreePatch ) {
-        konfytPatch p = library_patchMap.value(ui->treeWidget_Library->currentItem());
+        KonfytPatch p = library_patchMap.value(ui->treeWidget_Library->currentItem());
         return p;
     } else {
         // Return blank one
-        konfytPatch p;
+        KonfytPatch p;
         return p;
     }
 }
@@ -1748,7 +1747,7 @@ konfytPatch MainWindow::library_getSelectedPatch()
 
 // Returns the currently selected soundfont, or NULL if
 // nothing is selected.
-konfytSoundfont* MainWindow::library_getSelectedSfont()
+KonfytSoundfont* MainWindow::library_getSelectedSfont()
 {
     if ( library_getSelectedTreeItemType() == libTreeSoundfont ) {
         QTreeWidgetItem* current = ui->treeWidget_Library->currentItem();
@@ -1822,23 +1821,19 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
 
         // Load the selected item in the library to preview
 
-        if (previewPatch == NULL) {
-            previewPatch = new konfytPatch();
-        }
-
-        pengine->loadPatch(previewPatch);
+        pengine->loadPatch(&previewPatch);
         // Remove all layers
-        QList<KonfytPatchLayer> l = previewPatch->getLayerItems();
+        QList<KonfytPatchLayer> l = previewPatch.getLayerItems();
         for (int i=0; i<l.count(); i++) {
             KonfytPatchLayer layer = l[i];
             pengine->removeLayer(&layer);
         }
 
-        libraryTreeItemType type = library_getSelectedTreeItemType();
+        LibraryTreeItemType type = library_getSelectedTreeItemType();
 
         if (library_isProgramSelected()) {
             // Program selected. Load program into preview patch
-            konfytSoundfontProgram program = library_getSelectedProgram();
+            KonfytSoundfontProgram program = library_getSelectedProgram();
             pengine->addProgramLayer(program);
 
         } else if ( type == libTreePatch ) {
@@ -1889,7 +1884,7 @@ void MainWindow::gui_updatePatchView()
     clearLayerItems_GUIonly();
 
     // Only for master patch, not preview mode patch
-    konfytPatch* p = masterPatch;
+    KonfytPatch* p = masterPatch;
     if (p == NULL) {
         // No patch active
         ui->lineEdit_PatchName->setText("");
@@ -1965,9 +1960,9 @@ void MainWindow::fillTreeWithAll()
     library_patchRoot = new QTreeWidgetItem();
     library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db.getNumPatches()) + "]");
     library_patchRoot->setIcon(0, QIcon(":/icons/folder.png"));
-    QList<konfytPatch> pl = db.getPatchList();
+    QList<KonfytPatch> pl = db.getPatchList();
     for (int i=0; i<pl.count(); i++) {
-        konfytPatch pt = pl.at(i);
+        KonfytPatch pt = pl.at(i);
 
         QTreeWidgetItem* twiChild = new QTreeWidgetItem();
         twiChild->setIcon(0, QIcon(":/icons/picture.png"));
@@ -2042,7 +2037,7 @@ void MainWindow::buildSfTree(QTreeWidgetItem *twi, konfytDbTreeItem *item)
         QString pathRemoved = twi->text(0).remove(rem);
         twi->setText(0, pathRemoved);
 
-        library_sfMap.insert(twi, (konfytSoundfont*)(item->data)); // Add to soundfonts map
+        library_sfMap.insert(twi, (KonfytSoundfont*)(item->data)); // Add to soundfonts map
         twi->setToolTip(0,twi->text(0));
         twi->setIcon(0, QIcon(":/icons/picture.png"));
     } else {
@@ -2096,10 +2091,10 @@ void MainWindow::fillTreeWithSearch(QString search)
     library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db.getNumPatchesResults()) + "]");
     library_patchRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
-    QList<konfytPatch> pl = db.getResults_patches();
+    QList<KonfytPatch> pl = db.getResults_patches();
 
     for (int i=0; i<pl.count(); i++) {
-        konfytPatch pt = pl.at(i);
+        KonfytPatch pt = pl.at(i);
 
         QTreeWidgetItem* twiChild = new QTreeWidgetItem();
         twiChild->setText(0,pt.getName());
@@ -2188,7 +2183,7 @@ void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int co
 
 
 // Set the current patch, and update the gui accordingly.
-void MainWindow::setCurrentPatch(konfytPatch* newPatch)
+void MainWindow::setCurrentPatch(KonfytPatch* newPatch)
 {
     this->masterPatch = newPatch;
     loadPatchForModeAndUpdateGUI();
@@ -2266,11 +2261,11 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *curre
         // Soundfont is selected.
         if (searchMode) {
             // Fill programList variable with program results of selected soundfont
-            konfytSoundfont* sf = library_getSelectedSfont();
+            KonfytSoundfont* sf = library_getSelectedSfont();
             programList = db.getResults_sfontPrograms(sf);
         } else {
             // Fill programList variable with all programs of selected soundfont
-            konfytSoundfont* sf = library_getSelectedSfont();
+            KonfytSoundfont* sf = library_getSelectedSfont();
             programList = sf->programlist;
         }
         // Refresh the GUI program list with programs (if any).
@@ -2390,7 +2385,7 @@ void MainWindow::addCarlaInternalToCurrentPatch(QString URI)
 }
 
 // Adds soundfont program to current patch in engine and in GUI.
-void MainWindow::addProgramToCurrentPatch(konfytSoundfontProgram p)
+void MainWindow::addProgramToCurrentPatch(KonfytSoundfontProgram p)
 {
     newPatchIfMasterNull();
 
@@ -2528,7 +2523,7 @@ void MainWindow::on_lineEdit_ProjectName_editingFinished()
 
 
 // Save patch to library (in other words, to patchesDir directory.)
-bool MainWindow::savePatchToLibrary(konfytPatch *patch)
+bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
 {
     QDir dir(patchesDir);
     if (!dir.exists()) {
@@ -2831,7 +2826,7 @@ void MainWindow::database_scanDirsStatus(QString msg)
     ui->label_WaitingStatus->setText(msg);
 }
 
-void MainWindow::database_returnSfont(konfytSoundfont *sf)
+void MainWindow::database_returnSfont(KonfytSoundfont *sf)
 {
     if (returnSfontRequester == returnSfontRequester_on_treeWidget_filesystem_itemDoubleClicked) {
         // Soundfont received from database after request was made from
@@ -3974,8 +3969,8 @@ void MainWindow::on_actionSave_Patch_triggered()
 /* Action to save current patch as a copy in the current project. */
 void MainWindow::on_actionSave_Patch_As_Copy_triggered()
 {
-    konfytPatch* p = pengine->getPatch();
-    konfytPatch* newPatch = new konfytPatch();
+    KonfytPatch* p = pengine->getPatch();
+    KonfytPatch* newPatch = new KonfytPatch();
     *newPatch = *p;
     addPatchToProject(newPatch);
 
@@ -3991,7 +3986,7 @@ void MainWindow::on_actionSave_Patch_As_Copy_triggered()
 /* Action to add current patch to the library. */
 void MainWindow::on_actionAdd_Patch_To_Library_triggered()
 {
-    konfytPatch* pt = pengine->getPatch(); // Get current patch
+    KonfytPatch* pt = pengine->getPatch(); // Get current patch
 
     if (savePatchToLibrary(pt)) {
         userMessage("Saved to library.");
@@ -4005,7 +4000,7 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
 {
     // Save patch to user selected file
 
-    konfytPatch* pt = pengine->getPatch(); // Get current patch
+    KonfytPatch* pt = pengine->getPatch(); // Get current patch
     QFileDialog d;
     QString filename = d.getSaveFileName(this,"Save patch as file", patchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
     if (filename=="") {return;} // Dialog was cancelled.
@@ -4034,7 +4029,7 @@ void MainWindow::on_actionNew_Patch_triggered()
 void MainWindow::on_actionAdd_Patch_From_Library_triggered()
 {
     if ( library_getSelectedTreeItemType() == libTreePatch ) {
-        konfytPatch* newPatch = new konfytPatch();
+        KonfytPatch* newPatch = new KonfytPatch();
         *newPatch = library_getSelectedPatch();
         addPatchToProject(newPatch);
     } else {
@@ -4050,7 +4045,7 @@ void MainWindow::on_actionAdd_Patch_From_File_triggered()
     KonfytProject *prj = getCurrentProject();
     if (prj == NULL) { return; }
 
-    konfytPatch* pt = new konfytPatch();
+    KonfytPatch* pt = new KonfytPatch();
     QFileDialog d;
     QString filename = d.getOpenFileName(this, "Open patch from file", patchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
     if (filename=="") { return; }
@@ -4409,7 +4404,7 @@ void MainWindow::on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, 
 
     } else if ( library_getTreeItemType(item) == libTreePatch ) {
 
-        konfytPatch* p = new konfytPatch();
+        KonfytPatch* p = new KonfytPatch();
         *p = library_getSelectedPatch();
         addPatchToProject( p );
     }
@@ -4615,7 +4610,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
     } else if ( fileIsPatch(info.filePath()) ) {
         // File is a patch
 
-        konfytPatch* pt = new konfytPatch();
+        KonfytPatch* pt = new KonfytPatch();
         if (pt->loadPatchFromFile(info.filePath())) {
             addPatchToProject(pt);
         } else {
@@ -4971,9 +4966,9 @@ void MainWindow::on_actionRemove_BusPort_triggered()
     // Check if any patch layers are using this bus/port
     QList<int> usingPatches;
     QList<int> usingLayers;
-    QList<konfytPatch*> patchList = prj->getPatchList();
+    QList<KonfytPatch*> patchList = prj->getPatchList();
     for (int i=0; i<patchList.count(); i++) {
-        konfytPatch* patch = patchList[i];
+        KonfytPatch* patch = patchList[i];
         QList<KonfytPatchLayer> layerList = patch->getLayerItems();
         for (int j=0; j<layerList.count(); j++) {
             KonfytPatchLayer layer = layerList[j];
@@ -5033,7 +5028,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove bus
                 // Change the bus for all layers still using this one
                 for (int i=0; i<usingPatches.count(); i++) {
-                    konfytPatch* patch = prj->getPatch(usingPatches[i]);
+                    KonfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KonfytPatchLayer layer = patch->getLayerItems()[usingLayers[i]];
                     pengine->setLayerBus( patch, &layer, busToChangeTo );
                 }
@@ -5050,7 +5045,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove port.
                 // Remove it from all patches where it was in use
                 for (int i=0; i<usingPatches.count(); i++) {
-                    konfytPatch* patch = prj->getPatch(usingPatches[i]);
+                    KonfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KonfytPatchLayer layer = patch->getLayerItems()[usingLayers[i]];
                     pengine->removeLayer( patch, &layer );
                 }
@@ -5067,7 +5062,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove port.
                 // Remove it from all patches where it was in use
                 for (int i=0; i<usingPatches.count(); i++) {
-                    konfytPatch* patch = prj->getPatch(usingPatches[i]);
+                    KonfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KonfytPatchLayer layer = patch->getLayerItems()[usingLayers[i]];
                     pengine->removeLayer( patch, &layer );
                 }
@@ -5088,7 +5083,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove port
                 // Change the port for all layers still using this one
                 for (int i=0; i<usingPatches.count(); i++) {
-                    konfytPatch* patch = prj->getPatch(usingPatches[i]);
+                    KonfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KonfytPatchLayer layer = patch->getLayerItems()[usingLayers[i]];
                     pengine->setLayerMidiInPort( patch, &layer, portToChangeTo );
                 }
@@ -5264,7 +5259,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::on_treeWidget_Library_customContextMenuRequested(const QPoint &pos)
 {
     libraryMenuItem = ui->treeWidget_Library->itemAt(pos);
-    libraryTreeItemType itemType = library_getTreeItemType( libraryMenuItem );
+    LibraryTreeItemType itemType = library_getTreeItemType( libraryMenuItem );
 
     libraryMenu.clear();
 
@@ -5287,7 +5282,7 @@ void MainWindow::on_actionOpen_In_File_Manager_library_triggered()
 
     QString path;
 
-    libraryTreeItemType itemType = library_getTreeItemType( libraryMenuItem );
+    LibraryTreeItemType itemType = library_getTreeItemType( libraryMenuItem );
 
     if ( itemType == libTreeSoundfontRoot ) { path = this->soundfontsDir; }
     else if ( itemType == libTreePatchesRoot ) { path = this->patchesDir; }
