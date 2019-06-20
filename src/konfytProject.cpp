@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -187,7 +187,6 @@ bool KonfytProject::saveProjectAs(QString dirname)
         stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_NAME, p.portName );
         stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_LGAIN, n2s(p.leftGain) );
         stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_RGAIN, n2s(p.rightGain) );
-        stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_BUS, n2s(p.destinationBus) );
         for (int j=0; j<p.leftInClients.count(); j++) {
             stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_LCLIENT, p.leftInClients.at(j) );
         }
@@ -423,8 +422,6 @@ bool KonfytProject::loadProject(QString filename)
                             p.leftGain = r.readElementText().toFloat();
                         } else if (r.name() == XML_PRJ_AUDIOIN_PORT_RGAIN) {
                             p.rightGain = r.readElementText().toFloat();
-                        } else if (r.name() == XML_PRJ_AUDIOIN_PORT_BUS) {
-                            p.destinationBus = r.readElementText().toInt();
                         } else if (r.name() == XML_PRJ_AUDIOIN_PORT_LCLIENT) {
                             p.leftInClients.append( r.readElementText() );
                         } else if (r.name() == XML_PRJ_AUDIOIN_PORT_RCLIENT) {
@@ -1012,7 +1009,6 @@ int KonfytProject::audioInPort_add(QString portName)
 {
     PrjAudioInPort port;
     port.portName = portName;
-    port.destinationBus = 0;
     port.leftGain = 1;
     port.leftJackPortId = -1;
     port.rightJackPortId = -1;

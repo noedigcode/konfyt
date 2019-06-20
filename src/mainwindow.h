@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -237,6 +237,7 @@ public:
     int currentPatchIndex;
     void setCurrentPatch(int index);
     void setCurrentPatch(KonfytPatch *newPatch);
+    void setPatchIcon(const KonfytPatch* patch, QListWidgetItem* item, bool current);
     void setCurrentPatchIcon();
     void unsetCurrentPatchIcon();
 
@@ -282,11 +283,22 @@ public:
     // layerMidiInMenu: Midi-In menu in the layers in patch view
     //   Opened when user clicks on layer item midi in button, see onlayer_midiIn_clicked()
     //   When a menu item is clicked: onLayerMidiInMenu_ActionTrigger()
-    void gui_updateLayerMidiInPortsMenu();
+
+    // Layer toolbutton menu and MIDI-in port and channels menu
+    // Triggered when layer toolbutton clicked. See menu action trigger slots for
+    // procedures when menus clicked.
+    QMenu layerToolMenu;
+    konfytLayerWidget* layerToolMenu_sourceitem;
+    void gui_updateLayerToolMenu();
+
     QMenu layerMidiInPortsMenu;
     QAction* layerMidiInPortsMenu_newPortAction;
-    konfytLayerWidget* layerMidiInMenu_sourceItem;
     QMap<QAction*, int> layerMidiInPortsMenu_map; // Map menu actions to project port ids
+
+    QMenu layerMidiInChannelMenu;
+
+    void gui_updateLayerMidiInPortsAndChansMenu();
+
 
     // layerBusMenu: Bus menu in the layers in patch view.
     //   Opened when user clicks on layer item bus button, see onlayer_bus_clicked()
@@ -295,10 +307,10 @@ public:
     void gui_updateLayerMidiOutChannelMenu();
     QMenu layerBusMenu;
     QMenu layerMidiOutChannelMenu;
+
     QAction* layerBusMenu_NewBusAction;
     konfytLayerWidget* layerBusMenu_sourceItem;
     QMap<QAction*, int> layerBusMenu_actionsBusIdsMap; // Map menu actions to bus ids
-    QMap<QAction*, int> layerMidiOutChannelMenu_map;
 
     // Patch list menu
     QMenu patchListMenu;
@@ -585,22 +597,18 @@ private slots:
     void onPatchMidiOutPortsMenu_ActionTrigger(QAction* action);
     void onPatchAudioInPortsMenu_ActionTrigger(QAction* action);
     void on_lineEdit_ProjectName_editingFinished();
-    void on_toolButton_SavePatch_clicked();
     void on_textBrowser_patchNote_textChanged();
 
     // Layers
-    void onLayer_remove_clicked(konfytLayerWidget* layerItem);
-    void onLayer_filter_clicked(konfytLayerWidget* layerItem);
     void onLayer_slider_moved(konfytLayerWidget* layerItem, float gain);
     void onLayer_solo_clicked(konfytLayerWidget* layerItem, bool solo);
     void onLayer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
     void onLayer_bus_clicked(konfytLayerWidget* layerItem);
-    void onLayer_midiIn_clicked(konfytLayerWidget* layerItem);
-    void onLayer_reload_clicked(konfytLayerWidget* layerItem);
-    void onLayer_openInFileManager_clicked(konfytLayerWidget* layerItem, QString filepath);
+    void onLayer_toolbutton_clicked(konfytLayerWidget* layerItem);
     void onLayerBusMenu_ActionTrigger(QAction* action);
     void onLayerMidiOutChannelMenu_ActionTrigger(QAction* action);
-    void onLayerMidiInMenu_ActionTrigger(QAction* action);
+    void onLayerMidiInPortsMenu_ActionTrigger(QAction* action);
+    void onLayerMidiInChannelMenu_ActionTrigger(QAction* action);
 
     // Patch List
     void on_toolButton_RemovePatch_clicked();
@@ -612,8 +620,6 @@ private slots:
     void on_toolButton_PatchListMenu_clicked();
     void toggleShowPatchListNumbers();
     void toggleShowPatchListNotes();
-
-    void on_listWidget_Patches_indexesMoved(const QModelIndexList &indexes);
 
     // ========================================================================
     // Midi Filter Dialog
@@ -805,6 +811,16 @@ private slots:
     void on_toolButton_MidiFilter_VelLimitMax_last_clicked();
 
     void on_pushButton_jackCon_OK_clicked();
+
+    void on_actionAlways_Active_triggered();
+
+    void on_actionEdit_MIDI_Filter_triggered();
+
+    void on_actionReload_Layer_triggered();
+
+    void on_actionOpen_In_File_Manager_layerwidget_triggered();
+
+    void on_actionRemove_Layer_triggered();
 
 private:
     Ui::MainWindow *ui;

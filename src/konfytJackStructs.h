@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -41,37 +41,52 @@ struct KonfytJackPortsSpec
 };
 
 struct KonfytJackPort {
-    int id;
-    jack_port_t* jack_pointer;
-    bool active;
-    bool prev_active;
+    int id = 0;
+    float gain = 1;
+    jack_port_t* jack_pointer = NULL;
     void* buffer;
     KonfytMidiFilter filter;
-    bool solo;
-    bool mute;
-    float gain;
     QStringList connectionList;
-    KonfytJackPort* destOrSrcPort; // Destination (bus) for audio port, or source (input) for MIDI port.
-    int noteOns;
-    bool sustainNonZero;
-    bool pitchbendNonZero;
+    int noteOns = 0;
+    bool sustainNonZero = false;
+    bool pitchbendNonZero = false;
+
+    KonfytJackPort() {}
+};
+
+struct KonfytJackMidiRoute {
+    int id = 0;
+    bool active = false;
+    bool prev_active = false;
+    KonfytMidiFilter filter;
+    KonfytJackPort* source = NULL;
+    KonfytJackPort* destJackPort = NULL;
+    int destFluidsynthID = 0;
+    bool destIsJackPort = true;
+
+    KonfytJackMidiRoute() {}
+};
+
+struct KonfytJackAudioRoute {
+    int id;
+    bool active;
+    bool prev_active;
+    float gain;
     unsigned int fadeoutCounter;
     bool fadingOut;
+    KonfytJackPort* source;
+    KonfytJackPort* dest;
 
-    KonfytJackPort() : id(0),
-                       jack_pointer(NULL),
-                       active(false),
-                       prev_active(false),
-                       solo(false),
-                       mute(false),
-                       gain(1),
-                       destOrSrcPort(NULL),
-                       noteOns(0),
-                       sustainNonZero(false),
-                       pitchbendNonZero(false),
-                       fadeoutCounter(0),
-                       fadingOut(false) {}
-
+    KonfytJackAudioRoute() :
+        id(0),
+        active(false),
+        prev_active(false),
+        gain(1),
+        fadeoutCounter(0),
+        fadingOut(false),
+        source(NULL),
+        dest(NULL)
+    {}
 };
 
 struct KonfytJackPluginPorts {
@@ -80,6 +95,9 @@ struct KonfytJackPluginPorts {
     KonfytJackPort* midi;        // Send midi output to plugin
     KonfytJackPort* audio_in_l;  // Receive plugin audio
     KonfytJackPort* audio_in_r;
+    int midiRouteId;
+    int audioLeftRouteId;
+    int audioRightRouteId;
 };
 
 struct KonfytJackNoteOnRecord {
@@ -87,7 +105,6 @@ struct KonfytJackNoteOnRecord {
     bool jackPortNotFluidsynth; // true for jack port, false for Fluidsynth
     int fluidsynthID;
     KonfytJackPort* port;
-    KonfytJackPort* relatedPort;
     KonfytJackPort* sourcePort;
     KonfytMidiFilter filter;
     int globalTranspose;

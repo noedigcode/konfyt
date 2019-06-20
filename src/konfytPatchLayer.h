@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -62,8 +62,8 @@ struct LayerSoundfontStruct {
 
     LayerSoundfontStruct() : gain(1),
                              indexInEngine(-1),
-                             solo(true),
-                             mute(true),
+                             solo(false),
+                             mute(false),
                              idInJackEngine(0) {}
 
 };
@@ -113,11 +113,11 @@ struct LayerCarlaPluginStruct {
 struct LayerMidiOutStruct {
     int portIdInProject;
     KonfytMidiFilter filter;
-    bool solo;
-    bool mute;
+    bool solo = false;
+    bool mute = false;
+    int jackRouteId = -1;
 
-    LayerMidiOutStruct() : solo(false),
-                           mute(false) {}
+    LayerMidiOutStruct() {}
 
 };
 
@@ -127,13 +127,13 @@ struct LayerMidiOutStruct {
 struct LayerAudioInStruct {
     QString name;
     int portIdInProject;   // Index of audio input port in project
-    float gain;
-    bool solo;
-    bool mute;
+    float gain = 1;
+    bool solo = false;
+    bool mute = false;
+    int jackRouteIdLeft = -1;
+    int jackRouteIdRight = -1;
 
-    LayerAudioInStruct() : gain(1),
-                           solo(false),
-                           mute(false) {}
+    LayerAudioInStruct() {}
 
 };
 
@@ -146,7 +146,7 @@ class KonfytPatchLayer
 public:
     explicit KonfytPatchLayer();
 
-    int ID_in_patch; // ID used in patch to uniquely identify layeritems within a patch.
+    int idInPatch; // ID used in patch to uniquely identify layeritems within a patch.
 
     KonfytLayerType getLayerType() const;
 
@@ -175,6 +175,7 @@ public:
     QString getErrorMessage();
 
     // Depending on the layer type, one of the following is used:
+    // TODO: MERGE BELOW INTO LAYER
     LayerSoundfontStruct    sfData;
     LayerCarlaPluginStruct  carlaPluginData;
     LayerMidiOutStruct      midiOutputPortData;

@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -68,22 +68,7 @@ void konfytLayerWidget::paintEvent(QPaintEvent *e)
 
 void konfytLayerWidget::on_toolButton_clicked()
 {
-    this->popupMenu.clear();
-    if ( (this->g.getLayerType() != KonfytLayerType_Uninitialized)
-         && ( ! this->g.hasError())
-         && ( this->g.getLayerType() != KonfytLayerType_AudioIn) ) {
-        popupMenu.addAction(ui->actionEdit_Filter);
-    }
-    if ( (this->g.getLayerType() == KonfytLayerType_CarlaPlugin)
-        || (this->g.getLayerType() == KonfytLayerType_SoundfontProgram) ) {
-        popupMenu.addAction(ui->actionReload_Layer);
-    }
-    if (!filepath.isEmpty()) {
-        popupMenu.addAction(ui->actionOpen_in_File_Manager);
-    }
-    if (popupMenu.actions().count()) { popupMenu.addSeparator(); }
-    popupMenu.addAction(ui->actionRemove_Layer);
-    popupMenu.popup(QCursor::pos());
+    emit toolbutton_clicked_signal(this);
 }
 
 // This function has to be called before the object can be used.
@@ -110,9 +95,6 @@ void konfytLayerWidget::setUpGUI()
     if (g.getLayerType() == KonfytLayerType_SoundfontProgram) {
 
         filepath = g.sfData.program.parent_soundfont;
-        // Set icon
-        QIcon icon(":/icons/sf2.png");
-        ui->toolButton->setIcon(icon);
         // Display soundfont and program name
         ui->lineEdit->setText(g.sfData.program.parent_soundfont + "/" +
                               g.sfData.program.name);
@@ -121,8 +103,6 @@ void konfytLayerWidget::setUpGUI()
         this->updateBackgroundFromFilter();
         // Volume
         ui->gainSlider->setVisible(true);
-        // MidiIn button
-        ui->toolButton_midiInPort->setVisible(true);
 
 
     } else if (g.getLayerType() == KonfytLayerType_CarlaPlugin) {
@@ -131,23 +111,18 @@ void konfytLayerWidget::setUpGUI()
 
         if (g.carlaPluginData.pluginType == KonfytCarlaPluginType_SFZ) {
 
-            // Set icon
-            QIcon icon(":/icons/sfz.png");
-            ui->toolButton->setIcon(icon);
             // Display sfz name
             ui->lineEdit->setText(g.carlaPluginData.path);
             ui->lineEdit->setToolTip( g.carlaPluginData.name + ": " + g.carlaPluginData.path );
 
         } else if (g.carlaPluginData.pluginType == KonfytCarlaPluginType_LV2) {
 
-            ui->toolButton->setText("LV2");
             // Display name
             ui->lineEdit->setText(g.carlaPluginData.path);
             ui->lineEdit->setToolTip( g.carlaPluginData.name + ": " + g.carlaPluginData.path );
 
         } else if (g.carlaPluginData.pluginType == KonfytCarlaPluginType_Internal ) {
 
-            ui->toolButton->setText("Int");
             // Display name
             ui->lineEdit->setText(g.carlaPluginData.path);
             ui->lineEdit->setToolTip( g.carlaPluginData.name + ": " + g.carlaPluginData.path );
@@ -161,14 +136,9 @@ void konfytLayerWidget::setUpGUI()
         this->updateBackgroundFromFilter();
         // Volume
         ui->gainSlider->setVisible(true);
-        // MidiIn button
-        ui->toolButton_midiInPort->setVisible(true);
 
     } else if (g.getLayerType() == KonfytLayerType_MidiOut) {
 
-        // Set icon
-        QIcon icon(":/icons/midi.png");
-        ui->toolButton->setIcon(icon);
         // Display port id and name
         int portId = g.midiOutputPortData.portIdInProject;
         QString text = "MIDI Out " + n2s(portId);
@@ -184,16 +154,14 @@ void konfytLayerWidget::setUpGUI()
         this->updateBackgroundFromFilter();
         // Volume
         ui->gainSlider->setVisible(false);
-        // Use bus button as midi output channel
+        // Use bus button as MIDI output channel
         int outchan = g.getMidiFilter().outChan;
         if (outchan >= 0) {
             ui->toolButton_bus->setText( n2s(outchan+1));
         } else {
             ui->toolButton_bus->setText( "-" );
         }
-        ui->toolButton_bus->setToolTip("MIDI Channel");
-        // MidiIn button
-        ui->toolButton_midiInPort->setVisible(true);
+        ui->toolButton_bus->setToolTip("MIDI Output Channel");
 
     } else if (g.getLayerType() == KonfytLayerType_AudioIn ) {
 
@@ -211,8 +179,6 @@ void konfytLayerWidget::setUpGUI()
         changeBackground(0,127);
         // Volume
         ui->gainSlider->setVisible(true);
-        // Hide MidiIn button
-        ui->toolButton_midiInPort->setVisible(false);
 
     } else {
 
@@ -240,16 +206,27 @@ void konfytLayerWidget::setUpGUI()
         }
     }
 
-    // MIDI In button
+    // Input-side tool button
     if ( (project != NULL) && (g.getLayerType() != KonfytLayerType_AudioIn) ) {
         if (project->midiInPort_exists(g.midiInPortIdInProject)) {
-            ui->toolButton_midiInPort->setText( n2s(g.midiInPortIdInProject) );
-            ui->toolButton_midiInPort->setToolTip("MIDI In Port: " + project->midiInPort_getPort(g.midiInPortIdInProject).portName);
-            ui->toolButton_midiInPort->setStyleSheet("");
+            QString btnTxt = QString("%1:").arg(g.midiInPortIdInProject);
+            QString tooltip = "MIDI In Port: " + project->midiInPort_getPort(g.midiInPortIdInProject).portName;
+            tooltip.append("\nMIDI Channel: ");
+            int inChan = g.getMidiFilter().inChan;
+            if (inChan < 0) {
+                btnTxt.append("A");
+                tooltip.append("All");
+            } else {
+                btnTxt.append(n2s(inChan+1));
+                tooltip.append(n2s(inChan+1));
+            }
+            ui->toolButton->setText( btnTxt );
+            ui->toolButton->setToolTip(tooltip);
+            ui->toolButton->setStyleSheet("");
         } else {
-            ui->toolButton_midiInPort->setText( n2s(g.midiInPortIdInProject) + "!" );
-            ui->toolButton_midiInPort->setToolTip("MIDI In Port does not exist in this project.");
-            ui->toolButton_midiInPort->setStyleSheet("background-color: red;");
+            ui->toolButton->setText( n2s(g.midiInPortIdInProject) + "!" );
+            ui->toolButton->setToolTip("MIDI In Port does not exist in this project.");
+            ui->toolButton->setStyleSheet("background-color: red;");
         }
     }
 
@@ -296,6 +273,11 @@ QListWidgetItem* konfytLayerWidget::getListWidgetItem()
     return this->listWidgetItem;
 }
 
+QString konfytLayerWidget::getFilePath()
+{
+    return filepath;
+}
+
 /* Set slider gain from outside the class, e.g. if gain was changed by some
  * other event like a midi trigger. */
 void konfytLayerWidget::setSliderGain(float newGain)
@@ -325,16 +307,6 @@ void konfytLayerWidget::on_gainSlider_sliderMoved(int position)
     float gain = (float)position/(float)ui->gainSlider->maximum();
     g.setGain(gain);
     emit slider_moved_signal(this, gain);
-}
-
-void konfytLayerWidget::on_actionEdit_Filter_triggered()
-{
-    emit filter_clicked_signal(this);
-}
-
-void konfytLayerWidget::on_actionRemove_Layer_triggered()
-{
-    emit remove_clicked_signal(this);
 }
 
 void konfytLayerWidget::on_gainSlider_valueChanged(int value)
@@ -369,17 +341,3 @@ void konfytLayerWidget::on_toolButton_bus_clicked()
     emit bus_clicked_signal(this);
 }
 
-void konfytLayerWidget::on_actionReload_Layer_triggered()
-{
-    emit reload_clicked_signal(this);
-}
-
-void konfytLayerWidget::on_actionOpen_in_File_Manager_triggered()
-{
-    emit openInFileManager_clicked_signal(this, filepath);
-}
-
-void konfytLayerWidget::on_toolButton_midiInPort_clicked()
-{
-    emit midiIn_clicked_signal(this);
-}

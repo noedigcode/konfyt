@@ -135,22 +135,6 @@ QSlider::handle:horizontal:hover {
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="toolButton_midiInPort">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="toolTip">
-         <string>MIDI In Port</string>
-        </property>
-        <property name="text">
-         <string>0</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QLineEdit" name="lineEdit">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
@@ -263,29 +247,6 @@ QSlider::handle:horizontal:hover {
     </widget>
    </item>
   </layout>
-  <action name="actionEdit_Filter">
-   <property name="text">
-    <string>Edit MIDI Filter...</string>
-   </property>
-  </action>
-  <action name="actionRemove_Layer">
-   <property name="text">
-    <string>Remove Layer</string>
-   </property>
-  </action>
-  <action name="actionReload_Layer">
-   <property name="text">
-    <string>Reload Layer</string>
-   </property>
-   <property name="toolTip">
-    <string>Reload Layer</string>
-   </property>
-  </action>
-  <action name="actionOpen_in_File_Manager">
-   <property name="text">
-    <string>Open in File Manager</string>
-   </property>
-  </action>
  </widget>
  <resources/>
  <connections/>

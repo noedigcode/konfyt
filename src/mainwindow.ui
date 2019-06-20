@@ -89,6 +89,15 @@ QFrame[buttonFrame=true] {
 }
 
 /* ---------------------------------------------------------------------- */
+/* Main toolbar frame*/
+QFrame#frame_MainToolbar{
+	margin-top: 0px;
+	border: 0px;
+	border-radius: 0px;
+	background-color: rgb(80, 80, 80);
+}
+
+/* ---------------------------------------------------------------------- */
 /* GroupBox */
 
 QGroupBox{
@@ -104,15 +113,6 @@ QGroupBox::title {
 	subcontrol-origin: margin;
 	padding: 0 3px;
 	padding-top: 2px;
-}
-
-/* ---------------------------------------------------------------------- */
-/* Main toolbar groupbox*/
-QGroupBox#groupBox_MainToolbar{
-	margin-top: 0px;
-	border: 0px;
-	border-radius: 0px;
-	background-color: rgb(80, 80, 80);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -599,7 +599,7 @@ QStatusBar {
      <number>5</number>
     </property>
     <item>
-     <widget class="QGroupBox" name="groupBox_MainToolbar">
+     <widget class="QFrame" name="frame_MainToolbar">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
         <horstretch>0</horstretch>
@@ -620,12 +620,6 @@ QStatusBar {
       </property>
       <property name="styleSheet">
        <string notr="true"/>
-      </property>
-      <property name="title">
-       <string/>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_26">
        <property name="leftMargin">
@@ -2341,7 +2335,7 @@ color: white;</string>
                       <property name="verticalSpacing">
                        <number>2</number>
                       </property>
-                      <item row="3" column="0">
+                      <item row="4" column="0">
                        <widget class="QTextBrowser" name="textBrowser_patchNote">
                         <property name="maximumSize">
                          <size>
@@ -2502,7 +2496,7 @@ border-bottom-left-radius: 0;</string>
                         </layout>
                        </widget>
                       </item>
-                      <item row="1" column="0">
+                      <item row="2" column="0">
                        <widget class="QListWidget" name="listWidget_Layers">
                         <property name="styleSheet">
                          <string notr="true"/>
@@ -2512,10 +2506,24 @@ border-bottom-left-radius: 0;</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="2" column="0">
+                      <item row="3" column="0">
                        <widget class="QLabel" name="label_21">
                         <property name="text">
                          <string>Note:</string>
+                        </property>
+                       </widget>
+                      </item>
+                      <item row="1" column="0">
+                       <widget class="QLabel" name="label_patch_alwaysActive">
+                        <property name="styleSheet">
+                         <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(229, 130, 64, 200), stop:1 rgba(255, 170, 0, 200));
+color: rgb(0, 0, 0);</string>
+                        </property>
+                        <property name="text">
+                         <string>Always Active</string>
+                        </property>
+                        <property name="alignment">
+                         <set>Qt::AlignCenter</set>
                         </property>
                        </widget>
                       </item>
@@ -2524,6 +2532,7 @@ border-bottom-left-radius: 0;</string>
                      <zorder>frame_20</zorder>
                      <zorder>textBrowser_patchNote</zorder>
                      <zorder>label_21</zorder>
+                     <zorder>label_patch_alwaysActive</zorder>
                     </widget>
                    </item>
                   </layout>
@@ -3479,8 +3488,8 @@ QSpinBox {
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>266</width>
-                        <height>398</height>
+                        <width>226</width>
+                        <height>395</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -7369,6 +7378,34 @@ border-bottom-left-radius: 0;
   <action name="actionAdd_Path_to_External_App_Box_Relative_to_Project">
    <property name="text">
     <string>Add Path to External App Box (Relative to Project)</string>
+   </property>
+  </action>
+  <action name="actionAlways_Active">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Always Active</string>
+   </property>
+  </action>
+  <action name="actionEdit_MIDI_Filter">
+   <property name="text">
+    <string>Edit MIDI Filter</string>
+   </property>
+  </action>
+  <action name="actionReload_Layer">
+   <property name="text">
+    <string>Reload Layer</string>
+   </property>
+  </action>
+  <action name="actionOpen_In_File_Manager_layerwidget">
+   <property name="text">
+    <string>Open In File Manager</string>
+   </property>
+  </action>
+  <action name="actionRemove_Layer">
+   <property name="text">
+    <string>Remove Layer</string>
    </property>
   </action>
  </widget>

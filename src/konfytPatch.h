@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -34,6 +34,7 @@
 #define XML_PATCH "sfpatch"
 #define XML_PATCH_NAME "name"
 #define XML_PATCH_NOTE "patchNote"
+#define XML_PATCH_ALWAYSACTIVE "alwaysActive"
 
 #define XML_PATCH_SFLAYER "sfLayer"
 #define XML_PATCH_SFLAYER_FILENAME "soundfont_filename"
@@ -84,6 +85,7 @@ public:
     QString getNote();
     void setNote(QString newNote);
     int id_in_project; // Unique ID in project to identify the patch in runtime.
+    bool alwaysActive = false;
 
     // ----------------------------------------------------
     // General layer related functions
@@ -135,7 +137,8 @@ public:
     // ----------------------------------------------------
 
     QList<int> getMidiOutputPortList_ids() const;
-    QList<LayerMidiOutStruct> getMidiOutputPortList_struct();
+    QList<LayerMidiOutStruct> getMidiOutputPortList_struct() const;
+    QList<KonfytPatchLayer> getMidiOutputLayerList() const;
     KonfytPatchLayer addMidiOutputPort(int newPort);
     KonfytPatchLayer addMidiOutputPort(LayerMidiOutStruct newPort);
 
@@ -144,7 +147,8 @@ public:
     // ----------------------------------------------------
 
     QList<int> getAudioInPortList_ids() const;
-    QList<LayerAudioInStruct> getAudioInPortList_struct();
+    QList<LayerAudioInStruct> getAudioInPortList_struct() const;
+    QList<KonfytPatchLayer> getAudioInLayerList() const;
     KonfytPatchLayer addAudioInPort(int newPort);
     KonfytPatchLayer addAudioInPort(LayerAudioInStruct newPort);
 
@@ -166,7 +170,7 @@ private:
     // List of layers (all types, order is important for user in the patch)
     QList<KonfytPatchLayer> layerList;
 
-    int id_counter; // Counter for unique ID given to layeritem to uniquely identify them.
+    int idCounter = 200; // Counter for unique ID given to layeritem to uniquely identify them.
 
 };
 

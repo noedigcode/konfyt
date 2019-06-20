@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -26,7 +26,7 @@
 
 KonfytPatch::KonfytPatch()
 {
-    this->id_counter = 200; // Initialise ID counter for layeritem unique ids.
+
 }
 
 
@@ -78,6 +78,7 @@ bool KonfytPatch::savePatchToFile(QString filename)
     stream.writeAttribute(XML_PATCH_NAME,this->patchName);
 
     stream.writeTextElement(XML_PATCH_NOTE, this->getNote());
+    stream.writeTextElement(XML_PATCH_ALWAYSACTIVE, QVariant(alwaysActive).toString());
 
     // Step through all the layers. It's important to save them in the correct order.
     for (int i=0; i<this->layerList.count(); i++) {
@@ -207,6 +208,10 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
             if (r.name() == XML_PATCH_NOTE) {
 
                 this->setNote(r.readElementText());
+
+            } else if (r.name() == XML_PATCH_ALWAYSACTIVE) {
+
+                this->alwaysActive = QVariant(r.readElementText()).toBool();
 
             } else if (r.name() == XML_PATCH_SFLAYER) { // soundfont layer
 
@@ -374,9 +379,9 @@ bool KonfytPatch::isValid_Sf_LayerNumber(int SfLayer)
 void KonfytPatch::removeLayer(KonfytPatchLayer* layer)
 {
     // Identify layer using the unique ID in the layeritem.
-    int id = layer->ID_in_patch;
+    int id = layer->idInPatch;
     for (int i=0; i<this->layerList.count(); i++) {
-        if (layerList.at(i).ID_in_patch == id) {
+        if (layerList.at(i).idInPatch == id) {
             layerList.removeAt(i);
             return;
         }
@@ -394,7 +399,7 @@ void KonfytPatch::clearLayers()
 int KonfytPatch::layerListIndexFromPatchId(KonfytPatchLayer *layer)
 {
     for (int i=0; i < layerList.count(); i++) {
-        if (layerList.at(i).ID_in_patch == layer->ID_in_patch) {
+        if (layerList.at(i).idInPatch == layer->idInPatch) {
             return i;
         }
     }
@@ -412,7 +417,7 @@ void KonfytPatch::replaceLayer(KonfytPatchLayer newLayer)
         this->layerList.replace(index, newLayer);
     } else {
         // No layer was found and replaced. This is probably a logic error somewhere.
-        error_abort("replaceLayer: Layer with id " + n2s(newLayer.ID_in_patch) + " is not in the patch's layerList.");
+        error_abort("replaceLayer: Layer with id " + n2s(newLayer.idInPatch) + " is not in the patch's layerList.");
     }
 }
 
@@ -429,7 +434,7 @@ void KonfytPatch::setLayerFilter(KonfytPatchLayer *layer, KonfytMidiFilter newFi
         this->layerList.replace(index, g);
     } else {
         // No layer was found. This is probably a logic error somewhere.
-        error_abort("setLayerFilter: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+        error_abort("setLayerFilter: Layer with id " + n2s(layer->idInPatch) + " is not in the patch's layerList.");
     }
 }
 
@@ -442,7 +447,7 @@ float KonfytPatch::getLayerGain(KonfytPatchLayer *layer)
         return this->layerList.at(index).getGain();
     } else {
         // No layer was found that matches the ID. This is probably a logic error somewhere.
-        error_abort("getLayerGain: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+        error_abort("getLayerGain: Layer with id " + n2s(layer->idInPatch) + " is not in the patch's layerList.");
         return 0;
     }
 }
@@ -458,7 +463,7 @@ void KonfytPatch::setLayerGain(KonfytPatchLayer *layer, float newGain)
         this->replaceLayer(g);
     } else {
         // No layer was found that matches the ID. This is probably a logic error somewhere.
-        error_abort("setLayerGain: Layer with id " + n2s(layer->ID_in_patch) +  " is not in the patch's layerList.");
+        error_abort("setLayerGain: Layer with id " + n2s(layer->idInPatch) +  " is not in the patch's layerList.");
     }
 }
 
@@ -473,7 +478,7 @@ void KonfytPatch::setLayerSolo(KonfytPatchLayer *layer, bool solo)
         this->replaceLayer(g);
     } else {
         // No layer was found that matches the ID. This is probably a logic error somewhere.
-        error_abort("setLayerSolo: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+        error_abort("setLayerSolo: Layer with id " + n2s(layer->idInPatch) + " is not in the patch's layerList.");
     }
 }
 
@@ -488,7 +493,7 @@ void KonfytPatch::setLayerMute(KonfytPatchLayer *layer, bool mute)
         this->replaceLayer(g);
     } else {
         // No layer was found that matches the ID. This is probably a logic error somewhere.
-        error_abort("setLayerMute: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+        error_abort("setLayerMute: Layer with id " + n2s(layer->idInPatch) + " is not in the patch's layerList.");
     }
 }
 
@@ -513,7 +518,7 @@ void KonfytPatch::setLayerBus(KonfytPatchLayer *layer, int bus)
         this->replaceLayer(g);
     } else {
         // No layer was found that matches the ID. This is probably a logic error somewhere.
-        error_abort("setLayerBus: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+        error_abort("setLayerBus: Layer with id " + n2s(layer->idInPatch) + " is not in the patch's layerList.");
     }
 }
 
@@ -528,29 +533,27 @@ void KonfytPatch::setLayerMidiInPort(KonfytPatchLayer *layer, int portId)
         this->replaceLayer(g);
     } else {
         // No layer was found that matches the ID. This is probably a logic error somewhere.
-        error_abort("setLayerMidiInPort: Layer with id " + n2s(layer->ID_in_patch) + " is not in the patch's layerList.");
+        error_abort("setLayerMidiInPort: Layer with id " + n2s(layer->idInPatch) + " is not in the patch's layerList.");
     }
 }
 
 KonfytPatchLayer KonfytPatch::addProgram(KonfytSoundfontProgram p)
 {
     // Set up new soundfont program layer structure
-    LayerSoundfontStruct l = LayerSoundfontStruct();
-    l.program = p;
-    l.gain = DEFAULT_GAIN_FOR_NEW_LAYER; // default gain
-    l.solo = false;
-    l.mute = false;
+    LayerSoundfontStruct sfData;
+    sfData.program = p;
+    sfData.gain = DEFAULT_GAIN_FOR_NEW_LAYER; // default gain
 
     // Set up a new layer item
     // (a layer item is initialised with an unique id which will
     //  allow us to identify it later on.)
-    KonfytPatchLayer g;
-    g.initLayer(this->id_counter++, l);
+    KonfytPatchLayer layer;
+    layer.initLayer(this->idCounter++, sfData);
 
     // Add to layer list
-    layerList.append(g);
+    layerList.append(layer);
 
-    return g;
+    return layer;
 }
 
 KonfytPatchLayer KonfytPatch::addSfLayer(LayerSoundfontStruct newSfLayer)
@@ -559,7 +562,7 @@ KonfytPatchLayer KonfytPatch::addSfLayer(LayerSoundfontStruct newSfLayer)
     // (a layer item is initialised with an unique id which will
     //  allow us to identify it later on.)
     KonfytPatchLayer g;
-    g.initLayer(this->id_counter++, newSfLayer);
+    g.initLayer(this->idCounter++, newSfLayer);
 
     // add to layer list
     layerList.append(g);
@@ -648,13 +651,13 @@ KonfytPatchLayer KonfytPatch::getLayerItem(KonfytPatchLayer item)
 {
     // Find layer that matches patch_id
     for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).ID_in_patch == item.ID_in_patch) {
+        if (this->layerList.at(i).idInPatch == item.idInPatch) {
             return this->layerList.at(i);
         }
     }
 
     // No layer was found that matches the ID. This is probably a logic error somewhere.
-    error_abort("getLayerItem: LayerItem with patch_id " + n2s(item.ID_in_patch) + " is not in the patch's layerList.");
+    error_abort("getLayerItem: LayerItem with patch_id " + n2s(item.idInPatch) + " is not in the patch's layerList.");
     KonfytPatchLayer l;
     return l;
 }
@@ -683,7 +686,7 @@ QList<int> KonfytPatch::getAudioInPortList_ids() const
     return l;
 }
 
-QList<LayerAudioInStruct> KonfytPatch::getAudioInPortList_struct()
+QList<LayerAudioInStruct> KonfytPatch::getAudioInPortList_struct() const
 {
     QList<LayerAudioInStruct> l;
     for (int i=0; i<this->layerList.count(); i++) {
@@ -694,13 +697,35 @@ QList<LayerAudioInStruct> KonfytPatch::getAudioInPortList_struct()
     return l;
 }
 
+QList<KonfytPatchLayer> KonfytPatch::getAudioInLayerList() const
+{
+    QList<KonfytPatchLayer> l;
+    for (int i=0; i < this->layerList.count(); i++) {
+        if (layerList.at(i).getLayerType() == KonfytLayerType_AudioIn) {
+            l.append(layerList.at(i));
+        }
+    }
+    return l;
+}
+
 // Return list of midiOutputPortStruct's of the patch's midi output ports.
-QList<LayerMidiOutStruct> KonfytPatch::getMidiOutputPortList_struct()
+QList<LayerMidiOutStruct> KonfytPatch::getMidiOutputPortList_struct() const
 {
     QList<LayerMidiOutStruct> l;
     for (int i=0; i<this->layerList.count(); i++) {
         if (layerList.at(i).getLayerType() == KonfytLayerType_MidiOut) {
             l.append(layerList.at(i).midiOutputPortData);
+        }
+    }
+    return l;
+}
+
+QList<KonfytPatchLayer> KonfytPatch::getMidiOutputLayerList() const
+{
+    QList<KonfytPatchLayer> l;
+    for (int i=0; i < this->layerList.count(); i++) {
+        if (layerList.at(i).getLayerType() == KonfytLayerType_MidiOut) {
+            l.append(layerList.at(i));
         }
     }
     return l;
@@ -731,7 +756,7 @@ KonfytPatchLayer KonfytPatch::addAudioInPort(LayerAudioInStruct newPort)
         // Set up layer item
         // Layer item is initialised with a unique ID, which will later
         // be used to uniquely identify the item.
-        g.initLayer(this->id_counter++, newPort);
+        g.initLayer(this->idCounter++, newPort);
         // Add to layer list
         layerList.append(g);
     } else {
@@ -762,7 +787,7 @@ KonfytPatchLayer KonfytPatch::addMidiOutputPort(LayerMidiOutStruct newPort)
         // Set up layer item
         // Layer item is initialised with a unique ID, which will later
         // be used to uniquely identify the item.
-        g.initLayer(this->id_counter++, newPort);
+        g.initLayer(this->idCounter++, newPort);
         // Add to layer list
         layerList.append(g);
     } else {
@@ -781,7 +806,7 @@ KonfytPatchLayer KonfytPatch::addPlugin(LayerCarlaPluginStruct newPlugin)
     // Item is initialised with a unique ID, which will later be used to
     // uniquely identify it.
     KonfytPatchLayer g;
-    g.initLayer(this->id_counter++, newPlugin);
+    g.initLayer(this->idCounter++, newPlugin);
 
     // Add to layer list
     layerList.append(g);

@@ -1,6 +1,6 @@
 ﻿/******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -103,7 +103,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     if (jackClientName.isEmpty()) {
         jackClientName = KONFYT_JACK_DEFAULT_CLIENT_NAME;
     }
-    if ( jack->InitJackClient(jackClientName) ) {
+    if ( jack->initJackClient(jackClientName) ) {
         // Jack client initialised.
         userMessage("Initialised JACK client with name " + jack->clientName());
     } else {
@@ -304,6 +304,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     // Save-patch button menu
     QMenu* savePatchMenu = new QMenu();
     //savePatchMenu->addAction(ui->actionSave_Patch); // 2017-01-05 Not used at the moment; patches are saved automatically.
+    savePatchMenu->addAction(ui->actionAlways_Active);
     savePatchMenu->addAction(ui->actionSave_Patch_As_Copy);
     savePatchMenu->addAction(ui->actionAdd_Patch_To_Library);
     savePatchMenu->addAction(ui->actionSave_Patch_To_File);
@@ -341,7 +342,11 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
 
     // Layer MIDI input port menu
     connect(&layerMidiInPortsMenu, &QMenu::triggered,
-            this, &MainWindow::onLayerMidiInMenu_ActionTrigger);
+            this, &MainWindow::onLayerMidiInPortsMenu_ActionTrigger);
+
+    // Layer MIDI input channel menu
+    connect(&layerMidiInChannelMenu, &QMenu::triggered,
+            this, &MainWindow::onLayerMidiInChannelMenu_ActionTrigger);
 
     // If one of the paths are not set, show settings. Else, switch to patch view.
     if ( (projectsDir == "") || (patchesDir == "") || (soundfontsDir == "") || (sfzDir == "") ) {
@@ -793,6 +798,9 @@ void MainWindow::gui_updatePatchList()
         } else {
             item->setTextColor(Qt::gray);
         }
+
+        setPatchIcon(pat, item, false);
+
 
         ui->listWidget_Patches->addItem(item);
     }
@@ -1443,7 +1451,7 @@ void MainWindow::setCurrentProject(int i)
     }
 
     // Update the port menus in patch view
-    gui_updateLayerMidiInPortsMenu();
+    gui_updateLayerMidiInPortsAndChansMenu();
     gui_updatePatchMidiOutPortsMenu();
     gui_updatePatchAudioInPortsMenu();
 
@@ -1847,9 +1855,6 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
             pengine->addSfzLayer(library_selectedSfz);
         }
 
-        // Deactivate all midi output jack ports
-        jack->setAllPortsActive(KonfytJackPortType_MidiOut, false);
-
         setMasterGain(previewGain);
 
 
@@ -1912,6 +1917,11 @@ void MainWindow::gui_updatePatchView()
     // Patch note
     patchNote_ignoreChange = true;
     ui->textBrowser_patchNote->setText(p->getNote());
+
+    // Always-active text
+    ui->label_patch_alwaysActive->setVisible(p->alwaysActive);
+    // Always-active menu item
+    ui->actionAlways_Active->setChecked(p->alwaysActive);
 }
 
 
@@ -2190,6 +2200,19 @@ void MainWindow::setCurrentPatch(KonfytPatch* newPatch)
 
 }
 
+void MainWindow::setPatchIcon(const KonfytPatch *patch, QListWidgetItem *item, bool current)
+{
+    if (current) {
+        item->setIcon(QIcon(":/icons/play.png"));
+    } else {
+        if (patch->alwaysActive) {
+            item->setIcon(QIcon(":/icons/alwaysactive.png"));
+        } else {
+            item->setIcon(QIcon(":/icons/empty.png"));
+        }
+    }
+}
+
 void MainWindow::setCurrentPatch(int index)
 {
     KonfytProject* prj = getCurrentProject();
@@ -2222,8 +2245,9 @@ void MainWindow::setCurrentPatchIcon()
 {
     KonfytProject* prj = getCurrentProject();
     if ( (currentPatchIndex >= 0) && (currentPatchIndex < prj->getNumPatches()) ) {
+        KonfytPatch* patch = prj->getPatch(currentPatchIndex);
         QListWidgetItem* item = ui->listWidget_Patches->item(currentPatchIndex);
-        item->setIcon(QIcon(":/icons/play.png"));
+        setPatchIcon(patch, item, true);
     }
 }
 
@@ -2231,8 +2255,9 @@ void MainWindow::unsetCurrentPatchIcon()
 {
     KonfytProject* prj = getCurrentProject();
     if ( (currentPatchIndex >= 0) && (currentPatchIndex < prj->getNumPatches()) ) {
+        KonfytPatch* patch = prj->getPatch(currentPatchIndex);
         QListWidgetItem* item = ui->listWidget_Patches->item(currentPatchIndex);
-        item->setIcon(QIcon());
+        setPatchIcon(patch, item, false);
     }
 }
 
@@ -2893,11 +2918,6 @@ void MainWindow::on_toolButton_PatchUp_clicked()
     }
 }
 
-void MainWindow::on_listWidget_Patches_indexesMoved(const QModelIndexList &indexes)
-{
-    userMessage("moved."); // TODO
-}
-
 void MainWindow::on_toolButton_PatchDown_clicked()
 {
     int row = ui->listWidget_Patches->currentRow();
@@ -3278,7 +3298,7 @@ void MainWindow::midi_setLayerSolo(int layer, int midiValue)
 /* MIDI events are waiting in the JACK engine. */
 void MainWindow::midiEventSlot()
 {   
-    QList<KonfytMidiEvent> events = jack->eventsBuffer.readAll();
+    QList<KonfytMidiEvent> events = jack->getEvents();
     for (int i=0; i < events.count(); i++) {
         handleMidiEvent(events[i]);
     }
@@ -3523,7 +3543,7 @@ void MainWindow::onPatchAudioInPortsMenu_ActionTrigger(QAction *action)
 /* Layer midi output channel menu item has been clicked. */
 void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
 {
-    int channel = layerMidiOutChannelMenu_map.value(action);
+    int channel = action->property("midiChannel").toInt();
 
     KonfytPatchLayer layer = layerBusMenu_sourceItem->getPatchLayerItem();
     KonfytMidiFilter filter = layer.getMidiFilter();
@@ -3539,7 +3559,7 @@ void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
 }
 
 /* Menu item has been clicked in the layer MIDI-In port menu. */
-void MainWindow::onLayerMidiInMenu_ActionTrigger(QAction *action)
+void MainWindow::onLayerMidiInPortsMenu_ActionTrigger(QAction *action)
 {
     int portId;
     if (action == layerMidiInPortsMenu_newPortAction) {
@@ -3555,13 +3575,30 @@ void MainWindow::onLayerMidiInMenu_ActionTrigger(QAction *action)
     }
 
     // Set the MIDI Input port in the GUI layer item
-    KonfytPatchLayer layer = layerMidiInMenu_sourceItem->getPatchLayerItem();
+    KonfytPatchLayer layer = layerToolMenu_sourceitem->getPatchLayerItem();
     layer.midiInPortIdInProject = portId;
 
     // Update the layer widget
-    layerMidiInMenu_sourceItem->setLayerItem( layer );
+    layerToolMenu_sourceitem->setLayerItem( layer );
     // Update in pengine
     pengine->setLayerMidiInPort( &layer, portId );
+
+    setPatchModified(true);
+}
+
+void MainWindow::onLayerMidiInChannelMenu_ActionTrigger(QAction *action)
+{
+    int channel = action->property("midiChannel").toInt();
+
+    KonfytPatchLayer layer = layerToolMenu_sourceitem->getPatchLayerItem();
+    KonfytMidiFilter filter = layer.getMidiFilter();
+    filter.inChan = channel;
+    layer.setMidiFilter(filter);
+
+    // Update the layer widget
+    layerToolMenu_sourceitem->setLayerItem( layer );
+    // Update in pengine
+    pengine->setLayerFilter(&layer, filter);
 
     setPatchModified(true);
 }
@@ -3661,22 +3698,6 @@ void MainWindow::on_pushButton_ExtApp_remove_clicked()
     removeProcess(row);
 }
 
-
-/* Slot: on layer item remove button clicked. */
-void MainWindow::onLayer_remove_clicked(konfytLayerWidget *layerItem)
-{
-    // Remove layer item from engine and GUI.
-    removeLayerItem(layerItem);
-}
-
-/* Slot: on layer item filter button clicked. */
-void MainWindow::onLayer_filter_clicked(konfytLayerWidget *layerItem)
-{
-    midiFilterEditType = MidiFilterEditLayer;
-    midiFilterEditItem = layerItem;
-    showMidiFilterEditor();
-}
-
 /* Slot: on layer item slider move. */
 void MainWindow::onLayer_slider_moved(konfytLayerWidget *layerItem, float gain)
 {
@@ -3719,33 +3740,15 @@ void MainWindow::onLayer_bus_clicked(konfytLayerWidget *layerItem)
     // The rest will be done in onlayerBusMenu_ActionTrigger() when the user clicked a menu item.
 }
 
-/* Slot: on layer item Midi-In button clicked. */
-void MainWindow::onLayer_midiIn_clicked(konfytLayerWidget *layerItem)
+void MainWindow::onLayer_toolbutton_clicked(konfytLayerWidget *layerItem)
 {
     // Save the layer item for future use
-    layerMidiInMenu_sourceItem = layerItem;
+    layerToolMenu_sourceitem = layerItem;
 
-    // Show MIDI input port menu
-    gui_updateLayerMidiInPortsMenu();
-    layerMidiInPortsMenu.popup(QCursor::pos());
+    gui_updateLayerToolMenu();
+    layerToolMenu.popup(QCursor::pos());
 
-    // The rest will be done in onLayerMidiInMenu_ActionTrigger() when the user clicked a menu item.
-}
-
-void MainWindow::onLayer_reload_clicked(konfytLayerWidget *layerItem)
-{
-    KonfytPatchLayer l = layerItem->getPatchLayerItem();
-    KonfytPatchLayer lnew = pengine->reloadLayer( &l );
-    layerItem->setLayerItem( lnew );
-
-}
-
-void MainWindow::onLayer_openInFileManager_clicked(konfytLayerWidget *layerItem, QString filepath)
-{
-    // If path is a file, change path to the folder name of the file
-    QFileInfo info(filepath);
-    if (!info.isDir()) { filepath = info.path(); }
-    openFileManager(filepath);
+    // The rest will be done in the menu/submenu trigger slots.
 }
 
 void MainWindow::gui_updateLayerBusMenu()
@@ -3765,17 +3768,16 @@ void MainWindow::gui_updateLayerBusMenu()
 
 void MainWindow::gui_updateLayerMidiOutChannelMenu()
 {
-    static bool done = false;
+    static bool done = false; // Create menu only once
 
     if (!done) {
         done = true;
         layerMidiOutChannelMenu.clear();
-        layerMidiOutChannelMenu_map.clear();
         QAction* action = layerMidiOutChannelMenu.addAction("Original Channel" );
-        layerMidiOutChannelMenu_map.insert(action, -1);
+        action->setProperty("midiChannel", -1);
         for (int i=0; i<=15; i++) {
             QAction* action = layerMidiOutChannelMenu.addAction("Channel " + n2s(i+1));
-            layerMidiOutChannelMenu_map.insert(action, i);
+            action->setProperty("midiChannel", i);
         }
     }
 }
@@ -3805,29 +3807,17 @@ void MainWindow::addLayerItemToGUI(KonfytPatchLayer layerItem)
     connect(gui, &konfytLayerWidget::slider_moved_signal,
             this, &MainWindow::onLayer_slider_moved);
 
-    connect(gui, &konfytLayerWidget::remove_clicked_signal,
-            this, &MainWindow::onLayer_remove_clicked);
-
-    connect(gui, &konfytLayerWidget::filter_clicked_signal,
-            this, &MainWindow::onLayer_filter_clicked);
-
     connect(gui, &konfytLayerWidget::solo_clicked_signal,
             this, &MainWindow::onLayer_solo_clicked);
 
     connect(gui, &konfytLayerWidget::mute_clicked_signal,
             this, &MainWindow::onLayer_mute_clicked);
 
-    connect(gui, &konfytLayerWidget::midiIn_clicked_signal,
-            this, &MainWindow::onLayer_midiIn_clicked);
+    connect(gui, &konfytLayerWidget::toolbutton_clicked_signal,
+            this, &MainWindow::onLayer_toolbutton_clicked);
 
     connect(gui, &konfytLayerWidget::bus_clicked_signal,
             this, &MainWindow::onLayer_bus_clicked);
-
-    connect(gui, &konfytLayerWidget::reload_clicked_signal,
-            this, &MainWindow::onLayer_reload_clicked);
-
-    connect(gui, &konfytLayerWidget::openInFileManager_clicked_signal,
-            this, &MainWindow::onLayer_openInFileManager_clicked);
 
 }
 
@@ -3866,10 +3856,12 @@ void MainWindow::clearLayerItems_GUIonly()
     }
 }
 
-void MainWindow::gui_updateLayerMidiInPortsMenu()
+void MainWindow::gui_updateLayerMidiInPortsAndChansMenu()
 {
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
+
+    // Create MIDI in ports menu
 
     layerMidiInPortsMenu.clear();
     layerMidiInPortsMenu_map.clear();
@@ -3884,6 +3876,53 @@ void MainWindow::gui_updateLayerMidiInPortsMenu()
     layerMidiInPortsMenu.addSeparator();
     layerMidiInPortsMenu_newPortAction = layerMidiInPortsMenu.addAction("New Port");
 
+    // Create MIDI in channels menu & overall menu
+    static bool done = false; // Create menu only once
+    if (!done) {
+        done = true;
+
+        // MIDI Channels
+        layerMidiInChannelMenu.clear();
+        QAction* action = layerMidiInChannelMenu.addAction("All");
+        action->setProperty("midiChannel", -1);
+        for (int i=0; i<=15; i++) {
+            QAction* action = layerMidiInChannelMenu.addAction("Channel " + n2s(i+1));
+            action->setProperty("midiChannel", i);
+        }
+
+        layerMidiInPortsMenu.setTitle("MIDI In Port");
+        layerMidiInChannelMenu.setTitle("MIDI In Channel");
+    }
+
+}
+
+void MainWindow::gui_updateLayerToolMenu()
+{
+    konfytLayerWidget* layerWidget = layerToolMenu_sourceitem;
+    KonfytPatchLayer patchLayer = layerWidget->getPatchLayerItem();
+    KonfytLayerType type = patchLayer.getLayerType();
+
+    layerToolMenu.clear();
+    if (    (type != KonfytLayerType_Uninitialized)
+         && (!patchLayer.hasError())
+         && (type != KonfytLayerType_AudioIn) )
+    {
+        gui_updateLayerMidiInPortsAndChansMenu();
+        layerToolMenu.addMenu(&layerMidiInPortsMenu);
+        layerToolMenu.addMenu(&layerMidiInChannelMenu);
+        layerToolMenu.addAction( ui->actionEdit_MIDI_Filter );
+    }
+    if (    (type == KonfytLayerType_CarlaPlugin)
+         || (type == KonfytLayerType_SoundfontProgram) )
+    {
+        layerToolMenu.addAction( ui->actionReload_Layer );
+    }
+    QString filepath = layerWidget->getFilePath();
+    if (!filepath.isEmpty()) {
+        layerToolMenu.addAction(ui->actionOpen_In_File_Manager_layerwidget);
+    }
+    if (layerToolMenu.actions().count()) { layerToolMenu.addSeparator(); }
+    layerToolMenu.addAction( ui->actionRemove_Layer );
 }
 
 
@@ -4062,13 +4101,6 @@ void MainWindow::on_toolButton_AddPatch_clicked()
 {
     // Add a new patch to the project.
     on_actionNew_Patch_triggered();
-}
-
-/* Save button clicked (not its menu). */
-void MainWindow::on_toolButton_SavePatch_clicked()
-{
-    //on_actionSave_Patch_triggered();
-
 }
 
 
@@ -4662,9 +4694,9 @@ void MainWindow::on_lineEdit_filesystem_path_returnPressed()
 }
 
 
-// Add left and right audio output ports to Jack client for a bus, named
-// according to the given bus number. The left and right port references in Jack
-// are assigned to the leftPort and rightPort parameters.
+/* Add left and right audio output ports to JACK client for a bus, named
+ * according to the given bus number. The left and right port references in JACK
+ * are assigned to the leftPort and rightPort parameters. */
 void MainWindow::addAudioBusToJack(int busNo, int *leftPortId, int *rightPortId)
 {
     *leftPortId = jack->addPort( KonfytJackPortType_AudioOut, "bus_" + n2s( busNo ) + "_L" );
@@ -4761,7 +4793,7 @@ int MainWindow::addMidiInPort()
         jack->setPortFilter(jackPortId, p.filter);
 
         // Add to GUI
-        gui_updateLayerMidiInPortsMenu();
+        gui_updateLayerMidiInPortsAndChansMenu();
 
         return prjPortId;
 
@@ -5108,14 +5140,14 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         jack->removePort(audioInPort.rightJackPortId);
         prj->audioInPort_remove(id);
         tree_audioInMap.remove(item);
-        gui_updatePatchAudioInPortsMenu(); // TODO: why not just do this when opening the menu
+        gui_updatePatchAudioInPortsMenu();
     }
     else if (midiOutSelected) {
         // Remove the port
         jack->removePort(midiOutPort.jackPortId);
         prj->midiOutPort_removePort(id);
         tree_midiOutMap.remove(item);
-        gui_updatePatchMidiOutPortsMenu(); // TODO: why not just do this when opening the menu
+        gui_updatePatchMidiOutPortsMenu();
     } else if (midiInSelected) {
         // Remove the port
         jack->removePort(midiInPort.jackPortId);
@@ -5433,8 +5465,8 @@ void MainWindow::on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int colu
         prj->midiInPort_replace(id, p);
     }
 
-    gui_updatePatchAudioInPortsMenu(); // TODO why not just do this when menu is opened?
-    gui_updatePatchMidiOutPortsMenu(); // TODO why not just do this when menu is opened?
+    gui_updatePatchAudioInPortsMenu();
+    gui_updatePatchMidiOutPortsMenu();
 
 }
 
@@ -5920,4 +5952,42 @@ void MainWindow::on_pushButton_jackCon_OK_clicked()
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 }
 
+/* Action to toggle always-active for current patch. */
+void MainWindow::on_actionAlways_Active_triggered()
+{
+    KonfytPatch* p = pengine->getPatch();
+    p->alwaysActive = !p->alwaysActive;
+    ui->actionAlways_Active->setChecked(p->alwaysActive);
+    ui->label_patch_alwaysActive->setVisible(p->alwaysActive);
 
+    KonfytProject *prj = getCurrentProject();
+    prj->setModified(true);
+}
+
+void MainWindow::on_actionEdit_MIDI_Filter_triggered()
+{
+    midiFilterEditType = MidiFilterEditLayer;
+    midiFilterEditItem = layerToolMenu_sourceitem;
+    showMidiFilterEditor();
+}
+
+void MainWindow::on_actionReload_Layer_triggered()
+{
+    KonfytPatchLayer l = layerToolMenu_sourceitem->getPatchLayerItem();
+    KonfytPatchLayer lnew = pengine->reloadLayer( &l );
+    layerToolMenu_sourceitem->setLayerItem( lnew );
+}
+
+void MainWindow::on_actionOpen_In_File_Manager_layerwidget_triggered()
+{
+    QString filepath = layerToolMenu_sourceitem->getFilePath();
+    // If path is a file, change path to the folder name of the file
+    QFileInfo info(filepath);
+    if (!info.isDir()) { filepath = info.path(); }
+    openFileManager(filepath);
+}
+
+void MainWindow::on_actionRemove_Layer_triggered()
+{
+    removeLayerItem( layerToolMenu_sourceitem );
+}

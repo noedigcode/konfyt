@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -64,11 +64,11 @@ struct KonfytMidiEvent {
     KonfytMidiEvent() : sourceId(-1),
                         type(MIDI_EVENT_TYPE_NOTEON), channel(0),
                         data1(0), data2(0), bankMSB(-1), bankLSB(-1) {}
-    KonfytMidiEvent(QByteArray buffer) {
+    KonfytMidiEvent(const unsigned char* buffer, int size) {
         type = MIDI_TYPE_FROM_BUFFER(buffer);
         channel = MIDI_CHANNEL_FROM_BUFFER(buffer);
         data1 = MIDI_DATA1_FROM_BUFFER(buffer);
-        if (buffer.size() >= 3) { data2 = MIDI_DATA2_FROM_BUFFER(buffer); }
+        if (size >= 3) { data2 = MIDI_DATA2_FROM_BUFFER(buffer); }
         else { data2 = -1; }
         bankMSB = -1;
         bankLSB = -1;

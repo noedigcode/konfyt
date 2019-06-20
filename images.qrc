@@ -1,8 +1,5 @@
 <RCC>
     <qresource prefix="/">
-        <file>icons/midi.png</file>
-        <file>icons/sf2.png</file>
-        <file>icons/sfz.png</file>
         <file>icons/settings.png</file>
         <file>icons/remove.png</file>
         <file>icons/add.png</file>
@@ -20,5 +17,7 @@
         <file>icons/folder.png</file>
         <file>icons/picture.png</file>
         <file>icons/play.png</file>
+        <file>icons/alwaysactive.png</file>
+        <file>icons/empty.png</file>
     </qresource>
 </RCC>

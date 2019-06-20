@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -69,6 +69,7 @@ public:
     QString getPatchName();
     void setPatchNote(QString newNote);
     QString getPatchNote();
+    void setPatchAlwaysActive(bool alwaysActive);
 
     // ----------------------------------------------------
     // Modify layers

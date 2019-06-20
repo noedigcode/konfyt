@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -56,28 +56,28 @@ QString KonfytPatchLayer::getErrorMessage()
 // Accepts an ID which will later be used by the patch class to uniquely identify it.
 void KonfytPatchLayer::initLayer(int id, LayerSoundfontStruct newLayerData)
 {
-    this->ID_in_patch = id;
+    this->idInPatch = id;
     this->layerType = KonfytLayerType_SoundfontProgram;
     this->sfData = newLayerData;
 }
 
 void KonfytPatchLayer::initLayer(int id, LayerCarlaPluginStruct newLayerData)
 {
-    this->ID_in_patch = id;
+    this->idInPatch = id;
     this->layerType = KonfytLayerType_CarlaPlugin;
     this->carlaPluginData = newLayerData;
 }
 
 void KonfytPatchLayer::initLayer(int id, LayerMidiOutStruct newLayerData)
 {
-    this->ID_in_patch = id;
+    this->idInPatch = id;
     this->layerType = KonfytLayerType_MidiOut;
     this->midiOutputPortData = newLayerData;
 }
 
 void KonfytPatchLayer::initLayer(int id, LayerAudioInStruct newLayerData)
 {
-    this->ID_in_patch = id;
+    this->idInPatch = id;
     this->layerType = KonfytLayerType_AudioIn;
     this->audioInPortData = newLayerData;
 }

@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -68,7 +68,6 @@
 #define XML_PRJ_AUDIOIN_PORT_NAME "portName"
 #define XML_PRJ_AUDIOIN_PORT_LGAIN "leftGain"
 #define XML_PRJ_AUDIOIN_PORT_RGAIN "rightGain"
-#define XML_PRJ_AUDIOIN_PORT_BUS "destinationBus"
 #define XML_PRJ_AUDIOIN_PORT_LCLIENT "leftClient"
 #define XML_PRJ_AUDIOIN_PORT_RCLIENT "rightClient"
 #define XML_PRJ_PROCESSLIST "processList"
@@ -91,53 +90,47 @@
 
 struct PrjAudioBus {
     QString busName;
-    int leftJackPortId;
-    float leftGain;
+    int leftJackPortId = -1;
+    float leftGain = 1;
     QStringList leftOutClients;
-    int rightJackPortId;
-    float rightGain;
+    int rightJackPortId = -1;
+    float rightGain = 1;
     QStringList rightOutClients;
 
-    PrjAudioBus() : leftJackPortId(-1), leftGain(1),
-                    rightJackPortId(-1), rightGain(1) {}
+    PrjAudioBus() {}
 };
 
 struct PrjAudioInPort {
     QString portName;
-    int leftJackPortId;
-    int rightJackPortId;
-    float leftGain;
-    float rightGain;
+    int leftJackPortId = -1;
+    int rightJackPortId = -1;
+    float leftGain = 1;
+    float rightGain = 1;
     QStringList leftInClients;
     QStringList rightInClients;
-    int destinationBus;
 
-    PrjAudioInPort() : leftJackPortId(-1), rightJackPortId(-1),
-                       leftGain(1), rightGain(1), destinationBus(-1) {}
+    PrjAudioInPort() {}
 };
 
 struct PrjMidiPort {
     QString portName;
     QStringList clients;
-    int jackPortId;
+    int jackPortId = -1;
     KonfytMidiFilter filter;
 
-    PrjMidiPort() : jackPortId(-1) {}
+    PrjMidiPort() {}
 };
 
 struct KonfytTrigger {
     QString actionText;
-    int type;
-    int channel;
-    int data1;
-    int bankMSB;
-    int bankLSB;
+    int type = -1;
+    int channel = 0;
+    int data1 = -1;
+    int bankMSB = -1;
+    int bankLSB = -1;
 
-    KonfytTrigger() : type(-1),
-                      channel(0),
-                      data1(-1),
-                      bankMSB(-1),
-                      bankLSB(-1) {}
+    KonfytTrigger() {}
+
     int toInt() const
     {
         return hashMidiEventToInt(type, channel, data1, bankMSB, bankLSB);

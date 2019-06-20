@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2019 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -59,13 +59,13 @@ public:
     void setMuteButton(bool mute);
     KonfytPatchLayer getPatchLayerItem();
     QListWidgetItem* getListWidgetItem();
+    QString getFilePath();
     
 private:
     Ui::guiLayerItem *ui;
 
     KonfytPatchLayer g;
     QListWidgetItem* listWidgetItem;
-    QMenu popupMenu;
     QString filepath;
 
     void setUpGUI();
@@ -78,28 +78,19 @@ private:
 
 signals:
     void slider_moved_signal(konfytLayerWidget* layerItem, float gain);
-    void remove_clicked_signal(konfytLayerWidget* layerItem);
-    void filter_clicked_signal(konfytLayerWidget* layerItem);
     void solo_clicked_signal(konfytLayerWidget* layerItem, bool solo);
     void mute_clicked_signal(konfytLayerWidget* layerItem, bool mute);
     void bus_clicked_signal(konfytLayerWidget* layerItem);
-    void midiIn_clicked_signal(konfytLayerWidget* layerItem);
-    void reload_clicked_signal(konfytLayerWidget* layerItem);
-    void openInFileManager_clicked_signal(konfytLayerWidget* layerItem, QString filepath);
+    void toolbutton_clicked_signal(konfytLayerWidget* layerItem);
 
 private slots:
     void on_toolButton_clicked();
     void on_gainSlider_sliderMoved(int position);
 
-    void on_actionEdit_Filter_triggered();
-    void on_actionRemove_Layer_triggered();
     void on_gainSlider_valueChanged(int value);
     void on_toolButton_solo_clicked();
     void on_toolButton_mute_clicked();
     void on_toolButton_bus_clicked();
-    void on_actionReload_Layer_triggered();
-    void on_actionOpen_in_File_Manager_triggered();
-    void on_toolButton_midiInPort_clicked();
 };
 
 #endif // KONFYT_LAYER_WIDGET_H
