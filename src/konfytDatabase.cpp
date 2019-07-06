@@ -203,7 +203,7 @@ konfytDatabase::konfytDatabase()
     sfzTree = new konfytDbTree();
     sfzTree_results = new konfytDbTree();
 
-    qRegisterMetaType<QList<KonfytSoundfont*> >("QList<konfytSoundfont*>");
+    qRegisterMetaType<QList<KonfytSoundfont*> >("QList<KonfytSoundfont*>");
 
     connect(&worker, &konfytDatabaseWorker::userMessage,
             this, &konfytDatabase::userMessageFromWorker);

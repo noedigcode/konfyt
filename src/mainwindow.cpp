@@ -94,7 +94,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     connect(jack, &KonfytJackEngine::jackPortRegisterOrConnectCallback,
             this, &MainWindow::jackPortRegisterOrConnectCallback);
 
-    qRegisterMetaType<KonfytMidiEvent>("KonfytMidiEvent"); // To be able to use konfytMidiEvent in the Qt signal/slot system
+    qRegisterMetaType<KonfytMidiEvent>("KonfytMidiEvent"); // To be able to use KonfytMidiEvent in the Qt signal/slot system
     connect(jack, &KonfytJackEngine::midiEventSignal, this, &MainWindow::midiEventSlot);
 
     connect(jack, &KonfytJackEngine::xrunSignal, this, &MainWindow::jackXrun);
@@ -159,6 +159,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     // ----------------------------------------------------
 
     connect(&db, &konfytDatabase::userMessage, this, &MainWindow::userMessage);
+
 
     connect(&db, &konfytDatabase::scanDirs_finished,
             this, &MainWindow::database_scanDirsFinished);
@@ -2765,7 +2766,7 @@ void MainWindow::timerEvent(QTimerEvent *ev)
         // We are busy waiting for something (startWaiter() has been called).
         // Rotate the cool fan in the statusbar.
         QString anim = "|/-\\";
-        ui->statusBar->showMessage(QString(anim.at(waiterState)) + " " + waiterMessage);
+        ui->statusBar->showMessage(waiterMessage + "   " + QString(anim.at(waiterState)));
         waiterState++;
         if (waiterState >= anim.count()) {
             waiterState = 0;
@@ -2867,9 +2868,7 @@ void MainWindow::database_returnSfont(KonfytSoundfont *sf)
 // Rescan database button pressed.
 void MainWindow::on_pushButtonSettings_RescanLibrary_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->page_Waiting);
     applySettings();
-
     db.clearDatabase();
     scanForDatabase();
 }
@@ -2877,13 +2876,9 @@ void MainWindow::on_pushButtonSettings_RescanLibrary_clicked()
 // Quick scan database button clicked
 void MainWindow::on_pushButtonSettings_QuickRescanLibrary_clicked()
 {
-    startWaiter("Scanning database...");
     applySettings();
-
     db.clearDatabase_exceptSoundfonts();
     scanForDatabase();
-    // This will be done in the background and database_scanDirsFinished()
-    // will be called when done.
 }
 
 void MainWindow::scanThreadFihishedSlot()
