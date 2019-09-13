@@ -209,6 +209,12 @@ private:
     QMap<int, GidLsDevice> mdevs;
     QMap<int, GidLsChannel> chans;
 
+    // Parameter constnats
+    const char* KEY_NAME = "NAME";
+    const char* KEY_CHANNELS = "CHANNELS";
+    const char* KEY_PORTS = "PORTS";
+    const char* VAL_0 = "0";
+
 private slots:
     void clientInitialised();
 

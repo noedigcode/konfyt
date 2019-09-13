@@ -348,6 +348,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     // Layer MIDI input channel menu
     connect(&layerMidiInChannelMenu, &QMenu::triggered,
             this, &MainWindow::onLayerMidiInChannelMenu_ActionTrigger);
+    createLayerMidiInChannelMenu();
 
     // If one of the paths are not set, show settings. Else, switch to patch view.
     if ( (projectsDir == "") || (patchesDir == "") || (soundfontsDir == "") || (sfzDir == "") ) {
@@ -1452,7 +1453,7 @@ void MainWindow::setCurrentProject(int i)
     }
 
     // Update the port menus in patch view
-    gui_updateLayerMidiInPortsAndChansMenu();
+    gui_updateLayerMidiInPortsMenu();
     gui_updatePatchMidiOutPortsMenu();
     gui_updatePatchAudioInPortsMenu();
 
@@ -1535,7 +1536,7 @@ void MainWindow::setCurrentProject(int i)
         }
     }
 
-    // Update other JACK connections in Jack
+    // Update other JACK connections in JACK
     jack->clearOtherJackConPair();
     // MIDI
     QList<KonfytJackConPair> jackCons = prj->getJackMidiConList();
@@ -1573,8 +1574,10 @@ void MainWindow::setCurrentProject(int i)
     ui->tabWidget_Projects->setCurrentIndex(currentProject);
     ui->tabWidget_Projects->blockSignals(false);
 
-    jack->pauseJackProcessing(false);
+    // Default to patch view (ensure no edit screens are open for previous projects)
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 
+    jack->pauseJackProcessing(false);
 }
 
 /* Update the midi output ports menu */
@@ -2198,6 +2201,8 @@ void MainWindow::setCurrentPatch(KonfytPatch* newPatch)
 {
     this->masterPatch = newPatch;
     loadPatchForModeAndUpdateGUI();
+    // Send MIDI events associated with patch layers
+    pengine->sendCurrentPatchMidi();
 
 }
 
@@ -2376,33 +2381,6 @@ void MainWindow::addSfzToCurrentPatch(QString sfzPath)
 
     // Add layer to engine
     KonfytPatchLayer g = pengine->addSfzLayer(sfzPath);
-
-    // Add layer to GUI
-    addLayerItemToGUI(g);
-
-    setPatchModified(true);
-}
-
-void MainWindow::addLV2ToCurrentPatch(QString lv2Path)
-{
-    newPatchIfMasterNull();
-
-    // Add layer to engine
-    KonfytPatchLayer g = pengine->addLV2Layer(lv2Path);
-
-    // Add layer to GUI
-    addLayerItemToGUI(g);
-
-    setPatchModified(true);
-}
-
-// Adds an internal Carla plugin to the current patch in engine and GUI.
-void MainWindow::addCarlaInternalToCurrentPatch(QString URI)
-{
-    newPatchIfMasterNull();
-
-    // Add layer to engine
-    KonfytPatchLayer g = pengine->addCarlaInternalLayer(URI);
 
     // Add layer to GUI
     addLayerItemToGUI(g);
@@ -3312,17 +3290,11 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
                     + " from port " + p.portName);
     }
 
+    // MIDI indicator "LED"
     if ( !midiIndicatorTimer.isActive() ) {
         ui->MIDI_indicator->setChecked(true);
         midiIndicatorTimer.start(500, this);
     }
-
-
-    // Set the "last" lineEdits in the MidiFilter view
-    midiFilter_lastChan = ev.channel;
-    midiFilter_lastData1 = ev.data1;
-    midiFilter_lastData2 = ev.data2;
-    updateMidiFilterEditorLastRx();
 
     // Save bank selects
     if (ev.type == MIDI_EVENT_TYPE_CC) {
@@ -3347,6 +3319,40 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
         lastBankSelectLSB = -1;
     }
 
+    // MIDI Filter Editor "last" lineEdits
+    midiFilter_lastChan = ev.channel;
+    midiFilter_lastData1 = ev.data1;
+    midiFilter_lastData2 = ev.data2;
+    updateMidiFilterEditorLastRx();
+
+    // MIDI send list editor page
+    if (ui->stackedWidget->currentWidget() == ui->midiSendListPage) {
+
+        // Add event to last received events list
+        ui->listWidget_midiSendList_lastReceived->addItem( ev.toString() );
+        midiSendEditorLastEvents.append(ev);
+
+        // If event is a program and the previous messages happened to be bank MSB and LSB,
+        // then add an extra program event which includes the bank.
+        if (ev.type == MIDI_EVENT_TYPE_PROGRAM) {
+            if (lastBankSelectMSB >= 0) {
+                if (lastBankSelectLSB >= 0) {
+                    ev.bankLSB = lastBankSelectLSB;
+                    ev.bankMSB = lastBankSelectMSB;
+                    ui->listWidget_midiSendList_lastReceived->addItem( ev.toString() );
+                    midiSendEditorLastEvents.append(ev);
+                }
+            }
+        }
+
+        // The list shouldn't get too crowded
+        while (midiSendEditorLastEvents.count() > 15) {
+            midiSendEditorLastEvents.removeFirst();
+            delete ui->listWidget_midiSendList_lastReceived->item(0);
+        }
+    }
+
+    // Triggers page events list
     if (ui->stackedWidget->currentWidget() == ui->triggersPage) {
 
         // Add event to last received events list
@@ -3598,6 +3604,12 @@ void MainWindow::onLayerMidiInChannelMenu_ActionTrigger(QAction *action)
     setPatchModified(true);
 }
 
+void MainWindow::onLayer_midiSend_clicked(konfytLayerWidget *layerItem)
+{
+    KonfytPatchLayer patchLayer = layerItem->getPatchLayerItem();
+    pengine->sendLayerMidi( &patchLayer );
+}
+
 /* Layer bus menu item has been clicked. */
 void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
 {
@@ -3814,6 +3826,9 @@ void MainWindow::addLayerItemToGUI(KonfytPatchLayer layerItem)
     connect(gui, &konfytLayerWidget::bus_clicked_signal,
             this, &MainWindow::onLayer_bus_clicked);
 
+    connect(gui, &konfytLayerWidget::sendMidiEvents_clicked_signal,
+            this, &MainWindow::onLayer_midiSend_clicked);
+
 }
 
 /* Remove a layer item from the layer list.
@@ -3851,7 +3866,7 @@ void MainWindow::clearLayerItems_GUIonly()
     }
 }
 
-void MainWindow::gui_updateLayerMidiInPortsAndChansMenu()
+void MainWindow::gui_updateLayerMidiInPortsMenu()
 {
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
@@ -3870,25 +3885,24 @@ void MainWindow::gui_updateLayerMidiInPortsAndChansMenu()
     }
     layerMidiInPortsMenu.addSeparator();
     layerMidiInPortsMenu_newPortAction = layerMidiInPortsMenu.addAction("New Port");
+}
 
-    // Create MIDI in channels menu & overall menu
-    static bool done = false; // Create menu only once
-    if (!done) {
-        done = true;
+void MainWindow::createLayerMidiInChannelMenu()
+{
+    layerMidiInChannelMenu.clear();
 
-        // MIDI Channels
-        layerMidiInChannelMenu.clear();
-        QAction* action = layerMidiInChannelMenu.addAction("All");
-        action->setProperty("midiChannel", -1);
-        for (int i=0; i<=15; i++) {
-            QAction* action = layerMidiInChannelMenu.addAction("Channel " + n2s(i+1));
-            action->setProperty("midiChannel", i);
-        }
+    // "All" entry
+    QAction* action = layerMidiInChannelMenu.addAction("All");
+    action->setProperty("midiChannel", -1);
 
-        layerMidiInPortsMenu.setTitle("MIDI In Port");
-        layerMidiInChannelMenu.setTitle("MIDI In Channel");
+    // MIDI channels
+    for (int i=0; i<=15; i++) {
+        QAction* action = layerMidiInChannelMenu.addAction("Channel " + n2s(i+1));
+        action->setProperty("midiChannel", i);
     }
 
+    layerMidiInPortsMenu.setTitle("MIDI In Port");
+    layerMidiInChannelMenu.setTitle("MIDI In Channel");
 }
 
 void MainWindow::gui_updateLayerToolMenu()
@@ -3902,12 +3916,15 @@ void MainWindow::gui_updateLayerToolMenu()
          && (!patchLayer.hasError())
          && (type != KonfytLayerType_AudioIn) )
     {
-        gui_updateLayerMidiInPortsAndChansMenu();
+        gui_updateLayerMidiInPortsMenu();
         layerToolMenu.addMenu(&layerMidiInPortsMenu);
         layerToolMenu.addMenu(&layerMidiInChannelMenu);
         layerToolMenu.addAction( ui->actionEdit_MIDI_Filter );
     }
-    if (    (type == KonfytLayerType_CarlaPlugin)
+    if (type == KonfytLayerType_MidiOut) {
+        layerToolMenu.addAction( ui->actionEdit_MIDI_Send_List );
+    }
+    if (    (type == KonfytLayerType_Sfz)
          || (type == KonfytLayerType_SoundfontProgram) )
     {
         layerToolMenu.addAction( ui->actionReload_Layer );
@@ -4301,11 +4318,7 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     setProjectModified();
 
     // Switch back to previous view
-    if (midiFilterEditType == MidiFilterEditPort) {
-        ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
-    } else {
-        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
-    }
+    on_pushButton_midiFilter_Cancel_clicked();
 }
 
 
@@ -4788,7 +4801,7 @@ int MainWindow::addMidiInPort()
         jack->setPortFilter(jackPortId, p.filter);
 
         // Add to GUI
-        gui_updateLayerMidiInPortsAndChansMenu();
+        gui_updateLayerMidiInPortsMenu();
 
         return prjPortId;
 
@@ -5002,7 +5015,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             bool append = false;
             if (busSelected) {
                 if ( (layer.getLayerType() == KonfytLayerType_AudioIn)
-                     || ( layer.getLayerType() == KonfytLayerType_CarlaPlugin)
+                     || ( layer.getLayerType() == KonfytLayerType_Sfz)
                      || ( layer.getLayerType() == KonfytLayerType_SoundfontProgram) ) {
                     append = layer.busIdInProject == id;
                 }
@@ -5018,7 +5031,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 }
             }
             if (midiInSelected) {
-                if ( (layer.getLayerType() == KonfytLayerType_CarlaPlugin)
+                if ( (layer.getLayerType() == KonfytLayerType_Sfz)
                      || ( layer.getLayerType() == KonfytLayerType_MidiOut)
                      || ( layer.getLayerType() == KonfytLayerType_SoundfontProgram) ) {
                     append = layer.midiInPortIdInProject == id;
@@ -5942,6 +5955,74 @@ void MainWindow::on_toolButton_MidiFilter_VelLimitMax_last_clicked()
     ui->spinBox_midiFilter_VelLimitMax->setValue( midiFilter_lastData2 );
 }
 
+void MainWindow::showMidiSendListEditor()
+{
+    midiSendList = midiSendListEditItem->getPatchLayerItem().midiSendList;
+
+    ui->listWidget_midiSendList->clear();
+    foreach (KonfytMidiEvent event, midiSendList) {
+        ui->listWidget_midiSendList->addItem(event.toString());
+    }
+
+    // Set default event in editor
+    KonfytMidiEvent e;
+    midiEventToMidiSendEditor(e);
+
+    // Switch to MIDI send list editor page
+    ui->stackedWidget->setCurrentWidget(ui->midiSendListPage);
+}
+
+void MainWindow::midiEventToMidiSendEditor(KonfytMidiEvent event)
+{
+    int comboIndex = midiSendTypeComboItems.indexOf(event.type);
+    if (comboIndex < 0) { comboIndex = 0; }
+    ui->comboBox_midiSendList_type->setCurrentIndex(comboIndex);
+
+    // Channel in GUI is 1-based, but in event it is 0-based.
+    ui->spinBox_midiSendList_channel->setValue(event.channel + 1);
+
+    ui->spinBox_midiSendList_cc_data1->setValue(event.data1);
+    ui->spinBox_midiSendList_cc_data2->setValue(event.data2);
+
+    ui->spinBox_midiSendList_program->setValue(event.data1);
+    ui->checkBox_midiSendList_bank->setChecked(event.bankMSB >= 0);
+    ui->spinBox_midiSendList_msb->setValue(event.bankMSB);
+    ui->spinBox_midiSendList_lsb->setValue(event.bankLSB);
+
+    ui->spinBox_midiSendList_pitchbend->setValue(event.pitchbendValue_signed());
+}
+
+KonfytMidiEvent MainWindow::midiEventFromMidiSendEditor()
+{
+    KonfytMidiEvent e;
+
+    e.type = midiSendTypeComboItems.value(
+                ui->comboBox_midiSendList_type->currentIndex(),
+                MIDI_EVENT_TYPE_CC);
+
+    // Channel in GUI is 1-based, but in event it is 0-based.
+    e.channel = ui->spinBox_midiSendList_channel->value() - 1;
+
+    if (e.type == MIDI_EVENT_TYPE_PITCHBEND) {
+
+        e.setPitchbendData(ui->spinBox_midiSendList_pitchbend->value());
+
+    } else if (e.type == MIDI_EVENT_TYPE_PROGRAM) {
+
+        e.data1 = ui->spinBox_midiSendList_program->value();
+        if (ui->checkBox_midiSendList_bank->isChecked()) {
+            e.bankMSB = ui->spinBox_midiSendList_msb->value();
+            e.bankLSB = ui->spinBox_midiSendList_lsb->value();
+        }
+
+    } else {
+        e.data1 = ui->spinBox_midiSendList_cc_data1->value();
+        e.data2 = ui->spinBox_midiSendList_cc_data2->value();
+    }
+
+    return e;
+}
+
 void MainWindow::on_pushButton_jackCon_OK_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
@@ -5985,4 +6066,183 @@ void MainWindow::on_actionOpen_In_File_Manager_layerwidget_triggered()
 void MainWindow::on_actionRemove_Layer_triggered()
 {
     removeLayerItem( layerToolMenu_sourceitem );
+}
+
+void MainWindow::on_pushButton_midiSendList_apply_clicked()
+{
+    KonfytPatchLayer patchLayer = midiSendListEditItem->getPatchLayerItem();
+    patchLayer.midiSendList = midiSendList;
+
+    // Update in engine
+    pengine->setLayerMidiSendList(&patchLayer, midiSendList);
+
+    // Update in GUI layer item
+    midiSendListEditItem->setLayerItem(patchLayer);
+
+    // Indicate project needs to be saved
+    setProjectModified();
+
+    // Switch back to patch view
+    on_pushButton_midiSendList_cancel_clicked();
+}
+
+void MainWindow::on_pushButton_midiSendList_cancel_clicked()
+{
+    // Switch back to patch view
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+}
+
+void MainWindow::on_pushButton_midiSendList_add_clicked()
+{
+    KonfytMidiEvent e = midiEventFromMidiSendEditor();
+
+    // Add event
+    midiSendList.append(e);
+    ui->listWidget_midiSendList->addItem(e.toString());
+}
+
+void MainWindow::on_comboBox_midiSendList_type_currentIndexChanged(int index)
+{
+    int type = midiSendTypeComboItems.value(index, MIDI_EVENT_TYPE_CC);
+    switch (type) {
+    case MIDI_EVENT_TYPE_CC:
+        ui->stackedWidget_midiSend->setCurrentWidget(ui->page_midiSend_cc);
+        break;
+    case MIDI_EVENT_TYPE_PROGRAM:
+        ui->stackedWidget_midiSend->setCurrentWidget(ui->page_midiSend_program);
+        break;
+    case MIDI_EVENT_TYPE_NOTEON:
+        ui->stackedWidget_midiSend->setCurrentWidget(ui->page_midiSend_cc);
+        break;
+    case MIDI_EVENT_TYPE_NOTEOFF:
+        ui->stackedWidget_midiSend->setCurrentWidget(ui->page_midiSend_cc);
+        break;
+    case MIDI_EVENT_TYPE_PITCHBEND:
+        ui->stackedWidget_midiSend->setCurrentWidget(ui->page_midiSend_pitchbend);
+        break;
+    }
+}
+
+/* MIDI send list program bank checkbox: enable/disable bank select boxes. */
+void MainWindow::on_checkBox_midiSendList_bank_stateChanged(int arg1)
+{
+    bool enabled = (arg1 == Qt::Checked);
+    ui->spinBox_midiSendList_msb->setEnabled(enabled);
+    ui->spinBox_midiSendList_lsb->setEnabled(enabled);
+    // If disabled, set MSB and LSB to -1 to indicate no bank select.
+    if (!enabled) {
+        ui->spinBox_midiSendList_msb->setValue(-1);
+        ui->spinBox_midiSendList_lsb->setValue(-1);
+    }
+}
+
+void MainWindow::on_listWidget_midiSendList_currentRowChanged(int currentRow)
+{
+    if (currentRow >= 0) {
+        // Valid item selected
+        midiEventToMidiSendEditor(midiSendList[currentRow]);
+    } else {
+        // No item selected
+        KonfytMidiEvent e;
+        midiEventToMidiSendEditor(e);
+    }
+}
+
+void MainWindow::on_pushButton_midiSendList_pbmin_clicked()
+{
+    ui->spinBox_midiSendList_pitchbend->setValue(MIDI_PITCHBEND_SIGNED_MIN);
+}
+
+void MainWindow::on_pushButton_midiSendList_pbzero_clicked()
+{
+    ui->spinBox_midiSendList_pitchbend->setValue(0);
+}
+
+void MainWindow::on_pushButton_midiSendList_pbmax_clicked()
+{
+    ui->spinBox_midiSendList_pitchbend->setValue(MIDI_PITCHBEND_SIGNED_MAX);
+}
+
+void MainWindow::on_actionEdit_MIDI_Send_List_triggered()
+{
+    midiSendListEditItem = layerToolMenu_sourceitem;
+    showMidiSendListEditor();
+}
+
+void MainWindow::on_listWidget_midiSendList_lastReceived_itemClicked(QListWidgetItem *item)
+{
+    int index = ui->listWidget_midiSendList_lastReceived->row(item);
+    KonfytMidiEvent event = midiSendEditorLastEvents[index];
+    midiEventToMidiSendEditor(event);
+}
+
+void MainWindow::on_pushButton_midiSendList_replace_clicked()
+{
+    int index = ui->listWidget_midiSendList->currentRow();
+    if (index < 0) { return; }
+
+    KonfytMidiEvent e = midiEventFromMidiSendEditor();
+    midiSendList.replace(index, e);
+    ui->listWidget_midiSendList->item(index)->setText(e.toString());
+}
+
+void MainWindow::on_toolButton_midiSendList_down_clicked()
+{
+    int index = ui->listWidget_midiSendList->currentRow();
+    if (index < 0) { return; }
+
+    int nexti = index + 1;
+    if (nexti >= midiSendList.count()) {
+        nexti = 0;
+    }
+
+    midiSendList.move(index, nexti);
+    ui->listWidget_midiSendList->insertItem(
+                nexti, ui->listWidget_midiSendList->takeItem(index));
+    ui->listWidget_midiSendList->setCurrentRow(nexti);
+}
+
+void MainWindow::on_toolButton_midiSendList_up_clicked()
+{
+    int index = ui->listWidget_midiSendList->currentRow();
+    if (index < 0) { return; }
+
+    int nexti = index - 1;
+    if (nexti < 0) {
+        nexti = midiSendList.count() - 1;
+    }
+
+    midiSendList.move(index, nexti);
+    ui->listWidget_midiSendList->insertItem(
+                nexti, ui->listWidget_midiSendList->takeItem(index));
+    ui->listWidget_midiSendList->setCurrentRow(nexti);
+}
+
+void MainWindow::on_pushButton_midiSendList_remove_clicked()
+{
+    int index = ui->listWidget_midiSendList->currentRow();
+    if (index < 0) { return; }
+
+    midiSendList.removeAt(index);
+    delete ui->listWidget_midiSendList->item(index);
+}
+
+void MainWindow::on_pushButton_midiSendList_sendSelected_clicked()
+{
+    int index = ui->listWidget_midiSendList->currentRow();
+    if (index < 0) { return; }
+
+    KonfytMidiEvent event = midiSendList[index];
+    KonfytPatchLayer p = midiSendListEditItem->getPatchLayerItem();
+    if (!p.hasError()) {
+        jack->sendMidiEventsOnRoute(p.midiOutputPortData.jackRouteId, {event});
+    }
+}
+
+void MainWindow::on_pushButton_midiSendList_sendAll_clicked()
+{
+    KonfytPatchLayer p = midiSendListEditItem->getPatchLayerItem();
+    if (!p.hasError()) {
+        jack->sendMidiEventsOnRoute(p.midiOutputPortData.jackRouteId, midiSendList);
+    }
 }

@@ -21,20 +21,6 @@
 
 #include "konfytMidiFilter.h"
 
-KonfytMidiFilter::KonfytMidiFilter()
-{
-    this->passAllCC = false;
-
-    this->passCC.append(64); // 64 = sustain pedal
-
-    this->passProg = false;
-    this->passPitchbend = true;
-
-    this->inChan = -1; // -1 = any
-    this->outChan = -1; // -1 = original
-
-}
-
 void KonfytMidiFilter::setPassAll()
 {
     this->passAllCC = true;

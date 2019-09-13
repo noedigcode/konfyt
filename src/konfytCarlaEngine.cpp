@@ -226,7 +226,7 @@ void KonfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
     // Must be set for some internal plugins to work
     carla_set_engine_option(ENGINE_OPTION_PATH_RESOURCES, 0, "/usr/lib/lv2/carla.lv2/resources/");
     // Set the engine callback
-    carla_set_engine_callback(KonfytCarlaEngine::carlaEngineCallback, this);
+    //carla_set_engine_callback(KonfytCarlaEngine::carlaEngineCallback, this);
     // TODO: Handle the case where this name is already taken.
     carla_engine_init("JACK", jack_client_name.toLocal8Bit().constData());
 }
@@ -234,33 +234,6 @@ void KonfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
 QString KonfytCarlaEngine::jackClientName()
 {
     return jack_client_name;
-}
-
-void KonfytCarlaEngine::carlaEngineCallback(void *ptr, EngineCallbackOpcode action, uint pluginId, int value1, int value2, int value3, float valuef, const char *valueStr)
-{
-    return;
-
-    KonfytCarlaEngine* e = (KonfytCarlaEngine*)ptr;
-
-    e->userMessage("Carla callback, action " + n2s(action) + ", plugin " + n2s(pluginId));
-
-    QString msg = "CARLA CALLBACK: ";
-
-    switch (action) {
-    case ENGINE_CALLBACK_PLUGIN_ADDED:
-        e->userMessage(msg + "Plugin added, pluginId " + n2s(pluginId));
-        break;
-    case ENGINE_CALLBACK_PLUGIN_REMOVED:
-        e->userMessage(msg + "Plugin removed, pluginId " + n2s(pluginId));
-        break;
-    case ENGINE_CALLBACK_PARAMETER_VALUE_CHANGED:
-        e->userMessage(msg + "Plugin parameter value changed, pluginId " + n2s(pluginId) + ", param " + n2s(value1) + ", value " + n2s(valuef));
-        break;
-    default:
-        break;
-    }
-
-
 }
 
 
@@ -273,8 +246,6 @@ void KonfytCarlaEngine::setGain(int ID, float newGain)
 
     carla_set_volume( pluginIdInCarla, newGain );
 }
-
-
 
 
 // Print error message to stdout, and abort app.

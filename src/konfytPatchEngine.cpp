@@ -55,7 +55,7 @@ void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytA
     fluidsynthEngine = e;
     jack->setFluidsynthEngine(e); // Give to Jack so it can get sound out of it.
 
-    // Initialise Carla Backend
+    // Initialise SFZ Backend
 
     bridge = appInfo.bridge;
     if (bridge) {
@@ -142,60 +142,49 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
     currentPatch = newPatch;
 
     // ---------------------------------------------------
-    // Carla plugin layers:
+    // SFZ layers:
     // ---------------------------------------------------
 
-    // For each carla plugin in the patch...
+    // For each SFZ layer in the patch...
     QList<KonfytPatchLayer> pluginList = currentPatch->getPluginLayerList();
     for (int i=0; i<pluginList.count(); i++) {
         // If layer indexInEngine is -1, the layer hasn't been loaded yet.
         KonfytPatchLayer layer = pluginList[i];
-        if (patchIsNew) { layer.carlaPluginData.indexInEngine = -1; }
-        if ( layer.carlaPluginData.indexInEngine == -1 ) {
-            // Load in Carla engine
-            int ID = -1;
-            if ( layer.carlaPluginData.pluginType == KonfytCarlaPluginType_LV2 ) {
+        if (patchIsNew) { layer.sfzData.indexInEngine = -1; }
+        if ( layer.sfzData.indexInEngine == -1 ) {
 
-                // Old experimental code is in a huge comment in konfytCarlaEngine
-
-            } else if ( layer.carlaPluginData.pluginType == KonfytCarlaPluginType_SFZ ) {
-
-                ID = sfzEngine->addSfz( layer.carlaPluginData.path );
-
-            } else if ( layer.carlaPluginData.pluginType == KonfytCarlaPluginType_Internal ) {
-
-                // Old experimental code is in a huge comment in konfytCarlaEngine
-            }
+            // Load in SFZ engine
+            int ID = sfzEngine->addSfz( layer.sfzData.path );
 
             if (ID < 0) {
-                layer.setErrorMessage("Failed to load Carla plugin " + layer.carlaPluginData.path);
+                layer.setErrorMessage("Failed to load SFZ: " + layer.sfzData.path);
                 r = false;
             } else {
-                layer.carlaPluginData.indexInEngine = ID;
-                layer.carlaPluginData.name = sfzEngine->pluginName(ID);
-                // Add to jack engine
+                layer.sfzData.indexInEngine = ID;
+                layer.sfzData.name = sfzEngine->pluginName(ID);
+                // Add to JACK engine
 
                 // Find the plugin midi input port
-                layer.carlaPluginData.midi_in_port = sfzEngine->midiInJackPortName(ID);
+                layer.sfzData.midi_in_port = sfzEngine->midiInJackPortName(ID);
 
                 // Find the plugin audio output ports
                 QStringList audioLR = sfzEngine->audioOutJackPortNames(ID);
-                layer.carlaPluginData.audio_out_port_left = audioLR[0];
-                layer.carlaPluginData.audio_out_port_right = audioLR[1];
+                layer.sfzData.audio_out_port_left = audioLR[0];
+                layer.sfzData.audio_out_port_right = audioLR[1];
 
                 // The plugin object now contains the midi input port and
-                // audio left and right output ports. Give this to Jack, which will:
+                // audio left and right output ports. Give this to JACK, which will:
                 // - create a midi output port and connect it to the plugin midi input port,
                 // - create audio input ports and connect it to the plugin audio output ports.
                 // - assigns the midi filter
                 KonfytJackPortsSpec spec;
-                spec.name = layer.carlaPluginData.name;
-                spec.midiOutConnectTo = layer.carlaPluginData.midi_in_port;
-                spec.midiFilter = layer.carlaPluginData.midiFilter;
-                spec.audioInLeftConnectTo = layer.carlaPluginData.audio_out_port_left;
-                spec.audioInRightConnectTo = layer.carlaPluginData.audio_out_port_right;
+                spec.name = layer.sfzData.name;
+                spec.midiOutConnectTo = layer.sfzData.midi_in_port;
+                spec.midiFilter = layer.sfzData.midiFilter;
+                spec.audioInLeftConnectTo = layer.sfzData.audio_out_port_left;
+                spec.audioInRightConnectTo = layer.sfzData.audio_out_port_right;
                 int jackId = jack->addPluginPortsAndConnect( spec );
-                layer.carlaPluginData.portsIdInJackEngine = jackId;
+                layer.sfzData.portsIdInJackEngine = jackId;
 
                 // Gain, solo, mute and bus are set later in refershAllGainsAndRouting()
             }
@@ -213,18 +202,18 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
     for (int i=0; i < sflist.count(); i++) {
         // If layer indexInEngine is -1, layer hasn't been loaded yet.
         KonfytPatchLayer layer = sflist[i];
-        if (patchIsNew) { layer.sfData.indexInEngine = -1; }
-        if ( layer.sfData.indexInEngine == -1 ) {
+        if (patchIsNew) { layer.soundfontData.indexInEngine = -1; }
+        if ( layer.soundfontData.indexInEngine == -1 ) {
             // Load in Fluidsynth engine
-            int ID = fluidsynthEngine->addSoundfontProgram( layer.sfData.program );
+            int ID = fluidsynthEngine->addSoundfontProgram( layer.soundfontData.program );
             if (ID < 0) {
                 layer.setErrorMessage("Failed to load soundfont.");
                 r = false;
             } else {
-                layer.sfData.indexInEngine = ID;
+                layer.soundfontData.indexInEngine = ID;
                 // Add to Jack engine (this also assigns the midi filter)
-                int jackId = jack->addSoundfont( layer.sfData );
-                layer.sfData.idInJackEngine = jackId;
+                int jackId = jack->addSoundfont( layer.soundfontData );
+                layer.soundfontData.idInJackEngine = jackId;
                 // Gain, solo, mute and bus are set later in refreshAllGainsAndRouting()
             }
             // Update layer in patch
@@ -244,9 +233,24 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
             // Routes haven't been created yet
 
             // Get source ports
-            PrjAudioInPort srcPorts = currentProject->audioInPort_getPort(layer.audioInPortData.portIdInProject);
+            int portId = layer.audioInPortData.portIdInProject;
+            if (!currentProject->audioInPort_exists(portId)) {
+                layer.setErrorMessage("No audio-in port in project: " + n2s(portId));
+                userMessage("loadPatch: " + layer.getErrorMessage());
+                // Update layer in patch
+                currentPatch->replaceLayer(layer);
+                continue;
+            }
+            PrjAudioInPort srcPorts = currentProject->audioInPort_getPort(portId);
 
             // Get destination ports (bus)
+            if (!currentProject->audioBus_exists(layer.busIdInProject)) {
+                layer.setErrorMessage("No bus in project: " + n2s(portId));
+                userMessage("loadPatch: " + layer.getErrorMessage());
+                // Update layer in patch
+                currentPatch->replaceLayer(layer);
+                continue;
+            }
             PrjAudioBus destPorts = currentProject->audioBus_getBus(layer.busIdInProject);
 
             // Route for left port
@@ -272,9 +276,23 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
             // Route hasn't been created yet
 
             // Get source port
+            if (!currentProject->midiInPort_exists(layer.midiInPortIdInProject)) {
+                layer.setErrorMessage("No MIDI-in port in project: " + n2s(layer.midiInPortIdInProject));
+                userMessage("loadPatch: " + layer.getErrorMessage());
+                // Update layer in patch
+                currentPatch->replaceLayer(layer);
+                continue;
+            }
             PrjMidiPort srcPort = currentProject->midiInPort_getPort(layer.midiInPortIdInProject);
 
             // Get destination port
+            if (!currentProject->midiOutPort_exists(layer.midiOutputPortData.portIdInProject)) {
+                layer.setErrorMessage("No MIDI-out port in project: " + n2s(layer.midiOutputPortData.portIdInProject));
+                userMessage("loadPatch: " + layer.getErrorMessage());
+                // Update layer in patch
+                currentPatch->replaceLayer(layer);
+                continue;
+            }
             PrjMidiPort destPort = currentProject->midiOutPort_getPort(layer.midiOutputPortData.portIdInProject);
 
             // Create route
@@ -344,23 +362,23 @@ void KonfytPatchEngine::unloadLayer(KonfytPatch *patch, KonfytPatchLayer *item)
 {
     KonfytPatchLayer layer = patch->getLayerItem( *item );
     if (layer.getLayerType() == KonfytLayerType_SoundfontProgram) {
-        if (layer.sfData.indexInEngine >= 0) {
+        if (layer.soundfontData.indexInEngine >= 0) {
             // First remove from jack
-            jack->removeSoundfont(layer.sfData.idInJackEngine);
+            jack->removeSoundfont(layer.soundfontData.idInJackEngine);
             // Then from fluidsynthEngine
-            fluidsynthEngine->removeSoundfontProgram(layer.sfData.indexInEngine);
+            fluidsynthEngine->removeSoundfontProgram(layer.soundfontData.indexInEngine);
             // Set unloaded in patch
-            layer.sfData.indexInEngine = -1;
+            layer.soundfontData.indexInEngine = -1;
             patch->replaceLayer(layer);
         }
-    } else if (layer.getLayerType() == KonfytLayerType_CarlaPlugin) {
-        if (layer.carlaPluginData.indexInEngine >= 0) {
-            // First remove from jack
-            jack->removePlugin(layer.carlaPluginData.portsIdInJackEngine);
-            // Then from carlaEngine
-            sfzEngine->removeSfz(layer.carlaPluginData.indexInEngine);
+    } else if (layer.getLayerType() == KonfytLayerType_Sfz) {
+        if (layer.sfzData.indexInEngine >= 0) {
+            // First remove from JACK
+            jack->removePlugin(layer.sfzData.portsIdInJackEngine);
+            // Then from SFZ engine
+            sfzEngine->removeSfz(layer.sfzData.indexInEngine);
             // Set unloaded in patch
-            layer.carlaPluginData.indexInEngine = -1;
+            layer.sfzData.indexInEngine = -1;
             patch->replaceLayer(layer);
         }
     }
@@ -380,8 +398,7 @@ KonfytPatchLayer KonfytPatchEngine::addSfzLayer(QString path)
 {
     Q_ASSERT( currentPatch != NULL );
 
-    LayerCarlaPluginStruct plugin = LayerCarlaPluginStruct();
-    plugin.pluginType = KonfytCarlaPluginType_SFZ;
+    LayerSfzStruct plugin = LayerSfzStruct();
     plugin.gain = DEFAULT_GAIN_FOR_NEW_LAYER;
     plugin.mute = false;
     plugin.solo = false;
@@ -403,75 +420,7 @@ KonfytPatchLayer KonfytPatchEngine::addSfzLayer(QString path)
 
 
     // Note that the LayerItem g we created above does not have the correct
-    // pluginInCarlaEngine index. That is only assigned when loading the patch,
-    // in loadPatch.
-    // But it does have a unique id, which is how we can now get the 'real'
-    // LayerItem from the loaded patch:
-
-    return currentPatch->getLayerItem(g);
-}
-
-KonfytPatchLayer KonfytPatchEngine::addLV2Layer(QString path)
-{
-    Q_ASSERT( currentPatch != NULL );
-
-    LayerCarlaPluginStruct plugin = LayerCarlaPluginStruct();
-    plugin.pluginType = KonfytCarlaPluginType_LV2;
-    plugin.gain = DEFAULT_GAIN_FOR_NEW_LAYER;
-    plugin.mute = false;
-    plugin.solo = false;
-    plugin.name = "lv2";
-    plugin.path = path;
-
-    // Add the plugin to the patch
-    KonfytPatchLayer g = currentPatch->addPlugin(plugin);
-
-    // The bus defaults to 0, but the project may not have a bus 0.
-    // Set the layer bus to the first one in the project.
-    currentPatch->setLayerBus(&g, currentProject->audioBus_getFirstBusId(-1));
-
-    // The MIDI in port defaults to 0, but the project may not have a port 0.
-    // Find the first port in the project.
-    currentPatch->setLayerMidiInPort(&g, currentProject->midiInPort_getFirstPortId(-1));
-
-    reloadPatch();
-
-    // Note that the LayerItem g we created above does not have the correct
-    // pluginInCarlaEngine index. That is only assigned when loading the patch,
-    // in loadPatch.
-    // But it does have a unique id, which is how we can now get the 'real'
-    // LayerItem from the loaded patch:
-
-    return currentPatch->getLayerItem(g);
-}
-
-KonfytPatchLayer KonfytPatchEngine::addCarlaInternalLayer(QString URI)
-{
-    Q_ASSERT( currentPatch != NULL );
-
-    LayerCarlaPluginStruct plugin = LayerCarlaPluginStruct();
-    plugin.pluginType = KonfytCarlaPluginType_Internal;
-    plugin.gain = DEFAULT_GAIN_FOR_NEW_LAYER;
-    plugin.mute = false;
-    plugin.solo = false;
-    plugin.name = URI;
-    plugin.path = URI;
-
-    // Add the plugin to the patch
-    KonfytPatchLayer g = currentPatch->addPlugin(plugin);
-
-    // The bus defaults to 0, but the project may not have a bus 0.
-    // Set the layer bus to the first one in the project.
-    currentPatch->setLayerBus(&g, currentProject->audioBus_getFirstBusId(-1));
-
-    // The MIDI in port defaults to 0, but the project may not have a port 0.
-    // Find the first port in the project.
-    currentPatch->setLayerMidiInPort(&g, currentProject->midiInPort_getFirstPortId(-1));
-
-    reloadPatch();
-
-    // Note that the LayerItem g we created above does not have the correct
-    // pluginInCarlaEngine index. That is only assigned when loading the patch,
+    // LayerSfzStruct indexInEngine. That is only assigned when loading the patch,
     // in loadPatch.
     // But it does have a unique id, which is how we can now get the 'real'
     // LayerItem from the loaded patch:
@@ -518,7 +467,7 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
 
         PrjAudioBus bus;
         if ( (layerType == KonfytLayerType_SoundfontProgram) ||
-             (layerType == KonfytLayerType_CarlaPlugin) ||
+             (layerType == KonfytLayerType_Sfz) ||
              (layerType == KonfytLayerType_AudioIn) )
         {
             if ( !currentProject->audioBus_exists(layer.busIdInProject) ) {
@@ -538,7 +487,7 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
         }
         PrjMidiPort midiInPort;
         if ( (layerType == KonfytLayerType_SoundfontProgram) ||
-             (layerType == KonfytLayerType_CarlaPlugin) ||
+             (layerType == KonfytLayerType_Sfz) ||
              (layerType == KonfytLayerType_MidiOut) )
         {
             if ( !currentProject->midiInPort_exists(layer.midiInPortIdInProject) ) {
@@ -565,7 +514,7 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
 
         if (layerType ==  KonfytLayerType_SoundfontProgram) {
 
-            LayerSoundfontStruct sfData = layer.sfData;
+            LayerSoundfontStruct sfData = layer.soundfontData;
             // Gain = layer gain * master gain
             fluidsynthEngine->setGain( sfData.indexInEngine, convertGain(sfData.gain*masterGain) );
 
@@ -576,11 +525,11 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
             // Activate route in JACK engine
             jack->setSoundfontActive(sfData.idInJackEngine, activate);
 
-        } else if (layerType == KonfytLayerType_CarlaPlugin) {
+        } else if (layerType == KonfytLayerType_Sfz) {
 
-            LayerCarlaPluginStruct pluginData = layer.carlaPluginData;
+            LayerSfzStruct pluginData = layer.sfzData;
             // Gain = layer gain * master gain
-            // Set gain of JACK ports instead of carlaEngine->setGain() since this isn't implemented for all engine types yet.
+            // Set gain of JACK ports instead of sfzEngine->setGain() since this isn't implemented for all engine types yet.
             jack->setPluginGain(pluginData.portsIdInJackEngine, convertGain(pluginData.gain*masterGain) );
 
             // Set MIDI and bus routing
@@ -776,6 +725,33 @@ void KonfytPatchEngine::setLayerMidiInPort(KonfytPatch *patch, KonfytPatchLayer 
     if (patch == currentPatch) { refreshAllGainsAndRouting(); }
 }
 
+void KonfytPatchEngine::setLayerMidiSendList(KonfytPatchLayer *layerItem, QList<KonfytMidiEvent> events)
+{
+    Q_ASSERT( currentPatch != NULL );
+    currentPatch->setLayerMidiSendEvents(layerItem, events);
+}
+
+void KonfytPatchEngine::sendCurrentPatchMidi()
+{
+    Q_ASSERT( currentPatch != NULL );
+    foreach (KonfytPatchLayer layer, currentPatch->getMidiOutputLayerList()) {
+        if (layer.hasError()) { continue; }
+        jack->sendMidiEventsOnRoute(layer.midiOutputPortData.jackRouteId,
+                                    layer.midiSendList);
+    }
+}
+
+void KonfytPatchEngine::sendLayerMidi(KonfytPatchLayer *layerItem)
+{
+    Q_ASSERT( currentPatch != NULL );
+    KonfytPatchLayer l = currentPatch->getLayerItem(*layerItem);
+    if (l.hasError()) { return; }
+    if (l.getLayerType() == KonfytLayerType_MidiOut) {
+        jack->sendMidiEventsOnRoute(l.midiOutputPortData.jackRouteId,
+                                    l.midiSendList);
+    }
+}
+
 void KonfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, KonfytMidiFilter filter)
 {
     Q_ASSERT( currentPatch != NULL );
@@ -786,12 +762,12 @@ void KonfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, KonfytMidiFi
     // And also in the respective engine.
     if (layerItem->getLayerType() == KonfytLayerType_SoundfontProgram) {
 
-        jack->setSoundfontMidiFilter(layerItem->sfData.idInJackEngine, filter);
+        jack->setSoundfontMidiFilter(layerItem->soundfontData.idInJackEngine, filter);
 
-    } else if (layerItem->getLayerType() == KonfytLayerType_CarlaPlugin) {
+    } else if (layerItem->getLayerType() == KonfytLayerType_Sfz) {
 
-        jack->setPluginMidiFilter( layerItem->carlaPluginData.portsIdInJackEngine,
-                                         layerItem->carlaPluginData.midiFilter);
+        jack->setPluginMidiFilter( layerItem->sfzData.portsIdInJackEngine,
+                                         layerItem->sfzData.midiFilter);
 
     } else if (layerItem->getLayerType() == KonfytLayerType_MidiOut) {
 

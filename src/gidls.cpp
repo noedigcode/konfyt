@@ -141,8 +141,8 @@ int GidLs::getAudioDeviceIdByName(QString name)
 bool GidLs::addAudioDevice(QString name)
 {
     lscp_param_t params[3];
-    params[0].key = "NAME"; params[0].value = (char*)name.toLocal8Bit().constData();
-    params[1].key = "CHANNELS"; params[1].value = "0";
+    params[0].key = (char*)KEY_NAME; params[0].value = (char*)name.toLocal8Bit().constData();
+    params[1].key = (char*)KEY_CHANNELS; params[1].value = (char*)VAL_0;
     params[2].key = NULL; params[2].value = NULL;
     int ret = lscp_create_audio_device(client, "JACK", params);
 
@@ -398,7 +398,7 @@ int GidLs::addAudioChannel()
     int chan = dev.numPorts();
 
     lscp_param_t param;
-    param.key = "CHANNELS";
+    param.key = (char*)KEY_CHANNELS;
     param.value = (char*)n2s(chan+1).toLocal8Bit().constData();
     lscp_set_audio_device_param(client, dev.index, &param);
 
@@ -450,8 +450,8 @@ int GidLs::getMidiDeviceIdByName(QString name)
 bool GidLs::addMidiDevice(QString name)
 {
     lscp_param_t params[3];
-    params[0].key = "NAME"; params[0].value = (char*)name.toLocal8Bit().constData();
-    params[1].key = "PORTS"; params[1].value = "0";
+    params[0].key = (char*)KEY_NAME; params[0].value = (char*)name.toLocal8Bit().constData();
+    params[1].key = (char*)KEY_PORTS; params[1].value = (char*)VAL_0;
     params[2].key = NULL; params[2].value = NULL;
     int ret = lscp_create_midi_device(client, "JACK", params);
 
@@ -470,7 +470,7 @@ int GidLs::addMidiPort()
     int port = dev.numPorts();
 
     lscp_param_t param;
-    param.key = "PORTS";
+    param.key = (char*)KEY_PORTS;
     param.value = (char*)n2s(port+1).toLocal8Bit().constData();
     lscp_set_midi_device_param(client, dev.index, &param);
 

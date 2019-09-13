@@ -21,17 +21,6 @@
 
 #include "konfytPatchLayer.h"
 
-KonfytPatchLayer::KonfytPatchLayer()
-{
-    // ----------------------------------------------------
-    // Initialise variables
-    // ----------------------------------------------------
-
-    this->layerType = KonfytLayerType_Uninitialized;
-    busIdInProject = 0;
-    midiInPortIdInProject = 0;
-}
-
 void KonfytPatchLayer::setErrorMessage(QString msg)
 {
     this->errorMessage = msg;
@@ -58,14 +47,14 @@ void KonfytPatchLayer::initLayer(int id, LayerSoundfontStruct newLayerData)
 {
     this->idInPatch = id;
     this->layerType = KonfytLayerType_SoundfontProgram;
-    this->sfData = newLayerData;
+    this->soundfontData = newLayerData;
 }
 
-void KonfytPatchLayer::initLayer(int id, LayerCarlaPluginStruct newLayerData)
+void KonfytPatchLayer::initLayer(int id, LayerSfzStruct newLayerData)
 {
     this->idInPatch = id;
-    this->layerType = KonfytLayerType_CarlaPlugin;
-    this->carlaPluginData = newLayerData;
+    this->layerType = KonfytLayerType_Sfz;
+    this->sfzData = newLayerData;
 }
 
 void KonfytPatchLayer::initLayer(int id, LayerMidiOutStruct newLayerData)
@@ -88,14 +77,14 @@ QString KonfytPatchLayer::getName()
     case KonfytLayerType_AudioIn:
         return this->audioInPortData.name;
         break;
-    case KonfytLayerType_CarlaPlugin:
-        return this->carlaPluginData.name;
+    case KonfytLayerType_Sfz:
+        return this->sfzData.name;
         break;
     case KonfytLayerType_MidiOut:
         return "MIDI Out Port";
         break;
     case KonfytLayerType_SoundfontProgram:
-        return this->sfData.program.parent_soundfont + "/" + this->sfData.program.name;
+        return this->soundfontData.program.parent_soundfont + "/" + this->soundfontData.program.name;
         break;
     case KonfytLayerType_Uninitialized:
         return "UNINITIALIZED LAYER";
@@ -108,9 +97,9 @@ QString KonfytPatchLayer::getName()
 float KonfytPatchLayer::getGain() const
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        return this->sfData.gain;
-    } else if (this->layerType == KonfytLayerType_CarlaPlugin) {
-        return this->carlaPluginData.gain;
+        return this->soundfontData.gain;
+    } else if (this->layerType == KonfytLayerType_Sfz) {
+        return this->sfzData.gain;
     } else if (this->layerType == KonfytLayerType_AudioIn) {
         return this->audioInPortData.gain;
     } else {
@@ -121,9 +110,9 @@ float KonfytPatchLayer::getGain() const
 void KonfytPatchLayer::setGain(float newGain)
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        this->sfData.gain = newGain;
-    } else if (this->layerType == KonfytLayerType_CarlaPlugin) {
-        this->carlaPluginData.gain = newGain;
+        this->soundfontData.gain = newGain;
+    } else if (this->layerType == KonfytLayerType_Sfz) {
+        this->sfzData.gain = newGain;
     } else if (this->layerType == KonfytLayerType_AudioIn) {
         this->audioInPortData.gain = newGain;
     }
@@ -132,9 +121,9 @@ void KonfytPatchLayer::setGain(float newGain)
 void KonfytPatchLayer::setSolo(bool newSolo)
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        this->sfData.solo = newSolo;
-    } else if (this->layerType == KonfytLayerType_CarlaPlugin) {
-        this->carlaPluginData.solo = newSolo;
+        this->soundfontData.solo = newSolo;
+    } else if (this->layerType == KonfytLayerType_Sfz) {
+        this->sfzData.solo = newSolo;
     } else if (this->layerType == KonfytLayerType_MidiOut) {
         this->midiOutputPortData.solo = newSolo;
     } else if (this->layerType == KonfytLayerType_AudioIn) {
@@ -145,9 +134,9 @@ void KonfytPatchLayer::setSolo(bool newSolo)
 void KonfytPatchLayer::setMute(bool newMute)
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        this->sfData.mute = newMute;
-    } else if (this->layerType == KonfytLayerType_CarlaPlugin) {
-        this->carlaPluginData.mute = newMute;
+        this->soundfontData.mute = newMute;
+    } else if (this->layerType == KonfytLayerType_Sfz) {
+        this->sfzData.mute = newMute;
     } else if (this->layerType == KonfytLayerType_MidiOut) {
         this->midiOutputPortData.mute = newMute;
     } else if (this->layerType == KonfytLayerType_AudioIn) {
@@ -158,9 +147,9 @@ void KonfytPatchLayer::setMute(bool newMute)
 bool KonfytPatchLayer::isSolo() const
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        return this->sfData.solo;
-    } else if (this->layerType == KonfytLayerType_CarlaPlugin) {
-        return this->carlaPluginData.solo;
+        return this->soundfontData.solo;
+    } else if (this->layerType == KonfytLayerType_Sfz) {
+        return this->sfzData.solo;
     } else if (this->layerType == KonfytLayerType_MidiOut) {
         return this->midiOutputPortData.solo;
     } else if (this->layerType == KonfytLayerType_AudioIn) {
@@ -172,9 +161,9 @@ bool KonfytPatchLayer::isSolo() const
 bool KonfytPatchLayer::isMute() const
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        return this->sfData.mute;
-    } else if (this->layerType == KonfytLayerType_CarlaPlugin) {
-        return this->carlaPluginData.mute;
+        return this->soundfontData.mute;
+    } else if (this->layerType == KonfytLayerType_Sfz) {
+        return this->sfzData.mute;
     } else if (this->layerType == KonfytLayerType_MidiOut) {
         return this->midiOutputPortData.mute;
     } else if (this->layerType == KonfytLayerType_AudioIn) {
@@ -186,9 +175,9 @@ bool KonfytPatchLayer::isMute() const
 KonfytMidiFilter KonfytPatchLayer::getMidiFilter()
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        return this->sfData.filter;
-    } else if (this->layerType == KonfytLayerType_CarlaPlugin) {
-        return this->carlaPluginData.midiFilter;
+        return this->soundfontData.filter;
+    } else if (this->layerType == KonfytLayerType_Sfz) {
+        return this->sfzData.midiFilter;
     } else {
         return this->midiOutputPortData.filter;
     }
@@ -197,9 +186,9 @@ KonfytMidiFilter KonfytPatchLayer::getMidiFilter()
 void KonfytPatchLayer::setMidiFilter(KonfytMidiFilter newFilter)
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        this->sfData.filter = newFilter;
-    } else if (this->layerType == KonfytLayerType_CarlaPlugin) {
-        this->carlaPluginData.midiFilter = newFilter;
+        this->soundfontData.filter = newFilter;
+    } else if (this->layerType == KonfytLayerType_Sfz) {
+        this->sfzData.midiFilter = newFilter;
     } else {
         this->midiOutputPortData.filter = newFilter;
     }

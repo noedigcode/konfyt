@@ -70,6 +70,14 @@
 #define XML_PATCH_AUDIOIN_SOLO "solo"
 #define XML_PATCH_AUDIOIN_MUTE "mute"
 
+#define XML_PATCH_MIDISENDLIST "midiSendList"
+#define XML_PATCH_MIDIEVENT "midiEvent"
+#define XML_PATCH_MIDIEVENT_TYPE "type"
+#define XML_PATCH_MIDIEVENT_CHANNEL "channel"
+#define XML_PATCH_MIDIEVENT_DATA1 "data1"
+#define XML_PATCH_MIDIEVENT_DATA2 "data2"
+#define XML_PATCH_MIDIEVENT_BANKMSB "bankMSB"
+#define XML_PATCH_MIDIEVENT_BANKLSB "bankLSB"
 
 
 class KonfytPatch
@@ -105,6 +113,7 @@ public:
     void setLayerMute(KonfytPatchLayer* layer, bool mute);
     void setLayerBus(KonfytPatchLayer* layer, int bus);
     void setLayerMidiInPort(KonfytPatchLayer* layer, int portId);
+    void setLayerMidiSendEvents(KonfytPatchLayer* layer, QList<KonfytMidiEvent> events);
 
     // ----------------------------------------------------
     // Soundfont layer related functions
@@ -122,10 +131,10 @@ public:
     void setSfLayerGain(int id_in_engine, float newGain);
 
     // ----------------------------------------------------
-    // Carla Plugin functions
+    // SFZ Plugin functions
     // ----------------------------------------------------
-    KonfytPatchLayer addPlugin(LayerCarlaPluginStruct newPlugin);
-    LayerCarlaPluginStruct getPlugin(int index_in_engine);
+    KonfytPatchLayer addPlugin(LayerSfzStruct newPlugin);
+    LayerSfzStruct getPlugin(int index_in_engine);
     KonfytPatchLayer getPlugin_LayerItem(int index_in_engine);
     int getPluginCount();
     void setPluginGain(int index_in_engine, float newGain);

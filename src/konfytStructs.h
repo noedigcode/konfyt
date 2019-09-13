@@ -31,12 +31,9 @@
 struct KonfytSoundfontProgram {
 
     QString name;               // Program name
-    int bank;                   // Bank number
-    int program;                // Program/preset number
+    int bank = 0;               // Bank number
+    int program = 0;            // Program/preset number
     QString parent_soundfont;   // Filename of parent soundfont
-
-    // Constructor
-    KonfytSoundfontProgram() : bank(0), program(0) {}
 
 };
 
@@ -50,19 +47,16 @@ struct KonfytSoundfont {
 };
 
 struct KonfytAppInfo {
+
     QString exePath;
-    bool bridge;
-    bool headless;
-    bool carla;
+    bool bridge = false;
+    bool headless = false;
+    bool carla = false;
     QStringList filesToLoad;
     QString jackClientName;
-    QApplication *a;
+    QApplication *a = NULL;
 
-    KonfytAppInfo() : bridge(false), headless(false), carla(false), a(NULL) {}
 };
-
-
-
 
 
 #endif // KONFYT_STRUCTS_H

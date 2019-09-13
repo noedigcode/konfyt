@@ -36,7 +36,15 @@
 
 #define MIDI_MSG_ALL_NOTES_OFF 0x7B
 
+#define MIDI_CC_MSB 0
+#define MIDI_CC_LSB 32
 #define MIDI_CC_ALL_NOTES_OFF 123
+
+#define MIDI_PITCHBEND_ZERO 8192
+#define MIDI_PITCHBEND_MAX 16383
+
+#define MIDI_PITCHBEND_SIGNED_MIN -8192
+#define MIDI_PITCHBEND_SIGNED_MAX 8191
 
 #define MIDI_TYPE_FROM_BUFFER(x) x[0]&0xF0
 #define MIDI_CHANNEL_FROM_BUFFER(x) x[0]&0x0F
@@ -53,17 +61,15 @@ QString midiEventToString(int type, int channel, int data1, int data2, int bankM
 
 
 struct KonfytMidiEvent {
-    int sourceId;
-    int type;   // Status bit without channel (i.e. same as channel=0)
-    int channel;
-    int data1;
-    int data2;
-    int bankMSB;
-    int bankLSB;
+    int sourceId = -1;
+    int type = MIDI_EVENT_TYPE_NOTEON; // Status bit without channel (i.e. same as channel=0)
+    int channel = 0;
+    int data1 = 0;
+    int data2 = 0;
+    int bankMSB = -1;
+    int bankLSB = -1;
 
-    KonfytMidiEvent() : sourceId(-1),
-                        type(MIDI_EVENT_TYPE_NOTEON), channel(0),
-                        data1(0), data2(0), bankMSB(-1), bankLSB(-1) {}
+    KonfytMidiEvent() {}
     KonfytMidiEvent(const unsigned char* buffer, int size) {
         type = MIDI_TYPE_FROM_BUFFER(buffer);
         channel = MIDI_CHANNEL_FROM_BUFFER(buffer);
@@ -81,6 +87,26 @@ struct KonfytMidiEvent {
             buffer[2] = data2;
             return 3;
         } else return 2;
+    }
+
+    int bufferSizeRequired() {
+        if ( (type == MIDI_EVENT_TYPE_PROGRAM) || (data2 < 0) ) {
+            return 2;
+        } else {
+            return 3;
+        }
+    }
+
+    void msbToBuffer(unsigned char* buffer) {
+        buffer[0] = MIDI_EVENT_TYPE_CC | channel;
+        buffer[1] = MIDI_CC_MSB;
+        buffer[2] = bankMSB;
+    }
+
+    void lsbToBuffer(unsigned char* buffer) {
+        buffer[0] = MIDI_EVENT_TYPE_CC | channel;
+        buffer[1] = MIDI_CC_LSB;
+        buffer[2] = bankLSB;
     }
 
     // Return pitchbend value between -8192 and 8191

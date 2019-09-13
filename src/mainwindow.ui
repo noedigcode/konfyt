@@ -57,6 +57,8 @@ QComboBox {
 	background-color: rgb(54, 54, 54);
 	border: 1px solid grey;
 	border-radius: 2px;
+	color: rgb(245,245,245);
+	padding: 2px; /* Padding required to make color work. */
 }
 
 QComboBox::drop-down {
@@ -306,6 +308,11 @@ QSlider::handle:horizontal:hover {
 QSpinBox {
     border: 1px solid grey;
     border-radius: 2px;
+}
+
+QSpinBox:!enabled {
+	background-color: rgb(77, 77, 77);
+	color: grey;
 }
 
 QSpinBox::up-button {
@@ -3488,8 +3495,8 @@ QSpinBox {
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>226</width>
-                        <height>395</height>
+                        <width>243</width>
+                        <height>398</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -5855,6 +5862,1473 @@ border-top-left-radius: 0;
           </item>
          </layout>
         </widget>
+        <widget class="QWidget" name="midiSendListPage">
+         <layout class="QVBoxLayout" name="verticalLayout_25">
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QGroupBox" name="groupBox_FilterPage_2">
+            <property name="styleSheet">
+             <string notr="true">
+
+QGroupBox{
+	
+	margin-top: 0ex;
+
+
+	background-color: rgb(4, 59, 93);
+	
+	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
+	
+	
+	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
+	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
+border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+}</string>
+            </property>
+            <property name="title">
+             <string/>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_47">
+             <item row="0" column="0">
+              <widget class="QGroupBox" name="groupBox_midiSendListDialog">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>0</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>65535</height>
+                </size>
+               </property>
+               <property name="styleSheet">
+                <string notr="true">QGroupBox{
+	background-color: rgba(100,100,100, 255);
+	border: 0px solid;
+	border-radius: 4px;
+	margin-top: 0ex;
+	padding-top: 1em;
+}</string>
+               </property>
+               <property name="title">
+                <string>MIDI messages that will be sent from layer when patch is activated</string>
+               </property>
+               <layout class="QVBoxLayout" name="verticalLayout_22">
+                <item>
+                 <layout class="QHBoxLayout" name="horizontalLayout_47" stretch="1,0">
+                  <item>
+                   <layout class="QVBoxLayout" name="verticalLayout_20">
+                    <property name="rightMargin">
+                     <number>0</number>
+                    </property>
+                    <item>
+                     <widget class="QGroupBox" name="groupBox_25">
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>0</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>16777215</height>
+                       </size>
+                      </property>
+                      <property name="styleSheet">
+                       <string notr="true">QGroupBox{
+	margin-top: 0;	
+	background-color:  rgba(107, 107, 107, 255);
+	border: 2px solid rgb(212, 212, 212);
+	border-radius: 1px;
+	padding: 1px;
+}
+
+QGroupBox::title {
+	subcontrol-position: top left;
+	subcontrol-origin: margin;
+	padding: 0 3px;
+}
+
+/*
+QComboBox {
+	max-width: 3em;
+}
+
+QSpinBox {
+	max-width: 3em;
+}
+*/</string>
+                      </property>
+                      <property name="title">
+                       <string/>
+                      </property>
+                      <layout class="QVBoxLayout" name="verticalLayout_27">
+                       <property name="leftMargin">
+                        <number>2</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>2</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>2</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>2</number>
+                       </property>
+                       <item>
+                        <layout class="QHBoxLayout" name="horizontalLayout_46">
+                         <item>
+                          <layout class="QVBoxLayout" name="verticalLayout_24">
+                           <property name="spacing">
+                            <number>2</number>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="label_28">
+                             <property name="text">
+                              <string>Type</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QFrame" name="frame_40">
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>16777215</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true"/>
+                             </property>
+                             <property name="frameShape">
+                              <enum>QFrame::StyledPanel</enum>
+                             </property>
+                             <property name="frameShadow">
+                              <enum>QFrame::Raised</enum>
+                             </property>
+                             <property name="buttonFrame" stdset="0">
+                              <bool>true</bool>
+                             </property>
+                             <layout class="QHBoxLayout" name="horizontalLayout_42">
+                              <property name="spacing">
+                               <number>1</number>
+                              </property>
+                              <property name="leftMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="topMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="rightMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="bottomMargin">
+                               <number>0</number>
+                              </property>
+                              <item>
+                               <widget class="QComboBox" name="comboBox_midiSendList_type">
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true"/>
+                                </property>
+                                <item>
+                                 <property name="text">
+                                  <string>CC</string>
+                                 </property>
+                                </item>
+                                <item>
+                                 <property name="text">
+                                  <string>PROGRAM</string>
+                                 </property>
+                                </item>
+                                <item>
+                                 <property name="text">
+                                  <string>NOTEON</string>
+                                 </property>
+                                </item>
+                                <item>
+                                 <property name="text">
+                                  <string>NOTEOFF</string>
+                                 </property>
+                                </item>
+                                <item>
+                                 <property name="text">
+                                  <string>PITCHBEND</string>
+                                 </property>
+                                </item>
+                               </widget>
+                              </item>
+                             </layout>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                         <item>
+                          <layout class="QVBoxLayout" name="verticalLayout_26">
+                           <property name="spacing">
+                            <number>2</number>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="label_29">
+                             <property name="text">
+                              <string>Channel</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QFrame" name="frame_39">
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>16777215</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true"/>
+                             </property>
+                             <property name="frameShape">
+                              <enum>QFrame::StyledPanel</enum>
+                             </property>
+                             <property name="frameShadow">
+                              <enum>QFrame::Raised</enum>
+                             </property>
+                             <property name="buttonFrame" stdset="0">
+                              <bool>true</bool>
+                             </property>
+                             <layout class="QHBoxLayout" name="horizontalLayout_41">
+                              <property name="spacing">
+                               <number>1</number>
+                              </property>
+                              <property name="leftMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="topMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="rightMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="bottomMargin">
+                               <number>0</number>
+                              </property>
+                              <item>
+                               <widget class="QSpinBox" name="spinBox_midiSendList_channel">
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                 <size>
+                                  <width>0</width>
+                                  <height>23</height>
+                                 </size>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true"/>
+                                </property>
+                                <property name="minimum">
+                                 <number>1</number>
+                                </property>
+                                <property name="maximum">
+                                 <number>16</number>
+                                </property>
+                                <property name="value">
+                                 <number>1</number>
+                                </property>
+                               </widget>
+                              </item>
+                             </layout>
+                            </widget>
+                           </item>
+                          </layout>
+                         </item>
+                        </layout>
+                       </item>
+                       <item>
+                        <widget class="QStackedWidget" name="stackedWidget_midiSend">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="currentIndex">
+                          <number>1</number>
+                         </property>
+                         <widget class="QWidget" name="page_midiSend_cc">
+                          <layout class="QGridLayout" name="gridLayout_5">
+                           <property name="leftMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="topMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="rightMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="bottomMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="spacing">
+                            <number>2</number>
+                           </property>
+                           <item row="1" column="1">
+                            <widget class="QFrame" name="frame_42">
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>16777215</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true"/>
+                             </property>
+                             <property name="frameShape">
+                              <enum>QFrame::StyledPanel</enum>
+                             </property>
+                             <property name="frameShadow">
+                              <enum>QFrame::Raised</enum>
+                             </property>
+                             <property name="buttonFrame" stdset="0">
+                              <bool>true</bool>
+                             </property>
+                             <layout class="QHBoxLayout" name="horizontalLayout_44">
+                              <property name="spacing">
+                               <number>1</number>
+                              </property>
+                              <property name="leftMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="topMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="rightMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="bottomMargin">
+                               <number>0</number>
+                              </property>
+                              <item>
+                               <widget class="QSpinBox" name="spinBox_midiSendList_cc_data2">
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                 <size>
+                                  <width>0</width>
+                                  <height>23</height>
+                                 </size>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true"/>
+                                </property>
+                                <property name="minimum">
+                                 <number>0</number>
+                                </property>
+                                <property name="maximum">
+                                 <number>127</number>
+                                </property>
+                                <property name="value">
+                                 <number>0</number>
+                                </property>
+                               </widget>
+                              </item>
+                             </layout>
+                            </widget>
+                           </item>
+                           <item row="0" column="1">
+                            <widget class="QLabel" name="label_31">
+                             <property name="text">
+                              <string>Data 2</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item row="1" column="0">
+                            <widget class="QFrame" name="frame_41">
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>16777215</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true"/>
+                             </property>
+                             <property name="frameShape">
+                              <enum>QFrame::StyledPanel</enum>
+                             </property>
+                             <property name="frameShadow">
+                              <enum>QFrame::Raised</enum>
+                             </property>
+                             <property name="buttonFrame" stdset="0">
+                              <bool>true</bool>
+                             </property>
+                             <layout class="QHBoxLayout" name="horizontalLayout_43">
+                              <property name="spacing">
+                               <number>1</number>
+                              </property>
+                              <property name="leftMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="topMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="rightMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="bottomMargin">
+                               <number>0</number>
+                              </property>
+                              <item>
+                               <widget class="QSpinBox" name="spinBox_midiSendList_cc_data1">
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                 <size>
+                                  <width>0</width>
+                                  <height>23</height>
+                                 </size>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true"/>
+                                </property>
+                                <property name="minimum">
+                                 <number>0</number>
+                                </property>
+                                <property name="maximum">
+                                 <number>127</number>
+                                </property>
+                                <property name="value">
+                                 <number>0</number>
+                                </property>
+                               </widget>
+                              </item>
+                             </layout>
+                            </widget>
+                           </item>
+                           <item row="0" column="0">
+                            <widget class="QLabel" name="label_30">
+                             <property name="text">
+                              <string>Data 1</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item row="2" column="0">
+                            <spacer name="verticalSpacer_7">
+                             <property name="orientation">
+                              <enum>Qt::Vertical</enum>
+                             </property>
+                             <property name="sizeHint" stdset="0">
+                              <size>
+                               <width>20</width>
+                               <height>40</height>
+                              </size>
+                             </property>
+                            </spacer>
+                           </item>
+                          </layout>
+                         </widget>
+                         <widget class="QWidget" name="page_midiSend_program">
+                          <layout class="QGridLayout" name="gridLayout_15">
+                           <property name="leftMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="topMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="rightMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="bottomMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="spacing">
+                            <number>2</number>
+                           </property>
+                           <item row="1" column="1">
+                            <widget class="QCheckBox" name="checkBox_midiSendList_bank">
+                             <property name="toolTip">
+                              <string>Include bank select messages</string>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true">padding-left: 1em;</string>
+                             </property>
+                             <property name="text">
+                              <string>Bank</string>
+                             </property>
+                             <property name="checked">
+                              <bool>true</bool>
+                             </property>
+                            </widget>
+                           </item>
+                           <item row="3" column="1">
+                            <widget class="QFrame" name="frame_45">
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>16777215</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true"/>
+                             </property>
+                             <property name="frameShape">
+                              <enum>QFrame::StyledPanel</enum>
+                             </property>
+                             <property name="frameShadow">
+                              <enum>QFrame::Raised</enum>
+                             </property>
+                             <property name="buttonFrame" stdset="0">
+                              <bool>true</bool>
+                             </property>
+                             <layout class="QHBoxLayout" name="horizontalLayout_48">
+                              <property name="spacing">
+                               <number>1</number>
+                              </property>
+                              <property name="leftMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="topMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="rightMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="bottomMargin">
+                               <number>0</number>
+                              </property>
+                              <item>
+                               <widget class="QSpinBox" name="spinBox_midiSendList_lsb">
+                                <property name="enabled">
+                                 <bool>true</bool>
+                                </property>
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                 <size>
+                                  <width>0</width>
+                                  <height>23</height>
+                                 </size>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true"/>
+                                </property>
+                                <property name="minimum">
+                                 <number>-1</number>
+                                </property>
+                                <property name="maximum">
+                                 <number>127</number>
+                                </property>
+                                <property name="value">
+                                 <number>0</number>
+                                </property>
+                               </widget>
+                              </item>
+                             </layout>
+                            </widget>
+                           </item>
+                           <item row="2" column="1">
+                            <widget class="QLabel" name="label_35">
+                             <property name="text">
+                              <string>Bank LSB</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item row="3" column="0">
+                            <widget class="QFrame" name="frame_46">
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>16777215</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true"/>
+                             </property>
+                             <property name="frameShape">
+                              <enum>QFrame::StyledPanel</enum>
+                             </property>
+                             <property name="frameShadow">
+                              <enum>QFrame::Raised</enum>
+                             </property>
+                             <property name="buttonFrame" stdset="0">
+                              <bool>true</bool>
+                             </property>
+                             <layout class="QHBoxLayout" name="horizontalLayout_49">
+                              <property name="spacing">
+                               <number>1</number>
+                              </property>
+                              <property name="leftMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="topMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="rightMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="bottomMargin">
+                               <number>0</number>
+                              </property>
+                              <item>
+                               <widget class="QSpinBox" name="spinBox_midiSendList_msb">
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                 <size>
+                                  <width>0</width>
+                                  <height>23</height>
+                                 </size>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true"/>
+                                </property>
+                                <property name="minimum">
+                                 <number>-1</number>
+                                </property>
+                                <property name="maximum">
+                                 <number>127</number>
+                                </property>
+                                <property name="value">
+                                 <number>0</number>
+                                </property>
+                               </widget>
+                              </item>
+                             </layout>
+                            </widget>
+                           </item>
+                           <item row="2" column="0">
+                            <widget class="QLabel" name="label_36">
+                             <property name="text">
+                              <string>Bank MSB</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item row="0" column="0">
+                            <widget class="QLabel" name="label_37">
+                             <property name="text">
+                              <string>Program</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item row="1" column="0">
+                            <widget class="QFrame" name="frame_48">
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>16777215</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true"/>
+                             </property>
+                             <property name="frameShape">
+                              <enum>QFrame::StyledPanel</enum>
+                             </property>
+                             <property name="frameShadow">
+                              <enum>QFrame::Raised</enum>
+                             </property>
+                             <property name="buttonFrame" stdset="0">
+                              <bool>true</bool>
+                             </property>
+                             <layout class="QHBoxLayout" name="horizontalLayout_50">
+                              <property name="spacing">
+                               <number>1</number>
+                              </property>
+                              <property name="leftMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="topMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="rightMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="bottomMargin">
+                               <number>0</number>
+                              </property>
+                              <item>
+                               <widget class="QSpinBox" name="spinBox_midiSendList_program">
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                 <size>
+                                  <width>0</width>
+                                  <height>23</height>
+                                 </size>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true"/>
+                                </property>
+                                <property name="minimum">
+                                 <number>0</number>
+                                </property>
+                                <property name="maximum">
+                                 <number>127</number>
+                                </property>
+                                <property name="value">
+                                 <number>0</number>
+                                </property>
+                               </widget>
+                              </item>
+                             </layout>
+                            </widget>
+                           </item>
+                          </layout>
+                         </widget>
+                         <widget class="QWidget" name="page_midiSend_pitchbend">
+                          <layout class="QVBoxLayout" name="verticalLayout_23">
+                           <property name="spacing">
+                            <number>2</number>
+                           </property>
+                           <property name="leftMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="topMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="rightMargin">
+                            <number>2</number>
+                           </property>
+                           <property name="bottomMargin">
+                            <number>2</number>
+                           </property>
+                           <item>
+                            <widget class="QLabel" name="label_32">
+                             <property name="text">
+                              <string>Pitchbend value (-8192 to 8191)</string>
+                             </property>
+                            </widget>
+                           </item>
+                           <item>
+                            <widget class="QFrame" name="frame_43">
+                             <property name="minimumSize">
+                              <size>
+                               <width>0</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="maximumSize">
+                              <size>
+                               <width>16777215</width>
+                               <height>28</height>
+                              </size>
+                             </property>
+                             <property name="styleSheet">
+                              <string notr="true"/>
+                             </property>
+                             <property name="frameShape">
+                              <enum>QFrame::StyledPanel</enum>
+                             </property>
+                             <property name="frameShadow">
+                              <enum>QFrame::Raised</enum>
+                             </property>
+                             <property name="buttonFrame" stdset="0">
+                              <bool>true</bool>
+                             </property>
+                             <layout class="QHBoxLayout" name="horizontalLayout_45">
+                              <property name="spacing">
+                               <number>1</number>
+                              </property>
+                              <property name="leftMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="topMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="rightMargin">
+                               <number>0</number>
+                              </property>
+                              <property name="bottomMargin">
+                               <number>0</number>
+                              </property>
+                              <item>
+                               <widget class="QSpinBox" name="spinBox_midiSendList_pitchbend">
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="minimumSize">
+                                 <size>
+                                  <width>0</width>
+                                  <height>23</height>
+                                 </size>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                                </property>
+                                <property name="minimum">
+                                 <number>-8192</number>
+                                </property>
+                                <property name="maximum">
+                                 <number>8191</number>
+                                </property>
+                                <property name="value">
+                                 <number>0</number>
+                                </property>
+                               </widget>
+                              </item>
+                              <item>
+                               <widget class="QPushButton" name="pushButton_midiSendList_pbmin">
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="toolTip">
+                                 <string>Replace the selected item in the list</string>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                                </property>
+                                <property name="text">
+                                 <string>Min</string>
+                                </property>
+                               </widget>
+                              </item>
+                              <item>
+                               <widget class="QPushButton" name="pushButton_midiSendList_pbzero">
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="toolTip">
+                                 <string>Replace the selected item in the list</string>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                                </property>
+                                <property name="text">
+                                 <string>0</string>
+                                </property>
+                               </widget>
+                              </item>
+                              <item>
+                               <widget class="QPushButton" name="pushButton_midiSendList_pbmax">
+                                <property name="sizePolicy">
+                                 <sizepolicy hsizetype="Maximum" vsizetype="Minimum">
+                                  <horstretch>0</horstretch>
+                                  <verstretch>0</verstretch>
+                                 </sizepolicy>
+                                </property>
+                                <property name="toolTip">
+                                 <string>Replace the selected item in the list</string>
+                                </property>
+                                <property name="styleSheet">
+                                 <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                                </property>
+                                <property name="text">
+                                 <string>Max</string>
+                                </property>
+                               </widget>
+                              </item>
+                             </layout>
+                            </widget>
+                           </item>
+                           <item>
+                            <spacer name="verticalSpacer_6">
+                             <property name="orientation">
+                              <enum>Qt::Vertical</enum>
+                             </property>
+                             <property name="sizeHint" stdset="0">
+                              <size>
+                               <width>20</width>
+                               <height>40</height>
+                              </size>
+                             </property>
+                            </spacer>
+                           </item>
+                          </layout>
+                         </widget>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QFrame" name="frame_35">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="minimumSize">
+                       <size>
+                        <width>0</width>
+                        <height>28</height>
+                       </size>
+                      </property>
+                      <property name="maximumSize">
+                       <size>
+                        <width>16777215</width>
+                        <height>28</height>
+                       </size>
+                      </property>
+                      <property name="styleSheet">
+                       <string notr="true"/>
+                      </property>
+                      <property name="frameShape">
+                       <enum>QFrame::StyledPanel</enum>
+                      </property>
+                      <property name="frameShadow">
+                       <enum>QFrame::Raised</enum>
+                      </property>
+                      <property name="buttonFrame" stdset="0">
+                       <bool>true</bool>
+                      </property>
+                      <layout class="QGridLayout" name="gridLayout_48">
+                       <property name="leftMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="topMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="rightMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="bottomMargin">
+                        <number>0</number>
+                       </property>
+                       <property name="spacing">
+                        <number>1</number>
+                       </property>
+                       <item row="0" column="1">
+                        <widget class="QPushButton" name="pushButton_midiSendList_replace">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="toolTip">
+                          <string>Replace the selected item in the list</string>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                         </property>
+                         <property name="text">
+                          <string>Replace</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="0" column="2">
+                        <widget class="QToolButton" name="toolButton_midiSendList_down">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>16777215</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Move selected item down</string>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset resource="../images.qrc">
+                           <normaloff>:/icons/down.png</normaloff>:/icons/down.png</iconset>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>22</width>
+                           <height>22</height>
+                          </size>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="0" column="0">
+                        <widget class="QPushButton" name="pushButton_midiSendList_add">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>16777215</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Add to list below</string>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                         </property>
+                         <property name="text">
+                          <string>Add</string>
+                         </property>
+                         <property name="checkable">
+                          <bool>false</bool>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="0" column="4">
+                        <widget class="QPushButton" name="pushButton_midiSendList_remove">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>16777215</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Remove selected item</string>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                         </property>
+                         <property name="text">
+                          <string>Remove</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="0" column="3">
+                        <widget class="QToolButton" name="toolButton_midiSendList_up">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
+                         </property>
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
+                         <property name="maximumSize">
+                          <size>
+                           <width>16777215</width>
+                           <height>16777215</height>
+                          </size>
+                         </property>
+                         <property name="toolTip">
+                          <string>Move selected item up</string>
+                         </property>
+                         <property name="styleSheet">
+                          <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                         </property>
+                         <property name="text">
+                          <string/>
+                         </property>
+                         <property name="icon">
+                          <iconset resource="../images.qrc">
+                           <normaloff>:/icons/up.png</normaloff>:/icons/up.png</iconset>
+                         </property>
+                         <property name="iconSize">
+                          <size>
+                           <width>22</width>
+                           <height>22</height>
+                          </size>
+                         </property>
+                        </widget>
+                       </item>
+                      </layout>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QLabel" name="label_34">
+                      <property name="text">
+                       <string>MIDI Send List:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QListWidget" name="listWidget_midiSendList"/>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_55">
+                      <item>
+                       <widget class="QFrame" name="frame_49">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>28</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>28</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true"/>
+                        </property>
+                        <property name="frameShape">
+                         <enum>QFrame::StyledPanel</enum>
+                        </property>
+                        <property name="frameShadow">
+                         <enum>QFrame::Raised</enum>
+                        </property>
+                        <property name="buttonFrame" stdset="0">
+                         <bool>true</bool>
+                        </property>
+                        <layout class="QHBoxLayout" name="horizontalLayout_56">
+                         <property name="spacing">
+                          <number>1</number>
+                         </property>
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>0</number>
+                         </property>
+                         <item>
+                          <widget class="QPushButton" name="pushButton_midiSendList_sendSelected">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>78</width>
+                             <height>0</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>Send the selected MIDI message to the layer output</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;
+</string>
+                           </property>
+                           <property name="text">
+                            <string>Send Selected</string>
+                           </property>
+                           <property name="KonfytWideButton" stdset="0">
+                            <bool>true</bool>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QPushButton" name="pushButton_midiSendList_sendAll">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>78</width>
+                             <height>0</height>
+                            </size>
+                           </property>
+                           <property name="toolTip">
+                            <string>Send all MIDI messages in the MIDI Send List to the layer output</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                           </property>
+                           <property name="text">
+                            <string>Send All</string>
+                           </property>
+                           <property name="KonfytWideButton" stdset="0">
+                            <bool>true</bool>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </widget>
+                      </item>
+                      <item>
+                       <spacer name="horizontalSpacer_11">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </item>
+                  <item>
+                   <layout class="QVBoxLayout" name="verticalLayout_21">
+                    <item>
+                     <widget class="QLabel" name="label_38">
+                      <property name="text">
+                       <string>Last received:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QListWidget" name="listWidget_midiSendList_lastReceived"/>
+                    </item>
+                    <item>
+                     <layout class="QHBoxLayout" name="horizontalLayout_53">
+                      <item>
+                       <spacer name="horizontalSpacer_10">
+                        <property name="orientation">
+                         <enum>Qt::Horizontal</enum>
+                        </property>
+                        <property name="sizeHint" stdset="0">
+                         <size>
+                          <width>40</width>
+                          <height>20</height>
+                         </size>
+                        </property>
+                       </spacer>
+                      </item>
+                      <item>
+                       <widget class="QFrame" name="frame_47">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>28</height>
+                         </size>
+                        </property>
+                        <property name="maximumSize">
+                         <size>
+                          <width>16777215</width>
+                          <height>28</height>
+                         </size>
+                        </property>
+                        <property name="styleSheet">
+                         <string notr="true"/>
+                        </property>
+                        <property name="frameShape">
+                         <enum>QFrame::StyledPanel</enum>
+                        </property>
+                        <property name="frameShadow">
+                         <enum>QFrame::Raised</enum>
+                        </property>
+                        <property name="buttonFrame" stdset="0">
+                         <bool>true</bool>
+                        </property>
+                        <layout class="QHBoxLayout" name="horizontalLayout_54">
+                         <property name="spacing">
+                          <number>1</number>
+                         </property>
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>0</number>
+                         </property>
+                         <item>
+                          <widget class="QPushButton" name="pushButton_midiSendList_cancel">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>78</width>
+                             <height>0</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;
+</string>
+                           </property>
+                           <property name="text">
+                            <string>Cancel</string>
+                           </property>
+                           <property name="KonfytWideButton" stdset="0">
+                            <bool>true</bool>
+                           </property>
+                          </widget>
+                         </item>
+                         <item>
+                          <widget class="QPushButton" name="pushButton_midiSendList_apply">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>78</width>
+                             <height>0</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                           </property>
+                           <property name="text">
+                            <string>Apply</string>
+                           </property>
+                           <property name="KonfytWideButton" stdset="0">
+                            <bool>true</bool>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </widget>
+                      </item>
+                     </layout>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </item>
+               </layout>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </item>
+         </layout>
+        </widget>
         <widget class="QWidget" name="sandboxPage">
          <widget class="QLabel" name="label_5">
           <property name="geometry">
@@ -6157,7 +7631,7 @@ border-top-right-radius: 0;
         <enum>QTabWidget::South</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tab_15">
         <attribute name="title">
@@ -7406,6 +8880,11 @@ border-bottom-left-radius: 0;
   <action name="actionRemove_Layer">
    <property name="text">
     <string>Remove Layer</string>
+   </property>
+  </action>
+  <action name="actionEdit_MIDI_Send_List">
+   <property name="text">
+    <string>Edit MIDI Send List</string>
    </property>
   </action>
  </widget>

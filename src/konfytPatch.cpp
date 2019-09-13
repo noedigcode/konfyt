@@ -84,11 +84,12 @@ bool KonfytPatch::savePatchToFile(QString filename)
     for (int i=0; i<this->layerList.count(); i++) {
 
         KonfytPatchLayer g = this->layerList.at(i);
+
         if (g.getLayerType() == KonfytLayerType_SoundfontProgram) {
 
             // --------------------------------------------
 
-            LayerSoundfontStruct sfLayer = g.sfData;
+            LayerSoundfontStruct sfLayer = g.soundfontData;
 
             stream.writeStartElement(XML_PATCH_SFLAYER);
             // Layer properties
@@ -111,11 +112,11 @@ bool KonfytPatch::savePatchToFile(QString filename)
 
             // --------------------------------------------
 
-        } else if (g.getLayerType() == KonfytLayerType_CarlaPlugin) {
+        } else if (g.getLayerType() == KonfytLayerType_Sfz) {
 
             // ----------------------------------------------------------
 
-            LayerCarlaPluginStruct p = g.carlaPluginData;
+            LayerSfzStruct p = g.sfzData;
 
             stream.writeStartElement(XML_PATCH_SFZLAYER);
             stream.writeTextElement(XML_PATCH_SFZLAYER_NAME, p.name);
@@ -149,6 +150,26 @@ bool KonfytPatch::savePatchToFile(QString filename)
             // Midi filter
             KonfytMidiFilter f = m.filter;
             f.writeToXMLStream(&stream);
+
+            // MIDI Send list
+            if (g.midiSendList.count()) {
+                stream.writeStartElement(XML_PATCH_MIDISENDLIST);
+
+                foreach (KonfytMidiEvent event, g.midiSendList) {
+                    stream.writeStartElement(XML_PATCH_MIDIEVENT);
+
+                    stream.writeTextElement(XML_PATCH_MIDIEVENT_TYPE, n2s(event.type));
+                    stream.writeTextElement(XML_PATCH_MIDIEVENT_CHANNEL, n2s(event.channel));
+                    stream.writeTextElement(XML_PATCH_MIDIEVENT_DATA1, n2s(event.data1));
+                    stream.writeTextElement(XML_PATCH_MIDIEVENT_DATA2, n2s(event.data2));
+                    stream.writeTextElement(XML_PATCH_MIDIEVENT_BANKMSB, n2s(event.bankMSB));
+                    stream.writeTextElement(XML_PATCH_MIDIEVENT_BANKLSB, n2s(event.bankLSB));
+
+                    stream.writeEndElement();
+                }
+
+                stream.writeEndElement();
+            }
 
             stream.writeEndElement();
 
@@ -256,7 +277,7 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
 
             } else if (r.name() == XML_PATCH_SFZLAYER) { // SFZ Layer
 
-                LayerCarlaPluginStruct p = LayerCarlaPluginStruct();
+                LayerSfzStruct p = LayerSfzStruct();
                 int bus = 0;
                 int midiIn = 0;
 
@@ -286,8 +307,6 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
 
                 }
 
-                p.pluginType = KonfytCarlaPluginType_SFZ;
-
                 KonfytPatchLayer newLayer = this->addPlugin(p);
                 this->setLayerBus(&newLayer, bus);
                 this->setLayerMidiInPort(&newLayer, midiIn);
@@ -297,6 +316,7 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
 
                 LayerMidiOutStruct mp;
                 int midiIn = 0;
+                QList<KonfytMidiEvent> midiSendEvents;
 
                 while (r.readNextStartElement()) { // port
                     if (r.name() == XML_PATCH_MIDIOUT_PORT) {
@@ -309,6 +329,36 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
                         mp.filter.readFromXMLStream(&r);
                     } else if (r.name() == XML_PATCH_MIDIOUT_MIDI_IN) {
                         midiIn = r.readElementText().toInt();
+                    } else if (r.name() == XML_PATCH_MIDISENDLIST) {
+                        while (r.readNextStartElement()) {
+                            if (r.name() == XML_PATCH_MIDIEVENT) {
+                                KonfytMidiEvent e;
+                                while (r.readNextStartElement()) {
+                                    if (r.name() == XML_PATCH_MIDIEVENT_TYPE) {
+                                        e.type = r.readElementText().toInt();
+                                    } else if (r.name() == XML_PATCH_MIDIEVENT_CHANNEL) {
+                                        e.channel = r.readElementText().toInt();
+                                    } else if (r.name() == XML_PATCH_MIDIEVENT_DATA1) {
+                                        e.data1 = r.readElementText().toInt();
+                                    } else if (r.name() == XML_PATCH_MIDIEVENT_DATA2) {
+                                        e.data2 = r.readElementText().toInt();
+                                    } else if (r.name() == XML_PATCH_MIDIEVENT_BANKMSB) {
+                                        e.bankMSB = r.readElementText().toInt();
+                                    } else if (r.name() == XML_PATCH_MIDIEVENT_BANKLSB) {
+                                        e.bankLSB = r.readElementText().toInt();
+                                    } else {
+                                        userMessage("konfytPatch::loadPatchFromFile: "
+                                                    "Unrecognized MIDI event element: " + r.name().toString());
+                                        r.skipCurrentElement();
+                                    }
+                                }
+                                midiSendEvents.append(e);
+                            } else {
+                                userMessage("konfytPatch::loadPatchFromFile: "
+                                            "Unrecognized MIDI send list element: " + r.name().toString());
+                                r.skipCurrentElement();
+                            }
+                        }
                     } else {
                         userMessage("konfytPatch::loadPatchFromFile: "
                                     "Unrecognized midiOutputPortLayer element: " + r.name().toString() );
@@ -319,6 +369,7 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
                 // Add new midi port
                 KonfytPatchLayer newLayer = this->addMidiOutputPort(mp);
                 this->setLayerMidiInPort(&newLayer, midiIn);
+                this->setLayerMidiSendEvents(&newLayer, midiSendEvents);
 
             } else if (r.name() == XML_PATCH_AUDIOIN) {
 
@@ -507,7 +558,7 @@ void KonfytPatch::setLayerBus(KonfytPatchLayer *layer, int bus)
 
         if ( (g.getLayerType() == KonfytLayerType_SoundfontProgram)
              || (g.getLayerType() == KonfytLayerType_AudioIn)
-             || (g.getLayerType() == KonfytLayerType_CarlaPlugin) ) {
+             || (g.getLayerType() == KonfytLayerType_Sfz) ) {
 
             g.busIdInProject = bus;
 
@@ -534,6 +585,21 @@ void KonfytPatch::setLayerMidiInPort(KonfytPatchLayer *layer, int portId)
     } else {
         // No layer was found that matches the ID. This is probably a logic error somewhere.
         error_abort("setLayerMidiInPort: Layer with id " + n2s(layer->idInPatch) + " is not in the patch's layerList.");
+    }
+}
+
+void KonfytPatch::setLayerMidiSendEvents(KonfytPatchLayer *layer, QList<KonfytMidiEvent> events)
+{
+    // Find layer that matches ID_in_patch
+    int index = layerListIndexFromPatchId(layer);
+
+    if (index >= 0) {
+        KonfytPatchLayer g = layerList.at(index);
+        g.midiSendList = events;
+        this->replaceLayer(g);
+    } else {
+        // No layer was found that matches the ID. This is probably a logic error somewhere.
+        error_abort("setLayerMidiSendEvents: Layer with id " + n2s(layer->idInPatch) + " is not in the patch's layerList.");
     }
 }
 
@@ -580,14 +646,14 @@ KonfytSoundfontProgram KonfytPatch::getProgram(int id_in_engine)
 // Get sfLayerStruct of the soundfont program layer with the specified index.
 LayerSoundfontStruct KonfytPatch::getSfLayer(int id_in_engine)
 {
-    return this->getSfLayer_LayerItem(id_in_engine).sfData;
+    return this->getSfLayer_LayerItem(id_in_engine).soundfontData;
 }
 
 KonfytPatchLayer KonfytPatch::getSfLayer_LayerItem(int id_in_engine)
 {
     for (int i=0; i < this->layerList.count(); i++) {
         if (this->layerList.at(i).getLayerType() == KonfytLayerType_SoundfontProgram) {
-            if (this->layerList.at(i).sfData.indexInEngine == id_in_engine) {
+            if (this->layerList.at(i).soundfontData.indexInEngine == id_in_engine) {
                 return this->layerList.at(i);
             }
         }
@@ -800,7 +866,7 @@ KonfytPatchLayer KonfytPatch::addMidiOutputPort(LayerMidiOutStruct newPort)
 }
 
 
-KonfytPatchLayer KonfytPatch::addPlugin(LayerCarlaPluginStruct newPlugin)
+KonfytPatchLayer KonfytPatch::addPlugin(LayerSfzStruct newPlugin)
 {
     // Create and initialise new layeritem.
     // Item is initialised with a unique ID, which will later be used to
@@ -815,16 +881,16 @@ KonfytPatchLayer KonfytPatch::addPlugin(LayerCarlaPluginStruct newPlugin)
 }
 
 
-LayerCarlaPluginStruct KonfytPatch::getPlugin(int index_in_engine)
+LayerSfzStruct KonfytPatch::getPlugin(int index_in_engine)
 {
-    return this->getPlugin_LayerItem(index_in_engine).carlaPluginData;
+    return this->getPlugin_LayerItem(index_in_engine).sfzData;
 }
 
 KonfytPatchLayer KonfytPatch::getPlugin_LayerItem(int index_in_engine)
 {
     for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).getLayerType() == KonfytLayerType_CarlaPlugin) {
-            if (this->layerList.at(i).carlaPluginData.indexInEngine == index_in_engine) {
+        if (this->layerList.at(i).getLayerType() == KonfytLayerType_Sfz) {
+            if (this->layerList.at(i).sfzData.indexInEngine == index_in_engine) {
                 return this->layerList.at(i);
             }
         }
@@ -858,7 +924,7 @@ QList<KonfytPatchLayer> KonfytPatch::getPluginLayerList() const
 {
     QList<KonfytPatchLayer> l;
     for (int i=0; i < this->layerList.count(); i++) {
-        if ( this->layerList.at(i).getLayerType() == KonfytLayerType_CarlaPlugin ) {
+        if ( this->layerList.at(i).getLayerType() == KonfytLayerType_Sfz ) {
             l.append(this->layerList.at(i));
         }
     }

@@ -23,6 +23,7 @@
 #define KONFYTJACKSTRUCTS_H
 
 #include "konfytMidiFilter.h"
+#include "ringbufferqmutex.h"
 
 enum KonfytJackPortType {
     KonfytJackPortType_AudioIn  = 0,
@@ -50,8 +51,6 @@ struct KonfytJackPort {
     int noteOns = 0;
     bool sustainNonZero = false;
     bool pitchbendNonZero = false;
-
-    KonfytJackPort() {}
 };
 
 struct KonfytJackMidiRoute {
@@ -60,33 +59,21 @@ struct KonfytJackMidiRoute {
     bool prev_active = false;
     KonfytMidiFilter filter;
     KonfytJackPort* source = NULL;
-    KonfytJackPort* destJackPort = NULL;
+    KonfytJackPort* destPort = NULL;
     int destFluidsynthID = 0;
     bool destIsJackPort = true;
-
-    KonfytJackMidiRoute() {}
+    RingbufferQMutex<KonfytMidiEvent> eventsTxBuffer{100};
 };
 
 struct KonfytJackAudioRoute {
-    int id;
-    bool active;
-    bool prev_active;
-    float gain;
-    unsigned int fadeoutCounter;
-    bool fadingOut;
-    KonfytJackPort* source;
-    KonfytJackPort* dest;
-
-    KonfytJackAudioRoute() :
-        id(0),
-        active(false),
-        prev_active(false),
-        gain(1),
-        fadeoutCounter(0),
-        fadingOut(false),
-        source(NULL),
-        dest(NULL)
-    {}
+    int id = 0;
+    bool active = false;
+    bool prev_active = false;
+    float gain = 1;
+    unsigned int fadeoutCounter = 0;
+    bool fadingOut = false;
+    KonfytJackPort* source = NULL;
+    KonfytJackPort* dest = NULL;
 };
 
 struct KonfytJackPluginPorts {

@@ -94,10 +94,10 @@ void konfytLayerWidget::setUpGUI()
 
     if (g.getLayerType() == KonfytLayerType_SoundfontProgram) {
 
-        filepath = g.sfData.program.parent_soundfont;
+        filepath = g.soundfontData.program.parent_soundfont;
         // Display soundfont and program name
-        ui->lineEdit->setText(g.sfData.program.parent_soundfont + "/" +
-                              g.sfData.program.name);
+        ui->lineEdit->setText(g.soundfontData.program.parent_soundfont + "/" +
+                              g.soundfontData.program.name);
         ui->lineEdit->setToolTip(ui->lineEdit->text());
         // Indicate note range of the midi filter
         this->updateBackgroundFromFilter();
@@ -105,32 +105,13 @@ void konfytLayerWidget::setUpGUI()
         ui->gainSlider->setVisible(true);
 
 
-    } else if (g.getLayerType() == KonfytLayerType_CarlaPlugin) {
+    } else if (g.getLayerType() == KonfytLayerType_Sfz) {
 
-        filepath = g.carlaPluginData.path;
+        filepath = g.sfzData.path;
 
-        if (g.carlaPluginData.pluginType == KonfytCarlaPluginType_SFZ) {
-
-            // Display sfz name
-            ui->lineEdit->setText(g.carlaPluginData.path);
-            ui->lineEdit->setToolTip( g.carlaPluginData.name + ": " + g.carlaPluginData.path );
-
-        } else if (g.carlaPluginData.pluginType == KonfytCarlaPluginType_LV2) {
-
-            // Display name
-            ui->lineEdit->setText(g.carlaPluginData.path);
-            ui->lineEdit->setToolTip( g.carlaPluginData.name + ": " + g.carlaPluginData.path );
-
-        } else if (g.carlaPluginData.pluginType == KonfytCarlaPluginType_Internal ) {
-
-            // Display name
-            ui->lineEdit->setText(g.carlaPluginData.path);
-            ui->lineEdit->setToolTip( g.carlaPluginData.name + ": " + g.carlaPluginData.path );
-
-        } else {
-            ui->lineEdit->setText("Unknown CarlaPluginType");
-        }
-
+        // Display sfz name
+        ui->lineEdit->setText(g.sfzData.path);
+        ui->lineEdit->setToolTip( g.sfzData.name + ": " + g.sfzData.path );
 
         // Indicate note range of the midi filter
         this->updateBackgroundFromFilter();
@@ -143,6 +124,8 @@ void konfytLayerWidget::setUpGUI()
         int portId = g.midiOutputPortData.portIdInProject;
         QString text = "MIDI Out " + n2s(portId);
         if (project != NULL) {
+            // TODO: setErrorMessage should not be done here, it should be set
+            //       in the engine when loading the patch
             if (project->midiOutPort_exists(portId)) {
                 text = text + ": " + project->midiOutPort_getPort(portId).portName;
             } else {
@@ -169,6 +152,8 @@ void konfytLayerWidget::setUpGUI()
         int portId = g.audioInPortData.portIdInProject;
         QString text = "Audio In " + n2s(portId);
         if (project != NULL) {
+            // TODO: setErrorMessage should not be done here, it should be set
+            //       in the engine when loading the patch
             if (project->audioInPort_exists(portId)) {
                 text = text + ": " + project->audioInPort_getPort(portId).portName;
             } else {
@@ -230,6 +215,9 @@ void konfytLayerWidget::setUpGUI()
         }
     }
 
+    // MIDI Events Send button
+    ui->toolButton_sendEvents->setVisible( g.midiSendList.count() > 0 );
+
     // If the layer has an error (marked when loading in patchEngine), indicate it.
     if (g.hasError()) {
 
@@ -239,7 +227,10 @@ void konfytLayerWidget::setUpGUI()
         ui->toolButton_solo->setVisible(false);
         ui->toolButton_mute->setVisible(false);
         ui->toolButton_bus->setVisible(false);
-        this->setStyleSheet("QGroupBox{background-color:red;}");
+
+        ui->lineEdit->setProperty("konfytError", true);
+        ui->lineEdit->style()->unpolish(ui->lineEdit);
+        ui->lineEdit->style()->polish(ui->lineEdit);
 
     }
 }
@@ -341,3 +332,7 @@ void konfytLayerWidget::on_toolButton_bus_clicked()
     emit bus_clicked_signal(this);
 }
 
+void konfytLayerWidget::on_toolButton_sendEvents_clicked()
+{
+    emit sendMidiEvents_clicked_signal(this);
+}

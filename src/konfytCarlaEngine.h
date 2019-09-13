@@ -62,11 +62,6 @@ public:
     void setGain(int ID, float newGain);
     QString pluginName(int ID);
 
-    static void carlaEngineCallback(void* ptr, EngineCallbackOpcode action,
-                                    uint pluginId, int value1, int value2,
-                                    int value3, float valuef,
-                                    const char* valueStr);
-
     void error_abort(QString msg);
 
 private:

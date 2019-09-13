@@ -106,6 +106,7 @@ public:
     int getPortCount(KonfytJackPortType type);
     void setPortFilter(int portId, KonfytMidiFilter filter);
 
+    // Audio routes
     int addAudioRoute(int sourcePortId, int destPortId);
     int addAudioRoute();
     void setAudioRoute(int routeId, int sourcePortId, int destPortId);
@@ -113,14 +114,16 @@ public:
     void setAudioRouteActive(int routeId, bool active);
     void setAudioRouteGain(int routeId, float gain);
 
+    // MIDI routes
     int addMidiRoute(int sourcePortId, int destPortId);
     int addMidiRoute();
     void setMidiRoute(int routeId, int sourcePortId, int destPortId);
     void removeMidiRoute(int routeId);
     void setMidiRouteActive(int routeId, bool active);
     void setRouteMidiFilter(int routeId, KonfytMidiFilter filter);
+    bool sendMidiEventsOnRoute(int routeId, QList<KonfytMidiEvent> events);
 
-    // Carla plugins
+    // SFZ plugins
     int addPluginPortsAndConnect(const KonfytJackPortsSpec &spec);
     void removePlugin(int id);
     void setPluginMidiFilter(int id, KonfytMidiFilter filter);
@@ -154,7 +157,7 @@ private:
     jack_nframes_t nframes;
     bool clientActive = false;      // Flag to indicate if the client has been successfully activated
     double samplerate;
-    RingbufferQMutex<KonfytMidiEvent> eventsBuffer;
+    RingbufferQMutex<KonfytMidiEvent> eventsRxBuffer{1000};
     bool connectCallback = false;
     bool registerCallback = false;
 

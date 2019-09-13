@@ -82,6 +82,7 @@ signals:
     void mute_clicked_signal(konfytLayerWidget* layerItem, bool mute);
     void bus_clicked_signal(konfytLayerWidget* layerItem);
     void toolbutton_clicked_signal(konfytLayerWidget* layerItem);
+    void sendMidiEvents_clicked_signal(konfytLayerWidget* layerItem);
 
 private slots:
     void on_toolButton_clicked();
@@ -91,6 +92,7 @@ private slots:
     void on_toolButton_solo_clicked();
     void on_toolButton_mute_clicked();
     void on_toolButton_bus_clicked();
+    void on_toolButton_sendEvents_clicked();
 };
 
 #endif // KONFYT_LAYER_WIDGET_H

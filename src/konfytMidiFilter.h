@@ -47,27 +47,18 @@
 
 
 struct KonfytMidiFilterZone {
-    int lowNote;
-    int highNote;
-    int add;
-    int lowVel;
-    int highVel;
-    int velLimitMin;
-    int velLimitMax;
-
-    KonfytMidiFilterZone() : lowNote(0),
-                             highNote(127),
-                             add(0),
-                             lowVel(0),
-                             highVel(127),
-                             velLimitMin(0),
-                             velLimitMax(127) {}
+    int lowNote = 0;
+    int highNote = 127;
+    int add = 0;
+    int lowVel = 0;
+    int highVel = 127;
+    int velLimitMin = 0;
+    int velLimitMax = 127;
 };
 
 class KonfytMidiFilter
 {
 public:
-    KonfytMidiFilter();
     void setPassAll();
 
     KonfytMidiFilterZone zone;
@@ -78,16 +69,15 @@ public:
     bool passFilter(const KonfytMidiEvent *ev);
     KonfytMidiEvent modify(const KonfytMidiEvent* ev);
 
-    QList<int> passCC;
-    bool passAllCC;
-    bool passProg;
-    bool passPitchbend;
-    int inChan;
-    int outChan;
+    QList<int> passCC{64};
+    bool passAllCC = false;
+    bool passProg = false;
+    bool passPitchbend = true;
+    int inChan = -1; // -1 = any
+    int outChan = -1; // -1 = original
 
     void writeToXMLStream(QXmlStreamWriter* stream);
     void readFromXMLStream(QXmlStreamReader *r);
-
 };
 
 #endif // KONFYT_MIDI_FILTER_H

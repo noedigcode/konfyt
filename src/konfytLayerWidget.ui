@@ -23,6 +23,16 @@ QFrame {
 	background-color: transparent;
 }
 
+QLineEdit[konfytError=false] {
+	background-color: rgb(54, 54, 54);
+	color: white;
+}
+
+QLineEdit[konfytError=true] {
+	background-color: red;
+	color: black;
+}
+
 QToolButton{
 	color: rgba(255,255,255,200);
 	background-color: rgb(80,80,80);
@@ -135,6 +145,22 @@ QSlider::handle:horizontal:hover {
        </widget>
       </item>
       <item>
+       <widget class="QToolButton" name="toolButton_sendEvents">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Send layer MIDI events now</string>
+        </property>
+        <property name="text">
+         <string>Send Events</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLineEdit" name="lineEdit">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
@@ -142,8 +168,14 @@ QSlider::handle:horizontal:hover {
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
         <property name="readOnly">
          <bool>true</bool>
+        </property>
+        <property name="konfytError" stdset="0">
+         <bool>false</bool>
         </property>
        </widget>
       </item>

@@ -88,6 +88,10 @@ public:
     void setLayerMidiInPort(KonfytPatchLayer* layerItem, int portId); // currentPatch
     void setLayerMidiInPort(KonfytPatch* patch, KonfytPatchLayer* layerItem, int portId);
 
+    void setLayerMidiSendList(KonfytPatchLayer* layerItem, QList<KonfytMidiEvent> events);
+    void sendCurrentPatchMidi();
+    void sendLayerMidi(KonfytPatchLayer* layerItem);
+
     int getNumLayers();
     void removeLayer(KonfytPatchLayer *item); // Perform action on currentPatch
     void removeLayer(KonfytPatch* patch, KonfytPatchLayer* item);
@@ -96,10 +100,8 @@ public:
     // Soundfont / Fluidsynth layers
     KonfytPatchLayer addProgramLayer(KonfytSoundfontProgram newProgram);
 
-    // Plugin layers
+    // SFZ layers
     KonfytPatchLayer addSfzLayer(QString path);
-    KonfytPatchLayer addLV2Layer(QString path);
-    KonfytPatchLayer addCarlaInternalLayer(QString URI);
 
     // Midi output port layers
     KonfytPatchLayer addMidiOutPortToPatch(int port);
@@ -125,7 +127,7 @@ private:
     konfytFluidsynthEngine* fluidsynthEngine;
 
     // ----------------------------------------------------
-    // Carla plugins
+    // SFZ plugins
     // ----------------------------------------------------
     KonfytBaseSoundEngine* sfzEngine;
     bool bridge;

@@ -39,9 +39,6 @@
 #include <QTimer>
 #include <QTreeWidgetItem>
 
-#include <fluidsynth.h>
-#include <carla/CarlaHost.h>
-
 #include "konfytDatabase.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytPatchEngine.h"
@@ -56,8 +53,6 @@
 #include "konfytsfloader.h"
 #include "aboutdialog.h"
 
-
-CARLA_BACKEND_USE_NAMESPACE
 
 #define APP_RESTART_CODE 1000
 
@@ -121,19 +116,44 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
     
+    // ========================================================================
+    // MainWindow
+    // ========================================================================
 public:
-
     explicit MainWindow(QWidget *parent, KonfytAppInfo appInfoArg);
     ~MainWindow();
 
     KonfytAppInfo appInfo;
 
-    bool eventFilter(QObject *object, QEvent *event);
+private:
+    Ui::MainWindow *ui;
     int eventFilterMode;
+
+private slots:
+    void closeEvent(QCloseEvent *);
+    bool eventFilter(QObject *object, QEvent *event);
+
+    // Display info to user
+    void userMessage(QString message);
+
+    // Keyboard shortcuts
+private:
+    QShortcut* shortcut_save;
+    QShortcut* shortcut_panic;
+private slots:
+    void shortcut_save_activated();
+    void shortcut_panic_activated();
+
+    // General helper functions
+private:
+    QString getBaseNameWithoutExtension(QString filepath);
+    void error_abort(QString msg);
+    void messageBox(QString msg);
 
     // ========================================================================
     // Project related
     // ========================================================================
+private:
     QList<QFileInfo> projectDirList;
     QList<KonfytProject*> projectList;
     int currentProject;
@@ -163,9 +183,17 @@ public:
     void setPatchModified(bool modified);
     void setProjectModified();
 
+private slots:
+    // Project modified
+    void projectModifiedStateChanged(bool modified);
+
+    // Projects Menu
+    void onprojectMenu_ActionTrigger(QAction* action);
+
     // ========================================================================
-    // GUI Representation of library
+    // Library and filesystem view
     // ========================================================================
+private:
     bool library_isProgramSelected();
     KonfytSoundfontProgram library_getSelectedProgram();
 
@@ -188,12 +216,19 @@ public:
     void buildSfzTree(QTreeWidgetItem* twi, konfytDbTreeItem* item);
     void buildSfTree(QTreeWidgetItem* twi, konfytDbTreeItem* item);
 
+    // Database
+private:
     konfytDatabase db;
     bool saveDatabase();
     int returnSfontRequester;
     QList<KonfytSoundfontProgram> programList; // List of programs currently displayed in program list view in library.
     void library_refreshGUIProgramList();      // Refresh the GUI program list to match programList
+private slots:
+    void database_scanDirsFinished();
+    void database_scanDirsStatus(QString msg);
+    void database_returnSfont(KonfytSoundfont* sf);
 
+private:
     bool searchMode;
     void fillTreeWithAll();
     void fillTreeWithSearch(QString search);
@@ -217,9 +252,44 @@ public:
     void showSfzContentsBelowLibrary(QString filename);
     QString loadSfzFileText(QString filename);
 
+private slots:
+    void on_tabWidget_library_currentChanged(int index);
+
+    void on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int column);
+    void on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, int column);
+    /* When the user right-clicks on the library tree. */
+    void on_treeWidget_Library_customContextMenuRequested(const QPoint &pos);
+
+    void on_listWidget_LibraryBottom_currentRowChanged(int currentRow);
+    void on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem *item);
+
+    void on_lineEdit_Search_returnPressed();
+    void on_toolButton_ClearSearch_clicked();
+    void on_pushButton_LibraryPreview_clicked();
+
+    void on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int column);
+    /* When the user right-clicks on the filesystem tree. */
+    void on_treeWidget_filesystem_customContextMenuRequested(const QPoint &pos);
+
+    void on_toolButton_filesystem_up_clicked();
+    void on_toolButton_filesystem_refresh_clicked();
+    void on_toolButton_filesystem_home_clicked();
+    void on_toolButton_filesystem_back_clicked();
+    void on_lineEdit_filesystem_path_returnPressed();
+    void on_toolButton_filesystem_projectDir_clicked();
+    void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
+
+    void on_actionOpen_In_File_Manager_library_triggered();
+    void on_actionAdd_Path_To_External_App_Box_triggered();
+    void on_actionOpen_In_File_Manager_fsview_triggered();
+    void on_actionAdd_Path_to_External_App_Box_Relative_to_Project_triggered();
+
     // ========================================================================
     // Patches
     // ========================================================================
+private:
     KonfytPatchEngine* pengine;
     KonfytPatch* masterPatch;   // Current patch being played
     float masterGain;           // Master gain when not in preview mode
@@ -246,8 +316,6 @@ public:
     void addProgramToCurrentPatch(KonfytSoundfontProgram p);
     void addMidiPortToCurrentPatch(int port);
     void addAudioInPortToCurrentPatch(int port);
-    void addLV2ToCurrentPatch(QString lv2Path);
-    void addCarlaInternalToCurrentPatch(QString URI);
 
     void loadPatchForModeAndUpdateGUI();
 
@@ -294,11 +362,10 @@ public:
     QMenu layerMidiInPortsMenu;
     QAction* layerMidiInPortsMenu_newPortAction;
     QMap<QAction*, int> layerMidiInPortsMenu_map; // Map menu actions to project port ids
+    void gui_updateLayerMidiInPortsMenu();
 
     QMenu layerMidiInChannelMenu;
-
-    void gui_updateLayerMidiInPortsAndChansMenu();
-
+    void createLayerMidiInChannelMenu();
 
     // layerBusMenu: Bus menu in the layers in patch view.
     //   Opened when user clicks on layer item bus button, see onlayer_bus_clicked()
@@ -317,10 +384,45 @@ public:
     QAction* patchListMenu_NumbersAction;
     QAction* patchListMenu_NotesAction;
 
+private slots:
+    // Patch view area
+
+    // Patch related
+    void on_lineEdit_PatchName_returnPressed();
+    void on_lineEdit_PatchName_editingFinished();
+    void onPatchMidiInPortsMenu_ActionTrigger(QAction* action);
+    void onPatchMidiOutPortsMenu_ActionTrigger(QAction* action);
+    void onPatchAudioInPortsMenu_ActionTrigger(QAction* action);
+    void on_lineEdit_ProjectName_editingFinished();
+    void on_textBrowser_patchNote_textChanged();
+
+    // Layers
+    void onLayer_slider_moved(konfytLayerWidget* layerItem, float gain);
+    void onLayer_solo_clicked(konfytLayerWidget* layerItem, bool solo);
+    void onLayer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
+    void onLayer_bus_clicked(konfytLayerWidget* layerItem);
+    void onLayer_toolbutton_clicked(konfytLayerWidget* layerItem);
+    void onLayerBusMenu_ActionTrigger(QAction* action);
+    void onLayerMidiOutChannelMenu_ActionTrigger(QAction* action);
+    void onLayerMidiInPortsMenu_ActionTrigger(QAction* action);
+    void onLayerMidiInChannelMenu_ActionTrigger(QAction* action);
+    void onLayer_midiSend_clicked(konfytLayerWidget* layerItem);
+
+    // Patch List
+    void on_toolButton_RemovePatch_clicked();
+    void on_toolButton_PatchUp_clicked();
+    void on_toolButton_PatchDown_clicked();
+    void on_toolButton_AddPatch_clicked();
+    void on_listWidget_Patches_itemClicked(QListWidgetItem *item);
+    void on_pushButton_LoadAll_clicked();
+    void on_toolButton_PatchListMenu_clicked();
+    void toggleShowPatchListNumbers();
+    void toggleShowPatchListNotes();
+
     // ========================================================================
     // Connections page (Ports and busses)
     // ========================================================================
-
+private:
     // portsBussesTreeMenu: Context menu when item in the tree is right-clicked on
     //   Opened when user right-clicks on tree_portsBusses, see tree_portsBusses_Menu()
     //   When an item is clicked: slot corresponding to action is called.
@@ -350,9 +452,25 @@ public:
     QTreeWidgetItem* notRunningParent; // Parent of ports which clients are not currently running
     QMap<QString, QTreeWidgetItem*> notRunningClientsMap;
 
+private slots:
+    void checkboxes_clicked_slot(QCheckBox* c);
+    void tree_portsBusses_Menu(const QPoint &pos);
+    void on_pushButton_connectionsPage_OK_clicked();
+    void on_pushButton_ShowConnections_clicked();
+    void on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void on_actionAdd_Bus_triggered();
+    void on_actionAdd_Audio_In_Port_triggered();
+    void on_actionAdd_MIDI_In_Port_triggered();
+    void on_actionAdd_MIDI_Out_Port_triggered();
+    void on_actionRemove_BusPort_triggered();
+    void on_actionRename_BusPort_triggered();
+    void on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int column);
+    void on_pushButton_connectionsPage_MidiFilter_clicked();
+
     // ========================================================================
     // Settings
     // ========================================================================
+private:
     void showSettingsDialog();
     void applySettings();
     void scanForDatabase();
@@ -365,9 +483,43 @@ public:
     bool loadSettingsFile();
     bool saveSettingsFile();
 
+private slots:
+    // Settings Dialog
+    void on_toolButton_Settings_clicked();
+    void on_pushButtonSettings_RescanLibrary_clicked();
+    void on_pushButton_Settings_Cancel_clicked();
+    void on_pushButton_Settings_Apply_clicked();
+    void on_pushButton_settings_Projects_clicked();
+    void on_pushButton_Settings_Soundfonts_clicked();
+    void on_pushButton_Settings_Patches_clicked();
+    void on_pushButton_Settings_Sfz_clicked();
+    void on_pushButtonSettings_QuickRescanLibrary_clicked();
+
+    // Thread for scanning folders
+private:
+    konfytSfLoader sfLoader;
+    void showWaitingPage(QString title);
+
+    /* Waiter
+     * When a long operation is going to be performed which waits for a signal
+     * to complete, call startWaiter() with an informative message.
+     * The message appears in the status bar. All GUI input is disabled.
+     * The waiterTimer is started which displays a waiting animation in the statusbar.
+     * When the signal is received which completes the operation, call stopWaiter(),
+     * which will reset everything back to normal. */
+    void startWaiter(QString msg);
+    void stopWaiter();
+    int waiterState;
+    QString waiterMessage;
+    QBasicTimer waiterTimer;
+    void timerEvent(QTimerEvent *ev);
+private slots:
+    void scanThreadFihishedSlot();
+
     // ========================================================================
     // MIDI filter editor
     // ========================================================================
+private:
     int midiFilter_lastChan;
     int midiFilter_lastData1;
     int midiFilter_lastData2;
@@ -376,20 +528,73 @@ public:
     int midiFilterEditPort;
     void showMidiFilterEditor();
     void updateMidiFilterEditorLastRx();
+private slots:
+    void on_pushButton_midiFilter_Cancel_clicked();
+    void on_pushButton_midiFilter_Apply_clicked();
+    void on_toolButton_MidiFilter_lowNote_clicked();
+    void on_toolButton_MidiFilter_HighNote_clicked();
+    void on_toolButton_MidiFilter_Add_clicked();
+    void on_toolButton_MidiFilter_Add_Plus12_clicked();
+    void on_toolButton_MidiFilter_Add_Minus12_clicked();
+    void on_toolButton_MidiFilter_lowVel_clicked();
+    void on_toolButton_MidiFilter_HighVel_clicked();
+    void on_toolButton_MidiFilter_lastCC_clicked();
+    void on_toolButton_MidiFilter_Add_CC_clicked();
+    void on_toolButton_MidiFilter_removeCC_clicked();
+    void on_toolButton_MidiFilter_inChan_last_clicked();
+    void on_toolButton_MidiFilter_VelLimitMin_last_clicked();
+    void on_toolButton_MidiFilter_VelLimitMax_last_clicked();
 
     // ========================================================================
-    // Jack
+    // MIDI send list editor
     // ========================================================================
+private:
+    konfytLayerWidget* midiSendListEditItem;
+    QList<KonfytMidiEvent> midiSendList;
+    void showMidiSendListEditor();
+    void midiEventToMidiSendEditor(KonfytMidiEvent event);
+    KonfytMidiEvent midiEventFromMidiSendEditor();
+    // Map combo box index to MIDI type
+    QList<int> midiSendTypeComboItems{
+                MIDI_EVENT_TYPE_CC,
+                MIDI_EVENT_TYPE_PROGRAM,
+                MIDI_EVENT_TYPE_NOTEON,
+                MIDI_EVENT_TYPE_NOTEOFF,
+                MIDI_EVENT_TYPE_PITCHBEND};
+    QList<KonfytMidiEvent> midiSendEditorLastEvents;
+
+private slots:
+    void on_pushButton_midiSendList_apply_clicked();
+    void on_pushButton_midiSendList_cancel_clicked();
+    void on_pushButton_midiSendList_add_clicked();
+    void on_comboBox_midiSendList_type_currentIndexChanged(int index);
+    void on_checkBox_midiSendList_bank_stateChanged(int arg1);
+    void on_listWidget_midiSendList_currentRowChanged(int currentRow);
+    void on_pushButton_midiSendList_pbmin_clicked();
+    void on_pushButton_midiSendList_pbzero_clicked();
+    void on_pushButton_midiSendList_pbmax_clicked();
+    void on_actionEdit_MIDI_Send_List_triggered();
+
+    // ========================================================================
+    // JACK / MIDI
+    // ========================================================================
+private:
     KonfytJackEngine* jack;
     void addAudioBusToJack(int busNo, int *leftPortId, int *rightPortId);
     void addAudioInPortsToJack(int portNo, int *leftPortId, int *rightPortId);
     int addMidiOutPortToJack(int portId);
     int addMidiInPortToJack(int portId);
     bool jackPortBelongstoUs(QString jackPortName);
+private slots:
+    void midiEventSlot();
+    void handleMidiEvent(KonfytMidiEvent ev);
+    void jackXrun();
+    void jackPortRegisterOrConnectCallback();
 
     // ========================================================================
     // Processes (External apps)
     // ========================================================================
+private:
     QHash<QAction*, QString> extAppsMenuActions_Append;
     QHash<QAction*, QString> extAppsMenuActions_Set;
     QMenu extAppsMenu;
@@ -398,10 +603,32 @@ public:
     void runProcess(int index);
     void stopProcess(int index);
     void removeProcess(int index);
+private slots:
+    // Processes (external apps)
+    void processStartedSlot(int index, konfytProcess* process);
+    void processFinishedSlot(int index, konfytProcess* process);
+
+    // External apps menu
+    void extAppsMenuTriggered(QAction* action);
+    void on_toolButton_ExtAppsMenu_clicked();
+
+    // External Apps widgets
+    void on_listWidget_ExtApps_doubleClicked(const QModelIndex &index);
+    void on_listWidget_ExtApps_clicked(const QModelIndex &index);
+    void on_toolButton_layer_AddMidiPort_clicked();
+    void on_pushButton_ExtApp_add_clicked();
+    void on_lineEdit_ExtApp_returnPressed();
+    void on_pushButton_ExtApp_RunSelected_clicked();
+    void on_pushButton_ExtApp_Stop_clicked();
+    void on_pushButton_ExtApp_RunAll_clicked();
+    void on_pushButton_ExtApp_StopAll_clicked();
+    void on_pushButton_ExtApp_remove_clicked();
+    void on_pushButton_ExtApp_Replace_clicked();
 
     // ========================================================================
-    // Busses, audio and midi ports
+    // Busses, audio and MIDI ports
     // ========================================================================
+private:
     int addBus();
     int addAudioInPort();
     int addMidiInPort();
@@ -410,7 +637,7 @@ public:
     // ========================================================================
     // Triggers
     // ========================================================================
-
+private:
     /* To add a new trigger, create an action with unique text in the mainwindow.ui editor.
      * Add the action to the list in initTriggers().
      * In midiEventSlot(), handle the action.
@@ -433,45 +660,49 @@ public:
     void midi_setLayerSolo(int layer, int midiValue);
     void midi_setLayerMute(int layer, int midiValue);
 
+private slots:
+    void on_pushButton_ShowTriggersPage_clicked();
+    void on_pushButton_triggersPage_OK_clicked();
+    void on_pushButton_triggersPage_assign_clicked();
+    void on_pushButton_triggersPage_clear_clicked();
+    void on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem *item, int column);
+    void on_checkBox_Triggers_ProgSwitchPatches_clicked();
+
     // ========================================================================
     // Other JACK connections
     // ========================================================================
+private:
     bool jackPage_audio; // True to display audio ports, false for MIDI
     void showJackPage();
     void updateJackPage();
-
-    // ========================================================================
-    // Warnings
-    // ========================================================================
-
-    void updateGUIWarnings();
-    void addWarning(QString warning);
+private slots:
+    void on_pushButton_ShowJackPage_clicked();
+    void on_pushButton_jackConRefresh_clicked();
+    void on_pushButton_jackConAdd_clicked();
+    void on_pushButton_jackConRemove_clicked();
+    void on_pushButton_JackAudioPorts_clicked();
+    void on_pushButton_JackMidiPorts_clicked();
+    void on_pushButton_jackCon_OK_clicked();
 
     // ========================================================================
     // Other
     // ========================================================================
 
+    // Warnings
+private:
+    void updateGUIWarnings();
+    void addWarning(QString warning);
+
+    // Panic
+private:
     bool panicState;
     void triggerPanic(bool panic);
+private slots:
+    void on_pushButton_Panic_clicked();
+    void on_pushButton_Panic_customContextMenuRequested(const QPoint &pos);
 
-    // Thread for scanning folders
-    konfytSfLoader sfLoader;
-    void showWaitingPage(QString title);
-
-    /* Waiter
-     * When a long operation is going to be performed which waits for a signal
-     * to complete, call startWaiter() with an informative message.
-     * The message appears in the status bar. All GUI input is disabled.
-     * The waiterTimer is started which displays a waiting animation in the statusbar.
-     * When the signal is received which completes the operation, call stopWaiter(),
-     * which will reset everything back to normal. */
-    void startWaiter(QString msg);
-    void stopWaiter();
-    int waiterState;
-    QString waiterMessage;
-    QBasicTimer waiterTimer;
-    void timerEvent(QTimerEvent *ev);
-
+    // About Dialog
+private:
     AboutDialog aboutDialog;
     void initAboutDialog();
     void showAboutDialog();
@@ -479,201 +710,35 @@ public:
     void resizeEvent(QResizeEvent *ev);
 
     // Console
-    ConsoleDialog* consoleDiag; // Console dialog (seperate console window)
+public:
     void setConsoleShowMidiMessages(bool show);
+private:
+    ConsoleDialog* consoleDiag; // Console dialog (seperate console window)
     bool console_showMidiMessages;
+private slots:
+    void on_pushButton_ClearConsole_clicked();
+    void on_pushButton_ShowConsole_clicked();
+    void on_checkBox_ConsoleShowMidiMessages_clicked();
 
     // MIDI Indicator
+private:
     QBasicTimer midiIndicatorTimer;
-
-    // Keyboard shortcuts
-    QShortcut* shortcut_save;
-    QShortcut* shortcut_panic;
-
-    void setMasterInTranspose(int transpose, bool relative);
-
-    // General utilities
-    QString getBaseNameWithoutExtension(QString filepath);
-
-
-    void error_abort(QString msg);
-    void messageBox(QString msg);
-    
 private slots:
+    void on_MIDI_indicator_clicked();
 
-    // Keyboard Shortcuts
-    void shortcut_save_activated();
-    void shortcut_panic_activated();
-
-    // Database
-    void database_scanDirsFinished();
-    void database_scanDirsStatus(QString msg);
-    void database_returnSfont(KonfytSoundfont* sf);
-
-    // Display info to user
-    void userMessage(QString message);
-
-    // Midi / Jack
-    void midiEventSlot();
-    void handleMidiEvent(KonfytMidiEvent ev);
-    void jackXrun();
-    void jackPortRegisterOrConnectCallback();
-
-    // Project modified
-    void projectModifiedStateChanged(bool modified);
-
-    // Projects Menu
-    void onprojectMenu_ActionTrigger(QAction* action);
-
-    // ========================================================================
-    // Processes (external apps)
-    void processStartedSlot(int index, konfytProcess* process);
-    void processFinishedSlot(int index, konfytProcess* process);
-
-    // External apps menu
-    void extAppsMenuTriggered(QAction* action);
-    void on_toolButton_ExtAppsMenu_clicked();
-
-    // External Apps widgets
-    void on_listWidget_ExtApps_doubleClicked(const QModelIndex &index);
-    void on_listWidget_ExtApps_clicked(const QModelIndex &index);
-    void on_toolButton_layer_AddMidiPort_clicked();
-    void on_pushButton_ExtApp_add_clicked();
-    void on_lineEdit_ExtApp_returnPressed();
-    void on_pushButton_ExtApp_RunSelected_clicked();
-    void on_pushButton_ExtApp_Stop_clicked();
-    void on_pushButton_ExtApp_RunAll_clicked();
-    void on_pushButton_ExtApp_StopAll_clicked();
-    void on_pushButton_ExtApp_remove_clicked();
-    void on_pushButton_ExtApp_Replace_clicked();
-    // ========================================================================
-
-    // Thread for scanning folders
-    void scanThreadFihishedSlot();
-
-    // Handle application closing
-    void closeEvent(QCloseEvent *);
-
-    // ========================================================================
-    // Library and filesystem view
-
-    void on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int column);
-    void on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
-    void on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, int column);
-    /* When the user right-clicks on the library tree. */
-    void on_treeWidget_Library_customContextMenuRequested(const QPoint &pos);
-
-    void on_listWidget_LibraryBottom_currentRowChanged(int currentRow);
-    void on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem *item);
-
-    void on_lineEdit_Search_returnPressed();
-    void on_toolButton_ClearSearch_clicked();
-    void on_pushButton_LibraryPreview_clicked();
-
-    void on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
-    void on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int column);
-    /* When the user right-clicks on the filesystem tree. */
-    void on_treeWidget_filesystem_customContextMenuRequested(const QPoint &pos);
-
-    void on_toolButton_filesystem_up_clicked();
-    void on_toolButton_filesystem_refresh_clicked();
-    void on_toolButton_filesystem_home_clicked();
-    void on_toolButton_filesystem_back_clicked();
-    void on_lineEdit_filesystem_path_returnPressed();
-    void on_toolButton_filesystem_projectDir_clicked();
-
-    void on_actionOpen_In_File_Manager_library_triggered();
-    void on_actionAdd_Path_To_External_App_Box_triggered();
-    void on_actionOpen_In_File_Manager_fsview_triggered();
-    void on_actionAdd_Path_to_External_App_Box_Relative_to_Project_triggered();
-
-    // ========================================================================
-    // Patch view area
-
-    // Patch related
-    void on_lineEdit_PatchName_returnPressed();
-    void on_lineEdit_PatchName_editingFinished();
-    void onPatchMidiInPortsMenu_ActionTrigger(QAction* action);
-    void onPatchMidiOutPortsMenu_ActionTrigger(QAction* action);
-    void onPatchAudioInPortsMenu_ActionTrigger(QAction* action);
-    void on_lineEdit_ProjectName_editingFinished();
-    void on_textBrowser_patchNote_textChanged();
-
-    // Layers
-    void onLayer_slider_moved(konfytLayerWidget* layerItem, float gain);
-    void onLayer_solo_clicked(konfytLayerWidget* layerItem, bool solo);
-    void onLayer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
-    void onLayer_bus_clicked(konfytLayerWidget* layerItem);
-    void onLayer_toolbutton_clicked(konfytLayerWidget* layerItem);
-    void onLayerBusMenu_ActionTrigger(QAction* action);
-    void onLayerMidiOutChannelMenu_ActionTrigger(QAction* action);
-    void onLayerMidiInPortsMenu_ActionTrigger(QAction* action);
-    void onLayerMidiInChannelMenu_ActionTrigger(QAction* action);
-
-    // Patch List
-    void on_toolButton_RemovePatch_clicked();
-    void on_toolButton_PatchUp_clicked();
-    void on_toolButton_PatchDown_clicked();
-    void on_toolButton_AddPatch_clicked();
-    void on_listWidget_Patches_itemClicked(QListWidgetItem *item);
-    void on_pushButton_LoadAll_clicked();
-    void on_toolButton_PatchListMenu_clicked();
-    void toggleShowPatchListNumbers();
-    void toggleShowPatchListNotes();
-
-    // ========================================================================
-    // Midi Filter Dialog
-
-    void on_pushButton_midiFilter_Cancel_clicked();
-
-    void on_pushButton_midiFilter_Apply_clicked();
-
-    void on_toolButton_MidiFilter_lowNote_clicked();
-
-    void on_toolButton_MidiFilter_HighNote_clicked();
-
-    void on_toolButton_MidiFilter_Add_clicked();
-
-    void on_toolButton_MidiFilter_Add_Plus12_clicked();
-
-    void on_toolButton_MidiFilter_Add_Minus12_clicked();
-
-    void on_toolButton_MidiFilter_lowVel_clicked();
-
-    void on_toolButton_MidiFilter_HighVel_clicked();
-
-    void on_toolButton_MidiFilter_lastCC_clicked();
-
-    void on_toolButton_MidiFilter_Add_CC_clicked();
-
-    void on_toolButton_MidiFilter_removeCC_clicked();
-
-    void on_toolButton_MidiFilter_inChan_last_clicked();
-
-    // ========================================================================
-    // Settings Dialog
-
-    void on_toolButton_Settings_clicked();
-
-    void on_pushButtonSettings_RescanLibrary_clicked();
-
-    void on_pushButton_Settings_Cancel_clicked();
-
-    void on_pushButton_Settings_Apply_clicked();
-
-    void on_pushButton_settings_Projects_clicked();
-
-    void on_pushButton_Settings_Soundfonts_clicked();
-
-    void on_pushButton_Settings_Patches_clicked();
-
-    void on_pushButton_Settings_Sfz_clicked();
-
-    void on_pushButtonSettings_QuickRescanLibrary_clicked();
-
+    // Global transpose
+private:
+    void setMasterInTranspose(int transpose, bool relative);
+private slots:
+    void on_spinBox_MasterIn_Transpose_valueChanged(int arg1);
+    void on_pushButton_MasterIn_TransposeSub12_clicked();
+    void on_pushButton_MasterIn_TransposeAdd12_clicked();
+    void on_pushButton_MasterIn_TransposeZero_clicked();
+    
     // ========================================================================
     // Actions
 
+private slots:
     void on_actionSave_Patch_triggered();
 
     void on_actionSave_Patch_As_Copy_triggered();
@@ -706,112 +771,6 @@ private slots:
 
     void on_actionProject_SaveAs_triggered();
 
-    // ========================================================================
-    // Connections (ports and busses) Page
-
-    void checkboxes_clicked_slot(QCheckBox* c);
-
-    void tree_portsBusses_Menu(const QPoint &pos);
-
-    void on_pushButton_connectionsPage_OK_clicked();
-
-    void on_pushButton_ShowConnections_clicked();
-
-    void on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
-
-    void on_actionAdd_Bus_triggered();
-
-    void on_actionAdd_Audio_In_Port_triggered();
-
-    void on_actionAdd_MIDI_In_Port_triggered();
-
-    void on_actionAdd_MIDI_Out_Port_triggered();
-
-    void on_actionRemove_BusPort_triggered();
-
-    void on_actionRename_BusPort_triggered();
-
-    void on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int column);
-
-    // ========================================================================
-    // Triggers page
-
-    void on_pushButton_ShowTriggersPage_clicked();
-
-    void on_pushButton_triggersPage_OK_clicked();
-
-    void on_pushButton_triggersPage_assign_clicked();
-
-    void on_pushButton_triggersPage_clear_clicked();
-
-    void on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem *item, int column);
-
-    void on_checkBox_Triggers_ProgSwitchPatches_clicked();
-
-    // ========================================================================
-    // Console
-
-    void on_pushButton_ClearConsole_clicked();
-
-    void on_pushButton_ShowConsole_clicked();
-
-    void on_checkBox_ConsoleShowMidiMessages_clicked();
-
-    // ========================================================================
-    // Global transpose
-
-    void on_spinBox_MasterIn_Transpose_valueChanged(int arg1);
-
-    void on_pushButton_MasterIn_TransposeSub12_clicked();
-
-    void on_pushButton_MasterIn_TransposeAdd12_clicked();
-
-    void on_pushButton_MasterIn_TransposeZero_clicked();
-
-    // ========================================================================
-
-    void on_horizontalSlider_MasterGain_sliderMoved(int position);
-
-    void on_pushButton_LiveMode_clicked();
-
-    void on_tabWidget_Projects_currentChanged(int index);
-
-    void on_tabWidget_library_currentChanged(int index);
-
-    void on_pushButton_RestartApp_clicked();
-
-    void on_toolButton_Project_clicked();
-
-    void on_pushButton_Panic_clicked();
-
-    void on_MIDI_indicator_clicked();
-
-    void on_pushButton_ShowJackPage_clicked();
-
-    void on_pushButton_jackConRefresh_clicked();
-
-    void on_pushButton_jackConAdd_clicked();
-
-    void on_pushButton_jackConRemove_clicked();
-
-    void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
-
-    void on_pushButton_LavaMonster_clicked();
-
-    void on_pushButton_JackAudioPorts_clicked();
-
-    void on_pushButton_JackMidiPorts_clicked();
-
-    void on_pushButton_connectionsPage_MidiFilter_clicked();
-
-    void on_toolButton_MidiFilter_VelLimitMin_last_clicked();
-
-    void on_pushButton_Panic_customContextMenuRequested(const QPoint &pos);
-
-    void on_toolButton_MidiFilter_VelLimitMax_last_clicked();
-
-    void on_pushButton_jackCon_OK_clicked();
-
     void on_actionAlways_Active_triggered();
 
     void on_actionEdit_MIDI_Filter_triggered();
@@ -822,8 +781,28 @@ private slots:
 
     void on_actionRemove_Layer_triggered();
 
-private:
-    Ui::MainWindow *ui;
+    // ========================================================================
+
+    void on_horizontalSlider_MasterGain_sliderMoved(int position);
+
+    void on_pushButton_LiveMode_clicked();
+
+    void on_tabWidget_Projects_currentChanged(int index);
+
+    void on_pushButton_RestartApp_clicked();
+
+    void on_toolButton_Project_clicked();
+
+    void on_pushButton_LavaMonster_clicked();    
+
+
+    void on_listWidget_midiSendList_lastReceived_itemClicked(QListWidgetItem *item);
+    void on_pushButton_midiSendList_replace_clicked();
+    void on_toolButton_midiSendList_down_clicked();
+    void on_toolButton_midiSendList_up_clicked();
+    void on_pushButton_midiSendList_remove_clicked();
+    void on_pushButton_midiSendList_sendSelected_clicked();
+    void on_pushButton_midiSendList_sendAll_clicked();
 };
 
 #endif // MAINWINDOW_H
