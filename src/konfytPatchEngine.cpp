@@ -479,7 +479,7 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
                     bus = currentProject->audioBus_getBus(busList[0]);
                     userMessage("   Defaulting to bus " + n2s(busList[0]));
                 } else {
-                    error_abort("refreshAllGainsAndRouting: Project has no busses.");
+                    error_abort("refreshAllGainsAndRouting: Project has no buses.");
                 }
             } else {
                 bus = currentProject->audioBus_getBus(layer.busIdInProject);

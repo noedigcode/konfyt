@@ -159,7 +159,7 @@ void KonfytJackEngine::refreshPortConnections()
         }
     }
 
-    // Refresh connections for audio output ports (aka busses)
+    // Refresh connections for audio output ports (aka buses)
     for (int i=0; i<audio_out_ports.count(); i++) {
 
         KonfytJackPort* p = audio_out_ports[i];
@@ -1110,8 +1110,8 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     }
 
     if (panicState > 0) {
-        // We are in a panic state. Write zero to all busses.
-        // (Busses already zeroed above))))
+        // We are in a panic state. Write zero to all buses.
+        // (Buses already zeroed above))))
     } else {
 
         // For each audio route, if active, mix source buffer to destination buffer

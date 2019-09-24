@@ -935,7 +935,7 @@ int KonfytProject::audioBus_getFirstBusId(int skipId)
             }
         }
     } else {
-        error_abort("audioBus_getFirstBusId: no busses in project!");
+        error_abort("audioBus_getFirstBusId: no buses in project!");
     }
     return ret;
 }

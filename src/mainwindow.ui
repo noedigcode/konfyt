@@ -815,7 +815,7 @@ border-top-left-radius: 0;
 border-bottom-left-radius: 0;</string>
             </property>
             <property name="text">
-             <string>Ports and Busses</string>
+             <string>Ports and Buses</string>
             </property>
            </widget>
           </item>
@@ -3495,7 +3495,7 @@ QSpinBox {
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>243</width>
+                        <width>266</width>
                         <height>398</height>
                        </rect>
                       </property>
@@ -4947,7 +4947,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                   </sizepolicy>
                  </property>
                  <property name="text">
-                  <string>Ports/Busses</string>
+                  <string>Ports/Buses</string>
                  </property>
                 </widget>
                </item>

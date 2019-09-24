@@ -213,7 +213,7 @@ public:
     void audioInPort_addClient(int portId, portLeftRight leftRight, QString client);
     void audioInPort_removeClient(int portId, portLeftRight leftRight, QString client);
 
-    // Audio busses
+    // Audio buses
     int audioBus_add(QString busName);
     void audioBus_remove(int busId);
     int audioBus_count();

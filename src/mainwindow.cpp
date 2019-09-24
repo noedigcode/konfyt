@@ -366,7 +366,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     audioInParent = NULL;
     midiOutParent = NULL;
 
-    // Set up portsBusses tree context menu
+    // Set up portsBuses tree context menu
     ui->tree_portsBusses->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tree_portsBusses, &QTreeWidget::customContextMenuRequested,
             this, &MainWindow::tree_portsBusses_Menu);
@@ -833,7 +833,7 @@ void MainWindow::gui_updatePortsBussesTree()
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
 
-    /* Busses
+    /* Buses
      *  |__ bus 1
      *  |__  :
      *  |__ bus n
@@ -868,7 +868,7 @@ void MainWindow::gui_updatePortsBussesTree()
     }
 
     busParent = new QTreeWidgetItem();
-    busParent->setText(0, "Busses");
+    busParent->setText(0, "Buses");
     QList<int> busIds = prj->audioBus_getAllBusIds();
     for (int i=0; i<busIds.count(); i++) {
         int id = busIds[i];
@@ -1461,7 +1461,7 @@ void MainWindow::setCurrentProject(int i)
     // In Jack, remove all audio input ports and busses (audio output ports)
     jack->removeAllAudioInAndOutPorts();
 
-    // Audio Busses
+    // Audio Buses
 
     QList<int> busIds = prj->audioBus_getAllBusIds();
     for (int j=0; j<busIds.count(); j++) {
@@ -3079,7 +3079,7 @@ void MainWindow::updateGUIWarnings()
         }
     }
 
-    // Busses
+    // Buses
     QList<int> busIds = prj->audioBus_getAllBusIds();
     for (int i=0; i<busIds.count(); i++) {
         PrjAudioBus bus = prj->audioBus_getBus(busIds[i]);
@@ -3739,7 +3739,7 @@ void MainWindow::onLayer_bus_clicked(konfytLayerWidget *layerItem)
         gui_updateLayerMidiOutChannelMenu();
         layerMidiOutChannelMenu.popup(QCursor::pos());
     } else {
-        // Show Busses menu
+        // Show Buses menu
         gui_updateLayerBusMenu();
         layerBusMenu.popup(QCursor::pos());
 
@@ -4963,7 +4963,7 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current
     gui_updateConnectionsTree();
 }
 
-/* Remove the bus/port selected in the connections ports/busses tree widget. */
+/* Remove the bus/port selected in the connections ports/buses tree widget. */
 void MainWindow::on_actionRemove_BusPort_triggered()
 {
     KonfytProject* prj = getCurrentProject();
@@ -6140,7 +6140,7 @@ void MainWindow::on_listWidget_midiSendList_currentRowChanged(int currentRow)
 {
     if (currentRow >= 0) {
         // Valid item selected
-        midiEventToMidiSendEditor(midiSendList[currentRow]);
+        midiEventToMidiSendEditor(midiSendList.value(currentRow));
     } else {
         // No item selected
         KonfytMidiEvent e;
@@ -6223,8 +6223,8 @@ void MainWindow::on_pushButton_midiSendList_remove_clicked()
     int index = ui->listWidget_midiSendList->currentRow();
     if (index < 0) { return; }
 
-    midiSendList.removeAt(index);
     delete ui->listWidget_midiSendList->item(index);
+    midiSendList.removeAt(index);
 }
 
 void MainWindow::on_pushButton_midiSendList_sendSelected_clicked()

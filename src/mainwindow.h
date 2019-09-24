@@ -420,7 +420,7 @@ private slots:
     void toggleShowPatchListNotes();
 
     // ========================================================================
-    // Connections page (Ports and busses)
+    // Connections page (Ports and buses)
     // ========================================================================
 private:
     // portsBussesTreeMenu: Context menu when item in the tree is right-clicked on
@@ -626,7 +626,7 @@ private slots:
     void on_pushButton_ExtApp_Replace_clicked();
 
     // ========================================================================
-    // Busses, audio and MIDI ports
+    // Buses, audio and MIDI ports
     // ========================================================================
 private:
     int addBus();
