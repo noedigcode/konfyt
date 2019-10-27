@@ -49,23 +49,23 @@ void konfytFluidsynthEngine::processJackMidi(int ID, const KonfytMidiEvent *ev)
         return;
     }
 
-    if ( (ev->type != MIDI_EVENT_TYPE_PROGRAM) || (ev->type != MIDI_EVENT_TYPE_SYSTEM) ) {
+    if ( (ev->type() != MIDI_EVENT_TYPE_PROGRAM) || (ev->type() != MIDI_EVENT_TYPE_SYSTEM) ) {
 
         // All MIDI events are sent to Fluidsynth on channel 0
 
-        if (ev->type == MIDI_EVENT_TYPE_NOTEON) {
-            fluid_synth_noteon( synthDataMap.value(ID).synth, MIDI_CHANNEL_0, ev->data1, ev->data2 );
-        } else if (ev->type == MIDI_EVENT_TYPE_NOTEOFF) {
-            fluid_synth_noteoff( synthDataMap.value(ID).synth, MIDI_CHANNEL_0, ev->data1 );
-        } else if (ev->type == MIDI_EVENT_TYPE_CC) {
-            fluid_synth_cc( synthDataMap.value(ID).synth, MIDI_CHANNEL_0, ev->data1, ev->data2 );
+        if (ev->type() == MIDI_EVENT_TYPE_NOTEON) {
+            fluid_synth_noteon( synthDataMap.value(ID).synth, MIDI_CHANNEL_0, ev->note(), ev->velocity() );
+        } else if (ev->type() == MIDI_EVENT_TYPE_NOTEOFF) {
+            fluid_synth_noteoff( synthDataMap.value(ID).synth, MIDI_CHANNEL_0, ev->note() );
+        } else if (ev->type() == MIDI_EVENT_TYPE_CC) {
+            fluid_synth_cc( synthDataMap.value(ID).synth, MIDI_CHANNEL_0, ev->data1(), ev->data2() );
             // If we have received an all notes off, sommer kill all the sound also. This is probably a panic.
-            if (ev->data1 == MIDI_CC_ALL_NOTES_OFF) {
+            if (ev->data1() == MIDI_CC_ALL_NOTES_OFF) {
                 fluid_synth_all_sounds_off( synthDataMap.value(ID).synth, MIDI_CHANNEL_0 );
             }
-        } else if (ev->type == MIDI_EVENT_TYPE_PITCHBEND) {
+        } else if (ev->type() == MIDI_EVENT_TYPE_PITCHBEND) {
             // Fluidsynth expects a positive pitchbend value, i.e. centered around 8192, not zero.
-            fluid_synth_pitch_bend( synthDataMap.value(ID).synth, MIDI_CHANNEL_0, ev->pitchbendValue_signed()+8192 );
+            fluid_synth_pitch_bend( synthDataMap.value(ID).synth, MIDI_CHANNEL_0, ev->pitchbendValueSigned()+8192 );
         }
     }
 

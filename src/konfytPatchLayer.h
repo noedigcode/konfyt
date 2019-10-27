@@ -151,7 +151,8 @@ public:
     LayerMidiOutStruct      midiOutputPortData;
     LayerAudioInStruct      audioInPortData;
 
-    QList<KonfytMidiEvent> midiSendList;
+    QList<MidiSendItem> midiSendList;
+    QList<KonfytMidiEvent> getMidiSendListEvents();
 
 private:
     KonfytLayerType layerType = KonfytLayerType_Uninitialized;

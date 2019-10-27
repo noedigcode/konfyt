@@ -40,6 +40,15 @@ QString KonfytPatchLayer::getErrorMessage()
     return this->errorMessage;
 }
 
+QList<KonfytMidiEvent> KonfytPatchLayer::getMidiSendListEvents()
+{
+    QList<KonfytMidiEvent> events;
+    foreach (MidiSendItem item, midiSendList) {
+        events.append(item.midiEvent);
+    }
+    return events;
+}
+
 
 // Use to initialise the layer object.
 // Accepts an ID which will later be used by the patch class to uniquely identify it.

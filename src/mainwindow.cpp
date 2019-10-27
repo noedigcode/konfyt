@@ -74,6 +74,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     // Settings dir is in user home directory
     settingsDir = QDir::homePath() + "/" + SETTINGS_DIR;
     userMessage("Settings dir: " + settingsDir);
+    createSettingsDir();
     ui->label_SettingsPath->setText( ui->label_SettingsPath->text() + settingsDir );
     if (loadSettingsFile()) {
         userMessage("Settings loaded.");
@@ -152,7 +153,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     // Library filesystem view
     this->fsview_currentPath = QDir::homePath();
     refreshFilesystemView();
-    ui->tabWidget_library->setCurrentIndex(LIBRARY_TAB_LIBRARY);
+    ui->tabWidget_library->setCurrentWidget(ui->tab_library);
 
     // ----------------------------------------------------
     // Initialise soundfont database
@@ -185,6 +186,10 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
 
     fillTreeWithAll(); // Fill the tree widget with all the database entries
 
+    // ----------------------------------------------------
+    // Setup saved MIDI send items
+    // ----------------------------------------------------
+    setupSavedMidiSendItems();
 
     // ----------------------------------------------------
     // Projects / commandline arguments
@@ -194,7 +199,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     ui->tabWidget_Projects->blockSignals(true);
     ui->tabWidget_Projects->clear();
     ui->tabWidget_Projects->blockSignals(true);
-    // Scan projectsDir for projects. If none found, create a new project and empty patch.
+    // Scan projectsDir for projects.
     if ( !scanDirForProjects(projectsDir) ) {
         userMessage("No project directory " + projectsDir);
     }
@@ -221,8 +226,8 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
                     delete pt;
                 }
                 // Locate in filesystem view
-                ui->tabWidget_library->setCurrentIndex(LIBRARY_TAB_FILESYSTEM);
-                cdFilesystemView(file);
+                ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
+                cdFilesystemView(QFileInfo(file).absoluteFilePath());
                 selectItemInFilesystemView(file);
 
             } else if (fileIsSfzOrGig(file)) {
@@ -236,8 +241,8 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
                 on_lineEdit_PatchName_editingFinished();
 
                 // Locate in filesystem view
-                ui->tabWidget_library->setCurrentIndex(LIBRARY_TAB_FILESYSTEM);
-                cdFilesystemView(file);
+                ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
+                cdFilesystemView(QFileInfo(file).absoluteFilePath());
                 selectItemInFilesystemView(file);
 
             } else if (fileIsSoundfont(file)) {
@@ -247,8 +252,8 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
                 // Locate soundfont in filebrowser, select it and show its programs
 
                 // Locate in filesystem view
-                ui->tabWidget_library->setCurrentIndex(LIBRARY_TAB_FILESYSTEM);
-                cdFilesystemView(file);
+                ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
+                cdFilesystemView(QFileInfo(file).absoluteFilePath());
                 selectItemInFilesystemView(file);
                 // Load from filesystem view
                 on_treeWidget_filesystem_itemDoubleClicked( ui->treeWidget_filesystem->currentItem(), 0 );
@@ -395,7 +400,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupExtAppMenu();
 
     // Show library view (not live mode)
-    ui->stackedWidget_left->setCurrentIndex(STACKED_WIDGET_LEFT_LIBRARY);
+    ui->stackedWidget_left->setCurrentWidget(ui->pageLibrary);
 
     // Show welcome message in statusbar
     QString app_name(APP_NAME);
@@ -477,34 +482,12 @@ void MainWindow::jackPortRegisterOrConnectCallback()
 // Scan given directory recursively and add project files to list.
 bool MainWindow::scanDirForProjects(QString dirname)
 {
-    if (dirname.isEmpty()) { return false; }
-
-    QDir dir(dirname);
-    if (!dir.exists()) {
-        emit userMessage("scanDirForProjects: Dir does not exist.");
-        return false;
+    if (!dirExists(dirname)) {
+        userMessage("scanDirForProjects: Dir does not exist.");
     }
 
-    // Get list of all subfiles and directories. Then for each:
-    // If a file, add it if it is a project.
-    // If a directory, run this function on it.
-    QFileInfoList fil = dir.entryInfoList();
-    for (int i=0; i<fil.count(); i++) {
-        QFileInfo fi = fil.at(i);
-        if (fi.fileName() == ".") { continue; }
-        if (fi.fileName() == "..") { continue; }
+    projectDirList = scanDirForFiles(dirname, PROJECT_FILENAME_EXTENSION);
 
-        if (fi.isFile()) {
-            // Check extension and add if project.
-            QString suffix = "." + fi.suffix();
-            if (suffix == PROJECT_FILENAME_EXTENSION) {
-                projectDirList.append(fi);
-            }
-        } else if (fi.isDir()) {
-            // Scan the dir
-            scanDirForProjects(fi.filePath());
-        }
-    }
     return true;
 }
 
@@ -645,15 +628,7 @@ bool MainWindow::loadSettingsFile()
 bool MainWindow::saveSettingsFile()
 {
     // First, create settings directory if it doesn't exist.
-    QDir dir(settingsDir);
-    if (!dir.exists()) {
-        if (dir.mkpath(settingsDir)) {
-            userMessage("Created settings directory: " + settingsDir);
-        } else {
-            userMessage("Failed to create settings directory: " + settingsDir);
-            return false;
-        }
-    }
+    createSettingsDir();
 
     // Open settings file for writing.
     QString filename = settingsDir + "/" + SETTINGS_FILE;
@@ -1386,7 +1361,7 @@ void MainWindow::setCurrentProject(int i)
 {
     if (i==-1) { i = projectList.count()-1; }
     if ( (i<0) || (i>=projectList.count()) ) {
-        userMessage("DEBUG: SET_CURRENT_PROJECT: INVALID INDEX " + n2s(i));
+        userMessage("SET_CURRENT_PROJECT: INVALID INDEX " + n2s(i));
         return;
     }
 
@@ -1900,10 +1875,10 @@ void MainWindow::gui_updatePatchView()
         ui->lineEdit_PatchName->setEnabled(false);
         patchNote_ignoreChange = true;
         ui->textBrowser_patchNote->clear();
-        ui->stackedWidget_patchLayers->setCurrentIndex(STACKED_WIDGET_PATCHLAYERS_NOPATCH);
+        ui->stackedWidget_patchLayers->setCurrentWidget(ui->page_notPatchLayers);
         return;
     } else {
-        ui->stackedWidget_patchLayers->setCurrentIndex(STACKED_WIDGET_PATCHLAYERS_PATCH);
+        ui->stackedWidget_patchLayers->setCurrentWidget(ui->page_patchLayers);
         ui->lineEdit_PatchName->setEnabled(true);
     }
 
@@ -2180,6 +2155,55 @@ void MainWindow::messageBox(QString msg)
     QMessageBox msgbox;
     msgbox.setText(msg);
     msgbox.exec();
+}
+
+bool MainWindow::dirExists(QString dirname)
+{
+    if (dirname.isEmpty()) { return false; }
+
+    QDir dir(dirname);
+    return dir.exists();
+}
+
+QStringList MainWindow::scanDirForFiles(QString dirname, QString filenameExtension)
+{
+    QStringList ret;
+
+    if (!dirExists(dirname)) {
+        userMessage(QString("Scan dir for %1 files: Dir does not exist: %2")
+                    .arg(filenameExtension, dirname));
+        return ret;
+    }
+
+    QDir dir(dirname);
+
+    // Get list of all subfiles and directories. Then for each:
+    // If a file, add it if it is a project.
+    // If a directory, run this function on it.
+    QFileInfoList fil = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
+    for (int i = 0; i < fil.count(); i++) {
+        QFileInfo fi = fil.at(i);
+
+        if (fi.isFile()) {
+            // Check extension and add if project.
+            bool pass = false;
+            if (filenameExtension.isEmpty()) { pass = true; }
+            else {
+                QString suffix = "." + fi.suffix();
+                if (suffix == filenameExtension) {
+                    pass = true;
+                }
+            }
+            if (pass) {
+                ret.append(fi.filePath());
+            }
+        } else if (fi.isDir()) {
+            // Scan the dir
+            ret.append(scanDirForFiles(fi.filePath(), filenameExtension));
+        }
+    }
+
+    return ret;
 }
 
 QString MainWindow::getBaseNameWithoutExtension(QString filepath)
@@ -2531,7 +2555,7 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
 {
     QDir dir(patchesDir);
     if (!dir.exists()) {
-        emit userMessage("Patches directory does not exist.");
+        userMessage("Patches directory does not exist.");
         return false;
     }
 
@@ -2796,6 +2820,19 @@ void MainWindow::scanForDatabase()
     // When the finished signal is received, remove waiting screen.
     // See database_scanDirsFinished()
     // Periodic status info might be received in database_scanDirsStatus()
+}
+
+/* Creates the settings dir if it doesn't exist. */
+void MainWindow::createSettingsDir()
+{
+    QDir dir(settingsDir);
+    if (!dir.exists()) {
+        if (dir.mkpath(settingsDir)) {
+            userMessage("Created settings directory: " + settingsDir);
+        } else {
+            userMessage("Failed to create settings directory: " + settingsDir);
+        }
+    }
 }
 
 void MainWindow::database_scanDirsFinished()
@@ -3279,6 +3316,10 @@ void MainWindow::midiEventSlot()
 
 void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
 {
+    KonfytMidiEvent evInclBank = ev;
+    evInclBank.bankMSB = lastBankSelectMSB;
+    evInclBank.bankLSB = lastBankSelectLSB;
+
     // Show in console if enabled.
     if (console_showMidiMessages) {
         PrjMidiPort p;
@@ -3286,7 +3327,8 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
         if (prj) {
             p = prj->midiInPort_getPortWithJackId(ev.sourceId);
         }
-        userMessage("MIDI EVENT " + midiEventToString(ev.type, ev.channel, ev.data1, ev.data2, lastBankSelectMSB, lastBankSelectLSB)
+        // Take last bank select info into account
+        userMessage("MIDI EVENT " + evInclBank.toString()
                     + " from port " + p.portName);
     }
 
@@ -3297,13 +3339,13 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
     }
 
     // Save bank selects
-    if (ev.type == MIDI_EVENT_TYPE_CC) {
-        if (ev.data1 == 0) {
+    if (ev.type() == MIDI_EVENT_TYPE_CC) {
+        if (ev.data1() == 0) {
             // Bank select MSB
-            lastBankSelectMSB = ev.data2;
-        } else if (ev.data1 == 32) {
+            lastBankSelectMSB = ev.data2();
+        } else if (ev.data1() == 32) {
             // Bank select LSB
-            lastBankSelectLSB = ev.data2;
+            lastBankSelectLSB = ev.data2();
         } else {
             // Otherwise, reset bank select. Bank select
             // should only be taken into account if a program
@@ -3311,7 +3353,7 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
             lastBankSelectMSB = -1;
             lastBankSelectLSB = -1;
         }
-    } else if (ev.type != MIDI_EVENT_TYPE_PROGRAM) {
+    } else if (ev.type() != MIDI_EVENT_TYPE_PROGRAM) {
         // Otherwise, reset bank select. Bank select
         // should only be taken into account if a program
         // is received directly after it. If not, it is cleared.
@@ -3321,8 +3363,8 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
 
     // MIDI Filter Editor "last" lineEdits
     midiFilter_lastChan = ev.channel;
-    midiFilter_lastData1 = ev.data1;
-    midiFilter_lastData2 = ev.data2;
+    midiFilter_lastData1 = ev.data1();
+    midiFilter_lastData2 = ev.data2();
     updateMidiFilterEditorLastRx();
 
     // MIDI send list editor page
@@ -3334,13 +3376,11 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
 
         // If event is a program and the previous messages happened to be bank MSB and LSB,
         // then add an extra program event which includes the bank.
-        if (ev.type == MIDI_EVENT_TYPE_PROGRAM) {
+        if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
             if (lastBankSelectMSB >= 0) {
                 if (lastBankSelectLSB >= 0) {
-                    ev.bankLSB = lastBankSelectLSB;
-                    ev.bankMSB = lastBankSelectMSB;
-                    ui->listWidget_midiSendList_lastReceived->addItem( ev.toString() );
-                    midiSendEditorLastEvents.append(ev);
+                    ui->listWidget_midiSendList_lastReceived->addItem( evInclBank.toString() );
+                    midiSendEditorLastEvents.append(evInclBank);
                 }
             }
         }
@@ -3361,13 +3401,11 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
 
         // If event is a program and the previous messages happened to be bank MSB and LSB,
         // then add an extra program event which includes the bank.
-        if (ev.type == MIDI_EVENT_TYPE_PROGRAM) {
+        if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
             if (lastBankSelectMSB >= 0) {
                 if (lastBankSelectLSB >= 0) {
-                    ev.bankLSB = lastBankSelectLSB;
-                    ev.bankMSB = lastBankSelectMSB;
-                    ui->listWidget_triggers_eventList->addItem( ev.toString() );
-                    triggersLastEvents.append(ev);
+                    ui->listWidget_triggers_eventList->addItem( evInclBank.toString() );
+                    triggersLastEvents.append(evInclBank);
                 }
             }
         }
@@ -3386,12 +3424,12 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
     }
 
     // If program change without bank select, switch patch if checkbox is checked.
-    if (ev.type == MIDI_EVENT_TYPE_PROGRAM) {
+    if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
         if ( (lastBankSelectLSB == -1) && (lastBankSelectMSB == -1) ) {
             KonfytProject* prj = getCurrentProject();
             if (prj != NULL) {
                 if (prj->isProgramChangeSwitchPatches()) {
-                    setCurrentPatch(ev.data1);
+                    setCurrentPatch(ev.program());
                 }
             }
         }
@@ -3399,17 +3437,17 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
 
     // Hash midi event to a key
     int key;
-    if (ev.type == MIDI_EVENT_TYPE_PROGRAM) {
-        key = hashMidiEventToInt(ev.type, ev.channel, ev.data1, lastBankSelectMSB, lastBankSelectLSB);
+    if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
+        key = hashMidiEventToInt(ev.type(), ev.channel, ev.data1(), lastBankSelectMSB, lastBankSelectLSB);
     } else {
-        key = hashMidiEventToInt(ev.type, ev.channel, ev.data1, -1, -1);
+        key = hashMidiEventToInt(ev.type(), ev.channel, ev.data1(), -1, -1);
     }
     // Determine if event passes as button press
     bool buttonPass = 0;
-    if (ev.type == MIDI_EVENT_TYPE_PROGRAM) {
+    if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
         buttonPass = true;
     } else {
-        buttonPass = ev.data2 > 0;
+        buttonPass = ev.data2() > 0;
     }
 
     // Get the appropriate action based on the key
@@ -3434,7 +3472,7 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
 
     } else if (action == ui->actionMaster_Volume_Slider) {
 
-        ui->horizontalSlider_MasterGain->setValue(((float)ev.data2)/127.0*ui->horizontalSlider_MasterGain->maximum());
+        ui->horizontalSlider_MasterGain->setValue(((float)ev.data2())/127.0*ui->horizontalSlider_MasterGain->maximum());
         ui->horizontalSlider_MasterGain->triggerAction(QSlider::SliderMove);
         on_horizontalSlider_MasterGain_sliderMoved(ui->horizontalSlider_MasterGain->value());
 
@@ -3456,15 +3494,15 @@ void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
 
     } else if (channelGainActions.contains(action)) {
 
-        midi_setLayerGain( channelGainActions.indexOf(action), ev.data2 );
+        midi_setLayerGain( channelGainActions.indexOf(action), ev.data2() );
 
     } else if (channelSoloActions.contains(action)) {
 
-        midi_setLayerSolo( channelSoloActions.indexOf(action), ev.data2 );
+        midi_setLayerSolo( channelSoloActions.indexOf(action), ev.data2() );
 
     } else if (channelMuteActions.contains(action)) {
 
-        midi_setLayerMute( channelMuteActions.indexOf(action), ev.data2 );
+        midi_setLayerMute( channelMuteActions.indexOf(action), ev.data2() );
 
     } else if (patchActions.contains(action)) {
 
@@ -4359,13 +4397,13 @@ void MainWindow::on_pushButton_LiveMode_clicked()
 {
     if (ui->pushButton_LiveMode->isChecked()) {
         // Switch to live mode
-        ui->stackedWidget_left->setCurrentIndex(STACKED_WIDGET_LEFT_LIVE);
+        ui->stackedWidget_left->setCurrentWidget(ui->page_Live);
         // Install event filter to catch all global key presses
         eventFilterMode = EVENT_FILTER_MODE_LIVE;
         appInfo.a->installEventFilter(this);
     } else {
         // Switch out of live mode to normal
-        ui->stackedWidget_left->setCurrentIndex(STACKED_WIDGET_LEFT_LIBRARY);
+        ui->stackedWidget_left->setCurrentWidget(ui->pageLibrary);
         // Remove event filter
         appInfo.a->removeEventFilter(this);
 
@@ -4492,14 +4530,10 @@ void MainWindow::on_toolButton_MidiFilter_removeCC_clicked()
 }
 
 // Library tab widget current tab changed.
-void MainWindow::on_tabWidget_library_currentChanged(int index)
+void MainWindow::on_tabWidget_library_currentChanged(int /*index*/)
 {
-    if (index == LIBRARY_TAB_LIBRARY) {
-        // Library tab selected
-
-    } else if (index == LIBRARY_TAB_FILESYSTEM) {
+    if (ui->tabWidget_library->currentWidget() == ui->tab_filesystem) {
         // Filesystem tab selected
-
         // Refresh
         refreshFilesystemView();
     }
@@ -5513,8 +5547,8 @@ void MainWindow::on_pushButton_triggersPage_assign_clicked()
     trig.bankLSB = selectedEvent.bankLSB;
     trig.bankMSB = selectedEvent.bankMSB;
     trig.channel = selectedEvent.channel;
-    trig.data1 = selectedEvent.data1;
-    trig.type = selectedEvent.type;
+    trig.data1 = selectedEvent.data1();
+    trig.type = selectedEvent.type();
 
     // Add to project
     prj->addAndReplaceTrigger(trig);
@@ -5960,67 +5994,93 @@ void MainWindow::showMidiSendListEditor()
     midiSendList = midiSendListEditItem->getPatchLayerItem().midiSendList;
 
     ui->listWidget_midiSendList->clear();
-    foreach (KonfytMidiEvent event, midiSendList) {
-        ui->listWidget_midiSendList->addItem(event.toString());
+    foreach (MidiSendItem item, midiSendList) {
+        ui->listWidget_midiSendList->addItem(item.toString());
     }
 
     // Set default event in editor
-    KonfytMidiEvent e;
+    MidiSendItem e;
     midiEventToMidiSendEditor(e);
 
     // Switch to MIDI send list editor page
     ui->stackedWidget->setCurrentWidget(ui->midiSendListPage);
 }
 
-void MainWindow::midiEventToMidiSendEditor(KonfytMidiEvent event)
+void MainWindow::midiEventToMidiSendEditor(MidiSendItem item)
 {
-    int comboIndex = midiSendTypeComboItems.indexOf(event.type);
+    int comboIndex = midiSendTypeComboItems.indexOf(item.midiEvent.type());
     if (comboIndex < 0) { comboIndex = 0; }
     ui->comboBox_midiSendList_type->setCurrentIndex(comboIndex);
 
     // Channel in GUI is 1-based, but in event it is 0-based.
-    ui->spinBox_midiSendList_channel->setValue(event.channel + 1);
+    ui->spinBox_midiSendList_channel->setValue(item.midiEvent.channel + 1);
 
-    ui->spinBox_midiSendList_cc_data1->setValue(event.data1);
-    ui->spinBox_midiSendList_cc_data2->setValue(event.data2);
+    // Note/CC page
+    ui->spinBox_midiSendList_cc_data1->setValue(item.midiEvent.data1());
+    ui->spinBox_midiSendList_cc_data2->setValue(item.midiEvent.data2());
 
-    ui->spinBox_midiSendList_program->setValue(event.data1);
-    ui->checkBox_midiSendList_bank->setChecked(event.bankMSB >= 0);
-    ui->spinBox_midiSendList_msb->setValue(event.bankMSB);
-    ui->spinBox_midiSendList_lsb->setValue(event.bankLSB);
+    // Program page
+    ui->spinBox_midiSendList_program->setValue(item.midiEvent.program());
+    ui->checkBox_midiSendList_bank->setChecked(item.midiEvent.bankMSB >= 0);
+    ui->spinBox_midiSendList_msb->setValue(item.midiEvent.bankMSB);
+    ui->spinBox_midiSendList_lsb->setValue(item.midiEvent.bankLSB);
 
-    ui->spinBox_midiSendList_pitchbend->setValue(event.pitchbendValue_signed());
+    // Pitchbend page
+    ui->spinBox_midiSendList_pitchbend->setValue(item.midiEvent.pitchbendValueSigned());
+
+    // Sysex page
+    ui->lineEdit_midiSendList_sysex_bytes->setText(item.midiEvent.dataToHexString());
+
+    // Description
+    ui->lineEdit_midiSendList_Description->setText(item.description);
 }
 
-KonfytMidiEvent MainWindow::midiEventFromMidiSendEditor()
+MidiSendItem MainWindow::midiEventFromMidiSendEditor()
 {
     KonfytMidiEvent e;
 
-    e.type = midiSendTypeComboItems.value(
+    int type = midiSendTypeComboItems.value(
                 ui->comboBox_midiSendList_type->currentIndex(),
                 MIDI_EVENT_TYPE_CC);
+    int data1 = ui->spinBox_midiSendList_cc_data1->value();
+    int data2 = ui->spinBox_midiSendList_cc_data2->value();
 
     // Channel in GUI is 1-based, but in event it is 0-based.
     e.channel = ui->spinBox_midiSendList_channel->value() - 1;
 
-    if (e.type == MIDI_EVENT_TYPE_PITCHBEND) {
-
-        e.setPitchbendData(ui->spinBox_midiSendList_pitchbend->value());
-
-    } else if (e.type == MIDI_EVENT_TYPE_PROGRAM) {
-
-        e.data1 = ui->spinBox_midiSendList_program->value();
+    switch (type) {
+    case MIDI_EVENT_TYPE_PITCHBEND:
+        e.setPitchbend(ui->spinBox_midiSendList_pitchbend->value());
+        break;
+    case MIDI_EVENT_TYPE_PROGRAM:
+        e.setProgram( ui->spinBox_midiSendList_program->value() );
         if (ui->checkBox_midiSendList_bank->isChecked()) {
             e.bankMSB = ui->spinBox_midiSendList_msb->value();
             e.bankLSB = ui->spinBox_midiSendList_lsb->value();
         }
-
-    } else {
-        e.data1 = ui->spinBox_midiSendList_cc_data1->value();
-        e.data2 = ui->spinBox_midiSendList_cc_data2->value();
+        break;
+    case MIDI_EVENT_TYPE_NOTEON:
+        e.setNoteOn(data1, data2);
+        break;
+    case MIDI_EVENT_TYPE_NOTEOFF:
+        e.setNoteOff(data1, data2);
+        break;
+    case MIDI_EVENT_TYPE_CC:
+        e.setCC(data1, data2);
+        break;
+    case MIDI_EVENT_TYPE_SYSTEM:
+        // For sysex, force channel to zero.
+        e.channel = 0;
+        e.setType(type);
+        e.setDataFromHexString( ui->lineEdit_midiSendList_sysex_bytes->text() );
+        break;
     }
 
-    return e;
+    MidiSendItem item;
+    item.midiEvent = e;
+    item.description = ui->lineEdit_midiSendList_Description->text();
+
+    return item;
 }
 
 void MainWindow::on_pushButton_jackCon_OK_clicked()
@@ -6094,11 +6154,11 @@ void MainWindow::on_pushButton_midiSendList_cancel_clicked()
 
 void MainWindow::on_pushButton_midiSendList_add_clicked()
 {
-    KonfytMidiEvent e = midiEventFromMidiSendEditor();
+    MidiSendItem item = midiEventFromMidiSendEditor();
 
     // Add event
-    midiSendList.append(e);
-    ui->listWidget_midiSendList->addItem(e.toString());
+    midiSendList.append(item);
+    ui->listWidget_midiSendList->addItem(item.toString());
 }
 
 void MainWindow::on_comboBox_midiSendList_type_currentIndexChanged(int index)
@@ -6119,6 +6179,9 @@ void MainWindow::on_comboBox_midiSendList_type_currentIndexChanged(int index)
         break;
     case MIDI_EVENT_TYPE_PITCHBEND:
         ui->stackedWidget_midiSend->setCurrentWidget(ui->page_midiSend_pitchbend);
+        break;
+    case MIDI_EVENT_TYPE_SYSTEM:
+        ui->stackedWidget_midiSend->setCurrentWidget(ui->page_midiSend_sysex);
         break;
     }
 }
@@ -6143,9 +6206,15 @@ void MainWindow::on_listWidget_midiSendList_currentRowChanged(int currentRow)
         midiEventToMidiSendEditor(midiSendList.value(currentRow));
     } else {
         // No item selected
-        KonfytMidiEvent e;
-        midiEventToMidiSendEditor(e);
+        MidiSendItem item;
+        midiEventToMidiSendEditor(item);
     }
+}
+
+void MainWindow::on_listWidget_midiSendList_itemClicked(QListWidgetItem *item)
+{
+    on_listWidget_midiSendList_currentRowChanged(
+                ui->listWidget_midiSendList->row(item) );
 }
 
 void MainWindow::on_pushButton_midiSendList_pbmin_clicked()
@@ -6169,11 +6238,148 @@ void MainWindow::on_actionEdit_MIDI_Send_List_triggered()
     showMidiSendListEditor();
 }
 
+void MainWindow::setupSavedMidiSendItems()
+{
+    savedMidiListDir = settingsDir + "/" + SAVED_MIDI_SEND_ITEMS_DIR;
+
+    // Create directory if it doesn't exist
+    QDir dir(savedMidiListDir);
+    if (!dir.exists()) {
+        if (dir.mkpath(savedMidiListDir)) {
+            userMessage("Created Saved-MIDI-Send-Items directory: " + savedMidiListDir);
+        } else {
+            userMessage("Failed to create Saved-MIDI-Send-Items directory: " + savedMidiListDir);
+        }
+    }
+
+    loadSavedMidiSendItems(savedMidiListDir);
+}
+
+void MainWindow::addSavedMidiSendItem(MidiSendItem item)
+{
+    savedMidiSendItems.append(item);
+    QTreeWidgetItem* treeItem = new QTreeWidgetItem();
+    treeItem->setText(0, item.toString());
+    ui->treeWidget_savedMidiMessages->addTopLevelItem(treeItem);
+}
+
+void MainWindow::loadSavedMidiSendItems(QString dirname)
+{
+    userMessage("Scanning for saved MIDI Send Items...");
+    QStringList files = scanDirForFiles(dirname);
+
+    foreach (QString filename, files) {
+        QFile file(filename);
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            userMessage("Failed to open MIDI Send Item file: " + filename);
+            continue;
+        }
+        QXmlStreamReader r(&file);
+        r.setNamespaceProcessing(false);
+        MidiSendItem item;
+        QString error = item.readFromXmlStream(&r);
+        if (!error.isEmpty()) {
+            userMessage("Errors for MIDI Send Item File " + filename + ":");
+            userMessage(error);
+        }
+        item.filename = filename;
+        addSavedMidiSendItem(item);
+    }
+
+    userMessage("Saved MIDI send items loaded. " + n2s(savedMidiListDir.count()) + " items.");
+}
+
+bool MainWindow::saveMidiSendItemToFile(QString filename, MidiSendItem item)
+{
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        userMessage("Failed to open MIDI Send Item file for writing: " + filename);
+        return false;
+    }
+
+    QXmlStreamWriter stream(&file);
+    stream.setAutoFormatting(true);
+    stream.writeStartDocument();
+
+    item.writeToXMLStream(&stream);
+
+    stream.writeEndDocument();
+
+    file.close();
+
+    return true;
+}
+
+void MainWindow::on_pushButton_savedMidiMsgs_save_clicked()
+{
+    MidiSendItem item = midiEventFromMidiSendEditor();
+
+    // Get unique filename
+    QString filename = "event";
+    if (!item.description.isEmpty()) {
+        filename = item.description;
+    }
+    filename = getUniqueFilename(savedMidiListDir, filename, ".midiSendEvent");
+    filename = savedMidiListDir + "/" + filename;
+
+    // Save
+    if (saveMidiSendItemToFile(filename, item)) {
+        userMessage("Saved MIDI Send Event to file: " + filename);
+        item.filename = filename;
+    } else {
+        userMessage("Failed to save MIDI Send event to file.");
+    }
+
+    // Add to GUI
+    addSavedMidiSendItem(item);
+}
+
+void MainWindow::on_pushButton_savedMidiMsgs_remove_clicked()
+{
+    QTreeWidgetItem* selected = ui->treeWidget_savedMidiMessages->currentItem();
+    if (selected == nullptr) { return; }
+
+    int index = ui->treeWidget_savedMidiMessages->indexOfTopLevelItem(selected);
+    MidiSendItem item = savedMidiSendItems[index];
+
+    if (item.filename.isEmpty()) {
+        userMessage("Error removing saved MIDI send item: No filename associated with item.");
+        return;
+    }
+
+    // Ask whether user is sure
+    QMessageBox msgbox;
+    msgbox.setText("Are you sure you want to delete the MIDI Send Event '" + item.toString() + "'?");
+    msgbox.setInformativeText(item.filename);
+    msgbox.setIcon(QMessageBox::Question);
+    msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    int ret = msgbox.exec();
+    if (ret == QMessageBox::Yes) {
+        QFile f(item.filename);
+        bool removed = f.remove();
+        if (removed) {
+            userMessage("Removed MIDI Send Event file " + f.fileName());
+            // Remove from list and GUI
+            delete selected;
+            savedMidiSendItems.removeAt(index);
+        } else {
+            userMessage("Failed to remove MIDI Send Event file " + f.fileName());
+        }
+    }
+}
+
+void MainWindow::on_treeWidget_savedMidiMessages_itemClicked(QTreeWidgetItem *item, int column)
+{
+    int index = ui->treeWidget_savedMidiMessages->indexOfTopLevelItem(item);
+    midiEventToMidiSendEditor(savedMidiSendItems[index]);
+}
+
 void MainWindow::on_listWidget_midiSendList_lastReceived_itemClicked(QListWidgetItem *item)
 {
     int index = ui->listWidget_midiSendList_lastReceived->row(item);
-    KonfytMidiEvent event = midiSendEditorLastEvents[index];
-    midiEventToMidiSendEditor(event);
+    MidiSendItem m;
+    m.midiEvent = midiSendEditorLastEvents[index];
+    midiEventToMidiSendEditor(m);
 }
 
 void MainWindow::on_pushButton_midiSendList_replace_clicked()
@@ -6181,9 +6387,9 @@ void MainWindow::on_pushButton_midiSendList_replace_clicked()
     int index = ui->listWidget_midiSendList->currentRow();
     if (index < 0) { return; }
 
-    KonfytMidiEvent e = midiEventFromMidiSendEditor();
-    midiSendList.replace(index, e);
-    ui->listWidget_midiSendList->item(index)->setText(e.toString());
+    MidiSendItem item = midiEventFromMidiSendEditor();
+    midiSendList.replace(index, item);
+    ui->listWidget_midiSendList->item(index)->setText(item.toString());
 }
 
 void MainWindow::on_toolButton_midiSendList_down_clicked()
@@ -6229,10 +6435,9 @@ void MainWindow::on_pushButton_midiSendList_remove_clicked()
 
 void MainWindow::on_pushButton_midiSendList_sendSelected_clicked()
 {
-    int index = ui->listWidget_midiSendList->currentRow();
-    if (index < 0) { return; }
+    // Send the MIDI message currently being edited
 
-    KonfytMidiEvent event = midiSendList[index];
+    KonfytMidiEvent event = midiEventFromMidiSendEditor().midiEvent;
     KonfytPatchLayer p = midiSendListEditItem->getPatchLayerItem();
     if (!p.hasError()) {
         jack->sendMidiEventsOnRoute(p.midiOutputPortData.jackRouteId, {event});
@@ -6243,6 +6448,30 @@ void MainWindow::on_pushButton_midiSendList_sendAll_clicked()
 {
     KonfytPatchLayer p = midiSendListEditItem->getPatchLayerItem();
     if (!p.hasError()) {
-        jack->sendMidiEventsOnRoute(p.midiOutputPortData.jackRouteId, midiSendList);
+        QList<KonfytMidiEvent> events;
+        foreach (MidiSendItem item, midiSendList) {
+            events.append(item.midiEvent);
+        }
+        jack->sendMidiEventsOnRoute(p.midiOutputPortData.jackRouteId, events);
     }
 }
+
+void MainWindow::on_stackedWidget_currentChanged(int arg1)
+{
+    QWidget* currentWidget = ui->stackedWidget->currentWidget();
+    if (lastCenterWidget == ui->midiSendListPage) {
+        // Changed away from MIDI Send List page
+        ui->stackedWidget_left->setCurrentWidget(lastSidebarWidget);
+    } else if (currentWidget == ui->midiSendListPage) {
+        // Save current sidebar widget and change to saved MIDI send list
+        lastSidebarWidget = ui->stackedWidget_left->currentWidget();
+        ui->stackedWidget_left->setCurrentWidget(ui->page_savedMidiMsges);
+    }
+    lastCenterWidget = currentWidget;
+}
+
+
+
+
+
+

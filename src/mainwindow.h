@@ -60,6 +60,8 @@
 #define SETTINGS_FILE "konfyt.settings"
 #define DATABASE_FILE "konfyt.database"
 
+#define SAVED_MIDI_SEND_ITEMS_DIR "savedMidiSendItems"
+
 #define EVENT_FILTER_MODE_LIVE 0
 #define EVENT_FILTER_MODE_WAITER 1
 
@@ -69,15 +71,6 @@
 #define TREE_ITEM_SOUNDFONTS "Soundfonts"
 #define TREE_ITEM_PATCHES "Patches"
 #define TREE_ITEM_SFZ "SFZ"
-
-#define STACKED_WIDGET_LEFT_LIBRARY 0
-#define STACKED_WIDGET_LEFT_LIVE 1
-
-#define STACKED_WIDGET_PATCHLAYERS_PATCH 0
-#define STACKED_WIDGET_PATCHLAYERS_NOPATCH 1
-
-#define LIBRARY_TAB_LIBRARY     0
-#define LIBRARY_TAB_FILESYSTEM  1
 
 #define TREECON_COL_PORT 0
 #define TREECON_COL_L 1
@@ -149,12 +142,14 @@ private:
     QString getBaseNameWithoutExtension(QString filepath);
     void error_abort(QString msg);
     void messageBox(QString msg);
+    bool dirExists(QString dirname);
+    QStringList scanDirForFiles(QString dirname, QString filenameExtension = "");
 
     // ========================================================================
     // Project related
     // ========================================================================
 private:
-    QList<QFileInfo> projectDirList;
+    QStringList projectDirList;
     QList<KonfytProject*> projectList;
     int currentProject;
     bool startupProject;
@@ -480,6 +475,7 @@ private:
     QString patchesDir;
     QString sfzDir;
     QString filemanager;
+    void createSettingsDir();
     bool loadSettingsFile();
     bool saveSettingsFile();
 
@@ -546,21 +542,24 @@ private slots:
     void on_toolButton_MidiFilter_VelLimitMax_last_clicked();
 
     // ========================================================================
-    // MIDI send list editor
+    // MIDI send list
     // ========================================================================
+
+    // MIDI send list editor
 private:
     konfytLayerWidget* midiSendListEditItem;
-    QList<KonfytMidiEvent> midiSendList;
+    QList<MidiSendItem> midiSendList;
     void showMidiSendListEditor();
-    void midiEventToMidiSendEditor(KonfytMidiEvent event);
-    KonfytMidiEvent midiEventFromMidiSendEditor();
+    void midiEventToMidiSendEditor(MidiSendItem item);
+    MidiSendItem midiEventFromMidiSendEditor();
     // Map combo box index to MIDI type
     QList<int> midiSendTypeComboItems{
                 MIDI_EVENT_TYPE_CC,
                 MIDI_EVENT_TYPE_PROGRAM,
                 MIDI_EVENT_TYPE_NOTEON,
                 MIDI_EVENT_TYPE_NOTEOFF,
-                MIDI_EVENT_TYPE_PITCHBEND};
+                MIDI_EVENT_TYPE_PITCHBEND,
+                MIDI_EVENT_TYPE_SYSTEM};
     QList<KonfytMidiEvent> midiSendEditorLastEvents;
 
 private slots:
@@ -570,10 +569,31 @@ private slots:
     void on_comboBox_midiSendList_type_currentIndexChanged(int index);
     void on_checkBox_midiSendList_bank_stateChanged(int arg1);
     void on_listWidget_midiSendList_currentRowChanged(int currentRow);
+    void on_listWidget_midiSendList_itemClicked(QListWidgetItem *item);
     void on_pushButton_midiSendList_pbmin_clicked();
     void on_pushButton_midiSendList_pbzero_clicked();
     void on_pushButton_midiSendList_pbmax_clicked();
     void on_actionEdit_MIDI_Send_List_triggered();
+    void on_listWidget_midiSendList_lastReceived_itemClicked(QListWidgetItem *item);
+    void on_pushButton_midiSendList_replace_clicked();
+    void on_toolButton_midiSendList_down_clicked();
+    void on_toolButton_midiSendList_up_clicked();
+    void on_pushButton_midiSendList_remove_clicked();
+    void on_pushButton_midiSendList_sendSelected_clicked();
+    void on_pushButton_midiSendList_sendAll_clicked();
+
+    // Saved MIDI send items
+private:
+    QString savedMidiListDir;
+    QList<MidiSendItem> savedMidiSendItems;
+    void setupSavedMidiSendItems();
+    void addSavedMidiSendItem(MidiSendItem item);
+    void loadSavedMidiSendItems(QString dirname);
+    bool saveMidiSendItemToFile(QString filename, MidiSendItem item);
+private slots:
+    void on_pushButton_savedMidiMsgs_save_clicked();
+    void on_pushButton_savedMidiMsgs_remove_clicked();
+    void on_treeWidget_savedMidiMessages_itemClicked(QTreeWidgetItem *item, int column);
 
     // ========================================================================
     // JACK / MIDI
@@ -688,6 +708,11 @@ private slots:
     // Other
     // ========================================================================
 
+private:
+    // Center view and sidebar (For changing to and from Saved MIDI Send List sidebar)
+    QWidget* lastCenterWidget = nullptr;
+    QWidget* lastSidebarWidget = nullptr;
+
     // Warnings
 private:
     void updateGUIWarnings();
@@ -795,14 +820,11 @@ private slots:
 
     void on_pushButton_LavaMonster_clicked();    
 
+    void on_stackedWidget_currentChanged(int arg1);
 
-    void on_listWidget_midiSendList_lastReceived_itemClicked(QListWidgetItem *item);
-    void on_pushButton_midiSendList_replace_clicked();
-    void on_toolButton_midiSendList_down_clicked();
-    void on_toolButton_midiSendList_up_clicked();
-    void on_pushButton_midiSendList_remove_clicked();
-    void on_pushButton_midiSendList_sendSelected_clicked();
-    void on_pushButton_midiSendList_sendAll_clicked();
+
+
+
 };
 
 #endif // MAINWINDOW_H

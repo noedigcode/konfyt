@@ -1213,9 +1213,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
             }
 
             // Send to GUI
-            if (ev.type != MIDI_EVENT_TYPE_SYSTEM) {
-                eventsRxBuffer.stash(ev);
-            }
+            eventsRxBuffer.stash(ev);
 
             bool passEvent = true;
             bool recordNoteon = false;
@@ -1223,28 +1221,29 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
             bool recordPitchbend = false;
 
 
-            if (ev.type == MIDI_EVENT_TYPE_NOTEOFF) {
+            if (ev.type() == MIDI_EVENT_TYPE_NOTEOFF) {
                 passEvent = false;
                 handleNoteoffEvent(ev, inEvent_jack, sourcePort);
-            } else if ( (ev.type == MIDI_EVENT_TYPE_CC) && (ev.data1 == 64) ) {
-                if (ev.data2 <= KONFYT_JACK_SUSTAIN_THRESH) {
+            } else if ( (ev.type() == MIDI_EVENT_TYPE_CC) && (ev.data1() == 64) ) {
+                if (ev.data2() <= KONFYT_JACK_SUSTAIN_THRESH) {
                     // Sustain zero
                     passEvent = false;
                     handleSustainoffEvent(ev, inEvent_jack, sourcePort);
                 } else {
                     recordSustain = true;
                 }
-            } else if ( (ev.type == MIDI_EVENT_TYPE_PITCHBEND) ) {
-                if (ev.pitchbendValue_signed() == 0) {
+            } else if ( (ev.type() == MIDI_EVENT_TYPE_PITCHBEND) ) {
+                if (ev.pitchbendValueSigned() == 0) {
                     // Pitchbend zero
                     passEvent = false;
                     handlePitchbendZeroEvent(ev, inEvent_jack, sourcePort);
                 } else {
                     recordPitchbend = true;
                 }
-            } else if ( ev.type == MIDI_EVENT_TYPE_NOTEON ) {
-                ev.data1 += globalTranspose;
-                if ( (ev.data1 < 0) || (ev.data1 > 127) ) {
+            } else if ( ev.type() == MIDI_EVENT_TYPE_NOTEON ) {
+                int note = ev.note() + globalTranspose;
+                ev.setNote(note);
+                if ( (note < 0) || (note > 127) ) {
                     passEvent = false;
                 }
                 recordNoteon = true;
@@ -1290,7 +1289,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
                         rec.fluidsynthID = route->destFluidsynthID;
                         rec.sourcePort = route->source;
 
-                        rec.note = evToSend.data1;
+                        rec.note = evToSend.note();
 
                         noteOnList.add(rec);
                         rec.port->noteOns++;
@@ -1436,12 +1435,12 @@ void KonfytJackEngine::handleNoteoffEvent(KonfytMidiEvent &ev, jack_midi_event_t
         KonfytJackNoteOnRecord* rec = noteOnList.at_ptr(i);
         if (rec->sourcePort != sourcePort) { continue; }
         // Apply global transpose that was active at time of noteon
-        ev.data1 += rec->globalTranspose;
+        ev.setNote( ev.note() + rec->globalTranspose );
         // Check if event passes noteon filter
         if ( rec->filter.passFilter(&ev) ) {
             // Apply noteon filter modification
             KonfytMidiEvent newEv = rec->filter.modify( &ev );
-            if (newEv.data1 == rec->note) {
+            if (newEv.note() == rec->note) {
                 // Match! Send noteoff and remove noteon from list.
                 if (rec->jackPortNotFluidsynth) {
                     // Get output buffer, based on size and time of input event
@@ -1459,7 +1458,7 @@ void KonfytJackEngine::handleNoteoffEvent(KonfytMidiEvent &ev, jack_midi_event_t
                 i--; // Due to removal, have to stay at same index after for loop i++
             }
         }
-        ev.data1 -= rec->globalTranspose;
+        ev.setNote( ev.note() - rec->globalTranspose );
     }
 }
 
@@ -1475,7 +1474,7 @@ void KonfytJackEngine::handleSustainoffEvent(KonfytMidiEvent &ev, jack_midi_even
             // Apply filter modification
             KonfytMidiEvent newEv = rec->filter.modify( &ev );
             // Set sustain value to zero exactly
-            newEv.data2 = 0;
+            newEv.setData2(0);
             // Send sustain zero and remove from list
             if (rec->jackPortNotFluidsynth) {
                 // Get output buffer, based on size and time of input event
@@ -1559,16 +1558,9 @@ void KonfytJackEngine::mixBufferToDestinationPort(KonfytJackAudioRoute *route,
 // Initialises MIDI closure events that will be sent to ports during Jack process callback.
 void KonfytJackEngine::initMidiClosureEvents()
 {
-    evAllNotesOff.type = MIDI_EVENT_TYPE_CC;
-    evAllNotesOff.data1 = MIDI_MSG_ALL_NOTES_OFF;
-    evAllNotesOff.data2 = 0;
-
-    evSustainZero.type = MIDI_EVENT_TYPE_CC;
-    evSustainZero.data1 = 64;
-    evSustainZero.data2 = 0;
-
-    evPitchbendZero.type = MIDI_EVENT_TYPE_PITCHBEND;
-    evPitchbendZero.setPitchbendData(0);
+    evAllNotesOff.setCC(MIDI_MSG_ALL_NOTES_OFF, 0);
+    evSustainZero.setCC(64, 0);
+    evPitchbendZero.setPitchbend(0);
 }
 
 // Helper function for Jack process callback

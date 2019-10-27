@@ -141,8 +141,6 @@ signals:
     void start_scanDirs(QString sfontDir, QString sfzDir, QString patchesDir, QList<KonfytSoundfont*> sfontIgnoreList);
     void start_sfontFromFile(QString filename, int source);
 
-
-
 private:
     QList<KonfytSoundfont*> sfontlist;
     QList<KonfytPatch> patchList;

@@ -72,6 +72,14 @@ void GidLs::init(QString deviceName)
 
             t->start(1000);
         });
+        connect(p, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+              [=](int exitCode, QProcess::ExitStatus /*exitStatus*/){
+            print(QString("Linuxsampler process finished with exit code %1.").arg(exitCode));
+        });
+        connect(p, &QProcess::errorOccurred,
+                [=](QProcess::ProcessError /*error*/){
+            print("Error occurred running Linuxsampler process: " + p->errorString());
+        });
 
         p->start("linuxsampler");
 
@@ -215,47 +223,6 @@ QString GidLs::printChannels()
     return ret;
 }
 
-bool GidLs::addSfzChannel(QString file)
-{
-    lscp_status_t status;
-
-    int chan = lscp_add_channel(client);
-    if (chan < 0) {
-        print("Failed adding channel.");
-        print("Result: " + QString( lscp_client_get_result(client) ));
-        return false;
-    }
-
-    status = lscp_load_engine(client, "SFZ", chan);
-    if (status != LSCP_OK) {
-        print("Failed loading SFZ engine.");
-        print("Result: " + QString( lscp_client_get_result(client) ));
-        return false;
-    }
-
-    status = lscp_set_channel_audio_device(client, chan, 0);
-    if (status != LSCP_OK) {
-        print("Failed connecting audio device to channel.");
-        print("Result: " + QString( lscp_client_get_result(client) ));
-        return false;
-    }
-    lscp_set_channel_audio_channel(client, chan, 0, 0);
-    lscp_set_channel_audio_channel(client, chan, 1, 1);
-
-    lscp_set_channel_midi_device(client, chan, 0);
-    lscp_set_channel_midi_port(client, chan, 0);
-
-    status = lscp_load_instrument_non_modal(client, file.toLocal8Bit().constData(),
-                                            0, chan);
-    if (status != LSCP_OK) {
-        print("Failed loading instrument: " + file);
-        print("Result: " + QString( lscp_client_get_result(client) ));
-        return false;
-    }
-
-    return true;
-}
-
 /* Adds channel (sfz instrument) with accompanying MIDI and audio ports and
  * returns ID. (The ID is also the same ID that Linuxsampler uses for the
  * channel.)
@@ -295,10 +262,12 @@ int GidLs::addSfzChannelAndPorts(QString file)
     lscp_set_channel_midi_device(client, chan, 0);
     lscp_set_channel_midi_port(client, chan, midi);
 
-    status = lscp_load_instrument_non_modal(client, file.toLocal8Bit().constData(),
+    QString fileEscaped = escapeString(file);
+    status = lscp_load_instrument_non_modal(client,
+                                            fileEscaped.toLocal8Bit().constData(),
                                             0, chan);
     if (status != LSCP_OK) {
-        print("Failed loading instrument: " + file);
+        print("Failed loading instrument: " + fileEscaped);
         print("Result: " + QString( lscp_client_get_result(client) ));
         return -1;
     }
@@ -341,12 +310,27 @@ void GidLs::removeSfzChannel(int id)
     }
 }
 
+QString GidLs::escapeString(QString s)
+{
+    s.replace("\\", "\\\\"); // Must be first to not interfere with rest.
+    s.replace("\n", "\\n");
+    s.replace("\r", "\\r");
+    s.replace("\f", "\\f");
+    s.replace("\t", "\\t");
+    s.replace("\v", "\\v");
+    s.replace("'", "\\'");
+    s.replace("\"", "\\\"");
+
+    return s;
+}
+
 void GidLs::clientInitialised()
 {
     QString errString;
     bool error = false;
 
     print("Connected to Linuxsampler.");
+
     print("Resetting sampler");
     lscp_status_t rst = lscp_reset_sampler(client);
     if (rst != LSCP_OK) {

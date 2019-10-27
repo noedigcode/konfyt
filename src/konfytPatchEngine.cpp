@@ -725,7 +725,7 @@ void KonfytPatchEngine::setLayerMidiInPort(KonfytPatch *patch, KonfytPatchLayer 
     if (patch == currentPatch) { refreshAllGainsAndRouting(); }
 }
 
-void KonfytPatchEngine::setLayerMidiSendList(KonfytPatchLayer *layerItem, QList<KonfytMidiEvent> events)
+void KonfytPatchEngine::setLayerMidiSendList(KonfytPatchLayer *layerItem, QList<MidiSendItem> events)
 {
     Q_ASSERT( currentPatch != NULL );
     currentPatch->setLayerMidiSendEvents(layerItem, events);
@@ -737,7 +737,7 @@ void KonfytPatchEngine::sendCurrentPatchMidi()
     foreach (KonfytPatchLayer layer, currentPatch->getMidiOutputLayerList()) {
         if (layer.hasError()) { continue; }
         jack->sendMidiEventsOnRoute(layer.midiOutputPortData.jackRouteId,
-                                    layer.midiSendList);
+                                    layer.getMidiSendListEvents());
     }
 }
 
@@ -748,7 +748,7 @@ void KonfytPatchEngine::sendLayerMidi(KonfytPatchLayer *layerItem)
     if (l.hasError()) { return; }
     if (l.getLayerType() == KonfytLayerType_MidiOut) {
         jack->sendMidiEventsOnRoute(l.midiOutputPortData.jackRouteId,
-                                    l.midiSendList);
+                                    l.getMidiSendListEvents());
     }
 }
 

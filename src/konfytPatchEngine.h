@@ -88,7 +88,7 @@ public:
     void setLayerMidiInPort(KonfytPatchLayer* layerItem, int portId); // currentPatch
     void setLayerMidiInPort(KonfytPatch* patch, KonfytPatchLayer* layerItem, int portId);
 
-    void setLayerMidiSendList(KonfytPatchLayer* layerItem, QList<KonfytMidiEvent> events);
+    void setLayerMidiSendList(KonfytPatchLayer* layerItem, QList<MidiSendItem> events);
     void sendCurrentPatchMidi();
     void sendLayerMidi(KonfytPatchLayer* layerItem);
 

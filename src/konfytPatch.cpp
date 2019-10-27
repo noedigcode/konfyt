@@ -155,17 +155,8 @@ bool KonfytPatch::savePatchToFile(QString filename)
             if (g.midiSendList.count()) {
                 stream.writeStartElement(XML_PATCH_MIDISENDLIST);
 
-                foreach (KonfytMidiEvent event, g.midiSendList) {
-                    stream.writeStartElement(XML_PATCH_MIDIEVENT);
-
-                    stream.writeTextElement(XML_PATCH_MIDIEVENT_TYPE, n2s(event.type));
-                    stream.writeTextElement(XML_PATCH_MIDIEVENT_CHANNEL, n2s(event.channel));
-                    stream.writeTextElement(XML_PATCH_MIDIEVENT_DATA1, n2s(event.data1));
-                    stream.writeTextElement(XML_PATCH_MIDIEVENT_DATA2, n2s(event.data2));
-                    stream.writeTextElement(XML_PATCH_MIDIEVENT_BANKMSB, n2s(event.bankMSB));
-                    stream.writeTextElement(XML_PATCH_MIDIEVENT_BANKLSB, n2s(event.bankLSB));
-
-                    stream.writeEndElement();
+                foreach (MidiSendItem item, g.midiSendList) {
+                    item.writeToXMLStream(&stream);
                 }
 
                 stream.writeEndElement();
@@ -316,7 +307,7 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
 
                 LayerMidiOutStruct mp;
                 int midiIn = 0;
-                QList<KonfytMidiEvent> midiSendEvents;
+                QList<MidiSendItem> midiSendItems;
 
                 while (r.readNextStartElement()) { // port
                     if (r.name() == XML_PATCH_MIDIOUT_PORT) {
@@ -331,28 +322,14 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
                         midiIn = r.readElementText().toInt();
                     } else if (r.name() == XML_PATCH_MIDISENDLIST) {
                         while (r.readNextStartElement()) {
-                            if (r.name() == XML_PATCH_MIDIEVENT) {
-                                KonfytMidiEvent e;
-                                while (r.readNextStartElement()) {
-                                    if (r.name() == XML_PATCH_MIDIEVENT_TYPE) {
-                                        e.type = r.readElementText().toInt();
-                                    } else if (r.name() == XML_PATCH_MIDIEVENT_CHANNEL) {
-                                        e.channel = r.readElementText().toInt();
-                                    } else if (r.name() == XML_PATCH_MIDIEVENT_DATA1) {
-                                        e.data1 = r.readElementText().toInt();
-                                    } else if (r.name() == XML_PATCH_MIDIEVENT_DATA2) {
-                                        e.data2 = r.readElementText().toInt();
-                                    } else if (r.name() == XML_PATCH_MIDIEVENT_BANKMSB) {
-                                        e.bankMSB = r.readElementText().toInt();
-                                    } else if (r.name() == XML_PATCH_MIDIEVENT_BANKLSB) {
-                                        e.bankLSB = r.readElementText().toInt();
-                                    } else {
-                                        userMessage("konfytPatch::loadPatchFromFile: "
-                                                    "Unrecognized MIDI event element: " + r.name().toString());
-                                        r.skipCurrentElement();
-                                    }
+                            if (r.name() == XML_MIDI_SEND_ITEM) {
+                                MidiSendItem item;
+                                QString error = item.readFromXmlStream(&r);
+                                if (!error.isEmpty()) {
+                                    userMessage("konfytPatch::loadPatchFromFile:");
+                                    userMessage(error);
                                 }
-                                midiSendEvents.append(e);
+                                midiSendItems.append(item);
                             } else {
                                 userMessage("konfytPatch::loadPatchFromFile: "
                                             "Unrecognized MIDI send list element: " + r.name().toString());
@@ -369,7 +346,7 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
                 // Add new midi port
                 KonfytPatchLayer newLayer = this->addMidiOutputPort(mp);
                 this->setLayerMidiInPort(&newLayer, midiIn);
-                this->setLayerMidiSendEvents(&newLayer, midiSendEvents);
+                this->setLayerMidiSendEvents(&newLayer, midiSendItems);
 
             } else if (r.name() == XML_PATCH_AUDIOIN) {
 
@@ -588,7 +565,7 @@ void KonfytPatch::setLayerMidiInPort(KonfytPatchLayer *layer, int portId)
     }
 }
 
-void KonfytPatch::setLayerMidiSendEvents(KonfytPatchLayer *layer, QList<KonfytMidiEvent> events)
+void KonfytPatch::setLayerMidiSendEvents(KonfytPatchLayer *layer, QList<MidiSendItem> events)
 {
     // Find layer that matches ID_in_patch
     int index = layerListIndexFromPatchId(layer);

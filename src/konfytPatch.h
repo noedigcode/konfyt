@@ -71,13 +71,6 @@
 #define XML_PATCH_AUDIOIN_MUTE "mute"
 
 #define XML_PATCH_MIDISENDLIST "midiSendList"
-#define XML_PATCH_MIDIEVENT "midiEvent"
-#define XML_PATCH_MIDIEVENT_TYPE "type"
-#define XML_PATCH_MIDIEVENT_CHANNEL "channel"
-#define XML_PATCH_MIDIEVENT_DATA1 "data1"
-#define XML_PATCH_MIDIEVENT_DATA2 "data2"
-#define XML_PATCH_MIDIEVENT_BANKMSB "bankMSB"
-#define XML_PATCH_MIDIEVENT_BANKLSB "bankLSB"
 
 
 class KonfytPatch
@@ -113,7 +106,7 @@ public:
     void setLayerMute(KonfytPatchLayer* layer, bool mute);
     void setLayerBus(KonfytPatchLayer* layer, int bus);
     void setLayerMidiInPort(KonfytPatchLayer* layer, int portId);
-    void setLayerMidiSendEvents(KonfytPatchLayer* layer, QList<KonfytMidiEvent> events);
+    void setLayerMidiSendEvents(KonfytPatchLayer* layer, QList<MidiSendItem> events);
 
     // ----------------------------------------------------
     // Soundfont layer related functions

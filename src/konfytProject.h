@@ -88,7 +88,8 @@
 #define XML_PRJ_OTHERJACKCON_SRC "srcPort"
 #define XML_PRJ_OTHERJACKCON_DEST "destPort"
 
-struct PrjAudioBus {
+struct PrjAudioBus
+{
     QString busName;
     int leftJackPortId = -1;
     float leftGain = 1;
@@ -96,11 +97,10 @@ struct PrjAudioBus {
     int rightJackPortId = -1;
     float rightGain = 1;
     QStringList rightOutClients;
-
-    PrjAudioBus() {}
 };
 
-struct PrjAudioInPort {
+struct PrjAudioInPort
+{
     QString portName;
     int leftJackPortId = -1;
     int rightJackPortId = -1;
@@ -108,28 +108,24 @@ struct PrjAudioInPort {
     float rightGain = 1;
     QStringList leftInClients;
     QStringList rightInClients;
-
-    PrjAudioInPort() {}
 };
 
-struct PrjMidiPort {
+struct PrjMidiPort
+{
     QString portName;
     QStringList clients;
     int jackPortId = -1;
     KonfytMidiFilter filter;
-
-    PrjMidiPort() {}
 };
 
-struct KonfytTrigger {
+struct KonfytTrigger
+{
     QString actionText;
     int type = -1;
     int channel = 0;
     int data1 = -1;
     int bankMSB = -1;
     int bankLSB = -1;
-
-    KonfytTrigger() {}
 
     int toInt() const
     {
@@ -139,9 +135,7 @@ struct KonfytTrigger {
     {
         return midiEventToString(type, channel, data1, bankMSB, bankLSB);
     }
-
 };
-
 
 enum portLeftRight { leftPort, rightPort };
 
@@ -300,16 +294,12 @@ signals:
     // Signals emitted when signals are recieved from Process objects.
     void processStartedSignal(int index, konfytProcess* process);
     void processFinishedSignal(int index, konfytProcess* process);
-    
-public slots:
 
 private slots:
     // Slots for signals from Process objects.
     // Will then emit the processStarted/Finished signals.
     void processStartedSlot(konfytProcess* process);
     void processFinishedSlot(konfytProcess* process);
-
-    
 };
 
 #endif // KONFYT_PROJECT_H

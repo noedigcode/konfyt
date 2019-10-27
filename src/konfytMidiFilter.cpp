@@ -63,40 +63,40 @@ bool KonfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
         }
     }
 
-    if (ev->type == MIDI_EVENT_TYPE_CC) {
+    if (ev->type() == MIDI_EVENT_TYPE_CC) {
 
         if (this->passAllCC) {
             pass = true;
         } else {
-            if (this->passCC.contains(ev->data1)) {
+            if (this->passCC.contains(ev->data1())) {
                 pass = true;
             }
         }
 
-    } else if ( ev->type == MIDI_EVENT_TYPE_PROGRAM ) {
+    } else if ( ev->type() == MIDI_EVENT_TYPE_PROGRAM ) {
 
         if (this->passProg) { pass = true; }
 
-    } else if ( ev->type == MIDI_EVENT_TYPE_PITCHBEND ) {
+    } else if ( ev->type() == MIDI_EVENT_TYPE_PITCHBEND ) {
 
         if (this->passPitchbend) { pass = true; }
 
-    } else if ( (ev->type == MIDI_EVENT_TYPE_NOTEON) || (ev->type == MIDI_EVENT_TYPE_NOTEOFF) ) {
+    } else if ( (ev->type() == MIDI_EVENT_TYPE_NOTEON) || (ev->type() == MIDI_EVENT_TYPE_NOTEOFF) ) {
 
         // Check note
-        if ( (ev->data1>=zone.lowNote) && (ev->data1<=zone.highNote) ) {
+        if ( (ev->note() >= zone.lowNote) && (ev->note() <= zone.highNote) ) {
             // If NoteOn, check velocity
-            if (ev->type == MIDI_EVENT_TYPE_NOTEON) {
-                if ( (ev->data2>=zone.lowVel) && (ev->data2<=zone.highVel) ) {
+            if (ev->type() == MIDI_EVENT_TYPE_NOTEON) {
+                if ( (ev->velocity() >= zone.lowVel) && (ev->velocity() <= zone.highVel) ) {
                     // Check if note will still be valid after addition
-                    int note = ev->data1 + zone.add;
+                    int note = ev->note() + zone.add;
                     if ( (note <= 127) && (note >= 0) ) {
                         pass = true;
                     }
                 }
             } else {
                 // else, if note off, pass if note will be valid after addition
-                int note = ev->data1 + zone.add;
+                int note = ev->note() + zone.add;
                 if ( (note <= 127) && (note >= 0) ) {
                     pass = true;
                 }
@@ -120,16 +120,16 @@ KonfytMidiEvent KonfytMidiFilter::modify(const KonfytMidiEvent* ev)
         r.channel = outChan;
     }
 
-    if ( (r.type == MIDI_EVENT_TYPE_NOTEON) || (r.type == MIDI_EVENT_TYPE_NOTEOFF) ) {
+    if ( (r.type() == MIDI_EVENT_TYPE_NOTEON) || (r.type() == MIDI_EVENT_TYPE_NOTEOFF) ) {
         // Modify based on addition
-        r.data1 = r.data1 + zone.add;
+        r.setNote( r.note() + zone.add );
         // Limit velocity
-        if (r.type == MIDI_EVENT_TYPE_NOTEON) {
-            if (r.data2 < zone.velLimitMin) {
-                r.data2 = zone.velLimitMin;
+        if (r.type() == MIDI_EVENT_TYPE_NOTEON) {
+            if (r.velocity() < zone.velLimitMin) {
+                r.setVelocity( zone.velLimitMin );
             }
-            if (r.data2 > zone.velLimitMax) {
-                r.data2 = zone.velLimitMax;
+            if (r.velocity() > zone.velLimitMax) {
+                r.setVelocity( zone.velLimitMax );
             }
         }
     }

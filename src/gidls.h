@@ -197,10 +197,11 @@ public:
     QString printDevices();
 
     QString printChannels();
-    bool addSfzChannel(QString file);
     int addSfzChannelAndPorts(QString file);
     GidLsChannel getSfzChannelInfo(int id);
     void removeSfzChannel(int id);
+
+    static QString escapeString(QString s);
 
 private:
     QString devName;
