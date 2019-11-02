@@ -50,7 +50,6 @@
 #include "konfytLayerWidget.h"
 #include "consoledialog.h"
 #include "konfytDefines.h"
-#include "konfytsfloader.h"
 #include "aboutdialog.h"
 
 
@@ -493,7 +492,6 @@ private slots:
 
     // Thread for scanning folders
 private:
-    konfytSfLoader sfLoader;
     void showWaitingPage(QString title);
 
     /* Waiter

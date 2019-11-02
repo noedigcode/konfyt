@@ -34,7 +34,6 @@ SOURCES += src/main.cpp\
     src/konfytDefines.cpp \
     src/konfytMidi.cpp \
     src/konfytCarlaEngine.cpp \
-    src/konfytsfloader.cpp \
     src/konfytArrayList.cpp \
     src/aboutdialog.cpp \
     src/konfytBridgeEngine.cpp \
@@ -61,7 +60,6 @@ HEADERS  += src/mainwindow.h \
     src/konfytJackStructs.h \
     src/konfytMidi.h \
     src/konfytCarlaEngine.h \
-    src/konfytsfloader.h \
     src/konfytArrayList.h \
     src/aboutdialog.h \
     src/konfytBridgeEngine.h \

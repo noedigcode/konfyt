@@ -160,29 +160,42 @@ KonfytSoundfont* konfytDatabaseWorker::_sfontFromFile(QString filename)
     newSfont->name = dir.dirName();
 
     // Iterate through all the presets within the soundfont
-    int more = 1;
+#if FLUIDSYNTH_VERSION_MAJOR == 1
     fluid_preset_t* preset = new fluid_preset_t();
-    // Reset the iteration
     sf->iteration_start(sf);
+    int more = sf->iteration_next(sf, preset);
     while (more) {
+        KonfytSoundfontProgram p;
+
+        p.name = QString(QByteArray( preset->get_name(preset) ));
+        p.bank = preset->get_banknum(preset);
+        p.program = preset->get_num(preset);
+        p.parent_soundfont = newSfont->filename;
+
+        newSfont->programlist.append(p);
         more = sf->iteration_next(sf, preset);
-        if (more) {
-            // Get preset name
-            QString presetName = QString(QByteArray( preset->get_name(preset) ));
-            int banknum = preset->get_banknum(preset);
-            int num = preset->get_num(preset);
-            KonfytSoundfontProgram sfp;
-            sfp.name = presetName;
-            sfp.bank = banknum;
-            sfp.program = num;
-            sfp.parent_soundfont = newSfont->filename;
-            newSfont->programlist.append(sfp);
-        }
     }
+#else
+    fluid_sfont_iteration_start(sf);
+    fluid_preset_t* preset = fluid_sfont_iteration_next(sf);
+    while (preset) {
+        KonfytSoundfontProgram p;
+
+        p.name = QString(QByteArray( fluid_preset_get_name(preset) ));
+        p.bank = fluid_preset_get_banknum(preset);
+        p.program = fluid_preset_get_num(preset);
+        p.parent_soundfont = newSfont->filename;
+
+        newSfont->programlist.append(p);
+        preset = fluid_sfont_iteration_next(sf);
+    }
+#endif
 
     // Unload soundfont to save memory
     fluid_synth_sfunload(synth,sfID,1);
+#if FLUIDSYNTH_VERSION_MAJOR == 1
     delete preset;
+#endif
 
     return newSfont;
 }
