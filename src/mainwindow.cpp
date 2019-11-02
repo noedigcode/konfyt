@@ -22,9 +22,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <iostream>
-
-
 MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -53,6 +50,14 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     this->consoleDiag = new ConsoleDialog(this);
 
     // USER MESSAGES CAN HAPPEN AFTER THIS POINT
+
+    QString stylename = "Fusion";
+    QStyle* style = QStyleFactory::create(stylename);
+    if (style) {
+        appInfoArg.a->setStyle(style);
+    } else {
+        userMessage("Unable to create style " + stylename);
+    }
 
     userMessage(QString(APP_NAME) + " " + APP_VERSION);
     userMessage("Arguments:");

@@ -22,6 +22,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <iostream>
 
 #include <QAction>
 #include <QCheckBox>
@@ -36,6 +37,7 @@
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QShortcut>
+#include <QStyleFactory>
 #include <QTimer>
 #include <QTreeWidgetItem>
 
