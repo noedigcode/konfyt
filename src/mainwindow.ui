@@ -8178,8 +8178,7 @@ border-bottom-right-radius: 0;</string>
                  </property>
                  <property name="styleSheet">
                   <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;
-hieght: 26px;</string>
+border-bottom-left-radius: 0;</string>
                  </property>
                  <property name="minimum">
                   <number>-127</number>
