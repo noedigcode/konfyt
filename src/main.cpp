@@ -79,6 +79,7 @@ int main(int argc, char *argv[])
     int return_code = 0;
 
     QApplication a(argc, argv);
+    a.setApplicationName(APP_NAME);
 
     do {
 

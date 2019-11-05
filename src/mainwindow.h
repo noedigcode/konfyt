@@ -37,6 +37,7 @@
 #include <QMessageBox>
 #include <QScrollBar>
 #include <QShortcut>
+#include <QStandardPaths>
 #include <QStyleFactory>
 #include <QTimer>
 #include <QTreeWidgetItem>
@@ -477,7 +478,7 @@ private:
     QString sfzDir;
     QString filemanager;
     void createSettingsDir();
-    bool loadSettingsFile();
+    bool loadSettingsFile(QString dir);
     bool saveSettingsFile();
 
 private slots:

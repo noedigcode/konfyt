@@ -76,17 +76,69 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     // Sort out settings
     // ----------------------------------------------------
 
-    // Settings dir is in user home directory
-    settingsDir = QDir::homePath() + "/" + SETTINGS_DIR;
-    userMessage("Settings dir: " + settingsDir);
-    createSettingsDir();
-    ui->label_SettingsPath->setText( ui->label_SettingsPath->text() + settingsDir );
-    if (loadSettingsFile()) {
+    // Settings dir is standard (XDG) config dir
+    bool showSettings = false;
+    settingsDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    userMessage("Settings path: " + settingsDir);
+    // Check if settings file exists
+    if (loadSettingsFile(settingsDir)) {
         userMessage("Settings loaded.");
     } else {
         userMessage("Could not load settings.");
-        // If settings file does not exist, it's probably the first run. Show about dialog.
-        showAboutDialog();
+        // Check if old settings file exists.
+        QString oldDir = QDir::homePath() + "/.konfyt";
+        if (loadSettingsFile(oldDir)) {
+            userMessage("Loaded settings from old location: " + settingsDir);
+            userMessage("Saving to new settings location.");
+            if (saveSettingsFile()) {
+                userMessage("Saved settings file to new location: " + settingsDir);
+            } else {
+                userMessage("Could not save settings to new location: " + settingsDir);
+            }
+        } else {
+            // If settings file does not exist, it's probably the first run.
+            // Show about dialog and settings.
+            createSettingsDir();
+            showSettings = true;
+            showAboutDialog();
+        }
+    }
+
+    // Set up settings dialog
+    ui->label_SettingsPath->setText( ui->label_SettingsPath->text() + settingsDir );
+
+    ui->comboBox_settings_projectsDir->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Projects");
+    ui->comboBox_settings_projectsDir->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Projects");
+
+    ui->comboBox_settings_soundfontDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Soundfonts");
+    ui->comboBox_settings_soundfontDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Soundfonts");
+
+    ui->comboBox_settings_patchDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Patches");
+    ui->comboBox_settings_patchDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Patches");
+
+    ui->comboBox_settings_sfzDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/sfz");
+    ui->comboBox_settings_sfzDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/sfz");
+
+    // Initialise default settings
+    if (projectsDir.isEmpty()) {
+        projectsDir = ui->comboBox_settings_projectsDir->itemText(0);
+    }
+    if (patchesDir.isEmpty()) {
+        patchesDir = ui->comboBox_settings_patchDirs->itemText(0);
+    }
+    if (soundfontsDir.isEmpty()) {
+        soundfontsDir = ui->comboBox_settings_soundfontDirs->itemText(0);
+    }
+    if (sfzDir.isEmpty()) {
+        sfzDir = ui->comboBox_settings_sfzDirs->itemText(0);
     }
 
     // ----------------------------------------------------
@@ -176,7 +228,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     connect(&db, &konfytDatabase::returnSfont_finished,
             this, &MainWindow::database_returnSfont);
 
-    // Check if database file exists. Otherwise, scan directories.
+    // Check if database file exists.
     if (db.loadDatabaseFromFile(settingsDir + "/" + DATABASE_FILE)) {
         userMessage("Database loaded from file. Rescan to refresh.");
         userMessage("Database contains:");
@@ -184,9 +236,16 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
         userMessage("   " + n2s(db.getNumPatches()) + " patches.");
         userMessage("   " + n2s(db.getNumSfz()) + " sfz/gig samples.");
     } else {
-        // Scan for soundfonts
         userMessage("No database file found.");
-        userMessage("You can scan directories to create a database from Settings.");
+        // Check if old database location exists
+        QString oldDir = QDir::homePath() + "/.konfyt/konfyt.database";
+        if (db.loadDatabaseFromFile(oldDir)) {
+            userMessage("Found database file in old location. Saving to new location.");
+            db.saveDatabaseToFile(settingsDir + "/" + DATABASE_FILE);
+        } else {
+            // Still no database file.
+            userMessage("You can scan directories to create a database from Settings.");
+        }
     }
 
     fillTreeWithAll(); // Fill the tree widget with all the database entries
@@ -360,12 +419,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
             this, &MainWindow::onLayerMidiInChannelMenu_ActionTrigger);
     createLayerMidiInChannelMenu();
 
-    // If one of the paths are not set, show settings. Else, switch to patch view.
-    if ( (projectsDir == "") || (patchesDir == "") || (soundfontsDir == "") || (sfzDir == "") ) {
-        showSettingsDialog();
-    } else {
-        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
-    }
+
     currentPatchIndex = -1;
 
     // Console
@@ -406,6 +460,14 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
 
     // Show library view (not live mode)
     ui->stackedWidget_left->setCurrentWidget(ui->pageLibrary);
+
+    // Show default view
+    if (showSettings) {
+        showSettingsDialog();
+    } else {
+        // Show normal patch view
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+    }
 
     // Show welcome message in statusbar
     QString app_name(APP_NAME);
@@ -499,10 +561,10 @@ bool MainWindow::scanDirForProjects(QString dirname)
 // Show the settings dialog.
 void MainWindow::showSettingsDialog()
 {
-    ui->lineEdit_Settings_PatchesDir->setText(this->patchesDir);
-    ui->lineEdit_Settings_ProjectsDir->setText(this->projectsDir);
-    ui->lineEdit_Settings_SfzDir->setText(this->sfzDir);
-    ui->lineEdit_Settings_SoundfontsDir->setText(this->soundfontsDir);
+    ui->comboBox_settings_patchDirs->setCurrentText(this->patchesDir);
+    ui->comboBox_settings_projectsDir->setCurrentText(this->projectsDir);
+    ui->comboBox_settings_sfzDirs->setCurrentText(this->sfzDir);
+    ui->comboBox_settings_soundfontDirs->setCurrentText(this->soundfontsDir);
 
     int i = ui->comboBox_Settings_filemanager->findText( this->filemanager );
     if (i>=0) {
@@ -571,10 +633,10 @@ void MainWindow::showMidiFilterEditor()
 void MainWindow::applySettings()
 {
     // Get settings from dialog.
-    projectsDir = ui->lineEdit_Settings_ProjectsDir->text();
-    patchesDir = ui->lineEdit_Settings_PatchesDir->text();
-    soundfontsDir = ui->lineEdit_Settings_SoundfontsDir->text();
-    sfzDir = ui->lineEdit_Settings_SfzDir->text();
+    projectsDir = ui->comboBox_settings_projectsDir->currentText();
+    patchesDir = ui->comboBox_settings_patchDirs->currentText();
+    soundfontsDir = ui->comboBox_settings_soundfontDirs->currentText();
+    sfzDir = ui->comboBox_settings_sfzDirs->currentText();
     filemanager = ui->comboBox_Settings_filemanager->currentText();
 
     userMessage("Settings applied.");
@@ -585,11 +647,18 @@ void MainWindow::applySettings()
     } else {
         userMessage("Failed to save settings to file.");
     }
+
+    // Create directories if they don't exist
+    QDir d;
+    d.mkpath(projectsDir);
+    d.mkpath(patchesDir);
+    d.mkpath(soundfontsDir);
+    d.mkpath(sfzDir);
 }
 
-bool MainWindow::loadSettingsFile()
+bool MainWindow::loadSettingsFile(QString dir)
 {
-    QString filename = settingsDir + "/" + SETTINGS_FILE;
+    QString filename = dir + "/" + SETTINGS_FILE;
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         userMessage("Failed to open settings file: " + filename);
@@ -3997,9 +4066,10 @@ void MainWindow::on_pushButton_settings_Projects_clicked()
 {
     // Show dialog to select projects directory
     QFileDialog d;
-    QString path = d.getExistingDirectory( this, "Select projects directory", ui->lineEdit_Settings_ProjectsDir->text() );
+    QString path = d.getExistingDirectory( this, "Select projects directory",
+                                           ui->comboBox_settings_projectsDir->currentText() );
     if ( !path.isEmpty() ) {
-        ui->lineEdit_Settings_ProjectsDir->setText( path );
+        ui->comboBox_settings_projectsDir->setCurrentText( path );
     }
 }
 
@@ -4007,9 +4077,10 @@ void MainWindow::on_pushButton_Settings_Soundfonts_clicked()
 {
     // Show dialog to select soundfonts directory
     QFileDialog d;
-    QString path = d.getExistingDirectory( this, "Select soundfonts directory", ui->lineEdit_Settings_SoundfontsDir->text() );
+    QString path = d.getExistingDirectory( this, "Select soundfonts directory",
+                                           ui->comboBox_settings_soundfontDirs->currentText() );
     if ( !path.isEmpty() ) {
-        ui->lineEdit_Settings_SoundfontsDir->setText( path );
+        ui->comboBox_settings_soundfontDirs->setCurrentText( path );
     }
 }
 
@@ -4017,9 +4088,10 @@ void MainWindow::on_pushButton_Settings_Patches_clicked()
 {
     // Show dialog to select patches directory
     QFileDialog d;
-    QString path = d.getExistingDirectory( this, "Select patches directory", ui->lineEdit_Settings_PatchesDir->text() );
+    QString path = d.getExistingDirectory( this, "Select patches directory",
+                                           ui->comboBox_settings_patchDirs->currentText() );
     if ( !path.isEmpty() ) {
-        ui->lineEdit_Settings_PatchesDir->setText( path );
+        ui->comboBox_settings_patchDirs->setCurrentText( path );
     }
 }
 
@@ -4027,9 +4099,10 @@ void MainWindow::on_pushButton_Settings_Sfz_clicked()
 {
     // Show dialog to select sfz directory
     QFileDialog d;
-    QString path = d.getExistingDirectory( this, "Select sfz directory", ui->lineEdit_Settings_SfzDir->text() );
+    QString path = d.getExistingDirectory( this, "Select sfz directory",
+                                           ui->comboBox_settings_sfzDirs->currentText() );
     if ( !path.isEmpty() ) {
-        ui->lineEdit_Settings_SfzDir->setText( path );
+        ui->comboBox_settings_sfzDirs->setCurrentText( path );
     }
 }
 
@@ -6291,7 +6364,8 @@ void MainWindow::loadSavedMidiSendItems(QString dirname)
         addSavedMidiSendItem(item);
     }
 
-    userMessage("Saved MIDI send items loaded. " + n2s(savedMidiListDir.count()) + " items.");
+
+    userMessage("Saved MIDI send items loaded: " + n2s(savedMidiSendItems.count()) + " items.");
 }
 
 bool MainWindow::saveMidiSendItemToFile(QString filename, MidiSendItem item)
