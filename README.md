@@ -64,6 +64,8 @@ qmake --qt=5
 
 * Carla
 
+Optional - to build without Carla support, comment out the line `CONFIG += KONFYT_USE_CARLA` in the `konfyt.pro` file by adding a `#` at the beginning of the line.
+
 * g++
 
 * liblscp development files (liblscp-dev in Ubuntu)
