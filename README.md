@@ -48,15 +48,15 @@ under testing, it should be quite stable.
 The following are required to build:
 
 * Qt5: Ensure that the Qt5 development packages are installed.
-Check the Qt version that qmake uses with:
-```
-qmake -v
-```
+  Check the Qt version that qmake uses with:
+  ```
+  qmake -v
+  ```
 
-If qmake uses Qt4 by default, force it to use Qt5 with:
-```
-qmake --qt=5
-```
+  If qmake uses Qt4 by default, force it to use Qt5 with:
+  ```
+  qmake --qt=5
+  ```
 
 * pkg-config
 
@@ -64,7 +64,7 @@ qmake --qt=5
 
 * Carla
 
-Optional - to build without Carla support, comment out the line `CONFIG += KONFYT_USE_CARLA` in the `konfyt.pro` file by adding a `#` at the beginning of the line.
+  Optional - to build without Carla support, comment out the line `CONFIG += KONFYT_USE_CARLA` in the `konfyt.pro` file by adding a `#` at the beginning of the line.
 
 * g++
 
