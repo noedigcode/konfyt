@@ -38,7 +38,7 @@ konfytLayerWidget::~konfytLayerWidget()
 }
 
 
-void konfytLayerWidget::paintEvent(QPaintEvent *e)
+void konfytLayerWidget::paintEvent(QPaintEvent* /*e*/)
 {
     QColor colorFG = QColor(24, 87, 127, 255);
     QColor colorBG = QColor(0,0,0,0);
@@ -300,7 +300,7 @@ void konfytLayerWidget::on_gainSlider_sliderMoved(int position)
     emit slider_moved_signal(this, gain);
 }
 
-void konfytLayerWidget::on_gainSlider_valueChanged(int value)
+void konfytLayerWidget::on_gainSlider_valueChanged(int /*value*/)
 {
     // Update slider tooltip
     float tooltip_gain = (float)ui->gainSlider->value()/(float)ui->gainSlider->maximum();

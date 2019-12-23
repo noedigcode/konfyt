@@ -38,19 +38,12 @@ AboutDialog::~AboutDialog()
     delete ui;
 }
 
-void AboutDialog::setExtraVersionText(QStringList txtList)
+void AboutDialog::setExtraVersionText(QString txt)
 {
-    QString extra;
-    for (int i=0; i < txtList.count(); i++) {
-        if (i) {
-            extra += "<br>";
-        }
-        extra += txtList[i];
-    }
-
-    QString txt = ui->textBrowser->document()->toHtml();
-    txt.replace(REPLACE_TXT_MORE_VERSION, extra);
-    ui->textBrowser->document()->setHtml(txt);
+    QString extra = txt.replace("\n", "<br>");
+    QString html = ui->textBrowser->document()->toHtml();
+    html.replace(REPLACE_TXT_MORE_VERSION, extra);
+    ui->textBrowser->document()->setHtml(html);
 }
 
 void AboutDialog::on_pushButton_clicked()

@@ -31,7 +31,9 @@
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackEngine.h"
 #include "konfytProject.h"
-#include "konfytCarlaEngine.h"
+#ifdef KONFYT_USE_CARLA
+    #include "konfytCarlaEngine.h"
+#endif
 #include "konfytLscpEngine.h"
 
 class KonfytPatchEngine : public QObject

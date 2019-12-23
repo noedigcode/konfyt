@@ -38,7 +38,7 @@ void konfytProcess::processStarted()
 }
 
 // Slot for signal from process when it is finished.
-void konfytProcess::processFinished(int exitCode)
+void konfytProcess::processFinished(int /*exitCode*/)
 {
     if (state != KONFYTPROCESS_STOPPED) {
         state = KONFYTPROCESS_FINISHED;

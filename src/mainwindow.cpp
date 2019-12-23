@@ -2287,7 +2287,7 @@ QString MainWindow::getBaseNameWithoutExtension(QString filepath)
 }
 
 
-void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int column)
+void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*column*/)
 {
     // Expand / unexpand item due to click (makes things a lot easier)
     item->setExpanded(!item->isExpanded());
@@ -2365,7 +2365,7 @@ void MainWindow::unsetCurrentPatchIcon()
     }
 }
 
-void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
+void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
 {
     ui->listWidget_LibraryBottom->clear();  // Program list view
     programList.clear();        // Our internal program list, corresponding to the list view
@@ -2562,13 +2562,11 @@ void MainWindow::setPreviewMode(bool choice)
 }
 
 // Master gain slider moved.
-void MainWindow::on_horizontalSlider_MasterGain_sliderMoved(int position)
+void MainWindow::on_horizontalSlider_MasterGain_sliderMoved(int /*position*/)
 {
     setMasterGain( (float)ui->horizontalSlider_MasterGain->value() /
                    (float)ui->horizontalSlider_MasterGain->maximum() );
 }
-
-
 
 void MainWindow::on_lineEdit_PatchName_returnPressed()
 {
@@ -2856,9 +2854,7 @@ void MainWindow::timerEvent(QTimerEvent *ev)
 void MainWindow::initAboutDialog()
 {
     // Add additional version text to about dialog
-    QStringList txt;
-    txt.append( "Compiled with Fluidsynth " + QString(fluid_version_str()) );
-    txt.append( "Compiled with Carla " + QString(CARLA_VERSION_STRING) );
+    QString txt = getCompileVersionText();
     aboutDialog.setExtraVersionText(txt);
 
     aboutDialog.setParent(this);
@@ -2877,7 +2873,7 @@ void MainWindow::resizeAboutDialog()
     aboutDialog.resize(this->width(),this->height());
 }
 
-void MainWindow::resizeEvent(QResizeEvent *ev)
+void MainWindow::resizeEvent(QResizeEvent* /*ev*/)
 {
     resizeAboutDialog();
 }
@@ -4241,7 +4237,7 @@ void MainWindow::on_pushButton_ShowConsole_clicked()
 
 
 
-bool MainWindow::eventFilter(QObject *object, QEvent *event)
+bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
 {
     // To find all actions:
     // QList<QAction*> actionList = this->findChildren<QAction*>();
@@ -4501,7 +4497,7 @@ void MainWindow::on_actionMaster_Volume_Down_triggered()
 }
 
 /* External apps list: item double clicked. */
-void MainWindow::on_listWidget_ExtApps_doubleClicked(const QModelIndex &index)
+void MainWindow::on_listWidget_ExtApps_doubleClicked(const QModelIndex& /*index*/)
 {
     // Run the currently selected process.
     on_pushButton_ExtApp_RunSelected_clicked();
@@ -4532,7 +4528,7 @@ void MainWindow::on_listWidget_Patches_itemClicked(QListWidgetItem *item)
 
 
 /* Library soundfont program list: item double clicked. */
-void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem *item)
+void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem* /*item*/)
 {
     // Add soundfont program to current patch.
 
@@ -4546,7 +4542,7 @@ void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem *
 
 
 /* Library tree: item double clicked. */
-void MainWindow::on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, int column)
+void MainWindow::on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, int /*column*/)
 {
     if (previewMode) { setPreviewMode(false); }
 
@@ -4701,7 +4697,7 @@ void MainWindow::selectItemInFilesystemView(QString path)
 }
 
 
-void MainWindow::on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
+void MainWindow::on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
 {
     ui->textBrowser_LibraryBottom->clear();
     ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
@@ -4728,7 +4724,7 @@ void MainWindow::on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *cu
 
 
 /* Filesystem view: double clicked file or folder in file list. */
-void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int column)
+void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int /*column*/)
 {
     ui->textBrowser_LibraryBottom->clear();
     ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
@@ -5060,7 +5056,7 @@ void MainWindow::on_pushButton_ShowConnections_clicked()
     }
 }
 
-void MainWindow::on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous)
+void MainWindow::on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
 {
     if (current == NULL){ return; }
 
@@ -5470,7 +5466,7 @@ void MainWindow::openFileManager(QString path)
         QProcess* process = new QProcess();
 
         connect(process, static_cast<void (QProcess::*)(int)>(&QProcess::finished),
-                [this, process](int exitCode){
+                [this, process](int /*exitCode*/){
             process->deleteLater();
         });
 
@@ -5547,7 +5543,7 @@ void MainWindow::on_actionRename_BusPort_triggered()
 }
 
 /* User has renamed a port or bus. */
-void MainWindow::on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int column)
+void MainWindow::on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int /*column*/)
 {
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
@@ -5662,7 +5658,7 @@ void MainWindow::on_pushButton_triggersPage_clear_clicked()
     showTriggersPage();
 }
 
-void MainWindow::on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem *item, int column)
+void MainWindow::on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem* /*item*/, int /*column*/)
 {
     on_pushButton_triggersPage_assign_clicked();
 }
@@ -5977,7 +5973,7 @@ void MainWindow::on_pushButton_jackConRemove_clicked()
 
 }
 
-void MainWindow::on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked)
+void MainWindow::on_checkBox_filesystem_ShowOnlySounds_toggled(bool /*checked*/)
 {
     refreshFilesystemView();
 }
@@ -6056,7 +6052,7 @@ void MainWindow::on_toolButton_MidiFilter_VelLimitMin_last_clicked()
 }
 
 /* User right-clicked on panic button. */
-void MainWindow::on_pushButton_Panic_customContextMenuRequested(const QPoint &pos)
+void MainWindow::on_pushButton_Panic_customContextMenuRequested(const QPoint& /*pos*/)
 {
     // Momentary panic
     on_actionPanic_triggered();
@@ -6447,7 +6443,7 @@ void MainWindow::on_pushButton_savedMidiMsgs_remove_clicked()
     }
 }
 
-void MainWindow::on_treeWidget_savedMidiMessages_itemClicked(QTreeWidgetItem *item, int column)
+void MainWindow::on_treeWidget_savedMidiMessages_itemClicked(QTreeWidgetItem *item, int /*column*/)
 {
     int index = ui->treeWidget_savedMidiMessages->indexOfTopLevelItem(item);
     midiEventToMidiSendEditor(savedMidiSendItems[index]);
@@ -6535,7 +6531,7 @@ void MainWindow::on_pushButton_midiSendList_sendAll_clicked()
     }
 }
 
-void MainWindow::on_stackedWidget_currentChanged(int arg1)
+void MainWindow::on_stackedWidget_currentChanged(int /*arg1*/)
 {
     QWidget* currentWidget = ui->stackedWidget->currentWidget();
     if (lastCenterWidget == ui->midiSendListPage) {

@@ -19,16 +19,31 @@
  *
  *****************************************************************************/
 
-#include "mainwindow.h"
-#include "konfytStructs.h"
 #include <QApplication>
 #include <iostream>
 
-void printUsage()
+#include "konfytDefines.h"
+#include "konfytStructs.h"
+#include "mainwindow.h"
+
+
+void printAppNameAndVersion()
 {
     std::cout << std::endl << APP_NAME << std::endl;
     std::cout << "Version " << APP_VERSION << std::endl;
     std::cout << "Gideon van der Kolf 2014-2019" << std::endl;
+}
+
+void printAllVersionInfo()
+{
+    printAppNameAndVersion();
+    std::cout << std::endl;
+    std::cout << getCompileVersionText().toStdString() << std::endl;
+}
+
+void printUsage()
+{
+    printAppNameAndVersion();
     std::cout << std::endl;
     std::cout << "   Usage: konfyt [OPTION]... [PROJECT_FILE] [SOUNDFILE]" << std::endl;
     std::cout << std::endl;
@@ -42,6 +57,9 @@ void printUsage()
     std::cout << "      -q, --headless         Hide GUI" << std::endl;
     std::cout << "      -b, --bridge           Load sfz's in separate processes (experimental feature, uses Carla)" << std::endl;
     std::cout << "      -c, --carla            Use Carla to load sfz's and not Linuxsampler" << std::endl;
+#ifndef KONFYT_USE_CARLA
+    std::cout << "                             Note: This version of Konfyt was compiled without Carla support." << std::endl;
+#endif
     std::cout << std::endl;
 }
 
@@ -101,7 +119,7 @@ int main(int argc, char *argv[])
 
                 } else if ( matchArgument(arg, KonfytArg_Version) ) {
 
-                    printUsage();
+                    printAllVersionInfo();
                     return 0;
 
                 } else if ( matchArgument(arg, KonfytArg_Jackname) ) {

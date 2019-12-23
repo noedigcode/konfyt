@@ -33,7 +33,6 @@ SOURCES += src/main.cpp\
     src/konfytProcess.cpp \
     src/konfytDefines.cpp \
     src/konfytMidi.cpp \
-    src/konfytCarlaEngine.cpp \
     src/konfytArrayList.cpp \
     src/aboutdialog.cpp \
     src/konfytBridgeEngine.cpp \
@@ -59,7 +58,6 @@ HEADERS  += src/mainwindow.h \
     src/konfytDefines.h \
     src/konfytJackStructs.h \
     src/konfytMidi.h \
-    src/konfytCarlaEngine.h \
     src/konfytArrayList.h \
     src/aboutdialog.h \
     src/konfytBridgeEngine.h \
@@ -80,8 +78,15 @@ unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += lscp
 
 # Carla stuff
-LIBS += -Wl,-rpath=/usr/lib/carla -L/usr/lib/carla -lcarla_standalone2
-QMAKE_CXXFLAGS += -DREAL_BUILD -I/usr/include/carla -I/usr/include/carla/includes
+# Comment out the following line to compile without Carla support.
+CONFIG += KONFYT_USE_CARLA
+KONFYT_USE_CARLA {
+    SOURCES += src/konfytCarlaEngine.cpp
+    HEADERS += src/konfytCarlaEngine.h
+    DEFINES += KONFYT_USE_CARLA
+    LIBS += -Wl,-rpath=/usr/lib/carla -L/usr/lib/carla -lcarla_standalone2
+    QMAKE_CXXFLAGS += -DREAL_BUILD -I/usr/include/carla -I/usr/include/carla/includes
+}
 
 # Fluidsynth
 unix: PKGCONFIG += fluidsynth
@@ -93,9 +98,6 @@ unix: PKGCONFIG += jack
 QMAKE_CFLAGS += -fpermissive
 QMAKE_CXXFLAGS += -fpermissive
 QMAKE_LFLAGS += -fpermissive
-
-# Suppress unused parameter warnings
-QMAKE_CXXFLAGS_WARN_ON += -Wno-unused-parameter
 
 RESOURCES += \
     images.qrc

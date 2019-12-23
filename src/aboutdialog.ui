@@ -91,7 +91,7 @@
         <property name="minimumSize">
          <size>
           <width>400</width>
-          <height>200</height>
+          <height>250</height>
          </size>
         </property>
         <property name="styleSheet">

@@ -26,7 +26,7 @@ GidLs::GidLs(QObject *parent) : QObject(parent), client(NULL)
 
 }
 
-lscp_status_t GidLs::client_callback(lscp_client_t *pClient, lscp_event_t event, const char *pchData, int cchData, void *pvData)
+lscp_status_t GidLs::client_callback(lscp_client_t* /*pClient*/, lscp_event_t event, const char *pchData, int cchData, void* /*pvData*/)
 {
     lscp_status_t ret = LSCP_FAILED;
 
@@ -76,10 +76,12 @@ void GidLs::init(QString deviceName)
               [=](int exitCode, QProcess::ExitStatus /*exitStatus*/){
             print(QString("Linuxsampler process finished with exit code %1.").arg(exitCode));
         });
+#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
         connect(p, &QProcess::errorOccurred,
                 [=](QProcess::ProcessError /*error*/){
             print("Error occurred running Linuxsampler process: " + p->errorString());
         });
+#endif
 
         p->start("linuxsampler");
 

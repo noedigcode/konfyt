@@ -38,3 +38,18 @@ QString sanitiseFilename(QString filename)
 }
 
 
+
+QString getCompileVersionText()
+{
+    QString txt;
+    txt.append( "Compiled with Qt " + QString(QT_VERSION_STR));
+    txt.append("\n");
+    txt.append( "Compiled with Fluidsynth " + QString(fluid_version_str()));
+    txt.append("\n");
+#ifdef KONFYT_USE_CARLA
+    txt.append( "Compiled with Carla " + QString(CARLA_VERSION_STRING));
+#else
+    txt.append( "Compiled without Carla support" );
+#endif
+    return txt;
+}

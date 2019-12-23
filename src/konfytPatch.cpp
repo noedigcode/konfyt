@@ -30,7 +30,7 @@ KonfytPatch::KonfytPatch()
 }
 
 
-void KonfytPatch::userMessage(QString msg)
+void KonfytPatch::userMessage(QString /*msg*/)
 {
     // dummy function at the moment to handle all userMessage calls.
 }

@@ -1019,13 +1019,13 @@ void KonfytJackEngine::pauseJackProcessing(bool pause)
     }
 }
 
-void KonfytJackEngine::jackPortConnectCallback(jack_port_id_t a, jack_port_id_t b, int connect, void* arg)
+void KonfytJackEngine::jackPortConnectCallback(jack_port_id_t /*a*/, jack_port_id_t /*b*/, int /*connect*/, void* arg)
 {
     KonfytJackEngine* e = (KonfytJackEngine*)arg;
     e->jackPortConnectCallback();
 }
 
-void KonfytJackEngine::jackPortRegistrationCallback(jack_port_id_t port, int registered, void *arg)
+void KonfytJackEngine::jackPortRegistrationCallback(jack_port_id_t /*port*/, int /*registered*/, void *arg)
 {
     KonfytJackEngine* e = (KonfytJackEngine*)arg;
     e->jackPortRegistrationCallback();

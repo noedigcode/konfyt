@@ -24,6 +24,11 @@
 
 #include <QString>
 
+#ifdef KONFYT_USE_CARLA
+    #include <carla/CarlaHost.h>
+#endif
+#include <fluidsynth.h>
+
 #define APP_NAME "Konfyt"
 #define APP_VERSION "1.1.0-beta"
 
@@ -36,6 +41,7 @@
 #define KONFYT_PATCH_SUFFIX "konfytpatch"
 
 QString sanitiseFilename(QString path);
+QString getCompileVersionText();
 
 
 #endif // KONFYT_DEFINES_H

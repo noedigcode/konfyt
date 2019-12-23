@@ -62,10 +62,14 @@ void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytA
         // Create bridge engine (each plugin is hosted in new Konfyt process)
         sfzEngine = new KonfytBridgeEngine();
         static_cast<KonfytBridgeEngine*>(sfzEngine)->setKonfytExePath(appInfo.exePath);
-    } else if (appInfo.carla) {
+    }
+#ifdef KONFYT_USE_CARLA
+    else if (appInfo.carla) {
         // Use local Carla engine
         sfzEngine = new KonfytCarlaEngine();
-    } else {
+    }
+#endif
+    else {
         // Use Linuxsampler via LSCP
         sfzEngine = new KonfytLscpEngine();
     }

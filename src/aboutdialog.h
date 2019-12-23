@@ -18,7 +18,7 @@ class AboutDialog : public QWidget
 public:
     explicit AboutDialog(QWidget *parent = 0);
     ~AboutDialog();
-    void setExtraVersionText(QStringList txtList);
+    void setExtraVersionText(QString txt);
 
 private slots:
     void on_pushButton_clicked();
