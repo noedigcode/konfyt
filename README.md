@@ -68,6 +68,8 @@ qmake --qt=5
 
 * liblscp development files (liblscp-dev in Ubuntu)
 
+* JACK development files (libjack-dev or libjack-jackd2-dev in Ubuntu)
+
 
 To build from the command line, run the following from the source code directory:
 ```
