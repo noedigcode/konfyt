@@ -78,9 +78,11 @@ unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += lscp
 
 # Carla stuff
-# Comment out the following line to compile without Carla support.
-CONFIG += KONFYT_USE_CARLA
-KONFYT_USE_CARLA {
+# To build without Carla support, run qmake with the option
+# "CONFIG+=KONFYT_NO_CARLA"
+# or add it below.
+
+!KONFYT_NO_CARLA {
     SOURCES += src/konfytCarlaEngine.cpp
     HEADERS += src/konfytCarlaEngine.h
     DEFINES += KONFYT_USE_CARLA

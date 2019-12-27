@@ -30,10 +30,10 @@ More information is available at www.noedig.co.za/konfyt/
 Requirements:
 -------------
 Konfyt was developed and tested with the following:
-* Linux Mint 19.1 (based on Ubuntu 18.04).
-* Qt 5
-* Fluidsynth 1.1.6 (Version 1.1.5 has a nasty polyphony bug)
-* liblscp 0.5.6 and thus Linuxsampler
+* Linux Mint 19.3 (based on Ubuntu 18.04).
+* Qt 5.9.5
+* Fluidsynth 1.1.9
+* liblscp 0.6.0-1 and thus Linuxsampler
 * Carla 2.0.0
 
 Carla is available in the KXStudio repositories (http://kxstudio.linuxaudio.org/Repositories).
@@ -64,7 +64,7 @@ The following are required to build:
 
 * Carla
 
-  Optional - to build without Carla support, comment out the line `CONFIG += KONFYT_USE_CARLA` in the `konfyt.pro` file by adding a `#` at the beginning of the line.
+  Optional - to build without Carla support, either add the line `CONFIG+=KONFYT_NO_CARLA` to the `konfyt.pro` file (see the comments in the file for the correct location) or pass it as an option to qmake, as described below.
 
 * g++
 
@@ -81,6 +81,10 @@ qmake ../konfyt.pro
 make
 ```
 
-A "konfyt" executable will be produced.
+To build without Carla support, alter the qmake command as follows:
+```
+qmake "CONFIG+=KONFYT_NO_CARLA" ../konfyt.pro
+```
 
+A "konfyt" executable file will be produced.
 
