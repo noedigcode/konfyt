@@ -56,7 +56,7 @@ struct KonfytPortSpec
 // ----------------------------------------------------
 struct LayerSoundfontStruct {
     KonfytSoundfontProgram program;
-    float gain = 1;
+    float gain = 1.0;
     KonfytMidiFilter filter;
     int indexInEngine = -1;
     bool solo = false;
@@ -79,7 +79,7 @@ struct LayerSfzStruct {
 
     int indexInEngine = -1;
 
-    float gain = 1;
+    float gain = 1.0;
     bool solo = false;
     bool mute = false;
 };
@@ -102,7 +102,7 @@ struct LayerMidiOutStruct {
 struct LayerAudioInStruct {
     QString name;
     int portIdInProject;   // Index of audio input port in project
-    float gain = 1;
+    float gain = 1.0;
     bool solo = false;
     bool mute = false;
     int jackRouteIdLeft = -1;

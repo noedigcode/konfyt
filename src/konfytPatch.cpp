@@ -585,7 +585,6 @@ KonfytPatchLayer KonfytPatch::addProgram(KonfytSoundfontProgram p)
     // Set up new soundfont program layer structure
     LayerSoundfontStruct sfData;
     sfData.program = p;
-    sfData.gain = DEFAULT_GAIN_FOR_NEW_LAYER; // default gain
 
     // Set up a new layer item
     // (a layer item is initialised with an unique id which will
@@ -782,9 +781,6 @@ KonfytPatchLayer KonfytPatch::addAudioInPort(int newPort)
     LayerAudioInStruct a = LayerAudioInStruct();
     a.name = "Audio Input Port " + n2s(newPort);
     a.portIdInProject = newPort;
-    a.gain = DEFAULT_GAIN_FOR_NEW_LAYER;
-    a.mute = false;
-    a.solo = false;
 
     return addAudioInPort(a);
 }

@@ -403,9 +403,6 @@ KonfytPatchLayer KonfytPatchEngine::addSfzLayer(QString path)
     Q_ASSERT( currentPatch != NULL );
 
     LayerSfzStruct plugin = LayerSfzStruct();
-    plugin.gain = DEFAULT_GAIN_FOR_NEW_LAYER;
-    plugin.mute = false;
-    plugin.solo = false;
     plugin.name = "sfz";
     plugin.path = path;
 

@@ -29,8 +29,6 @@
 #include "konfytMidiFilter.h"
 #include "konfytPatchLayer.h"
 
-#define DEFAULT_GAIN_FOR_NEW_LAYER 0.8
-
 #define XML_PATCH "sfpatch"
 #define XML_PATCH_NAME "name"
 #define XML_PATCH_NOTE "patchNote"

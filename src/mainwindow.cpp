@@ -195,10 +195,6 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     });
 
     pengine->initPatchEngine(this->jack, appInfo);
-    this->masterGain = 0.8;
-    pengine->setMasterGain(masterGain);
-    this->previewGain = 0.8;
-
 
     // ----------------------------------------------------
     // Set up gui stuff that needs to happen before loading project or commandline arguments

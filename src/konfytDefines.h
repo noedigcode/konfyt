@@ -30,7 +30,7 @@
 #include <fluidsynth.h>
 
 #define APP_NAME "Konfyt"
-#define APP_VERSION "1.1.0"
+#define APP_VERSION "1.1.1-testing"
 
 #define n2s(x) QString::number(x)
 #define bool2int(x) (x ? 1 : 0)

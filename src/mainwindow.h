@@ -289,9 +289,9 @@ private slots:
 private:
     KonfytPatchEngine* pengine;
     KonfytPatch* masterPatch;   // Current patch being played
-    float masterGain;           // Master gain when not in preview mode
+    float masterGain = 1.0;     // Master gain when not in preview mode
     KonfytPatch previewPatch;   // Patch played when in preview mode
-    float previewGain;          // Gain when in preview mode
+    float previewGain = 1.0;    // Gain when in preview mode
 
     bool fileSuffixIs(QString file, QString suffix);
     bool fileIsPatch(QString file);
