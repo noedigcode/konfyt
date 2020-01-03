@@ -21,22 +21,57 @@
 
 #include "konfytDbTree.h"
 
-konfytDbTree::konfytDbTree()
+KonfytDbTreeItem::KonfytDbTreeItem()
 {
-    root = new konfytDbTreeItem();
+    this->name = "Item";
+    this->parent = NULL;
 }
 
-void konfytDbTree::clearTree()
+KonfytDbTreeItem::KonfytDbTreeItem(QString newName)
+{
+    this->name = newName;
+    this->parent = NULL;
+}
+
+KonfytDbTreeItem::KonfytDbTreeItem(KonfytDbTreeItem *newParent, QString newName)
+{
+    this->parent = newParent;
+    this->name = newName;
+}
+
+bool KonfytDbTreeItem::hasChildren()
+{
+    return children.count() > 0;
+}
+
+bool KonfytDbTreeItem::hasParent()
+{
+    return parent != NULL;
+}
+
+
+
+KonfytDbTree::KonfytDbTree()
+{
+    root = new KonfytDbTreeItem();
+}
+
+KonfytDbTree::~KonfytDbTree()
+{
+    clearTree();
+    delete root;
+}
+
+void KonfytDbTree::clearTree()
 {
     removeAllChildren(this->root);
 }
 
-/* Recursive function to remove all children items
- * of a treeItem, recursively repeating. */
-void konfytDbTree::removeAllChildren(konfytDbTreeItem *item)
+/* Recursively remove and delete all children items of a tree item. */
+void KonfytDbTree::removeAllChildren(KonfytDbTreeItem *item)
 {
     while (item->children.count()) {
-        konfytDbTreeItem* child = item->children.at(0);
+        KonfytDbTreeItem* child = item->children.at(0);
         removeAllChildren(child);
         item->children.removeAt(0);
         delete child;

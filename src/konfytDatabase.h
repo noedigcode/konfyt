@@ -35,7 +35,6 @@
 
 #include "konfytPatch.h"
 #include "konfytDbTree.h"
-#include "konfytDbTreeItem.h"
 
 #define konfytDatabaseSource_returnSfont 1
 
@@ -88,15 +87,15 @@ public:
     int getNumPatches();
     QStringList getSfzList();
     int getNumSfz();
-    konfytDbTree* sfzTree;
-    konfytDbTree* sfzTree_results;
-    konfytDbTree* sfontTree;
-    konfytDbTree* sfontTree_results;
+    KonfytDbTree* sfzTree;
+    KonfytDbTree* sfzTree_results;
+    KonfytDbTree* sfontTree;
+    KonfytDbTree* sfontTree_results;
     void buildSfzTree();
     void buildSfzTree_results();
     void buildSfontTree();
     void buildSfontTree_results();
-    void compactTree(konfytDbTreeItem* item);
+    void compactTree(KonfytDbTreeItem* item);
 
     void scanDirs(QString sfontsDir, QString sfzDir, QString patchesDir);
 
@@ -111,16 +110,15 @@ public:
     bool loadDatabaseFromFile(QString filename);
 
     // Search functionality
-    void searchProgram(QString str);    // Search all programs in all soundfonts and patches.
+    void search(QString str);
     int getNumSfontsResults();
     int getNumSfontProgramResults();
-    QList<KonfytSoundfont*>       getResults_sfonts();
-    QList<KonfytSoundfontProgram>    getResults_sfontPrograms(KonfytSoundfont *sf);
-    QList<KonfytSoundfontProgram>    getResults_allPrograms();
+    QList<KonfytSoundfont*> getResultsSfonts();
+    QList<KonfytSoundfontProgram> getResultsSfontPrograms(KonfytSoundfont *sf);
     int getNumPatchesResults();
-    QList<KonfytPatch>      getResults_patches();
+    QList<KonfytPatch> getResultsPatches();
     int getNumSfzResults();
-    QStringList         getResults_sfz();
+    QStringList getResultsSfz();
 
     void addPatch(QString filename);
 

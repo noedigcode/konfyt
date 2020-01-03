@@ -38,7 +38,7 @@ void konfytDatabaseWorker::scanDirs(QString sfontDir, QString sfzDir, QString pa
 {
     QStringList sfontPaths, sfzPaths, patchPaths;
     QStringList sfontSuffix, sfzSuffix, patchSuffix;
-    sfontSuffix << "sf2";
+    sfontSuffix << "sf2" << "sf3";
     sfzSuffix << "sfz" << "gig";
     patchSuffix << KONFYT_PATCH_SUFFIX;
     QStringList sfontsToLoad;
@@ -211,10 +211,10 @@ konfytDatabase::konfytDatabase()
     settings = NULL;
     synth = NULL;
 
-    sfontTree = new konfytDbTree();
-    sfontTree_results = new konfytDbTree();
-    sfzTree = new konfytDbTree();
-    sfzTree_results = new konfytDbTree();
+    sfontTree = new KonfytDbTree();
+    sfontTree_results = new KonfytDbTree();
+    sfzTree = new KonfytDbTree();
+    sfzTree_results = new KonfytDbTree();
 
     qRegisterMetaType<QList<KonfytSoundfont*> >("QList<KonfytSoundfont*>");
 
@@ -291,11 +291,13 @@ void konfytDatabase::scanDirsFinished(QList<KonfytSoundfont*> sfonts, QStringLis
     for (int i=0; i<sfonts.count(); i++) {
         addSfont(sfonts[i]);
     }
+    buildSfontTree();
 
     // Add SFZs
     for (int i=0; i<sfzs.count(); i++) {
         addSfz(sfzs[i]);
     }
+    buildSfzTree();
 
     // Add patches
     for (int i=0; i<patches.count(); i++) {
@@ -544,11 +546,11 @@ void konfytDatabase::buildSfzTree()
         if (l[0] == "") { l.removeAt(0); }
         QString path;
 
-        konfytDbTreeItem* item = this->sfzTree->root;
+        KonfytDbTreeItem* item = this->sfzTree->root;
         for (int i=0; i<l.count(); i++) {
             path += "/" + l.at(i);
             bool contains = false;
-            QList<konfytDbTreeItem*> children = item->children;
+            QList<KonfytDbTreeItem*> children = item->children;
             for (int j=0; j<children.count(); j++) {
                 if (children.at(j)->name == l.at(i)) {
                     contains = true;
@@ -556,7 +558,7 @@ void konfytDatabase::buildSfzTree()
                 }
             }
             if (contains==false) {
-                konfytDbTreeItem* newItem = new konfytDbTreeItem(item, l.at(i));
+                KonfytDbTreeItem* newItem = new KonfytDbTreeItem(item, l.at(i));
                 newItem->path = path;
                 item->children.append(newItem);
                 item = newItem;
@@ -582,11 +584,11 @@ void konfytDatabase::buildSfzTree_results()
         if (l[0] == "") { l.removeAt(0); }
         QString path;
 
-        konfytDbTreeItem* item = this->sfzTree_results->root;
+        KonfytDbTreeItem* item = this->sfzTree_results->root;
         for (int i=0; i<l.count(); i++) {
             path += "/" + l.at(i);
             bool contains = false;
-            QList<konfytDbTreeItem*> children = item->children;
+            QList<KonfytDbTreeItem*> children = item->children;
             for (int j=0; j<children.count(); j++) {
                 if (children.at(j)->name == l.at(i)) {
                     contains = true;
@@ -594,7 +596,7 @@ void konfytDatabase::buildSfzTree_results()
                 }
             }
             if (contains==false) {
-                konfytDbTreeItem* newItem = new konfytDbTreeItem(item, l.at(i));
+                KonfytDbTreeItem* newItem = new KonfytDbTreeItem(item, l.at(i));
                 newItem->path = path;
                 item->children.append(newItem);
                 item = newItem;
@@ -619,11 +621,11 @@ void konfytDatabase::buildSfontTree()
         if (l[0] == "") { l.removeAt(0); }
         QString path;
 
-        konfytDbTreeItem* item = this->sfontTree->root;
+        KonfytDbTreeItem* item = this->sfontTree->root;
         for (int i=0; i<l.count(); i++) {
             path += "/" + l.at(i);
             bool contains = false;
-            QList<konfytDbTreeItem*> children = item->children;
+            QList<KonfytDbTreeItem*> children = item->children;
             for (int j=0; j<children.count(); j++) {
                 if (children.at(j)->name == l.at(i)) {
                     contains = true;
@@ -631,7 +633,7 @@ void konfytDatabase::buildSfontTree()
                 }
             }
             if (contains == false) {
-                konfytDbTreeItem* newItem = new konfytDbTreeItem(item, l.at(i));
+                KonfytDbTreeItem* newItem = new KonfytDbTreeItem(item, l.at(i));
                 newItem->path = path;
                 item->children.append(newItem);
                 item = newItem;
@@ -650,18 +652,18 @@ void konfytDatabase::buildSfontTree_results()
 {
     sfontTree_results->clearTree();
 
-    QList<KonfytSoundfont*> sfResultsList = getResults_sfonts();
+    QList<KonfytSoundfont*> sfResultsList = getResultsSfonts();
     for (int sf=0; sf<sfResultsList.count(); sf++) {
         QStringList l = sfResultsList.at(sf)->filename.split("/");
 
         if (l[0] == "") { l.removeAt(0); }
         QString path;
 
-        konfytDbTreeItem* item = this->sfontTree_results->root;
+        KonfytDbTreeItem* item = this->sfontTree_results->root;
         for (int i=0; i<l.count(); i++) {
             path += "/" + l.at(i);
             bool contains = false;
-            QList<konfytDbTreeItem*> children = item->children;
+            QList<KonfytDbTreeItem*> children = item->children;
             for (int j=0; j<children.count(); j++) {
                 if (children.at(j)->name == l.at(i)) {
                     contains = true;
@@ -669,7 +671,7 @@ void konfytDatabase::buildSfontTree_results()
                 }
             }
             if (contains == false) {
-                konfytDbTreeItem* newItem = new konfytDbTreeItem(item, l.at(i));
+                KonfytDbTreeItem* newItem = new KonfytDbTreeItem(item, l.at(i));
                 newItem->path = path;
                 item->children.append(newItem);
                 item = newItem;
@@ -686,7 +688,7 @@ void konfytDatabase::buildSfontTree_results()
 
 /* Compact a tree, by combining branches with their children
  * if they only have single children. E.g. a->b->c.sfz becomes a/b->c.sfz */
-void konfytDatabase::compactTree(konfytDbTreeItem* item)
+void konfytDatabase::compactTree(KonfytDbTreeItem* item)
 {
     for (int i=0; i<item->children.count(); i++) {
         compactTree(item->children.at(i));
@@ -694,7 +696,7 @@ void konfytDatabase::compactTree(konfytDbTreeItem* item)
 
     if (item->parent != NULL) { // Do not do this for the root item
         if (item->children.count() == 1) {
-            konfytDbTreeItem* child = item->children.at(0);
+            KonfytDbTreeItem* child = item->children.at(0);
             item->name = item->name + "/" + child->name;
             // NB remember to copy all of the child's data over
             item->path = child->path;
@@ -780,20 +782,17 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
     }
 
     file.close();
+
+    buildSfontTree();
+    buildSfzTree();
+
     return true;
 
 }
 
-
-
-
-// Searches all the programs in all the soundfonts.
-// If programs in a soundfont match the given string, they are
-// added to the results list in their soundfont.
-// All the resultant soundfonts (containing only the programs matching
-// the search string) are added to the sfontResults map.
-// The results can be accessed with the getResults functions.
-void konfytDatabase::searchProgram(QString str)
+/* Search all soundfonts (and their programs), SFZs and patches for the specified
+ * string. Results can be accessed with the getResults functions. */
+void konfytDatabase::search(QString str)
 {
     // Search all the soundfonts.
     // If a soundfont's filename matches the search string, the entire
@@ -804,7 +803,7 @@ void konfytDatabase::searchProgram(QString str)
     for (int i=0; i<sfontlist.count(); i++) {
         KonfytSoundfont* sf = sfontlist.at(i);
         sf->searchResults.clear();
-        if (sf->name.toLower().contains(str.toLower())) {
+        if (sf->filename.toLower().contains(str.toLower())) {
             // Soundfont name match. Include all programs
             sf->searchResults = sf->programlist;
         } else {
@@ -820,6 +819,7 @@ void konfytDatabase::searchProgram(QString str)
             sfontResults.insert(sf->filename,sf);
         }
     }
+    buildSfontTree_results();
 
     // Search all the patches (patch names as well as programs)
     patchResults.clear();
@@ -847,22 +847,23 @@ void konfytDatabase::searchProgram(QString str)
             sfzResults.append(sfzList.at(i));
         }
     }
+    buildSfzTree_results();
 }
 
 // Returns a list of patches from the search results.
-QList<KonfytPatch> konfytDatabase::getResults_patches()
+QList<KonfytPatch> konfytDatabase::getResultsPatches()
 {
     return patchResults;
 }
 
-QStringList konfytDatabase::getResults_sfz()
+QStringList konfytDatabase::getResultsSfz()
 {
     return sfzResults;
 }
 
 // Returns a list of soundfonts from the search results.
 // The soundfonts only contain the programs matching the search.
-QList<KonfytSoundfont*> konfytDatabase::getResults_sfonts()
+QList<KonfytSoundfont*> konfytDatabase::getResultsSfonts()
 {
     QList<KonfytSoundfont*> l;
     QList<QString> keys = sfontResults.keys();
@@ -888,20 +889,9 @@ int konfytDatabase::getNumSfontProgramResults()
 }
 
 // Returns a list of all programs within a specific sounfont matching the search.
-QList<KonfytSoundfontProgram> konfytDatabase::getResults_sfontPrograms(KonfytSoundfont* sf)
+QList<KonfytSoundfontProgram> konfytDatabase::getResultsSfontPrograms(KonfytSoundfont* sf)
 {
     return sfontResults.value(sf->filename)->searchResults;
-}
-
-// Returns a list of all the programs in the search results.
-QList<KonfytSoundfontProgram> konfytDatabase::getResults_allPrograms()
-{
-    QList<KonfytSoundfontProgram> l;
-    QList<KonfytSoundfont*> all = sfontResults.values();
-    for (int i=0; i<all.count(); i++) {
-        l.append(all.at(i)->searchResults);
-    }
-    return l;
 }
 
 int konfytDatabase::getNumPatchesResults()

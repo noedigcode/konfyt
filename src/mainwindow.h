@@ -210,8 +210,8 @@ private:
     QTreeWidgetItem*                 library_sfzRoot;
     QMap<QTreeWidgetItem*, QString>  library_sfzFolders; // All the non-root and non-bottom items in the sfz tree and item path
     QMap<QTreeWidgetItem*, QString>  library_sfzMap;     // Bottom-most items in the sfz tree with corresponding path
-    void buildSfzTree(QTreeWidgetItem* twi, konfytDbTreeItem* item);
-    void buildSfTree(QTreeWidgetItem* twi, konfytDbTreeItem* item);
+    void buildSfzTree(QTreeWidgetItem* twi, KonfytDbTreeItem* item);
+    void buildSfTree(QTreeWidgetItem* twi, KonfytDbTreeItem* item);
 
     // Database
 private:

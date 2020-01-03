@@ -1846,7 +1846,7 @@ bool MainWindow::fileIsSfzOrGig(QString file)
 
 bool MainWindow::fileIsSoundfont(QString file)
 {
-    return fileSuffixIs(file, "sf2");
+    return ( fileSuffixIs(file, "sf2") || fileSuffixIs(file, "sf3") );
 }
 
 
@@ -2011,7 +2011,6 @@ void MainWindow::fillTreeWithAll()
     library_sfRoot->setText(0,QString(TREE_ITEM_SOUNDFONTS) + " [" + n2s(db.getNumSfonts()) + "]");
     library_sfFolders.clear();
     library_sfMap.clear();
-    db.buildSfontTree();
     buildSfTree(library_sfRoot, db.sfontTree->root);
     library_sfRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
@@ -2037,7 +2036,6 @@ void MainWindow::fillTreeWithAll()
     library_sfzRoot->setText(0,QString(TREE_ITEM_SFZ) + " [" + n2s(db.getNumSfz()) + "]");
     library_sfzFolders.clear();
     library_sfzMap.clear();
-    db.buildSfzTree();
     buildSfzTree(library_sfzRoot, db.sfzTree->root);
     library_sfzRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
@@ -2052,7 +2050,7 @@ void MainWindow::fillTreeWithAll()
 
 
 /* Build TreeWidget tree from the database's tree. */
-void MainWindow::buildSfzTree(QTreeWidgetItem* twi, konfytDbTreeItem* item)
+void MainWindow::buildSfzTree(QTreeWidgetItem* twi, KonfytDbTreeItem* item)
 {
     if ( !item->hasChildren() ) {
         // Remove soundfont directory from item name if present
@@ -2087,7 +2085,7 @@ void MainWindow::buildSfzTree(QTreeWidgetItem* twi, konfytDbTreeItem* item)
     }
 }
 
-void MainWindow::buildSfTree(QTreeWidgetItem *twi, konfytDbTreeItem *item)
+void MainWindow::buildSfTree(QTreeWidgetItem *twi, KonfytDbTreeItem *item)
 {
     if ( !item->hasChildren() ) {
         // Remove soundfont directory from item name if present
@@ -2126,7 +2124,7 @@ void MainWindow::buildSfTree(QTreeWidgetItem *twi, konfytDbTreeItem *item)
 void MainWindow::fillTreeWithSearch(QString search)
 {
     searchMode = true; // Controls the behaviour when the user selects a tree item
-    db.searchProgram(search);
+    db.search(search);
 
     ui->treeWidget_Library->clear();
 
@@ -2140,7 +2138,7 @@ void MainWindow::fillTreeWithSearch(QString search)
 
     library_sfFolders.clear();
     library_sfMap.clear();
-    db.buildSfontTree_results();
+
     buildSfTree(library_sfRoot, db.sfontTree_results->root);
     library_sfRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
@@ -2150,7 +2148,7 @@ void MainWindow::fillTreeWithSearch(QString search)
     library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db.getNumPatchesResults()) + "]");
     library_patchRoot->setIcon(0, QIcon(":/icons/folder.png"));
 
-    QList<KonfytPatch> pl = db.getResults_patches();
+    QList<KonfytPatch> pl = db.getResultsPatches();
 
     for (int i=0; i<pl.count(); i++) {
         KonfytPatch pt = pl.at(i);
@@ -2168,7 +2166,6 @@ void MainWindow::fillTreeWithSearch(QString search)
     library_sfzRoot->setText(0,QString(TREE_ITEM_SFZ) + " [" + n2s(db.getNumSfzResults()) + "]");
     library_sfzFolders.clear();
     library_sfzMap.clear();
-    db.buildSfzTree_results();
 
     buildSfzTree(library_sfzRoot, db.sfzTree_results->root);
     library_sfzRoot->setIcon(0, QIcon(":/icons/folder.png"));
@@ -2387,7 +2384,7 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *curre
         if (searchMode) {
             // Fill programList variable with program results of selected soundfont
             KonfytSoundfont* sf = library_getSelectedSfont();
-            programList = db.getResults_sfontPrograms(sf);
+            programList = db.getResultsSfontPrograms(sf);
         } else {
             // Fill programList variable with all programs of selected soundfont
             KonfytSoundfont* sf = library_getSelectedSfont();

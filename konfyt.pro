@@ -27,7 +27,6 @@ SOURCES += src/main.cpp\
     src/konfytJackEngine.cpp \
     src/konfytDatabase.cpp \
     src/konfytProject.cpp \
-    src/konfytDbTreeItem.cpp \
     src/konfytDbTree.cpp \
     src/konfytMidiFilter.cpp \
     src/konfytProcess.cpp \
@@ -51,7 +50,6 @@ HEADERS  += src/mainwindow.h \
     src/konfytJackEngine.h \
     src/konfytDatabase.h \
     src/konfytProject.h \
-    src/konfytDbTreeItem.h \
     src/konfytDbTree.h \
     src/konfytMidiFilter.h \
     src/konfytProcess.h \
