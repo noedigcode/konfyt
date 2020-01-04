@@ -80,18 +80,17 @@ signals:
     void slider_moved_signal(konfytLayerWidget* layerItem, float gain);
     void solo_clicked_signal(konfytLayerWidget* layerItem, bool solo);
     void mute_clicked_signal(konfytLayerWidget* layerItem, bool mute);
-    void bus_clicked_signal(konfytLayerWidget* layerItem);
-    void toolbutton_clicked_signal(konfytLayerWidget* layerItem);
+    void rightToolbutton_clicked_signal(konfytLayerWidget* layerItem);
+    void leftToolbutton_clicked_signal(konfytLayerWidget* layerItem);
     void sendMidiEvents_clicked_signal(konfytLayerWidget* layerItem);
 
 private slots:
-    void on_toolButton_clicked();
+    void on_toolButton_left_clicked();
     void on_gainSlider_sliderMoved(int position);
-
     void on_gainSlider_valueChanged(int value);
     void on_toolButton_solo_clicked();
     void on_toolButton_mute_clicked();
-    void on_toolButton_bus_clicked();
+    void on_toolButton_right_clicked();
     void on_toolButton_sendEvents_clicked();
 };
 

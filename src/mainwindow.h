@@ -85,6 +85,11 @@
 #define XML_SETTINGS_SFZDIR "sfzDir"
 #define XML_SETTINGS_FILEMAN "filemanager"
 
+#define PTY_MIDI_CHANNEL "midiChannel"
+#define PTY_MIDI_IN_PORT "midiInPort"
+#define PTY_AUDIO_OUT_BUS "audioOutBus"
+#define PTY_AUDIO_IN_PORT "audioInPort"
+#define PTY_MIDI_OUT_PORT "midiOutPort"
 
 namespace Ui {
 class MainWindow;
@@ -213,6 +218,16 @@ private:
     void buildSfzTree(QTreeWidgetItem* twi, KonfytDbTreeItem* item);
     void buildSfTree(QTreeWidgetItem* twi, KonfytDbTreeItem* item);
 
+    // Preview button & menu
+private:
+    QMenu previewButtonMenu;
+private slots:
+    void preparePreviewMenu();
+    void previewButtonMidiInPortMenuTrigger(QAction* action);
+    void previewButtonMidiInChannelMenuTrigger(QAction* action);
+    void previewButtonBusMenuTrigger(QAction* action);
+    void on_toolButton_LibraryPreview_clicked();
+
     // Database
 private:
     konfytDatabase db;
@@ -263,7 +278,6 @@ private slots:
 
     void on_lineEdit_Search_returnPressed();
     void on_toolButton_ClearSearch_clicked();
-    void on_pushButton_LibraryPreview_clicked();
 
     void on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
     void on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int column);
@@ -290,8 +304,13 @@ private:
     KonfytPatchEngine* pengine;
     KonfytPatch* masterPatch;   // Current patch being played
     float masterGain = 1.0;     // Master gain when not in preview mode
+
     KonfytPatch previewPatch;   // Patch played when in preview mode
     float previewGain = 1.0;    // Gain when in preview mode
+    int previewPatchMidiInPort = 0;
+    int previewPatchMidiInChannel = -1;
+    int previewPatchBus = 0;
+    void updatePreviewPatchLayer();
 
     bool fileSuffixIs(QString file, QString suffix);
     bool fileIsPatch(QString file);
@@ -301,7 +320,7 @@ private:
     void setMasterGain(float gain);
 
     // Current patch functions
-    int currentPatchIndex;
+    int currentPatchIndex = -1;
     void setCurrentPatch(int index);
     void setCurrentPatch(KonfytPatch *newPatch);
     void setPatchIcon(const KonfytPatch* patch, QListWidgetItem* item, bool current);
@@ -332,51 +351,60 @@ private:
     void clearLayerItems_GUIonly();
 
     // patchMidiOutPortsMenu: Context menu when user clicks button to add a new MIDI output layer.
-    //   When an item is clicked: onPatchMidiOutPortsMenu_ActionTrigger()
+private:
+    void updateMidiOutPortsMenu(QMenu* menu);
     QMenu patchMidiOutPortsMenu;
-    QAction* patchMidiOutPortsMenu_NewPortAction;
-    QMap<QAction*, int> patchMidiOutPortsMenu_map; // Map menu actions to project port ids
-    void gui_updatePatchMidiOutPortsMenu();
+private slots:
+    void onPatchMidiOutPortsMenu_aboutToShow();
+    void onPatchMidiOutPortsMenu_ActionTrigger(QAction* action);
 
     // patchAudioInPortsMenu: Context menu when user clicks button to add new audio input port layer.
-    //    When item is clicked: onPatchAudioInPortsMenu_ActionTrigger()
+private:
+    void updateAudioInPortsMenu(QMenu* menu);
     QMenu patchAudioInPortsMenu;
-    QAction* patchAudioInPortsMenu_NewPortAction;
-    QMap<QAction*, int> patchAudioInPortsMenu_map; // Map menu actions to project port ids
-    void gui_updatePatchAudioInPortsMenu();
+private slots:
+    void onPatchAudioInPortsMenu_aboutToShow();
+    void onPatchAudioInPortsMenu_ActionTrigger(QAction* action);
 
-    // layerMidiInMenu: Midi-In menu in the layers in patch view
-    //   Opened when user clicks on layer item midi in button, see onlayer_midiIn_clicked()
-    //   When a menu item is clicked: onLayerMidiInMenu_ActionTrigger()
-
-    // Layer toolbutton menu and MIDI-in port and channels menu
-    // Triggered when layer toolbutton clicked. See menu action trigger slots for
-    // procedures when menus clicked.
+    // Layer left toolbutton menu
+private:
     QMenu layerToolMenu;
-    konfytLayerWidget* layerToolMenu_sourceitem;
+    konfytLayerWidget* layerToolMenuSourceitem;
     void gui_updateLayerToolMenu();
+private slots:
+    void onLayer_leftToolbutton_clicked(konfytLayerWidget* layerItem);
 
+    // Layer MIDI input ports menu
+private:
+    void updateMidiInPortsMenu(QMenu* menu);
     QMenu layerMidiInPortsMenu;
-    QAction* layerMidiInPortsMenu_newPortAction;
-    QMap<QAction*, int> layerMidiInPortsMenu_map; // Map menu actions to project port ids
-    void gui_updateLayerMidiInPortsMenu();
+private slots:
+    void onLayerMidiInPortsMenu_ActionTrigger(QAction* action);
 
+    // Layer MIDI input channel menu
+private:
+    void updateMidiInChannelMenu(QMenu* menu);
     QMenu layerMidiInChannelMenu;
-    void createLayerMidiInChannelMenu();
+private slots:
+    void onLayerMidiInChannelMenu_ActionTrigger(QAction* action);
 
-    // layerBusMenu: Bus menu in the layers in patch view.
-    //   Opened when user clicks on layer item bus button, see onlayer_bus_clicked()
-    //   When a menu item is clicked: onlayerBusMenu_ActionTrigger()
-    void gui_updateLayerBusMenu();
-    void gui_updateLayerMidiOutChannelMenu();
+    // layerBusMenu: Opened when user clicks on bus button of a layer which has audio output.
+private:
+    void updateBusMenu(QMenu* menu);
     QMenu layerBusMenu;
-    QMenu layerMidiOutChannelMenu;
+private slots:
+    void onLayerBusMenu_ActionTrigger(QAction* action);
 
-    QAction* layerBusMenu_NewBusAction;
-    konfytLayerWidget* layerBusMenu_sourceItem;
-    QMap<QAction*, int> layerBusMenu_actionsBusIdsMap; // Map menu actions to bus ids
+    // Layer MIDI out channel menu: Opened when user clicks on bus button of a layer which as MIDI output.
+private:
+    void updateLayerMidiOutChannelMenu(QMenu* menu);
+    QMenu layerMidiOutChannelMenu;
+private slots:
+    void onLayerMidiOutChannelMenu_aboutToShow();
+    void onLayerMidiOutChannelMenu_ActionTrigger(QAction* action);
 
     // Patch list menu
+private:
     QMenu patchListMenu;
     QAction* patchListMenu_NumbersAction;
     QAction* patchListMenu_NotesAction;
@@ -387,9 +415,6 @@ private slots:
     // Patch related
     void on_lineEdit_PatchName_returnPressed();
     void on_lineEdit_PatchName_editingFinished();
-    void onPatchMidiInPortsMenu_ActionTrigger(QAction* action);
-    void onPatchMidiOutPortsMenu_ActionTrigger(QAction* action);
-    void onPatchAudioInPortsMenu_ActionTrigger(QAction* action);
     void on_lineEdit_ProjectName_editingFinished();
     void on_textBrowser_patchNote_textChanged();
 
@@ -397,13 +422,8 @@ private slots:
     void onLayer_slider_moved(konfytLayerWidget* layerItem, float gain);
     void onLayer_solo_clicked(konfytLayerWidget* layerItem, bool solo);
     void onLayer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
-    void onLayer_bus_clicked(konfytLayerWidget* layerItem);
-    void onLayer_toolbutton_clicked(konfytLayerWidget* layerItem);
-    void onLayerBusMenu_ActionTrigger(QAction* action);
-    void onLayerMidiOutChannelMenu_ActionTrigger(QAction* action);
-    void onLayerMidiInPortsMenu_ActionTrigger(QAction* action);
-    void onLayerMidiInChannelMenu_ActionTrigger(QAction* action);
     void onLayer_midiSend_clicked(konfytLayerWidget* layerItem);
+    void onLayer_rightToolbutton_clicked(konfytLayerWidget* layerItem);
 
     // Patch List
     void on_toolButton_RemovePatch_clicked();
@@ -427,6 +447,10 @@ private:
     QTreeWidgetItem* portsBussesTreeMenuItem; // The item that was right-clicked on
 
     void showConnectionsPage();
+    void connectionsTreeSelectBus(int busId);
+    void connectionsTreeSelectAudioInPort(int portId);
+    void connectionsTreeSelectMidiInPort(int portId);
+    void connectionsTreeSelectMidiOutPort(int portId);
     void gui_updatePortsBussesTree();
     void gui_updateConnectionsTree();
 
@@ -822,9 +846,6 @@ private slots:
     void on_pushButton_LavaMonster_clicked();    
 
     void on_stackedWidget_currentChanged(int arg1);
-
-
-
 
 };
 

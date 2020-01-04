@@ -123,7 +123,7 @@ QSlider::handle:horizontal:hover {
        <number>1</number>
       </property>
       <item>
-       <widget class="QToolButton" name="toolButton">
+       <widget class="QToolButton" name="toolButton_left">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
           <horstretch>0</horstretch>
@@ -254,7 +254,7 @@ QSlider::handle:horizontal:hover {
        </widget>
       </item>
       <item>
-       <widget class="QToolButton" name="toolButton_bus">
+       <widget class="QToolButton" name="toolButton_right">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
           <horstretch>0</horstretch>

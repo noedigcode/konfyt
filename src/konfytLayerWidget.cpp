@@ -66,9 +66,9 @@ void konfytLayerWidget::paintEvent(QPaintEvent* /*e*/)
     p.drawRect(r);
 }
 
-void konfytLayerWidget::on_toolButton_clicked()
+void konfytLayerWidget::on_toolButton_left_clicked()
 {
-    emit toolbutton_clicked_signal(this);
+    emit leftToolbutton_clicked_signal(this);
 }
 
 // This function has to be called before the object can be used.
@@ -137,14 +137,14 @@ void konfytLayerWidget::setUpGUI()
         this->updateBackgroundFromFilter();
         // Volume
         ui->gainSlider->setVisible(false);
-        // Use bus button as MIDI output channel
+        // Use right toolbutton as MIDI output channel
         int outchan = g.getMidiFilter().outChan;
         if (outchan >= 0) {
-            ui->toolButton_bus->setText( n2s(outchan+1));
+            ui->toolButton_right->setText( n2s(outchan+1));
         } else {
-            ui->toolButton_bus->setText( "-" );
+            ui->toolButton_right->setText( "-" );
         }
-        ui->toolButton_bus->setToolTip("MIDI Output Channel");
+        ui->toolButton_right->setToolTip("MIDI Output Channel");
 
     } else if (g.getLayerType() == KonfytLayerType_AudioIn ) {
 
@@ -181,13 +181,13 @@ void konfytLayerWidget::setUpGUI()
     // Bus button
     if ( (project != NULL) && (g.getLayerType() != KonfytLayerType_MidiOut) ) {
         if ( project->audioBus_exists(g.busIdInProject) ) {
-            ui->toolButton_bus->setText( n2s(g.busIdInProject) );
-            ui->toolButton_bus->setToolTip("Bus: " + project->audioBus_getBus(g.busIdInProject).busName);
-            ui->toolButton_bus->setStyleSheet("");
+            ui->toolButton_right->setText( n2s(g.busIdInProject) );
+            ui->toolButton_right->setToolTip("Bus: " + project->audioBus_getBus(g.busIdInProject).busName);
+            ui->toolButton_right->setStyleSheet("");
         } else {
-            ui->toolButton_bus->setText( n2s(g.busIdInProject) + "!" );
-            ui->toolButton_bus->setToolTip("Bus does not exist in this project.");
-            ui->toolButton_bus->setStyleSheet("background-color: red;");
+            ui->toolButton_right->setText( n2s(g.busIdInProject) + "!" );
+            ui->toolButton_right->setToolTip("Bus does not exist in this project.");
+            ui->toolButton_right->setStyleSheet("background-color: red;");
         }
     }
 
@@ -205,13 +205,13 @@ void konfytLayerWidget::setUpGUI()
                 btnTxt.append(n2s(inChan+1));
                 tooltip.append(n2s(inChan+1));
             }
-            ui->toolButton->setText( btnTxt );
-            ui->toolButton->setToolTip(tooltip);
-            ui->toolButton->setStyleSheet("");
+            ui->toolButton_left->setText( btnTxt );
+            ui->toolButton_left->setToolTip(tooltip);
+            ui->toolButton_left->setStyleSheet("");
         } else {
-            ui->toolButton->setText( n2s(g.midiInPortIdInProject) + "!" );
-            ui->toolButton->setToolTip("MIDI In Port does not exist in this project.");
-            ui->toolButton->setStyleSheet("background-color: red;");
+            ui->toolButton_left->setText( n2s(g.midiInPortIdInProject) + "!" );
+            ui->toolButton_left->setToolTip("MIDI In Port does not exist in this project.");
+            ui->toolButton_left->setStyleSheet("background-color: red;");
         }
     }
 
@@ -226,7 +226,7 @@ void konfytLayerWidget::setUpGUI()
         ui->gainSlider->setVisible(false);
         ui->toolButton_solo->setVisible(false);
         ui->toolButton_mute->setVisible(false);
-        ui->toolButton_bus->setVisible(false);
+        ui->toolButton_right->setVisible(false);
 
         ui->lineEdit->setProperty("konfytError", true);
         ui->lineEdit->style()->unpolish(ui->lineEdit);
@@ -327,9 +327,9 @@ void konfytLayerWidget::on_toolButton_mute_clicked()
     emit mute_clicked_signal(this, mute);
 }
 
-void konfytLayerWidget::on_toolButton_bus_clicked()
+void konfytLayerWidget::on_toolButton_right_clicked()
 {
-    emit bus_clicked_signal(this);
+    emit rightToolbutton_clicked_signal(this);
 }
 
 void konfytLayerWidget::on_toolButton_sendEvents_clicked()
