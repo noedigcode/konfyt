@@ -19,5 +19,6 @@
         <file>icons/play.png</file>
         <file>icons/alwaysactive.png</file>
         <file>icons/empty.png</file>
+        <file>icons/right_w_outline.png</file>
     </qresource>
 </RCC>

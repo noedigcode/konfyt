@@ -376,31 +376,30 @@ private slots:
 
     // Layer MIDI input ports menu
 private:
-    void updateMidiInPortsMenu(QMenu* menu);
+    void updateMidiInPortsMenu(QMenu* menu, int currentPortId = -1);
     QMenu layerMidiInPortsMenu;
 private slots:
     void onLayerMidiInPortsMenu_ActionTrigger(QAction* action);
 
     // Layer MIDI input channel menu
 private:
-    void updateMidiInChannelMenu(QMenu* menu);
+    void updateMidiInChannelMenu(QMenu* menu, int currentChannel = -2);
     QMenu layerMidiInChannelMenu;
 private slots:
     void onLayerMidiInChannelMenu_ActionTrigger(QAction* action);
 
     // layerBusMenu: Opened when user clicks on bus button of a layer which has audio output.
 private:
-    void updateBusMenu(QMenu* menu);
+    void updateBusMenu(QMenu* menu, int currentBusId = -1);
     QMenu layerBusMenu;
 private slots:
     void onLayerBusMenu_ActionTrigger(QAction* action);
 
     // Layer MIDI out channel menu: Opened when user clicks on bus button of a layer which as MIDI output.
 private:
-    void updateLayerMidiOutChannelMenu(QMenu* menu);
+    void updateLayerMidiOutChannelMenu(QMenu* menu, int currentMidiPort = -2);
     QMenu layerMidiOutChannelMenu;
 private slots:
-    void onLayerMidiOutChannelMenu_aboutToShow();
     void onLayerMidiOutChannelMenu_ActionTrigger(QAction* action);
 
     // Patch list menu

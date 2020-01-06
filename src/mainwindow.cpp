@@ -407,11 +407,8 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
             this, &MainWindow::onLayerBusMenu_ActionTrigger);
 
     // Layer MIDI output channel menu
-    connect(&layerMidiOutChannelMenu, &QMenu::aboutToShow,
-            this, &MainWindow::onLayerMidiOutChannelMenu_aboutToShow);
     connect(&layerMidiOutChannelMenu, &QMenu::triggered,
             this, &MainWindow::onLayerMidiOutChannelMenu_ActionTrigger);
-    updateLayerMidiOutChannelMenu(&layerMidiOutChannelMenu);
 
     // Layer MIDI input port menu
     layerMidiInPortsMenu.setTitle("MIDI In Port");
@@ -422,7 +419,6 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     layerMidiInChannelMenu.setTitle("MIDI In Channel");
     connect(&layerMidiInChannelMenu, &QMenu::triggered,
             this, &MainWindow::onLayerMidiInChannelMenu_ActionTrigger);
-    updateMidiInChannelMenu(&layerMidiInChannelMenu);
 
     // Preview button menu
     connect(&previewButtonMenu, &QMenu::aboutToShow,
@@ -2158,17 +2154,17 @@ void MainWindow::preparePreviewMenu()
     previewButtonMenu.clear();
 
     QMenu* midiInPortMenu = previewButtonMenu.addMenu("MIDI In Port");
-    updateMidiInPortsMenu(midiInPortMenu);
+    updateMidiInPortsMenu(midiInPortMenu, previewPatchMidiInPort);
     connect(midiInPortMenu, &QMenu::triggered,
             this, &MainWindow::previewButtonMidiInPortMenuTrigger);
 
     QMenu* midiInChannelMenu = previewButtonMenu.addMenu("MIDI In Channel");
-    updateMidiInChannelMenu(midiInChannelMenu);
+    updateMidiInChannelMenu(midiInChannelMenu, previewPatchMidiInChannel);
     connect(midiInChannelMenu, &QMenu::triggered,
             this, &MainWindow::previewButtonMidiInChannelMenuTrigger);
 
     QMenu* busMenu = previewButtonMenu.addMenu("Output Bus");
-    updateBusMenu(busMenu);
+    updateBusMenu(busMenu, previewPatchBus);
     connect(busMenu, &QMenu::triggered,
             this, &MainWindow::previewButtonBusMenuTrigger);
 }
@@ -2177,17 +2173,23 @@ void MainWindow::preparePreviewMenu()
 void MainWindow::previewButtonMidiInPortMenuTrigger(QAction *action)
 {
     int portId = action->property(PTY_MIDI_IN_PORT).toInt();
-    if (portId < 0) {
-        // Add new MIDI in port
-        portId = addMidiInPort();
-        if (portId < 0) { return; }
-        // Open the connections page and show port
+    if (portId == -2) {
+        // Show current port in connections page
         showConnectionsPage();
-        connectionsTreeSelectMidiInPort(portId);
-    }
+        connectionsTreeSelectMidiInPort(previewPatchMidiInPort);
+    } else {
+        if (portId < 0) {
+            // Add new MIDI in port
+            portId = addMidiInPort();
+            if (portId < 0) { return; }
+            // Open the connections page and show port
+            showConnectionsPage();
+            connectionsTreeSelectMidiInPort(portId);
+        }
 
-    previewPatchMidiInPort = portId;
-    updatePreviewPatchLayer();
+        previewPatchMidiInPort = portId;
+        updatePreviewPatchLayer();
+    }
 }
 
 /* Menu item has been clicked in the preview button MIDI-In channel menu. */
@@ -2202,17 +2204,23 @@ void MainWindow::previewButtonMidiInChannelMenuTrigger(QAction *action)
 void MainWindow::previewButtonBusMenuTrigger(QAction *action)
 {
     int busId = action->property(PTY_AUDIO_OUT_BUS).toInt();
-    if (busId < 0) {
-        // Add new audio output bus
-        busId = addBus();
-        if (busId < 0) { return; }
-        // Open the connections page and show bus
+    if (busId == -2) {
+        // Show current bus in connections page
         showConnectionsPage();
-        connectionsTreeSelectBus(busId);
-    }
+        connectionsTreeSelectBus(previewPatchBus);
+    } else {
+        if (busId < 0) {
+            // Add new audio output bus
+            busId = addBus();
+            if (busId < 0) { return; }
+            // Open the connections page and show bus
+            showConnectionsPage();
+            connectionsTreeSelectBus(busId);
+        }
 
-    previewPatchBus = busId;
-    updatePreviewPatchLayer();
+        previewPatchBus = busId;
+        updatePreviewPatchLayer();
+    }
 }
 
 void MainWindow::fillTreeWithSearch(QString search)
@@ -3737,26 +3745,33 @@ void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
 /* Menu item has been clicked in the layer MIDI-In port menu. */
 void MainWindow::onLayerMidiInPortsMenu_ActionTrigger(QAction *action)
 {
-    int portId = action->property(PTY_MIDI_IN_PORT).toInt();
-    if (portId < 0) {
-        // Add new MIDI in port
-        portId = addMidiInPort();
-        if (portId < 0) { return; }
-        // Open the connections page and show port.
-        showConnectionsPage();
-        connectionsTreeSelectMidiInPort(portId);
-    }
-
-    // Set the MIDI Input port in the GUI layer item
     KonfytPatchLayer layer = layerToolMenuSourceitem->getPatchLayerItem();
-    layer.midiInPortIdInProject = portId;
 
-    // Update the layer widget
-    layerToolMenuSourceitem->setLayerItem( layer );
-    // Update in pengine
-    pengine->setLayerMidiInPort( &layer, portId );
+    int portId = action->property(PTY_MIDI_IN_PORT).toInt();
+    if (portId == -2) {
+        // Get current port id and show it in the connections page
+        showConnectionsPage();
+        connectionsTreeSelectMidiInPort(layer.midiInPortIdInProject);
+    } else {
+        if (portId == -1) {
+            // Add new MIDI in port
+            portId = addMidiInPort();
+            if (portId < 0) { return; }
+            // Open the connections page and show port.
+            showConnectionsPage();
+            connectionsTreeSelectMidiInPort(portId);
+            }
 
-    setPatchModified(true);
+        // Set the MIDI Input port in the GUI layer item
+        layer.midiInPortIdInProject = portId;
+
+        // Update the layer widget
+        layerToolMenuSourceitem->setLayerItem( layer );
+        // Update in pengine
+        pengine->setLayerMidiInPort( &layer, portId );
+
+        setPatchModified(true);
+    }
 }
 
 void MainWindow::onLayerMidiInChannelMenu_ActionTrigger(QAction *action)
@@ -3785,26 +3800,33 @@ void MainWindow::onLayer_midiSend_clicked(konfytLayerWidget *layerItem)
 /* Layer bus menu item has been clicked. */
 void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
 {
+    KonfytPatchLayer layer = layerToolMenuSourceitem->getPatchLayerItem();
+
     int busId = action->property(PTY_AUDIO_OUT_BUS).toInt();
-    if (busId < 0) {
-        // Add new bus
-        busId = addBus();
-        if (busId < 0) { return; }
-        // Open the connections page and show bus.
+    if (busId == -2) {
+        // Show current bus in connections page
         showConnectionsPage();
-        connectionsTreeSelectBus(busId);
+        connectionsTreeSelectBus(layer.busIdInProject);
+    } else {
+        if (busId < 0) {
+            // Add new bus
+            busId = addBus();
+            if (busId < 0) { return; }
+            // Open the connections page and show bus.
+            showConnectionsPage();
+            connectionsTreeSelectBus(busId);
+        }
+
+        // Set the destination bus in gui layer item
+        layer.busIdInProject = busId;
+
+        // Update the layer widget
+        layerToolMenuSourceitem->setLayerItem(layer);
+        // Update in pengine
+        pengine->setLayerBus(&layer, busId);
+
+        setPatchModified(true);
     }
-
-    // Set the destination bus in gui layer item
-    KonfytPatchLayer g = layerToolMenuSourceitem->getPatchLayerItem();
-    g.busIdInProject = busId;
-
-    // Update the layer widget
-    layerToolMenuSourceitem->setLayerItem( g );
-    // Update in pengine
-    pengine->setLayerBus( &g, busId );
-
-    setPatchModified(true);
 }
 
 void MainWindow::on_pushButton_ExtApp_add_clicked()
@@ -3905,10 +3927,12 @@ void MainWindow::onLayer_rightToolbutton_clicked(konfytLayerWidget *layerItem)
     KonfytLayerType type = layerItem->getPatchLayerItem().getLayerType();
     if (type == KonfytLayerType_MidiOut) {
         // Show MIDI channel menu
+        updateLayerMidiOutChannelMenu(&layerMidiOutChannelMenu,
+                layerItem->getPatchLayerItem().getMidiFilter().outChan);
         layerMidiOutChannelMenu.popup(QCursor::pos());
     } else {
         // Show Buses menu
-        updateBusMenu(&layerBusMenu);
+        updateBusMenu(&layerBusMenu, layerItem->getPatchLayerItem().busIdInProject);
         layerBusMenu.popup(QCursor::pos());
 
     }
@@ -3927,47 +3951,58 @@ void MainWindow::onLayer_leftToolbutton_clicked(konfytLayerWidget *layerItem)
 }
 
 /* Clears and fills specified menu with items corresponding to project audio
- * output buses and a new bus entry. A property is set for each action
- * corresponding to the bus id and -1 for the new bus entry. */
-void MainWindow::updateBusMenu(QMenu *menu)
+ * output buses as well as a current bus connections entry and a new bus entry.
+ * A property is set for each action corresponding to the bus id, -1 for the new
+ * bus entry and -2 for the current bus connections entry.
+ * The action corresponding to the specified currentBusId is marked to indicate
+ * the current setting. */
+void MainWindow::updateBusMenu(QMenu *menu, int currentBusId)
 {
     menu->clear();
 
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
 
+    QAction* a = menu->addAction("Current Bus Connections...");
+    a->setProperty(PTY_AUDIO_OUT_BUS, -2);
+    menu->addSeparator();
+
     QList<int> busIds = prj->audioBus_getAllBusIds();
     foreach (int id, busIds) {
         QAction* action = menu->addAction( n2s(id) + " " + prj->audioBus_getBus(id).busName );
         action->setProperty(PTY_AUDIO_OUT_BUS, id);
+        if (id == currentBusId) {
+            action->setIcon(QIcon("://icons/right_w_outline.png"));
+        }
     }
     menu->addSeparator();
-    QAction* action = menu->addAction("New Bus");
-    action->setProperty(PTY_AUDIO_OUT_BUS, -1);
+    QAction* b = menu->addAction("New Bus");
+    b->setProperty(PTY_AUDIO_OUT_BUS, -1);
 }
 
 /* Clears and fills specified menu with items corresponding to the 16 MIDI
  * channels as well as an original channel entry. A property is set for each
  * action corresponding to the MIDI channel (zero based) and -1 for the original
- * channel entry. */
-void MainWindow::updateLayerMidiOutChannelMenu(QMenu *menu)
+ * channel entry. The action corresponding to the specified currentMidiPort is
+ * marked to indicate the current setting. */
+void MainWindow::updateLayerMidiOutChannelMenu(QMenu *menu, int currentMidiPort)
 {
     menu->clear();
 
     QAction* action = menu->addAction("Original Channel");
     action->setProperty(PTY_MIDI_CHANNEL, -1);
+    if (currentMidiPort == -1) {
+        action->setIcon(QIcon("://icons/right_w_outline.png"));
+    }
 
     for (int i=0; i <= 15; i++) {
         QAction* action = menu->addAction("Channel " + n2s(i+1));
         action->setProperty(PTY_MIDI_CHANNEL, i);
+        if (i == currentMidiPort) {
+            action->setIcon(QIcon("://icons/right_w_outline.png"));
+        }
     }
 }
-
-void MainWindow::onLayerMidiOutChannelMenu_aboutToShow()
-{
-    updateLayerMidiOutChannelMenu(&layerMidiOutChannelMenu);
-}
-
 
 /* Add a layer item to the GUI layer list. */
 void MainWindow::addLayerItemToGUI(KonfytPatchLayer layerItem)
@@ -4046,42 +4081,60 @@ void MainWindow::clearLayerItems_GUIonly()
 }
 
 /* Clears and fills specified menu with items corresponding to project MIDI
- * input ports and a new port entry. A property is set for each action
- * corresponding to the port id and -1 for the new port entry. */
-void MainWindow::updateMidiInPortsMenu(QMenu *menu)
+ * input ports as well as a current port connections item and a new port item.
+ * A property is set for each action corresponding to the port id, -1 for the
+ * new port entry and -2 for the current port connections entry.
+ * The item corresponding to the specified currentPortId will be marked to
+ * indicate that it is the current setting. */
+void MainWindow::updateMidiInPortsMenu(QMenu *menu, int currentPortId)
 {
     menu->clear();
 
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
 
+    QAction* a = menu->addAction("Current Port Connections...");
+    a->setProperty(PTY_MIDI_IN_PORT, -2);
+    menu->addSeparator();
+
     QList<int> midiInIds = prj->midiInPort_getAllPortIds();
     foreach(int id, midiInIds) {
         PrjMidiPort projectPort = prj->midiInPort_getPort(id);
         QAction* action = menu->addAction( n2s(id) + " " + projectPort.portName);
         action->setProperty(PTY_MIDI_IN_PORT, id);
+        if (id == currentPortId) {
+            action->setIcon(QIcon("://icons/right_w_outline.png"));
+        }
     }
     menu->addSeparator();
-    QAction* action = menu->addAction("New Port");
-    action->setProperty(PTY_MIDI_IN_PORT, -1);
+
+    QAction* b = menu->addAction("New Port");
+    b->setProperty(PTY_MIDI_IN_PORT, -1);
 }
 
 /* Clears and fills the specified menu with items corresponding to the 16
  * MIDI channels, as well as an all channels entry. A property is set for each
  * action corresponding to the MIDI channel (zero-based) and -1 for the all
- * channels entry. */
-void MainWindow::updateMidiInChannelMenu(QMenu *menu)
+ * channels entry. The action corresponding to the specified currentChannel
+ * is marked to indicate the current setting. */
+void MainWindow::updateMidiInChannelMenu(QMenu *menu, int currentChannel)
 {
     menu->clear();
 
     // "All" entry
     QAction* action = menu->addAction("All");
     action->setProperty(PTY_MIDI_CHANNEL, -1);
+    if (currentChannel == -1) {
+        action->setIcon(QIcon("://icons/right_w_outline.png"));
+    }
 
     // MIDI channels
     for (int i=0; i<=15; i++) {
         QAction* action = menu->addAction("Channel " + n2s(i+1));
         action->setProperty(PTY_MIDI_CHANNEL, i);
+        if (i == currentChannel) {
+            action->setIcon(QIcon("://icons/right_w_outline.png"));
+        }
     }
 }
 
@@ -4096,8 +4149,9 @@ void MainWindow::gui_updateLayerToolMenu()
          && (!patchLayer.hasError())
          && (type != KonfytLayerType_AudioIn) )
     {
-        updateMidiInPortsMenu(&layerMidiInPortsMenu);
+        updateMidiInPortsMenu(&layerMidiInPortsMenu, patchLayer.midiInPortIdInProject);
         layerToolMenu.addMenu(&layerMidiInPortsMenu);
+        updateMidiInChannelMenu(&layerMidiInChannelMenu, patchLayer.getMidiFilter().inChan);
         layerToolMenu.addMenu(&layerMidiInChannelMenu);
         layerToolMenu.addAction( ui->actionEdit_MIDI_Filter );
     }
