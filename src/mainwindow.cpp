@@ -6061,11 +6061,6 @@ void MainWindow::updateJackPage()
     }
 }
 
-void MainWindow::on_pushButton_jackConRefresh_clicked()
-{
-    showJackPage();
-}
-
 void MainWindow::on_pushButton_jackConAdd_clicked()
 {
     QTreeWidgetItem* itemOut = ui->treeWidget_jackPortsOut->currentItem();

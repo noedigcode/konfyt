@@ -721,7 +721,6 @@ private:
     void updateJackPage();
 private slots:
     void on_pushButton_ShowJackPage_clicked();
-    void on_pushButton_jackConRefresh_clicked();
     void on_pushButton_jackConAdd_clicked();
     void on_pushButton_jackConRemove_clicked();
     void on_pushButton_JackAudioPorts_clicked();

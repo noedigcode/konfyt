@@ -103,7 +103,7 @@ struct KonfytJackConPair {
 
     QString toString()
     {
-        return srcPort + " --> " + destPort;
+        return srcPort + " \u2B95 " + destPort;
     }
 
     bool equals(const KonfytJackConPair &a) {
