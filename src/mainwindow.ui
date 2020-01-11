@@ -2101,7 +2101,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>6</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <property name="konfytGradient" stdset="0">
@@ -3689,7 +3689,7 @@ QSpinBox {
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>385</width>
+                        <width>243</width>
                         <height>398</height>
                        </rect>
                       </property>

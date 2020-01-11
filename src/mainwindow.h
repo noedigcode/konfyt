@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2019 Gideon van der Kolf
+ * Copyright 2020 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -29,6 +29,7 @@
 #include <QCloseEvent>
 #include <QDesktopServices>
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QKeyEvent>
 #include <QListWidgetItem>
 #include <QMainWindow>
@@ -184,6 +185,8 @@ private:
 
     void setPatchModified(bool modified);
     void setProjectModified();
+    void setProjectName(QString name);
+    void gui_updateProjectName();
 
 private slots:
     // Project modified

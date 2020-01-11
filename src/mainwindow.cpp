@@ -1,6 +1,6 @@
 ﻿/******************************************************************************
  *
- * Copyright 2019 Gideon van der Kolf
+ * Copyright 2020 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -384,7 +384,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
             this, &MainWindow::onprojectMenu_ActionTrigger);
     projectButtonMenu->addMenu(&projectsMenu);
     projectButtonMenu->addAction(ui->actionProject_New);
-    //projectButtonMenu->addAction(ui->actionProject_SaveAs); // TODO: SaveAs menu entry disabled for now until it is implemented.
+    projectButtonMenu->addAction(ui->actionProject_SaveAs);
     ui->toolButton_Project->setMenu(projectButtonMenu);
 
 
@@ -1477,7 +1477,7 @@ void MainWindow::setCurrentProject(int i)
     KonfytProject* prj = projectList.at(i);
     pengine->setProject(prj); // patch engine needs a pointer to the current project for some stuff.
 
-    ui->lineEdit_ProjectName->setText(prj->getProjectName());
+    gui_updateProjectName();
     // Populate patch list for current project
     gui_updatePatchList();
 
@@ -2693,11 +2693,7 @@ void MainWindow::onPatchMidiOutPortsMenu_aboutToShow()
 
 void MainWindow::on_lineEdit_ProjectName_editingFinished()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj != NULL) {
-        prj->setProjectName(ui->lineEdit_ProjectName->text());
-        ui->tabWidget_Projects->setTabText(ui->tabWidget_Projects->currentIndex(),ui->lineEdit_ProjectName->text());
-    }
+    setProjectName(ui->lineEdit_ProjectName->text());
 }
 
 // Save patch to library (in other words, to patchesDir directory.)
@@ -3110,6 +3106,24 @@ void MainWindow::setProjectModified()
     }
 }
 
+/* Set the name of the current project and updates the GUI. */
+void MainWindow::setProjectName(QString name)
+{
+    KonfytProject* prj = getCurrentProject();
+    if (prj != NULL) {
+        prj->setProjectName(name);
+        gui_updateProjectName();
+    }
+}
+
+/* Update GUI with current project name. */
+void MainWindow::gui_updateProjectName()
+{
+    KonfytProject* prj = getCurrentProject();
+    if (prj != NULL) {
+        ui->lineEdit_ProjectName->setText(prj->getProjectName());
+    }
+}
 
 void MainWindow::projectModifiedStateChanged(bool modified)
 {
@@ -5890,7 +5904,32 @@ void MainWindow::on_toolButton_Project_clicked()
 
 void MainWindow::on_actionProject_SaveAs_triggered()
 {
-    messageBox("Save As not implemented yet.");
+    KonfytProject* p = getCurrentProject();
+
+    if (p == NULL) { return; }
+    QString oldName = p->getProjectName();
+    bool oldModified = p->isModified();
+    QString oldDirname = p->getDirname();
+
+    // Clear the project dir name so it can be saved as new project
+    p->setDirname("");
+    // Query user for new project name
+    QString newName = QInputDialog::getText(this, "Save Project As", "New Project Name");
+    if (newName.isEmpty()) { return; }
+
+    setProjectName(newName);
+
+    bool saved = saveProject(p);
+    if (saved) {
+        userMessage("Saved project as new project.");
+    } else {
+        userMessage("Project not saved as new project.");
+        messageBox("Project was not saved as a new project.");
+        // Restore original project state
+        setProjectName(oldName);
+        p->setDirname(oldDirname);
+        p->setModified(oldModified);
+    }
 }
 
 void MainWindow::on_pushButton_Panic_clicked()
