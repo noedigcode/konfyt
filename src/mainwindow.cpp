@@ -273,14 +273,14 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
                 newProject();           // Create new project and add to list and GUI
                 setCurrentProject(0);   // Set current project to newly created project.
             }
-            KonfytProject *prj = getCurrentProject();
+
             if (fileIsPatch(file)) {
                 // Load patch into current project and switch to patch
 
                 KonfytPatch* pt = new KonfytPatch();
                 if (pt->loadPatchFromFile(file)) {
                     addPatchToProject(pt);
-                    setCurrentPatch(prj->getNumPatches()-1);
+                    setCurrentPatch(-1);
                 } else {
                     userMessage("Failed loading patch " + file);
                     delete pt;
@@ -293,7 +293,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
             } else if (fileIsSfzOrGig(file)) {
                 // Create new patch and load sfz into patch
                 newPatchToProject();    // Create a new patch and add to current project.
-                setCurrentPatch(prj->getNumPatches()-1);
+                setCurrentPatch(-1);
 
                 addSfzToCurrentPatch(file);
                 // Rename patch
@@ -308,7 +308,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
             } else if (fileIsSoundfont(file)) {
                 // Create new blank patch
                 newPatchToProject();    // Create a new patch and add to current project.
-                setCurrentPatch(prj->getNumPatches()-1);
+                setCurrentPatch(-1);
                 // Locate soundfont in filebrowser, select it and show its programs
 
                 // Locate in filesystem view
@@ -2412,10 +2412,18 @@ void MainWindow::setPatchIcon(const KonfytPatch *patch, QListWidgetItem *item, b
     }
 }
 
+/* Set the current patch corresponding to the specified index. If index is -1,
+ * the last patch is selected. If index is out of bounds, the first patch is
+ * selected. */
 void MainWindow::setCurrentPatch(int index)
 {
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
+
+    // If index is -1, select the last patch
+    if (index == -1) {
+        index = prj->getNumPatches()-1;
+    }
 
     // Make index zero if out of bounds
     if ( (index < 0) || (index >= prj->getNumPatches()) ) {
@@ -2598,7 +2606,7 @@ void MainWindow::newPatchIfMasterNull()
     if (masterPatch == NULL) {
         newPatchToProject();
         // Switch to latest patch
-        setCurrentPatch( prj->getNumPatches()-1 );
+        setCurrentPatch(-1);
     }
 }
 
@@ -5911,11 +5919,12 @@ void MainWindow::on_actionProject_SaveAs_triggered()
     bool oldModified = p->isModified();
     QString oldDirname = p->getDirname();
 
-    // Clear the project dir name so it can be saved as new project
-    p->setDirname("");
     // Query user for new project name
     QString newName = QInputDialog::getText(this, "Save Project As", "New Project Name");
     if (newName.isEmpty()) { return; }
+
+    // Clear the project dir name so it can be saved as new project
+    p->setDirname("");
 
     setProjectName(newName);
 
