@@ -26,7 +26,7 @@ void KonfytPatchLayer::setErrorMessage(QString msg)
     this->errorMessage = msg;
 }
 
-bool KonfytPatchLayer::hasError()
+bool KonfytPatchLayer::hasError() const
 {
     if ( this->errorMessage.length() ) {
         return true;
@@ -35,7 +35,7 @@ bool KonfytPatchLayer::hasError()
     }
 }
 
-QString KonfytPatchLayer::getErrorMessage()
+QString KonfytPatchLayer::getErrorMessage() const
 {
     return this->errorMessage;
 }
@@ -80,7 +80,7 @@ void KonfytPatchLayer::initLayer(int id, LayerAudioInStruct newLayerData)
     this->audioInPortData = newLayerData;
 }
 
-QString KonfytPatchLayer::getName()
+QString KonfytPatchLayer::getName() const
 {
     switch (layerType) {
     case KonfytLayerType_AudioIn:
@@ -181,7 +181,7 @@ bool KonfytPatchLayer::isMute() const
     return false;
 }
 
-KonfytMidiFilter KonfytPatchLayer::getMidiFilter()
+KonfytMidiFilter KonfytPatchLayer::getMidiFilter() const
 {
     if (this->layerType == KonfytLayerType_SoundfontProgram) {
         return this->soundfontData.filter;
@@ -203,9 +203,15 @@ void KonfytPatchLayer::setMidiFilter(KonfytMidiFilter newFilter)
     }
 }
 
-
-
 KonfytLayerType KonfytPatchLayer::getLayerType() const
 {
     return layerType;
+}
+
+/* Shorthand for determining of layer type has MIDI input. */
+bool KonfytPatchLayer::hasMidiInput() const
+{
+    return    (layerType == KonfytLayerType_MidiOut)
+           || (layerType == KonfytLayerType_Sfz)
+           || (layerType == KonfytLayerType_SoundfontProgram);
 }

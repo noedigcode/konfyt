@@ -978,6 +978,32 @@ border-bottom-left-radius: 0;</string>
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="MIDI_indicator_pitchbend">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>P</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="MIDI_indicator_sustain">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>S</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QCheckBox" name="MIDI_indicator">
          <property name="styleSheet">
           <string notr="true"/>

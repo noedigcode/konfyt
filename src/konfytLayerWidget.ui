@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>guiLayerItem</class>
- <widget class="QWidget" name="guiLayerItem">
+ <class>KonfytLayerWidget</class>
+ <widget class="QWidget" name="KonfytLayerWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -14,7 +14,7 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#guiLayerItem{
+   <string notr="true">QWidget#KonfytLayerWidget{
 	min-height: 2.5em;
 	max-height: 2.5em;
 }
@@ -81,7 +81,7 @@ QSlider::handle:horizontal:hover {
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout">
    <property name="leftMargin">
-    <number>2</number>
+    <number>10</number>
    </property>
    <property name="topMargin">
     <number>0</number>

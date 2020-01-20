@@ -476,7 +476,6 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     ui->statusBar->showMessage("Welkom by " + app_name + ".",5000);
 }
 
-
 MainWindow::~MainWindow()
 {
     delete pengine;
@@ -495,7 +494,8 @@ void MainWindow::shortcut_panic_activated()
     ui->actionPanicToggle->trigger();
 }
 
-// Build project-open menu with an Open action and a list of projects in the projects dir.
+/* Build project-open menu with an Open action and a list of projects in the
+ * projects dir. */
 void MainWindow::updateProjectsMenu()
 {
     projectsMenu.clear();
@@ -529,7 +529,6 @@ void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
     }
 }
 
-
 void MainWindow::jackXrun()
 {
     static int count = 1;
@@ -548,7 +547,7 @@ void MainWindow::jackPortRegisterOrConnectCallback()
     updateGUIWarnings();
 }
 
-// Scan given directory recursively and add project files to list.
+/* Scan given directory recursively and add project files to list. */
 bool MainWindow::scanDirForProjects(QString dirname)
 {
     if (!dirExists(dirname)) {
@@ -560,7 +559,6 @@ bool MainWindow::scanDirForProjects(QString dirname)
     return true;
 }
 
-// Show the settings dialog.
 void MainWindow::showSettingsDialog()
 {
     ui->comboBox_settings_patchDirs->setCurrentText(this->patchesDir);
@@ -630,8 +628,8 @@ void MainWindow::showMidiFilterEditor()
     ui->stackedWidget->setCurrentWidget(ui->FilterPage);
 }
 
-// This slot is called when the settings dialog sends a signal to
-// update the settings.
+/* This slot is called when the settings dialog sends a signal to update the
+ * settings. */
 void MainWindow::applySettings()
 {
     // Get settings from dialog.
@@ -738,7 +736,7 @@ bool MainWindow::saveSettingsFile()
     return true;
 }
 
-// Remove project from projectList and GUI
+/* Remove project from projectList and GUI. */
 void MainWindow::removeProject(int i)
 {
     if ( (i >=0) && (i < projectList.count()) ) {
@@ -748,7 +746,7 @@ void MainWindow::removeProject(int i)
     }
 }
 
-// Create a new project and add new project to projectList and GUI.
+/* Create a new project and add new project to projectList and GUI. */
 void MainWindow::newProject()
 {
     KonfytProject* prj = new KonfytProject();
@@ -776,7 +774,7 @@ void MainWindow::newProject()
     addProject(prj);
 }
 
-// Open a project from the specified filename and add to project list and GUI.
+/* Open a project from the specified filename and add to project list and GUI. */
 bool MainWindow::openProject(QString filename)
 {
     KonfytProject* prj = new KonfytProject();
@@ -795,7 +793,7 @@ bool MainWindow::openProject(QString filename)
     }
 }
 
-// Add project to projectList and GUI.
+/* Add project to projectList and GUI. */
 void MainWindow::addProject(KonfytProject* prj)
 {
     // If startupProject is true, a default created project exists.
@@ -862,7 +860,6 @@ void MainWindow::gui_updatePatchList()
 
 
 }
-
 
 void MainWindow::showConnectionsPage()
 {
@@ -1325,8 +1322,6 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     updateGUIWarnings();
 }
 
-
-
 /* Slot that gets called when the custom context menu of tree_portsBusses is requested.
  * This adds the appropriate actions to the menu based on the item selected, and shows
  * the menu. When an action is clicked, the slot of the corresponding action is called. */
@@ -1353,7 +1348,6 @@ void MainWindow::tree_portsBusses_Menu(const QPoint &pos)
 
     portsBussesTreeMenu.popup(QCursor::pos());
 }
-
 
 void MainWindow::initTriggers()
 {
@@ -1453,7 +1447,6 @@ void MainWindow::showTriggersPage()
     ui->checkBox_Triggers_ProgSwitchPatches->setChecked( prj->isProgramChangeSwitchPatches() );
 
 }
-
 
 /* Set current project corresponding to specified index.
  * If index is -1, the last project in the list is loaded. */
@@ -1694,7 +1687,7 @@ void MainWindow::updateAudioInPortsMenu(QMenu *menu)
     action->setProperty(PTY_AUDIO_IN_PORT, -1);
 }
 
-// Create a new patch, and add it to the current project. (and update the gui).
+/* Create a new patch, and add it to the current project. (and update the GUI). */
 void MainWindow::newPatchToProject()
 {
     KonfytPatch* pt = new KonfytPatch();
@@ -1703,7 +1696,7 @@ void MainWindow::newPatchToProject()
     addPatchToProject(pt);
 }
 
-// Remove the patch with specified index from the project.
+/* Remove the patch with specified index from the project. */
 void MainWindow::removePatchFromProject(int i)
 {
     KonfytProject* prj = getCurrentProject();
@@ -1731,8 +1724,7 @@ void MainWindow::removePatchFromProject(int i)
     }
 }
 
-
-// Add a patch to the current project, and update the gui.
+/* Add a patch to the current project, and update the GUI. */
 void MainWindow::addPatchToProject(KonfytPatch* newPatch)
 {
     KonfytProject *prj = getCurrentProject();
@@ -1745,7 +1737,6 @@ void MainWindow::addPatchToProject(KonfytPatch* newPatch)
     // Add to list in gui:
     gui_updatePatchList();
 }
-
 
 KonfytProject* MainWindow::getCurrentProject()
 {
@@ -1760,9 +1751,7 @@ KonfytProject* MainWindow::getCurrentProject()
     }
 }
 
-
-
-// Returns true if a program is selected in the library.
+/* Returns true if a program is selected in the library. */
 bool MainWindow::library_isProgramSelected()
 {
     // This is possible only if the list widget contains programs
@@ -1780,8 +1769,8 @@ bool MainWindow::library_isProgramSelected()
     }
 }
 
-// Returns the currently selected program, or a blank one
-// if nothing is selected.
+/* Returns the currently selected program, or a blank one
+ * if nothing is selected. */
 KonfytSoundfontProgram MainWindow::library_getSelectedProgram()
 {
     if (library_isProgramSelected()) {
@@ -1793,7 +1782,6 @@ KonfytSoundfontProgram MainWindow::library_getSelectedProgram()
         return p;
     }
 }
-
 
 /* Returns the type of item in the library tree. */
 LibraryTreeItemType MainWindow::library_getTreeItemType(QTreeWidgetItem *item)
@@ -1814,9 +1802,8 @@ LibraryTreeItemType MainWindow::library_getSelectedTreeItemType()
     return library_getTreeItemType( ui->treeWidget_Library->currentItem() );
 }
 
-
-// Returns the currently selected patch, or a blank one
-// if nothing is selected.
+/* Returns the currently selected patch, or a blank one
+ * if nothing is selected. */
 KonfytPatch MainWindow::library_getSelectedPatch()
 {
     if ( library_getSelectedTreeItemType() == libTreePatch ) {
@@ -1829,10 +1816,8 @@ KonfytPatch MainWindow::library_getSelectedPatch()
     }
 }
 
-
-
-// Returns the currently selected soundfont, or NULL if
-// nothing is selected.
+/* Returns the currently selected soundfont, or NULL if
+ * nothing is selected. */
 KonfytSoundfont* MainWindow::library_getSelectedSfont()
 {
     if ( library_getSelectedTreeItemType() == libTreeSoundfont ) {
@@ -1842,8 +1827,6 @@ KonfytSoundfont* MainWindow::library_getSelectedSfont()
         return NULL;
     }
 }
-
-
 
 /* Determine if file suffix is as specified. The specified suffix should not
  * contain a leading dot. The suffix is checked by adding a dot.
@@ -1856,32 +1839,24 @@ bool MainWindow::fileSuffixIs(QString file, QString suffix)
     return  right == suffix;
 }
 
-
-
 /* Determine if specified file is a Konfyt patch file. */
 bool MainWindow::fileIsPatch(QString file)
 {
     return fileSuffixIs(file, KONFYT_PATCH_SUFFIX);
 }
 
-
-
 bool MainWindow::fileIsSfzOrGig(QString file)
 {
     return fileSuffixIs(file, "sfz") || fileSuffixIs(file, "gig");
 }
-
-
 
 bool MainWindow::fileIsSoundfont(QString file)
 {
     return ( fileSuffixIs(file, "sf2") || fileSuffixIs(file, "sf3") );
 }
 
-
-
-// Set master gain if in normal mode, or preview gain if in preview mode,
-// and set the master gain in the patch engine.
+/* Set master gain if in normal mode, or preview gain if in preview mode,
+ * and set the master gain in the patch engine. */
 void MainWindow::setMasterGain(float gain)
 {
     if (previewMode) {
@@ -1892,10 +1867,8 @@ void MainWindow::setMasterGain(float gain)
     pengine->setMasterGain(gain);
 }
 
-
-
-// Load the appropriate patch based on the mode (preview mode or normal) and
-// updates the GUI accordingly.
+/* Load the appropriate patch based on the mode (preview mode or normal) and
+ * updates the GUI accordingly. */
 void MainWindow::loadPatchForModeAndUpdateGUI()
 {
 
@@ -1959,8 +1932,6 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
 
 }
 
-
-
 void MainWindow::gui_updatePatchView()
 {
     clearLayerItems_GUIonly();
@@ -2001,8 +1972,6 @@ void MainWindow::gui_updatePatchView()
     ui->actionAlways_Active->setChecked(p->alwaysActive);
 }
 
-
-
 void MainWindow::gui_updateWindowTitle()
 {
     if (previewMode) {
@@ -2024,9 +1993,7 @@ void MainWindow::gui_updateWindowTitle()
     }
 }
 
-
-
-// Fill the tree widget with all the entries in the soundfont database.
+/* Fill the tree widget with all the entries in the soundfont database. */
 void MainWindow::fillTreeWithAll()
 {
     searchMode = false; // Controls the behaviour when the user selects a tree item
@@ -2074,8 +2041,6 @@ void MainWindow::fillTreeWithAll()
     //ui->treeWidget_Library->expandItem(sfzParent);
     ui->treeWidget_Library->insertTopLevelItem(0,library_patchRoot);
 }
-
-
 
 /* Build TreeWidget tree from the database's tree. */
 void MainWindow::buildSfzTree(QTreeWidgetItem* twi, KonfytDbTreeItem* item)
@@ -2285,9 +2250,7 @@ void MainWindow::fillTreeWithSearch(QString search)
     ui->treeWidget_Library->expandItem(library_sfRoot);
 }
 
-
-
-// Displays a user message on the GUI.
+/* Displays a user message on the GUI. */
 void MainWindow::userMessage(QString message)
 {
     static bool start = true;
@@ -2388,7 +2351,7 @@ void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*
 }
 
 
-// Set the current patch, and update the gui accordingly.
+/* Set the current patch, and update the gui accordingly. */
 void MainWindow::setCurrentPatch(KonfytPatch* newPatch)
 {
     this->masterPatch = newPatch;
@@ -2567,8 +2530,7 @@ void MainWindow::on_listWidget_LibraryBottom_currentRowChanged(int currentRow)
     }
 }
 
-
-// Adds SFZ to current patch in engine and in GUI.
+/* Adds SFZ to current patch in engine and in GUI. */
 void MainWindow::addSfzToCurrentPatch(QString sfzPath)
 {
     newPatchIfMasterNull();
@@ -2582,7 +2544,7 @@ void MainWindow::addSfzToCurrentPatch(QString sfzPath)
     setPatchModified(true);
 }
 
-// Adds soundfont program to current patch in engine and in GUI.
+/* Adds soundfont program to current patch in engine and in GUI. */
 void MainWindow::addProgramToCurrentPatch(KonfytSoundfontProgram p)
 {
     newPatchIfMasterNull();
@@ -2596,7 +2558,7 @@ void MainWindow::addProgramToCurrentPatch(KonfytSoundfontProgram p)
     setPatchModified(true);
 }
 
-// If masterPatch is NULL, adds a new patch to the project and switches to it
+/* If masterPatch is NULL, adds a new patch to the project and switches to it. */
 void MainWindow::newPatchIfMasterNull()
 {
     KonfytProject* prj = getCurrentProject();
@@ -2609,8 +2571,7 @@ void MainWindow::newPatchIfMasterNull()
     }
 }
 
-
-// Adds a midi port to the current patch in engine and GUI.
+/* Adds a midi port to the current patch in engine and GUI. */
 void MainWindow::addMidiPortToCurrentPatch(int port)
 {
     newPatchIfMasterNull();
@@ -2628,7 +2589,7 @@ void MainWindow::addMidiPortToCurrentPatch(int port)
     setPatchModified(true);
 }
 
-// Adds an audio bus to the current patch in engine and GUI
+/* Adds an audio bus to the current patch in engine and GUI. */
 void MainWindow::addAudioInPortToCurrentPatch(int port)
 {
     newPatchIfMasterNull();
@@ -2646,7 +2607,7 @@ void MainWindow::addAudioInPortToCurrentPatch(int port)
     setPatchModified(true);
 }
 
-// Sets previewMode based on choice, and updates the gui.
+/* Sets previewMode based on choice, and updates the GUI. */
 void MainWindow::setPreviewMode(bool choice)
 {
     previewMode = choice;
@@ -2658,7 +2619,7 @@ void MainWindow::setPreviewMode(bool choice)
     loadPatchForModeAndUpdateGUI();
 }
 
-// Master gain slider moved.
+/* Master gain slider moved. */
 void MainWindow::on_horizontalSlider_MasterGain_sliderMoved(int /*position*/)
 {
     setMasterGain( (float)ui->horizontalSlider_MasterGain->value() /
@@ -2679,7 +2640,6 @@ void MainWindow::on_lineEdit_PatchName_returnPressed()
     // Indicate to the user that the patch has been modified.
     setPatchModified(true);
 }
-
 
 void MainWindow::on_lineEdit_PatchName_editingFinished()
 {
@@ -2703,7 +2663,7 @@ void MainWindow::on_lineEdit_ProjectName_editingFinished()
     setProjectName(ui->lineEdit_ProjectName->text());
 }
 
-// Save patch to library (in other words, to patchesDir directory.)
+/* Save patch to library (in other words, to patchesDir directory.) */
 bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
 {
     QDir dir(patchesDir);
@@ -2786,7 +2746,7 @@ QString MainWindow::getUniqueFilename(QString dirname, QString name, QString ext
 }
 
 
-// Add process (External application) to GUI and current project.
+/* Add process (External application) to GUI and current project. */
 void MainWindow::addProcess(konfytProcess* process)
 {
     KonfytProject* p = getCurrentProject();
@@ -3428,25 +3388,36 @@ void MainWindow::addWarning(QString warning)
 void MainWindow::triggerPanic(bool panic)
 {
     panicState = panic;
-
     pengine->panic(panicState);
 
-    // Update in GUI
+    // Indicate panic state in GUI
     ui->pushButton_Panic->setChecked(panicState);
+
+    // Clear sustain and pitchbend indicators for all layers
+    foreach (KonfytLayerWidget* w, layerWidgetList) {
+        if ( ! w->getPatchLayerItem().hasMidiInput() ) { continue; }
+        w->indicateSustain(false);
+        w->indicatePitchbend(false);
+    }
+
+    // Global sustain indicator
+    midiInPortSustain.clear();
+    updateGlobalSustainIndicator();
+
+    // Global pitchbend indicator
+    midiInPortPitchbend.clear();
+    updateGlobalPitchbendIndicator();
 }
-
-
-
 
 void MainWindow::midi_setLayerGain(int layer, int midiValue)
 {
-    // channel slider
+    // Channel slider
     float temp = ((float)midiValue)/127.0;
     // Set channel gain in engine
     if ((layer>=0) && (layer < pengine->getNumLayers()) ) {
         pengine->setLayerGain(layer,temp);
         // Set channel gain in GUI slider
-        this->guiLayerItemList.at(layer)->setSliderGain(temp);
+        this->layerWidgetList.at(layer)->setSliderGain(temp);
     }
 }
 
@@ -3457,7 +3428,7 @@ void MainWindow::midi_setLayerMute(int layer, int midiValue)
             bool newMute = !(pengine->getPatch()->getLayerItems().at(layer).isMute());
             pengine->setLayerMute(layer, newMute);
             // Set in GUI layer item
-            this->guiLayerItemList.at(layer)->setMuteButton(newMute);
+            this->layerWidgetList.at(layer)->setMuteButton(newMute);
         }
     }
 }
@@ -3469,7 +3440,7 @@ void MainWindow::midi_setLayerSolo(int layer, int midiValue)
             bool newSolo = !(pengine->getPatch()->getLayerItems().at(layer).isSolo());
             pengine->setLayerSolo(layer, newSolo);
             // Set in GUI layer item
-            this->guiLayerItemList.at(layer)->setSoloButton(newSolo);
+            this->layerWidgetList.at(layer)->setSoloButton(newSolo);
         }
     }
 }
@@ -3485,26 +3456,103 @@ void MainWindow::midiEventSlot()
 
 void MainWindow::handleMidiEvent(KonfytMidiEvent ev)
 {
+    KonfytProject* prj = getCurrentProject();
+    if (prj == nullptr) { return; }
+
     KonfytMidiEvent evInclBank = ev;
     evInclBank.bankMSB = lastBankSelectMSB;
     evInclBank.bankLSB = lastBankSelectLSB;
 
+    int portIdInPrj = prj->midiInPort_getPortIdWithJackId(ev.sourceId);
+    if (portIdInPrj < 0) {
+        userMessage("ERROR: NO PORT IN PROJECT MATCHING JACK ID " + n2s(ev.sourceId));
+    }
+
+    bool modifySustain = false;
+    bool indicateSustain = false;
+    if (ev.type() == MIDI_EVENT_TYPE_CC) {
+        if (ev.data1() == 64) {
+
+            modifySustain = true;
+
+            if (ev.data2() == 0) { // TODO USE JACK_SUSTAIN_THRESH?
+                midiInPortSustain.remove(portIdInPrj);
+            } else {
+                midiInPortSustain.insert(portIdInPrj, ev.data2());
+                indicateSustain = true;
+            }
+
+            // Global sustain indicator
+            updateGlobalSustainIndicator();
+        }
+    }
+
+    // TODO INDICATIONS SHOULD HONOR LAYER MIDI FILTERS
+    // TODO HAVE TO SOMEHOW GET EVENT/SUSTAIN/PB INFO PER ROUTE FROM JACK ENGINE
+    //      PROPOSAL:
+    //          In Jack engine: MutexRingbuffer< {route id, midi event} >
+    //              Process(): push events (and route id) to ringbuffer
+    //              Timer(): read from ringbuffer
+    //                       match route ids with plugins/soundfont/midi ports etc.
+    //                       emit signal to GUI for plugins with data: QMap< pluginId, QList<midiEvents> >
+    //                       same for fluidsynth/midi ports
+    //          In GUI:
+    //              Handle midi events
+    //              For sustain/pb:
+    //                  Keep Map< id, {sustain, pb} > record for plugins/soudfonts/midi ports
+
+
+    bool modifyPitchbend = false;
+    bool indicatePitchbend = false;
+    if (ev.type() == MIDI_EVENT_TYPE_PITCHBEND) {
+
+        modifyPitchbend = true;
+
+        if (ev.pitchbendValueSigned() == 0) {
+            midiInPortPitchbend.remove(portIdInPrj);
+        } else {
+            midiInPortPitchbend.insert(portIdInPrj, ev.pitchbendValueSigned());
+            indicatePitchbend = true;
+        }
+
+        // Global pitchbend indicator
+        updateGlobalPitchbendIndicator();
+    }
+
+    // Indicate MIDI, sustain and pitchbend for each layer if it passes MIDI filter
+    foreach (KonfytLayerWidget* w, layerWidgetList) {
+        KonfytPatchLayer p = w->getPatchLayerItem();
+        if (!p.hasMidiInput()) { continue; }
+        if (p.midiInPortIdInProject != portIdInPrj) { continue; }
+        KonfytMidiFilter filter = p.getMidiFilter();
+        if (!filter.passFilter(&ev)) { continue; }
+
+        if (modifySustain) {
+            layerIndicatorData.setSustain(pengine->getPatch(), p.idInPatch, ev.data2());
+        }
+
+        // General MIDI indication
+        w->indicateMidi();
+        // Sustain indication
+        if (modifySustain) { w->indicateSustain(indicateSustain); }
+        // Pitchbend indication
+        if (modifyPitchbend) { w->indicatePitchbend(indicatePitchbend); }
+    }
+
+    // Global MIDI indicator "LED"
+    ui->MIDI_indicator->setChecked(true);
+    midiIndicatorTimer.start(500, this);
+
     // Show in console if enabled.
     if (console_showMidiMessages) {
-        PrjMidiPort p;
-        KonfytProject* prj = getCurrentProject();
-        if (prj) {
-            p = prj->midiInPort_getPortWithJackId(ev.sourceId);
+        QString portName = "UNKNOWN";
+        if (portIdInPrj >= 0) {
+            PrjMidiPort prt = prj->midiInPort_getPort(portIdInPrj);
+            portName = prt.portName;
         }
         // Take last bank select info into account
         userMessage("MIDI EVENT " + evInclBank.toString()
-                    + " from port " + p.portName);
-    }
-
-    // MIDI indicator "LED"
-    if ( !midiIndicatorTimer.isActive() ) {
-        ui->MIDI_indicator->setChecked(true);
-        midiIndicatorTimer.start(500, this);
+                    + " from port " + portName);
     }
 
     // Save bank selects
@@ -3812,7 +3860,7 @@ void MainWindow::onLayerMidiInChannelMenu_ActionTrigger(QAction *action)
     setPatchModified(true);
 }
 
-void MainWindow::onLayer_midiSend_clicked(konfytLayerWidget *layerItem)
+void MainWindow::onLayer_midiSend_clicked(KonfytLayerWidget *layerItem)
 {
     KonfytPatchLayer patchLayer = layerItem->getPatchLayerItem();
     pengine->sendLayerMidi( &patchLayer );
@@ -3918,14 +3966,14 @@ void MainWindow::on_pushButton_ExtApp_remove_clicked()
 }
 
 /* Slot: on layer item slider move. */
-void MainWindow::onLayer_slider_moved(konfytLayerWidget *layerItem, float gain)
+void MainWindow::onLayer_slider_moved(KonfytLayerWidget *layerItem, float gain)
 {
     KonfytPatchLayer g = layerItem->getPatchLayerItem();
     pengine->setLayerGain(&g, gain);
 }
 
 /* Slot: on layer item solo button clicked. */
-void MainWindow::onLayer_solo_clicked(konfytLayerWidget *layerItem, bool solo)
+void MainWindow::onLayer_solo_clicked(KonfytLayerWidget *layerItem, bool solo)
 {
     KonfytPatchLayer g = layerItem->getPatchLayerItem();
     pengine->setLayerSolo(&g, solo);
@@ -3933,14 +3981,14 @@ void MainWindow::onLayer_solo_clicked(konfytLayerWidget *layerItem, bool solo)
 }
 
 /* Slot: on layer item mute button clicked. */
-void MainWindow::onLayer_mute_clicked(konfytLayerWidget *layerItem, bool mute)
+void MainWindow::onLayer_mute_clicked(KonfytLayerWidget *layerItem, bool mute)
 {
     KonfytPatchLayer g = layerItem->getPatchLayerItem();
     pengine->setLayerMute(&g, mute);
 }
 
 /* Slot: on layer item bus button clicked. */
-void MainWindow::onLayer_rightToolbutton_clicked(konfytLayerWidget *layerItem)
+void MainWindow::onLayer_rightToolbutton_clicked(KonfytLayerWidget *layerItem)
 {
     // Save the layer item for future use
     layerToolMenuSourceitem = layerItem;
@@ -3960,7 +4008,7 @@ void MainWindow::onLayer_rightToolbutton_clicked(konfytLayerWidget *layerItem)
     // The rest will be done in onlayerBusMenu_ActionTrigger() when the user clicked a menu item.
 }
 
-void MainWindow::onLayer_leftToolbutton_clicked(konfytLayerWidget *layerItem)
+void MainWindow::onLayer_leftToolbutton_clicked(KonfytLayerWidget *layerItem)
 {
     // Save the layer item for future use
     layerToolMenuSourceitem = layerItem;
@@ -4028,47 +4076,56 @@ void MainWindow::updateLayerMidiOutChannelMenu(QMenu *menu, int currentMidiPort)
 /* Add a layer item to the GUI layer list. */
 void MainWindow::addLayerItemToGUI(KonfytPatchLayer layerItem)
 {
-    // Create new gui layer item
-    konfytLayerWidget* gui = new konfytLayerWidget();
-    gui->project = getCurrentProject();
+    // Create new GUI layer item
+    KonfytLayerWidget* layerWidget = new KonfytLayerWidget();
+    layerWidget->project = getCurrentProject();
     QListWidgetItem* item = new QListWidgetItem();
-    gui->initLayer(layerItem, item);
+    layerWidget->initLayer(layerItem, item);
+
+    // Apply MIDI indicators
+    // TODO ONLY DO FOR LAYERS THAT HAVE MIDI INPUT, AND MIDI FILTER PASSED.
+    layerWidget->indicateSustain(
+        layerIndicatorData.hasSustain(pengine->getPatch(), layerItem.idInPatch)
+                );
+    //layerWidget->indicateSustain(
+    //            midiInPortSustain.value(layerItem.midiInPortIdInProject, 0) > 0);
+    layerWidget->indicatePitchbend(
+                midiInPortPitchbend.value(layerItem.midiInPortIdInProject, 0) != 0);
 
     // Add to our internal list
-    this->guiLayerItemList.append(gui);
+    this->layerWidgetList.append(layerWidget);
 
     // Add to gui layer list
     ui->listWidget_Layers->addItem(item);
     // and set the item widget
-    ui->listWidget_Layers->setItemWidget(item, gui);
+    ui->listWidget_Layers->setItemWidget(item, layerWidget);
     // Put setSizeHint() after setItemWidget() so size is accurate since widget is already displayed.
     // Use zero width so that horizontal scrollbars don't appear when shrinking.
-    item->setSizeHint(QSize(0, gui->size().height()));
+    item->setSizeHint(QSize(0, layerWidget->size().height()));
 
     // Make all connections
-    connect(gui, &konfytLayerWidget::slider_moved_signal,
+    connect(layerWidget, &KonfytLayerWidget::slider_moved_signal,
             this, &MainWindow::onLayer_slider_moved);
 
-    connect(gui, &konfytLayerWidget::solo_clicked_signal,
+    connect(layerWidget, &KonfytLayerWidget::solo_clicked_signal,
             this, &MainWindow::onLayer_solo_clicked);
 
-    connect(gui, &konfytLayerWidget::mute_clicked_signal,
+    connect(layerWidget, &KonfytLayerWidget::mute_clicked_signal,
             this, &MainWindow::onLayer_mute_clicked);
 
-    connect(gui, &konfytLayerWidget::leftToolbutton_clicked_signal,
+    connect(layerWidget, &KonfytLayerWidget::leftToolbutton_clicked_signal,
             this, &MainWindow::onLayer_leftToolbutton_clicked);
 
-    connect(gui, &konfytLayerWidget::rightToolbutton_clicked_signal,
+    connect(layerWidget, &KonfytLayerWidget::rightToolbutton_clicked_signal,
             this, &MainWindow::onLayer_rightToolbutton_clicked);
 
-    connect(gui, &konfytLayerWidget::sendMidiEvents_clicked_signal,
+    connect(layerWidget, &KonfytLayerWidget::sendMidiEvents_clicked_signal,
             this, &MainWindow::onLayer_midiSend_clicked);
-
 }
 
 /* Remove a layer item from the layer list.
  * This includes from the engine, GUI and the internal list. */
-void MainWindow::removeLayerItem(konfytLayerWidget *layerItem)
+void MainWindow::removeLayerItem(KonfytLayerWidget *layerItem)
 {
     // First, remove from engine
     KonfytPatchLayer g = layerItem->getPatchLayerItem();
@@ -4079,25 +4136,23 @@ void MainWindow::removeLayerItem(konfytLayerWidget *layerItem)
     setPatchModified(true);
 }
 
-// Remove a layer item from the gui (and our internal list) only.
-// This is used if the layers in the engine should not be modified.
-void MainWindow::removeLayerItem_GUIonly(konfytLayerWidget *layerItem)
+/* Remove a layer item from the GUI (and our internal list) only.
+ * This is used if the layers in the engine should not be modified. */
+void MainWindow::removeLayerItem_GUIonly(KonfytLayerWidget *layerItem)
 {
     // Remove from our internal list
-    this->guiLayerItemList.removeAll(layerItem);
+    layerWidgetList.removeAll(layerItem);
 
     // Remove from GUI list
     QListWidgetItem* item = layerItem->getListWidgetItem();
     delete item;
 }
 
-// Clear patch's layer items from GUI list.
+/* Clear patch's layer items from GUI list. */
 void MainWindow::clearLayerItems_GUIonly()
 {
-    while (this->guiLayerItemList.count()) {
-
-        this->removeLayerItem_GUIonly(this->guiLayerItemList.at(0));
-
+    while (this->layerWidgetList.count()) {
+        removeLayerItem_GUIonly(this->layerWidgetList.at(0));
     }
 }
 
@@ -4161,7 +4216,7 @@ void MainWindow::updateMidiInChannelMenu(QMenu *menu, int currentChannel)
 
 void MainWindow::gui_updateLayerToolMenu()
 {
-    konfytLayerWidget* layerWidget = layerToolMenuSourceitem;
+    KonfytLayerWidget* layerWidget = layerToolMenuSourceitem;
     KonfytPatchLayer patchLayer = layerWidget->getPatchLayerItem();
     KonfytLayerType type = patchLayer.getLayerType();
 
@@ -5841,6 +5896,16 @@ void MainWindow::on_checkBox_ConsoleShowMidiMessages_clicked()
     setConsoleShowMidiMessages( ui->checkBox_ConsoleShowMidiMessages->isChecked() );
 }
 
+void MainWindow::updateGlobalSustainIndicator()
+{
+    ui->MIDI_indicator_sustain->setChecked(!midiInPortSustain.isEmpty());
+}
+
+void MainWindow::updateGlobalPitchbendIndicator()
+{
+    ui->MIDI_indicator_pitchbend->setChecked(!midiInPortPitchbend.isEmpty());
+}
+
 void MainWindow::setConsoleShowMidiMessages(bool show)
 {
     ui->checkBox_ConsoleShowMidiMessages->setChecked( show );
@@ -5889,8 +5954,6 @@ void MainWindow::on_actionProject_OpenDirectory_triggered()
 {
     openFileManager( projectsDir );
 }
-
-
 
 void MainWindow::on_textBrowser_patchNote_textChanged()
 {

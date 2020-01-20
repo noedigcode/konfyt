@@ -92,7 +92,7 @@ QStringList KonfytPatchEngine::ourJackClientNames()
 
 void KonfytPatchEngine::panic(bool p)
 {
-    // indicate panic situation to Jack
+    // Indicate panic situation to JACK
     jack->panic(p);
 }
 

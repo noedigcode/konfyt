@@ -28,22 +28,23 @@
 #include <QPainter>
 #include <QBrush>
 #include <QRect>
+#include <QTimer>
 
 #include "konfytPatchLayer.h"
 #include "konfytProject.h"
 
 
 namespace Ui {
-class guiLayerItem;
+class KonfytLayerWidget;
 }
 
-class konfytLayerWidget : public QWidget
+class KonfytLayerWidget : public QWidget
 {
     Q_OBJECT
     
 public:
-    explicit konfytLayerWidget(QWidget *parent = 0);
-    ~konfytLayerWidget();
+    explicit KonfytLayerWidget(QWidget *parent = 0);
+    ~KonfytLayerWidget();
 
     KonfytProject* project; // Pointer to current project to get bus and port naming info
 
@@ -60,9 +61,13 @@ public:
     KonfytPatchLayer getPatchLayerItem();
     QListWidgetItem* getListWidgetItem();
     QString getFilePath();
+
+    void indicateMidi();
+    void indicateSustain(bool sustain);
+    void indicatePitchbend(bool pitchbend);
     
 private:
-    Ui::guiLayerItem *ui;
+    Ui::KonfytLayerWidget *ui;
 
     KonfytPatchLayer g;
     QListWidgetItem* listWidgetItem;
@@ -75,14 +80,18 @@ private:
 
     void paintEvent(QPaintEvent *);
 
+    QTimer midiIndicateTimer;
+    bool midiIndicate = false;
+    bool midiIndicateSustain = false;
+    bool midiIndicatePitchbend = false;
 
 signals:
-    void slider_moved_signal(konfytLayerWidget* layerItem, float gain);
-    void solo_clicked_signal(konfytLayerWidget* layerItem, bool solo);
-    void mute_clicked_signal(konfytLayerWidget* layerItem, bool mute);
-    void rightToolbutton_clicked_signal(konfytLayerWidget* layerItem);
-    void leftToolbutton_clicked_signal(konfytLayerWidget* layerItem);
-    void sendMidiEvents_clicked_signal(konfytLayerWidget* layerItem);
+    void slider_moved_signal(KonfytLayerWidget* layerItem, float gain);
+    void solo_clicked_signal(KonfytLayerWidget* layerItem, bool solo);
+    void mute_clicked_signal(KonfytLayerWidget* layerItem, bool mute);
+    void rightToolbutton_clicked_signal(KonfytLayerWidget* layerItem);
+    void leftToolbutton_clicked_signal(KonfytLayerWidget* layerItem);
+    void sendMidiEvents_clicked_signal(KonfytLayerWidget* layerItem);
 
 private slots:
     void on_toolButton_left_clicked();
@@ -92,6 +101,8 @@ private slots:
     void on_toolButton_mute_clicked();
     void on_toolButton_right_clicked();
     void on_toolButton_sendEvents_clicked();
+
+    void midiIndicateTimerEvent();
 };
 
 #endif // KONFYT_LAYER_WIDGET_H

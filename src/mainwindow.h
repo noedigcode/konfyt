@@ -347,11 +347,18 @@ private:
     bool patchNote_ignoreChange;
 
     // Layers
-    QList<konfytLayerWidget*> guiLayerItemList;
+private:
+    QList<KonfytLayerWidget*> layerWidgetList;
     void addLayerItemToGUI(KonfytPatchLayer layerItem);
-    void removeLayerItem(konfytLayerWidget *layerItem);
-    void removeLayerItem_GUIonly(konfytLayerWidget *layerItem);
+    void removeLayerItem(KonfytLayerWidget *layerItem);
+    void removeLayerItem_GUIonly(KonfytLayerWidget *layerItem);
     void clearLayerItems_GUIonly();
+private slots:
+    void onLayer_slider_moved(KonfytLayerWidget* layerItem, float gain);
+    void onLayer_solo_clicked(KonfytLayerWidget* layerItem, bool solo);
+    void onLayer_mute_clicked(KonfytLayerWidget* layerItem, bool mute);
+    void onLayer_midiSend_clicked(KonfytLayerWidget* layerItem);
+    void onLayer_rightToolbutton_clicked(KonfytLayerWidget* layerItem);
 
     // patchMidiOutPortsMenu: Context menu when user clicks button to add a new MIDI output layer.
 private:
@@ -372,10 +379,10 @@ private slots:
     // Layer left toolbutton menu
 private:
     QMenu layerToolMenu;
-    konfytLayerWidget* layerToolMenuSourceitem;
+    KonfytLayerWidget* layerToolMenuSourceitem;
     void gui_updateLayerToolMenu();
 private slots:
-    void onLayer_leftToolbutton_clicked(konfytLayerWidget* layerItem);
+    void onLayer_leftToolbutton_clicked(KonfytLayerWidget* layerItem);
 
     // Layer MIDI input ports menu
 private:
@@ -419,13 +426,6 @@ private slots:
     void on_lineEdit_PatchName_editingFinished();
     void on_lineEdit_ProjectName_editingFinished();
     void on_textBrowser_patchNote_textChanged();
-
-    // Layers
-    void onLayer_slider_moved(konfytLayerWidget* layerItem, float gain);
-    void onLayer_solo_clicked(konfytLayerWidget* layerItem, bool solo);
-    void onLayer_mute_clicked(konfytLayerWidget* layerItem, bool mute);
-    void onLayer_midiSend_clicked(konfytLayerWidget* layerItem);
-    void onLayer_rightToolbutton_clicked(konfytLayerWidget* layerItem);
 
     // Patch List
     void on_toolButton_RemovePatch_clicked();
@@ -547,7 +547,7 @@ private:
     int midiFilter_lastData1;
     int midiFilter_lastData2;
     MidiFilterEditType midiFilterEditType;
-    konfytLayerWidget* midiFilterEditItem;
+    KonfytLayerWidget* midiFilterEditItem;
     int midiFilterEditPort;
     void showMidiFilterEditor();
     void updateMidiFilterEditorLastRx();
@@ -574,7 +574,7 @@ private slots:
 
     // MIDI send list editor
 private:
-    konfytLayerWidget* midiSendListEditItem;
+    KonfytLayerWidget* midiSendListEditItem;
     QList<MidiSendItem> midiSendList;
     void showMidiSendListEditor();
     void midiEventToMidiSendEditor(MidiSendItem item);
@@ -771,9 +771,44 @@ private slots:
     void on_pushButton_ShowConsole_clicked();
     void on_checkBox_ConsoleShowMidiMessages_clicked();
 
-    // MIDI Indicator
+    // MIDI Indicators
 private:
+    QMap<int, int> midiInPortSustain; // Map MIDI in port id in project to sustain value
+    QMap<int, int> midiInPortPitchbend;
+    QMap<KonfytPatch*, QMap<int, int> > blah;
+    class IndicatorData
+    {
+    public:
+        bool hasSustain(KonfytPatch* patch, int layerId) {
+            int sustainVal = sustainMap[patch].value(layerId, 0);
+            return sustainVal > 0;
+        }
+
+        bool hasSustain(KonfytPatch* patch) {
+            return !sustainMap[patch].isEmpty();
+        }
+
+        void setSustain(KonfytPatch* patch, KonfytPatchLayer layer, int sustainVal)
+        {
+
+            if (sustainVal) {
+                sustainMap[patch].insert(layerId, sustainVal);
+            } else {
+                sustainMap[patch].remove(layerId);
+            }
+        }
+
+    private:
+        typedef int LayerId;
+        QMap<KonfytPatch*, QMap<LayerId, int> > sustainMap;
+        QMap<KonfytPatch*, QMap<LayerId, int> > pitchbendMap;
+
+
+    } layerIndicatorData;
+
     QBasicTimer midiIndicatorTimer;
+    void updateGlobalSustainIndicator();
+    void updateGlobalPitchbendIndicator();
 private slots:
     void on_MIDI_indicator_clicked();
 

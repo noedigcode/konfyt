@@ -34,7 +34,7 @@ KonfytJackEngine::~KonfytJackEngine()
     free(fadeOutValues);
 }
 
-// Set panicCmd. The Jack process callback will behave accordingly.
+/* Set panicCmd. The JACK process callback will behave accordingly. */
 void KonfytJackEngine::panic(bool p)
 {
     panicCmd = p;
@@ -1424,8 +1424,6 @@ QList<KonfytMidiEvent> KonfytJackEngine::getEvents()
 {
     return eventsRxBuffer.readAll();
 }
-
-
 
 /* Helper function for Jack process callback.
  * Send noteoffs to all ports with corresponding noteon events. */

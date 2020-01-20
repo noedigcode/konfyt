@@ -728,19 +728,20 @@ PrjMidiPort KonfytProject::midiInPort_getPort(int portId)
     return midiInPortMap.value(portId);
 }
 
-PrjMidiPort KonfytProject::midiInPort_getPortWithJackId(int jackId)
+int KonfytProject::midiInPort_getPortIdWithJackId(int jackId)
 {
-    QList<int> l = midiInPortMap.keys();
-    for (int i=0; i < l.count(); i++) {
-        PrjMidiPort p = midiInPortMap[i];
+    int ret = -1;
+
+    QList<int> ids = midiInPortMap.keys();
+    foreach (int id, ids) {
+        PrjMidiPort p = midiInPortMap[id];
         if (p.jackPortId == jackId) {
-            return p;
+            ret = id;
+            break;
         }
     }
 
-    // No port was found.
-    PrjMidiPort p;
-    return p;
+    return ret;
 }
 
 /* Gets the first MIDI Input Port Id that is not skipId. */

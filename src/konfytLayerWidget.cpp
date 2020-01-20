@@ -22,23 +22,25 @@
 #include "konfytLayerWidget.h"
 #include "ui_konfytLayerWidget.h"
 
-konfytLayerWidget::konfytLayerWidget(QWidget *parent) :
+KonfytLayerWidget::KonfytLayerWidget(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::guiLayerItem)
+    ui(new Ui::KonfytLayerWidget)
 {
     ui->setupUi(this);
 
     background_rectLeft = 0;
     background_rectRight = 0;
+
+    connect(&midiIndicateTimer, &QTimer::timeout,
+            this, &KonfytLayerWidget::midiIndicateTimerEvent);
 }
 
-konfytLayerWidget::~konfytLayerWidget()
+KonfytLayerWidget::~KonfytLayerWidget()
 {
     delete ui;
 }
 
-
-void konfytLayerWidget::paintEvent(QPaintEvent* /*e*/)
+void KonfytLayerWidget::paintEvent(QPaintEvent* /*e*/)
 {
     QColor colorFG = QColor(24, 87, 127, 255);
     QColor colorBG = QColor(0,0,0,0);
@@ -60,19 +62,41 @@ void konfytLayerWidget::paintEvent(QPaintEvent* /*e*/)
     // Foreground rectangle
     r.setLeft( background_rectLeft*(float)(this->width()-2) );
     r.setRight( background_rectRight*(this->width()-2) );
-    //r.setWidth( (float)(this->width()-2)*(background_rectRight-background_rectLeft) );
     b.setColor(colorFG);
     p.setBrush(b);
     p.drawRect(r);
+
+    // MIDI indicator
+    if (midiIndicate) {
+        int len = 20;
+        QLinearGradient grad(0,0,len,0);
+        grad.setColorAt(0, Qt::green);
+        grad.setColorAt(1, Qt::transparent);
+        QBrush b(grad);
+        p.setBrush(b);
+        p.setPen(Qt::NoPen);
+
+        p.drawRect(0,0,len,this->height()-1);
+    }
+
+    // Sustain and pitchbend indication
+    if (midiIndicate) { p.setPen(Qt::black); }
+    else { p.setPen(Qt::white); }
+    if (midiIndicateSustain) {
+        p.drawText(QRectF(1,1,this->height()/2, this->height()/2),"S");
+    }
+    if (midiIndicatePitchbend) {
+        p.drawText(QRectF(1,this->height()/2,this->height()/2, this->height()/2),"P");
+    }
 }
 
-void konfytLayerWidget::on_toolButton_left_clicked()
+void KonfytLayerWidget::on_toolButton_left_clicked()
 {
     emit leftToolbutton_clicked_signal(this);
 }
 
 // This function has to be called before the object can be used.
-void konfytLayerWidget::initLayer(KonfytPatchLayer newg, QListWidgetItem *newItem)
+void KonfytLayerWidget::initLayer(KonfytPatchLayer newg, QListWidgetItem *newItem)
 {
     this->g = newg;
     this->listWidgetItem = newItem;
@@ -81,14 +105,14 @@ void konfytLayerWidget::initLayer(KonfytPatchLayer newg, QListWidgetItem *newIte
     setUpGUI();
 }
 
-void konfytLayerWidget::setLayerItem(KonfytPatchLayer newg)
+void KonfytLayerWidget::setLayerItem(KonfytPatchLayer newg)
 {
     this->g = newg;
     setUpGUI();
 }
 
 // Set up the widgets corresponding to the layer item.
-void konfytLayerWidget::setUpGUI()
+void KonfytLayerWidget::setUpGUI()
 {
     filepath = "";
 
@@ -236,7 +260,7 @@ void konfytLayerWidget::setUpGUI()
 }
 
 // Change the background to indicate midi filter zone.
-void konfytLayerWidget::updateBackgroundFromFilter()
+void KonfytLayerWidget::updateBackgroundFromFilter()
 {
     KonfytMidiFilter filter = g.getMidiFilter();
     KonfytMidiFilterZone z = filter.zone;
@@ -245,7 +269,7 @@ void konfytLayerWidget::updateBackgroundFromFilter()
 
 // Change the background depending on the min and max values (between 0 and 127),
 // used to indicate the range/zone of a midi filter.
-void konfytLayerWidget::changeBackground(int min, int max)
+void KonfytLayerWidget::changeBackground(int min, int max)
 {
     max++; // inclusive!
     background_rectLeft = (float)min/127.0;
@@ -254,24 +278,49 @@ void konfytLayerWidget::changeBackground(int min, int max)
     this->repaint();
 }
 
-KonfytPatchLayer konfytLayerWidget::getPatchLayerItem()
+KonfytPatchLayer KonfytLayerWidget::getPatchLayerItem()
 {
     return this->g;
 }
 
-QListWidgetItem* konfytLayerWidget::getListWidgetItem()
+QListWidgetItem* KonfytLayerWidget::getListWidgetItem()
 {
     return this->listWidgetItem;
 }
 
-QString konfytLayerWidget::getFilePath()
+QString KonfytLayerWidget::getFilePath()
 {
     return filepath;
 }
 
+void KonfytLayerWidget::indicateMidi()
+{
+    midiIndicateTimer.start(500);
+    if (!midiIndicate) {
+        midiIndicate = true;
+        this->repaint();
+    }
+}
+
+void KonfytLayerWidget::indicateSustain(bool sustain)
+{
+    if (sustain != midiIndicateSustain) {
+        midiIndicateSustain = sustain;
+        this->repaint();
+    }
+}
+
+void KonfytLayerWidget::indicatePitchbend(bool pitchbend)
+{
+    if (pitchbend != midiIndicatePitchbend) {
+        midiIndicatePitchbend = pitchbend;
+        this->repaint();
+    }
+}
+
 /* Set slider gain from outside the class, e.g. if gain was changed by some
  * other event like a midi trigger. */
-void konfytLayerWidget::setSliderGain(float newGain)
+void KonfytLayerWidget::setSliderGain(float newGain)
 {
     ui->gainSlider->setValue(newGain*ui->gainSlider->maximum());
     g.setGain(newGain);
@@ -279,7 +328,7 @@ void konfytLayerWidget::setSliderGain(float newGain)
 
 /* Set solo button from outside the class, e.g. if it was changed by some
  * other event like a midi trigger. */
-void konfytLayerWidget::setSoloButton(bool solo)
+void KonfytLayerWidget::setSoloButton(bool solo)
 {
     ui->toolButton_solo->setChecked(solo);
     g.setSolo(solo);
@@ -287,20 +336,20 @@ void konfytLayerWidget::setSoloButton(bool solo)
 
 /* Set mute button from outside the class, e.g. if it was changed by some
  * other event like a midi trigger. */
-void konfytLayerWidget::setMuteButton(bool mute)
+void KonfytLayerWidget::setMuteButton(bool mute)
 {
     ui->toolButton_mute->setChecked(mute);
     g.setMute(mute);
 }
 
-void konfytLayerWidget::on_gainSlider_sliderMoved(int position)
+void KonfytLayerWidget::on_gainSlider_sliderMoved(int position)
 {
     float gain = (float)position/(float)ui->gainSlider->maximum();
     g.setGain(gain);
     emit slider_moved_signal(this, gain);
 }
 
-void konfytLayerWidget::on_gainSlider_valueChanged(int /*value*/)
+void KonfytLayerWidget::on_gainSlider_valueChanged(int /*value*/)
 {
     // Update slider tooltip
     float tooltip_gain = (float)ui->gainSlider->value()/(float)ui->gainSlider->maximum();
@@ -312,7 +361,7 @@ void konfytLayerWidget::on_gainSlider_valueChanged(int /*value*/)
 }
 
 /* Solo button: Clicked. */
-void konfytLayerWidget::on_toolButton_solo_clicked()
+void KonfytLayerWidget::on_toolButton_solo_clicked()
 {
     bool solo = ui->toolButton_solo->isChecked();
     g.setSolo(solo);
@@ -320,19 +369,26 @@ void konfytLayerWidget::on_toolButton_solo_clicked()
 }
 
 /* Mute button: Clicked. */
-void konfytLayerWidget::on_toolButton_mute_clicked()
+void KonfytLayerWidget::on_toolButton_mute_clicked()
 {
     bool mute = ui->toolButton_mute->isChecked();
     g.setMute(mute);
     emit mute_clicked_signal(this, mute);
 }
 
-void konfytLayerWidget::on_toolButton_right_clicked()
+void KonfytLayerWidget::on_toolButton_right_clicked()
 {
     emit rightToolbutton_clicked_signal(this);
 }
 
-void konfytLayerWidget::on_toolButton_sendEvents_clicked()
+void KonfytLayerWidget::on_toolButton_sendEvents_clicked()
 {
     emit sendMidiEvents_clicked_signal(this);
+}
+
+void KonfytLayerWidget::midiIndicateTimerEvent()
+{
+    midiIndicate = false;
+    midiIndicateTimer.stop();
+    this->repaint();
 }
