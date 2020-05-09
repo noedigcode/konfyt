@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 #include "konfytJackEngine.h"
+
 #include <iostream>
 
 
@@ -52,7 +53,7 @@ void KonfytJackEngine::timerEvent(QTimerEvent* /*event*/)
     if (connectCallback || registerCallback) {
         connectCallback = false;
         registerCallback = false;
-        refreshPortConnections();
+        refreshAllPortsConnections();
         jackPortRegisterOrConnectCallback();
     }
 
@@ -64,176 +65,118 @@ void KonfytJackEngine::startPortTimer()
     this->timer.start(100, this);
 }
 
-KonfytJackPluginPorts *KonfytJackEngine::pluginPortsFromId(int portId)
-{
-    KonfytJackPluginPorts* p = pluginsPortsMap.value(portId, NULL);
-    if (p == NULL) {
-        error_abort("Invalid pluginports " + n2s(portId));
-    }
-    return p;
-}
-
-KonfytJackPluginPorts* KonfytJackEngine::fluidsynthPortFromId(int portId)
-{
-    KonfytJackPluginPorts* p = soundfontPortsMap.value(portId, NULL);
-    if (p == NULL) {
-        error_abort("Invalid Fluidsynth port " + n2s(portId));
-    }
-    return p;
-}
-
-void KonfytJackEngine::refreshPortConnections()
+void KonfytJackEngine::refreshAllPortsConnections()
 {
     if (!clientIsActive()) { return; }
 
     // Refresh connections to each midi input port
-    for (int i=0; i < midi_in_ports.count(); i++) {
-
-        KonfytJackPort* port = midi_in_ports.at(i);
-        const char* portname = jack_port_name( port->jack_pointer );
-
-        for (int j=0; j < port->connectionList.count(); j++) {
-            QString clientname = port->connectionList.at(j);
-
-            if (!jack_port_connected_to( port->jack_pointer, clientname.toLocal8Bit() )) {
-                jack_connect(client, clientname.toLocal8Bit(), portname); // NB order of ports important; First source, then dest.
-            }
-        }
+    foreach (KfJackMidiPort* port, midiInPorts) {
+        refreshConnections(port->jackPointer, port->connectionList, true);
     }
 
     // For each midi output port to external apps, refresh connections to all their clients
-    for (int i=0; i<midi_out_ports.count(); i++) {
-
-        KonfytJackPort* port = midi_out_ports.at(i);
-        const char* portname = jack_port_name( port->jack_pointer );
-
-        for (int j=0; j<port->connectionList.count(); j++) {
-            QString clientname = port->connectionList.at(j);
-
-            if (!jack_port_connected_to( port->jack_pointer, clientname.toLocal8Bit())) {
-                jack_connect(client, portname, clientname.toLocal8Bit()); // NB order of ports important; First source, then dest.
-            }
-        }
+    foreach (KfJackMidiPort* port, midiOutPorts) {
+        refreshConnections(port->jackPointer, port->connectionList, false);
     }
 
     // Refresh connections for plugin midi and audio ports
-    for (int i=0; i<plugin_ports.count(); i++) {
-
+    foreach (KfJackPluginPorts* pluginPort, pluginPorts) {
         // Midi out
-        KonfytJackPort* m = plugin_ports.at(i)->midi;
-        const char* m_src = jack_port_name( m->jack_pointer );
-        for (int j=0; j<m->connectionList.count(); j++) {
-
-            const char* m_dest = m->connectionList.at(j).toLocal8Bit();
-            jack_connect(client, m_src, m_dest);
-        }
-
+        refreshConnections(pluginPort->midi->jackPointer,
+                           pluginPort->midi->connectionList, false);
         // Audio in left
-        KonfytJackPort* al = plugin_ports.at(i)->audio_in_l;
-        const char* al_dest = jack_port_name( al->jack_pointer );
-        for (int j=0; j<al->connectionList.count(); j++) {
-
-            const char* al_src = al->connectionList.at(j).toLocal8Bit();
-            jack_connect(client, al_src, al_dest);
-        }
-
+        refreshConnections(pluginPort->audioInLeft->jackPointer,
+                           pluginPort->audioInLeft->connectionList, true);
         // Audio in right
-        KonfytJackPort* ar = plugin_ports.at(i)->audio_in_r;
-        const char* ar_dest = jack_port_name( ar->jack_pointer );
-        for (int j=0; j<ar->connectionList.count(); j++) {
-
-            const char* ar_src = ar->connectionList.at(j).toLocal8Bit();
-            jack_connect(client, ar_src, ar_dest);
-        }
-
+        refreshConnections(pluginPort->audioInRight->jackPointer,
+                           pluginPort->audioInRight->connectionList, true);
     }
 
     // Refresh connections for audio input ports
-    for (int i=0; i<audio_in_ports.count(); i++) {
-
-        KonfytJackPort* p = audio_in_ports[i];
-        const char* dest = jack_port_name(p->jack_pointer);
-        for (int j=0; j<p->connectionList.count(); j++) {
-            const char* src = p->connectionList[j].toLocal8Bit();
-            jack_connect(client, src, dest);
-        }
+    foreach (KfJackAudioPort* port, audioInPorts) {
+        refreshConnections(port->jackPointer, port->connectionList, true);
     }
 
     // Refresh connections for audio output ports (aka buses)
-    for (int i=0; i<audio_out_ports.count(); i++) {
-
-        KonfytJackPort* p = audio_out_ports[i];
-        const char* src = jack_port_name(p->jack_pointer);
-        for (int j=0; j<p->connectionList.count(); j++) {
-            const char* dest = p->connectionList[j].toLocal8Bit();
-            jack_connect(client, src, dest);
-        }
-
+    foreach (KfJackAudioPort* port, audioOutPorts) {
+        refreshConnections(port->jackPointer, port->connectionList, false);
     }
 
     // Refresh other JACK connections
-    for (int i=0; i<otherConsList.count(); i++) {
-        KonfytJackConPair p = otherConsList[i];
-        jack_connect(client, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
+    foreach (const KonfytJackConPair &p, otherConsList) {
+        jack_connect(mJackClient, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
     }
 
 }
 
+void KonfytJackEngine::refreshConnections(jack_port_t *jackPort, QStringList clients, bool inNotOut)
+{
+    const char* src;
+    const char* dest;
+    const char* portname = jack_port_name(jackPort);
+    if (inNotOut) {
+        dest = portname;
+    } else {
+        src = portname;
+    }
+    foreach (QString s, clients) {
+        const char* clientname = s.toLocal8Bit().constData();
+        if (inNotOut) {
+            src = clientname;
+        } else {
+            dest = clientname;
+        }
+        jack_connect(mJackClient, src, dest);
+    }
+}
+
 /* Add new soundfont ports. Also assigns MIDI filter. */
-int KonfytJackEngine::addSoundfont(const LayerSoundfontStruct &sf)
+KfJackPluginPorts* KonfytJackEngine::addSoundfont(const LayerSoundfontStruct &sf)
 {
     /* Soundfonts use the same structures as SFZ plugins for now, but are much simpler
      * as midi is given to the fluidsynth engine and audio is recieved from it without
      * external Jack connections. */
 
-    KonfytJackPluginPorts* p = new KonfytJackPluginPorts();
-    p->audio_in_l = new KonfytJackPort();
-    p->audio_in_r = new KonfytJackPort();
+    KfJackPluginPorts* p = new KfJackPluginPorts();
+    p->audioInLeft = new KfJackAudioPort();
+    p->audioInRight = new KfJackAudioPort();
 
     // Because our audio is not received from jack audio ports, we have to allocate
     // the buffers now so fluidsynth can write to them in the jack process callback.
-    p->audio_in_l->buffer = malloc(sizeof(jack_default_audio_sample_t)*nframes);
-    p->audio_in_r->buffer = malloc(sizeof(jack_default_audio_sample_t)*nframes);
+    p->audioInLeft->buffer = malloc(sizeof(jack_default_audio_sample_t)*nframes);
+    p->audioInRight->buffer = malloc(sizeof(jack_default_audio_sample_t)*nframes);
 
-    p->midi = new KonfytJackPort(); // Dummy port for note records, etc.
-    p->id = idCounter++;
+    p->midi = new KfJackMidiPort(); // Dummy port for note records, etc.
     p->idInPluginEngine = sf.indexInEngine;
 
-    p->midiRouteId = addMidiRoute();
-    p->audioLeftRouteId = addAudioRoute();
-    p->audioRightRouteId = addAudioRoute();
+    p->midiRoute = addMidiRoute();
+    p->audioLeftRoute = addAudioRoute();
+    p->audioRightRoute = addAudioRoute();
 
     // Only MIDI route is used to activate/deactivate the sound. Audio routes are
     // always active.
-    setAudioRouteActive(p->audioLeftRouteId, true);
-    setAudioRouteActive(p->audioRightRouteId, true);
+    setAudioRouteActive(p->audioLeftRoute, true);
+    setAudioRouteActive(p->audioRightRoute, true);
 
     // Pre-set audio route sources and MIDI route destination
-    KonfytJackAudioRoute* route = audioRouteFromId(p->audioLeftRouteId);
-    route->source = p->audio_in_l;
+    p->audioLeftRoute->source = p->audioInLeft;
+    p->audioRightRoute->source = p->audioInRight;
 
-    route = audioRouteFromId(p->audioRightRouteId);
-    route->source = p->audio_in_r;
+    p->midiRoute->destFluidsynthID = p->idInPluginEngine;
+    p->midiRoute->destIsJackPort = false;
+    p->midiRoute->destPort = p->midi;
+    p->midiRoute->filter = sf.filter;
 
-    KonfytJackMidiRoute* midiRoute = midiRouteFromId(p->midiRouteId);
-    midiRoute->destFluidsynthID = p->idInPluginEngine;
-    midiRoute->destIsJackPort = false;
-    midiRoute->destPort = p->midi;
-    midiRoute->filter = sf.filter;
+    fluidsynthPorts.append(p);
 
-    fluidsynth_ports.append(p);
-    soundfontPortsMap.insert(p->id, p);
-
-    return p->id;
+    return p;
 }
 
-void KonfytJackEngine::removeSoundfont(int id)
+void KonfytJackEngine::removeSoundfont(KfJackPluginPorts *p)
 {
     pauseJackProcessing(true);
 
     // Delete all objects created in addSoundfont()
-
-    KonfytJackPluginPorts* p = fluidsynthPortFromId(id);
 
     // Remove all recorded noteon, sustain and pitchbend events related to this Fluidsynth ID.
     for (int i=0; i<noteOnList.count(); i++) {
@@ -264,15 +207,14 @@ void KonfytJackEngine::removeSoundfont(int id)
         }
     }
 
-    soundfontPortsMap.remove(id);
-    fluidsynth_ports.removeAll(p);
-    free(p->audio_in_l->buffer);
-    free(p->audio_in_r->buffer);
-    removeMidiRoute(p->midiRouteId);
-    removeAudioRoute(p->audioLeftRouteId);
-    removeAudioRoute(p->audioRightRouteId);
-    delete p->audio_in_l;
-    delete p->audio_in_r;
+    fluidsynthPorts.removeAll(p);
+    free(p->audioInLeft->buffer);
+    free(p->audioInRight->buffer);
+    removeMidiRoute(p->midiRoute);
+    removeAudioRoute(p->audioLeftRoute);
+    removeAudioRoute(p->audioRightRoute);
+    delete p->audioInLeft;
+    delete p->audioInRight;
     delete p->midi;
     delete p;
 
@@ -285,81 +227,70 @@ void KonfytJackEngine::removeSoundfont(int id)
  * spec are used to add to the created ports auto-connect lists and the MIDI
  * filter is applied to the MIDI port.
  * A unique ID is returned. */
-int KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPortsSpec &spec)
+KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPortsSpec &spec)
 {
-    KonfytJackPort* midiPort = new KonfytJackPort();
-    KonfytJackPort* alPort = new KonfytJackPort();
-    KonfytJackPort* arPort = new KonfytJackPort();
+    KfJackMidiPort* midiPort = new KfJackMidiPort();
+    KfJackAudioPort* alPort = new KfJackAudioPort();
+    KfJackAudioPort* arPort = new KfJackAudioPort();
 
     // Add a new midi output port which will be connected to the plugin midi input
-    jack_port_t* newPortPointer = registerJackPort(midiPort, client, spec.name, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
-    if (newPortPointer == NULL) {
-        userMessage("Failed to create Jack MIDI output port '" + spec.name + "' for plugin.");
+    midiPort->jackPointer = registerJackMidiPort(spec.name, false);
+    if (midiPort->jackPointer == nullptr) {
+        userMessage("Failed to create JACK MIDI output port '" + spec.name + "' for plugin.");
     }
     midiPort->connectionList.append( spec.midiOutConnectTo );
 
     // Add left audio input port where we will receive plugin audio
     QString nameL = spec.name + "_in_L";
-    jack_port_t* newL = registerJackPort(alPort, client, nameL, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-    if (newL == NULL) {
+    alPort->jackPointer = registerJackAudioPort(nameL, true);
+    if (alPort->jackPointer == nullptr) {
         userMessage("Failed to create left audio input port '" + nameL + "' for plugin.");
     }
     alPort->connectionList.append( spec.audioInLeftConnectTo );
 
     // Add right audio input port
     QString nameR = spec.name + "_in_R";
-    jack_port_t* newR = registerJackPort(arPort, client, nameR, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-    if (newR == NULL) {
+    arPort->jackPointer = registerJackAudioPort(nameR, true);
+    if (arPort->jackPointer == nullptr) {
         userMessage("Failed to create right audio input port '" + nameR + "' for plugin.");
     }
     arPort->connectionList.append( spec.audioInRightConnectTo );
 
-    KonfytJackPluginPorts* p = new KonfytJackPluginPorts();
+    KfJackPluginPorts* p = new KfJackPluginPorts();
     p->midi = midiPort;
-    p->audio_in_l = alPort;
-    p->audio_in_r = arPort;
+    p->audioInLeft = alPort;
+    p->audioInRight = arPort;
 
     // Add routes
-    p->midiRouteId = addMidiRoute();
-    p->audioLeftRouteId = addAudioRoute();
-    p->audioRightRouteId = addAudioRoute();
+    p->midiRoute = addMidiRoute();
+    p->audioLeftRoute = addAudioRoute();
+    p->audioRightRoute = addAudioRoute();
 
     // Only MIDI route is used to set plugin active/inactive. Audio ports always
     // active.
-    setAudioRouteActive(p->audioLeftRouteId, true);
-    setAudioRouteActive(p->audioRightRouteId, true);
+    setAudioRouteActive(p->audioLeftRoute, true);
+    setAudioRouteActive(p->audioRightRoute, true);
 
     // Pre-set route sources/dests
-    KonfytJackMidiRoute* midiRoute = midiRouteFromId(p->midiRouteId);
-    midiRoute->destIsJackPort = true;
-    midiRoute->destPort = midiPort;
-    midiRoute->filter = spec.midiFilter;
+    p->midiRoute->destIsJackPort = true;
+    p->midiRoute->destPort = midiPort;
+    p->midiRoute->filter = spec.midiFilter;
 
-    KonfytJackAudioRoute* audioRoute = audioRouteFromId(p->audioLeftRouteId);
-    audioRoute->source = alPort;
-
-    audioRoute = audioRouteFromId(p->audioRightRouteId);
-    audioRoute->source = arPort;
-
-    // Create new unique id
-    p->id = idCounter++;
+    p->audioLeftRoute->source = p->audioInLeft;
+    p->audioRightRoute->source = p->audioInRight;
 
     pauseJackProcessing(true);
-    plugin_ports.append(p);
-    pluginsPortsMap.insert(p->id, p);
+    pluginPorts.append(p);
     pauseJackProcessing(false);
 
-    return p->id;
+    return p;
 }
 
-void KonfytJackEngine::removePlugin(int id)
+void KonfytJackEngine::removePlugin(KfJackPluginPorts *p)
 {
     pauseJackProcessing(true);
 
     // Remove everything created in addPluginPortsAndConnect()
-
-    KonfytJackPluginPorts* p = pluginPortsFromId(id);
-    pluginsPortsMap.remove(id);
 
     // Remove all recorded noteon, sustain and pitchbend events related to this midi out port
     for (int i=0; i<noteOnList.count(); i++) {
@@ -391,580 +322,380 @@ void KonfytJackEngine::removePlugin(int id)
     }
 
     // Remove routes
-    removeMidiRoute(p->midiRouteId);
-    removeAudioRoute(p->audioLeftRouteId);
-    removeAudioRoute(p->audioRightRouteId);
+    removeMidiRoute(p->midiRoute);
+    removeAudioRoute(p->audioLeftRoute);
+    removeAudioRoute(p->audioRightRoute);
 
-    plugin_ports.removeAll(p);
+    pluginPorts.removeAll(p);
 
-    jack_port_unregister(client, p->midi->jack_pointer);
+    jack_port_unregister(mJackClient, p->midi->jackPointer);
     delete p->midi;
 
-    jack_port_unregister(client, p->audio_in_l->jack_pointer);
-    delete p->audio_in_l;
+    jack_port_unregister(mJackClient, p->audioInLeft->jackPointer);
+    delete p->audioInLeft;
 
-    jack_port_unregister(client, p->audio_in_r->jack_pointer);
-    delete p->audio_in_r;
+    jack_port_unregister(mJackClient, p->audioInRight->jackPointer);
+    delete p->audioInRight;
 
     delete p;
 
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::setSoundfontMidiFilter(int id, KonfytMidiFilter filter)
+void KonfytJackEngine::setSoundfontMidiFilter(KfJackPluginPorts *p, KonfytMidiFilter filter)
 {
-    midiRouteFromId(fluidsynthPortFromId(id)->midiRouteId)->filter = filter;
+    p->midiRoute->filter = filter;
 }
 
-void KonfytJackEngine::setSoundfontActive(int id, bool active)
+void KonfytJackEngine::setSoundfontActive(KfJackPluginPorts *p, bool active)
 {
-    KonfytJackPluginPorts* p = fluidsynthPortFromId(id);
-    setMidiRouteActive(p->midiRouteId, active);
+    setMidiRouteActive(p->midiRoute, active);
 }
 
-void KonfytJackEngine::setPluginMidiFilter(int id, KonfytMidiFilter filter)
+void KonfytJackEngine::setPluginMidiFilter(KfJackPluginPorts *p, KonfytMidiFilter filter)
 {
-    midiRouteFromId(pluginPortsFromId(id)->midiRouteId)->filter = filter;
+    p->midiRoute->filter = filter;
 }
 
-void KonfytJackEngine::setPluginActive(int id, bool active)
+void KonfytJackEngine::setPluginActive(KfJackPluginPorts *p, bool active)
 {
-    KonfytJackPluginPorts* p = pluginPortsFromId(id);
-    setMidiRouteActive(p->midiRouteId, active);
+    setMidiRouteActive(p->midiRoute, active);
 }
 
-void KonfytJackEngine::setPluginGain(int id, float gain)
+void KonfytJackEngine::setPluginGain(KfJackPluginPorts *p, float gain)
 {
-    KonfytJackPluginPorts* p = pluginPortsFromId(id);
-    audioRouteFromId(p->audioLeftRouteId)->gain = gain;
-    audioRouteFromId(p->audioRightRouteId)->gain = gain;
+    p->audioLeftRoute->gain = gain;
+    p->audioRightRoute->gain = gain;
 }
 
-void KonfytJackEngine::setSoundfontRouting(int id, int midiInPortId, int leftPortId, int rightPortId)
+void KonfytJackEngine::setSoundfontRouting(KfJackPluginPorts *p, KfJackMidiPort *midiInPort, KfJackAudioPort *leftPort, KfJackAudioPort *rightPort)
 {
     if (!clientIsActive()) { return; }
-
-    KonfytJackPluginPorts* p = fluidsynthPortFromId(id);
 
     pauseJackProcessing(true);
 
     // MIDI route destination has already been set in addSoundfont().
-    KonfytJackMidiRoute* midiRoute = midiRouteFromId(p->midiRouteId);
-    midiRoute->source = midiInPortFromId(midiInPortId);
+    p->midiRoute->source = midiInPort;
 
     // Audio route sources have already been set in addSoundfont().
     // Set left audio route destination
-    KonfytJackAudioRoute* route = audioRouteFromId(p->audioLeftRouteId);
-    route->dest = audioOutPortFromId(leftPortId);
+    p->audioLeftRoute->dest = leftPort;
     // Right audio route destination
-    route = audioRouteFromId(p->audioRightRouteId);
-    route->dest = audioOutPortFromId(rightPortId);
+    p->audioRightRoute->dest = rightPort;
 
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::setPluginRouting(int pluginId, int midiInPortId, int leftPortId, int rightPortId)
+void KonfytJackEngine::setPluginRouting(KfJackPluginPorts *p, KfJackMidiPort *midiInPort, KfJackAudioPort *leftPort, KfJackAudioPort *rightPort)
 {
     if (!clientIsActive()) { return; }
 
-    KonfytJackPluginPorts* p = pluginPortsFromId(pluginId);
-
     pauseJackProcessing(true);
 
-    KonfytJackMidiRoute* midiRoute = midiRouteFromId(p->midiRouteId);
-    midiRoute->source = midiInPortFromId(midiInPortId);
-
-    KonfytJackAudioRoute* audioRoute = audioRouteFromId(p->audioLeftRouteId);
-    audioRoute->dest = audioOutPortFromId(leftPortId);
-
-    audioRoute = audioRouteFromId(p->audioRightRouteId);
-    audioRoute->dest = audioOutPortFromId(rightPortId);
+    p->midiRoute->source = midiInPort;
+    p->audioLeftRoute->dest = leftPort;
+    p->audioRightRoute->dest = rightPort;
 
     pauseJackProcessing(false);
 }
 
 void KonfytJackEngine::removeAllAudioInAndOutPorts()
 {
-    // Disable audio port processing in Jack process callback function,
-    // and wait for processing to finish before removing ports.
     pauseJackProcessing(true);
 
-    while (audio_in_ports.count()) {
-        removePort(audio_in_ports[0]->id);
+    foreach (KfJackAudioPort* port, audioOutPorts) {
+        removeAudioPort(port);
     }
-
-    while (audio_out_ports.count()) {
-        removePort(audio_out_ports[0]->id);
-    }
-
-    // Enable audio port processing again.
-    pauseJackProcessing(false);
-}
-
-void KonfytJackEngine::removeAllMidiInPorts()
-{
-    pauseJackProcessing(true);
-
-    while (midi_in_ports.count()) {
-        removePort(midi_in_ports[0]->id);
+    foreach (KfJackAudioPort* port, audioInPorts) {
+        removeAudioPort(port);
     }
 
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::removeAllMidiOutPorts()
+void KonfytJackEngine::removeAllMidiInAndOutPorts()
 {
     pauseJackProcessing(true);
 
-    while (midi_out_ports.count()) {
-        removePort(midi_out_ports[0]->id);
+    foreach (KfJackMidiPort* port, midiInPorts) {
+        removeMidiPort(port);
     }
 
     pauseJackProcessing(false);
 }
 
-QList<KonfytJackPort *> *KonfytJackEngine::getListContainingPort(int portId)
+void KonfytJackEngine::clearPortClients(KfJackMidiPort *port)
 {
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (port == NULL) { return NULL; }
-
-    QList<KonfytJackPort*> *l = NULL;
-
-    if (midi_in_ports.contains(port)) {
-        l = &midi_in_ports;
-    } else if (midi_out_ports.contains(port)) {
-        l = &midi_out_ports;
-    } else if (audio_out_ports.contains(port)) {
-        l = &audio_out_ports;
-    } else if (audio_in_ports.contains(port)) {
-        l = &audio_in_ports;
+    if (port) {
+        QStringList clients = port->connectionList;
+        foreach (QString client, clients) {
+            removeAndDisconnectPortClient(port, client);
+        }
+    } else {
+        error_abort("clearPortClients: MIDI port null.");
     }
+}
 
-    return l;
+void KonfytJackEngine::clearPortClients(KfJackAudioPort *port)
+{
+    if (port) {
+        foreach (QString client, port->connectionList) {
+            removeAndDisconnectPortClient(port, client);
+        }
+    } else {
+        error_abort("clearPortClients: Audio port null.");
+    }
 }
 
 /* Set the source/destination port to NULL for all routes that use the specified
  * port. */
-void KonfytJackEngine::removePortFromAllRoutes(KonfytJackPort *port)
+void KonfytJackEngine::removePortFromAllRoutes(KfJackMidiPort *port)
 {
     pauseJackProcessing(true);
 
-    for (int i=0; i < audio_routes.count(); i++) {
-        if (audio_routes[i]->source == port) { audio_routes[i]->source = NULL; }
-        if (audio_routes[i]->dest == port) { audio_routes[i]->dest = NULL; }
-    }
-
-    for (int i=0; i < midi_routes.count(); i++) {
-        if (midi_routes[i]->source == port) { midi_routes[i]->source = NULL; }
-        if (midi_routes[i]->destPort == port) { midi_routes[i]->destPort = NULL; }
+    for (int i=0; i < midiRoutes.count(); i++) {
+        if (midiRoutes[i]->source == port) { midiRoutes[i]->source = NULL; }
+        if (midiRoutes[i]->destPort == port) { midiRoutes[i]->destPort = NULL; }
     }
 
     pauseJackProcessing(false);
 }
 
-/* Adds a new port to JACK with the specified type and name. Returns a unique
- * port ID. */
-int KonfytJackEngine::addPort(KonfytJackPortType type, QString portName)
+void KonfytJackEngine::removePortFromAllRoutes(KfJackAudioPort *port)
 {
-    if (!clientIsActive()) { return KONFYT_JACK_PORT_ERROR; }
-
     pauseJackProcessing(true);
 
-    jack_port_t* newPort = nullptr;
-    QList<KonfytJackPort*> *listToAddTo = nullptr;
-
-    KonfytJackPort* p = new KonfytJackPort();
-
-    switch (type) {
-    case KonfytJackPortType_MidiIn:
-
-        newPort = registerJackPort (p, client, portName, JACK_DEFAULT_MIDI_TYPE, JackPortIsInput, 0);
-        listToAddTo = &midi_in_ports;
-
-        break;
-    case KonfytJackPortType_MidiOut:
-
-        newPort = registerJackPort (p, client, portName, JACK_DEFAULT_MIDI_TYPE, JackPortIsOutput, 0);
-        listToAddTo = &midi_out_ports;
-
-        break;
-    case KonfytJackPortType_AudioOut:
-
-        newPort = registerJackPort (p, client, portName, JACK_DEFAULT_AUDIO_TYPE, JackPortIsOutput, 0);
-        listToAddTo = &audio_out_ports;
-
-        break;
-    case KonfytJackPortType_AudioIn:
-
-        newPort = registerJackPort (p, client, portName, JACK_DEFAULT_AUDIO_TYPE, JackPortIsInput, 0);
-        listToAddTo = &audio_in_ports;
-
-        break;
-
-    default:
-
-        error_abort("addPort: Invalid unhandled KonfytJackPortType.");
-
+    for (int i=0; i < audioRoutes.count(); i++) {
+        if (audioRoutes[i]->source == port) { audioRoutes[i]->source = NULL; }
+        if (audioRoutes[i]->dest == port) { audioRoutes[i]->dest = NULL; }
     }
 
-    if (newPort == nullptr) {
-        userMessage("Failed to add JACK port " + portName);
-    }
-
-    // Create unique ID for port
-    p->id = idCounter++;
-
-    listToAddTo->append(p);
-    portIdMap.insert(p->id, p);
-
-    pauseJackProcessing(false);
-    return p->id;
-}
-
-void KonfytJackEngine::removePort(int portId)
-{
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (port == NULL) {
-        // No such port
-        error_abort("removePort: Port " + n2s(portId) + " not found in map.");
-        return;
-    }
-
-    // Disable Jack process callback and block until it is not executing anymore
-    pauseJackProcessing(true);
-
-    QList<KonfytJackPort*> *l = getListContainingPort(portId);
-    if (l == NULL) {
-        error_abort("removePort: Port not found in any of the lists.");
-    }
-
-
-    l->removeAll(port);
-    jack_port_unregister(client, port->jack_pointer);
-    delete port;
-    portIdMap.remove(portId);
-
-    // If this is a midi out port, remove all recorded noteon, sustain and pitchbend
-    // events related to this port.
-    if (l == &midi_out_ports) {
-        for (int i=0; i<noteOnList.count(); i++) {
-            KonfytJackNoteOnRecord *rec = noteOnList.at_ptr(i);
-            if (rec->jackPortNotFluidsynth) {
-                if (rec->port == port) {
-                    noteOnList.remove(i);
-                    i--; // Due to removal, have to stay at same index after for loop i++
-                }
-            }
-        }
-        for (int i=0; i<sustainList.count(); i++) {
-            KonfytJackNoteOnRecord *rec = sustainList.at_ptr(i);
-            if (rec->jackPortNotFluidsynth) {
-                if (rec->port == port) {
-                    sustainList.remove(i);
-                    i--;
-                }
-            }
-        }
-        for (int i=0; i<pitchBendList.count(); i++) {
-            KonfytJackNoteOnRecord *rec = pitchBendList.at_ptr(i);
-            if (rec->jackPortNotFluidsynth) {
-                if (rec->port == port) {
-                    pitchBendList.remove(i);
-                    i--;
-                }
-            }
-        }
-    }
-
-    // Remove this port from any routes.
-    removePortFromAllRoutes(port);
-
-    // Enable Jack process callback again
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::setPortClients(int portId, QStringList newClientList)
-{
-    for (int i=0; i<newClientList.count(); i++) {
-        this->addPortClient( portId, newClientList[i] );
-    }
-}
-
-void KonfytJackEngine::clearPortClients(int portId)
-{
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (port == NULL) {
-        error_abort("Invalid port " + n2s(portId));
-        return;
-    }
-
-    port->connectionList.clear();
-}
-
-void KonfytJackEngine::clearPortClients_andDisconnect(int portId)
-{
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (port == NULL) {
-        error_abort("Invalid port " + n2s(portId));
-        return;
-    }
-
-    while (port->connectionList.count()) {
-        removePortClient_andDisconnect(portId, port->connectionList[0]);
-    }
-}
-
-void KonfytJackEngine::addPortClient(int portId, QString newClient)
+void KonfytJackEngine::addPortClient(KfJackMidiPort *port, QString newClient)
 {
     if (!clientIsActive()) { return; }
 
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (port == NULL) {
-        error_abort("Invalid port " + n2s(portId));
-    }
-
-    port->connectionList.append(newClient);
-
-    refreshPortConnections();
-}
-
-
-
-/* Remove the given client:port (cname) from the specified port auto-connect list. */
-void KonfytJackEngine::removePortClient_andDisconnect(int portId, QString cname)
-{
-    if (!clientIsActive()) { return; }
-
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (port == NULL) {
-        error_abort("Invalid port " + n2s(portId));
-        return;
-    }
-
-    QList<KonfytJackPort*> *l = getListContainingPort(portId);
-    if (l == NULL) {
-        error_abort("Port " + n2s(portId) + " not in any list.");
-        return;
-    }
-
-    int order = 0;
-    if ( (l == &midi_in_ports) || (l == &audio_in_ports) ) {
-        order = 0;
-    } else if ( (l == &audio_out_ports) || (l == &midi_out_ports) ) {
-        order = 1;
-    }
-
-    pauseJackProcessing(true);
-
-    if (port->connectionList.contains( cname )) {
-        // Disconnect in Jack
-        const char* ourPort = jack_port_name( port->jack_pointer );
-        // NB the order of ports in the jack_disconnect function matters:
-        if (order) {
-            jack_disconnect(client, ourPort, cname.toLocal8Bit() );
-        } else {
-            jack_disconnect(client, cname.toLocal8Bit(), ourPort );
-        }
-        // Remove client from port's list
-        port->connectionList.removeAll(cname);
-    }
-
-    pauseJackProcessing(false);
-    refreshPortConnections();
-}
-
-QStringList KonfytJackEngine::getPortClients(int portId)
-{
-    QStringList clients;
-
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (port == NULL) {
-        error_abort("Invalid port " + n2s(portId));
+    if (port) {
+        port->connectionList.append(newClient);
+        refreshAllPortsConnections();
     } else {
-        clients = port->connectionList;
+        error_abort("addPortClient: MIDI port null.");
     }
-
-    return clients;
 }
 
-int KonfytJackEngine::getPortCount(KonfytJackPortType type)
-{
-    int ret = 0;
-
-    switch (type) {
-    case KonfytJackPortType_MidiIn:
-        ret = midi_in_ports.count();
-        break;
-    case KonfytJackPortType_MidiOut:
-        ret = midi_out_ports.count();
-        break;
-    case KonfytJackPortType_AudioIn:
-        ret = audio_in_ports.count();
-        break;
-    case KonfytJackPortType_AudioOut:
-        ret = audio_out_ports.count();
-        break;
-    default:
-        error_abort("getPortCount: invalid JackPortType");
-    }
-
-    return ret;
-}
-
-void KonfytJackEngine::setPortFilter(int portId, KonfytMidiFilter filter)
+void KonfytJackEngine::addPortClient(KfJackAudioPort *port, QString newClient)
 {
     if (!clientIsActive()) { return; }
 
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (port == NULL) {
-        error_abort("Invalid port " + n2s(portId));
+    if (port) {
+        port->connectionList.append(newClient);
+        refreshAllPortsConnections();
+    } else {
+        error_abort("addPortClient: Audio port null.");
+    }
+}
+
+void KonfytJackEngine::removeAndDisconnectPortClient(KfJackMidiPort *port, QString client)
+{
+    if (!clientIsActive()) { return; }
+
+    if (!port) {
+        error_abort("removeAndDisconnectPortClient: MIDI port null.");
         return;
     }
 
-    port->filter = filter;
-}
+    if (!port->connectionList.contains(client)) { return; }
 
-
-
-int KonfytJackEngine::addAudioRoute(int sourcePortId, int destPortId)
-{
-    int routeId = addAudioRoute();
-    setAudioRoute(routeId, sourcePortId, destPortId);
-    return routeId;
-}
-
-int KonfytJackEngine::addAudioRoute()
-{
-    if (!clientIsActive()) { return KONFYT_JACK_PORT_ERROR; }
+    bool portIsInput = midiInPorts.contains(port);
+    const char* portName = jack_port_name(port->jackPointer);
 
     pauseJackProcessing(true);
 
-    KonfytJackAudioRoute* route = new KonfytJackAudioRoute();
-    route->id = idCounter++;
-
-    audio_routes.append(route);
-    audioRouteIdMap.insert(route->id, route);
+    // Disconnect client from port in JACK
+    int err = 0;
+    if (portIsInput) {
+        err = jack_disconnect(mJackClient, client.toLocal8Bit().constData(), portName);
+    } else {
+        err = jack_disconnect(mJackClient, portName, client.toLocal8Bit().constData());
+    }
+    // Remove client from port's list
+    port->connectionList.removeAll(client);
 
     pauseJackProcessing(false);
 
-    return route->id;
+    if (err) {
+        userMessage("Failed to disconnect JACK MIDI port client.");
+    }
+    refreshAllPortsConnections();
 }
 
-void KonfytJackEngine::setAudioRoute(int routeId, int sourcePortId, int destPortId)
+void KonfytJackEngine::removeAndDisconnectPortClient(KfJackAudioPort *port, QString client)
+{
+    if (!clientIsActive()) { return; }
+
+    if (!port) {
+        error_abort("removeAndDisconnectPortClient: Audio port null.");
+        return;
+    }
+
+    if (!port->connectionList.contains(client)) { return; }
+
+    bool portIsInput = audioInPorts.contains(port);
+    const char* portName = jack_port_name(port->jackPointer);
+
+    pauseJackProcessing(true);
+
+    // Disconnect client from port in JACK
+    int err = 0;
+    if (portIsInput) {
+        err = jack_disconnect(mJackClient, client.toLocal8Bit().constData(), portName);
+    } else {
+        err = jack_disconnect(mJackClient, portName, client.toLocal8Bit().constData());
+    }
+    // Remove client from port's list
+    port->connectionList.removeAll(client);
+
+    pauseJackProcessing(false);
+
+    if (err) {
+        userMessage("Failed to disconnect JACK audio port client.");
+    }
+    refreshAllPortsConnections();
+}
+
+void KonfytJackEngine::setPortFilter(KfJackMidiPort *port, KonfytMidiFilter filter)
+{
+    if (!clientIsActive()) { return; }
+
+    if (port) {
+        port->filter = filter;
+    } else {
+        error_abort("setPortFilter: Invalid port.");
+    }
+}
+
+KfJackAudioRoute *KonfytJackEngine::addAudioRoute(KfJackAudioPort *sourcePort, KfJackAudioPort *destPort)
+{
+    KfJackAudioRoute* route = addAudioRoute();
+    setAudioRoute(route, sourcePort, destPort);
+    return route;
+}
+
+KfJackAudioRoute* KonfytJackEngine::addAudioRoute()
+{
+    if (!clientIsActive()) { return nullptr; }
+
+    pauseJackProcessing(true);
+
+    KfJackAudioRoute* route = new KfJackAudioRoute();
+
+    audioRoutes.append(route);
+
+    pauseJackProcessing(false);
+
+    return route;
+}
+
+void KonfytJackEngine::setAudioRoute(KfJackAudioRoute *route, KfJackAudioPort *sourcePort, KfJackAudioPort *destPort)
 {
     if (!clientIsActive()) { return; }
 
     pauseJackProcessing(true);
 
-    KonfytJackAudioRoute* route = audioRouteFromId(routeId);
-
-    route->source = audioInPortFromId(sourcePortId);
-    route->dest = audioOutPortFromId(destPortId);
+    route->source = sourcePort;
+    route->dest = destPort;
 
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::removeAudioRoute(int routeId)
+void KonfytJackEngine::removeAudioRoute(KfJackAudioRoute* route)
 {
     if (!clientIsActive()) { return; }
 
     pauseJackProcessing(true);
 
-    KonfytJackAudioRoute* route = audioRouteFromId(routeId);
-    audio_routes.removeAll(route);
-    audioRouteIdMap.remove(routeId);
-
+    audioRoutes.removeAll(route);
     delete route;
 
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::setAudioRouteActive(int routeId, bool active)
+void KonfytJackEngine::setAudioRouteActive(KfJackAudioRoute *route, bool active)
 {
     if (!clientIsActive()) { return; }
 
-    KonfytJackAudioRoute* route = audioRouteFromId(routeId);
     route->active = active;
 }
 
-void KonfytJackEngine::setAudioRouteGain(int routeId, float gain)
+void KonfytJackEngine::setAudioRouteGain(KfJackAudioRoute *route, float gain)
 {
     if (!clientIsActive()) { return; }
 
-    KonfytJackAudioRoute* route = audioRouteFromId(routeId);
     route->gain = gain;
 }
 
-int KonfytJackEngine::addMidiRoute(int sourcePortId, int destPortId)
+KfJackMidiRoute *KonfytJackEngine::addMidiRoute(KfJackMidiPort *sourcePort, KfJackMidiPort *destPort)
 {
-    int routeId = addMidiRoute();
-    setMidiRoute(routeId, sourcePortId, destPortId);
-    return routeId;
+    KfJackMidiRoute* route = addMidiRoute();
+    setMidiRoute(route, sourcePort, destPort);
+    return route;
 }
 
-int KonfytJackEngine::addMidiRoute()
+KfJackMidiRoute* KonfytJackEngine::addMidiRoute()
 {
-    if (!clientIsActive()) { return KONFYT_JACK_PORT_ERROR; }
+    if (!clientIsActive()) { return nullptr; }
 
     pauseJackProcessing(true);
 
-    KonfytJackMidiRoute* route = new KonfytJackMidiRoute();
-    route->id = idCounter++;
+    KfJackMidiRoute* route = new KfJackMidiRoute();
 
-    midi_routes.append(route);
-    midiRouteIdMap.insert(route->id, route);
+    midiRoutes.append(route);
 
     pauseJackProcessing(false);
 
-    return route->id;
+    return route;
 }
 
-void KonfytJackEngine::setMidiRoute(int routeId, int sourcePortId, int destPortId)
+void KonfytJackEngine::setMidiRoute(KfJackMidiRoute *route, KfJackMidiPort *sourcePort, KfJackMidiPort *destPort)
 {
     if (!clientIsActive()) { return; }
 
     pauseJackProcessing(true);
 
-    KonfytJackMidiRoute* route = midiRouteFromId(routeId);
-
-    route->source = midiInPortFromId(sourcePortId);
-    route->destPort = midiOutPortFromId(destPortId);
+    route->source = sourcePort;
+    route->destPort = destPort;
 
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::removeMidiRoute(int routeId)
+void KonfytJackEngine::removeMidiRoute(KfJackMidiRoute *route)
 {
     if (!clientIsActive()) { return; }
 
     pauseJackProcessing(true);
 
-    KonfytJackMidiRoute* route = midiRouteFromId(routeId);
-    midi_routes.removeAll(route);
-    midiRouteIdMap.remove(routeId);
-
+    midiRoutes.removeAll(route);
     delete route;
 
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::setMidiRouteActive(int routeId, bool active)
+void KonfytJackEngine::setMidiRouteActive(KfJackMidiRoute *route, bool active)
 {
     if (!clientIsActive()) { return; }
 
-    KonfytJackMidiRoute* route = midiRouteFromId(routeId);
     route->active = active;
 }
 
-void KonfytJackEngine::setRouteMidiFilter(int routeId, KonfytMidiFilter filter)
+void KonfytJackEngine::setRouteMidiFilter(KfJackMidiRoute *route, KonfytMidiFilter filter)
 {
-    midiRouteFromId(routeId)->filter = filter;
+    route->filter = filter;
 }
 
-bool KonfytJackEngine::sendMidiEventsOnRoute(int routeId, QList<KonfytMidiEvent> events)
+bool KonfytJackEngine::sendMidiEventsOnRoute(KfJackMidiRoute *route, QList<KonfytMidiEvent> events)
 {
-    KonfytJackMidiRoute* route = midiRouteFromId(routeId);
-
     bool success = true;
     foreach (KonfytMidiEvent event, events) {
         success = route->eventsTxBuffer.stash(event);
@@ -972,8 +703,7 @@ bool KonfytJackEngine::sendMidiEventsOnRoute(int routeId, QList<KonfytMidiEvent>
     }
     route->eventsTxBuffer.commit();
     if (!success) {
-        userMessage("KonfytJackEngine::sendMidiEventsOnRoute " + n2s(routeId)
-                    + " event TX buffer full.");
+        userMessage("KonfytJackEngine::sendMidiEventsOnRoute event TX buffer full.");
     }
     return success;
 }
@@ -1039,7 +769,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
     return e->jackProcessCallback(nframes);
 }
 
-/* Non-static class instance specific JACK process callback. */
+/* Non-static class instance-specific JACK process callback. */
 int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 {
     // Lock jack_process ----------------------
@@ -1069,30 +799,31 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     // Other audio input ports are routed to the bus output.
 
     // Get all audio out ports (bus) buffers
-    for (int prt = 0; prt < audio_out_ports.count(); prt++) {
-        KonfytJackPort* port = audio_out_ports.at(prt);
-        port->buffer = jack_port_get_buffer( port->jack_pointer, nframes); // Bus output buffer
+    for (int prt = 0; prt < audioOutPorts.count(); prt++) {
+        KfJackAudioPort* port = audioOutPorts.at(prt);
+        port->buffer = jack_port_get_buffer( port->jackPointer, nframes); // Bus output buffer
         // Reset buffer
         memset(port->buffer, 0, sizeof(jack_default_audio_sample_t)*nframes);
     }
 
     // Get all audio in ports buffers
-    for (int prt = 0; prt < audio_in_ports.count(); prt++) {
-        KonfytJackPort* port = audio_in_ports.at(prt);
-        port->buffer = jack_port_get_buffer( port->jack_pointer, nframes );
+    for (int prt = 0; prt < audioInPorts.count(); prt++) {
+        KfJackAudioPort* port = audioInPorts.at(prt);
+        port->buffer = jack_port_get_buffer( port->jackPointer, nframes );
     }
 
     // Get all Fluidsynth audio in port buffers
-    if (fluidsynthEngine != NULL) {
-        for (int prt = 0; prt < fluidsynth_ports.count(); prt++) {
-            KonfytJackPort* port1 = fluidsynth_ports[prt]->audio_in_l; // Left
-            KonfytJackPort* port2 = fluidsynth_ports[prt]->audio_in_r; // Right
+    if (fluidsynthEngine != nullptr) {
+        for (int prt = 0; prt < fluidsynthPorts.count(); prt++) {
+            KfJackPluginPorts* fluidsynthPort = fluidsynthPorts.at(prt);
+            KfJackAudioPort* port1 = fluidsynthPort->audioInLeft; // Left
+            KfJackAudioPort* port2 = fluidsynthPort->audioInRight; // Right
 
             // We are not getting our audio from Jack audio ports, but from Fluidsynth.
             // The buffers have already been allocated when we added the soundfont layer to the engine.
             // Get data from Fluidsynth
             fluidsynthEngine->fluidsynthWriteFloat(
-                        fluidsynth_ports[prt]->idInPluginEngine,
+                        fluidsynthPort->idInPluginEngine,
                         ((jack_default_audio_sample_t*)port1->buffer),
                         ((jack_default_audio_sample_t*)port2->buffer),
                         nframes );
@@ -1100,23 +831,24 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     }
 
     // Get all plugin audio in port buffers
-    for (int prt = 0; prt < plugin_ports.count(); prt++) {
+    for (int prt = 0; prt < pluginPorts.count(); prt++) {
+        KfJackPluginPorts* pluginPort = pluginPorts.at(prt);
         // Left
-        KonfytJackPort* port1 = plugin_ports[prt]->audio_in_l;
-        port1->buffer = jack_port_get_buffer( port1->jack_pointer, nframes );
+        KfJackAudioPort* port1 = pluginPort->audioInLeft;
+        port1->buffer = jack_port_get_buffer( port1->jackPointer, nframes );
         // Right
-        KonfytJackPort* port2 = plugin_ports[prt]->audio_in_r;
-        port2->buffer = jack_port_get_buffer( port2->jack_pointer, nframes );
+        KfJackAudioPort* port2 = pluginPort->audioInRight;
+        port2->buffer = jack_port_get_buffer( port2->jackPointer, nframes );
     }
 
     if (panicState > 0) {
         // We are in a panic state. Write zero to all buses.
-        // (Buses already zeroed above))))
+        // (Buses already zeroed above)
     } else {
 
         // For each audio route, if active, mix source buffer to destination buffer
-        for (int r = 0; r < audio_routes.count(); r++) {
-            KonfytJackAudioRoute* route = audio_routes[r];
+        for (int r = 0; r < audioRoutes.count(); r++) {
+            KfJackAudioRoute* route = audioRoutes[r];
             bool outputFlag = false;
             if (route->active) {
                 route->fadingOut = false;
@@ -1133,8 +865,8 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
         }
 
         // Finally, apply the gain of each active bus
-        for (int prt = 0; prt < audio_out_ports.count(); prt++) {
-            KonfytJackPort* port = audio_out_ports.at(prt);
+        for (int prt = 0; prt < audioOutPorts.count(); prt++) {
+            KfJackAudioPort* port = audioOutPorts.at(prt);
             // Do for each frame
             for (jack_nframes_t i = 0;  i < nframes; i++) {
                 ( (jack_default_audio_sample_t*)( port->buffer ) )[i] *= port->gain;
@@ -1146,15 +878,15 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     // ------------------------------------- End of bus processing
 
     // Get buffers for midi output ports to external apps
-    for (int p = 0; p < midi_out_ports.count(); p++) {
-        KonfytJackPort* port = midi_out_ports.at(p);
-        port->buffer = jack_port_get_buffer( port->jack_pointer, nframes);
+    for (int p = 0; p < midiOutPorts.count(); p++) {
+        KfJackMidiPort* port = midiOutPorts.at(p);
+        port->buffer = jack_port_get_buffer( port->jackPointer, nframes);
         jack_midi_clear_buffer( port->buffer );
     }
     // Get buffers for midi output ports to plugins
-    for (int p = 0; p < plugin_ports.count(); p++) {
-        KonfytJackPort* port = plugin_ports[p]->midi;
-        port->buffer = jack_port_get_buffer( port->jack_pointer, nframes );
+    for (int p = 0; p < pluginPorts.count(); p++) {
+        KfJackMidiPort* port = pluginPorts[p]->midi;
+        port->buffer = jack_port_get_buffer( port->jackPointer, nframes );
         jack_midi_clear_buffer( port->buffer );
     }
 
@@ -1163,8 +895,8 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
         // We just entered panic state. Send note off messages etc, and proceed to state 2 where we just wait.
 
         // Send to fluidsynth
-        for (int p = 0; p < fluidsynth_ports.count(); p++) {
-            int id = fluidsynth_ports.at(p)->idInPluginEngine;
+        for (int p = 0; p < fluidsynthPorts.count(); p++) {
+            int id = fluidsynthPorts.at(p)->idInPluginEngine;
             // Fluidsynthengine will force event channel to zero
             fluidsynthEngine->processJackMidi( id, &(evAllNotesOff) );
             fluidsynthEngine->processJackMidi( id, &(evSustainZero) );
@@ -1172,14 +904,14 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
         }
 
         // Give to all output ports to external apps
-        for (int p = 0; p < midi_out_ports.count(); p++) {
-            KonfytJackPort* port = midi_out_ports.at(p);
+        for (int p = 0; p < midiOutPorts.count(); p++) {
+            KfJackMidiPort* port = midiOutPorts.at(p);
             sendMidiClosureEvents_allChannels( port ); // Send to all MIDI channels
         }
 
         // Also give to all plugin ports
-        for (int p = 0; p < plugin_ports.count(); p++) {
-            KonfytJackPort* port = plugin_ports[p]->midi;
+        for (int p = 0; p < pluginPorts.count(); p++) {
+            KfJackMidiPort* port = pluginPorts[p]->midi;
             sendMidiClosureEvents_chanZeroOnly( port ); // Only on channel zero
         }
 
@@ -1189,10 +921,10 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 
 
     // For each midi input port...
-    for (int p = 0; p < midi_in_ports.count(); p++) {
+    for (int p = 0; p < midiInPorts.count(); p++) {
 
-        KonfytJackPort* sourcePort = midi_in_ports[p];
-        sourcePort->buffer = jack_port_get_buffer(sourcePort->jack_pointer, nframes);
+        KfJackMidiPort* sourcePort = midiInPorts[p];
+        sourcePort->buffer = jack_port_get_buffer(sourcePort->jackPointer, nframes);
         jack_nframes_t nevents = jack_midi_get_event_count(sourcePort->buffer);
 
         // For each midi input event...
@@ -1202,7 +934,6 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
             jack_midi_event_t inEvent_jack;
             jack_midi_event_get(&inEvent_jack, sourcePort->buffer, i);
             KonfytMidiEvent ev( inEvent_jack.buffer, inEvent_jack.size );
-            ev.sourceId = sourcePort->id;
 
             // Apply input MIDI port filter
             if (sourcePort->filter.passFilter(&ev)) {
@@ -1213,7 +944,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
             }
 
             // Send to GUI
-            eventsRxBuffer.stash(ev);
+            eventsRxBuffer.stash({sourcePort, ev});
 
             bool passEvent = true;
             bool recordNoteon = false;
@@ -1253,9 +984,9 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
             if ( (panicState == 0) && passEvent ) {
 
                 // For each MIDI route...
-                for (int r = 0; r < midi_routes.count(); r++) {
+                for (int r = 0; r < midiRoutes.count(); r++) {
 
-                    KonfytJackMidiRoute* route = midi_routes[r];
+                    KfJackMidiRoute* route = midiRoutes[r];
                     if (!route->active) { continue; }
                     if (route->source != sourcePort) { continue; }
                     if (route->destIsJackPort && route->destPort == NULL) { continue; }
@@ -1335,14 +1066,15 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 
     // Send route MIDI tx events
     // For each MIDI route...
-    for (int r = 0; r < midi_routes.count(); r++) {
+    for (int r = 0; r < midiRoutes.count(); r++) {
 
-        KonfytJackMidiRoute* route = midi_routes[r];
+        KfJackMidiRoute* route = midiRoutes[r];
         if (!route->active) { continue; }
         if (route->destIsJackPort && route->destPort == NULL) { continue; }
 
-        QList<KonfytMidiEvent> events = route->eventsTxBuffer.readAll();
-        foreach (KonfytMidiEvent event, events) {
+        route->eventsTxBuffer.startRead();
+        while (route->eventsTxBuffer.hasNext()) {
+            KonfytMidiEvent event = route->eventsTxBuffer.readNext();
 
             // Apply only the route MIDI filter output channel (if any)
             if (route->filter.outChan >= 0) {
@@ -1377,13 +1109,13 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
             }
 
         }
-
+        route->eventsTxBuffer.endRead();
     }
 
 
     if (eventsRxBuffer.commit()) {
         // Inform GUI there are events waiting
-        emit midiEventSignal();
+        emit midiEventSignal(); // TODO Check if it is okay to emit from realtime audio thread
     }
 
 
@@ -1420,14 +1152,14 @@ int KonfytJackEngine::jackXrunCallback(void *arg)
 }
 
 /* Return list of MIDI events that were buffered during JACK process callback(s). */
-QList<KonfytMidiEvent> KonfytJackEngine::getEvents()
+QList<KfJackMidiRxEvent> KonfytJackEngine::getEvents()
 {
     return eventsRxBuffer.readAll();
 }
 
 /* Helper function for Jack process callback.
  * Send noteoffs to all ports with corresponding noteon events. */
-void KonfytJackEngine::handleNoteoffEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KonfytJackPort *sourcePort)
+void KonfytJackEngine::handleNoteoffEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KfJackMidiPort *sourcePort)
 {
     for (int i=0; i < noteOnList.count(); i++) {
         KonfytJackNoteOnRecord* rec = noteOnList.at_ptr(i);
@@ -1462,7 +1194,7 @@ void KonfytJackEngine::handleNoteoffEvent(KonfytMidiEvent &ev, jack_midi_event_t
 
 /* Helper function for Jack process callback.
  * Send sustain zero to all Jack midi ports that have a recorded sustain event. */
-void KonfytJackEngine::handleSustainoffEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KonfytJackPort *sourcePort)
+void KonfytJackEngine::handleSustainoffEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KfJackMidiPort *sourcePort)
 {
     for (int i=0; i < sustainList.count(); i++) {
         KonfytJackNoteOnRecord* rec = sustainList.at_ptr(i);
@@ -1494,7 +1226,7 @@ void KonfytJackEngine::handleSustainoffEvent(KonfytMidiEvent &ev, jack_midi_even
 
 /* Helper function for Jack process callback.
  * Send pitchbend zero to all Jack midi ports that have a recorded pitchbend. */
-void KonfytJackEngine::handlePitchbendZeroEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KonfytJackPort *sourcePort)
+void KonfytJackEngine::handlePitchbendZeroEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KfJackMidiPort *sourcePort)
 {
     for (int i=0; i < pitchBendList.count(); i++) {
         KonfytJackNoteOnRecord* rec = pitchBendList.at_ptr(i);
@@ -1523,7 +1255,7 @@ void KonfytJackEngine::handlePitchbendZeroEvent(KonfytMidiEvent &ev, jack_midi_e
 }
 
 // Helper function for Jack process callback
-void KonfytJackEngine::mixBufferToDestinationPort(KonfytJackAudioRoute *route,
+void KonfytJackEngine::mixBufferToDestinationPort(KfJackAudioRoute *route,
                                                   jack_nframes_t nframes,
                                                   bool applyGain)
 {
@@ -1562,7 +1294,7 @@ void KonfytJackEngine::initMidiClosureEvents()
 }
 
 // Helper function for Jack process callback
-void KonfytJackEngine::sendMidiClosureEvents(KonfytJackPort *port, int channel)
+void KonfytJackEngine::sendMidiClosureEvents(KfJackMidiPort *port, int channel)
 {
     unsigned char* out_buffer;
 
@@ -1587,13 +1319,13 @@ void KonfytJackEngine::sendMidiClosureEvents(KonfytJackPort *port, int channel)
 }
 
 // Helper function for Jack process callback
-void KonfytJackEngine::sendMidiClosureEvents_chanZeroOnly(KonfytJackPort *port)
+void KonfytJackEngine::sendMidiClosureEvents_chanZeroOnly(KfJackMidiPort *port)
 {
     sendMidiClosureEvents(port, 0);
 }
 
 // Helper function for Jack process callback
-void KonfytJackEngine::sendMidiClosureEvents_allChannels(KonfytJackPort *port)
+void KonfytJackEngine::sendMidiClosureEvents_allChannels(KfJackMidiPort *port)
 {
     for (int i=0; i<15; i++) {
         sendMidiClosureEvents(port, i);
@@ -1603,29 +1335,29 @@ void KonfytJackEngine::sendMidiClosureEvents_allChannels(KonfytJackPort *port)
 bool KonfytJackEngine::initJackClient(QString name)
 {
     // Try to become a client of the jack server
-    if ( (client = jack_client_open(name.toLocal8Bit(), JackNullOption, NULL)) == NULL) {
+    if ( (mJackClient = jack_client_open(name.toLocal8Bit(), JackNullOption, NULL)) == NULL) {
         userMessage("JACK: Error becoming client.");
         this->clientActive = false;
         return false;
     } else {
-        ourJackClientName = jack_get_client_name(client); // jack_client_open modifies the given name if another client already uses it.
+        ourJackClientName = jack_get_client_name(mJackClient); // jack_client_open modifies the given name if another client already uses it.
         userMessage("JACK: Client created: " + ourJackClientName);
         this->clientActive = true;
     }
 
 
     // Set up callback functions
-    jack_set_port_connect_callback(client, KonfytJackEngine::jackPortConnectCallback, this);
-    jack_set_port_registration_callback(client, KonfytJackEngine::jackPortRegistrationCallback, this);
-    jack_set_process_callback (client, KonfytJackEngine::jackProcessCallback, this);
-    jack_set_xrun_callback(client, KonfytJackEngine::jackXrunCallback, this);
+    jack_set_port_connect_callback(mJackClient, KonfytJackEngine::jackPortConnectCallback, this);
+    jack_set_port_registration_callback(mJackClient, KonfytJackEngine::jackPortRegistrationCallback, this);
+    jack_set_process_callback (mJackClient, KonfytJackEngine::jackProcessCallback, this);
+    jack_set_xrun_callback(mJackClient, KonfytJackEngine::jackXrunCallback, this);
 
-    nframes = jack_get_buffer_size(client);
+    nframes = jack_get_buffer_size(mJackClient);
 
     // Activate the client
-    if (jack_activate(client)) {
+    if (jack_activate(mJackClient)) {
         userMessage("JACK: Cannot activate client.");
-        jack_free(client);
+        jack_free(mJackClient);
         this->clientActive = false;
         return false;
     } else {
@@ -1634,7 +1366,7 @@ bool KonfytJackEngine::initJackClient(QString name)
     }
 
     // Get sample rate
-    this->samplerate = jack_get_sample_rate(client);
+    this->samplerate = jack_get_sample_rate(mJackClient);
     userMessage("JACK: Samplerate " + n2s(samplerate));
 
     fadeOutSecs = 1;
@@ -1653,19 +1385,19 @@ bool KonfytJackEngine::initJackClient(QString name)
 void KonfytJackEngine::stopJackClient()
 {
     if (clientIsActive()) {
-        jack_client_close(client);
+        jack_client_close(mJackClient);
         this->clientActive = false;
     }
 }
 
 /* Get a string list of JACK ports, based on type pattern (e.g. "midi" or "audio", etc.)
  * and flags (e.g. JackPortIsInput or JackPortIsOutput). */
-QStringList KonfytJackEngine::getPortsList(QString typePattern, unsigned long flags)
+QStringList KonfytJackEngine::getJackPorts(QString typePattern, unsigned long flags)
 {
     QStringList pl;
     char** ports;
 
-    ports = (char**)jack_get_ports(client,NULL,typePattern.toLocal8Bit(), flags);
+    ports = (char**)jack_get_ports(mJackClient,NULL,typePattern.toLocal8Bit(), flags);
 
     int i=0;
     if (ports != NULL) {
@@ -1687,25 +1419,130 @@ QStringList KonfytJackEngine::getPortsList(QString typePattern, unsigned long fl
 /* Returns list of JACK midi input ports from the JACK server. */
 QStringList KonfytJackEngine::getMidiInputPortsList()
 {
-    return getPortsList("midi", JackPortIsInput);
+    return getJackPorts("midi", JackPortIsInput);
 }
 
 /* Returns list of JACK midi output ports from the JACK server. */
 QStringList KonfytJackEngine::getMidiOutputPortsList()
 {
-    return getPortsList("midi", JackPortIsOutput);
+    return getJackPorts("midi", JackPortIsOutput);
 }
 
 /* Returns list of JACK audio input ports from the JACK server. */
 QStringList KonfytJackEngine::getAudioInputPortsList()
 {
-    return getPortsList("audio", JackPortIsInput);
+    return getJackPorts("audio", JackPortIsInput);
 }
 
 /* Returns list of JACK audio output ports from the JACK server. */
 QStringList KonfytJackEngine::getAudioOutputPortsList()
 {
-    return getPortsList("audio", JackPortIsOutput);
+    return getJackPorts("audio", JackPortIsOutput);
+}
+
+KfJackMidiPort *KonfytJackEngine::addMidiPort(QString name, bool isInput)
+{
+    if (!clientIsActive()) { return nullptr; }
+    pauseJackProcessing(true);
+
+    KfJackMidiPort* port = new KfJackMidiPort();
+    port->jackPointer = registerJackMidiPort(name, isInput);
+    if (isInput) {
+        midiInPorts.append(port);
+    } else {
+        midiOutPorts.append(port);
+    }
+
+    pauseJackProcessing(false);
+    return port;
+}
+
+KfJackAudioPort *KonfytJackEngine::addAudioPort(QString name, bool isInput)
+{
+    if (!clientIsActive()) { return nullptr; }
+    pauseJackProcessing(true);
+
+    KfJackAudioPort* port = new KfJackAudioPort();
+    port->jackPointer = registerJackAudioPort(name, isInput);
+    if (isInput) {
+        audioInPorts.append(port);
+    } else {
+        audioOutPorts.append(port);
+    }
+
+    pauseJackProcessing(false);
+    return port;
+}
+
+void KonfytJackEngine::removeMidiPort(KfJackMidiPort *port)
+{
+    if (!port) {
+        error_abort("removeMidiPort: port null.");
+    }
+
+    pauseJackProcessing(true);
+
+    bool portIsOutput = midiOutPorts.contains(port);
+    midiInPorts.removeAll(port);
+    midiOutPorts.removeAll(port);
+    jack_port_unregister(mJackClient, port->jackPointer);
+    delete port;
+
+    // If this is an output port, remove all recorded noteon, sustain and pitchbend
+    // events related to this port.
+    if (portIsOutput) {
+        for (int i=0; i<noteOnList.count(); i++) {
+            KonfytJackNoteOnRecord *rec = noteOnList.at_ptr(i);
+            if (rec->jackPortNotFluidsynth) {
+                if (rec->port == port) {
+                    noteOnList.remove(i);
+                    i--; // Due to removal, have to stay at same index after for loop i++
+                }
+            }
+        }
+        for (int i=0; i<sustainList.count(); i++) {
+            KonfytJackNoteOnRecord *rec = sustainList.at_ptr(i);
+            if (rec->jackPortNotFluidsynth) {
+                if (rec->port == port) {
+                    sustainList.remove(i);
+                    i--;
+                }
+            }
+        }
+        for (int i=0; i<pitchBendList.count(); i++) {
+            KonfytJackNoteOnRecord *rec = pitchBendList.at_ptr(i);
+            if (rec->jackPortNotFluidsynth) {
+                if (rec->port == port) {
+                    pitchBendList.remove(i);
+                    i--;
+                }
+            }
+        }
+    }
+
+    // Remove this port from any routes.
+    removePortFromAllRoutes(port);
+
+    pauseJackProcessing(false);
+}
+
+void KonfytJackEngine::removeAudioPort(KfJackAudioPort *port)
+{
+    if (!port) {
+        error_abort("removeAudioPort: Audio port null.");
+    }
+
+    pauseJackProcessing(true);
+
+    audioInPorts.removeAll(port);
+    audioOutPorts.removeAll(port);
+    jack_port_unregister(mJackClient, port->jackPointer);
+    delete port;
+
+    // Remove this port from any routes.
+    removePortFromAllRoutes(port);
+
+    pauseJackProcessing(false);
 }
 
 double KonfytJackEngine::getSampleRate()
@@ -1724,7 +1561,7 @@ void KonfytJackEngine::addOtherJackConPair(KonfytJackConPair p)
 
     otherConsList.append(p);
 
-    refreshPortConnections();
+    refreshAllPortsConnections();
 }
 
 void KonfytJackEngine::removeOtherJackConPair(KonfytJackConPair p)
@@ -1737,7 +1574,7 @@ void KonfytJackEngine::removeOtherJackConPair(KonfytJackConPair p)
 
             // Disconnect JACK ports
             if (clientIsActive()) {
-                jack_disconnect(client, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
+                jack_disconnect(mJackClient, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
             }
 
             break;
@@ -1745,7 +1582,7 @@ void KonfytJackEngine::removeOtherJackConPair(KonfytJackConPair p)
     }
 
     pauseJackProcessing(false);
-    refreshPortConnections();
+    refreshAllPortsConnections();
 }
 
 void KonfytJackEngine::clearOtherJackConPair()
@@ -1768,7 +1605,7 @@ void KonfytJackEngine::activateRoutesForPatch(const KonfytPatch* patch, bool act
     QList<KonfytPatchLayer> midiOutLayers = patch->getMidiOutputLayerList();
     foreach (KonfytPatchLayer layer, midiOutLayers) {
         if (layer.hasError()) { continue; }
-        setMidiRouteActive(layer.midiOutputPortData.jackRouteId, active);
+        setMidiRouteActive(layer.midiOutputPortData.jackRoute, active);
     }
 
     // Plugins
@@ -1777,7 +1614,7 @@ void KonfytJackEngine::activateRoutesForPatch(const KonfytPatch* patch, bool act
     for (int i=0; i<pluginLayers.count(); i++) {
         KonfytPatchLayer layer = pluginLayers[i];
         if (layer.hasError()) { continue; }
-        setPluginActive(layer.sfzData.portsIdInJackEngine, active);
+        setPluginActive(layer.sfzData.portsInJackEngine, active);
     }
 
     // Soundfont ports
@@ -1786,7 +1623,7 @@ void KonfytJackEngine::activateRoutesForPatch(const KonfytPatch* patch, bool act
     for (int i=0; i<sfLayers.count(); i++) {
         KonfytPatchLayer layer = sfLayers[i];
         if (layer.hasError()) { continue; }
-        setSoundfontActive(layer.soundfontData.idInJackEngine, active);
+        setSoundfontActive(layer.soundfontData.portsInJackEngine, active);
     }
 
     // General audio input ports
@@ -1794,8 +1631,8 @@ void KonfytJackEngine::activateRoutesForPatch(const KonfytPatch* patch, bool act
     QList<KonfytPatchLayer> audioInLayers = patch->getAudioInLayerList();
     foreach (KonfytPatchLayer layer, audioInLayers) {
         if (layer.hasError()) { continue; }
-        setAudioRouteActive(layer.audioInPortData.jackRouteIdLeft, active);
-        setAudioRouteActive(layer.audioInPortData.jackRouteIdRight, active);
+        setAudioRouteActive(layer.audioInPortData.jackRouteLeft, active);
+        setAudioRouteActive(layer.audioInPortData.jackRouteRight, active);
     }
 
 }
@@ -1805,77 +1642,33 @@ void KonfytJackEngine::setGlobalTranspose(int transpose)
     this->globalTranspose = transpose;
 }
 
-KonfytJackAudioRoute *KonfytJackEngine::audioRouteFromId(int routeId)
+jack_port_t *KonfytJackEngine::registerJackMidiPort(QString name, bool input)
 {
-    KonfytJackAudioRoute* route = audioRouteIdMap.value(routeId, NULL);
-    if (route == NULL) {
-        error_abort("Invalid audio route " + n2s(routeId));
-    }
-    return route;
-}
-
-KonfytJackMidiRoute *KonfytJackEngine::midiRouteFromId(int routeId)
-{
-    KonfytJackMidiRoute* route = midiRouteIdMap.value(routeId, NULL);
-    if (route == NULL) {
-        error_abort("Invalid MIDI route " + n2s(routeId));
-    }
-    return route;
-}
-
-KonfytJackPort *KonfytJackEngine::audioInPortFromId(int portId)
-{
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (!audio_in_ports.contains(port)) {
-        error_abort("Invalid audio in port " + n2s(portId));
+    jack_port_t* port = jack_port_register( mJackClient,
+                                            name.toLocal8Bit().constData(),
+                                            JACK_DEFAULT_MIDI_TYPE,
+                                    input ? JackPortIsInput : JackPortIsOutput,
+                                            0);
+    if (!port) {
+        userMessage(QString("Failed to register JACK MIDI %1 port: %2")
+                .arg(input ? "input" : "output")
+                .arg(name));
     }
     return port;
 }
 
-KonfytJackPort *KonfytJackEngine::audioOutPortFromId(int portId)
+jack_port_t *KonfytJackEngine::registerJackAudioPort(QString name, bool input)
 {
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (!audio_out_ports.contains(port)) {
-        error_abort("Invalid audio out port " + n2s(portId));
+    jack_port_t* port = jack_port_register( mJackClient,
+                                            name.toLocal8Bit().constData(),
+                                            JACK_DEFAULT_AUDIO_TYPE,
+                                    input ? JackPortIsInput : JackPortIsOutput,
+                                            0);
+    if (!port) {
+        userMessage(QString("Failed to register JACK MIDI %1 port: %2")
+                .arg(input ? "input" : "output")
+                .arg(name));
     }
-    return port;
-}
-
-KonfytJackPort *KonfytJackEngine::midiInPortFromId(int portId)
-{
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (!midi_in_ports.contains(port)) {
-        error_abort("Invalid MIDI in port " + n2s(portId));
-    }
-    return port;
-}
-
-KonfytJackPort *KonfytJackEngine::midiOutPortFromId(int portId)
-{
-    KonfytJackPort* port = portIdMap.value(portId, NULL);
-    if (!midi_out_ports.contains(port)) {
-        error_abort("Invalid MIDI out port " + n2s(portId));
-    }
-    return port;
-}
-
-jack_port_t *KonfytJackEngine::registerJackPort(KonfytJackPort* portStruct, jack_client_t *client, QString port_name, QString port_type, unsigned long flags, unsigned long buffer_size)
-{
-    jack_port_t* port = NULL;
-
-    port = jack_port_by_name(client, port_name.toLocal8Bit());
-    if (port != NULL) {
-        userMessage("Got port by name!");
-    } else {
-        port = jack_port_register(client, port_name.toLocal8Bit(), port_type.toLocal8Bit(), flags, buffer_size);
-    }
-
-    if (port == NULL) {
-        userMessage("Failed to create JACK port " + port_name);
-    }
-
-    portStruct->jack_pointer = port;
-
     return port;
 }
 
@@ -1886,4 +1679,6 @@ void KonfytJackEngine::error_abort(QString msg)
     std::cout << "\n" << "Konfyt ERROR, ABORTING: konfytJackClient:" << msg.toLocal8Bit().constData();
     abort();
 }
+
+
 

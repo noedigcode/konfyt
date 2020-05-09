@@ -22,19 +22,19 @@
 #ifndef KONFYT_PATCH_ENGINE_H
 #define KONFYT_PATCH_ENGINE_H
 
-#include <QObject>
-
-#include <jack/jack.h>
-
 #include "konfytBridgeEngine.h"
-#include "konfytPatch.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackEngine.h"
+#include "konfytLscpEngine.h"
+#include "konfytPatch.h"
 #include "konfytProject.h"
 #ifdef KONFYT_USE_CARLA
     #include "konfytCarlaEngine.h"
 #endif
-#include "konfytLscpEngine.h"
+
+#include <jack/jack.h>
+
+#include <QObject>
 
 class KonfytPatchEngine : public QObject
 {
@@ -114,8 +114,8 @@ public:
     void error_abort(QString msg);
     
 private:
-    KonfytPatch* currentPatch;
-    KonfytProject* currentProject;
+    KonfytPatch* currentPatch = nullptr;
+    KonfytProject* currentProject = nullptr;
     float masterGain;
     float convertGain(float linearGain);
 
@@ -132,7 +132,7 @@ private:
     // SFZ plugins
     // ----------------------------------------------------
     KonfytBaseSoundEngine* sfzEngine;
-    bool bridge;
+    bool bridge = false;
 
     // ----------------------------------------------------
     // Jack
@@ -143,9 +143,6 @@ private:
 signals:
     void userMessage(QString msg);
     void statusInfo(QString msg);
-    
-public slots:
-    void userMessageFromEngine(QString msg);
     
 };
 

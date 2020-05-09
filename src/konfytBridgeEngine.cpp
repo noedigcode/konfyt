@@ -42,6 +42,11 @@ KonfytBridgeEngine::~KonfytBridgeEngine()
     }
 }
 
+QString KonfytBridgeEngine::engineName()
+{
+    return "BridgeEngine";
+}
+
 void KonfytBridgeEngine::setKonfytExePath(QString path)
 {
     exePath = path;

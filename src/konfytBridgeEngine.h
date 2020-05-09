@@ -48,6 +48,7 @@ public:
     explicit KonfytBridgeEngine(QObject *parent = 0);
     ~KonfytBridgeEngine();
 
+    QString engineName();
     void setKonfytExePath(QString path);
     void initEngine(KonfytJackEngine* jackEngine);
     int addSfz(QString soundfilePath);

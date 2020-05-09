@@ -91,10 +91,10 @@
 struct PrjAudioBus
 {
     QString busName;
-    int leftJackPortId = -1;
+    KfJackAudioPort* leftJackPort = nullptr;
     float leftGain = 1;
     QStringList leftOutClients;
-    int rightJackPortId = -1;
+    KfJackAudioPort* rightJackPort = nullptr;
     float rightGain = 1;
     QStringList rightOutClients;
 };
@@ -102,8 +102,8 @@ struct PrjAudioBus
 struct PrjAudioInPort
 {
     QString portName;
-    int leftJackPortId = -1;
-    int rightJackPortId = -1;
+    KfJackAudioPort* leftJackPort = nullptr;
+    KfJackAudioPort* rightJackPort = nullptr;
     float leftGain = 1;
     float rightGain = 1;
     QStringList leftInClients;
@@ -114,7 +114,7 @@ struct PrjMidiPort
 {
     QString portName;
     QStringList clients;
-    int jackPortId = -1;
+    KfJackMidiPort* jackPort = nullptr;
     KonfytMidiFilter filter;
 };
 
@@ -172,7 +172,7 @@ public:
     void midiInPort_removePort(int portId);
     bool midiInPort_exists(int portId);
     PrjMidiPort midiInPort_getPort(int portId);
-    int midiInPort_getPortIdWithJackId(int jackId);
+    int midiInPort_getPortIdWithJackId(KfJackMidiPort *jackPort);
     int midiInPort_getFirstPortId(int skipId);
     int midiInPort_count();
     void midiInPort_replace(int portId, PrjMidiPort port);

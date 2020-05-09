@@ -34,6 +34,7 @@ public:
     KonfytLscpEngine(QObject *parent = 0);
     ~KonfytLscpEngine();
 
+    QString engineName();
     void initEngine(KonfytJackEngine *jackEngine);
     QString jackClientName();
     int addSfz(QString path);

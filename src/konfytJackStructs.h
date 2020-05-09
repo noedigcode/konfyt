@@ -41,63 +41,84 @@ struct KonfytJackPortsSpec
     QString audioInRightConnectTo;
 };
 
-struct KonfytJackPort {
-    int id = 0;
+struct KfJackAudioPort
+{
+    friend class KonfytJackEngine;
+protected:
     float gain = 1;
-    jack_port_t* jack_pointer = NULL;
+    jack_port_t* jackPointer = nullptr;
+    void* buffer;
+    QStringList connectionList;
+    RingbufferQMutex<float> traffic{8192};
+};
+
+struct KfJackMidiPort
+{
+    friend class KonfytJackEngine;
+protected:
+    jack_port_t* jackPointer = nullptr;
     void* buffer;
     KonfytMidiFilter filter;
     QStringList connectionList;
     int noteOns = 0;
     bool sustainNonZero = false;
     bool pitchbendNonZero = false;
+    RingbufferQMutex<KonfytMidiEvent> traffic{8192};
 };
 
-struct KonfytJackMidiRoute {
-    int id = 0;
+struct KfJackMidiRoute
+{
+    friend class KonfytJackEngine;
+protected:
     bool active = false;
-    bool prev_active = false;
+    bool prevActive = false;
     KonfytMidiFilter filter;
-    KonfytJackPort* source = NULL;
-    KonfytJackPort* destPort = NULL;
+    KfJackMidiPort* source = nullptr;
+    KfJackMidiPort* destPort = nullptr;
     int destFluidsynthID = 0;
     bool destIsJackPort = true;
     RingbufferQMutex<KonfytMidiEvent> eventsTxBuffer{100};
 };
 
-struct KonfytJackAudioRoute {
-    int id = 0;
+struct KfJackAudioRoute
+{
+    friend class KonfytJackEngine;
+protected:
     bool active = false;
-    bool prev_active = false;
+    bool prevActive = false;
     float gain = 1;
     unsigned int fadeoutCounter = 0;
     bool fadingOut = false;
-    KonfytJackPort* source = NULL;
-    KonfytJackPort* dest = NULL;
+    KfJackAudioPort* source = nullptr;
+    KfJackAudioPort* dest = nullptr;
 };
 
-struct KonfytJackPluginPorts {
-    int id;
+struct KfJackPluginPorts
+{
+    friend class KonfytJackEngine;
+protected:
     int idInPluginEngine; // Id in plugin's respective engine (used for Fluidsynth)
-    KonfytJackPort* midi;        // Send midi output to plugin
-    KonfytJackPort* audio_in_l;  // Receive plugin audio
-    KonfytJackPort* audio_in_r;
-    int midiRouteId;
-    int audioLeftRouteId;
-    int audioRightRouteId;
+    KfJackMidiPort* midi;        // Send midi output to plugin
+    KfJackAudioPort* audioInLeft;  // Receive plugin audio
+    KfJackAudioPort* audioInRight;
+    KfJackMidiRoute* midiRoute = nullptr;
+    KfJackAudioRoute* audioLeftRoute = nullptr;
+    KfJackAudioRoute* audioRightRoute = nullptr;
 };
 
-struct KonfytJackNoteOnRecord {
+struct KonfytJackNoteOnRecord
+{
     int note;
     bool jackPortNotFluidsynth; // true for jack port, false for Fluidsynth
     int fluidsynthID;
-    KonfytJackPort* port;
-    KonfytJackPort* sourcePort;
+    KfJackMidiPort* port;
+    KfJackMidiPort* sourcePort;
     KonfytMidiFilter filter;
     int globalTranspose;
 };
 
-struct KonfytJackConPair {
+struct KonfytJackConPair
+{
     QString srcPort;
     QString destPort;
 
@@ -111,6 +132,11 @@ struct KonfytJackConPair {
     }
 };
 
+struct KfJackMidiRxEvent
+{
+    KfJackMidiPort* sourcePort;
+    KonfytMidiEvent midiEvent;
+};
 
 
 #endif // KONFYTJACKSTRUCTS_H

@@ -84,7 +84,6 @@ private:
     unsigned char mData[MIDI_DATA_MAX_SIZE];
 
 public:
-    int sourceId = -1;
     int channel = 0;
     int bankMSB = -1;
     int bankLSB = -1;

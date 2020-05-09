@@ -30,6 +30,7 @@
 #include <QSlider>
 
 #include "konfytStructs.h"
+#include "konfytJackStructs.h"
 #include "konfytMidiFilter.h"
 
 
@@ -61,7 +62,7 @@ struct LayerSoundfontStruct {
     int indexInEngine = -1;
     bool solo = false;
     bool mute = false;
-    int idInJackEngine = 0;
+    KfJackPluginPorts* portsInJackEngine = nullptr;
 };
 
 // ----------------------------------------------------
@@ -73,7 +74,7 @@ struct LayerSfzStruct {
     QString midi_in_port;
     QString audio_out_port_left;
     QString audio_out_port_right;
-    int portsIdInJackEngine = -1;
+    KfJackPluginPorts* portsInJackEngine = nullptr;
 
     KonfytMidiFilter midiFilter;
 
@@ -93,7 +94,7 @@ struct LayerMidiOutStruct {
     KonfytMidiFilter filter;
     bool solo = false;
     bool mute = false;
-    int jackRouteId = -1;
+    KfJackMidiRoute* jackRoute = nullptr;
 };
 
 // ----------------------------------------------------
@@ -105,8 +106,8 @@ struct LayerAudioInStruct {
     float gain = 1.0;
     bool solo = false;
     bool mute = false;
-    int jackRouteIdLeft = -1;
-    int jackRouteIdRight = -1;
+    KfJackAudioRoute* jackRouteLeft = nullptr;
+    KfJackAudioRoute* jackRouteRight = nullptr;
 };
 
 

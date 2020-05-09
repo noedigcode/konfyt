@@ -33,6 +33,7 @@ public:
     explicit KonfytBaseSoundEngine(QObject *parent = 0);
     virtual ~KonfytBaseSoundEngine();
 
+    virtual QString engineName() = 0;
     virtual void initEngine(KonfytJackEngine* jackEngine) = 0;
     virtual QString jackClientName() { return ""; }
     virtual int addSfz(QString path) = 0;

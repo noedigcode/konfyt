@@ -9,11 +9,7 @@ template <class T>
 class RingbufferQMutex
 {
 public:
-    RingbufferQMutex (int bufferSize) :
-        iread(0),
-        iwrite(0),
-        iwriteEnd(0),
-        stashed(false)
+    RingbufferQMutex (int bufferSize)
     {
         size = bufferSize;
         buffer = (T*)malloc(sizeof(T)*size);
@@ -53,23 +49,51 @@ public:
         return ret;
     }
 
+    /* Reads all the data and returns a QList. This conveniently combines
+     * startRead(), hasNext(), readNext() and endRead() and should be called
+     * stand-alone. Note however that a QList is constructed. */
     QList<T> readAll()
     {
-        lockedData.mutex.lock();
-        int ireadEnd = lockedData.readEnd;
-        lockedData.mutex.unlock();
+        startRead();
 
         QList<T> ret;
-        while (iread != ireadEnd) {
-            ret.append(buffer[iread]);
-            iread = incr(iread);
+        while (hasNext()) {
+            ret.append(readNext());
         }
 
+        endRead();
+
+        return ret;
+    }
+
+    /* To be used in combination with hasNext(), readNext() and endRead() as an
+     * alternative to readAll() in order to read elements but not allocate a
+     * QList. */
+    void startRead()
+    {
+        lockedData.mutex.lock();
+        ireadEnd = lockedData.readEnd;
+        lockedData.mutex.unlock();
+    }
+
+    bool hasNext()
+    {
+        return (iread != ireadEnd);
+    }
+
+    /* Only call this if hasNext() returns true. */
+    T readNext()
+    {
+        T ret = buffer[iread];
+        iread = incr(iread);
+        return ret;
+    }
+
+    void endRead()
+    {
         lockedData.mutex.lock();
         lockedData.writeEnd = iread;
         lockedData.mutex.unlock();
-
-        return ret;
     }
 
 
@@ -77,10 +101,11 @@ private:
     int size;
     T* buffer;
 
-    int iread;
-    int iwrite;
-    int iwriteEnd;
-    bool stashed;
+    int iread = 0;
+    int ireadEnd = 0;
+    int iwrite = 0;
+    int iwriteEnd = 0;
+    bool stashed = false;
 
     struct LockedData {
         QMutex mutex;

@@ -62,6 +62,7 @@ public:
     ~KonfytCarlaEngine();
 
     // KonfytBaseSoundEngine interface
+    QString engineName();
     void initEngine(KonfytJackEngine *jackEngine);
     QString jackClientName();
     int addSfz(QString path);

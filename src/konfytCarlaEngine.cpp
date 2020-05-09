@@ -35,6 +35,11 @@ KonfytCarlaEngine::~KonfytCarlaEngine()
     CARLA_FUNC_V(carla_engine_close);
 }
 
+QString KonfytCarlaEngine::engineName()
+{
+    return "CarlaEngine";
+}
+
 /************************************************************************
  * OLD CODE FOR LOADING OTHER TYPES OF PLUGINS
  *

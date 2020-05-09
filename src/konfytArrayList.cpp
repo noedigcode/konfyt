@@ -24,6 +24,7 @@
 
 #include "konfytArrayList.h"
 
+#include <stdlib.h>
 
 template <typename T>
 KonfytArrayList<T>::KonfytArrayList()

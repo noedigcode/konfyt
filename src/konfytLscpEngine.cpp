@@ -39,6 +39,11 @@ KonfytLscpEngine::~KonfytLscpEngine()
     ls.deinit();
 }
 
+QString KonfytLscpEngine::engineName()
+{
+    return "LscpEngine";
+}
+
 void KonfytLscpEngine::initEngine(KonfytJackEngine *jackEngine)
 {
     ls.init( jackEngine->clientName() + "_LS" );

@@ -728,14 +728,14 @@ PrjMidiPort KonfytProject::midiInPort_getPort(int portId)
     return midiInPortMap.value(portId);
 }
 
-int KonfytProject::midiInPort_getPortIdWithJackId(int jackId)
+int KonfytProject::midiInPort_getPortIdWithJackId(KfJackMidiPort *jackPort)
 {
     int ret = -1;
 
     QList<int> ids = midiInPortMap.keys();
     foreach (int id, ids) {
         PrjMidiPort p = midiInPortMap[id];
-        if (p.jackPortId == jackId) {
+        if (p.jackPort == jackPort) {
             ret = id;
             break;
         }
@@ -881,10 +881,6 @@ int KonfytProject::audioBus_add(QString busName)
 {
     PrjAudioBus bus;
     bus.busName = busName;
-    bus.leftGain = 1;
-    bus.rightGain = 1;
-    bus.leftJackPortId = -1;
-    bus.rightJackPortId = -1;
 
     int busId = audioBus_getUniqueId();
     audioBusMap.insert(busId, bus);
@@ -1010,10 +1006,6 @@ int KonfytProject::audioInPort_add(QString portName)
 {
     PrjAudioInPort port;
     port.portName = portName;
-    port.leftGain = 1;
-    port.leftJackPortId = -1;
-    port.rightJackPortId = -1;
-    port.rightGain = 1;
 
     int portId = audioInPort_getUniqueId();
     audioInPortMap.insert(portId, port);

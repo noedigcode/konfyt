@@ -627,14 +627,14 @@ private slots:
     // ========================================================================
 private:
     KonfytJackEngine* jack;
-    void addAudioBusToJack(int busNo, int *leftPortId, int *rightPortId);
-    void addAudioInPortsToJack(int portNo, int *leftPortId, int *rightPortId);
-    int addMidiOutPortToJack(int portId);
-    int addMidiInPortToJack(int portId);
+    void addAudioBusToJack(int busNo, KfJackAudioPort** leftPort, KfJackAudioPort** rightPort);
+    void addAudioInPortsToJack(int portNo, KfJackAudioPort** leftPort, KfJackAudioPort** rightPort);
+    KfJackMidiPort* addMidiOutPortToJack(int numberLabel);
+    KfJackMidiPort* addMidiInPortToJack(int numberLabel);
     bool jackPortBelongstoUs(QString jackPortName);
 private slots:
     void midiEventSlot();
-    void handleMidiEvent(KonfytMidiEvent ev);
+    void handleMidiEvent(KfJackMidiRxEvent rxEvent);
     void jackXrun();
     void jackPortRegisterOrConnectCallback();
 
@@ -788,9 +788,8 @@ private:
             return !sustainMap[patch].isEmpty();
         }
 
-        void setSustain(KonfytPatch* patch, KonfytPatchLayer layer, int sustainVal)
+        void setSustain(KonfytPatch* patch, int layerId, int sustainVal)
         {
-
             if (sustainVal) {
                 sustainMap[patch].insert(layerId, sustainVal);
             } else {

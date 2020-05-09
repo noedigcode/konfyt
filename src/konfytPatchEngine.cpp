@@ -20,26 +20,17 @@
  *****************************************************************************/
 
 #include "konfytPatchEngine.h"
+
 #include <iostream>
 
 KonfytPatchEngine::KonfytPatchEngine(QObject *parent) :
     QObject(parent)
 {
-    currentProject = NULL;
-    currentPatch = NULL;
-    bridge = false;
 }
 
 KonfytPatchEngine::~KonfytPatchEngine()
 {
     delete sfzEngine;
-}
-
-
-// Get a userMessage signal from an engine, and pass it on to the gui.
-void KonfytPatchEngine::userMessageFromEngine(QString msg)
-{
-    userMessage("patchEngine: " + msg);
 }
 
 void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytAppInfo appInfo)
@@ -49,8 +40,9 @@ void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytA
 
     // Fluidsynth Engine
     konfytFluidsynthEngine* e = new konfytFluidsynthEngine();
-    connect(e, &konfytFluidsynthEngine::userMessage,
-            this, &KonfytPatchEngine::userMessageFromEngine);
+    connect(e, &konfytFluidsynthEngine::userMessage, [=](QString msg){
+        userMessage("Fluidsynth: " + msg);
+    });
     e->InitFluidsynth(jack->getSampleRate());
     fluidsynthEngine = e;
     jack->setFluidsynthEngine(e); // Give to Jack so it can get sound out of it.
@@ -74,8 +66,9 @@ void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytA
         sfzEngine = new KonfytLscpEngine();
     }
 
-    connect(sfzEngine, &KonfytBaseSoundEngine::userMessage,
-            this, &KonfytPatchEngine::userMessageFromEngine);
+    connect(sfzEngine, &KonfytBaseSoundEngine::userMessage, [=](QString msg){
+        userMessage(sfzEngine->engineName() + ": " + msg);
+    });
     connect(sfzEngine, &KonfytBaseSoundEngine::statusInfo,
             this, &KonfytPatchEngine::statusInfo);
 
@@ -187,8 +180,8 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
                 spec.midiFilter = layer.sfzData.midiFilter;
                 spec.audioInLeftConnectTo = layer.sfzData.audio_out_port_left;
                 spec.audioInRightConnectTo = layer.sfzData.audio_out_port_right;
-                int jackId = jack->addPluginPortsAndConnect( spec );
-                layer.sfzData.portsIdInJackEngine = jackId;
+                KfJackPluginPorts* jackPorts = jack->addPluginPortsAndConnect( spec );
+                layer.sfzData.portsInJackEngine = jackPorts;
 
                 // Gain, solo, mute and bus are set later in refershAllGainsAndRouting()
             }
@@ -216,8 +209,8 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
             } else {
                 layer.soundfontData.indexInEngine = ID;
                 // Add to Jack engine (this also assigns the midi filter)
-                int jackId = jack->addSoundfont( layer.soundfontData );
-                layer.soundfontData.idInJackEngine = jackId;
+                KfJackPluginPorts* jackPorts = jack->addSoundfont( layer.soundfontData );
+                layer.soundfontData.portsInJackEngine = jackPorts;
                 // Gain, solo, mute and bus are set later in refreshAllGainsAndRouting()
             }
             // Update layer in patch
@@ -233,7 +226,7 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
 
     QList<KonfytPatchLayer> audioInLayers = currentPatch->getAudioInLayerList();
     foreach (KonfytPatchLayer layer, audioInLayers) {
-        if (layer.audioInPortData.jackRouteIdLeft < 0) {
+        if (layer.audioInPortData.jackRouteLeft == nullptr) {
             // Routes haven't been created yet
 
             // Get source ports
@@ -258,11 +251,11 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
             PrjAudioBus destPorts = currentProject->audioBus_getBus(layer.busIdInProject);
 
             // Route for left port
-            layer.audioInPortData.jackRouteIdLeft = jack->addAudioRoute(
-                        srcPorts.leftJackPortId, destPorts.leftJackPortId);
+            layer.audioInPortData.jackRouteLeft = jack->addAudioRoute(
+                        srcPorts.leftJackPort, destPorts.leftJackPort);
             // Route for right port
-            layer.audioInPortData.jackRouteIdRight = jack->addAudioRoute(
-                        srcPorts.rightJackPortId, destPorts.rightJackPortId);
+            layer.audioInPortData.jackRouteRight = jack->addAudioRoute(
+                        srcPorts.rightJackPort, destPorts.rightJackPort);
 
             // Update layer in patch
             currentPatch->replaceLayer(layer);
@@ -276,7 +269,7 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
 
     QList<KonfytPatchLayer> midiOutLayers = currentPatch->getMidiOutputLayerList();
     foreach (KonfytPatchLayer layer, midiOutLayers) {
-        if (layer.midiOutputPortData.jackRouteId < 0) {
+        if (layer.midiOutputPortData.jackRoute == nullptr) {
             // Route hasn't been created yet
 
             // Get source port
@@ -300,15 +293,15 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
             PrjMidiPort destPort = currentProject->midiOutPort_getPort(layer.midiOutputPortData.portIdInProject);
 
             // Create route
-            layer.midiOutputPortData.jackRouteId = jack->addMidiRoute(
-                        srcPort.jackPortId, destPort.jackPortId);
+            layer.midiOutputPortData.jackRoute = jack->addMidiRoute(
+                        srcPort.jackPort, destPort.jackPort);
 
             // Update layer in patch
             currentPatch->replaceLayer(layer);
         }
 
         // Set MIDI Filter
-        jack->setRouteMidiFilter(layer.midiOutputPortData.jackRouteId,
+        jack->setRouteMidiFilter(layer.midiOutputPortData.jackRoute,
                                  layer.midiOutputPortData.filter);
     }
 
@@ -368,7 +361,7 @@ void KonfytPatchEngine::unloadLayer(KonfytPatch *patch, KonfytPatchLayer *item)
     if (layer.getLayerType() == KonfytLayerType_SoundfontProgram) {
         if (layer.soundfontData.indexInEngine >= 0) {
             // First remove from jack
-            jack->removeSoundfont(layer.soundfontData.idInJackEngine);
+            jack->removeSoundfont(layer.soundfontData.portsInJackEngine);
             // Then from fluidsynthEngine
             fluidsynthEngine->removeSoundfontProgram(layer.soundfontData.indexInEngine);
             // Set unloaded in patch
@@ -378,7 +371,7 @@ void KonfytPatchEngine::unloadLayer(KonfytPatch *patch, KonfytPatchLayer *item)
     } else if (layer.getLayerType() == KonfytLayerType_Sfz) {
         if (layer.sfzData.indexInEngine >= 0) {
             // First remove from JACK
-            jack->removePlugin(layer.sfzData.portsIdInJackEngine);
+            jack->removePlugin(layer.sfzData.portsInJackEngine);
             // Then from SFZ engine
             sfzEngine->removeSfz(layer.sfzData.indexInEngine);
             // Set unloaded in patch
@@ -520,26 +513,26 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
             fluidsynthEngine->setGain( sfData.indexInEngine, convertGain(sfData.gain*masterGain) );
 
             // Set MIDI and bus routing
-            jack->setSoundfontRouting( sfData.idInJackEngine, midiInPort.jackPortId,
-                                       bus.leftJackPortId, bus.rightJackPortId );
+            jack->setSoundfontRouting( sfData.portsInJackEngine, midiInPort.jackPort,
+                                       bus.leftJackPort, bus.rightJackPort );
 
             // Activate route in JACK engine
-            jack->setSoundfontActive(sfData.idInJackEngine, activate);
+            jack->setSoundfontActive(sfData.portsInJackEngine, activate);
 
         } else if (layerType == KonfytLayerType_Sfz) {
 
             LayerSfzStruct pluginData = layer.sfzData;
             // Gain = layer gain * master gain
             // Set gain of JACK ports instead of sfzEngine->setGain() since this isn't implemented for all engine types yet.
-            jack->setPluginGain(pluginData.portsIdInJackEngine, convertGain(pluginData.gain*masterGain) );
+            jack->setPluginGain(pluginData.portsInJackEngine, convertGain(pluginData.gain*masterGain) );
 
             // Set MIDI and bus routing
-            jack->setPluginRouting(pluginData.portsIdInJackEngine,
-                                   midiInPort.jackPortId,
-                                   bus.leftJackPortId, bus.rightJackPortId);
+            jack->setPluginRouting(pluginData.portsInJackEngine,
+                                   midiInPort.jackPort,
+                                   bus.leftJackPort, bus.rightJackPort);
 
             // Activate route in JACK engine
-            jack->setPluginActive(pluginData.portsIdInJackEngine, activate);
+            jack->setPluginActive(pluginData.portsInJackEngine, activate);
 
         } else if (layerType == KonfytLayerType_MidiOut) {
 
@@ -550,11 +543,11 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
                 PrjMidiPort prjMidiOutPort = currentProject->midiOutPort_getPort( portData.portIdInProject );
 
                 // Set routing
-                jack->setMidiRoute(portData.jackRouteId, midiInPort.jackPortId,
-                                   prjMidiOutPort.jackPortId);
+                jack->setMidiRoute(portData.jackRoute, midiInPort.jackPort,
+                                   prjMidiOutPort.jackPort);
 
                 // Activate route
-                jack->setMidiRouteActive(portData.jackRouteId, activate);
+                jack->setMidiRouteActive(portData.jackRoute, activate);
 
             } else {
                 userMessage("WARNING: Layer " + n2s(i+1) + " invalid MIDI out port " + n2s(portData.portIdInProject));
@@ -571,22 +564,23 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
                 PrjAudioInPort portPair = currentProject->audioInPort_getPort(audioPortData.portIdInProject);
                 // Left channel
                 // Gain
-                jack->setAudioRouteGain(audioPortData.jackRouteIdLeft, convertGain(audioPortData.gain*masterGain));
+                jack->setAudioRouteGain(audioPortData.jackRouteLeft,
+                                        convertGain(audioPortData.gain*masterGain));
                 // Bus routing
-                jack->setAudioRoute(audioPortData.jackRouteIdLeft,
-                                    portPair.leftJackPortId,
-                                    bus.leftJackPortId);
+                jack->setAudioRoute(audioPortData.jackRouteLeft,
+                                    portPair.leftJackPort,
+                                    bus.leftJackPort);
                 // Activate route
-                jack->setAudioRouteActive(audioPortData.jackRouteIdLeft, activate);
+                jack->setAudioRouteActive(audioPortData.jackRouteLeft, activate);
                 // Right channel
                 // Gain
-                jack->setAudioRouteGain(audioPortData.jackRouteIdRight, convertGain(audioPortData.gain*masterGain));
+                jack->setAudioRouteGain(audioPortData.jackRouteRight, convertGain(audioPortData.gain*masterGain));
                 // Bus routing
-                jack->setAudioRoute(audioPortData.jackRouteIdRight,
-                                    portPair.rightJackPortId,
-                                    bus.rightJackPortId);
+                jack->setAudioRoute(audioPortData.jackRouteRight,
+                                    portPair.rightJackPort,
+                                    bus.rightJackPort);
                 // Activate route
-                jack->setAudioRouteActive(audioPortData.jackRouteIdRight, activate);
+                jack->setAudioRouteActive(audioPortData.jackRouteRight, activate);
 
             } else {
                 userMessage("WARNING: Layer " + n2s(i+1) + " invalid audio in port " + n2s(audioPortData.portIdInProject));
@@ -737,7 +731,7 @@ void KonfytPatchEngine::sendCurrentPatchMidi()
     Q_ASSERT( currentPatch != NULL );
     foreach (KonfytPatchLayer layer, currentPatch->getMidiOutputLayerList()) {
         if (layer.hasError()) { continue; }
-        jack->sendMidiEventsOnRoute(layer.midiOutputPortData.jackRouteId,
+        jack->sendMidiEventsOnRoute(layer.midiOutputPortData.jackRoute,
                                     layer.getMidiSendListEvents());
     }
 }
@@ -748,7 +742,7 @@ void KonfytPatchEngine::sendLayerMidi(KonfytPatchLayer *layerItem)
     KonfytPatchLayer l = currentPatch->getLayerItem(*layerItem);
     if (l.hasError()) { return; }
     if (l.getLayerType() == KonfytLayerType_MidiOut) {
-        jack->sendMidiEventsOnRoute(l.midiOutputPortData.jackRouteId,
+        jack->sendMidiEventsOnRoute(l.midiOutputPortData.jackRoute,
                                     l.getMidiSendListEvents());
     }
 }
@@ -763,17 +757,17 @@ void KonfytPatchEngine::setLayerFilter(KonfytPatchLayer *layerItem, KonfytMidiFi
     // And also in the respective engine.
     if (layerItem->getLayerType() == KonfytLayerType_SoundfontProgram) {
 
-        jack->setSoundfontMidiFilter(layerItem->soundfontData.idInJackEngine, filter);
+        jack->setSoundfontMidiFilter(layerItem->soundfontData.portsInJackEngine, filter);
 
     } else if (layerItem->getLayerType() == KonfytLayerType_Sfz) {
 
-        jack->setPluginMidiFilter( layerItem->sfzData.portsIdInJackEngine,
+        jack->setPluginMidiFilter( layerItem->sfzData.portsInJackEngine,
                                          layerItem->sfzData.midiFilter);
 
     } else if (layerItem->getLayerType() == KonfytLayerType_MidiOut) {
 
         LayerMidiOutStruct layerPort = layerItem->midiOutputPortData;
-        jack->setRouteMidiFilter(layerPort.jackRouteId, layerPort.filter);
+        jack->setRouteMidiFilter(layerPort.jackRoute, layerPort.filter);
 
     }
 }
