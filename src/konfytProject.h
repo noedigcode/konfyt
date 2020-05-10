@@ -22,6 +22,12 @@
 #ifndef KONFYT_PROJECT_H
 #define KONFYT_PROJECT_H
 
+#include "konfytDefines.h"
+#include "konfytJackStructs.h"
+#include "konfytPatch.h"
+#include "konfytProcess.h"
+#include "konfytStructs.h"
+
 #include <QDir>
 #include <QFile>
 #include <QObject>
@@ -29,11 +35,6 @@
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 
-#include "konfytPatch.h"
-#include "konfytProcess.h"
-#include "konfytDefines.h"
-#include "konfytStructs.h"
-#include "konfytJackStructs.h"
 
 #define PROJECT_FILENAME_EXTENSION ".konfytproject"
 #define PROJECT_PATCH_DIR "patches"

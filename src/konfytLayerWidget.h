@@ -22,6 +22,9 @@
 #ifndef KONFYT_LAYER_WIDGET_H
 #define KONFYT_LAYER_WIDGET_H
 
+#include "konfytPatchLayer.h"
+#include "konfytProject.h"
+
 #include <QWidget>
 #include <QListWidgetItem>
 #include <QMenu>
@@ -29,9 +32,6 @@
 #include <QBrush>
 #include <QRect>
 #include <QTimer>
-
-#include "konfytPatchLayer.h"
-#include "konfytProject.h"
 
 
 namespace Ui {

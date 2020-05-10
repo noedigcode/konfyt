@@ -22,10 +22,11 @@
 #ifndef KONFYTMIDI_H
 #define KONFYTMIDI_H
 
+#include "konfytDefines.h"
+
 #include <QString>
 #include <QXmlStreamWriter>
 #include <QXmlStreamReader>
-#include "konfytDefines.h"
 
 #define MIDI_EVENT_TYPE_NOTEON 0x90
 #define MIDI_EVENT_TYPE_NOTEOFF 0x80

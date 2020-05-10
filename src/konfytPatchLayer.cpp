@@ -50,8 +50,8 @@ QList<KonfytMidiEvent> KonfytPatchLayer::getMidiSendListEvents()
 }
 
 
-// Use to initialise the layer object.
-// Accepts an ID which will later be used by the patch class to uniquely identify it.
+/* Use to initialise the layer object.
+ * Accepts an ID which will later be used by the patch class to uniquely identify it. */
 void KonfytPatchLayer::initLayer(int id, LayerSoundfontStruct newLayerData)
 {
     this->idInPatch = id;

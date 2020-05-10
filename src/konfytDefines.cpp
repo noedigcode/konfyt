@@ -21,6 +21,10 @@
 
 #include "konfytDefines.h"
 
+#ifdef KONFYT_USE_CARLA
+    #include <carla/CarlaHost.h>
+#endif
+#include <fluidsynth.h>
 
 
 QString sanitiseFilename(QString filename)
@@ -36,8 +40,6 @@ QString sanitiseFilename(QString filename)
 
     return ret;
 }
-
-
 
 QString getCompileVersionText()
 {

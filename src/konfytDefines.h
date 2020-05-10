@@ -24,11 +24,6 @@
 
 #include <QString>
 
-#ifdef KONFYT_USE_CARLA
-    #include <carla/CarlaHost.h>
-#endif
-#include <fluidsynth.h>
-
 #define APP_NAME "Konfyt"
 #define APP_VERSION "1.1.1"
 

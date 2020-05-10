@@ -20,20 +20,11 @@
  *****************************************************************************/
 
 #include "konfytPatch.h"
+
+#include "konfytDefines.h"
+
 #include <iostream>
 
-#define bool_to_10_string(x) x ? "1" : "0"
-
-KonfytPatch::KonfytPatch()
-{
-
-}
-
-
-void KonfytPatch::userMessage(QString /*msg*/)
-{
-    // dummy function at the moment to handle all userMessage calls.
-}
 
 void KonfytPatch::error_abort(QString msg)
 {
@@ -41,12 +32,6 @@ void KonfytPatch::error_abort(QString msg)
               << msg.toLocal8Bit().constData() << "\n\n";
     abort();
 }
-
-int KonfytPatch::getNumSfLayers()
-{
-    return this->getSfLayerList().count();
-}
-
 
 QList<KonfytPatchLayer> KonfytPatch::getSfLayerList() const
 {
@@ -59,7 +44,7 @@ QList<KonfytPatchLayer> KonfytPatch::getSfLayerList() const
     return l;
 }
 
-// Saves the patch to a xml patch file.
+/* Saves the patch to a XML patch file. */
 bool KonfytPatch::savePatchToFile(QString filename)
 {
     QFile file(filename);
@@ -100,8 +85,8 @@ bool KonfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_SFLAYER_NAME, p.name);
             stream.writeTextElement(XML_PATCH_SFLAYER_GAIN, n2s( sfLayer.gain ));
             stream.writeTextElement(XML_PATCH_SFLAYER_BUS, n2s(g.busIdInProject));
-            stream.writeTextElement(XML_PATCH_SFLAYER_SOLO, bool_to_10_string(sfLayer.solo));
-            stream.writeTextElement(XML_PATCH_SFLAYER_MUTE, bool_to_10_string(sfLayer.mute));
+            stream.writeTextElement(XML_PATCH_SFLAYER_SOLO, bool2str(sfLayer.solo));
+            stream.writeTextElement(XML_PATCH_SFLAYER_MUTE, bool2str(sfLayer.mute));
             stream.writeTextElement(XML_PATCH_SFLAYER_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
@@ -123,8 +108,8 @@ bool KonfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_SFZLAYER_PATH, p.path);
             stream.writeTextElement(XML_PATCH_SFZLAYER_GAIN, n2s(p.gain));
             stream.writeTextElement(XML_PATCH_SFZLAYER_BUS, n2s(g.busIdInProject) );
-            stream.writeTextElement(XML_PATCH_SFZLAYER_SOLO, bool_to_10_string(p.solo));
-            stream.writeTextElement(XML_PATCH_SFZLAYER_MUTE, bool_to_10_string(p.mute));
+            stream.writeTextElement(XML_PATCH_SFZLAYER_SOLO, bool2str(p.solo));
+            stream.writeTextElement(XML_PATCH_SFZLAYER_MUTE, bool2str(p.mute));
             stream.writeTextElement(XML_PATCH_SFZLAYER_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
@@ -143,8 +128,8 @@ bool KonfytPatch::savePatchToFile(QString filename)
 
             stream.writeStartElement(XML_PATCH_MIDIOUT);
             stream.writeTextElement(XML_PATCH_MIDIOUT_PORT, n2s( m.portIdInProject ));
-            stream.writeTextElement(XML_PATCH_MIDIOUT_SOLO, bool_to_10_string(m.solo));
-            stream.writeTextElement(XML_PATCH_MIDIOUT_MUTE, bool_to_10_string(m.mute));
+            stream.writeTextElement(XML_PATCH_MIDIOUT_SOLO, bool2str(m.solo));
+            stream.writeTextElement(XML_PATCH_MIDIOUT_MUTE, bool2str(m.mute));
             stream.writeTextElement(XML_PATCH_MIDIOUT_MIDI_IN, n2s(g.midiInPortIdInProject));
 
             // Midi filter
@@ -176,8 +161,8 @@ bool KonfytPatch::savePatchToFile(QString filename)
             stream.writeTextElement(XML_PATCH_AUDIOIN_PORT, n2s(a.portIdInProject));
             stream.writeTextElement(XML_PATCH_AUDIOIN_GAIN, n2s(a.gain));
             stream.writeTextElement(XML_PATCH_AUDIOIN_BUS, n2s(g.busIdInProject));
-            stream.writeTextElement(XML_PATCH_AUDIOIN_SOLO, bool_to_10_string(a.solo));
-            stream.writeTextElement(XML_PATCH_AUDIOIN_MUTE, bool_to_10_string(a.mute));
+            stream.writeTextElement(XML_PATCH_AUDIOIN_SOLO, bool2str(a.solo));
+            stream.writeTextElement(XML_PATCH_AUDIOIN_MUTE, bool2str(a.mute));
 
             stream.writeEndElement();
         }
@@ -192,12 +177,13 @@ bool KonfytPatch::savePatchToFile(QString filename)
     return true;
 }
 
-// Loads a pach from an patch xml file.
-bool KonfytPatch::loadPatchFromFile(QString filename)
+/* Loads a patch from a patch XML file. If errors string pointer is specified,
+ * any parsing errors are appended to it. */
+bool KonfytPatch::loadPatchFromFile(QString filename, QString *errors)
 {
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        // error message!
+        appendError(errors, "Failed to open file for reading.");
         return false;
     }
 
@@ -254,8 +240,7 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
                     } else if (r.name() == XML_PATCH_SFLAYER_MIDI_IN) {
                         midiIn = r.readElementText().toInt();
                     } else {
-                        userMessage("konfytPatch::loadPatchFromFile: "
-                                    "Unrecognized sfLayer element: " + r.name().toString() );
+                        appendError(errors, "Unrecognized sfLayer element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
 
@@ -291,8 +276,7 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
                     } else if (r.name() == XML_MIDIFILTER) {
                         p.midiFilter.readFromXMLStream(&r);
                     } else {
-                        userMessage("konfytPatch::loadPatchFromFile: "
-                                    "Unrecognized sfzLayer element: " + r.name().toString() );
+                        appendError(errors, "Unrecognized sfzLayer element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
 
@@ -326,19 +310,16 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
                                 MidiSendItem item;
                                 QString error = item.readFromXmlStream(&r);
                                 if (!error.isEmpty()) {
-                                    userMessage("konfytPatch::loadPatchFromFile:");
-                                    userMessage(error);
+                                    appendError(errors, "MidiSendItem read error: " + error);
                                 }
                                 midiSendItems.append(item);
                             } else {
-                                userMessage("konfytPatch::loadPatchFromFile: "
-                                            "Unrecognized MIDI send list element: " + r.name().toString());
+                                appendError(errors, "Unrecognized MIDI send list element: " + r.name().toString());
                                 r.skipCurrentElement();
                             }
                         }
                     } else {
-                        userMessage("konfytPatch::loadPatchFromFile: "
-                                    "Unrecognized midiOutputPortLayer element: " + r.name().toString() );
+                        appendError(errors, "Unrecognized midiOutputPortLayer element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
                 }
@@ -361,7 +342,7 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
                     else if (r.name() == XML_PATCH_AUDIOIN_SOLO) { a.solo = (r.readElementText() == "1"); }
                     else if (r.name() == XML_PATCH_AUDIOIN_MUTE) { a.mute = (r.readElementText() == "1"); }
                     else {
-                        userMessage("konfytPatch::loadPatchFromFile: "
+                        appendError(errors,
                                     "Unrecognized audioInPortLayer element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
@@ -371,8 +352,7 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
                 this->setLayerBus(&newLayer, bus);
 
             } else {
-                userMessage("konfytPatch::loadPatchFromFile: "
-                            "Unrecognized layer type: " + r.name().toString() );
+                appendError(errors, "Unrecognized layer type: " + r.name().toString() );
                 r.skipCurrentElement(); // not any of the layer types
             }
         }
@@ -384,20 +364,19 @@ bool KonfytPatch::loadPatchFromFile(QString filename)
     return true;
 }
 
-// Returns true if the layer number represents a valid layer.
-// This includes all types of layers.
-bool KonfytPatch::isValidLayerNumber(int layer)
+void KonfytPatch::appendError(QString *errorString, QString msg)
 {
-    if ( (layer>=0) && (layer < layerList.count()) ) {
-        return true;
-    } else {
-        return false;
+    if (errorString) {
+        if (!errorString->isEmpty()) { errorString->append("\n"); }
+        errorString->append(msg);
     }
 }
 
-bool KonfytPatch::isValid_Sf_LayerNumber(int SfLayer)
+/* Returns true if the layer number represents a valid layer.
+ * This includes all types of layers. */
+bool KonfytPatch::isValidLayerNumber(int layer)
 {
-    if ( (SfLayer>=0) && (SfLayer < this->getNumSfLayers()) ) {
+    if ( (layer>=0) && (layer < layerList.count()) ) {
         return true;
     } else {
         return false;
@@ -416,7 +395,7 @@ void KonfytPatch::removeLayer(KonfytPatchLayer* layer)
     }
 }
 
-// Removes all the layers in the patch.
+/* Removes all the layers in the patch. */
 void KonfytPatch::clearLayers()
 {
     this->layerList.clear();
@@ -435,7 +414,7 @@ int KonfytPatch::layerListIndexFromPatchId(KonfytPatchLayer *layer)
     return -1;
 }
 
-// Replace a layer. Layer is identified using unique patch_id in layer.
+/* Replace a layer. Layer is identified using unique patch_id in layer. */
 void KonfytPatch::replaceLayer(KonfytPatchLayer newLayer)
 {
     // Find layer that matches ID_in_patch
@@ -449,8 +428,8 @@ void KonfytPatch::replaceLayer(KonfytPatchLayer newLayer)
     }
 }
 
-// Set the midi filter for the layer for which the patch_id matches that of
-// the specified layer item.
+/* Set the midi filter for the layer for which the patch_id matches that of
+ * the specified layer item. */
 void KonfytPatch::setLayerFilter(KonfytPatchLayer *layer, KonfytMidiFilter newFilter)
 {
     // Find layer that matches ID_in_patch
@@ -612,49 +591,6 @@ KonfytPatchLayer KonfytPatch::addSfLayer(LayerSoundfontStruct newSfLayer)
     return g;
 }
 
-
-// Get soundfont program of the soundfont program layer with the specified index.
-KonfytSoundfontProgram KonfytPatch::getProgram(int id_in_engine)
-{
-    return this->getSfLayer(id_in_engine).program;
-}
-
-// Get sfLayerStruct of the soundfont program layer with the specified index.
-LayerSoundfontStruct KonfytPatch::getSfLayer(int id_in_engine)
-{
-    return this->getSfLayer_LayerItem(id_in_engine).soundfontData;
-}
-
-KonfytPatchLayer KonfytPatch::getSfLayer_LayerItem(int id_in_engine)
-{
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).getLayerType() == KonfytLayerType_SoundfontProgram) {
-            if (this->layerList.at(i).soundfontData.indexInEngine == id_in_engine) {
-                return this->layerList.at(i);
-            }
-        }
-    }
-    // If we did not return, the layer was not found. This is probably a logic error.
-    error_abort("getSfLayer_LayerItem: invalid id_in_engine: " + n2s(id_in_engine) );
-
-    KonfytPatchLayer g;
-    return g;
-}
-
-
-
-float KonfytPatch::getSfLayerGain(int id_in_engine)
-{
-    return this->getSfLayer(id_in_engine).gain;
-}
-
-void KonfytPatch::setSfLayerGain(int id_in_engine, float newGain)
-{
-    KonfytPatchLayer g = this->getSfLayer_LayerItem(id_in_engine);
-    g.setGain(newGain);
-    this->replaceLayer(g);
-}
-
 int KonfytPatch::getNumLayers()
 {
     return this->layerList.count();
@@ -687,8 +623,8 @@ QList<KonfytPatchLayer> KonfytPatch::getLayerItems()
     return this->layerList;
 }
 
-// Returns the layeritem in the patch that matches the unique ID
-// of the layerItem specified.
+/* Returns the layeritem in the patch that matches the unique ID of the
+ * layerItem specified. */
 KonfytPatchLayer KonfytPatch::getLayerItem(KonfytPatchLayer item)
 {
     // Find layer that matches patch_id
@@ -704,7 +640,7 @@ KonfytPatchLayer KonfytPatch::getLayerItem(KonfytPatchLayer item)
     return l;
 }
 
-// Return list of port ids of the patch's midi output ports.
+/* Return list of port ids of the patch's midi output ports. */
 QList<int> KonfytPatch::getMidiOutputPortList_ids() const
 {
     QList<int> l;
@@ -716,7 +652,7 @@ QList<int> KonfytPatch::getMidiOutputPortList_ids() const
     return l;
 }
 
-// Return list of port ids of patch's audio input ports.
+/* Return list of port ids of patch's audio input ports. */
 QList<int> KonfytPatch::getAudioInPortList_ids() const
 {
     QList<int> l;
@@ -728,35 +664,12 @@ QList<int> KonfytPatch::getAudioInPortList_ids() const
     return l;
 }
 
-QList<LayerAudioInStruct> KonfytPatch::getAudioInPortList_struct() const
-{
-    QList<LayerAudioInStruct> l;
-    for (int i=0; i<this->layerList.count(); i++) {
-        if (layerList.at(i).getLayerType() == KonfytLayerType_AudioIn) {
-            l.append(layerList.at(i).audioInPortData);
-        }
-    }
-    return l;
-}
-
 QList<KonfytPatchLayer> KonfytPatch::getAudioInLayerList() const
 {
     QList<KonfytPatchLayer> l;
     for (int i=0; i < this->layerList.count(); i++) {
         if (layerList.at(i).getLayerType() == KonfytLayerType_AudioIn) {
             l.append(layerList.at(i));
-        }
-    }
-    return l;
-}
-
-// Return list of midiOutputPortStruct's of the patch's midi output ports.
-QList<LayerMidiOutStruct> KonfytPatch::getMidiOutputPortList_struct() const
-{
-    QList<LayerMidiOutStruct> l;
-    for (int i=0; i<this->layerList.count(); i++) {
-        if (layerList.at(i).getLayerType() == KonfytLayerType_MidiOut) {
-            l.append(layerList.at(i).midiOutputPortData);
         }
     }
     return l;
@@ -807,8 +720,6 @@ KonfytPatchLayer KonfytPatch::addAudioInPort(LayerAudioInStruct newPort)
     return g;
 }
 
-// TODO: Change so that function returns true or false for success, and takes
-// a pointer, of which the location will be set to the LayerItem.
 KonfytPatchLayer KonfytPatch::addMidiOutputPort(int newPort)
 {
     LayerMidiOutStruct m = LayerMidiOutStruct();
@@ -838,7 +749,6 @@ KonfytPatchLayer KonfytPatch::addMidiOutputPort(LayerMidiOutStruct newPort)
     return g;
 }
 
-
 KonfytPatchLayer KonfytPatch::addPlugin(LayerSfzStruct newPlugin)
 {
     // Create and initialise new layeritem.
@@ -853,46 +763,6 @@ KonfytPatchLayer KonfytPatch::addPlugin(LayerSfzStruct newPlugin)
     return g;
 }
 
-
-LayerSfzStruct KonfytPatch::getPlugin(int index_in_engine)
-{
-    return this->getPlugin_LayerItem(index_in_engine).sfzData;
-}
-
-KonfytPatchLayer KonfytPatch::getPlugin_LayerItem(int index_in_engine)
-{
-    for (int i=0; i < this->layerList.count(); i++) {
-        if (this->layerList.at(i).getLayerType() == KonfytLayerType_Sfz) {
-            if (this->layerList.at(i).sfzData.indexInEngine == index_in_engine) {
-                return this->layerList.at(i);
-            }
-        }
-    }
-    // If we did not return, the layer was not found. This is probably a logic error.
-    error_abort("getPlugin_LayerItem: invalid index_in_engine: " + n2s(index_in_engine) );
-
-    KonfytPatchLayer g;
-    return g;
-}
-
-int KonfytPatch::getPluginCount()
-{
-    return this->getPluginLayerList().count();
-}
-
-
-void KonfytPatch::setPluginGain(int index_in_engine, float newGain)
-{
-    KonfytPatchLayer g = this->getPlugin_LayerItem(index_in_engine);
-    g.setGain(newGain);
-    this->replaceLayer(g);
-}
-
-float KonfytPatch::getPluginGain(int index_in_engine)
-{
-    return this->getPlugin(index_in_engine).gain;
-}
-
 QList<KonfytPatchLayer> KonfytPatch::getPluginLayerList() const
 {
     QList<KonfytPatchLayer> l;
@@ -903,7 +773,4 @@ QList<KonfytPatchLayer> KonfytPatch::getPluginLayerList() const
     }
     return l;
 }
-
-
-
 

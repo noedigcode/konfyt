@@ -35,122 +35,36 @@
 #include "lscp/client.h"
 #include "lscp/device.h"
 
-#define SERVER_PORT 8888
-
-#define n2s(x) QString::number(x)
-
-
-QString indentString(QString s, QString indent);
-
 // =============================================================================
 struct GidLsPort
 {
-    GidLsPort(int index, lscp_device_port_info_t* port) :
-        index(index)
-    {
-        if (port->params != NULL) {
-            int p = 0;
-            while (port->params[p].key != NULL) {
-                params.insert( QString(port->params[p].key),
-                               QString(port->params[p].value) );
-                p++;
-            }
-            params.insert("NAME", QString(port->name));
-        }
-    }
+    GidLsPort(int index, lscp_device_port_info_t* port);
 
-    QString name()
-    {
-        return params.value("NAME", "");
-    }
+    QString name();
 
     QMap<QString, QString> params;
     int index;
 
-    QString paramsToString()
-    {
-        QString ret;
-        QList<QString> keys = params.keys();
-        for (int i=0; i < keys.count(); i++) {
-            if (!ret.isEmpty()) { ret += "\n"; }
-            ret += keys[i] + ": " + params[keys[i]];
-        }
-        return ret;
-    }
+    QString paramsToString();
 };
 
 // =============================================================================
 struct GidLsDevice
 {
-    GidLsDevice() : audio(true), index(-1) {}
-    GidLsDevice(lscp_client_t *client, int index, bool audio, lscp_device_info_t* dev) :
-        audio(audio), index(index)
-    {
-        if (dev->params != NULL) {
-            int prm = 0;
-            while (dev->params[prm].key != NULL) {
-                params.insert( QString(dev->params[prm].key),
-                               QString(dev->params[prm].value) );
-                prm++;
-            }
-            params.insert("DRIVER", QString(dev->driver));
-        }
-
-        // Get ports
-        int nports = numPorts();
-        for (int i=0; i < nports; i++) {
-            lscp_device_port_info_t* port;
-            if (audio) {
-                port = lscp_get_audio_channel_info(client, index, i);
-            }
-            else { port = lscp_get_midi_port_info(client, index, i); }
-            if (port != NULL) {
-                GidLsPort prt(i, port);
-                ports.append(prt);
-            }
-        }
-
-    }
+    GidLsDevice();
+    GidLsDevice(lscp_client_t *client, int index, bool audio, lscp_device_info_t* dev);
 
     QMap<QString, QString> params;
     QList<GidLsPort> ports;
 
     bool audio;
     int index;
-    int numPorts() {
-        if (audio) {
-            return params.value("CHANNELS", "0").toInt();
-        } else {
-            return params.value("PORTS", "0").toInt();
-        }
-    }
+    int numPorts();
     QString name() { return params.value("NAME", ""); }
     QString driver() { return params.value("DRIVER", ""); }
 
-    QString toString()
-    {
-        QString ret = "Device " + n2s(index) + ": '"
-                + name() + "', "
-                + (audio ? (n2s(numPorts()) + " channels, ") : (n2s(numPorts()) + " ports, "))
-                + "(" + driver() + ")\n";
-        for (int i=0; i < ports.count(); i++) {
-            ret += "   Port " + n2s(i) + ":\n";
-            ret += indentString( ports[i].paramsToString(), "      " );
-            ret += "\n";
-        }
-        return ret;
-    }
-
-    QString paramsToString()
-    {
-        QString ret;
-        QList<QString> keys = params.keys();
-        for (int i=0; i < keys.count(); i++) {
-            if (!ret.isEmpty()) { ret += "\n"; }
-            ret += keys[i] + ": " + params[keys[i]];
-        }
-        return ret;
-    }
+    QString toString();
+    QString paramsToString();
 };
 
 // =============================================================================
@@ -202,13 +116,17 @@ public:
     void removeSfzChannel(int id);
 
     static QString escapeString(QString s);
+    static QString i2s(int value);
+    static QString indentString(QString s, QString indent);
 
 private:
     QString devName;
-    lscp_client_t *client;
+    lscp_client_t *client = NULL;
     QMap<int, GidLsDevice> adevs;
     QMap<int, GidLsDevice> mdevs;
     QMap<int, GidLsChannel> chans;
+
+    const int SERVER_PORT = 8888;
 
     // Parameter constnats
     const char* KEY_NAME = "NAME";
@@ -219,12 +137,9 @@ private:
 private slots:
     void clientInitialised();
 
-
 signals:
     void print(QString msg);
     void initialised(bool error, QString errString);
-
-public slots:
 };
 
 #endif // GIDLS_H

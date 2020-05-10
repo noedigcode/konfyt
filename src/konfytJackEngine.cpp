@@ -44,20 +44,12 @@ void KonfytJackEngine::panic(bool p)
 
 void KonfytJackEngine::timerEvent(QTimerEvent* /*event*/)
 {
-    timer_busy = true;
-    if (timer_disabled) {
-        timer_busy = false;
-        return;
-    }
-
     if (connectCallback || registerCallback) {
         connectCallback = false;
         registerCallback = false;
         refreshAllPortsConnections();
         jackPortRegisterOrConnectCallback();
     }
-
-    timer_busy = false;
 }
 
 void KonfytJackEngine::startPortTimer()
@@ -147,7 +139,7 @@ KfJackPluginPorts* KonfytJackEngine::addSoundfont(const LayerSoundfontStruct &sf
     p->audioInRight->buffer = malloc(sizeof(jack_default_audio_sample_t)*nframes);
 
     p->midi = new KfJackMidiPort(); // Dummy port for note records, etc.
-    p->idInPluginEngine = sf.indexInEngine;
+    p->fluidSynthInEngine = sf.synthInEngine;
 
     p->midiRoute = addMidiRoute();
     p->audioLeftRoute = addAudioRoute();
@@ -162,7 +154,7 @@ KfJackPluginPorts* KonfytJackEngine::addSoundfont(const LayerSoundfontStruct &sf
     p->audioLeftRoute->source = p->audioInLeft;
     p->audioRightRoute->source = p->audioInRight;
 
-    p->midiRoute->destFluidsynthID = p->idInPluginEngine;
+    p->midiRoute->destFluidsynthID = p->fluidSynthInEngine;
     p->midiRoute->destIsJackPort = false;
     p->midiRoute->destPort = p->midi;
     p->midiRoute->filter = sf.filter;
@@ -182,7 +174,7 @@ void KonfytJackEngine::removeSoundfont(KfJackPluginPorts *p)
     for (int i=0; i<noteOnList.count(); i++) {
         KonfytJackNoteOnRecord *rec = noteOnList.at_ptr(i);
         if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidsynthID == p->idInPluginEngine) {
+            if (rec->fluidSynth == p->fluidSynthInEngine) {
                 noteOnList.remove(i);
                 i--; // Due to removal, have to stay at same index after for loop i++
             }
@@ -191,7 +183,7 @@ void KonfytJackEngine::removeSoundfont(KfJackPluginPorts *p)
     for (int i=0; i<sustainList.count(); i++) {
         KonfytJackNoteOnRecord *rec = sustainList.at_ptr(i);
         if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidsynthID == p->idInPluginEngine) {
+            if (rec->fluidSynth == p->fluidSynthInEngine) {
                 sustainList.remove(i);
                 i--;
             }
@@ -200,7 +192,7 @@ void KonfytJackEngine::removeSoundfont(KfJackPluginPorts *p)
     for (int i=0; i<pitchBendList.count(); i++) {
         KonfytJackNoteOnRecord *rec = pitchBendList.at_ptr(i);
         if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidsynthID == p->idInPluginEngine) {
+            if (rec->fluidSynth == p->fluidSynthInEngine) {
                 pitchBendList.remove(i);
                 i--;
             }
@@ -726,25 +718,17 @@ QString KonfytJackEngine::clientName()
  * function is called again with pause=false. */
 void KonfytJackEngine::pauseJackProcessing(bool pause)
 {
-    /* When jack_process_disable is non-zero, Jack process is disabled. Here it is
-     * incremented or decremented, accounting for the fact that this function might
-     * be called multiple times within nested functions. Only once all of the callers
-     * have also called this function with pause=false, will it reach zero, enabling
-     * the Jack process callback again. */
-
     if (pause) {
-        jack_process_disable++;
-        timer_disabled = true;
-        timer.stop();
-        while (jack_process_busy) {}
-        while (timer_busy) {}
-    } else {
-        if (jack_process_disable) {
-            jack_process_disable--;
+        if (jackProcessLocks == 0) {
+            jackProcessMutex.lock(); // Blocks
         }
-        if (jack_process_disable == 0) {
-            timer_disabled = false;
-            startPortTimer();
+        jackProcessLocks++;
+    } else {
+        jackProcessLocks--;
+        if (jackProcessLocks == 0) {
+            jackProcessMutex.unlock();
+        } else if (jackProcessLocks < 0) {
+            error_abort("jackProcessLocks < 0");
         }
     }
 }
@@ -773,12 +757,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 {
     // Lock jack_process ----------------------
-    jack_process_busy = true;
-    if (jack_process_disable) {
-        jack_process_busy = false;
-        //userMessage("Jack process callback locked out.");
-        return 0;
-    }
+    if (!jackProcessMutex.tryLock()) { return 0; }
     // ----------------------------------------
 
     // panicCmd is the panic command received from the outside.
@@ -823,7 +802,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
             // The buffers have already been allocated when we added the soundfont layer to the engine.
             // Get data from Fluidsynth
             fluidsynthEngine->fluidsynthWriteFloat(
-                        fluidsynthPort->idInPluginEngine,
+                        fluidsynthPort->fluidSynthInEngine,
                         ((jack_default_audio_sample_t*)port1->buffer),
                         ((jack_default_audio_sample_t*)port2->buffer),
                         nframes );
@@ -896,11 +875,11 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 
         // Send to fluidsynth
         for (int p = 0; p < fluidsynthPorts.count(); p++) {
-            int id = fluidsynthPorts.at(p)->idInPluginEngine;
+            KfFluidSynth* synth = fluidsynthPorts.at(p)->fluidSynthInEngine;
             // Fluidsynthengine will force event channel to zero
-            fluidsynthEngine->processJackMidi( id, &(evAllNotesOff) );
-            fluidsynthEngine->processJackMidi( id, &(evSustainZero) );
-            fluidsynthEngine->processJackMidi( id, &(evPitchbendZero) );
+            fluidsynthEngine->processJackMidi( synth, &(evAllNotesOff) );
+            fluidsynthEngine->processJackMidi( synth, &(evSustainZero) );
+            fluidsynthEngine->processJackMidi( synth, &(evPitchbendZero) );
         }
 
         // Give to all output ports to external apps
@@ -1017,7 +996,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
                         rec.globalTranspose = globalTranspose;
                         rec.jackPortNotFluidsynth = route->destIsJackPort;
                         rec.port = route->destPort;
-                        rec.fluidsynthID = route->destFluidsynthID;
+                        rec.fluidSynth = route->destFluidsynthID;
                         rec.sourcePort = route->source;
 
                         rec.note = evToSend.note();
@@ -1033,7 +1012,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
                             rec.globalTranspose = globalTranspose;
                             rec.jackPortNotFluidsynth = route->destIsJackPort;
                             rec.port = route->destPort;
-                            rec.fluidsynthID = route->destFluidsynthID;
+                            rec.fluidSynth = route->destFluidsynthID;
                             rec.sourcePort = route->source;
 
                             pitchBendList.add(rec);
@@ -1047,7 +1026,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
                             rec.globalTranspose = globalTranspose;
                             rec.jackPortNotFluidsynth = route->destIsJackPort;
                             rec.port = route->destPort;
-                            rec.fluidsynthID = route->destFluidsynthID;
+                            rec.fluidSynth = route->destFluidsynthID;
                             rec.sourcePort = route->source;
 
                             sustainList.add(rec);
@@ -1120,7 +1099,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 
 
     // Unlock jack_process --------------------
-    jack_process_busy = false;
+    jackProcessMutex.unlock();
     // ----------------------------------------
 
     return 0;
@@ -1138,7 +1117,7 @@ void KonfytJackEngine::jackPortRegistrationCallback()
     registerCallback = true;
 }
 
-void KonfytJackEngine::setFluidsynthEngine(konfytFluidsynthEngine *e)
+void KonfytJackEngine::setFluidsynthEngine(KonfytFluidsynthEngine *e)
 {
     fluidsynthEngine = e;
 }
@@ -1180,7 +1159,7 @@ void KonfytJackEngine::handleNoteoffEvent(KonfytMidiEvent &ev, jack_midi_event_t
                         newEv.toBuffer( out_buffer );
                     }
                 } else {
-                    fluidsynthEngine->processJackMidi( rec->fluidsynthID, &newEv );
+                    fluidsynthEngine->processJackMidi( rec->fluidSynth, &newEv );
                 }
                 rec->port->noteOns--;
 
@@ -1214,7 +1193,7 @@ void KonfytJackEngine::handleSustainoffEvent(KonfytMidiEvent &ev, jack_midi_even
                     newEv.toBuffer( out_buffer );
                 }
             } else {
-                fluidsynthEngine->processJackMidi( rec->fluidsynthID, &newEv );
+                fluidsynthEngine->processJackMidi( rec->fluidSynth, &newEv );
             }
             rec->port->sustainNonZero = false;
 
@@ -1244,7 +1223,7 @@ void KonfytJackEngine::handlePitchbendZeroEvent(KonfytMidiEvent &ev, jack_midi_e
                     newEv.toBuffer( out_buffer );
                 }
             } else {
-                fluidsynthEngine->processJackMidi( rec->fluidsynthID, &newEv );
+                fluidsynthEngine->processJackMidi( rec->fluidSynth, &newEv );
             }
             rec->port->pitchbendNonZero = false;
 

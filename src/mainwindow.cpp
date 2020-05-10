@@ -278,12 +278,16 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
                 // Load patch into current project and switch to patch
 
                 KonfytPatch* pt = new KonfytPatch();
-                if (pt->loadPatchFromFile(file)) {
+                QString errors;
+                if (pt->loadPatchFromFile(file, &errors)) {
                     addPatchToProject(pt);
                     setCurrentPatch(-1);
                 } else {
                     userMessage("Failed loading patch " + file);
                     delete pt;
+                }
+                if (!errors.isEmpty()) {
+                    userMessage("Load errors for patch " + file + ":\n" + errors);
                 }
                 // Locate in filesystem view
                 ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
@@ -4414,11 +4418,15 @@ void MainWindow::on_actionAdd_Patch_From_File_triggered()
     QFileDialog d;
     QString filename = d.getOpenFileName(this, "Open patch from file", patchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
     if (filename=="") { return; }
-    if (pt->loadPatchFromFile(filename)) {
+    QString errors;
+    if (pt->loadPatchFromFile(filename, &errors)) {
         addPatchToProject(pt);
     } else {
         userMessage("Failed loading patch from file.");
         delete pt;
+    }
+    if (!errors.isEmpty()) {
+        userMessage("Load errors for patch " + filename + ":\n" + errors);
     }
 }
 
@@ -4961,11 +4969,15 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
         // File is a patch
 
         KonfytPatch* pt = new KonfytPatch();
-        if (pt->loadPatchFromFile(info.filePath())) {
+        QString errors;
+        if (pt->loadPatchFromFile(info.filePath()), &errors) {
             addPatchToProject(pt);
         } else {
             userMessage("Failed to load patch " + info.filePath());
             delete pt;
+        }
+        if (!errors.isEmpty()) {
+            userMessage("Load errors for patch " + info.filePath() + ":\n" + errors);
         }
 
     }

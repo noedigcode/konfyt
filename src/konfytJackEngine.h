@@ -67,7 +67,7 @@ public:
     void jackPortConnectCallback();
     void jackPortRegistrationCallback();
 
-    void setFluidsynthEngine(konfytFluidsynthEngine* e);
+    void setFluidsynthEngine(KonfytFluidsynthEngine* e);
 
     QList<KfJackMidiRxEvent> getEvents();
 
@@ -144,6 +144,11 @@ public:
 
     void setGlobalTranspose(int transpose);
 
+signals:
+    void userMessage(QString msg);
+    void jackPortRegisterOrConnectCallback();
+    void midiEventSignal();
+    void xrunSignal();
 
 private:
     jack_client_t* mJackClient;
@@ -154,13 +159,12 @@ private:
     bool connectCallback = false;
     bool registerCallback = false;
 
-    konfytFluidsynthEngine* fluidsynthEngine = nullptr;
+    KonfytFluidsynthEngine* fluidsynthEngine = nullptr;
 
     bool panicCmd = false;  // Panic command from outside
     int panicState = 0; // Internal panic state
 
     QString ourJackClientName;
-    int idCounter = 150; // TODO DELETE SOON
 
     float *fadeOutValues;
     unsigned int fadeOutValuesCount = 0;
@@ -171,10 +175,8 @@ private:
     KonfytMidiEvent evPitchbendZero;
     void initMidiClosureEvents();
 
-    volatile bool jack_process_busy = false;
-    int jack_process_disable = 0; // Non-zero value = disabled
-    bool timer_busy = false;
-    bool timer_disabled = false;
+    QMutex jackProcessMutex;
+    int jackProcessLocks = 0;
 
     // Port data structures
     QList<KfJackMidiPort*> midiInPorts;
@@ -223,13 +225,6 @@ private:
     void sendMidiClosureEvents_allChannels(KfJackMidiPort* port);
 
     void error_abort(QString msg);
-
-signals:
-    void userMessage(QString msg);
-    void jackPortRegisterOrConnectCallback();
-    void midiEventSignal();
-    void xrunSignal();
-    
 };
 
 

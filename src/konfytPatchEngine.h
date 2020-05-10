@@ -126,7 +126,7 @@ private:
     // ----------------------------------------------------
     // Fluidsynth / Soundfont related
     // ----------------------------------------------------
-    konfytFluidsynthEngine* fluidsynthEngine;
+    KonfytFluidsynthEngine* fluidsynthEngine;
 
     // ----------------------------------------------------
     // SFZ plugins

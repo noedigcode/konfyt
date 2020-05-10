@@ -39,11 +39,11 @@ void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient, KonfytA
     this->jack = newJackClient;
 
     // Fluidsynth Engine
-    konfytFluidsynthEngine* e = new konfytFluidsynthEngine();
-    connect(e, &konfytFluidsynthEngine::userMessage, [=](QString msg){
+    KonfytFluidsynthEngine* e = new KonfytFluidsynthEngine();
+    connect(e, &KonfytFluidsynthEngine::userMessage, [=](QString msg){
         userMessage("Fluidsynth: " + msg);
     });
-    e->InitFluidsynth(jack->getSampleRate());
+    e->initFluidsynth(jack->getSampleRate());
     fluidsynthEngine = e;
     jack->setFluidsynthEngine(e); // Give to Jack so it can get sound out of it.
 
@@ -199,19 +199,18 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
     for (int i=0; i < sflist.count(); i++) {
         // If layer indexInEngine is -1, layer hasn't been loaded yet.
         KonfytPatchLayer layer = sflist[i];
-        if (patchIsNew) { layer.soundfontData.indexInEngine = -1; }
-        if ( layer.soundfontData.indexInEngine == -1 ) {
+        if (patchIsNew) { layer.soundfontData.synthInEngine = nullptr; }
+        if ( layer.soundfontData.synthInEngine == nullptr ) {
             // Load in Fluidsynth engine
-            int ID = fluidsynthEngine->addSoundfontProgram( layer.soundfontData.program );
-            if (ID < 0) {
-                layer.setErrorMessage("Failed to load soundfont.");
-                r = false;
-            } else {
-                layer.soundfontData.indexInEngine = ID;
+            layer.soundfontData.synthInEngine = fluidsynthEngine->addSoundfontProgram( layer.soundfontData.program );
+            if (layer.soundfontData.synthInEngine) {
                 // Add to Jack engine (this also assigns the midi filter)
                 KfJackPluginPorts* jackPorts = jack->addSoundfont( layer.soundfontData );
                 layer.soundfontData.portsInJackEngine = jackPorts;
                 // Gain, solo, mute and bus are set later in refreshAllGainsAndRouting()
+            } else {
+                layer.setErrorMessage("Failed to load soundfont.");
+                r = false;
             }
             // Update layer in patch
             currentPatch->replaceLayer(layer);
@@ -359,13 +358,13 @@ void KonfytPatchEngine::unloadLayer(KonfytPatch *patch, KonfytPatchLayer *item)
 {
     KonfytPatchLayer layer = patch->getLayerItem( *item );
     if (layer.getLayerType() == KonfytLayerType_SoundfontProgram) {
-        if (layer.soundfontData.indexInEngine >= 0) {
-            // First remove from jack
+        if (layer.soundfontData.synthInEngine) {
+            // First remove from JACK engine
             jack->removeSoundfont(layer.soundfontData.portsInJackEngine);
             // Then from fluidsynthEngine
-            fluidsynthEngine->removeSoundfontProgram(layer.soundfontData.indexInEngine);
+            fluidsynthEngine->removeSoundfontProgram(layer.soundfontData.synthInEngine);
             // Set unloaded in patch
-            layer.soundfontData.indexInEngine = -1;
+            layer.soundfontData.synthInEngine = nullptr;
             patch->replaceLayer(layer);
         }
     } else if (layer.getLayerType() == KonfytLayerType_Sfz) {
@@ -510,7 +509,7 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
 
             LayerSoundfontStruct sfData = layer.soundfontData;
             // Gain = layer gain * master gain
-            fluidsynthEngine->setGain( sfData.indexInEngine, convertGain(sfData.gain*masterGain) );
+            fluidsynthEngine->setGain( sfData.synthInEngine, convertGain(sfData.gain*masterGain) );
 
             // Set MIDI and bus routing
             jack->setSoundfontRouting( sfData.portsInJackEngine, midiInPort.jackPort,

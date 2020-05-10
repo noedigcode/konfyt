@@ -22,17 +22,10 @@
 #ifndef KONFYT_PATCH_LAYER_H
 #define KONFYT_PATCH_LAYER_H
 
-#include <QObject>
-#include <QHBoxLayout>
-#include <QGroupBox>
-#include <QPushButton>
-#include <QLineEdit>
-#include <QSlider>
-
-#include "konfytStructs.h"
+#include "konfytFluidsynthEngine.h"
 #include "konfytJackStructs.h"
 #include "konfytMidiFilter.h"
-
+#include "konfytStructs.h"
 
 
 enum KonfytLayerType {
@@ -49,7 +42,6 @@ struct KonfytPortSpec
     QString midi_in_port;
     QString audio_out_port_left;
     QString audio_out_port_right;
-
 };
 
 // ----------------------------------------------------
@@ -59,7 +51,7 @@ struct LayerSoundfontStruct {
     KonfytSoundfontProgram program;
     float gain = 1.0;
     KonfytMidiFilter filter;
-    int indexInEngine = -1;
+    KfFluidSynth* synthInEngine = nullptr;
     bool solo = false;
     bool mute = false;
     KfJackPluginPorts* portsInJackEngine = nullptr;

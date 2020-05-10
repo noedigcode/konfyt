@@ -22,8 +22,9 @@
 #ifndef ABOUTDIALOG_H
 #define ABOUTDIALOG_H
 
-#include <QWidget>
 #include "konfytDefines.h"
+
+#include <QWidget>
 
 #define REPLACE_TXT_APP_VERSION "%APP_VERSION%"
 #define REPLACE_TXT_MORE_VERSION "%MORE_VERSION_TEXT%"

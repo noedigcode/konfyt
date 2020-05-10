@@ -24,30 +24,27 @@
 
 #include <QApplication>
 #include <QString>
-#include <jack/jack.h>
 
 
 /* This represents a program/preset within a soundfont (i.e. a single voice/instrument). */
-struct KonfytSoundfontProgram {
-
+struct KonfytSoundfontProgram
+{
     QString name;               // Program name
     int bank = 0;               // Bank number
     int program = 0;            // Program/preset number
     QString parent_soundfont;   // Filename of parent soundfont
-
 };
 
-struct KonfytSoundfont {
-
+struct KonfytSoundfont
+{
     QString filename;
     QString name;
     QList<KonfytSoundfontProgram> programlist;
     QList<KonfytSoundfontProgram> searchResults;
-
 };
 
-struct KonfytAppInfo {
-
+struct KonfytAppInfo
+{
     QString exePath;
     bool bridge = false;
     bool headless = false;
@@ -55,7 +52,6 @@ struct KonfytAppInfo {
     QStringList filesToLoad;
     QString jackClientName;
     QApplication *a = NULL;
-
 };
 
 

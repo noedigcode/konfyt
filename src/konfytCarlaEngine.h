@@ -22,13 +22,13 @@
 #ifndef KONFYT_CARLA_ENGINE_H
 #define KONFYT_CARLA_ENGINE_H
 
-#include <QObject>
-#include <QTime>
+#include "konfytBaseSoundEngine.h"
+#include "konfytDefines.h"
 
 #include <carla/CarlaHost.h>
 
-#include "konfytBaseSoundEngine.h"
-#include "konfytDefines.h"
+#include <QObject>
+#include <QTime>
 
 #define CARLA_CLIENT_POSTFIX "_plugins"
 #define CARLA_MIDI_IN_PORT_POSTFIX "events-in"

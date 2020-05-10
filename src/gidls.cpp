@@ -21,7 +21,7 @@
 
 #include "gidls.h"
 
-GidLs::GidLs(QObject *parent) : QObject(parent), client(NULL)
+GidLs::GidLs(QObject *parent) : QObject(parent)
 {
 
 }
@@ -193,23 +193,23 @@ QString GidLs::printChannels()
     }
     int i=0;
     while (chans[i] >= 0) {
-        ret += "Channel " + n2s(chans[i]) + ":\n";
+        ret += "Channel " + i2s(chans[i]) + ":\n";
         lscp_channel_info_t* info = lscp_get_channel_info(client, chans[i]);
         ret += "   Engine: " + QString(info->engine_name) + "\n";
         ret += "   File: " + QString(info->instrument_file) + "\n";
-        ret += "   Inst nr: " + n2s(info->instrument_nr) + "\n";
-        ret += "   Audio Channels: " + n2s(info->audio_channels) + "\n";
+        ret += "   Inst nr: " + i2s(info->instrument_nr) + "\n";
+        ret += "   Audio Channels: " + i2s(info->audio_channels) + "\n";
         if (info->audio_routing == NULL) {
             ret += "      No routing\n";
         } else {
             for (int j=0; j < info->audio_channels; j++) {
-                ret += "      Chan " + n2s(j) + " routing: " + n2s(info->audio_routing[j]) + "\n";
+                ret += "      Chan " + i2s(j) + " routing: " + i2s(info->audio_routing[j]) + "\n";
             }
         }
-        ret += "   Audio device: " + n2s(info->audio_device) + "\n";
-        ret += "   MIDI channel: " + n2s(info->midi_channel) + "\n";
-        ret += "   MIDI device: " + n2s(info->midi_device) + "\n";
-        ret += "   MIDI port: " + n2s(info->midi_port) + "\n";
+        ret += "   Audio device: " + i2s(info->audio_device) + "\n";
+        ret += "   MIDI channel: " + i2s(info->midi_channel) + "\n";
+        ret += "   MIDI device: " + i2s(info->midi_device) + "\n";
+        ret += "   MIDI port: " + i2s(info->midi_port) + "\n";
         if (this->chans.contains(chans[i])) {
             GidLsChannel info2 = getSfzChannelInfo(chans[i]);
             ret += "   Channel belongs to us:\n";
@@ -326,6 +326,21 @@ QString GidLs::escapeString(QString s)
     return s;
 }
 
+QString GidLs::i2s(int value)
+{
+    return QString::number(value);
+}
+
+QString GidLs::indentString(QString s, QString indent)
+{
+    QStringList l = s.split("\n");
+    QString ret;
+    for (int i=0; i < l.count(); i++) {
+        ret += indent + l[i] + "\n";
+    }
+    return ret;
+}
+
 void GidLs::clientInitialised()
 {
     QString errString;
@@ -385,7 +400,7 @@ int GidLs::addAudioChannel()
 
     lscp_param_t param;
     param.key = (char*)KEY_CHANNELS;
-    param.value = (char*)n2s(chan+1).toLocal8Bit().constData();
+    param.value = (char*)i2s(chan+1).toLocal8Bit().constData();
     lscp_set_audio_device_param(client, dev.index, &param);
 
     return chan;
@@ -457,7 +472,7 @@ int GidLs::addMidiPort()
 
     lscp_param_t param;
     param.key = (char*)KEY_PORTS;
-    param.value = (char*)n2s(port+1).toLocal8Bit().constData();
+    param.value = (char*)i2s(port+1).toLocal8Bit().constData();
     lscp_set_midi_device_param(client, dev.index, &param);
 
     return port;
@@ -468,12 +483,100 @@ QString GidLs::jackClientName()
     return devName;
 }
 
-QString indentString(QString s, QString indent)
+
+
+GidLsDevice::GidLsDevice() : audio(true), index(-1) {}
+
+GidLsDevice::GidLsDevice(lscp_client_t *client, int index, bool audio, lscp_device_info_t *dev) :
+    audio(audio), index(index)
 {
-    QStringList l = s.split("\n");
+    if (dev->params != NULL) {
+        int prm = 0;
+        while (dev->params[prm].key != NULL) {
+            params.insert( QString(dev->params[prm].key),
+                           QString(dev->params[prm].value) );
+            prm++;
+        }
+        params.insert("DRIVER", QString(dev->driver));
+    }
+
+    // Get ports
+    int nports = numPorts();
+    for (int i=0; i < nports; i++) {
+        lscp_device_port_info_t* port;
+        if (audio) {
+            port = lscp_get_audio_channel_info(client, index, i);
+        }
+        else { port = lscp_get_midi_port_info(client, index, i); }
+        if (port != NULL) {
+            GidLsPort prt(i, port);
+            ports.append(prt);
+        }
+    }
+
+}
+
+int GidLsDevice::numPorts() {
+    if (audio) {
+        return params.value("CHANNELS", "0").toInt();
+    } else {
+        return params.value("PORTS", "0").toInt();
+    }
+}
+
+QString GidLsDevice::toString()
+{
+    QString ret = QString("Device %1: '%2', %3 %4, (%5)\n")
+            .arg(index)
+            .arg(name())
+            .arg(numPorts())
+            .arg(audio ? "channels" : "ports")
+            .arg(driver());
+    for (int i=0; i < ports.count(); i++) {
+        ret += QString("   Port %1:\n%2\n")
+                .arg(i)
+                .arg( GidLs::indentString( ports[i].paramsToString(), "      ") );
+    }
+    return ret;
+}
+
+QString GidLsDevice::paramsToString()
+{
     QString ret;
-    for (int i=0; i < l.count(); i++) {
-        ret += indent + l[i] + "\n";
+    QList<QString> keys = params.keys();
+    for (int i=0; i < keys.count(); i++) {
+        if (!ret.isEmpty()) { ret += "\n"; }
+        ret += keys[i] + ": " + params[keys[i]];
+    }
+    return ret;
+}
+
+GidLsPort::GidLsPort(int index, lscp_device_port_info_t *port) :
+    index(index)
+{
+    if (port->params != NULL) {
+        int p = 0;
+        while (port->params[p].key != NULL) {
+            params.insert( QString(port->params[p].key),
+                           QString(port->params[p].value) );
+            p++;
+        }
+        params.insert("NAME", QString(port->name));
+    }
+}
+
+QString GidLsPort::name()
+{
+    return params.value("NAME", "");
+}
+
+QString GidLsPort::paramsToString()
+{
+    QString ret;
+    QList<QString> keys = params.keys();
+    for (int i=0; i < keys.count(); i++) {
+        if (!ret.isEmpty()) { ret += "\n"; }
+        ret += keys[i] + ": " + params[keys[i]];
     }
     return ret;
 }

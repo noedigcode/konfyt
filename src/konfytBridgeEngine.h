@@ -22,10 +22,11 @@
 #ifndef KONFYTBRIDGEENGINE_H
 #define KONFYTBRIDGEENGINE_H
 
+#include "konfytBaseSoundEngine.h"
+
 #include <QObject>
 #include <QProcess>
 
-#include "konfytBaseSoundEngine.h"
 
 class KonfytBridgeEngine : public KonfytBaseSoundEngine
 {

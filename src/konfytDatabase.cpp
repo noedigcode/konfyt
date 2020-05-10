@@ -325,13 +325,16 @@ void konfytDatabase::sfontFromFileFinished(KonfytSoundfont *sfont, int source)
 void konfytDatabase::addPatch(QString filename)
 {
     KonfytPatch p;
-    if ( p.loadPatchFromFile(filename) ) {
+    QString errors;
+    if ( p.loadPatchFromFile(filename, &errors) ) {
         patchList.append(p);
         patchFilenameList.append(filename);
     } else {
         userMessage("konfytDatabase addPatch: Failed to load patch " + filename);
     }
-
+    if (!errors.isEmpty()) {
+        userMessage("Load errors for patch " + filename + ":\n" + errors);
+    }
 }
 
 void konfytDatabase::addSfz(QString filename)
@@ -763,9 +766,13 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 
                 QString patchFilename = r.attributes().value("filename").toString();
                 KonfytPatch pt;
-                if (pt.loadPatchFromFile(patchFilename)) {
+                QString errors;
+                if (pt.loadPatchFromFile(patchFilename, &errors)) {
                     patchList.append(pt);
                     patchFilenameList.append(patchFilename);
+                }
+                if (!errors.isEmpty()) {
+                    userMessage("Load errors for patch " + patchFilename + ":\n" + errors);
                 }
                 r.skipCurrentElement();
 

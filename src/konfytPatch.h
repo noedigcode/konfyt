@@ -22,12 +22,13 @@
 #ifndef KONFYT_PATCH_H
 #define KONFYT_PATCH_H
 
+#include "konfytMidiFilter.h"
+#include "konfytPatchLayer.h"
+
 #include <QFile>
 #include <QXmlStreamWriter>
 #include <QXmlStreamReader>
 
-#include "konfytMidiFilter.h"
-#include "konfytPatchLayer.h"
 
 #define XML_PATCH "sfpatch"
 #define XML_PATCH_NAME "name"
@@ -74,7 +75,6 @@
 class KonfytPatch
 {
 public:
-    KonfytPatch();
 
     // ----------------------------------------------------
     // Patch Info
@@ -112,24 +112,12 @@ public:
 
     KonfytPatchLayer addProgram(KonfytSoundfontProgram p);
     KonfytPatchLayer addSfLayer(LayerSoundfontStruct newSfLayer);
-    LayerSoundfontStruct getSfLayer(int id_in_engine);
-    KonfytPatchLayer getSfLayer_LayerItem(int id_in_engine);
-    KonfytSoundfontProgram getProgram(int id_in_engine);
-    int getNumSfLayers();
-    bool isValid_Sf_LayerNumber(int SfLayer);
     QList<KonfytPatchLayer> getSfLayerList() const;
-    float getSfLayerGain(int id_in_engine);
-    void setSfLayerGain(int id_in_engine, float newGain);
 
     // ----------------------------------------------------
     // SFZ Plugin functions
     // ----------------------------------------------------
     KonfytPatchLayer addPlugin(LayerSfzStruct newPlugin);
-    LayerSfzStruct getPlugin(int index_in_engine);
-    KonfytPatchLayer getPlugin_LayerItem(int index_in_engine);
-    int getPluginCount();
-    void setPluginGain(int index_in_engine, float newGain);
-    float getPluginGain(int index_in_engine);
     QList<KonfytPatchLayer> getPluginLayerList() const;
 
     // ----------------------------------------------------
@@ -137,7 +125,6 @@ public:
     // ----------------------------------------------------
 
     QList<int> getMidiOutputPortList_ids() const;
-    QList<LayerMidiOutStruct> getMidiOutputPortList_struct() const;
     QList<KonfytPatchLayer> getMidiOutputLayerList() const;
     KonfytPatchLayer addMidiOutputPort(int newPort);
     KonfytPatchLayer addMidiOutputPort(LayerMidiOutStruct newPort);
@@ -147,7 +134,6 @@ public:
     // ----------------------------------------------------
 
     QList<int> getAudioInPortList_ids() const;
-    QList<LayerAudioInStruct> getAudioInPortList_struct() const;
     QList<KonfytPatchLayer> getAudioInLayerList() const;
     KonfytPatchLayer addAudioInPort(int newPort);
     KonfytPatchLayer addAudioInPort(LayerAudioInStruct newPort);
@@ -157,11 +143,7 @@ public:
     // ----------------------------------------------------
 
     bool savePatchToFile(QString filename);
-    bool loadPatchFromFile(QString filename);
-
-
-    void userMessage(QString msg);
-    void error_abort(QString msg);
+    bool loadPatchFromFile(QString filename, QString* errors = nullptr);
 
 private:
     QString patchName;
@@ -172,6 +154,8 @@ private:
 
     int idCounter = 200; // Counter for unique ID given to layeritem to uniquely identify them.
 
+    void appendError(QString *errorString, QString msg);
+    void error_abort(QString msg);
 };
 
 #endif // KONFYT_PATCH_H

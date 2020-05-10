@@ -24,6 +24,10 @@
 
 #include "konfytMidiFilter.h"
 #include "ringbufferqmutex.h"
+#include "konfytFluidsynthEngine.h"
+
+#include <jack/jack.h>
+
 
 enum KonfytJackPortType {
     KonfytJackPortType_AudioIn  = 0,
@@ -75,7 +79,7 @@ protected:
     KonfytMidiFilter filter;
     KfJackMidiPort* source = nullptr;
     KfJackMidiPort* destPort = nullptr;
-    int destFluidsynthID = 0;
+    KfFluidSynth* destFluidsynthID = nullptr;
     bool destIsJackPort = true;
     RingbufferQMutex<KonfytMidiEvent> eventsTxBuffer{100};
 };
@@ -97,7 +101,7 @@ struct KfJackPluginPorts
 {
     friend class KonfytJackEngine;
 protected:
-    int idInPluginEngine; // Id in plugin's respective engine (used for Fluidsynth)
+    KfFluidSynth* fluidSynthInEngine; // Id in plugin's respective engine (used for Fluidsynth)
     KfJackMidiPort* midi;        // Send midi output to plugin
     KfJackAudioPort* audioInLeft;  // Receive plugin audio
     KfJackAudioPort* audioInRight;
@@ -110,7 +114,7 @@ struct KonfytJackNoteOnRecord
 {
     int note;
     bool jackPortNotFluidsynth; // true for jack port, false for Fluidsynth
-    int fluidsynthID;
+    KfFluidSynth* fluidSynth;
     KfJackMidiPort* port;
     KfJackMidiPort* sourcePort;
     KonfytMidiFilter filter;

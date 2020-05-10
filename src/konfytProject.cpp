@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 #include "konfytProject.h"
+
 #include <iostream>
 
 KonfytProject::KonfytProject(QObject *parent) :
@@ -309,13 +310,17 @@ bool KonfytProject::loadProject(QString filename)
 
                 // Add new patch
                 KonfytPatch* pt = new KonfytPatch();
+                QString errors;
                 patchFilename = dir.path() + "/" + patchFilename;
                 userMessage("loadProject: Loading patch " + patchFilename);
-                if (pt->loadPatchFromFile(patchFilename)) {
+                if (pt->loadPatchFromFile(patchFilename, &errors)) {
                     this->addPatch(pt);
                 } else {
                     // Error message on loading patch.
                     userMessage("loadProject: Error loading patch: " + patchFilename);
+                }
+                if (!errors.isEmpty()) {
+                    userMessage("Load errors for patch " + patchFilename + ":\n" + errors);
                 }
 
             } else if (r.name() == XML_PRJ_PATCH_LIST_NUMBERS) {

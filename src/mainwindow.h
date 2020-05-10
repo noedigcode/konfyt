@@ -22,7 +22,18 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <iostream>
+#include "aboutdialog.h"
+#include "consoledialog.h"
+#include "konfytDatabase.h"
+#include "konfytDefines.h"
+#include "konfytFluidsynthEngine.h"
+#include "konfytJackEngine.h"
+#include "konfytLayerWidget.h"
+#include "konfytMidiFilter.h"
+#include "konfytPatchEngine.h"
+#include "konfytPatchLayer.h"
+#include "konfytProcess.h"
+#include "konfytProject.h"
 
 #include <QAction>
 #include <QCheckBox>
@@ -43,18 +54,7 @@
 #include <QTimer>
 #include <QTreeWidgetItem>
 
-#include "konfytDatabase.h"
-#include "konfytFluidsynthEngine.h"
-#include "konfytPatchEngine.h"
-#include "konfytProject.h"
-#include "konfytJackEngine.h"
-#include "konfytProcess.h"
-#include "konfytPatchLayer.h"
-#include "konfytMidiFilter.h"
-#include "konfytLayerWidget.h"
-#include "consoledialog.h"
-#include "konfytDefines.h"
-#include "aboutdialog.h"
+#include <iostream>
 
 
 #define APP_RESTART_CODE 1000

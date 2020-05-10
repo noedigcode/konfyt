@@ -22,54 +22,61 @@
 #ifndef KONFYT_FLUIDSYNTH_ENGINE_H
 #define KONFYT_FLUIDSYNTH_ENGINE_H
 
-#include <QObject>
-#include <QMutex>
+#include "konfytDefines.h"
+#include "konfytMidi.h"
+#include "konfytStructs.h"
 
 #include <fluidsynth.h>
 
-#include "konfytDefines.h"
-#include "konfytDatabase.h"
+#include <QObject>
+#include <QMutex>
 
 
-class konfytFluidsynthEngine : public QObject
+struct KfFluidSynth
+{
+    friend class KonfytFluidsynthEngine;
+
+    ~KfFluidSynth()
+    {
+        if (synth) { delete_fluid_synth(synth); }
+        if (settings) { delete_fluid_settings(settings); }
+    }
+
+protected:
+    fluid_synth_t* synth = nullptr;
+    fluid_settings_t* settings = nullptr;
+    KonfytSoundfontProgram program;
+    int soundfontIDinSynth;
+};
+
+
+class KonfytFluidsynthEngine : public QObject
 {
     Q_OBJECT
 public:
+    explicit KonfytFluidsynthEngine(QObject *parent = 0);
+    ~KonfytFluidsynthEngine();
 
-    struct konfytFluidSynthData
-    {
-        int ID; // ID in konfytFluidsynthEngine
-        fluid_synth_t* synth;
-        fluid_settings_t* settings;
-        KonfytSoundfontProgram program;
-        int soundfontIDinSynth;
-    };
-
-    explicit konfytFluidsynthEngine(QObject *parent = 0);
-
-    void InitFluidsynth(double SampleRate);
+    void initFluidsynth(double sampleRate);
 
     QMutex mutex;
-    void processJackMidi(int ID, const KonfytMidiEvent* ev);
-    int fluidsynthWriteFloat(int ID, void* leftBuffer, void* rightBuffer, int len);
+    void processJackMidi(KfFluidSynth *synth, const KonfytMidiEvent* ev);
+    int fluidsynthWriteFloat(KfFluidSynth *synth, void* leftBuffer, void* rightBuffer, int len);
 
-    int addSoundfontProgram(KonfytSoundfontProgram p);
-    void removeSoundfontProgram(int ID);
+    KfFluidSynth* addSoundfontProgram(KonfytSoundfontProgram p);
+    void removeSoundfontProgram(KfFluidSynth *synth);
 
-    float getGain(int ID);
-    void setGain(int ID, float newGain);
+    float getGain(KfFluidSynth *synth);
+    void setGain(KfFluidSynth *synth, float newGain);
 
     void error_abort(QString msg);
 
 private:
-    int synthUniqueIDCounter;
-    QMap<int, konfytFluidSynthData> synthDataMap;
-    double samplerate;
+    QList<KfFluidSynth*> synths;
+    double mSampleRate = 44100;
     
 signals:
     void userMessage(QString msg);
-    
-public slots:
     
 };
 
