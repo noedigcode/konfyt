@@ -26,9 +26,7 @@
 #include "konfytDefines.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackStructs.h"
-#include "konfytPatch.h"
 #include "konfytProject.h"
-#include "konfytStructs.h"
 #include "konfytStructs.h"
 #include "ringbufferqmutex.h"
 
@@ -127,7 +125,7 @@ public:
                                   KfJackAudioPort *rightPort);
 
     // Fluidsynth
-    KfJackPluginPorts* addSoundfont(const LayerSoundfontStruct &sf);
+    KfJackPluginPorts* addSoundfont(KfFluidSynth* fluidSynth);
     void removeSoundfont(KfJackPluginPorts *p);
     void setSoundfontMidiFilter(KfJackPluginPorts *p, KonfytMidiFilter filter);
     void setSoundfontActive(KfJackPluginPorts *p, bool active);
@@ -139,8 +137,6 @@ public:
     void addOtherJackConPair(KonfytJackConPair p);
     void removeOtherJackConPair(KonfytJackConPair p);
     void clearOtherJackConPair();
-
-    void activateRoutesForPatch(const KonfytPatch *patch, bool active);
 
     void setGlobalTranspose(int transpose);
 

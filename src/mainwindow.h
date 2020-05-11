@@ -349,16 +349,16 @@ private:
     // Layers
 private:
     QList<KonfytLayerWidget*> layerWidgetList;
-    void addLayerItemToGUI(KonfytPatchLayer layerItem);
-    void removeLayerItem(KonfytLayerWidget *layerItem);
-    void removeLayerItem_GUIonly(KonfytLayerWidget *layerItem);
-    void clearLayerItems_GUIonly();
+    void addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer);
+    void removePatchLayer(KonfytLayerWidget *layerWidget);
+    void removePatchLayerFromGuiOnly(KonfytLayerWidget *layerWidget);
+    void clearPatchLayersFromGuiOnly();
 private slots:
-    void onLayer_slider_moved(KonfytLayerWidget* layerItem, float gain);
-    void onLayer_solo_clicked(KonfytLayerWidget* layerItem, bool solo);
-    void onLayer_mute_clicked(KonfytLayerWidget* layerItem, bool mute);
-    void onLayer_midiSend_clicked(KonfytLayerWidget* layerItem);
-    void onLayer_rightToolbutton_clicked(KonfytLayerWidget* layerItem);
+    void onLayer_slider_moved(KonfytLayerWidget* layerWidget, float gain);
+    void onLayer_solo_clicked(KonfytLayerWidget* layerWidget, bool solo);
+    void onLayer_mute_clicked(KonfytLayerWidget* layerWidget, bool mute);
+    void onLayer_midiSend_clicked(KonfytLayerWidget* layerWidget);
+    void onLayer_rightToolbutton_clicked(KonfytLayerWidget* layerWidget);
 
     // patchMidiOutPortsMenu: Context menu when user clicks button to add a new MIDI output layer.
 private:
@@ -775,33 +775,42 @@ private slots:
 private:
     QMap<int, int> midiInPortSustain; // Map MIDI in port id in project to sustain value
     QMap<int, int> midiInPortPitchbend;
-    QMap<KonfytPatch*, QMap<int, int> > blah;
     class IndicatorData
     {
     public:
-        bool hasSustain(KonfytPatch* patch, int layerId) {
-            int sustainVal = sustainMap[patch].value(layerId, 0);
+        bool hasSustain(KfPatchLayerWeakPtr patchLayer)
+        {
+            int sustainVal = sustainMap.value(patchLayer.data(), 0);
             return sustainVal > 0;
         }
 
-        bool hasSustain(KonfytPatch* patch) {
-            return !sustainMap[patch].isEmpty();
-        }
-
-        void setSustain(KonfytPatch* patch, int layerId, int sustainVal)
+        void setSustain(KfPatchLayerWeakPtr patchLayer, int sustainVal)
         {
             if (sustainVal) {
-                sustainMap[patch].insert(layerId, sustainVal);
+                sustainMap.insert(patchLayer.data(), sustainVal);
             } else {
-                sustainMap[patch].remove(layerId);
+                sustainMap.remove(patchLayer.data());
+            }
+        }
+
+        bool hasPitchbend(KfPatchLayerWeakPtr patchLayer)
+        {
+            int val = pitchbendMap.value(patchLayer.data(), 0);
+            return val != 0;
+        }
+
+        void setPitchbend(KfPatchLayerWeakPtr patchLayer, int pitchbend)
+        {
+            if (pitchbend) {
+                pitchbendMap.insert(patchLayer.data(), pitchbend);
+            } else {
+                pitchbendMap.remove(patchLayer.data());
             }
         }
 
     private:
-        typedef int LayerId;
-        QMap<KonfytPatch*, QMap<LayerId, int> > sustainMap;
-        QMap<KonfytPatch*, QMap<LayerId, int> > pitchbendMap;
-
+        QMap<KonfytPatchLayer*, int> sustainMap;
+        QMap<KonfytPatchLayer*, int> pitchbendMap;
 
     } layerIndicatorData;
 
@@ -824,8 +833,6 @@ private slots:
     // Actions
 
 private slots:
-    void on_actionSave_Patch_triggered();
-
     void on_actionSave_Patch_As_Copy_triggered();
 
     void on_actionAdd_Patch_To_Library_triggered();

@@ -28,7 +28,6 @@ KonfytProject::KonfytProject(QObject *parent) :
 {
     // Initialise variables
     projectName = "New Project";
-    patch_id_counter = 250;
     patchListNumbers = true;
     patchListNotes = false;
     programChangeSwitchPatches = true;
@@ -40,8 +39,6 @@ KonfytProject::KonfytProject(QObject *parent) :
     this->midiInPort_addPort("MIDI In");
 }
 
-
-
 bool KonfytProject::saveProject()
 {
     if (projectDirname == "") {
@@ -51,9 +48,8 @@ bool KonfytProject::saveProject()
     }
 }
 
-
-// Save project xml file containing a list of all the patches,
-// as well as all the related patch files, in the specified directory.
+/* Save project xml file containing a list of all the patches,
+ * as well as all the related patch files, in the specified directory. */
 bool KonfytProject::saveProjectAs(QString dirname)
 {
     // Directory in which the project will be saved (from parameter):
@@ -108,7 +104,7 @@ bool KonfytProject::saveProjectAs(QString dirname)
         stream.writeStartElement(XML_PRJ_PATCH);
         // Patch properties
         KonfytPatch* pat = patchList.at(i);
-        QString patchFilename = QString(PROJECT_PATCH_DIR) + "/" + n2s(i) + "_" + sanitiseFilename(pat->getName()) + "." + KONFYT_PATCH_SUFFIX;
+        QString patchFilename = QString(PROJECT_PATCH_DIR) + "/" + n2s(i) + "_" + sanitiseFilename(pat->name()) + "." + KONFYT_PATCH_SUFFIX;
         stream.writeTextElement(XML_PRJ_PATCH_FILENAME, patchFilename);
 
         // Save the patch file in the same directory as the project file
@@ -255,8 +251,8 @@ bool KonfytProject::saveProjectAs(QString dirname)
     return true;
 }
 
-// Load project xml file (containing list of all the patches) and
-// load all the patch files from the same directory.
+/* Load project xml file (containing list of all the patches) and
+ * load all the patch files from the same directory. */
 bool KonfytProject::loadProject(QString filename)
 {
     QFile file(filename);
@@ -617,17 +613,13 @@ QString KonfytProject::getProjectName()
 
 void KonfytProject::addPatch(KonfytPatch *newPatch)
 {
-    // Set unique ID, so we can later identify this patch.
-    newPatch->id_in_project = this->patch_id_counter++;
-
     patchList.append(newPatch);
     setModified(true);
 }
 
-
-// Removes the patch from project and returns the pointer.
-// Note that the pointer has not been freed.
-// Returns NULL if index out of bounds.
+/* Removes the patch from project and returns the pointer.
+ * Note that the pointer has not been freed.
+ * Returns NULL if index out of bounds. */
 KonfytPatch *KonfytProject::removePatch(int i)
 {
     if ( (i>=0) && (i<patchList.count())) {
@@ -639,8 +631,6 @@ KonfytPatch *KonfytProject::removePatch(int i)
         return NULL;
     }
 }
-
-
 
 void KonfytProject::movePatchUp(int i)
 {
@@ -1142,7 +1132,6 @@ void KonfytProject::midiOutPort_addClient(int portId, QString client)
     }
 }
 
-
 void KonfytProject::midiOutPort_removeClient(int portId, QString client)
 {
     if (midiOutPortMap.contains(portId)) {
@@ -1185,7 +1174,7 @@ QStringList KonfytProject::midiOutPort_getClients(int portId)
     return midiOutPortMap.value(portId).clients;
 }
 
-// Add process (External program) to GUI and current project.
+/* Add process (External program) to GUI and current project. */
 void KonfytProject::addProcess(konfytProcess* process)
 {
     // Add to internal list
@@ -1238,7 +1227,7 @@ void KonfytProject::removeProcess(int index)
     }
 }
 
-// Slot for signal from Process object, when the process was started.
+/* Slot for signal from Process object, when the process was started. */
 void KonfytProject::processStartedSlot(konfytProcess *process)
 {
     int index = processList.indexOf(process);
@@ -1254,19 +1243,6 @@ void KonfytProject::processFinishedSlot(konfytProcess *process)
 QList<konfytProcess*> KonfytProject::getProcessList()
 {
     return processList;
-}
-
-// Used to determine whether patches are loaded. Uses unique patch id.
-// This addes the patch id to the loaded_patch_ids list.
-void KonfytProject::markPatchLoaded(int patch_id)
-{
-    this->loaded_patch_ids.append(patch_id);
-}
-
-// Used to determine whether patches are loaded. Uses unique patch id.
-bool KonfytProject::isPatchLoaded(int patch_id)
-{
-    return this->loaded_patch_ids.contains(patch_id);
 }
 
 void KonfytProject::addAndReplaceTrigger(KonfytTrigger newTrigger)
@@ -1373,13 +1349,9 @@ bool KonfytProject::isModified()
     return this->modified;
 }
 
-
-// Print error message to stdout, and abort app.
+/* Print error message to stdout, and abort app. */
 void KonfytProject::error_abort(QString msg) const
 {
     std::cout << "\n" << "Konfyt ERROR, ABORTING: konfytProject:" << msg.toLocal8Bit().constData();
     abort();
 }
-
-
-

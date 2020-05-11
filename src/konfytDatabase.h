@@ -22,19 +22,19 @@
 #ifndef SFDATABASE_H
 #define SFDATABASE_H
 
-#include <QObject>
-#include <QList>
-#include <QStringList>
-#include <QMap>
-#include <QThread>
-#include <QDir>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
+#include "konfytDbTree.h"
+#include "konfytPatch.h"
 
 #include <fluidsynth.h>
 
-#include "konfytPatch.h"
-#include "konfytDbTree.h"
+#include <QDir>
+#include <QList>
+#include <QMap>
+#include <QObject>
+#include <QStringList>
+#include <QThread>
+#include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 #define konfytDatabaseSource_returnSfont 1
 

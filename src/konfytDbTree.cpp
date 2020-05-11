@@ -49,8 +49,6 @@ bool KonfytDbTreeItem::hasParent()
     return parent != NULL;
 }
 
-
-
 KonfytDbTree::KonfytDbTree()
 {
     root = new KonfytDbTreeItem();

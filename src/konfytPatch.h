@@ -26,8 +26,10 @@
 #include "konfytPatchLayer.h"
 
 #include <QFile>
-#include <QXmlStreamWriter>
+#include <QSharedPointer>
+#include <QWeakPointer>
 #include <QXmlStreamReader>
+#include <QXmlStreamWriter>
 
 
 #define XML_PATCH "sfpatch"
@@ -71,6 +73,8 @@
 
 #define XML_PATCH_MIDISENDLIST "midiSendList"
 
+typedef QWeakPointer<KonfytPatchLayer> KfPatchLayerWeakPtr;
+typedef QSharedPointer<KonfytPatchLayer> KfPatchLayerSharedPtr;
 
 class KonfytPatch
 {
@@ -79,70 +83,60 @@ public:
     // ----------------------------------------------------
     // Patch Info
     // ----------------------------------------------------
-    QString getName();
+    QString name() const;
     void setName(QString newName);
-    QString getNote();
+    QString note() const;
     void setNote(QString newNote);
-    int id_in_project; // Unique ID in project to identify the patch in runtime.
     bool alwaysActive = false;
 
     // ----------------------------------------------------
     // General layer related functions
     // ----------------------------------------------------
-    QList<KonfytPatchLayer> getLayerItems();
-    KonfytPatchLayer getLayerItem(KonfytPatchLayer item);
-    int getNumLayers();
-    bool isValidLayerNumber(int layer);
-    void removeLayer(KonfytPatchLayer *layer);
+    QList<KfPatchLayerWeakPtr> layers();
+    KfPatchLayerWeakPtr layer(int index);
+    int layerCount() const;
+    bool isValidLayerIndex(int layerIndex) const;
+    void removeLayer(KfPatchLayerWeakPtr layer);
     void clearLayers();
-    int layerListIndexFromPatchId(KonfytPatchLayer* layer);
-    void replaceLayer(KonfytPatchLayer newLayer);
-    void setLayerFilter(KonfytPatchLayer* layer, KonfytMidiFilter newFilter);
-    float getLayerGain(KonfytPatchLayer* layer);
-    void setLayerGain(KonfytPatchLayer* layer, float newGain);
-    void setLayerSolo(KonfytPatchLayer* layer, bool solo);
-    void setLayerMute(KonfytPatchLayer* layer, bool mute);
-    void setLayerBus(KonfytPatchLayer* layer, int bus);
-    void setLayerMidiInPort(KonfytPatchLayer* layer, int portId);
-    void setLayerMidiSendEvents(KonfytPatchLayer* layer, QList<MidiSendItem> events);
+    int layerIndex(KfPatchLayerWeakPtr layer) const;
 
     // ----------------------------------------------------
     // Soundfont layer related functions
     // ----------------------------------------------------
 
-    KonfytPatchLayer addProgram(KonfytSoundfontProgram p);
-    KonfytPatchLayer addSfLayer(LayerSoundfontStruct newSfLayer);
-    QList<KonfytPatchLayer> getSfLayerList() const;
+    KfPatchLayerWeakPtr addProgram(KonfytSoundfontProgram p);
+    KfPatchLayerWeakPtr addSfLayer(LayerSoundfontData newSfLayer);
+    QList<KfPatchLayerWeakPtr> getSfLayerList() const;
 
     // ----------------------------------------------------
     // SFZ Plugin functions
     // ----------------------------------------------------
-    KonfytPatchLayer addPlugin(LayerSfzStruct newPlugin);
-    QList<KonfytPatchLayer> getPluginLayerList() const;
+    KfPatchLayerWeakPtr addPlugin(LayerSfzData newPlugin, QString name);
+    QList<KfPatchLayerWeakPtr> getPluginLayerList() const;
 
     // ----------------------------------------------------
     // Midi routing
     // ----------------------------------------------------
 
-    QList<int> getMidiOutputPortList_ids() const;
-    QList<KonfytPatchLayer> getMidiOutputLayerList() const;
-    KonfytPatchLayer addMidiOutputPort(int newPort);
-    KonfytPatchLayer addMidiOutputPort(LayerMidiOutStruct newPort);
+    QList<int> getMidiOutputPortListProjectIds() const;
+    QList<KfPatchLayerWeakPtr> getMidiOutputLayerList() const;
+    KfPatchLayerWeakPtr addMidiOutputPort(int newPort);
+    KfPatchLayerWeakPtr addMidiOutputPort(LayerMidiOutData newPort);
 
     // ----------------------------------------------------
     // Audio input ports
     // ----------------------------------------------------
 
-    QList<int> getAudioInPortList_ids() const;
-    QList<KonfytPatchLayer> getAudioInLayerList() const;
-    KonfytPatchLayer addAudioInPort(int newPort);
-    KonfytPatchLayer addAudioInPort(LayerAudioInStruct newPort);
+    QList<int> getAudioInPortListProjectIds() const;
+    QList<KfPatchLayerWeakPtr> getAudioInLayerList() const;
+    KfPatchLayerWeakPtr addAudioInPort(int newPort);
+    KfPatchLayerWeakPtr addAudioInPort(LayerAudioInData newPort, QString name);
 
     // ----------------------------------------------------
     // Save/load functions
     // ----------------------------------------------------
 
-    bool savePatchToFile(QString filename);
+    bool savePatchToFile(QString filename) const;
     bool loadPatchFromFile(QString filename, QString* errors = nullptr);
 
 private:
@@ -150,9 +144,9 @@ private:
     QString patchNote;  // Custom note for user instructions or to describe the patch
 
     // List of layers (all types, order is important for user in the patch)
-    QList<KonfytPatchLayer> layerList;
+    QList<KfPatchLayerSharedPtr> layerList;
 
-    int idCounter = 200; // Counter for unique ID given to layeritem to uniquely identify them.
+    QList<KfPatchLayerWeakPtr> layersOfType(KonfytPatchLayer::LayerType layerType) const;
 
     void appendError(QString *errorString, QString msg);
     void error_abort(QString msg);

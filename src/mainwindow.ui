@@ -8835,11 +8835,6 @@ border-bottom-left-radius: 0;
     <string>Add Patch From File</string>
    </property>
   </action>
-  <action name="actionSave_Patch">
-   <property name="text">
-    <string>Save Patch</string>
-   </property>
-  </action>
   <action name="actionSave_Patch_As_Copy">
    <property name="text">
     <string>Create Copy</string>

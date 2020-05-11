@@ -49,16 +49,15 @@ public:
     KonfytProject* project; // Pointer to current project to get bus and port naming info
 
     // This function has to be called before using the object.
-    void initLayer(KonfytPatchLayer newg, QListWidgetItem* newItem);
+    void initLayer(KfPatchLayerWeakPtr patchLayer, QListWidgetItem* listItem);
 
-    // This function is for updating the LayerItem
-    void setLayerItem(KonfytPatchLayer newg);
+    // Update the layer widget
+    void refresh();
 
-    void updateBackgroundFromFilter();
     void setSliderGain(float newGain);
     void setSoloButton(bool solo);
     void setMuteButton(bool mute);
-    KonfytPatchLayer getPatchLayerItem();
+    KfPatchLayerWeakPtr getPatchLayer();
     QListWidgetItem* getListWidgetItem();
     QString getFilePath();
 
@@ -69,14 +68,15 @@ public:
 private:
     Ui::KonfytLayerWidget *ui;
 
-    KonfytPatchLayer g;
-    QListWidgetItem* listWidgetItem;
-    QString filepath;
+    KfPatchLayerWeakPtr mPatchLayer;
+    QListWidgetItem* mListWidgetItem;
+    QString mFilepath;
 
     void setUpGUI();
     float background_rectLeft;
     float background_rectRight;
     void changeBackground(int min, int max);
+    void updateBackgroundFromFilter();
 
     void paintEvent(QPaintEvent *);
 

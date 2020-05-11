@@ -23,21 +23,17 @@
 
 void KonfytPatchLayer::setErrorMessage(QString msg)
 {
-    this->errorMessage = msg;
+    mErrorMessage = msg;
 }
 
 bool KonfytPatchLayer::hasError() const
 {
-    if ( this->errorMessage.length() ) {
-        return true;
-    } else {
-        return false;
-    }
+    return !mErrorMessage.isEmpty();
 }
 
-QString KonfytPatchLayer::getErrorMessage() const
+QString KonfytPatchLayer::errorMessage() const
 {
-    return this->errorMessage;
+    return mErrorMessage;
 }
 
 QList<KonfytMidiEvent> KonfytPatchLayer::getMidiSendListEvents()
@@ -49,169 +45,113 @@ QList<KonfytMidiEvent> KonfytPatchLayer::getMidiSendListEvents()
     return events;
 }
 
-
-/* Use to initialise the layer object.
- * Accepts an ID which will later be used by the patch class to uniquely identify it. */
-void KonfytPatchLayer::initLayer(int id, LayerSoundfontStruct newLayerData)
+void KonfytPatchLayer::initLayer(LayerSoundfontData newLayerData)
 {
-    this->idInPatch = id;
-    this->layerType = KonfytLayerType_SoundfontProgram;
-    this->soundfontData = newLayerData;
+    mLayerType = TypeSoundfontProgram;
+    soundfontData = newLayerData;
+    mName = soundfontData.program.parent_soundfont + "/" + soundfontData.program.name;
 }
 
-void KonfytPatchLayer::initLayer(int id, LayerSfzStruct newLayerData)
+void KonfytPatchLayer::initLayer(LayerSfzData newLayerData)
 {
-    this->idInPatch = id;
-    this->layerType = KonfytLayerType_Sfz;
-    this->sfzData = newLayerData;
+    mLayerType = TypeSfz;
+    sfzData = newLayerData;
+    mName = "SFZ";
 }
 
-void KonfytPatchLayer::initLayer(int id, LayerMidiOutStruct newLayerData)
+void KonfytPatchLayer::initLayer(LayerMidiOutData newLayerData)
 {
-    this->idInPatch = id;
-    this->layerType = KonfytLayerType_MidiOut;
-    this->midiOutputPortData = newLayerData;
+    mLayerType = TypeMidiOut;
+    midiOutputPortData = newLayerData;
+    mName = "MIDI Out Port";
 }
 
-void KonfytPatchLayer::initLayer(int id, LayerAudioInStruct newLayerData)
+void KonfytPatchLayer::initLayer(LayerAudioInData newLayerData)
 {
-    this->idInPatch = id;
-    this->layerType = KonfytLayerType_AudioIn;
-    this->audioInPortData = newLayerData;
+    mLayerType = TypeAudioIn;
+    audioInPortData = newLayerData;
+    mName = "Audio In Port";
 }
 
-QString KonfytPatchLayer::getName() const
+QString KonfytPatchLayer::name() const
 {
-    switch (layerType) {
-    case KonfytLayerType_AudioIn:
-        return this->audioInPortData.name;
-        break;
-    case KonfytLayerType_Sfz:
-        return this->sfzData.name;
-        break;
-    case KonfytLayerType_MidiOut:
-        return "MIDI Out Port";
-        break;
-    case KonfytLayerType_SoundfontProgram:
-        return this->soundfontData.program.parent_soundfont + "/" + this->soundfontData.program.name;
-        break;
-    case KonfytLayerType_Uninitialized:
-        return "UNINITIALIZED LAYER";
-        break;
-    default:
-        return "LAYER TYPE ERROR";
-    }
+    return mName;
 }
 
-float KonfytPatchLayer::getGain() const
+void KonfytPatchLayer::setName(QString name)
 {
-    if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        return this->soundfontData.gain;
-    } else if (this->layerType == KonfytLayerType_Sfz) {
-        return this->sfzData.gain;
-    } else if (this->layerType == KonfytLayerType_AudioIn) {
-        return this->audioInPortData.gain;
-    } else {
-        return 0;
-    }
+    mName = name;
 }
 
-void KonfytPatchLayer::setGain(float newGain)
+float KonfytPatchLayer::gain() const
 {
-    if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        this->soundfontData.gain = newGain;
-    } else if (this->layerType == KonfytLayerType_Sfz) {
-        this->sfzData.gain = newGain;
-    } else if (this->layerType == KonfytLayerType_AudioIn) {
-        this->audioInPortData.gain = newGain;
-    }
+    return mGain;
 }
 
-void KonfytPatchLayer::setSolo(bool newSolo)
+void KonfytPatchLayer::setGain(float gain)
 {
-    if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        this->soundfontData.solo = newSolo;
-    } else if (this->layerType == KonfytLayerType_Sfz) {
-        this->sfzData.solo = newSolo;
-    } else if (this->layerType == KonfytLayerType_MidiOut) {
-        this->midiOutputPortData.solo = newSolo;
-    } else if (this->layerType == KonfytLayerType_AudioIn) {
-        this->audioInPortData.solo = newSolo;
-    }
+    mGain = gain;
 }
 
-void KonfytPatchLayer::setMute(bool newMute)
+void KonfytPatchLayer::setSolo(bool isSolo)
 {
-    if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        this->soundfontData.mute = newMute;
-    } else if (this->layerType == KonfytLayerType_Sfz) {
-        this->sfzData.mute = newMute;
-    } else if (this->layerType == KonfytLayerType_MidiOut) {
-        this->midiOutputPortData.mute = newMute;
-    } else if (this->layerType == KonfytLayerType_AudioIn) {
-        this->audioInPortData.mute = newMute;
-    }
+    mSolo = isSolo;
+}
+
+void KonfytPatchLayer::setMute(bool isMute)
+{
+    mMute = isMute;
 }
 
 bool KonfytPatchLayer::isSolo() const
 {
-    if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        return this->soundfontData.solo;
-    } else if (this->layerType == KonfytLayerType_Sfz) {
-        return this->sfzData.solo;
-    } else if (this->layerType == KonfytLayerType_MidiOut) {
-        return this->midiOutputPortData.solo;
-    } else if (this->layerType == KonfytLayerType_AudioIn) {
-        return this->audioInPortData.solo;
-    }
-    return false;
+    return mSolo;
 }
 
 bool KonfytPatchLayer::isMute() const
 {
-    if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        return this->soundfontData.mute;
-    } else if (this->layerType == KonfytLayerType_Sfz) {
-        return this->sfzData.mute;
-    } else if (this->layerType == KonfytLayerType_MidiOut) {
-        return this->midiOutputPortData.mute;
-    } else if (this->layerType == KonfytLayerType_AudioIn) {
-        return this->audioInPortData.mute;
-    }
-    return false;
+    return mMute;
 }
 
-KonfytMidiFilter KonfytPatchLayer::getMidiFilter() const
+int KonfytPatchLayer::busIdInProject() const
 {
-    if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        return this->soundfontData.filter;
-    } else if (this->layerType == KonfytLayerType_Sfz) {
-        return this->sfzData.midiFilter;
-    } else {
-        return this->midiOutputPortData.filter;
-    }
+    return mBusIdInProject;
 }
 
-void KonfytPatchLayer::setMidiFilter(KonfytMidiFilter newFilter)
+void KonfytPatchLayer::setBusIdInProject(int bus)
 {
-    if (this->layerType == KonfytLayerType_SoundfontProgram) {
-        this->soundfontData.filter = newFilter;
-    } else if (this->layerType == KonfytLayerType_Sfz) {
-        this->sfzData.midiFilter = newFilter;
-    } else {
-        this->midiOutputPortData.filter = newFilter;
-    }
+    mBusIdInProject = bus;
 }
 
-KonfytLayerType KonfytPatchLayer::getLayerType() const
+int KonfytPatchLayer::midiInPortIdInProject() const
 {
-    return layerType;
+    return mMidiInPortIdInProject;
+}
+
+void KonfytPatchLayer::setMidiInPortIdInProject(int port)
+{
+    mMidiInPortIdInProject = port;
+}
+
+KonfytMidiFilter KonfytPatchLayer::midiFilter() const
+{
+    return mMidiFilter;
+}
+
+void KonfytPatchLayer::setMidiFilter(KonfytMidiFilter midiFilter)
+{
+    mMidiFilter = midiFilter;
+}
+
+KonfytPatchLayer::LayerType KonfytPatchLayer::layerType() const
+{
+    return mLayerType;
 }
 
 /* Shorthand for determining of layer type has MIDI input. */
 bool KonfytPatchLayer::hasMidiInput() const
 {
-    return    (layerType == KonfytLayerType_MidiOut)
-           || (layerType == KonfytLayerType_Sfz)
-           || (layerType == KonfytLayerType_SoundfontProgram);
+    return    (mLayerType == TypeMidiOut)
+           || (mLayerType == TypeSfz)
+           || (mLayerType == TypeSoundfontProgram);
 }

@@ -123,7 +123,7 @@ void KonfytJackEngine::refreshConnections(jack_port_t *jackPort, QStringList cli
 }
 
 /* Add new soundfont ports. Also assigns MIDI filter. */
-KfJackPluginPorts* KonfytJackEngine::addSoundfont(const LayerSoundfontStruct &sf)
+KfJackPluginPorts* KonfytJackEngine::addSoundfont(KfFluidSynth *fluidSynth)
 {
     /* Soundfonts use the same structures as SFZ plugins for now, but are much simpler
      * as midi is given to the fluidsynth engine and audio is recieved from it without
@@ -139,7 +139,7 @@ KfJackPluginPorts* KonfytJackEngine::addSoundfont(const LayerSoundfontStruct &sf
     p->audioInRight->buffer = malloc(sizeof(jack_default_audio_sample_t)*nframes);
 
     p->midi = new KfJackMidiPort(); // Dummy port for note records, etc.
-    p->fluidSynthInEngine = sf.synthInEngine;
+    p->fluidSynthInEngine = fluidSynth;
 
     p->midiRoute = addMidiRoute();
     p->audioLeftRoute = addAudioRoute();
@@ -157,7 +157,6 @@ KfJackPluginPorts* KonfytJackEngine::addSoundfont(const LayerSoundfontStruct &sf
     p->midiRoute->destFluidsynthID = p->fluidSynthInEngine;
     p->midiRoute->destIsJackPort = false;
     p->midiRoute->destPort = p->midi;
-    p->midiRoute->filter = sf.filter;
 
     fluidsynthPorts.append(p);
 
@@ -700,7 +699,8 @@ bool KonfytJackEngine::sendMidiEventsOnRoute(KfJackMidiRoute *route, QList<Konfy
     return success;
 }
 
-// This indicates whether we are connected to Jack or failed to create/activate a client.
+/* This indicates whether we are connected to JACK or failed to create/activate
+ * a client. */
 bool KonfytJackEngine::clientIsActive()
 {
     return this->clientActive;
@@ -1233,7 +1233,7 @@ void KonfytJackEngine::handlePitchbendZeroEvent(KonfytMidiEvent &ev, jack_midi_e
     }
 }
 
-// Helper function for Jack process callback
+/* Helper function for JACK process callback */
 void KonfytJackEngine::mixBufferToDestinationPort(KfJackAudioRoute *route,
                                                   jack_nframes_t nframes,
                                                   bool applyGain)
@@ -1264,7 +1264,8 @@ void KonfytJackEngine::mixBufferToDestinationPort(KfJackAudioRoute *route,
     }
 }
 
-// Initialises MIDI closure events that will be sent to ports during Jack process callback.
+/* Initialises MIDI closure events that will be sent to ports during JACK
+ * process callback. */
 void KonfytJackEngine::initMidiClosureEvents()
 {
     evAllNotesOff.setCC(MIDI_MSG_ALL_NOTES_OFF, 0);
@@ -1272,7 +1273,7 @@ void KonfytJackEngine::initMidiClosureEvents()
     evPitchbendZero.setPitchbend(0);
 }
 
-// Helper function for Jack process callback
+/* Helper function for JACK process callback. */
 void KonfytJackEngine::sendMidiClosureEvents(KfJackMidiPort *port, int channel)
 {
     unsigned char* out_buffer;
@@ -1297,13 +1298,13 @@ void KonfytJackEngine::sendMidiClosureEvents(KfJackMidiPort *port, int channel)
     }
 }
 
-// Helper function for Jack process callback
+/* Helper function for JACK process callback. */
 void KonfytJackEngine::sendMidiClosureEvents_chanZeroOnly(KfJackMidiPort *port)
 {
     sendMidiClosureEvents(port, 0);
 }
 
-// Helper function for Jack process callback
+/* Helper function for JACK process callback. */
 void KonfytJackEngine::sendMidiClosureEvents_allChannels(KfJackMidiPort *port)
 {
     for (int i=0; i<15; i++) {
@@ -1573,49 +1574,6 @@ void KonfytJackEngine::clearOtherJackConPair()
     pauseJackProcessing(false);
 }
 
-
-/* Activate all the necessary routes for the given patch. */
-void KonfytJackEngine::activateRoutesForPatch(const KonfytPatch* patch, bool active)
-{
-    if (!clientIsActive()) { return; }
-
-    // MIDI output ports to external apps
-
-    QList<KonfytPatchLayer> midiOutLayers = patch->getMidiOutputLayerList();
-    foreach (KonfytPatchLayer layer, midiOutLayers) {
-        if (layer.hasError()) { continue; }
-        setMidiRouteActive(layer.midiOutputPortData.jackRoute, active);
-    }
-
-    // Plugins
-
-    QList<KonfytPatchLayer> pluginLayers = patch->getPluginLayerList();
-    for (int i=0; i<pluginLayers.count(); i++) {
-        KonfytPatchLayer layer = pluginLayers[i];
-        if (layer.hasError()) { continue; }
-        setPluginActive(layer.sfzData.portsInJackEngine, active);
-    }
-
-    // Soundfont ports
-
-    QList<KonfytPatchLayer> sfLayers = patch->getSfLayerList();
-    for (int i=0; i<sfLayers.count(); i++) {
-        KonfytPatchLayer layer = sfLayers[i];
-        if (layer.hasError()) { continue; }
-        setSoundfontActive(layer.soundfontData.portsInJackEngine, active);
-    }
-
-    // General audio input ports
-
-    QList<KonfytPatchLayer> audioInLayers = patch->getAudioInLayerList();
-    foreach (KonfytPatchLayer layer, audioInLayers) {
-        if (layer.hasError()) { continue; }
-        setAudioRouteActive(layer.audioInPortData.jackRouteLeft, active);
-        setAudioRouteActive(layer.audioInPortData.jackRouteRight, active);
-    }
-
-}
-
 void KonfytJackEngine::setGlobalTranspose(int transpose)
 {
     this->globalTranspose = transpose;
@@ -1652,12 +1610,10 @@ jack_port_t *KonfytJackEngine::registerJackAudioPort(QString name, bool input)
 }
 
 
-// Print error message to stdout, and abort app.
+/* Print error message to stdout, and abort app. */
 void KonfytJackEngine::error_abort(QString msg)
 {
     std::cout << "\n" << "Konfyt ERROR, ABORTING: konfytJackClient:" << msg.toLocal8Bit().constData();
     abort();
 }
-
-
 

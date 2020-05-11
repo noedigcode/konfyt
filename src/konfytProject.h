@@ -229,10 +229,6 @@ public:
     void removeProcess(int index);
     QList<konfytProcess*> getProcessList();
 
-    // Used to determine whether patches are loaded. Uses unique patch id.
-    void markPatchLoaded(int patch_id);
-    bool isPatchLoaded(int patch_id);
-
     // Triggers
     void addAndReplaceTrigger(KonfytTrigger newTrigger);
     void removeTrigger(QString actionText);
@@ -283,10 +279,6 @@ private:
     QList<KonfytJackConPair> jackAudioConList;
 
     bool modified; // Whether project has been modified since last load/save.
-
-    // Used to determine whether patches are loaded. Uses unique patch id.
-    int patch_id_counter;
-    QList<int> loaded_patch_ids;
 
 signals:
     void userMessage(QString msg);

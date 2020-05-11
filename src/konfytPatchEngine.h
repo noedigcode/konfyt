@@ -60,13 +60,14 @@ public:
     bool loadPatch(KonfytPatch* newPatch);  // Load new patch, replacing current patch.
     void reloadPatch();                     // Reload the current patch (e.g. use if patch changed)
     void unloadPatch(KonfytPatch* patch);
-    void unloadLayer(KonfytPatch*patch, KonfytPatchLayer *item);
-    KonfytPatchLayer reloadLayer(KonfytPatchLayer *item);
+    void unloadLayer(KfPatchLayerWeakPtr layer);
+    void reloadLayer(KfPatchLayerWeakPtr layer);
+    bool isPatchLoaded(KonfytPatch* patch);
 
     // ----------------------------------------------------
     // Modify current patch
     // ----------------------------------------------------
-    KonfytPatch* getPatch();
+    KonfytPatch* currentPatch();
     void setPatchName(QString newName);
     QString getPatchName();
     void setPatchNote(QString newNote);
@@ -78,43 +79,43 @@ public:
     // ----------------------------------------------------
 
     // General use for any type of layer
-    void setLayerFilter(KonfytPatchLayer* layerItem, KonfytMidiFilter filter);
-    void setLayerGain(KonfytPatchLayer* layerItem, float newGain);
+    void setLayerFilter(KfPatchLayerWeakPtr patchLayer, KonfytMidiFilter filter);
+    void setLayerGain(KfPatchLayerWeakPtr patchLayer, float newGain);
     void setLayerGain(int layerIndex, float newGain);
-    void setLayerSolo(KonfytPatchLayer* layerItem, bool solo);
+    void setLayerSolo(KfPatchLayerWeakPtr patchLayer, bool solo);
     void setLayerSolo(int layerIndex, bool solo);
-    void setLayerMute(KonfytPatchLayer* layerItem, bool mute);
+    void setLayerMute(KfPatchLayerWeakPtr patchLayer, bool mute);
     void setLayerMute(int layerIndex, bool mute);
-    void setLayerBus(KonfytPatchLayer* layerItem, int bus); // currentPatch
-    void setLayerBus(KonfytPatch* patch, KonfytPatchLayer* layerItem, int bus);
-    void setLayerMidiInPort(KonfytPatchLayer* layerItem, int portId); // currentPatch
-    void setLayerMidiInPort(KonfytPatch* patch, KonfytPatchLayer* layerItem, int portId);
+    void setLayerBus(KfPatchLayerWeakPtr patchLayer, int bus); // currentPatch
+    void setLayerBus(KonfytPatch* patch, KfPatchLayerWeakPtr patchLayer, int bus);
+    void setLayerMidiInPort(KfPatchLayerWeakPtr patchLayer, int portId); // currentPatch
+    void setLayerMidiInPort(KonfytPatch* patch, KfPatchLayerWeakPtr patchLayer, int portId);
 
-    void setLayerMidiSendList(KonfytPatchLayer* layerItem, QList<MidiSendItem> events);
     void sendCurrentPatchMidi();
-    void sendLayerMidi(KonfytPatchLayer* layerItem);
+    void sendLayerMidi(KfPatchLayerWeakPtr patchLayer);
 
-    int getNumLayers();
-    void removeLayer(KonfytPatchLayer *item); // Perform action on currentPatch
-    void removeLayer(KonfytPatch* patch, KonfytPatchLayer* item);
-
+    int getNumLayers() const;
+    void removeLayer(KfPatchLayerWeakPtr layer); // currentPatch
+    void removeLayer(KonfytPatch* patch, KfPatchLayerWeakPtr layer);
 
     // Soundfont / Fluidsynth layers
-    KonfytPatchLayer addProgramLayer(KonfytSoundfontProgram newProgram);
+    KfPatchLayerWeakPtr addProgramLayer(KonfytSoundfontProgram newProgram);
 
     // SFZ layers
-    KonfytPatchLayer addSfzLayer(QString path);
+    KfPatchLayerWeakPtr addSfzLayer(QString path);
 
     // Midi output port layers
-    KonfytPatchLayer addMidiOutPortToPatch(int port);
+    KfPatchLayerWeakPtr addMidiOutPortToPatch(int port);
 
     // Audio input layers
-    KonfytPatchLayer addAudioInPortToPatch(int port);
+    KfPatchLayerWeakPtr addAudioInPortToPatch(int port);
 
-    void error_abort(QString msg);
+signals:
+    void userMessage(QString msg);
+    void statusInfo(QString msg);
     
 private:
-    KonfytPatch* currentPatch = nullptr;
+    KonfytPatch* mCurrentPatch = nullptr;
     KonfytProject* currentProject = nullptr;
     float masterGain;
     float convertGain(float linearGain);
@@ -123,27 +124,14 @@ private:
 
     void refreshAllGainsAndRouting();
 
-    // ----------------------------------------------------
-    // Fluidsynth / Soundfont related
-    // ----------------------------------------------------
     KonfytFluidsynthEngine* fluidsynthEngine;
 
-    // ----------------------------------------------------
-    // SFZ plugins
-    // ----------------------------------------------------
     KonfytBaseSoundEngine* sfzEngine;
     bool bridge = false;
 
-    // ----------------------------------------------------
-    // Jack
-    // ----------------------------------------------------
     KonfytJackEngine* jack;
-
-
-signals:
-    void userMessage(QString msg);
-    void statusInfo(QString msg);
     
+    void error_abort(QString msg);
 };
 
 #endif // KONFYT_PATCH_ENGINE_H
