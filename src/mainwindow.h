@@ -819,6 +819,8 @@ private:
     void updateGlobalPitchbendIndicator();
 private slots:
     void on_MIDI_indicator_clicked();
+    void on_MIDI_indicator_sustain_clicked();
+    void on_MIDI_indicator_pitchbend_clicked();
 
     // Global transpose
 private:
@@ -888,6 +890,7 @@ private slots:
     void on_pushButton_LavaMonster_clicked();    
 
     void on_stackedWidget_currentChanged(int arg1);
+
 
 };
 

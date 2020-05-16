@@ -53,6 +53,24 @@ QCheckBox#MIDI_indicator::indicator:checked {
 	background-color: rgb(19, 236, 47);
 }
 
+QCheckBox#MIDI_indicator_sustain::indicator {
+	border: 1px solid grey;
+	border-radius: 4px;
+}
+
+QCheckBox#MIDI_indicator_sustain::indicator:checked {
+	background-color: rgb(19, 236, 47);
+}
+
+QCheckBox#MIDI_indicator_pitchbend::indicator {
+	border: 1px solid grey;
+	border-radius: 4px;
+}
+
+QCheckBox#MIDI_indicator_pitchbend::indicator:checked {
+	background-color: rgb(19, 236, 47);
+}
+
 /* ---------------------------------------------------------------------- */
 /* ComboBox */
 
@@ -979,6 +997,9 @@ border-bottom-left-radius: 0;</string>
        </item>
        <item>
         <widget class="QCheckBox" name="MIDI_indicator_pitchbend">
+         <property name="toolTip">
+          <string>Pitchbend Indicator</string>
+         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
@@ -992,6 +1013,9 @@ border-bottom-left-radius: 0;</string>
        </item>
        <item>
         <widget class="QCheckBox" name="MIDI_indicator_sustain">
+         <property name="toolTip">
+          <string>Sustain Pedal Indicator</string>
+         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>
@@ -1005,6 +1029,9 @@ border-bottom-left-radius: 0;</string>
        </item>
        <item>
         <widget class="QCheckBox" name="MIDI_indicator">
+         <property name="toolTip">
+          <string>MIDI Activity Indicator</string>
+         </property>
          <property name="styleSheet">
           <string notr="true"/>
          </property>

@@ -6026,6 +6026,16 @@ void MainWindow::on_MIDI_indicator_clicked()
     ui->MIDI_indicator->setChecked(false);
 }
 
+void MainWindow::on_MIDI_indicator_sustain_clicked()
+{
+    ui->MIDI_indicator_sustain->setChecked(false);
+}
+
+void MainWindow::on_MIDI_indicator_pitchbend_clicked()
+{
+    ui->MIDI_indicator_pitchbend->setChecked(false);
+}
+
 void MainWindow::on_toolButton_MidiFilter_inChan_last_clicked()
 {
     ui->comboBox_midiFilter_inChannel->setCurrentIndex( midiFilter_lastChan+1 );
@@ -6752,3 +6762,7 @@ void MainWindow::on_toolButton_LibraryPreview_clicked()
 {
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
+
+
+
+
