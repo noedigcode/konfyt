@@ -41,20 +41,25 @@ void KonfytJackEngine::panic(bool p)
     panicCmd = p;
 }
 
-
 void KonfytJackEngine::timerEvent(QTimerEvent* /*event*/)
 {
+    // JACK port connections
     if (connectCallback || registerCallback) {
         connectCallback = false;
         registerCallback = false;
         refreshAllPortsConnections();
         jackPortRegisterOrConnectCallback();
     }
+
+    // Received MIDI events
+    if (eventsRxFlag) {
+        emit midiEventSignal();
+    }
 }
 
-void KonfytJackEngine::startPortTimer()
+void KonfytJackEngine::startTimer()
 {
-    this->timer.start(100, this);
+    this->timer.start(20, this);
 }
 
 void KonfytJackEngine::refreshAllPortsConnections()
@@ -1092,10 +1097,9 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     }
 
 
-    if (eventsRxBuffer.commit()) {
-        // Inform GUI there are events waiting
-        emit midiEventSignal(); // TODO Check if it is okay to emit from realtime audio thread
-    }
+    // Setting the flag will inform the rest of the app with a signal in the
+    // timer event.
+    eventsRxFlag = eventsRxBuffer.commit();
 
 
     // Unlock jack_process --------------------
@@ -1357,7 +1361,9 @@ bool KonfytJackEngine::initJackClient(QString name)
         fadeOutValues[i] = 1 - ((float)i/(float)fadeOutValuesCount);
     }
 
-    startPortTimer(); // Timer that will take care of automatically restoring port connections
+    // Timer that will take care of communicating JACK process data to rest of
+    // app, as well as restoring JACK port connections.
+    startTimer();
 
     return true;
 }

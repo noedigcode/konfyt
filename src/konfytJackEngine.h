@@ -152,6 +152,7 @@ private:
     bool clientActive = false;      // Flag to indicate if the client has been successfully activated
     double samplerate;
     RingbufferQMutex<KfJackMidiRxEvent> eventsRxBuffer{1000};
+    bool eventsRxFlag = false;
     bool connectCallback = false;
     bool registerCallback = false;
 
@@ -200,10 +201,11 @@ private:
     // Other JACK connections
     QList<KonfytJackConPair> otherConsList;
 
-    // Timer for handling port register and connect callbacks
+    // Timer for communicating data from JACK process to the rest of the app as
+    // well as restoring JACK port connections.
     QBasicTimer timer;
     void timerEvent(QTimerEvent *event);
-    void startPortTimer();
+    void startTimer();
     void refreshAllPortsConnections();
     void refreshConnections(jack_port_t* jackPort, QStringList clients, bool inNotOut);
 
