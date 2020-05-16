@@ -4049,6 +4049,8 @@ void MainWindow::updateLayerMidiOutChannelMenu(QMenu *menu, int currentMidiPort)
 {
     menu->clear();
 
+    menu->addSection("MIDI Out Channel");
+
     QAction* action = menu->addAction("Original Channel");
     action->setProperty(PTY_MIDI_CHANNEL, -1);
     if (currentMidiPort == -1) {
@@ -4204,6 +4206,7 @@ void MainWindow::gui_updateLayerToolMenu()
     KonfytPatchLayer::LayerType type = patchLayer->layerType();
 
     layerToolMenu.clear();
+    // Menu items for layers with MIDI input
     if (    (type != KonfytPatchLayer::TypeUninitialized)
          && (!patchLayer->hasError())
          && (type != KonfytPatchLayer::TypeAudioIn) )
@@ -4214,18 +4217,31 @@ void MainWindow::gui_updateLayerToolMenu()
         layerToolMenu.addMenu(&layerMidiInChannelMenu);
         layerToolMenu.addAction( ui->actionEdit_MIDI_Filter );
     }
+    // Menu items for Audio input port layers
+    if (type == KonfytPatchLayer::TypeAudioIn) {
+        QAction* a = layerToolMenu.addAction("Port Connections...");
+        connect(a, &QAction::triggered, [=](){
+            // Show port in connections page
+            showConnectionsPage();
+            connectionsTreeSelectAudioInPort(patchLayer->audioInPortData.portIdInProject);
+        });
+    }
+    // Menu items for MIDI output port layers
     if (type == KonfytPatchLayer::TypeMidiOut) {
         layerToolMenu.addAction( ui->actionEdit_MIDI_Send_List );
     }
+    // Menu items for instrument layers
     if (    (type == KonfytPatchLayer::TypeSfz)
          || (type == KonfytPatchLayer::TypeSoundfontProgram) )
     {
         layerToolMenu.addAction( ui->actionReload_Layer );
     }
+    // Menu items for layers that have a file path
     QString filepath = layerWidget->getFilePath();
     if (!filepath.isEmpty()) {
         layerToolMenu.addAction(ui->actionOpen_In_File_Manager_layerwidget);
     }
+    // Remove layer menu item
     if (layerToolMenu.actions().count()) { layerToolMenu.addSeparator(); }
     layerToolMenu.addAction( ui->actionRemove_Layer );
 }
