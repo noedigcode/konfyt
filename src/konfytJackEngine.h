@@ -142,9 +142,9 @@ public:
 
 signals:
     void userMessage(QString msg);
-    void jackPortRegisterOrConnectCallback();
-    void midiEventSignal();
-    void xrunSignal();
+    void jackPortRegisteredOrConnected();
+    void midiEventsReceived();
+    void xrunOccurred();
 
 private:
     jack_client_t* mJackClient;
@@ -152,7 +152,7 @@ private:
     bool clientActive = false;      // Flag to indicate if the client has been successfully activated
     double samplerate;
     RingbufferQMutex<KfJackMidiRxEvent> eventsRxBuffer{1000};
-    bool eventsRxFlag = false;
+    QList<KfJackMidiRxEvent> extractedRxEvents;
     bool connectCallback = false;
     bool registerCallback = false;
 

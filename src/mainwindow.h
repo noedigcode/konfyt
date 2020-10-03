@@ -627,16 +627,17 @@ private slots:
     // ========================================================================
 private:
     KonfytJackEngine* jack;
+    int mJackXrunCount = 0;
     void addAudioBusToJack(int busNo, KfJackAudioPort** leftPort, KfJackAudioPort** rightPort);
     void addAudioInPortsToJack(int portNo, KfJackAudioPort** leftPort, KfJackAudioPort** rightPort);
     KfJackMidiPort* addMidiOutPortToJack(int numberLabel);
     KfJackMidiPort* addMidiInPortToJack(int numberLabel);
     bool jackPortBelongstoUs(QString jackPortName);
-private slots:
-    void midiEventSlot();
     void handleMidiEvent(KfJackMidiRxEvent rxEvent);
-    void jackXrun();
-    void jackPortRegisterOrConnectCallback();
+private slots:
+    void onJackMidiEventsReceived();
+    void onJackXrunOccurred();
+    void onJackPortRegisteredOrConnected();
 
     // ========================================================================
     // Processes (External apps)

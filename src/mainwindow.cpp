@@ -149,13 +149,13 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
 
     connect(jack, &KonfytJackEngine::userMessage, this, &MainWindow::userMessage);
 
-    connect(jack, &KonfytJackEngine::jackPortRegisterOrConnectCallback,
-            this, &MainWindow::jackPortRegisterOrConnectCallback);
+    connect(jack, &KonfytJackEngine::jackPortRegisteredOrConnected,
+            this, &MainWindow::onJackPortRegisteredOrConnected);
 
-    qRegisterMetaType<KonfytMidiEvent>("KonfytMidiEvent"); // To be able to use KonfytMidiEvent in the Qt signal/slot system
-    connect(jack, &KonfytJackEngine::midiEventSignal, this, &MainWindow::midiEventSlot);
+    connect(jack, &KonfytJackEngine::midiEventsReceived,
+            this, &MainWindow::onJackMidiEventsReceived);
 
-    connect(jack, &KonfytJackEngine::xrunSignal, this, &MainWindow::jackXrun);
+    connect(jack, &KonfytJackEngine::xrunOccurred, this, &MainWindow::onJackXrunOccurred);
 
     QString jackClientName = appInfo.jackClientName;
     if (jackClientName.isEmpty()) {
@@ -533,13 +533,12 @@ void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
     }
 }
 
-void MainWindow::jackXrun()
+void MainWindow::onJackXrunOccurred()
 {
-    static int count = 1;
-    userMessage("XRUN " + n2s(count++));
+    userMessage("XRUN " + n2s(++mJackXrunCount));
 }
 
-void MainWindow::jackPortRegisterOrConnectCallback()
+void MainWindow::onJackPortRegisteredOrConnected()
 {
     // Refresh ports/connections tree
     gui_updateConnectionsTree();
@@ -3439,7 +3438,7 @@ void MainWindow::midi_setLayerSolo(int layer, int midiValue)
 }
 
 /* MIDI events are waiting in the JACK engine. */
-void MainWindow::midiEventSlot()
+void MainWindow::onJackMidiEventsReceived()
 {   
     QList<KfJackMidiRxEvent> events = jack->getEvents();
     foreach (KfJackMidiRxEvent event, events) {

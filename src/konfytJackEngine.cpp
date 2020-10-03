@@ -48,12 +48,13 @@ void KonfytJackEngine::timerEvent(QTimerEvent* /*event*/)
         connectCallback = false;
         registerCallback = false;
         refreshAllPortsConnections();
-        jackPortRegisterOrConnectCallback();
+        jackPortRegisteredOrConnected();
     }
 
     // Received MIDI events
-    if (eventsRxFlag) {
-        emit midiEventSignal();
+    extractedRxEvents.append(eventsRxBuffer.readAll());
+    if (!extractedRxEvents.isEmpty()) {
+        emit midiEventsReceived();
     }
 }
 
@@ -1097,9 +1098,8 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     }
 
 
-    // Setting the flag will inform the rest of the app with a signal in the
-    // timer event.
-    eventsRxFlag = eventsRxBuffer.commit();
+    // Commit received events to buffer so they can be read in the GUI thread.
+    eventsRxBuffer.commit();
 
 
     // Unlock jack_process --------------------
@@ -1130,14 +1130,16 @@ void KonfytJackEngine::setFluidsynthEngine(KonfytFluidsynthEngine *e)
 int KonfytJackEngine::jackXrunCallback(void *arg)
 {   
     KonfytJackEngine* e = (KonfytJackEngine*)arg;
-    e->xrunSignal();
+    e->xrunOccurred();
     return 0;
 }
 
 /* Return list of MIDI events that were buffered during JACK process callback(s). */
 QList<KfJackMidiRxEvent> KonfytJackEngine::getEvents()
 {
-    return eventsRxBuffer.readAll();
+    QList<KfJackMidiRxEvent> ret = extractedRxEvents;
+    extractedRxEvents.clear();
+    return ret;
 }
 
 /* Helper function for Jack process callback.
