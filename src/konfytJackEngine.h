@@ -123,6 +123,7 @@ public:
     void setPluginRouting(KfJackPluginPorts *p, KfJackMidiPort *midiInPort,
                                   KfJackAudioPort *leftPort,
                                   KfJackAudioPort *rightPort);
+    KfJackMidiRoute* getPluginMidiRoute(KfJackPluginPorts* p);
 
     // Fluidsynth
     KfJackPluginPorts* addSoundfont(KfFluidSynth* fluidSynth);
@@ -188,10 +189,6 @@ private:
     QList<KfJackMidiRoute*> midiRoutes;
     QList<KfJackAudioRoute*> audioRoutes;
 
-    KonfytArrayList<KonfytJackNoteOnRecord> noteOnList;
-    KonfytArrayList<KonfytJackNoteOnRecord> sustainList;
-    KonfytArrayList<KonfytJackNoteOnRecord> pitchBendList;
-
     jack_port_t* registerJackMidiPort(QString name, bool input);
     jack_port_t* registerJackAudioPort(QString name, bool input);
 
@@ -214,9 +211,8 @@ private:
     QStringList getJackPorts(QString typePattern, unsigned long flags);
 
     // JACK process callback helper functions
-    void handleNoteoffEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KfJackMidiPort* sourcePort);
-    void handleSustainoffEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KfJackMidiPort *sourcePort);
-    void handlePitchbendZeroEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KfJackMidiPort *sourcePort);
+    void writeRouteMidi(KfJackMidiRoute* route, KonfytMidiEvent &ev, jack_nframes_t time);
+    void handleNoteoffEvent(const KonfytMidiEvent& ev, KfJackMidiRoute* route, jack_nframes_t time);
     void mixBufferToDestinationPort(KfJackAudioRoute* route, jack_nframes_t nframes, bool applyGain);
     void sendMidiClosureEvents(KfJackMidiPort* port, int channel);
     void sendMidiClosureEvents_chanZeroOnly(KfJackMidiPort* port);

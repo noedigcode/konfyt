@@ -17,6 +17,7 @@ TEMPLATE = app
 INCLUDEPATH += src
 
 SOURCES += src/main.cpp\
+    src/indicatorHandlers.cpp \
         src/mainwindow.cpp \
     src/consoledialog.cpp \
     src/konfytPatchEngine.cpp \
@@ -41,6 +42,7 @@ SOURCES += src/main.cpp\
 
 HEADERS  += src/mainwindow.h \
     src/consoledialog.h \
+    src/indicatorHandlers.h \
     src/konfytPatchEngine.h \
     src/konfytPatch.h \
     src/konfytPatchLayer.h \

@@ -175,35 +175,6 @@ void KonfytJackEngine::removeSoundfont(KfJackPluginPorts *p)
 
     // Delete all objects created in addSoundfont()
 
-    // Remove all recorded noteon, sustain and pitchbend events related to this Fluidsynth ID.
-    for (int i=0; i<noteOnList.count(); i++) {
-        KonfytJackNoteOnRecord *rec = noteOnList.at_ptr(i);
-        if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidSynth == p->fluidSynthInEngine) {
-                noteOnList.remove(i);
-                i--; // Due to removal, have to stay at same index after for loop i++
-            }
-        }
-    }
-    for (int i=0; i<sustainList.count(); i++) {
-        KonfytJackNoteOnRecord *rec = sustainList.at_ptr(i);
-        if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidSynth == p->fluidSynthInEngine) {
-                sustainList.remove(i);
-                i--;
-            }
-        }
-    }
-    for (int i=0; i<pitchBendList.count(); i++) {
-        KonfytJackNoteOnRecord *rec = pitchBendList.at_ptr(i);
-        if (rec->jackPortNotFluidsynth == false) {
-            if (rec->fluidSynth == p->fluidSynthInEngine) {
-                pitchBendList.remove(i);
-                i--;
-            }
-        }
-    }
-
     fluidsynthPorts.removeAll(p);
     free(p->audioInLeft->buffer);
     free(p->audioInRight->buffer);
@@ -217,7 +188,6 @@ void KonfytJackEngine::removeSoundfont(KfJackPluginPorts *p)
 
     pauseJackProcessing(false);
 }
-
 
 /* For the specified ports spec, create a new MIDI output port and left and
  * right audio input ports, combined in a plugin ports struct. The strings in the
@@ -288,35 +258,6 @@ void KonfytJackEngine::removePlugin(KfJackPluginPorts *p)
     pauseJackProcessing(true);
 
     // Remove everything created in addPluginPortsAndConnect()
-
-    // Remove all recorded noteon, sustain and pitchbend events related to this midi out port
-    for (int i=0; i<noteOnList.count(); i++) {
-        KonfytJackNoteOnRecord *rec = noteOnList.at_ptr(i);
-        if (rec->jackPortNotFluidsynth) {
-            if (rec->port == p->midi) {
-                noteOnList.remove(i);
-                i--; // Due to removal, have to stay at same index after for loop i++
-            }
-        }
-    }
-    for (int i=0; i<sustainList.count(); i++) {
-        KonfytJackNoteOnRecord *rec = sustainList.at_ptr(i);
-        if (rec->jackPortNotFluidsynth) {
-            if (rec->port == p->midi) {
-                sustainList.remove(i);
-                i--;
-            }
-        }
-    }
-    for (int i=0; i<pitchBendList.count(); i++) {
-        KonfytJackNoteOnRecord *rec = pitchBendList.at_ptr(i);
-        if (rec->jackPortNotFluidsynth) {
-            if (rec->port == p->midi) {
-                pitchBendList.remove(i);
-                i--;
-            }
-        }
-    }
 
     // Remove routes
     removeMidiRoute(p->midiRoute);
@@ -394,6 +335,12 @@ void KonfytJackEngine::setPluginRouting(KfJackPluginPorts *p, KfJackMidiPort *mi
     p->audioRightRoute->dest = rightPort;
 
     pauseJackProcessing(false);
+}
+
+KfJackMidiRoute *KonfytJackEngine::getPluginMidiRoute(KfJackPluginPorts *p)
+{
+    // TODO CHECK EXISTENCE OF *p
+    return p->midiRoute;
 }
 
 void KonfytJackEngine::removeAllAudioInAndOutPorts()
@@ -929,120 +876,88 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
             }
 
             // Send to GUI
-            eventsRxBuffer.stash({sourcePort, ev});
+            eventsRxBuffer.stash({.sourcePort = sourcePort,
+                                  .midiRoute = nullptr,
+                                  .midiEvent = ev});
 
-            bool passEvent = true;
-            bool recordNoteon = false;
-            bool recordSustain = false;
-            bool recordPitchbend = false;
+            if (panicState != 0) { continue; }
 
+            // For each MIDI route...
+            for (int iRoute = 0; iRoute < midiRoutes.count(); iRoute++) {
 
-            if (ev.type() == MIDI_EVENT_TYPE_NOTEOFF) {
-                passEvent = false;
-                handleNoteoffEvent(ev, inEvent_jack, sourcePort);
-            } else if ( (ev.type() == MIDI_EVENT_TYPE_CC) && (ev.data1() == 64) ) {
-                if (ev.data2() <= KONFYT_JACK_SUSTAIN_THRESH) {
-                    // Sustain zero
-                    passEvent = false;
-                    handleSustainoffEvent(ev, inEvent_jack, sourcePort);
-                } else {
-                    recordSustain = true;
-                }
-            } else if ( (ev.type() == MIDI_EVENT_TYPE_PITCHBEND) ) {
-                if (ev.pitchbendValueSigned() == 0) {
-                    // Pitchbend zero
-                    passEvent = false;
-                    handlePitchbendZeroEvent(ev, inEvent_jack, sourcePort);
-                } else {
-                    recordPitchbend = true;
-                }
-            } else if ( ev.type() == MIDI_EVENT_TYPE_NOTEON ) {
-                int note = ev.note() + globalTranspose;
-                ev.setNote(note);
-                if ( (note < 0) || (note > 127) ) {
-                    passEvent = false;
-                }
-                recordNoteon = true;
-            }
+                KfJackMidiRoute* route = midiRoutes[iRoute];
 
+                if (route->source != sourcePort) { continue; }
+                if (route->destIsJackPort && route->destPort == NULL) { continue; }
+                if (!route->filter.passFilter(&ev)) { continue; }
 
-            if ( (panicState == 0) && passEvent ) {
+                KonfytMidiEvent evToSend = route->filter.modify(&ev);
 
-                // For each MIDI route...
-                for (int r = 0; r < midiRoutes.count(); r++) {
+                bool passEvent = route->active;
+                bool guiOnly = false;
+                bool recordNoteon = false;
+                bool recordSustain = false;
+                bool recordPitchbend = false;
 
-                    KfJackMidiRoute* route = midiRoutes[r];
-                    if (!route->active) { continue; }
-                    if (route->source != sourcePort) { continue; }
-                    if (route->destIsJackPort && route->destPort == NULL) { continue; }
-                    if (!route->filter.passFilter(&ev)) { continue; }
-
-                    KonfytMidiEvent evToSend = route->filter.modify(&ev);
-
-                    if (route->destIsJackPort) {
-                        // Destination is JACK port
-                        unsigned char* outBuffer = jack_midi_event_reserve(
-                                    route->destPort->buffer, inEvent_jack.time,
-                                    inEvent_jack.size);
-
-                        if (outBuffer == 0) { continue; } // JACK error
-
-                        // Copy event to output buffer
-                        evToSend.toBuffer( outBuffer );
+                if (evToSend.type() == MIDI_EVENT_TYPE_NOTEOFF) {
+                    passEvent = true; // Pass even if route inactive
+                    guiOnly = true;
+                    handleNoteoffEvent(evToSend, route, inEvent_jack.time);
+                } else if ( (evToSend.type() == MIDI_EVENT_TYPE_CC) && (evToSend.data1() == 64) ) {
+                    if (evToSend.data2() <= KONFYT_JACK_SUSTAIN_THRESH) {
+                        // Sustain zero
+                        if ((route->sustain >> evToSend.channel) & 0x1) {
+                            passEvent = true; // Pass even if route inactive
+                            route->sustain ^= (1 << evToSend.channel);
+                        }
                     } else {
-                        // Destination is Fluidsynth port
-                        fluidsynthEngine->processJackMidi(route->destFluidsynthID,
-                                                          &evToSend);
+                        recordSustain = true;
                     }
-
-                    // Record noteon, sustain or pitchbend for off events later.
-                    if (recordNoteon) {
-                        KonfytJackNoteOnRecord rec;
-                        rec.filter = route->filter;
-                        rec.globalTranspose = globalTranspose;
-                        rec.jackPortNotFluidsynth = route->destIsJackPort;
-                        rec.port = route->destPort;
-                        rec.fluidSynth = route->destFluidsynthID;
-                        rec.sourcePort = route->source;
-
-                        rec.note = evToSend.note();
-
-                        noteOnList.add(rec);
-                        rec.port->noteOns++;
-
-                    } else if (recordPitchbend) {
-                        // If this port hasn't saved a pitchbend yet
-                        if ( !route->destPort->pitchbendNonZero ) {
-                            KonfytJackNoteOnRecord rec;
-                            rec.filter = route->filter;
-                            rec.globalTranspose = globalTranspose;
-                            rec.jackPortNotFluidsynth = route->destIsJackPort;
-                            rec.port = route->destPort;
-                            rec.fluidSynth = route->destFluidsynthID;
-                            rec.sourcePort = route->source;
-
-                            pitchBendList.add(rec);
-                            rec.port->pitchbendNonZero = true;
+                } else if ( (evToSend.type() == MIDI_EVENT_TYPE_PITCHBEND) ) {
+                    if (evToSend.pitchbendValueSigned() == 0) {
+                        // Pitchbend zero
+                        if ((route->pitchbend >> evToSend.channel) & 0x1) {
+                            passEvent = true; // Pass even if route inactive
+                            route->pitchbend ^= (1 << evToSend.channel);
                         }
-                    } else if (recordSustain) {
-                        // If this port hasn't saved a sustain yet
-                        if ( !route->destPort->sustainNonZero ) {
-                            KonfytJackNoteOnRecord rec;
-                            rec.filter = route->filter;
-                            rec.globalTranspose = globalTranspose;
-                            rec.jackPortNotFluidsynth = route->destIsJackPort;
-                            rec.port = route->destPort;
-                            rec.fluidSynth = route->destFluidsynthID;
-                            rec.sourcePort = route->source;
-
-                            sustainList.add(rec);
-                            rec.port->sustainNonZero = true;
-                        }
+                    } else {
+                        recordPitchbend = true;
                     }
-
+                } else if ( evToSend.type() == MIDI_EVENT_TYPE_NOTEON ) {
+                    int note = evToSend.note() + globalTranspose;
+                    evToSend.setNote(note);
+                    if ( (note < 0) || (note > 127) ) {
+                        passEvent = false;
+                    }
+                    recordNoteon = true;
                 }
 
-            }
+                if (!passEvent) { continue; }
+
+                // Give to GUI
+                eventsRxBuffer.stash({.sourcePort = nullptr,
+                                      .midiRoute = route,
+                                      .midiEvent = evToSend});
+
+                if (guiOnly) { continue; }
+
+                // Write MIDI output
+                writeRouteMidi(route, evToSend, inEvent_jack.time);
+
+                // Record noteon, sustain or pitchbend for off events later.
+                if (recordNoteon) {
+                    KonfytJackNoteOnRecord rec;
+                    rec.globalTranspose = globalTranspose;
+                    rec.note = evToSend.note();
+                    rec.channel = evToSend.channel;
+                    route->noteOnList.add(rec);
+                } else if (recordPitchbend) {
+                    route->pitchbend |= 1 << evToSend.channel;
+                } else if (recordSustain) {
+                    route->sustain |= 1 << evToSend.channel;
+                }
+
+            } // end of for midi route
 
         } // end for each midi input event
 
@@ -1143,97 +1058,21 @@ QList<KfJackMidiRxEvent> KonfytJackEngine::getEvents()
 }
 
 /* Helper function for Jack process callback.
- * Send noteoffs to all ports with corresponding noteon events. */
-void KonfytJackEngine::handleNoteoffEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KfJackMidiPort *sourcePort)
+ * Send noteoffs to all corresponding recorded noteon events. */
+void KonfytJackEngine::handleNoteoffEvent(const KonfytMidiEvent &ev,
+                                          KfJackMidiRoute *route,
+                                          jack_nframes_t time)
 {
-    for (int i=0; i < noteOnList.count(); i++) {
-        KonfytJackNoteOnRecord* rec = noteOnList.at_ptr(i);
-        if (rec->sourcePort != sourcePort) { continue; }
-        // Apply global transpose that was active at time of noteon
-        ev.setNote( ev.note() + rec->globalTranspose );
-        // Check if event passes noteon filter
-        if ( rec->filter.passFilter(&ev) ) {
-            // Apply noteon filter modification
-            KonfytMidiEvent newEv = rec->filter.modify( &ev );
-            if (newEv.note() == rec->note) {
-                // Match! Send noteoff and remove noteon from list.
-                if (rec->jackPortNotFluidsynth) {
-                    // Get output buffer, based on size and time of input event
-                    unsigned char* out_buffer = jack_midi_event_reserve( rec->port->buffer, inEvent_jack.time, inEvent_jack.size);
-                    if (out_buffer) {
-                        // Copy input event to output buffer
-                        newEv.toBuffer( out_buffer );
-                    }
-                } else {
-                    fluidsynthEngine->processJackMidi( rec->fluidSynth, &newEv );
-                }
-                rec->port->noteOns--;
-
-                noteOnList.remove(i);
-                i--; // Due to removal, have to stay at same index after for loop i++
-            }
-        }
-        ev.setNote( ev.note() - rec->globalTranspose );
-    }
-}
-
-/* Helper function for Jack process callback.
- * Send sustain zero to all Jack midi ports that have a recorded sustain event. */
-void KonfytJackEngine::handleSustainoffEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KfJackMidiPort *sourcePort)
-{
-    for (int i=0; i < sustainList.count(); i++) {
-        KonfytJackNoteOnRecord* rec = sustainList.at_ptr(i);
-        if (rec->sourcePort != sourcePort) { continue; }
-        // Check if event passes filter
-        if ( rec->filter.passFilter(&ev) ) {
-            // Apply filter modification
-            KonfytMidiEvent newEv = rec->filter.modify( &ev );
-            // Set sustain value to zero exactly
-            newEv.setData2(0);
-            // Send sustain zero and remove from list
-            if (rec->jackPortNotFluidsynth) {
-                // Get output buffer, based on size and time of input event
-                unsigned char* out_buffer = jack_midi_event_reserve( rec->port->buffer, inEvent_jack.time, inEvent_jack.size);
-                if (out_buffer) {
-                    // Copy input event to output buffer
-                    newEv.toBuffer( out_buffer );
-                }
-            } else {
-                fluidsynthEngine->processJackMidi( rec->fluidSynth, &newEv );
-            }
-            rec->port->sustainNonZero = false;
-
-            sustainList.remove(i);
-            i--; // Due to removal, have to stay at same index after for loop i++
-        }
-    }
-}
-
-/* Helper function for Jack process callback.
- * Send pitchbend zero to all Jack midi ports that have a recorded pitchbend. */
-void KonfytJackEngine::handlePitchbendZeroEvent(KonfytMidiEvent &ev, jack_midi_event_t inEvent_jack, KfJackMidiPort *sourcePort)
-{
-    for (int i=0; i < pitchBendList.count(); i++) {
-        KonfytJackNoteOnRecord* rec = pitchBendList.at_ptr(i);
-        if (rec->sourcePort != sourcePort) { continue; }
-        // Check if event passes filter
-        if ( rec->filter.passFilter(&ev) ) {
-            // Apply filter modification
-            KonfytMidiEvent newEv = rec->filter.modify( &ev );
-            // Send pitchbend zero and remove from list
-            if (rec->jackPortNotFluidsynth) {
-                // Get output buffer, based on size and time of input event
-                unsigned char* out_buffer = jack_midi_event_reserve( rec->port->buffer, inEvent_jack.time, inEvent_jack.size);
-                if (out_buffer) {
-                    // Copy input event to output buffer
-                    newEv.toBuffer( out_buffer );
-                }
-            } else {
-                fluidsynthEngine->processJackMidi( rec->fluidSynth, &newEv );
-            }
-            rec->port->pitchbendNonZero = false;
-
-            pitchBendList.remove(i);
+    for (int i=0; i < route->noteOnList.count(); i++) {
+        KonfytJackNoteOnRecord* rec = route->noteOnList.at_ptr(i);
+        if ( (rec->note == ev.note() + rec->globalTranspose)
+             && (rec->channel == ev.channel) ) {
+            // Match! Send noteoff
+            KonfytMidiEvent toSend = ev;
+            toSend.setNote(rec->note);
+            writeRouteMidi(route, toSend, time);
+            // Remove noteon from list
+            route->noteOnList.remove(i);
             i--; // Due to removal, have to stay at same index after for loop i++
         }
     }
@@ -1404,6 +1243,24 @@ QStringList KonfytJackEngine::getJackPorts(QString typePattern, unsigned long fl
     return pl;
 }
 
+void KonfytJackEngine::writeRouteMidi(KfJackMidiRoute *route,
+                                      KonfytMidiEvent &ev, jack_nframes_t time)
+{
+    if (route->destIsJackPort) {
+        // Destination is JACK port
+        unsigned char* outBuffer = jack_midi_event_reserve(
+                    route->destPort->buffer, time, ev.bufferSizeRequired());
+
+        if (outBuffer == 0) { return; } // JACK error
+
+        // Copy event to output buffer
+        ev.toBuffer(outBuffer);
+    } else {
+        // Destination is Fluidsynth port
+        fluidsynthEngine->processJackMidi(route->destFluidsynthID, &ev);
+    }
+}
+
 /* Returns list of JACK midi input ports from the JACK server. */
 QStringList KonfytJackEngine::getMidiInputPortsList()
 {
@@ -1470,43 +1327,10 @@ void KonfytJackEngine::removeMidiPort(KfJackMidiPort *port)
 
     pauseJackProcessing(true);
 
-    bool portIsOutput = midiOutPorts.contains(port);
     midiInPorts.removeAll(port);
     midiOutPorts.removeAll(port);
     jack_port_unregister(mJackClient, port->jackPointer);
     delete port;
-
-    // If this is an output port, remove all recorded noteon, sustain and pitchbend
-    // events related to this port.
-    if (portIsOutput) {
-        for (int i=0; i<noteOnList.count(); i++) {
-            KonfytJackNoteOnRecord *rec = noteOnList.at_ptr(i);
-            if (rec->jackPortNotFluidsynth) {
-                if (rec->port == port) {
-                    noteOnList.remove(i);
-                    i--; // Due to removal, have to stay at same index after for loop i++
-                }
-            }
-        }
-        for (int i=0; i<sustainList.count(); i++) {
-            KonfytJackNoteOnRecord *rec = sustainList.at_ptr(i);
-            if (rec->jackPortNotFluidsynth) {
-                if (rec->port == port) {
-                    sustainList.remove(i);
-                    i--;
-                }
-            }
-        }
-        for (int i=0; i<pitchBendList.count(); i++) {
-            KonfytJackNoteOnRecord *rec = pitchBendList.at_ptr(i);
-            if (rec->jackPortNotFluidsynth) {
-                if (rec->port == port) {
-                    pitchBendList.remove(i);
-                    i--;
-                }
-            }
-        }
-    }
 
     // Remove this port from any routes.
     removePortFromAllRoutes(port);

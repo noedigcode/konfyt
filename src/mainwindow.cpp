@@ -3393,11 +3393,11 @@ void MainWindow::triggerPanic(bool panic)
     }
 
     // Global sustain indicator
-    midiInPortSustain.clear();
+    portIndicatorHandler.clearSustain();
     updateGlobalSustainIndicator();
 
     // Global pitchbend indicator
-    midiInPortPitchbend.clear();
+    portIndicatorHandler.clearPitchbend();
     updateGlobalPitchbendIndicator();
 }
 
@@ -3457,100 +3457,41 @@ void MainWindow::handleMidiEvent(KfJackMidiRxEvent rxEvent)
     evInclBank.bankMSB = lastBankSelectMSB;
     evInclBank.bankLSB = lastBankSelectLSB;
 
-    int portIdInPrj = prj->midiInPort_getPortIdWithJackId(rxEvent.sourcePort);
-    if (portIdInPrj < 0) {
-        userMessage("ERROR: NO PORT IN PROJECT MATCHING JACK PORT.");
-    }
-
-    bool modifySustain = false;
-    bool indicateSustain = false;
-    if (ev.type() == MIDI_EVENT_TYPE_CC) {
-        if (ev.data1() == 64) {
-
-            modifySustain = true;
-
-            if (ev.data2() == 0) { // TODO USE JACK_SUSTAIN_THRESH?
-                midiInPortSustain.remove(portIdInPrj);
-            } else {
-                midiInPortSustain.insert(portIdInPrj, ev.data2());
-                indicateSustain = true;
-            }
-
-            // Global sustain indicator
-            updateGlobalSustainIndicator();
-        }
-    }
-
-    // TODO INDICATIONS SHOULD HONOR LAYER MIDI FILTERS
-    // TODO HAVE TO SOMEHOW GET EVENT/SUSTAIN/PB INFO PER ROUTE FROM JACK ENGINE
-    //      PROPOSAL:
-    //          In Jack engine: MutexRingbuffer< {route id, midi event} >
-    //              Process(): push events (and route id) to ringbuffer
-    //              Timer(): read from ringbuffer
-    //                       match route ids with plugins/soundfont/midi ports etc.
-    //                       emit signal to GUI for plugins with data: QMap< pluginId, QList<midiEvents> >
-    //                       same for fluidsynth/midi ports
-    //          In GUI:
-    //              Handle midi events
-    //              For sustain/pb:
-    //                  Keep Map< id, {sustain, pb} > record for plugins/soudfonts/midi ports
-
-
-    bool modifyPitchbend = false;
-    bool indicatePitchbend = false;
-    if (ev.type() == MIDI_EVENT_TYPE_PITCHBEND) {
-
-        modifyPitchbend = true;
-
-        if (ev.pitchbendValueSigned() == 0) {
-            midiInPortPitchbend.remove(portIdInPrj);
-        } else {
-            midiInPortPitchbend.insert(portIdInPrj, ev.pitchbendValueSigned());
-            indicatePitchbend = true;
+    // Indicate global sustain/pitchbend based on MIDI port input
+    if (rxEvent.sourcePort) {
+        int portIdInPrj = prj->midiInPort_getPortIdWithJackId(rxEvent.sourcePort);
+        if (portIdInPrj < 0) {
+            userMessage("ERROR: NO PORT IN PROJECT MATCHING JACK PORT.");
         }
 
+        portIndicatorHandler.jackEventReceived(rxEvent);
+
+        // Global sustain indicator
+        updateGlobalSustainIndicator();
         // Global pitchbend indicator
         updateGlobalPitchbendIndicator();
+
+        // Show in console if enabled.
+        if (console_showMidiMessages) {
+            QString portName = "UNKNOWN";
+            if (portIdInPrj >= 0) {
+                PrjMidiPort prt = prj->midiInPort_getPort(portIdInPrj);
+                portName = prt.portName;
+            }
+            // Take last bank select info into account
+            userMessage("MIDI EVENT " + evInclBank.toString()
+                        + " from port " + portName);
+        }
     }
 
-    // Indicate MIDI, sustain and pitchbend for each layer if it passes MIDI filter
-    foreach (KonfytLayerWidget* w, layerWidgetList) {
-        KfPatchLayerSharedPtr layer = w->getPatchLayer().toStrongRef();
-        if (!layer->hasMidiInput()) { continue; }
-        if (layer->midiInPortIdInProject() != portIdInPrj) { continue; }
-        KonfytMidiFilter filter = layer->midiFilter();
-        if (!filter.passFilter(&ev)) { continue; }
-
-        if (modifySustain) {
-            layerIndicatorData.setSustain(layer, ev.data2());
-        }
-        if (modifyPitchbend) {
-            layerIndicatorData.setPitchbend(layer, ev.pitchbendValueSigned());
-        }
-
-        // General MIDI indication
-        w->indicateMidi();
-        // Sustain indication
-        if (modifySustain) { w->indicateSustain(indicateSustain); }
-        // Pitchbend indication
-        if (modifyPitchbend) { w->indicatePitchbend(indicatePitchbend); }
+    // Indicate MIDI, sustain and pitchbend for layers
+    if (rxEvent.midiRoute) {
+        layerIndicatorHandler.jackEventReceived(rxEvent);
     }
 
     // Global MIDI indicator "LED"
     ui->MIDI_indicator->setChecked(true);
     midiIndicatorTimer.start(500, this);
-
-    // Show in console if enabled.
-    if (console_showMidiMessages) {
-        QString portName = "UNKNOWN";
-        if (portIdInPrj >= 0) {
-            PrjMidiPort prt = prj->midiInPort_getPort(portIdInPrj);
-            portName = prt.portName;
-        }
-        // Take last bank select info into account
-        userMessage("MIDI EVENT " + evInclBank.toString()
-                    + " from port " + portName);
-    }
 
     // Save bank selects
     if (ev.type() == MIDI_EVENT_TYPE_CC) {
@@ -4074,10 +4015,19 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer)
     QListWidgetItem* item = new QListWidgetItem();
     layerWidget->initLayer(patchLayer, item);
 
-    // Apply MIDI indicators
-    // TODO ONLY DO FOR LAYERS THAT HAVE MIDI INPUT, AND MIDI FILTER PASSED.
-    layerWidget->indicateSustain(layerIndicatorData.hasSustain(patchLayer));
-    layerWidget->indicatePitchbend(layerIndicatorData.hasPitchbend(patchLayer));
+    // Register with MIDI indicator handler, provide corresponding JackEngine route
+    KfPatchLayerSharedPtr pl(patchLayer);
+    KfJackMidiRoute* route = nullptr;
+    if (pl->layerType() == KonfytPatchLayer::TypeMidiOut) {
+        route = pl->midiOutputPortData.jackRoute;
+    } else if (pl->layerType() == KonfytPatchLayer::TypeSfz) {
+        route = jack->getPluginMidiRoute(pl->sfzData.portsInJackEngine);
+    } else if (pl->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+        route = jack->getPluginMidiRoute(pl->soundfontData.portsInJackEngine);
+    }
+    if (route) {
+        layerIndicatorHandler.layerWidgetAdded(layerWidget, route);
+    }
 
     // Add to our internal list
     this->layerWidgetList.append(layerWidget);
@@ -4126,6 +4076,9 @@ void MainWindow::removePatchLayerFromGuiOnly(KonfytLayerWidget *layerWidget)
 {
     // Remove from our internal list
     layerWidgetList.removeAll(layerWidget);
+
+    // Remove from indicators handler
+    layerIndicatorHandler.layerWidgetRemoved(layerWidget);
 
     // Remove from GUI list
     QListWidgetItem* item = layerWidget->getListWidgetItem();
@@ -5437,8 +5390,11 @@ void MainWindow::on_actionRemove_BusPort_triggered()
     else if (midiOutSelected) {
         // Remove the port
         jack->removeMidiPort(midiOutPort.jackPort);
+        portIndicatorHandler.portRemoved(midiOutPort.jackPort);
         prj->midiOutPort_removePort(id);
         tree_midiOutMap.remove(item);
+        // Remove port from global indicator handler
+        portIndicatorHandler.portRemoved(midiOutPort.jackPort);
     } else if (midiInSelected) {
         // Remove the port
         jack->removeMidiPort(midiInPort.jackPort);
@@ -5872,12 +5828,12 @@ void MainWindow::on_checkBox_ConsoleShowMidiMessages_clicked()
 
 void MainWindow::updateGlobalSustainIndicator()
 {
-    ui->MIDI_indicator_sustain->setChecked(!midiInPortSustain.isEmpty());
+    ui->MIDI_indicator_sustain->setChecked(portIndicatorHandler.isSustainDown());
 }
 
 void MainWindow::updateGlobalPitchbendIndicator()
 {
-    ui->MIDI_indicator_pitchbend->setChecked(!midiInPortPitchbend.isEmpty());
+    ui->MIDI_indicator_pitchbend->setChecked(portIndicatorHandler.isPitchbendNonzero());
 }
 
 void MainWindow::setConsoleShowMidiMessages(bool show)

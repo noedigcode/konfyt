@@ -22,6 +22,7 @@
 #ifndef KONFYTJACKSTRUCTS_H
 #define KONFYTJACKSTRUCTS_H
 
+#include "konfytArrayList.h"
 #include "konfytMidiFilter.h"
 #include "ringbufferqmutex.h"
 #include "konfytFluidsynthEngine.h"
@@ -70,6 +71,13 @@ protected:
     RingbufferQMutex<KonfytMidiEvent> traffic{8192};
 };
 
+struct KonfytJackNoteOnRecord
+{
+    int note;
+    int globalTranspose;
+    int channel;
+};
+
 struct KfJackMidiRoute
 {
     friend class KonfytJackEngine;
@@ -82,6 +90,9 @@ protected:
     KfFluidSynth* destFluidsynthID = nullptr;
     bool destIsJackPort = true;
     RingbufferQMutex<KonfytMidiEvent> eventsTxBuffer{100};
+    uint16_t sustain = 0;
+    uint16_t pitchbend = 0;
+    KonfytArrayList<KonfytJackNoteOnRecord> noteOnList;
 };
 
 struct KfJackAudioRoute
@@ -95,6 +106,7 @@ protected:
     bool fadingOut = false;
     KfJackAudioPort* source = nullptr;
     KfJackAudioPort* dest = nullptr;
+    KonfytArrayList<KonfytJackNoteOnRecord> noteOnList;
 };
 
 struct KfJackPluginPorts
@@ -108,17 +120,6 @@ protected:
     KfJackMidiRoute* midiRoute = nullptr;
     KfJackAudioRoute* audioLeftRoute = nullptr;
     KfJackAudioRoute* audioRightRoute = nullptr;
-};
-
-struct KonfytJackNoteOnRecord
-{
-    int note;
-    bool jackPortNotFluidsynth; // true for jack port, false for Fluidsynth
-    KfFluidSynth* fluidSynth;
-    KfJackMidiPort* port;
-    KfJackMidiPort* sourcePort;
-    KonfytMidiFilter filter;
-    int globalTranspose;
 };
 
 struct KonfytJackConPair
@@ -138,7 +139,8 @@ struct KonfytJackConPair
 
 struct KfJackMidiRxEvent
 {
-    KfJackMidiPort* sourcePort;
+    KfJackMidiPort* sourcePort = nullptr;
+    KfJackMidiRoute* midiRoute = nullptr;
     KonfytMidiEvent midiEvent;
 };
 

@@ -343,6 +343,7 @@ void KonfytPatchEngine::removeLayer(KonfytPatch *patch, KfPatchLayerWeakPtr laye
     unloadLayer(layer);
 
     patch->removeLayer(layer);
+
     if (patch == mCurrentPatch) { reloadPatch(); }
 }
 
@@ -367,6 +368,11 @@ void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
             // Set unloaded in patch
             l->sfzData.indexInEngine = -1;
         }
+    } else if (l->layerType() == KonfytPatchLayer::TypeMidiOut) {
+        jack->removeMidiRoute(l->midiOutputPortData.jackRoute);
+    } else if (l->layerType() == KonfytPatchLayer::TypeAudioIn) {
+        jack->removeAudioRoute(l->audioInPortData.jackRouteLeft);
+        jack->removeAudioRoute(l->audioInPortData.jackRouteRight);
     }
 }
 

@@ -24,6 +24,7 @@
 
 #include "aboutdialog.h"
 #include "consoledialog.h"
+#include "indicatorHandlers.h"
 #include "konfytDatabase.h"
 #include "konfytDefines.h"
 #include "konfytFluidsynthEngine.h"
@@ -112,6 +113,12 @@ enum MidiFilterEditType {
     MidiFilterEditPort,
     MidiFilterEditLayer
 };
+
+
+
+
+
+
 
 class MainWindow : public QMainWindow
 {
@@ -774,46 +781,8 @@ private slots:
 
     // MIDI Indicators
 private:
-    QMap<int, int> midiInPortSustain; // Map MIDI in port id in project to sustain value
-    QMap<int, int> midiInPortPitchbend;
-    class IndicatorData
-    {
-    public:
-        bool hasSustain(KfPatchLayerWeakPtr patchLayer)
-        {
-            int sustainVal = sustainMap.value(patchLayer.data(), 0);
-            return sustainVal > 0;
-        }
-
-        void setSustain(KfPatchLayerWeakPtr patchLayer, int sustainVal)
-        {
-            if (sustainVal) {
-                sustainMap.insert(patchLayer.data(), sustainVal);
-            } else {
-                sustainMap.remove(patchLayer.data());
-            }
-        }
-
-        bool hasPitchbend(KfPatchLayerWeakPtr patchLayer)
-        {
-            int val = pitchbendMap.value(patchLayer.data(), 0);
-            return val != 0;
-        }
-
-        void setPitchbend(KfPatchLayerWeakPtr patchLayer, int pitchbend)
-        {
-            if (pitchbend) {
-                pitchbendMap.insert(patchLayer.data(), pitchbend);
-            } else {
-                pitchbendMap.remove(patchLayer.data());
-            }
-        }
-
-    private:
-        QMap<KonfytPatchLayer*, int> sustainMap;
-        QMap<KonfytPatchLayer*, int> pitchbendMap;
-
-    } layerIndicatorData;
+    PortIndicatorHandler portIndicatorHandler;
+    LayerIndicatorHandler layerIndicatorHandler;
 
     QBasicTimer midiIndicatorTimer;
     void updateGlobalSustainIndicator();
