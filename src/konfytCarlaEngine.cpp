@@ -32,7 +32,7 @@ KonfytCarlaEngine::KonfytCarlaEngine(QObject *parent) :
 
 KonfytCarlaEngine::~KonfytCarlaEngine()
 {
-    carla_engine_close();
+    CARLA_FUNC_V(carla_engine_close);
 }
 
 /************************************************************************
@@ -130,7 +130,7 @@ int KonfytCarlaEngine::addSfz(QString path)
     #else
     // 2015-03-28 Updated to Carla 1.9.6 (2.0-beta4). carla_add_plugin now has an additional parameter.
     // 2017-01-06 Tested with Carla 1.9.7 (2.0-beta5) (0x01097) as well.
-    returnValue = carla_add_plugin(BINARY_NATIVE, PLUGIN_SFZ, pluginData.path.toLocal8Bit(),
+    returnValue = CARLA_FUNC(carla_add_plugin, BINARY_NATIVE, PLUGIN_SFZ, pluginData.path.toLocal8Bit(),
                                       pluginData.name.toLocal8Bit(),"sfz",0,NULL,0);
     #endif
 
@@ -140,8 +140,8 @@ int KonfytCarlaEngine::addSfz(QString path)
         return -1;
     }
 
-    carla_set_active(pluginIdInCarla, true);
-    carla_set_option(pluginIdInCarla, PLUGIN_OPTION_SEND_CONTROL_CHANGES, true);
+    CARLA_FUNC(carla_set_active, pluginIdInCarla, true);
+    CARLA_FUNC(carla_set_option, pluginIdInCarla, PLUGIN_OPTION_SEND_CONTROL_CHANGES, true);
 
     // Insert to map of unique IDs (in this class) and plugin data
     pluginDataMap.insert( pluginData.ID, pluginData );
@@ -174,7 +174,7 @@ void KonfytCarlaEngine::removeSfz(int ID)
     int pluginIdInCarla = pluginList.indexOf(ID);
     pluginList.removeAt(pluginIdInCarla);
 
-    bool ret = carla_remove_plugin( pluginIdInCarla );
+    bool ret = CARLA_FUNC(carla_remove_plugin, pluginIdInCarla);
     if (!ret) {
         userMessage("ERROR - Failed to remove plugin from Carla. ID: " + n2s(ID) + ", pluginIdInCarla: " + n2s(pluginIdInCarla));
     }
@@ -220,15 +220,18 @@ void KonfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
     userMessage("Carla version " + QString(CARLA_VERSION_STRING));
 
     // Initialise Carla Backend
-    carla_set_engine_option(ENGINE_OPTION_PROCESS_MODE, ENGINE_PROCESS_MODE_SINGLE_CLIENT, NULL);
+#ifdef CARLA_USE_HANDLE
+    carlaHandle = carla_standalone_host_init();
+#endif
+    CARLA_FUNC(carla_set_engine_option, ENGINE_OPTION_PROCESS_MODE, ENGINE_PROCESS_MODE_SINGLE_CLIENT, NULL);
     // Set path to the resource files.
     // Default unset.
     // Must be set for some internal plugins to work
-    carla_set_engine_option(ENGINE_OPTION_PATH_RESOURCES, 0, "/usr/lib/lv2/carla.lv2/resources/");
+    CARLA_FUNC(carla_set_engine_option, ENGINE_OPTION_PATH_RESOURCES, 0, "/usr/lib/lv2/carla.lv2/resources/");
     // Set the engine callback
     //carla_set_engine_callback(KonfytCarlaEngine::carlaEngineCallback, this);
     // TODO: Handle the case where this name is already taken.
-    carla_engine_init("JACK", jack_client_name.toLocal8Bit().constData());
+    CARLA_FUNC(carla_engine_init, "JACK", jack_client_name.toLocal8Bit().constData());
 }
 
 QString KonfytCarlaEngine::jackClientName()
@@ -244,7 +247,7 @@ void KonfytCarlaEngine::setGain(int ID, float newGain)
 
     int pluginIdInCarla = pluginList.indexOf(ID);
 
-    carla_set_volume( pluginIdInCarla, newGain );
+    CARLA_FUNC(carla_set_volume, pluginIdInCarla, newGain);
 }
 
 

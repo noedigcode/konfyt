@@ -37,6 +37,15 @@
 
 CARLA_BACKEND_USE_NAMESPACE
 
+#if CARLA_VERSION_HEX >= 0x020200
+#define CARLA_USE_HANDLE
+#define CARLA_FUNC(x, ...) x(carlaHandle, __VA_ARGS__)
+#define CARLA_FUNC_V(x) x(carlaHandle)
+#else
+#define CARLA_FUNC(x, ...) x(__VA_ARGS__)
+#define CARLA_FUNC_V(x) x()
+#endif
+
 class KonfytCarlaEngine : public KonfytBaseSoundEngine
 {
     Q_OBJECT
@@ -65,6 +74,9 @@ public:
     void error_abort(QString msg);
 
 private:
+#ifdef CARLA_USE_HANDLE
+    CarlaHostHandle carlaHandle;
+#endif
     int pluginUniqueIDCounter;
     QString jack_client_name;
     KonfytJackEngine* jack;
