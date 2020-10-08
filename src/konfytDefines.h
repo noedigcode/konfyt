@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2017 Gideon van der Kolf
+ * Copyright 2020 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -30,7 +30,7 @@
 #include <fluidsynth.h>
 
 #define APP_NAME "Konfyt"
-#define APP_VERSION "1.1.1-testing"
+#define APP_VERSION "1.1.1"
 
 #define n2s(x) QString::number(x)
 #define bool2int(x) (x ? 1 : 0)

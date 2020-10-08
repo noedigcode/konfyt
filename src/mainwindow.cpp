@@ -369,7 +369,6 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
 
     // Save-patch button menu
     QMenu* savePatchMenu = new QMenu();
-    //savePatchMenu->addAction(ui->actionSave_Patch); // 2017-01-05 Not used at the moment; patches are saved automatically.
     savePatchMenu->addAction(ui->actionAlways_Active);
     savePatchMenu->addAction(ui->actionSave_Patch_As_Copy);
     savePatchMenu->addAction(ui->actionAdd_Patch_To_Library);

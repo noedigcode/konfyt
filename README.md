@@ -4,7 +4,7 @@ Konfyt
 Digital Keyboard Workstation for Linux
 --------------------------------------
 
-2014-2019 Gideon van der Kolf, noedigcode@gmail.com
+2014-2020 Gideon van der Kolf, noedigcode@gmail.com
 
 Welkom by Konfyt.
 
@@ -30,14 +30,14 @@ More information is available at www.noedig.co.za/konfyt/
 Requirements:
 -------------
 Konfyt was developed and tested with the following:
-* Linux Mint 19.3 (based on Ubuntu 18.04).
-* Qt 5.9.5
-* Fluidsynth 1.1.9
-* liblscp 0.6.0-1 and thus Linuxsampler
-* Carla 2.0.0
+* Linux Mint 20 (based on Ubuntu 20.04) Manjaro Linux 20.1
+* Qt 5.12.8, 5.15.0
+* Fluidsynth 2.1.1, 2.1.4
+* liblscp 0.6.0 and thus Linuxsampler
+* Carla 2.1.1, 2.2.0
 
-Carla is available in the KXStudio repositories (http://kxstudio.linuxaudio.org/Repositories).
-All versions are not guaranteed to work since Carla is under active development and the API is still subject to change.
+Carla is available in the KXStudio repositories (http://kxstudio.linuxaudio.org/Repositories)
+for Ubuntu based systems.
 
 
 Building:
