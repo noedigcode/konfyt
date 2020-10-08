@@ -22,9 +22,7 @@
 #include "konfytBridgeEngine.h"
 
 KonfytBridgeEngine::KonfytBridgeEngine(QObject *parent) :
-    KonfytBaseSoundEngine(parent),
-    jack(NULL),
-    idCounter(300)
+    KonfytBaseSoundEngine(parent)
 {
 
 }
@@ -76,8 +74,8 @@ int KonfytBridgeEngine::addSfz(QString soundfilePath)
         sendAllStatusInfo();
         userMessage("Bridge client " + n2s(id) + " started.");
     });
-    connect(item.process, static_cast<void (QProcess::*)(int)>(&QProcess::finished),
-            [this, id](int returnCode){
+    connect(item.process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+            [this, id](int returnCode, QProcess::ExitStatus /*exitStatus*/){
         // Process has finished. Restart.
         userMessage("Bridge client " + n2s(id) + " stopped: " + n2s(returnCode) + ". Restarting...");
         startProcess(id);

@@ -24,21 +24,21 @@
 konfytProcess::konfytProcess()
 {
     connect(&process, &QProcess::started, this, &konfytProcess::processStarted);
-    connect(&process, static_cast<void (QProcess::*)(int)>(&QProcess::finished),
+    connect(&process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
             this, &konfytProcess::processFinished);
 
     state = KONFYTPROCESS_NOT_STARTED;
 }
 
-// Slot for signal from process when it is started.
+/* Slot for signal from process when it is started. */
 void konfytProcess::processStarted()
 {
     state = KONFYTPROCESS_RUNNING;
     emit started(this);
 }
 
-// Slot for signal from process when it is finished.
-void konfytProcess::processFinished(int /*exitCode*/)
+/* Slot for signal from process when it is finished. */
+void konfytProcess::processFinished(int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/)
 {
     if (state != KONFYTPROCESS_STOPPED) {
         state = KONFYTPROCESS_FINISHED;

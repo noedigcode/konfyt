@@ -847,9 +847,9 @@ void MainWindow::gui_updatePatchList()
         QListWidgetItem* item = new QListWidgetItem(txt);
         // If patch has been loaded, mark it white. Else, gray.
         if (pengine->isPatchLoaded(pat)) {
-            item->setTextColor(Qt::white);
+            item->setForeground(QBrush(Qt::white));
         } else {
-            item->setTextColor(Qt::gray);
+            item->setForeground(QBrush(Qt::gray));
         }
 
         setPatchIcon(pat, item, false);
@@ -1148,10 +1148,10 @@ void MainWindow::gui_updateConnectionsTree()
         QString port = conPortsMap[item];
         if ( !l.contains(port) ) {
             // Mark red
-            item->setBackgroundColor(0, inactiveColor);
+            item->setBackground(0, QBrush(inactiveColor));
         } else {
             // Do not mark red
-            item->setBackgroundColor(0, activeColor);
+            item->setBackground(0, QBrush(activeColor));
         }
         QCheckBox* cb = conChecksMap1.key(item, NULL);
         if (cb != NULL) { cb->setChecked(leftCons.contains(port)); }
@@ -2395,7 +2395,7 @@ void MainWindow::setCurrentPatch(int index)
         // Indicate in the gui patch list that the patch has been loaded.
         setCurrentPatchIcon();
         QListWidgetItem* item = ui->listWidget_Patches->item(currentPatchIndex);
-        item->setTextColor(Qt::white);
+        item->setForeground(QBrush(Qt::white));
 
         gui_updateWindowTitle();
     }
@@ -4883,7 +4883,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
 
         KonfytPatch* pt = new KonfytPatch();
         QString errors;
-        if (pt->loadPatchFromFile(info.filePath()), &errors) {
+        if (pt->loadPatchFromFile(info.filePath(), &errors)) {
             addPatchToProject(pt);
         } else {
             userMessage("Failed to load patch " + info.filePath());
@@ -5620,8 +5620,8 @@ void MainWindow::openFileManager(QString path)
     if (this->filemanager.length()) {
         QProcess* process = new QProcess();
 
-        connect(process, static_cast<void (QProcess::*)(int)>(&QProcess::finished),
-                [this, process](int /*exitCode*/){
+        connect(process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+                [this, process](int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/){
             process->deleteLater();
         });
 
@@ -6105,7 +6105,7 @@ void MainWindow::updateJackPage()
         QListWidgetItem* item = new QListWidgetItem( portPair.toString() );
         // Colour red if one of the ports aren't present in JACK.
         if ( !outPorts.contains(portPair.srcPort) || !inPorts.contains(portPair.destPort) ) {
-            item->setBackgroundColor(Qt::red);
+            item->setBackground(QBrush(Qt::red));
         }
         ui->listWidget_jackConnections->addItem( item );
     }

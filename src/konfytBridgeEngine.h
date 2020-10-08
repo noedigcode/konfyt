@@ -61,9 +61,9 @@ public:
     QString getAllStatusInfo();
 
 private:
-    KonfytJackEngine* jack;
+    KonfytJackEngine* jack = nullptr;
     QString exePath;
-    int idCounter;
+    int idCounter = 300;
     QMap<int, KonfytBridgeItem> items;
 
     void startProcess(int id);

@@ -24,8 +24,7 @@
 
 
 KonfytCarlaEngine::KonfytCarlaEngine(QObject *parent) :
-    KonfytBaseSoundEngine(parent),
-    pluginUniqueIDCounter(10)
+    KonfytBaseSoundEngine(parent)
 {
 
 }
@@ -135,8 +134,9 @@ int KonfytCarlaEngine::addSfz(QString path)
     #else
     // 2015-03-28 Updated to Carla 1.9.6 (2.0-beta4). carla_add_plugin now has an additional parameter.
     // 2017-01-06 Tested with Carla 1.9.7 (2.0-beta5) (0x01097) as well.
-    returnValue = CARLA_FUNC(carla_add_plugin, BINARY_NATIVE, PLUGIN_SFZ, pluginData.path.toLocal8Bit(),
-                                      pluginData.name.toLocal8Bit(),"sfz",0,NULL,0);
+    returnValue = CARLA_FUNC(carla_add_plugin, BINARY_NATIVE, PLUGIN_SFZ,
+                             pluginData.path.toLocal8Bit(),
+                             pluginData.name.toLocal8Bit(), "sfz", 0, NULL, 0);
     #endif
 
     if ( !returnValue ) {
@@ -154,17 +154,6 @@ int KonfytCarlaEngine::addSfz(QString path)
     pluginList.append(pluginData.ID);
 
     pluginUniqueIDCounter++;
-
-    // Please don't look at the following section.
-    // Ugly workaround: for some reason, when adding the first plugin in the engine and then
-    // one or more directly afterwards, the first plugin is soundless.
-    // So, I'm not proud of it, but for now we just pause a short while after loading the
-    // first plugin.
-    if (pluginIdInCarla == 0) {
-        QTime t;
-        t.start();
-        while (t.elapsed() < 500) { }
-    }
 
     return pluginData.ID; // Return the unique ID used by this class to distinguish the plugin
 }
@@ -244,7 +233,6 @@ QString KonfytCarlaEngine::jackClientName()
     return jack_client_name;
 }
 
-
 void KonfytCarlaEngine::setGain(int ID, float newGain)
 {
     Q_ASSERT( pluginDataMap.contains(ID) );
@@ -254,7 +242,6 @@ void KonfytCarlaEngine::setGain(int ID, float newGain)
 
     CARLA_FUNC(carla_set_volume, pluginIdInCarla, newGain);
 }
-
 
 // Print error message to stdout, and abort app.
 void KonfytCarlaEngine::error_abort(QString msg)

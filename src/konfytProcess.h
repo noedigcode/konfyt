@@ -60,7 +60,7 @@ private:
 
 public slots:
     void processStarted();
-    void processFinished(int exitCode);
+    void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
 signals:
     void started(konfytProcess* process);

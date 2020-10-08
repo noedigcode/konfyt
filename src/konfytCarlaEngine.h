@@ -78,7 +78,7 @@ private:
 #ifdef CARLA_USE_HANDLE
     CarlaHostHandle carlaHandle;
 #endif
-    int pluginUniqueIDCounter;
+    int pluginUniqueIDCounter = 10;
     QString jack_client_name;
     KonfytJackEngine* jack;
     QMap<int, KonfytCarlaPluginData> pluginDataMap;
