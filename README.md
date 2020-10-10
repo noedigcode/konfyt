@@ -29,8 +29,7 @@ More information is available at www.noedig.co.za/konfyt/
 
 Requirements:
 -------------
-Konfyt was developed and tested with the following:
-* Linux Mint 20 (based on Ubuntu 20.04) Manjaro Linux 20.1
+Konfyt was mainly developed on Linux Mint 20 (based on Ubuntu 20.04), but also tested on Manjaro and Fedora Jam 32.
 * Qt 5.12.8, 5.15.0
 * Fluidsynth 2.1.1, 2.1.4
 * liblscp 0.6.0 and thus Linuxsampler
@@ -48,6 +47,7 @@ under testing, it should be quite stable.
 The following are required to build:
 
 * Qt5: Ensure that the Qt5 development packages are installed.
+
   Check the Qt version that qmake uses with:
   ```
   qmake -v
@@ -57,20 +57,41 @@ The following are required to build:
   ```
   qmake --qt=5
   ```
+  
+  On some distros, the qmake command is
+  ```
+  qmake-qt5
+  ```
 
 * pkg-config
 
-* Fluidsynth development files (libfluidsynth-dev in Ubuntu).
+* Fluidsynth development files
+  
+  Ubuntu: libfluidsynth-dev
+  
+  Fedora: fluidsynth-devel
 
 * Carla
 
   Optional - to build without Carla support, either add the line `CONFIG+=KONFYT_NO_CARLA` to the `konfyt.pro` file (see the comments in the file for the correct location) or pass it as an option to qmake, as described below.
+  
+  Ubuntu: Get it from the KXStudio repositories.
+  
+  Fedora: Carla-devel
 
 * g++
 
-* liblscp development files (liblscp-dev in Ubuntu)
+* liblscp development files
+  
+  Ubuntu: liblscp-dev
+  
+  Fedora: liblscp-devel, available from the Planet CCRMA third-party repository
 
-* JACK development files (libjack-dev or libjack-jackd2-dev in Ubuntu)
+* JACK development files
+
+  Ubuntu: libjack-dev or libjack-jackd2-dev
+  
+  Fedora: jack-audio-connection-kit-devel
 
 
 To build from the command line, run the following from the source code directory:
