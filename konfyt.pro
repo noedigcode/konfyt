@@ -70,10 +70,10 @@ FORMS    += src/mainwindow.ui \
     src/aboutdialog.ui
 
 # For pkgconfig
-unix: CONFIG += link_pkgconfig
+CONFIG += link_pkgconfig
 
 # libLSCP stuff
-unix: PKGCONFIG += lscp
+PKGCONFIG += lscp
 
 # Carla stuff
 # To build without Carla support, run qmake with the option
@@ -84,15 +84,14 @@ unix: PKGCONFIG += lscp
     SOURCES += src/konfytCarlaEngine.cpp
     HEADERS += src/konfytCarlaEngine.h
     DEFINES += KONFYT_USE_CARLA
-    LIBS += -Wl,-rpath=/usr/lib/carla -L/usr/lib/carla -lcarla_standalone2
-    QMAKE_CXXFLAGS += -DREAL_BUILD -I/usr/include/carla -I/usr/include/carla/includes
+    PKGCONFIG += carla-standalone
 }
 
 # Fluidsynth
-unix: PKGCONFIG += fluidsynth
+PKGCONFIG += fluidsynth
 
 # JACK
-unix: PKGCONFIG += jack
+PKGCONFIG += jack
 
 # -fpermissive flags (making on Ubuntu Studio complains without this)
 QMAKE_CFLAGS += -fpermissive
