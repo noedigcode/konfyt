@@ -40,9 +40,8 @@ AboutDialog::~AboutDialog()
 
 void AboutDialog::setExtraVersionText(QString txt)
 {
-    QString extra = txt.replace("\n", "<br>");
     QString plainText = ui->plainTextEdit->document()->toPlainText();
-    plainText.replace(REPLACE_TXT_MORE_VERSION, extra);
+    plainText.replace(REPLACE_TXT_MORE_VERSION, txt);
     ui->plainTextEdit->document()->setPlainText(plainText);
 }
 
