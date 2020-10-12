@@ -28,9 +28,9 @@ AboutDialog::AboutDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QString txt = ui->textBrowser->document()->toHtml();
+    QString txt = ui->plainTextEdit->document()->toPlainText();
     txt.replace(REPLACE_TXT_APP_VERSION, APP_VERSION);
-    ui->textBrowser->document()->setHtml(txt);
+    ui->plainTextEdit->document()->setPlainText(txt);
 }
 
 AboutDialog::~AboutDialog()
@@ -41,9 +41,9 @@ AboutDialog::~AboutDialog()
 void AboutDialog::setExtraVersionText(QString txt)
 {
     QString extra = txt.replace("\n", "<br>");
-    QString html = ui->textBrowser->document()->toHtml();
-    html.replace(REPLACE_TXT_MORE_VERSION, extra);
-    ui->textBrowser->document()->setHtml(html);
+    QString plainText = ui->plainTextEdit->document()->toPlainText();
+    plainText.replace(REPLACE_TXT_MORE_VERSION, extra);
+    ui->plainTextEdit->document()->setPlainText(plainText);
 }
 
 void AboutDialog::on_pushButton_clicked()

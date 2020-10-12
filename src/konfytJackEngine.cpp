@@ -109,8 +109,8 @@ void KonfytJackEngine::refreshAllPortsConnections()
 
 void KonfytJackEngine::refreshConnections(jack_port_t *jackPort, QStringList clients, bool inNotOut)
 {
-    const char* src;
-    const char* dest;
+    const char* src = nullptr;
+    const char* dest = nullptr;
     const char* portname = jack_port_name(jackPort);
     if (inNotOut) {
         dest = portname;
