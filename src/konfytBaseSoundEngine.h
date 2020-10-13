@@ -46,8 +46,6 @@ public:
 signals:
     void userMessage(QString msg);
     void statusInfo(QString msg);
-
-public slots:
 };
 
 #endif // KONFYTBASESOUNDENGINE_H
