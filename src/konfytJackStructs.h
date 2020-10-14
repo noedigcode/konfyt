@@ -106,7 +106,8 @@ protected:
     bool fadingOut = false;
     KfJackAudioPort* source = nullptr;
     KfJackAudioPort* dest = nullptr;
-    KonfytArrayList<KonfytJackNoteOnRecord> noteOnList;
+    float rxBufferSum = 0;
+    int rxCycleCount = 0;
 };
 
 struct KfJackPluginPorts
@@ -142,6 +143,13 @@ struct KfJackMidiRxEvent
     KfJackMidiPort* sourcePort = nullptr;
     KfJackMidiRoute* midiRoute = nullptr;
     KonfytMidiEvent midiEvent;
+};
+
+struct KfJackAudioRxEvent
+{
+    KfJackMidiPort* sourcePort = nullptr;
+    KfJackAudioRoute* audioRoute = nullptr;
+    float data = 0;
 };
 
 

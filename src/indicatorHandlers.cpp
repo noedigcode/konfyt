@@ -24,18 +24,26 @@
 
 void LayerIndicatorHandler::layerWidgetAdded(KonfytLayerWidget *w, KfJackMidiRoute *route)
 {
-    RouteState& state = routeStateMap[route]; // Created if it does not exist
+    MidiState& state = midiRouteStateMap[route]; // Created if it does not exist
     state.widget = w;
     w->indicateSustain(state.sustain);
     w->indicatePitchbend(state.pitchbend);
-    widgetRouteMap.insert(w, route);
+    midiWidgetRouteMap.insert(w, route);
+}
+
+void LayerIndicatorHandler::layerWidgetAdded(KonfytLayerWidget *w,
+                                             KfJackAudioRoute *route1,
+                                             KfJackAudioRoute *route2)
+{
+    audioRouteMap.insert(route1, { .left = true, .widget = w });
+    audioRouteMap.insert(route2, { .left = false, .widget = w });
 }
 
 void LayerIndicatorHandler::jackEventReceived(KfJackMidiRxEvent ev)
 {
-    if (!routeStateMap.contains(ev.midiRoute)) { return; }
+    if (!midiRouteStateMap.contains(ev.midiRoute)) { return; }
 
-    RouteState& state = routeStateMap[ev.midiRoute];
+    MidiState& state = midiRouteStateMap[ev.midiRoute];
 
     if ((ev.midiEvent.type() == MIDI_EVENT_TYPE_CC)
         && (ev.midiEvent.data1() == 64)) {
@@ -52,10 +60,34 @@ void LayerIndicatorHandler::jackEventReceived(KfJackMidiRxEvent ev)
     }
 }
 
+void LayerIndicatorHandler::jackEventReceived(KfJackAudioRxEvent ev)
+{
+    if (!audioRouteMap.contains(ev.audioRoute)) { return; }
+
+    AudioInfo& a = audioRouteMap[ev.audioRoute];
+
+    if (a.widget) {
+        if (a.left) {
+            a.widget->indicateAudioLeft(ev.data);
+        } else {
+            a.widget->indicateAudioRight(ev.data);
+        }
+    }
+}
+
 void LayerIndicatorHandler::layerWidgetRemoved(KonfytLayerWidget *w)
 {
-    KfJackMidiRoute* route = widgetRouteMap.take(w);
-    routeStateMap[route].widget = nullptr;
+    KfJackMidiRoute* route = midiWidgetRouteMap.take(w);
+    if (route) {
+        midiRouteStateMap[route].widget = nullptr;
+    }
+
+    foreach (KfJackAudioRoute* route, audioRouteMap.keys()) {
+        AudioInfo& a = audioRouteMap[route];
+        if (a.widget == w) {
+            a.widget = nullptr;
+        }
+    }
 }
 
 void PortIndicatorHandler::jackEventReceived(KfJackMidiRxEvent ev)

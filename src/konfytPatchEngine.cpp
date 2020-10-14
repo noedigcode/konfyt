@@ -22,6 +22,7 @@
 #include "konfytPatchEngine.h"
 
 #include <iostream>
+#include <math.h>
 
 KonfytPatchEngine::KonfytPatchEngine(QObject *parent) :
     QObject(parent)
@@ -417,7 +418,7 @@ float KonfytPatchEngine::convertGain(float linearGain)
     if (linearGain < 0) { linearGain = 0; }
     if (linearGain > 1) { linearGain = 1; }
 
-    return linearGain*linearGain*linearGain; // x^3
+    return pow(linearGain, 3.0); // x^3
 }
 
 

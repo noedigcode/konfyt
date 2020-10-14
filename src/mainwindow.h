@@ -643,6 +643,7 @@ private:
     void handleMidiEvent(KfJackMidiRxEvent rxEvent);
 private slots:
     void onJackMidiEventsReceived();
+    void onJackAudioEventsReceived();
     void onJackXrunOccurred();
     void onJackPortRegisteredOrConnected();
 

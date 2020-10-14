@@ -22,6 +22,8 @@
 #include "konfytLayerWidget.h"
 #include "ui_konfytLayerWidget.h"
 
+#include <math.h>
+
 KonfytLayerWidget::KonfytLayerWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::KonfytLayerWidget)
@@ -33,6 +35,10 @@ KonfytLayerWidget::KonfytLayerWidget(QWidget *parent) :
 
     connect(&midiIndicateTimer, &QTimer::timeout,
             this, &KonfytLayerWidget::midiIndicateTimerEvent);
+
+    connect(&audioIndicateTimer, &QTimer::timeout,
+            this, &KonfytLayerWidget::audioIndicateTimerEvent);
+    audioIndicateTimer.start(100);
 }
 
 KonfytLayerWidget::~KonfytLayerWidget()
@@ -87,6 +93,33 @@ void KonfytLayerWidget::paintEvent(QPaintEvent* /*e*/)
     }
     if (midiIndicatePitchbend) {
         p.drawText(QRectF(1,this->height()/2,this->height()/2, this->height()/2),"P");
+    }
+
+    // Audio indicator
+    int alen = 30;
+    if (audioLeftValue > 0) {
+        int val = alen * pow(audioLeftValue, 0.333);
+
+        QLinearGradient grad(this->width()-val, 0, this->width(), 0);
+        grad.setColorAt(0, Qt::transparent);
+        grad.setColorAt(1, Qt::green);
+        QBrush b(grad);
+        p.setBrush(b);
+        p.setPen(Qt::NoPen);
+
+        p.drawRect(this->width()-val, 0, this->width(), this->height()/2);
+    }
+    if (audioRightValue > 0) {
+        int val = alen * pow(audioRightValue, 0.333);
+
+        QLinearGradient grad(this->width()-val, 0, this->width(), 0);
+        grad.setColorAt(0, Qt::transparent);
+        grad.setColorAt(1, Qt::green);
+        QBrush b(grad);
+        p.setBrush(b);
+        p.setPen(Qt::NoPen);
+
+        p.drawRect(this->width()-val, this->height()/2, this->width(), this->height()-1);
     }
 }
 
@@ -282,7 +315,7 @@ void KonfytLayerWidget::changeBackground(int min, int max)
     background_rectLeft = (float)min/127.0;
     if (max >= 127) { background_rectRight = 1; }
     else { background_rectRight = (float)max/127.0; }
-    this->repaint();
+    //this->repaint(); // Done in audioIndicateTimerEvent()
 }
 
 KfPatchLayerWeakPtr KonfytLayerWidget::getPatchLayer()
@@ -305,7 +338,7 @@ void KonfytLayerWidget::indicateMidi()
     midiIndicateTimer.start(500);
     if (!midiIndicate) {
         midiIndicate = true;
-        this->repaint();
+        //this->repaint(); // Done in audioIndicateTimerEvent()
     }
 }
 
@@ -313,7 +346,7 @@ void KonfytLayerWidget::indicateSustain(bool sustain)
 {
     if (sustain != midiIndicateSustain) {
         midiIndicateSustain = sustain;
-        this->repaint();
+        //this->repaint(); // Done in audioIndicateTimerEvent()
     }
 }
 
@@ -321,8 +354,22 @@ void KonfytLayerWidget::indicatePitchbend(bool pitchbend)
 {
     if (pitchbend != midiIndicatePitchbend) {
         midiIndicatePitchbend = pitchbend;
-        this->repaint();
+        //this->repaint(); // Done in audioIndicateTimerEvent()
     }
+}
+
+void KonfytLayerWidget::indicateAudioLeft(float value)
+{
+    if (value < audioZeroLimit) { return; }
+    if (value > 0) { value += audioIndicateStep; }
+    audioLeftValue = qMax(value, audioLeftValue);
+}
+
+void KonfytLayerWidget::indicateAudioRight(float value)
+{
+    if (value < audioZeroLimit) { return; }
+    if (value > 0) { value += audioIndicateStep; }
+    audioRightValue = qMax(value, audioRightValue);
 }
 
 /* Set slider gain from outside the class, e.g. if gain was changed by some
@@ -391,5 +438,13 @@ void KonfytLayerWidget::midiIndicateTimerEvent()
 {
     midiIndicate = false;
     midiIndicateTimer.stop();
+    //this->repaint(); // Done in audioIndicateTimerEvent()
+}
+
+void KonfytLayerWidget::audioIndicateTimerEvent()
+{
+    audioLeftValue = qMax((float)0.0, audioLeftValue - audioIndicateStep);
+    audioRightValue = qMax((float)0.0, audioRightValue - audioIndicateStep);
+
     this->repaint();
 }

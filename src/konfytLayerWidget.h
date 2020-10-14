@@ -64,6 +64,8 @@ public:
     void indicateMidi();
     void indicateSustain(bool sustain);
     void indicatePitchbend(bool pitchbend);
+    void indicateAudioLeft(float value);
+    void indicateAudioRight(float value);
     
 private:
     Ui::KonfytLayerWidget *ui;
@@ -85,6 +87,12 @@ private:
     bool midiIndicateSustain = false;
     bool midiIndicatePitchbend = false;
 
+    QTimer audioIndicateTimer;
+    float audioIndicateStep = 0.1;
+    float audioLeftValue = 0;
+    float audioRightValue = 0;
+    const float audioZeroLimit = 1E-3;
+
 signals:
     void slider_moved_signal(KonfytLayerWidget* layerItem, float gain);
     void solo_clicked_signal(KonfytLayerWidget* layerItem, bool solo);
@@ -103,6 +111,7 @@ private slots:
     void on_toolButton_sendEvents_clicked();
 
     void midiIndicateTimerEvent();
+    void audioIndicateTimerEvent();
 };
 
 #endif // KONFYT_LAYER_WIDGET_H

@@ -155,6 +155,9 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     connect(jack, &KonfytJackEngine::midiEventsReceived,
             this, &MainWindow::onJackMidiEventsReceived);
 
+    connect(jack, &KonfytJackEngine::audioEventsReceived,
+            this, &MainWindow::onJackAudioEventsReceived);
+
     connect(jack, &KonfytJackEngine::xrunOccurred, this, &MainWindow::onJackXrunOccurred);
 
     QString jackClientName = appInfo.jackClientName;
@@ -3440,9 +3443,17 @@ void MainWindow::midi_setLayerSolo(int layer, int midiValue)
 /* MIDI events are waiting in the JACK engine. */
 void MainWindow::onJackMidiEventsReceived()
 {   
-    QList<KfJackMidiRxEvent> events = jack->getEvents();
+    QList<KfJackMidiRxEvent> events = jack->getMidiRxEvents();
     foreach (KfJackMidiRxEvent event, events) {
         handleMidiEvent(event);
+    }
+}
+
+void MainWindow::onJackAudioEventsReceived()
+{
+    QList<KfJackAudioRxEvent> events = jack->getAudioRxEvents();
+    foreach (KfJackAudioRxEvent event, events) {
+        layerIndicatorHandler.jackEventReceived(event);
     }
 }
 
@@ -4017,16 +4028,30 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer)
 
     // Register with MIDI indicator handler, provide corresponding JackEngine route
     KfPatchLayerSharedPtr pl(patchLayer);
-    KfJackMidiRoute* route = nullptr;
+    KfJackMidiRoute* midiRoute = nullptr;
+    KfJackAudioRoute* audioRoute1 = nullptr;
+    KfJackAudioRoute* audioRoute2 = nullptr;
     if (pl->layerType() == KonfytPatchLayer::TypeMidiOut) {
-        route = pl->midiOutputPortData.jackRoute;
+        midiRoute = pl->midiOutputPortData.jackRoute;
     } else if (pl->layerType() == KonfytPatchLayer::TypeSfz) {
-        route = jack->getPluginMidiRoute(pl->sfzData.portsInJackEngine);
+        midiRoute = jack->getPluginMidiRoute(pl->sfzData.portsInJackEngine);
+        QList<KfJackAudioRoute*> a = jack->getPluginAudioRoutes(pl->sfzData.portsInJackEngine);
+        audioRoute1 = a.value(0);
+        audioRoute2 = a.value(1);
     } else if (pl->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
-        route = jack->getPluginMidiRoute(pl->soundfontData.portsInJackEngine);
+        midiRoute = jack->getPluginMidiRoute(pl->soundfontData.portsInJackEngine);
+        QList<KfJackAudioRoute*> a = jack->getPluginAudioRoutes(pl->soundfontData.portsInJackEngine);
+        audioRoute1 = a.value(0);
+        audioRoute2 = a.value(1);
+    } else if (pl->layerType() == KonfytPatchLayer::TypeAudioIn) {
+        audioRoute1 = pl->audioInPortData.jackRouteLeft;
+        audioRoute2 = pl->audioInPortData.jackRouteRight;
     }
-    if (route) {
-        layerIndicatorHandler.layerWidgetAdded(layerWidget, route);
+    if (midiRoute) {
+        layerIndicatorHandler.layerWidgetAdded(layerWidget, midiRoute);
+    }
+    if (audioRoute1) {
+        layerIndicatorHandler.layerWidgetAdded(layerWidget, audioRoute1, audioRoute2);
     }
 
     // Add to our internal list

@@ -67,14 +67,16 @@ public:
 
     void setFluidsynthEngine(KonfytFluidsynthEngine* e);
 
-    QList<KfJackMidiRxEvent> getEvents();
+    QList<KfJackMidiRxEvent> getMidiRxEvents();
+    QList<KfJackAudioRxEvent> getAudioRxEvents();
 
     bool initJackClient(QString name);
     void stopJackClient();
     bool clientIsActive();
     QString clientName();
     void pauseJackProcessing(bool pause);
-    double getSampleRate();
+    uint32_t getSampleRate();
+    uint32_t getBufferSize();
 
     // JACK helper functions (Not specific to our client)
     QStringList getMidiInputPortsList();
@@ -124,6 +126,7 @@ public:
                                   KfJackAudioPort *leftPort,
                                   KfJackAudioPort *rightPort);
     KfJackMidiRoute* getPluginMidiRoute(KfJackPluginPorts* p);
+    QList<KfJackAudioRoute*> getPluginAudioRoutes(KfJackPluginPorts* p);
 
     // Fluidsynth
     KfJackPluginPorts* addSoundfont(KfFluidSynth* fluidSynth);
@@ -145,15 +148,19 @@ signals:
     void userMessage(QString msg);
     void jackPortRegisteredOrConnected();
     void midiEventsReceived();
+    void audioEventsReceived();
     void xrunOccurred();
 
 private:
     jack_client_t* mJackClient;
-    jack_nframes_t nframes;
+    jack_nframes_t nframes; // TODO THIS MIGHT CHANGE, REGISTER BUFSIZE CALLBACK TO UPDATE
     bool clientActive = false;      // Flag to indicate if the client has been successfully activated
-    double samplerate;
-    RingbufferQMutex<KfJackMidiRxEvent> eventsRxBuffer{1000};
-    QList<KfJackMidiRxEvent> extractedRxEvents;
+    uint32_t samplerate;
+    RingbufferQMutex<KfJackMidiRxEvent> midiRxBuffer{1000};
+    QList<KfJackMidiRxEvent> extractedMidiRx;
+    int audioBufferCycleCount = 100;
+    RingbufferQMutex<KfJackAudioRxEvent> audioRxBuffer{1000};
+    QList<KfJackAudioRxEvent> extractedAudioRx;
     bool connectCallback = false;
     bool registerCallback = false;
 
@@ -166,7 +173,7 @@ private:
 
     float *fadeOutValues;
     unsigned int fadeOutValuesCount = 0;
-    float fadeOutSecs = 0;
+    float fadeOutSecs = 1.0;
 
     KonfytMidiEvent evAllNotesOff;
     KonfytMidiEvent evSustainZero;

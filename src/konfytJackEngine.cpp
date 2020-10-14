@@ -52,9 +52,15 @@ void KonfytJackEngine::timerEvent(QTimerEvent* /*event*/)
     }
 
     // Received MIDI events
-    extractedRxEvents.append(eventsRxBuffer.readAll());
-    if (!extractedRxEvents.isEmpty()) {
+    extractedMidiRx.append(midiRxBuffer.readAll());
+    if (!extractedMidiRx.isEmpty()) {
         emit midiEventsReceived();
+    }
+
+    // Received audio data
+    extractedAudioRx.append(audioRxBuffer.readAll());
+    if (!extractedAudioRx.isEmpty()) {
+        emit audioEventsReceived();
     }
 }
 
@@ -341,6 +347,12 @@ KfJackMidiRoute *KonfytJackEngine::getPluginMidiRoute(KfJackPluginPorts *p)
 {
     // TODO CHECK EXISTENCE OF *p
     return p->midiRoute;
+}
+
+QList<KfJackAudioRoute *> KonfytJackEngine::getPluginAudioRoutes(KfJackPluginPorts *p)
+{
+    // TODO CHECK EXISTENCE OF *p
+    return QList<KfJackAudioRoute*>({p->audioLeftRoute, p->audioRightRoute});
 }
 
 void KonfytJackEngine::removeAllAudioInAndOutPorts()
@@ -876,7 +888,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
             }
 
             // Send to GUI
-            eventsRxBuffer.stash({.sourcePort = sourcePort,
+            midiRxBuffer.stash({.sourcePort = sourcePort,
                                   .midiRoute = nullptr,
                                   .midiEvent = ev});
 
@@ -935,7 +947,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
                 if (!passEvent) { continue; }
 
                 // Give to GUI
-                eventsRxBuffer.stash({.sourcePort = nullptr,
+                midiRxBuffer.stash({.sourcePort = nullptr,
                                       .midiRoute = route,
                                       .midiEvent = evToSend});
 
@@ -1014,7 +1026,8 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 
 
     // Commit received events to buffer so they can be read in the GUI thread.
-    eventsRxBuffer.commit();
+    audioRxBuffer.commit();
+    midiRxBuffer.commit();
 
 
     // Unlock jack_process --------------------
@@ -1050,10 +1063,17 @@ int KonfytJackEngine::jackXrunCallback(void *arg)
 }
 
 /* Return list of MIDI events that were buffered during JACK process callback(s). */
-QList<KfJackMidiRxEvent> KonfytJackEngine::getEvents()
+QList<KfJackMidiRxEvent> KonfytJackEngine::getMidiRxEvents()
 {
-    QList<KfJackMidiRxEvent> ret = extractedRxEvents;
-    extractedRxEvents.clear();
+    QList<KfJackMidiRxEvent> ret = extractedMidiRx;
+    extractedMidiRx.clear();
+    return ret;
+}
+
+QList<KfJackAudioRxEvent> KonfytJackEngine::getAudioRxEvents()
+{
+    QList<KfJackAudioRxEvent> ret = extractedAudioRx;
+    extractedAudioRx.clear();
     return ret;
 }
 
@@ -1093,9 +1113,10 @@ void KonfytJackEngine::mixBufferToDestinationPort(KfJackAudioRoute *route,
 
     // For each frame: destination_buffer[frame] += source_buffer[frame]
     for (jack_nframes_t i = 0;  i < nframes; i++) {
-        ( (jack_default_audio_sample_t*)(route->dest->buffer) )[i] +=
-                ((jack_default_audio_sample_t*)(route->source->buffer))[i]
+        float frame = ((jack_default_audio_sample_t*)(route->source->buffer))[i]
                 * gain * fadeOutValues[route->fadeoutCounter];
+        route->rxBufferSum += qAbs(frame);
+        ( (jack_default_audio_sample_t*)(route->dest->buffer) )[i] += frame;
 
         if (route->fadingOut) {
             if (route->fadeoutCounter < (fadeOutValuesCount-1) ) {
@@ -1106,6 +1127,15 @@ void KonfytJackEngine::mixBufferToDestinationPort(KfJackAudioRoute *route,
                 route->fadeoutCounter--;
             }
         }
+    }
+    route->rxCycleCount++;
+    if (route->rxCycleCount >= audioBufferCycleCount) {
+        KfJackAudioRxEvent ev;
+        ev.audioRoute = route;
+        ev.data = route->rxBufferSum / route->rxCycleCount / nframes;
+        audioRxBuffer.stash(ev);
+        route->rxBufferSum = 0;
+        route->rxCycleCount = 0;
     }
 }
 
@@ -1194,7 +1224,8 @@ bool KonfytJackEngine::initJackClient(QString name)
     this->samplerate = jack_get_sample_rate(mJackClient);
     userMessage("JACK: Samplerate " + n2s(samplerate));
 
-    fadeOutSecs = 1;
+    audioBufferCycleCount = samplerate/nframes/10;
+
     fadeOutValuesCount = samplerate*fadeOutSecs;
     // Linear fadeout
     fadeOutValues = (float*)malloc(sizeof(float)*fadeOutValuesCount);
@@ -1357,9 +1388,15 @@ void KonfytJackEngine::removeAudioPort(KfJackAudioPort *port)
     pauseJackProcessing(false);
 }
 
-double KonfytJackEngine::getSampleRate()
+uint32_t KonfytJackEngine::getSampleRate()
 {
     return this->samplerate;
+}
+
+/* Returns the JACK nframes size (passed to process callback). */
+uint32_t KonfytJackEngine::getBufferSize()
+{
+    return this->nframes;
 }
 
 void KonfytJackEngine::addOtherJackConPair(KonfytJackConPair p)
