@@ -22,9 +22,9 @@
 #ifndef KONFYTBASESOUNDENGINE_H
 #define KONFYTBASESOUNDENGINE_H
 
-#include <QObject>
-
 #include "konfytJackEngine.h"
+
+#include <QObject>
 
 class KonfytBaseSoundEngine : public QObject
 {

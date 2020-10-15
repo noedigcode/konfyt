@@ -22,10 +22,10 @@
 #ifndef KONFYT_PROCESS_H
 #define KONFYT_PROCESS_H
 
+#include "konfytDefines.h"
+
 #include <QProcess>
 #include <QFileInfo>
-
-#include "konfytDefines.h"
 
 
 enum konfytProcessState {

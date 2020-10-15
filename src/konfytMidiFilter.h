@@ -22,12 +22,13 @@
 #ifndef KONFYT_MIDI_FILTER_H
 #define KONFYT_MIDI_FILTER_H
 
-#include <QList>
-#include <QXmlStreamWriter>
-#include <QXmlStreamReader>
 #include "konfytDefines.h"
 #include "konfytStructs.h"
 #include "konfytMidi.h"
+
+#include <QList>
+#include <QXmlStreamWriter>
+#include <QXmlStreamReader>
 
 #define XML_MIDIFILTER "midiFilter"
 #define XML_MIDIFILTER_ZONE "zone"

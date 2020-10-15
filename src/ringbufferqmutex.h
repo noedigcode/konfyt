@@ -22,10 +22,10 @@
 #ifndef RINGBUFFERQMUTEX_H
 #define RINGBUFFERQMUTEX_H
 
-#include <stdlib.h>
-
 #include <QList>
 #include <QMutex>
+
+#include <stdlib.h>
 
 template <class T>
 class RingbufferQMutex

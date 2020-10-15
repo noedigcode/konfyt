@@ -22,11 +22,10 @@
 #ifndef KONFYTLSCPENGINE_H
 #define KONFYTLSCPENGINE_H
 
-#include <QObject>
-
+#include "gidls.h"
 #include "konfytBaseSoundEngine.h"
 
-#include "gidls.h"
+#include <QObject>
 
 class KonfytLscpEngine : public KonfytBaseSoundEngine
 {

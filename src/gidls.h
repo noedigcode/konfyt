@@ -27,13 +27,13 @@
 #ifndef GIDLS_H
 #define GIDLS_H
 
+#include "lscp/client.h"
+#include "lscp/device.h"
+
 #include <QObject>
 #include <QMap>
 #include <QProcess>
 #include <QTimer>
-
-#include "lscp/client.h"
-#include "lscp/device.h"
 
 // =============================================================================
 struct GidLsPort

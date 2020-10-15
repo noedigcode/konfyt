@@ -20,12 +20,12 @@
  *****************************************************************************/
 
 #include <QApplication>
-#include <iostream>
 
 #include "konfytDefines.h"
 #include "konfytStructs.h"
 #include "mainwindow.h"
 
+#include <iostream>
 
 void printAppNameAndVersion()
 {
