@@ -455,6 +455,7 @@ private:
     QMenu portsBussesTreeMenu;
     QTreeWidgetItem* portsBussesTreeMenuItem; // The item that was right-clicked on
 
+    void setupConnectionsPage();
     void showConnectionsPage();
     void connectionsTreeSelectBus(int busId);
     void connectionsTreeSelectAudioInPort(int portId);
@@ -463,10 +464,10 @@ private:
     void gui_updatePortsBussesTree();
     void gui_updateConnectionsTree();
 
-    QTreeWidgetItem* busParent;
-    QTreeWidgetItem* audioInParent;
-    QTreeWidgetItem* midiOutParent;
-    QTreeWidgetItem* midiInParent;
+    QTreeWidgetItem* busParent = nullptr;
+    QTreeWidgetItem* audioInParent = nullptr;
+    QTreeWidgetItem* midiOutParent = nullptr;
+    QTreeWidgetItem* midiInParent = nullptr;
     QMap<QTreeWidgetItem*, int> tree_busMap; // Maps tree item to bus id
     QMap<QTreeWidgetItem*, int> tree_midiOutMap;
     QMap<QTreeWidgetItem*, int> tree_audioInMap;
@@ -702,6 +703,7 @@ private:
     QHash<QTreeWidgetItem*, QAction*> triggersItemActionHash;
     QHash<int, QAction*> triggersMidiActionHash; // Map midi status and data1 bytes to action for fast midi event to action lookup
     void initTriggers();
+    void setupTriggersPage();
     void showTriggersPage();
     KonfytMidiEvent triggersLastEvent;
     int lastBankSelectMSB;
@@ -722,6 +724,7 @@ private slots:
     void on_pushButton_triggersPage_assign_clicked();
     void on_pushButton_triggersPage_clear_clicked();
     void on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem *item, int column);
+    void on_listWidget_triggers_eventList_itemDoubleClicked(QListWidgetItem *item);
     void on_checkBox_Triggers_ProgSwitchPatches_clicked();
 
     // ========================================================================
@@ -861,7 +864,6 @@ private slots:
     void on_pushButton_LavaMonster_clicked();    
 
     void on_stackedWidget_currentChanged(int arg1);
-
 
 };
 

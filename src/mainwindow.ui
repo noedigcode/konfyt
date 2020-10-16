@@ -690,7 +690,7 @@ QStatusBar {
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>28</height>
+           <height>26</height>
           </size>
          </property>
          <property name="styleSheet">
@@ -1048,7 +1048,7 @@ border-bottom-left-radius: 0;</string>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>28</height>
+           <height>26</height>
           </size>
          </property>
          <property name="styleSheet">
@@ -1218,13 +1218,13 @@ border-bottom-left-radius: 0;</string>
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>28</height>
+                     <height>26</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>28</height>
+                     <height>26</height>
                     </size>
                    </property>
                    <property name="styleSheet">
@@ -1463,13 +1463,13 @@ QScrollBar:horizontal {
                    <property name="minimumSize">
                     <size>
                      <width>0</width>
-                     <height>28</height>
+                     <height>26</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>28</height>
+                     <height>26</height>
                     </size>
                    </property>
                    <property name="styleSheet">
@@ -1913,13 +1913,13 @@ border-color: rgb(40, 40, 40);
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>28</height>
+                  <height>26</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>28</height>
+                  <height>26</height>
                  </size>
                 </property>
                 <property name="styleSheet">
@@ -2116,7 +2116,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>7</number>
+         <number>4</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <property name="konfytGradient" stdset="0">
@@ -2213,13 +2213,13 @@ td
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
-                   <height>28</height>
+                   <height>26</height>
                   </size>
                  </property>
                  <property name="maximumSize">
                   <size>
                    <width>16777215</width>
-                   <height>28</height>
+                   <height>26</height>
                   </size>
                  </property>
                  <property name="styleSheet">
@@ -2605,7 +2605,7 @@ color: white;</string>
                          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Noto Sans'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Lucida Sans'; font-size:8pt;&quot;&gt;Type a note here to be associated with the current patch.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                         </property>
                        </widget>
@@ -2621,13 +2621,13 @@ p, li { white-space: pre-wrap; }
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
                           <width>16777215</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="styleSheet">
@@ -2934,13 +2934,13 @@ QGroupBox::title {
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="styleSheet">
@@ -3022,13 +3022,13 @@ border-bottom-left-radius: 0;</string>
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="styleSheet">
@@ -3110,13 +3110,13 @@ border-bottom-left-radius: 0;</string>
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="styleSheet">
@@ -3219,13 +3219,13 @@ border-bottom-left-radius: 0;</string>
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="styleSheet">
@@ -3307,13 +3307,13 @@ border-bottom-left-radius: 0;</string>
                      <property name="minimumSize">
                       <size>
                        <width>0</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="styleSheet">
@@ -3590,7 +3590,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                </property>
                <property name="maximumSize">
                 <size>
-                 <width>427</width>
+                 <width>402</width>
                  <height>1000</height>
                 </size>
                </property>
@@ -3704,7 +3704,7 @@ QSpinBox {
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>385</width>
+                        <width>374</width>
                         <height>398</height>
                        </rect>
                       </property>
@@ -3723,13 +3723,13 @@ QSpinBox {
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -3815,13 +3815,13 @@ border-bottom-left-radius: 0;</string>
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -3900,13 +3900,13 @@ border-bottom-left-radius: 0;</string>
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -3988,13 +3988,13 @@ border-bottom-left-radius: 0;</string>
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -4097,13 +4097,13 @@ border-bottom-left-radius: 0;</string>
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -4282,13 +4282,13 @@ border-bottom-left-radius: 0;</string>
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -4431,13 +4431,13 @@ border-bottom-left-radius: 0;</string>
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -4516,13 +4516,13 @@ border-bottom-left-radius: 0;</string>
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -4619,13 +4619,13 @@ border-bottom-left-radius: 0;</string>
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -4835,13 +4835,13 @@ border-bottom-left-radius: 0;</string>
                     <property name="minimumSize">
                      <size>
                       <width>0</width>
-                      <height>28</height>
+                      <height>26</height>
                      </size>
                     </property>
                     <property name="maximumSize">
                      <size>
                       <width>16777215</width>
-                      <height>28</height>
+                      <height>26</height>
                      </size>
                     </property>
                     <property name="styleSheet">
@@ -4882,7 +4882,7 @@ border-bottom-left-radius: 0;</string>
                        </property>
                        <property name="minimumSize">
                         <size>
-                         <width>78</width>
+                         <width>74</width>
                          <height>0</height>
                         </size>
                        </property>
@@ -4909,7 +4909,7 @@ border-bottom-right-radius: 0;
                        </property>
                        <property name="minimumSize">
                         <size>
-                         <width>78</width>
+                         <width>74</width>
                          <height>0</height>
                         </size>
                        </property>
@@ -5165,6 +5165,9 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                  <property name="headerHidden">
                   <bool>false</bool>
                  </property>
+                 <attribute name="headerMinimumSectionSize">
+                  <number>30</number>
+                 </attribute>
                  <column>
                   <property name="text">
                    <string notr="true">Client/Port</string>
@@ -5224,7 +5227,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                       </property>
                       <property name="minimumSize">
                        <size>
-                        <width>78</width>
+                        <width>74</width>
                         <height>0</height>
                        </size>
                       </property>
@@ -5387,7 +5390,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>28</height>
+                       <height>26</height>
                       </size>
                      </property>
                      <property name="styleSheet">
@@ -5651,7 +5654,7 @@ QScrollBar:horizontal {
                     </property>
                     <property name="minimumSize">
                      <size>
-                      <width>78</width>
+                      <width>74</width>
                       <height>0</height>
                      </size>
                     </property>
@@ -5793,7 +5796,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                     </property>
                     <property name="minimumSize">
                      <size>
-                      <width>78</width>
+                      <width>74</width>
                       <height>0</height>
                      </size>
                     </property>
@@ -5835,7 +5838,7 @@ border-bottom-right-radius: 0;
                     </property>
                     <property name="minimumSize">
                      <size>
-                      <width>78</width>
+                      <width>74</width>
                       <height>0</height>
                      </size>
                     </property>
@@ -5931,7 +5934,7 @@ border-top-left-radius: 0;
                     </property>
                     <property name="minimumSize">
                      <size>
-                      <width>78</width>
+                      <width>74</width>
                       <height>0</height>
                      </size>
                     </property>
@@ -5977,7 +5980,7 @@ border-top-left-radius: 0;
                  <property name="minimumSize">
                   <size>
                    <width>0</width>
-                   <height>28</height>
+                   <height>26</height>
                   </size>
                  </property>
                  <property name="styleSheet">
@@ -6170,13 +6173,13 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
                           <width>16777215</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="styleSheet">
@@ -6265,13 +6268,13 @@ border-bottom-right-radius: 0;</string>
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
                           <width>16777215</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="styleSheet">
@@ -6313,7 +6316,7 @@ border-bottom-right-radius: 0;</string>
                            </property>
                            <property name="minimumSize">
                             <size>
-                             <width>78</width>
+                             <width>74</width>
                              <height>0</height>
                             </size>
                            </property>
@@ -6409,13 +6412,13 @@ QSpinBox {
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>28</height>
+                             <height>26</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -6480,13 +6483,13 @@ QSpinBox {
                              <property name="minimumSize">
                               <size>
                                <width>0</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="maximumSize">
                               <size>
                                <width>16777215</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="styleSheet">
@@ -6582,13 +6585,13 @@ QSpinBox {
                              <property name="minimumSize">
                               <size>
                                <width>0</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="maximumSize">
                               <size>
                                <width>16777215</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="styleSheet">
@@ -6681,13 +6684,13 @@ QSpinBox {
                              <property name="minimumSize">
                               <size>
                                <width>0</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="maximumSize">
                               <size>
                                <width>16777215</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="styleSheet">
@@ -6755,13 +6758,13 @@ QSpinBox {
                              <property name="minimumSize">
                               <size>
                                <width>0</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="maximumSize">
                               <size>
                                <width>16777215</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="styleSheet">
@@ -6877,13 +6880,13 @@ QSpinBox {
                              <property name="minimumSize">
                               <size>
                                <width>0</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="maximumSize">
                               <size>
                                <width>16777215</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="styleSheet">
@@ -6954,13 +6957,13 @@ QSpinBox {
                              <property name="minimumSize">
                               <size>
                                <width>0</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="maximumSize">
                               <size>
                                <width>16777215</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="styleSheet">
@@ -7035,13 +7038,13 @@ QSpinBox {
                              <property name="minimumSize">
                               <size>
                                <width>0</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="maximumSize">
                               <size>
                                <width>16777215</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="styleSheet">
@@ -7128,13 +7131,13 @@ QSpinBox {
                              <property name="minimumSize">
                               <size>
                                <width>0</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="maximumSize">
                               <size>
                                <width>16777215</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="styleSheet">
@@ -7302,13 +7305,13 @@ border-bottom-left-radius: 0;</string>
                              <property name="minimumSize">
                               <size>
                                <width>0</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="maximumSize">
                               <size>
                                <width>16777215</width>
-                               <height>28</height>
+                               <height>26</height>
                               </size>
                              </property>
                              <property name="styleSheet">
@@ -7401,13 +7404,13 @@ border-bottom-left-radius: 0;</string>
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
                           <width>16777215</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="styleSheet">
@@ -7532,13 +7535,13 @@ border-bottom-left-radius: 0;</string>
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
                           <width>16777215</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="styleSheet">
@@ -7693,7 +7696,7 @@ border-bottom-right-radius: 0;</string>
                            </property>
                            <property name="minimumSize">
                             <size>
-                             <width>78</width>
+                             <width>74</width>
                              <height>0</height>
                             </size>
                            </property>
@@ -7764,13 +7767,13 @@ border-bottom-left-radius: 0;</string>
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
                           <width>16777215</width>
-                          <height>28</height>
+                          <height>26</height>
                          </size>
                         </property>
                         <property name="styleSheet">
@@ -7811,7 +7814,7 @@ border-bottom-left-radius: 0;</string>
                            </property>
                            <property name="minimumSize">
                             <size>
-                             <width>78</width>
+                             <width>74</width>
                              <height>0</height>
                             </size>
                            </property>
@@ -7838,7 +7841,7 @@ border-bottom-right-radius: 0;
                            </property>
                            <property name="minimumSize">
                             <size>
-                             <width>78</width>
+                             <width>74</width>
                              <height>0</height>
                             </size>
                            </property>
@@ -8250,13 +8253,13 @@ border-top-right-radius: 0;
               <property name="minimumSize">
                <size>
                 <width>0</width>
-                <height>28</height>
+                <height>26</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>28</height>
+                <height>26</height>
                </size>
               </property>
               <property name="styleSheet">
@@ -8597,13 +8600,13 @@ QSlider::handle:horizontal:hover {
               <property name="minimumSize">
                <size>
                 <width>0</width>
-                <height>28</height>
+                <height>26</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>28</height>
+                <height>26</height>
                </size>
               </property>
               <property name="styleSheet">
@@ -8701,13 +8704,13 @@ border-bottom-left-radius: 0;</string>
               <property name="minimumSize">
                <size>
                 <width>0</width>
-                <height>28</height>
+                <height>26</height>
                </size>
               </property>
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>28</height>
+                <height>26</height>
                </size>
               </property>
               <property name="styleSheet">
@@ -8847,13 +8850,13 @@ border-bottom-right-radius: 0;</string>
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>28</height>
+                  <height>26</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>28</height>
+                  <height>26</height>
                  </size>
                 </property>
                 <property name="styleSheet">
@@ -8952,13 +8955,13 @@ border-bottom-right-radius: 0;</string>
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>28</height>
+                  <height>26</height>
                  </size>
                 </property>
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
-                  <height>28</height>
+                  <height>26</height>
                  </size>
                 </property>
                 <property name="styleSheet">

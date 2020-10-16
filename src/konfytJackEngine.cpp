@@ -48,7 +48,7 @@ void KonfytJackEngine::timerEvent(QTimerEvent* /*event*/)
         connectCallback = false;
         registerCallback = false;
         refreshAllPortsConnections();
-        jackPortRegisteredOrConnected();
+        emit jackPortRegisteredOrConnected();
     }
 
     // Received MIDI events
@@ -1053,7 +1053,6 @@ void KonfytJackEngine::setFluidsynthEngine(KonfytFluidsynthEngine *e)
 {
     fluidsynthEngine = e;
 }
-
 
 int KonfytJackEngine::jackXrunCallback(void *arg)
 {   

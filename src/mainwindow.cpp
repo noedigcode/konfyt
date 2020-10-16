@@ -434,15 +434,8 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     // Console
     console_showMidiMessages = false;
 
-    // Connections page
-    busParent = NULL; // Helps later on when deleting items.
-    audioInParent = NULL;
-    midiOutParent = NULL;
-
-    // Set up portsBuses tree context menu
-    ui->tree_portsBusses->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->tree_portsBusses, &QTreeWidget::customContextMenuRequested,
-            this, &MainWindow::tree_portsBusses_Menu);
+    setupConnectionsPage();
+    setupTriggersPage();
 
     // Resize some layouts
     QList<int> sizes;
@@ -862,20 +855,28 @@ void MainWindow::gui_updatePatchList()
     }
 
     setCurrentPatchIcon();
+}
 
+void MainWindow::setupConnectionsPage()
+{
+    // Connections tree widget column widths
+    ui->tree_Connections->header()->setSectionResizeMode(QHeaderView::Stretch);
+    ui->tree_Connections->header()->setStretchLastSection(false);
+    ui->tree_Connections->header()->setSectionResizeMode(TREECON_COL_L, QHeaderView::Fixed);
+    ui->tree_Connections->header()->resizeSection(TREECON_COL_L, 30);
+    ui->tree_Connections->header()->setSectionResizeMode(TREECON_COL_R, QHeaderView::Fixed);
+    ui->tree_Connections->header()->resizeSection(TREECON_COL_R, 30);
 
+    // Set up portsBuses tree context menu
+    ui->tree_portsBusses->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->tree_portsBusses, &QTreeWidget::customContextMenuRequested,
+            this, &MainWindow::tree_portsBusses_Menu);
 }
 
 void MainWindow::showConnectionsPage()
 {
     ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
     ui->frame_connectionsPage_MidiFilter->setVisible(false);
-
-    // Adjust column widths
-    int RLwidth = 30;
-    ui->tree_Connections->setColumnWidth(TREECON_COL_PORT,ui->tree_Connections->width() - RLwidth*2);
-    ui->tree_Connections->setColumnWidth(TREECON_COL_L,RLwidth);
-    ui->tree_Connections->setColumnWidth(TREECON_COL_R,RLwidth);
 
     gui_updatePortsBussesTree();
     gui_updateConnectionsTree();
@@ -1419,12 +1420,15 @@ void MainWindow::initTriggers()
     }
 }
 
+void MainWindow::setupTriggersPage()
+{
+    // Tree widget column widths
+    ui->tree_Triggers->header()->setSectionResizeMode(QHeaderView::Stretch);
+}
+
 void MainWindow::showTriggersPage()
 {
     ui->stackedWidget->setCurrentWidget(ui->triggersPage);
-
-    ui->tree_Triggers->setColumnWidth(0, ui->tree_Triggers->width()/2);
-    ui->tree_Triggers->setColumnWidth(1, ui->tree_Triggers->width()/2 - 16); // -16 is quick and dirty fix to accomodate scroll bar
 
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
@@ -5838,6 +5842,11 @@ void MainWindow::on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem* /*item*/, i
     on_pushButton_triggersPage_assign_clicked();
 }
 
+void MainWindow::on_listWidget_triggers_eventList_itemDoubleClicked(QListWidgetItem* /*item*/)
+{
+    on_pushButton_triggersPage_assign_clicked();
+}
+
 void MainWindow::on_checkBox_Triggers_ProgSwitchPatches_clicked()
 {
     KonfytProject* prj = getCurrentProject();
@@ -6237,6 +6246,8 @@ void MainWindow::toggleShowPatchListNotes()
     prj->setShowPatchListNotes( !prj->getShowPatchListNotes() );
     gui_updatePatchList();
 }
+
+
 
 void MainWindow::on_pushButton_JackAudioPorts_clicked()
 {
@@ -6758,6 +6769,8 @@ void MainWindow::on_toolButton_LibraryPreview_clicked()
 {
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
+
+
 
 
 
