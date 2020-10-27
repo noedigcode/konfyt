@@ -345,14 +345,19 @@ void KonfytJackEngine::setPluginRouting(KfJackPluginPorts *p, KfJackMidiPort *mi
 
 KfJackMidiRoute *KonfytJackEngine::getPluginMidiRoute(KfJackPluginPorts *p)
 {
-    // TODO CHECK EXISTENCE OF *p
-    return p->midiRoute;
+    KfJackMidiRoute* ret = nullptr;
+    if (p) { ret = p->midiRoute; }
+    return ret;
 }
 
 QList<KfJackAudioRoute *> KonfytJackEngine::getPluginAudioRoutes(KfJackPluginPorts *p)
 {
-    // TODO CHECK EXISTENCE OF *p
-    return QList<KfJackAudioRoute*>({p->audioLeftRoute, p->audioRightRoute});
+    QList<KfJackAudioRoute*> ret;
+    if (p) {
+        ret.append(p->audioLeftRoute);
+        ret.append(p->audioRightRoute);
+    }
+    return ret;
 }
 
 void KonfytJackEngine::removeAllAudioInAndOutPorts()
