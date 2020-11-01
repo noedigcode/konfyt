@@ -1661,12 +1661,14 @@ void MainWindow::updateAudioInPortsMenu(QMenu *menu)
 }
 
 /* Create a new patch, and add it to the current project. (and update the GUI). */
-void MainWindow::newPatchToProject()
+KonfytPatch *MainWindow::newPatchToProject()
 {
-    KonfytPatch* pt = new KonfytPatch();
-    pt->setName("New Patch");
+    KonfytPatch* patch = new KonfytPatch();
+    patch->setName("New Patch");
 
-    addPatchToProject(pt);
+    addPatchToProject(patch);
+
+    return patch;
 }
 
 /* Remove the patch with specified index from the project. */
@@ -1945,18 +1947,11 @@ void MainWindow::gui_updateWindowTitle()
     if (previewMode) {
         this->setWindowTitle("Preview - " + QString(APP_NAME));
     } else {
-        if (mCurrentPatchIndex < 0) {
-            // No patch is selected
-            this->setWindowTitle(APP_NAME);
-
-        } else if (mCurrentPatchIndex >= ui->listWidget_Patches->count()) {
-            // Invalid
-            userMessage("gui_updateWindowTitle error: out of bounds");
-            this->setWindowTitle(APP_NAME);
-
+        KonfytPatch* currentPatch = pengine->currentPatch();
+        if (currentPatch) {
+            setWindowTitle(QString("%1 - %2").arg(currentPatch->name()).arg(APP_NAME));
         } else {
-            this->setWindowTitle( ui->listWidget_Patches->item(mCurrentPatchIndex)->text()
-                                 + " - " + APP_NAME );
+            setWindowTitle(APP_NAME);
         }
     }
 }
@@ -4205,7 +4200,7 @@ void MainWindow::on_actionSave_Patch_As_Copy_triggered()
     *newPatch = *p;
     addPatchToProject(newPatch);
 
-    setCurrentPatchByIndex(ui->listWidget_Patches->count()-1);
+    setCurrentPatch(newPatch);
 
     ui->lineEdit_PatchName->setFocus();
     ui->lineEdit_PatchName->selectAll();
@@ -4249,11 +4244,10 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
 /* Action to add new patch to project. */
 void MainWindow::on_actionNew_Patch_triggered()
 {
-    newPatchToProject();
-    setCurrentPatchByIndex( ui->listWidget_Patches->count()-1 );
+    KonfytPatch* patch = newPatchToProject();
+    setCurrentPatch(patch);
     ui->lineEdit_PatchName->setFocus();
     ui->lineEdit_PatchName->selectAll();
-
 }
 
 /* Action to add patch from the library (currently selected) to the project. */
@@ -4585,14 +4579,6 @@ void MainWindow::on_toolButton_layer_AddMidiPort_clicked()
     // Button is configured to popup a menu upon click.
     // See patchMidiOutPortsMenu and on_patchMidiOutPortsMenu_ActionTrigger().
 }
-
-
-
-void MainWindow::on_listWidget_Patches_itemClicked(QListWidgetItem *item)
-{
-    setCurrentPatchByIndex( ui->listWidget_Patches->row(item) );
-}
-
 
 /* Library soundfont program list: item double clicked. */
 void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem* /*item*/)

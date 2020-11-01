@@ -175,7 +175,7 @@ private:
     bool saveCurrentProject();
     bool saveProject(KonfytProject *p);
 
-    void newPatchToProject();
+    KonfytPatch* newPatchToProject();
     void removePatchFromProject(int i);
     void addPatchToProject(KonfytPatch *newPatch);
     bool savePatchToLibrary(KonfytPatch* patch);
@@ -436,7 +436,6 @@ private slots:
     void on_toolButton_PatchUp_clicked();
     void on_toolButton_PatchDown_clicked();
     void on_toolButton_AddPatch_clicked();
-    void on_listWidget_Patches_itemClicked(QListWidgetItem *item);
     void on_pushButton_LoadAll_clicked();
     void on_toolButton_PatchListMenu_clicked();
     void toggleShowPatchListNumbers();
