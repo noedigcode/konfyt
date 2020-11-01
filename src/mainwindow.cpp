@@ -4197,7 +4197,8 @@ void MainWindow::on_actionSave_Patch_As_Copy_triggered()
 {
     KonfytPatch* p = pengine->currentPatch();
     KonfytPatch* newPatch = new KonfytPatch();
-    *newPatch = *p;
+    newPatch->fromByteArray(p->toByteArray());
+
     addPatchToProject(newPatch);
 
     setCurrentPatch(newPatch);

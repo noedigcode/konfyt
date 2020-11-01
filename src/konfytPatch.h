@@ -139,6 +139,9 @@ public:
     bool savePatchToFile(QString filename) const;
     bool loadPatchFromFile(QString filename, QString* errors = nullptr);
 
+    QByteArray toByteArray();
+    void fromByteArray(QByteArray data);
+
 private:
     QString patchName;
     QString patchNote;  // Custom note for user instructions or to describe the patch
@@ -147,6 +150,9 @@ private:
     QList<KfPatchLayerSharedPtr> layerList;
 
     QList<KfPatchLayerWeakPtr> layersOfType(KonfytPatchLayer::LayerType layerType) const;
+
+    void writeToXmlStream(QXmlStreamWriter* stream) const;
+    void readFromXmlStream(QXmlStreamReader* r, QString* errors = nullptr);
 
     void appendError(QString *errorString, QString msg);
     void error_abort(QString msg);
