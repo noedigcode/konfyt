@@ -38,7 +38,8 @@ SOURCES += src/main.cpp\
     src/konfytBridgeEngine.cpp \
     src/konfytBaseSoundEngine.cpp \
     src/konfytLscpEngine.cpp \
-    src/gidls.cpp
+    src/gidls.cpp \
+    src/patchListWidgetAdapter.cpp
 
 HEADERS  += src/mainwindow.h \
     src/consoledialog.h \
@@ -64,6 +65,7 @@ HEADERS  += src/mainwindow.h \
     src/konfytBaseSoundEngine.h \
     src/konfytLscpEngine.h \
     src/gidls.h \
+    src/patchListWidgetAdapter.h \
     src/ringbufferqmutex.h
 
 FORMS    += src/mainwindow.ui \

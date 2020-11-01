@@ -35,6 +35,8 @@
 #define STRING_PROJECT_DIR "$PROJ_DIR$"
 #define KONFYT_PATCH_SUFFIX "konfytpatch"
 
+#define KONFYT_ASSERT_RETURN(cond) Q_ASSERT(cond); if (!cond) { return; }
+
 QString sanitiseFilename(QString path);
 QString getCompileVersionText();
 

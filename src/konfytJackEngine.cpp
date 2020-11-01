@@ -673,7 +673,7 @@ bool KonfytJackEngine::sendMidiEventsOnRoute(KfJackMidiRoute *route, QList<Konfy
  * a client. */
 bool KonfytJackEngine::clientIsActive()
 {
-    return this->clientActive;
+    return this->mClientActive;
 }
 
 QString KonfytJackEngine::clientName()
@@ -1196,12 +1196,12 @@ bool KonfytJackEngine::initJackClient(QString name)
     // Try to become a client of the jack server
     if ( (mJackClient = jack_client_open(name.toLocal8Bit(), JackNullOption, NULL)) == NULL) {
         userMessage("JACK: Error becoming client.");
-        this->clientActive = false;
+        this->mClientActive = false;
         return false;
     } else {
         ourJackClientName = jack_get_client_name(mJackClient); // jack_client_open modifies the given name if another client already uses it.
         userMessage("JACK: Client created: " + ourJackClientName);
-        this->clientActive = true;
+        this->mClientActive = true;
     }
 
 
@@ -1217,11 +1217,11 @@ bool KonfytJackEngine::initJackClient(QString name)
     if (jack_activate(mJackClient)) {
         userMessage("JACK: Cannot activate client.");
         jack_free(mJackClient);
-        this->clientActive = false;
+        this->mClientActive = false;
         return false;
     } else {
         userMessage("JACK: Activated client.");
-        this->clientActive = true;
+        this->mClientActive = true;
     }
 
     // Get sample rate
@@ -1247,8 +1247,11 @@ bool KonfytJackEngine::initJackClient(QString name)
 void KonfytJackEngine::stopJackClient()
 {
     if (clientIsActive()) {
+        pauseJackProcessing(true);
         jack_client_close(mJackClient);
-        this->clientActive = false;
+        pauseJackProcessing(false);
+        mJackClient = nullptr;
+        mClientActive = false;
     }
 }
 

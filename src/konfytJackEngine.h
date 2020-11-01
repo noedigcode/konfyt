@@ -154,7 +154,7 @@ signals:
 private:
     jack_client_t* mJackClient;
     jack_nframes_t nframes; // TODO THIS MIGHT CHANGE, REGISTER BUFSIZE CALLBACK TO UPDATE
-    bool clientActive = false;      // Flag to indicate if the client has been successfully activated
+    bool mClientActive = false;      // Flag to indicate if the client has been successfully activated
     uint32_t samplerate;
     RingbufferQMutex<KfJackMidiRxEvent> midiRxBuffer{1000};
     QList<KfJackMidiRxEvent> extractedMidiRx;

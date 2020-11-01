@@ -152,9 +152,9 @@ public:
 
     void addPatch(KonfytPatch* newPatch);
     KonfytPatch* removePatch(int i);
-    void movePatchUp(int i);
-    void movePatchDown(int i);
+    void movePatch(int indexFrom, int indexTo);
     KonfytPatch* getPatch(int i);
+    int getPatchIndex(KonfytPatch* patch);
     QList<KonfytPatch*> getPatchList();
     int getNumPatches();
 

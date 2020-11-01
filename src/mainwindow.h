@@ -35,6 +35,7 @@
 #include "konfytPatchLayer.h"
 #include "konfytProcess.h"
 #include "konfytProject.h"
+#include "patchListWidgetAdapter.h"
 
 #include <QAction>
 #include <QCheckBox>
@@ -113,10 +114,6 @@ enum MidiFilterEditType {
     MidiFilterEditPort,
     MidiFilterEditLayer
 };
-
-
-
-
 
 
 
@@ -330,12 +327,9 @@ private:
     void setMasterGain(float gain);
 
     // Current patch functions
-    int currentPatchIndex = -1;
-    void setCurrentPatch(int index);
-    void setCurrentPatch(KonfytPatch *newPatch);
-    void setPatchIcon(const KonfytPatch* patch, QListWidgetItem* item, bool current);
-    void setCurrentPatchIcon();
-    void unsetCurrentPatchIcon();
+    int mCurrentPatchIndex = -1;
+    void setCurrentPatch(KonfytPatch *patch);
+    void setCurrentPatchByIndex(int index);
 
     void newPatchIfMasterNull();
     void addSfzToCurrentPatch(QString sfzPath);
@@ -350,8 +344,11 @@ private:
     void setPreviewMode(bool choice);   // Set preview mode on or off and updates GUI.
     void gui_updatePatchView();
     void gui_updateWindowTitle();
-    void gui_updatePatchList();
+    PatchListWidgetAdapter patchListAdapter;
+    void setupPatchListAdapter();
     bool patchNote_ignoreChange;
+private slots:
+    void onPatchSelected(KonfytPatch* patch);
 
     // Layers
 private:

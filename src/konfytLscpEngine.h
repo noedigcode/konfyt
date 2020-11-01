@@ -33,15 +33,15 @@ public:
     KonfytLscpEngine(QObject *parent = 0);
     ~KonfytLscpEngine();
 
-    QString engineName();
-    void initEngine(KonfytJackEngine *jackEngine);
-    QString jackClientName();
-    int addSfz(QString path);
-    QString pluginName(int id);
-    QString midiInJackPortName(int id);
-    QStringList audioOutJackPortNames(int id);
-    void removeSfz(int id);
-    void setGain(int id, float newGain);
+    QString engineName() override;
+    void initEngine(KonfytJackEngine *jackEngine) override;
+    QString jackClientName() override;
+    int addSfz(QString path) override;
+    QString pluginName(int id) override;
+    QString midiInJackPortName(int id) override;
+    QStringList audioOutJackPortNames(int id) override;
+    void removeSfz(int id) override;
+    void setGain(int id, float newGain) override;
 
 private:
     GidLs ls;

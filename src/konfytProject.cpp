@@ -632,20 +632,13 @@ KonfytPatch *KonfytProject::removePatch(int i)
     }
 }
 
-void KonfytProject::movePatchUp(int i)
+void KonfytProject::movePatch(int indexFrom, int indexTo)
 {
-    if ( (i>=1) && (i<patchList.count())) {
-        patchList.move(i,i-1);
-        setModified(true);
-    }
-}
+    KONFYT_ASSERT_RETURN( (indexFrom >= 0) && (indexFrom < patchList.count()) );
+    KONFYT_ASSERT_RETURN( (indexTo >= 0) && (indexTo < patchList.count()) );
 
-void KonfytProject::movePatchDown(int i)
-{
-    if ( (i>=0) && (i<patchList.count()-1) ) {
-        patchList.move(i, i+1);
-        setModified(true);
-    }
+    patchList.move(indexFrom, indexTo);
+    setModified(true);
 }
 
 KonfytPatch *KonfytProject::getPatch(int i)
@@ -653,8 +646,14 @@ KonfytPatch *KonfytProject::getPatch(int i)
     if ( (i>=0) && (i<patchList.count())) {
         return patchList.at(i);
     } else {
-        return NULL;
+        return nullptr;
     }
+}
+
+/* Returns the index of the specified patch and -1 if invalid. */
+int KonfytProject::getPatchIndex(KonfytPatch *patch)
+{
+    return patchList.indexOf(patch);
 }
 
 QList<KonfytPatch *> KonfytProject::getPatchList()

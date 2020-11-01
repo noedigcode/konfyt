@@ -211,6 +211,8 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     refreshFilesystemView();
     ui->tabWidget_library->setCurrentWidget(ui->tab_library);
 
+    setupPatchListAdapter();
+
     // ----------------------------------------------------
     // Initialise soundfont database
     // ----------------------------------------------------
@@ -284,7 +286,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
                 QString errors;
                 if (pt->loadPatchFromFile(file, &errors)) {
                     addPatchToProject(pt);
-                    setCurrentPatch(-1);
+                    setCurrentPatchByIndex(-1);
                 } else {
                     userMessage("Failed loading patch " + file);
                     delete pt;
@@ -300,7 +302,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
             } else if (fileIsSfzOrGig(file)) {
                 // Create new patch and load sfz into patch
                 newPatchToProject();    // Create a new patch and add to current project.
-                setCurrentPatch(-1);
+                setCurrentPatchByIndex(-1);
 
                 addSfzToCurrentPatch(file);
                 // Rename patch
@@ -315,7 +317,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
             } else if (fileIsSoundfont(file)) {
                 // Create new blank patch
                 newPatchToProject();    // Create a new patch and add to current project.
-                setCurrentPatch(-1);
+                setCurrentPatchByIndex(-1);
                 // Locate soundfont in filebrowser, select it and show its programs
 
                 // Locate in filesystem view
@@ -353,7 +355,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
         newProject();           // Create new project and add to list and GUI
         setCurrentProject(0);   // Set current project to newly created project.
         newPatchToProject();    // Create a new patch and add to current project.
-        setCurrentPatch(0);
+        setCurrentPatchByIndex(0);
         startupProject = true;
         KonfytProject *prj = getCurrentProject();
         prj->setModified(false);
@@ -816,45 +818,6 @@ void MainWindow::addProject(KonfytProject* prj)
     ui->tabWidget_Projects->blockSignals(true);
     ui->tabWidget_Projects->addTab(lbl,prj->getProjectName());
     ui->tabWidget_Projects->blockSignals(false);
-}
-
-/* Update the patch list according to the current project. */
-void MainWindow::gui_updatePatchList()
-{
-    ui->listWidget_Patches->clear();
-
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) {
-        userMessage("gui_updatePatchList(): Current project is NULL");
-        return;
-    }
-
-    // Populate patch list for current project
-    QList<KonfytPatch*> pl = prj->getPatchList();
-    QString notenames = "CDEFGAB";
-    for (int j=0; j<pl.count(); j++) {
-        KonfytPatch* pat = pl.at(j);
-
-        // Add number and/or note name to patch name based on project settings.
-        QString txt;
-        if (prj->getShowPatchListNumbers()) { txt.append(n2s(j+1) + " "); }
-        if (prj->getShowPatchListNotes()) { txt.append(QString(notenames.at(j%7)) + " "); }
-        txt.append(pat->name());
-        QListWidgetItem* item = new QListWidgetItem(txt);
-        // If patch has been loaded, mark it white. Else, gray.
-        if (pengine->isPatchLoaded(pat)) {
-            item->setForeground(QBrush(Qt::white));
-        } else {
-            item->setForeground(QBrush(Qt::gray));
-        }
-
-        setPatchIcon(pat, item, false);
-
-
-        ui->listWidget_Patches->addItem(item);
-    }
-
-    setCurrentPatchIcon();
 }
 
 void MainWindow::setupConnectionsPage()
@@ -1478,7 +1441,8 @@ void MainWindow::setCurrentProject(int i)
 
     gui_updateProjectName();
     // Populate patch list for current project
-    gui_updatePatchList();
+    patchListAdapter.clear();
+    patchListAdapter.addPatches(prj->getPatchList());
 
     jack->pauseJackProcessing(true);
 
@@ -1709,7 +1673,7 @@ void MainWindow::newPatchToProject()
 void MainWindow::removePatchFromProject(int i)
 {
     KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    if (prj == nullptr) { return; }
 
     if ( (i>=0) && (i<prj->getNumPatches()) ) {
 
@@ -1720,10 +1684,10 @@ void MainWindow::removePatchFromProject(int i)
         pengine->unloadPatch(patch);
 
         // Remove from GUI
-        delete ui->listWidget_Patches->item(i);
-        gui_updatePatchList();
+        patchListAdapter.removePatch(patch);
+
         if (masterPatch == patch) {
-            masterPatch = NULL;
+            masterPatch = nullptr;
             gui_updatePatchView();
         }
         userMessage("Patch Removed.");
@@ -1737,14 +1701,14 @@ void MainWindow::removePatchFromProject(int i)
 void MainWindow::addPatchToProject(KonfytPatch* newPatch)
 {
     KonfytProject *prj = getCurrentProject();
-    if (prj == NULL) {
+    if (prj == nullptr) {
         userMessage("Select a project.");
         return;
     }
 
     prj->addPatch(newPatch);
-    // Add to list in gui:
-    gui_updatePatchList();
+    // Add to list in gui
+    patchListAdapter.addPatch(newPatch);
 }
 
 KonfytProject* MainWindow::getCurrentProject()
@@ -1915,23 +1879,28 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
         updatePreviewPatchLayer();
 
     } else {
+        // Normal mode (not preview mode)
 
-        if (masterPatch != NULL) {
+        if (masterPatch != nullptr) {
             pengine->loadPatch(this->masterPatch);
-
             setMasterGain(masterGain);
         }
+
+        patchListAdapter.setCurrentPatch(this->masterPatch);
+        patchListAdapter.setPatchLoaded(this->masterPatch, true);
 
     }
 
     gui_updatePatchView();
 
-    // Update master slider
-    ui->horizontalSlider_MasterGain->setValue(pengine->getMasterGain()*ui->horizontalSlider_MasterGain->maximum());
+    // Update master slider (as this is different for normal/preview mode)
+    ui->horizontalSlider_MasterGain->setValue(
+                pengine->getMasterGain()*ui->horizontalSlider_MasterGain->maximum());
 
     // Indicate to the user that the patch is not modified.
     setPatchModified(false);
 
+    gui_updateWindowTitle();
 }
 
 void MainWindow::gui_updatePatchView()
@@ -1940,7 +1909,7 @@ void MainWindow::gui_updatePatchView()
 
     // Only for master patch, not preview mode patch
     KonfytPatch* p = masterPatch;
-    if (p == NULL) {
+    if (p == nullptr) {
         // No patch active
         ui->lineEdit_PatchName->setText("");
         ui->lineEdit_PatchName->setEnabled(false);
@@ -1976,20 +1945,38 @@ void MainWindow::gui_updateWindowTitle()
     if (previewMode) {
         this->setWindowTitle("Preview - " + QString(APP_NAME));
     } else {
-        if (currentPatchIndex < 0) {
+        if (mCurrentPatchIndex < 0) {
             // No patch is selected
             this->setWindowTitle(APP_NAME);
 
-        } else if (currentPatchIndex >= ui->listWidget_Patches->count()) {
+        } else if (mCurrentPatchIndex >= ui->listWidget_Patches->count()) {
             // Invalid
             userMessage("gui_updateWindowTitle error: out of bounds");
             this->setWindowTitle(APP_NAME);
 
         } else {
-            this->setWindowTitle( ui->listWidget_Patches->item(currentPatchIndex)->text()
+            this->setWindowTitle( ui->listWidget_Patches->item(mCurrentPatchIndex)->text()
                                  + " - " + APP_NAME );
         }
     }
+}
+
+void MainWindow::setupPatchListAdapter()
+{
+    patchListAdapter.init(ui->listWidget_Patches);
+    connect(&patchListAdapter, &PatchListWidgetAdapter::patchSelected,
+            this, &MainWindow::onPatchSelected);
+    connect(&patchListAdapter, &PatchListWidgetAdapter::patchMoved,
+            [=](int indexFrom, int indexTo) {
+        KonfytProject* prj = getCurrentProject();
+        if (!prj) { return; }
+        prj->movePatch(indexFrom, indexTo);
+    });
+}
+
+void MainWindow::onPatchSelected(KonfytPatch *patch)
+{
+    setCurrentPatch(patch);
 }
 
 /* Fill the tree widget with all the entries in the soundfont database. */
@@ -2349,37 +2336,30 @@ void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*
     item->setExpanded(!item->isExpanded());
 }
 
-
 /* Set the current patch, and update the gui accordingly. */
-void MainWindow::setCurrentPatch(KonfytPatch* newPatch)
+void MainWindow::setCurrentPatch(KonfytPatch* patch)
 {
-    this->masterPatch = newPatch;
+    KonfytProject* prj = getCurrentProject();
+    if (prj == nullptr) { return; }
+
+    this->masterPatch = patch;
+    mCurrentPatchIndex = prj->getPatchIndex(patch);
+
     loadPatchForModeAndUpdateGUI();
-    // Send MIDI events associated with patch layers
-    pengine->sendCurrentPatchMidi();
 
-}
-
-void MainWindow::setPatchIcon(const KonfytPatch *patch, QListWidgetItem *item, bool current)
-{
-    if (current) {
-        item->setIcon(QIcon(":/icons/play.png"));
-    } else {
-        if (patch->alwaysActive) {
-            item->setIcon(QIcon(":/icons/alwaysactive.png"));
-        } else {
-            item->setIcon(QIcon(":/icons/empty.png"));
-        }
+    if (patch) {
+        // Send MIDI events associated with patch layers
+        pengine->sendCurrentPatchMidi();
     }
 }
 
 /* Set the current patch corresponding to the specified index. If index is -1,
  * the last patch is selected. If index is out of bounds, the first patch is
  * selected. */
-void MainWindow::setCurrentPatch(int index)
+void MainWindow::setCurrentPatchByIndex(int index)
 {
     KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    if (prj == nullptr) { return; }
 
     // If index is -1, select the last patch
     if (index == -1) {
@@ -2391,42 +2371,7 @@ void MainWindow::setCurrentPatch(int index)
         index = 0;
     }
 
-    // Remove icon of current item in list
-    unsetCurrentPatchIcon();
-
-    // Set current patch. This will update gui also.
-    if ( (index >= 0) && (index < prj->getNumPatches()) ) {
-        currentPatchIndex = index;
-        setCurrentPatch( prj->getPatch(index) );
-
-        // Indicate in the gui patch list that the patch has been loaded.
-        setCurrentPatchIcon();
-        QListWidgetItem* item = ui->listWidget_Patches->item(currentPatchIndex);
-        item->setForeground(QBrush(Qt::white));
-
-        gui_updateWindowTitle();
-    }
-
-}
-
-void MainWindow::setCurrentPatchIcon()
-{
-    KonfytProject* prj = getCurrentProject();
-    if ( (currentPatchIndex >= 0) && (currentPatchIndex < prj->getNumPatches()) ) {
-        KonfytPatch* patch = prj->getPatch(currentPatchIndex);
-        QListWidgetItem* item = ui->listWidget_Patches->item(currentPatchIndex);
-        setPatchIcon(patch, item, true);
-    }
-}
-
-void MainWindow::unsetCurrentPatchIcon()
-{
-    KonfytProject* prj = getCurrentProject();
-    if ( (currentPatchIndex >= 0) && (currentPatchIndex < prj->getNumPatches()) ) {
-        KonfytPatch* patch = prj->getPatch(currentPatchIndex);
-        QListWidgetItem* item = ui->listWidget_Patches->item(currentPatchIndex);
-        setPatchIcon(patch, item, false);
-    }
+    setCurrentPatch(prj->getPatch(index));
 }
 
 void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
@@ -2566,7 +2511,7 @@ void MainWindow::newPatchIfMasterNull()
     if (masterPatch == NULL) {
         newPatchToProject();
         // Switch to latest patch
-        setCurrentPatch(-1);
+        setCurrentPatchByIndex(-1);
     }
 }
 
@@ -2627,17 +2572,10 @@ void MainWindow::on_horizontalSlider_MasterGain_sliderMoved(int /*position*/)
 
 void MainWindow::on_lineEdit_PatchName_returnPressed()
 {
-    // Rename patch
-    pengine->setPatchName(ui->lineEdit_PatchName->text());
+    on_lineEdit_PatchName_editingFinished();
 
     // Remove focus to something else to give the impression that the name has been changed.
     ui->label_PatchList->setFocus();
-
-    // Update name in patch list
-    gui_updatePatchList();
-
-    // Indicate to the user that the patch has been modified.
-    setPatchModified(true);
 }
 
 void MainWindow::on_lineEdit_PatchName_editingFinished()
@@ -2645,8 +2583,8 @@ void MainWindow::on_lineEdit_PatchName_editingFinished()
     // Rename patch
     pengine->setPatchName(ui->lineEdit_PatchName->text());
 
-    // Update name in patch list
-    gui_updatePatchList();
+    // Update GUI
+    patchListAdapter.patchModified(pengine->currentPatch());
 
     // Indicate to the user that the patch has been modified.
     setPatchModified(true);
@@ -3027,41 +2965,18 @@ void MainWindow::on_toolButton_RemovePatch_clicked()
 
 void MainWindow::on_toolButton_PatchUp_clicked()
 {
-    int row = ui->listWidget_Patches->currentRow();
-    if ( row >= 1 ) {
-        // Move actual patch in the project.
-        getCurrentProject()->movePatchUp(row);
-        // Update list in gui
-        gui_updatePatchList();
-        // Select item.
-        ui->listWidget_Patches->setCurrentRow(row-1);
-    }
+    patchListAdapter.moveSelectedPatchUp();
 }
 
 void MainWindow::on_toolButton_PatchDown_clicked()
 {
-    int row = ui->listWidget_Patches->currentRow();
-    if ( (row >= 0) && (row < ui->listWidget_Patches->count()-1)  ) {
-        // Move actual patch in the project.
-        getCurrentProject()->movePatchDown(row);
-        // Update list in gui
-        gui_updatePatchList();
-        // Select item.
-        ui->listWidget_Patches->setCurrentRow(row+1);
-    }
+    patchListAdapter.moveSelectedPatchDown();
 }
 
-// Indicate to the user whether the patch has been modified and needs to be saved.
+/* Indicate to the user whether the patch has been modified and needs to be saved. */
 void MainWindow::setPatchModified(bool modified)
 {
-    QString stylesheet_orange = "background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(95, 59, 28, 255), stop:1 rgba(199, 117, 18, 255));";
-
-    if (modified) {
-        //ui->pushButton_ReplacePatch->setStyleSheet(stylesheet_orange);
-        setProjectModified();
-    } else {
-        //ui->pushButton_ReplacePatch->setStyleSheet("");
-    }
+    if (modified) { setProjectModified(); }
 }
 
 void MainWindow::setProjectModified()
@@ -3599,7 +3514,7 @@ void MainWindow::handleMidiEvent(KfJackMidiRxEvent rxEvent)
             KonfytProject* prj = getCurrentProject();
             if (prj != NULL) {
                 if (prj->isProgramChangeSwitchPatches()) {
-                    setCurrentPatch(ev.program());
+                    setCurrentPatchByIndex(ev.program());
                 }
             }
         }
@@ -3634,11 +3549,11 @@ void MainWindow::handleMidiEvent(KfJackMidiRxEvent rxEvent)
 
     } else if (action == ui->actionNext_Patch) {
 
-        if (buttonPass) { setCurrentPatch( currentPatchIndex+1 ); }
+        if (buttonPass) { setCurrentPatchByIndex( mCurrentPatchIndex+1 ); }
 
     } else if (action == ui->actionPrevious_Patch) {
 
-        if (buttonPass) { setCurrentPatch( currentPatchIndex-1 ); }
+        if (buttonPass) { setCurrentPatchByIndex( mCurrentPatchIndex-1 ); }
 
     } else if (action == ui->actionMaster_Volume_Slider) {
 
@@ -3672,7 +3587,7 @@ void MainWindow::handleMidiEvent(KfJackMidiRxEvent rxEvent)
 
     } else if (patchActions.contains(action)) {
 
-        setCurrentPatch( patchActions.indexOf(action) );
+        setCurrentPatchByIndex( patchActions.indexOf(action) );
 
     } else if (action == ui->actionGlobal_Transpose_12_Down) {
 
@@ -4290,7 +4205,7 @@ void MainWindow::on_actionSave_Patch_As_Copy_triggered()
     *newPatch = *p;
     addPatchToProject(newPatch);
 
-    setCurrentPatch(ui->listWidget_Patches->count()-1);
+    setCurrentPatchByIndex(ui->listWidget_Patches->count()-1);
 
     ui->lineEdit_PatchName->setFocus();
     ui->lineEdit_PatchName->selectAll();
@@ -4335,7 +4250,7 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
 void MainWindow::on_actionNew_Patch_triggered()
 {
     newPatchToProject();
-    setCurrentPatch( ui->listWidget_Patches->count()-1 );
+    setCurrentPatchByIndex( ui->listWidget_Patches->count()-1 );
     ui->lineEdit_PatchName->setFocus();
     ui->lineEdit_PatchName->selectAll();
 
@@ -4432,41 +4347,41 @@ bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
                 break;
             case Qt::Key_Space:
                 // Next patch
-                setCurrentPatch( currentPatchIndex+1 );
+                setCurrentPatchByIndex( mCurrentPatchIndex+1 );
                 break;
             case Qt::Key_Right:
             case Qt::Key_Down:
                 // Next patch
-                setCurrentPatch( currentPatchIndex+1 );
+                setCurrentPatchByIndex( mCurrentPatchIndex+1 );
                 break;
             case Qt::Key_Left:
             case Qt::Key_Up:
                 // Previous patch
-                setCurrentPatch( currentPatchIndex-1 );
+                setCurrentPatchByIndex( mCurrentPatchIndex-1 );
                 break;
             case Qt::Key_1:
-                setCurrentPatch( 0 );
+                setCurrentPatchByIndex( 0 );
                 break;
             case Qt::Key_2:
-                setCurrentPatch( 1 );
+                setCurrentPatchByIndex( 1 );
                 break;
             case Qt::Key_3:
-                setCurrentPatch( 2 );
+                setCurrentPatchByIndex( 2 );
                 break;
             case Qt::Key_4:
-                setCurrentPatch( 3 );
+                setCurrentPatchByIndex( 3 );
                 break;
             case Qt::Key_5:
-                setCurrentPatch( 4 );
+                setCurrentPatchByIndex( 4 );
                 break;
             case Qt::Key_6:
-                setCurrentPatch( 5 );;
+                setCurrentPatchByIndex( 5 );;
                 break;
             case Qt::Key_7:
-                setCurrentPatch( 6 );
+                setCurrentPatchByIndex( 6 );
                 break;
             case Qt::Key_8:
-                setCurrentPatch( 7 );
+                setCurrentPatchByIndex( 7 );
                 break;
             case Qt::Key_Q:
                 midi_setLayerMute(0, 127);
@@ -4675,7 +4590,7 @@ void MainWindow::on_toolButton_layer_AddMidiPort_clicked()
 
 void MainWindow::on_listWidget_Patches_itemClicked(QListWidgetItem *item)
 {
-    setCurrentPatch( ui->listWidget_Patches->row(item) );
+    setCurrentPatchByIndex( ui->listWidget_Patches->row(item) );
 }
 
 
@@ -4755,7 +4670,7 @@ void MainWindow::on_toolButton_MidiFilter_removeCC_clicked()
     }
 }
 
-// Library tab widget current tab changed.
+/* Library tab widget current tab changed. */
 void MainWindow::on_tabWidget_library_currentChanged(int /*index*/)
 {
     if (ui->tabWidget_library->currentWidget() == ui->tab_filesystem) {
@@ -4765,10 +4680,9 @@ void MainWindow::on_tabWidget_library_currentChanged(int /*index*/)
     }
 }
 
-// Refresh the library file system view
+/* Refresh the library file system view. */
 void MainWindow::refreshFilesystemView()
 {
-
     ui->lineEdit_filesystem_path->setText(fsview_currentPath);
 
     KonfytProject* prj = getCurrentProject();
@@ -5998,16 +5912,14 @@ void MainWindow::on_pushButton_LoadAll_clicked()
     KonfytProject* prj = getCurrentProject();
     if (prj == NULL) { return; }
 
-    int startPatch = currentPatchIndex;
+    int startPatch = mCurrentPatchIndex;
 
     for (int i=0; i<prj->getNumPatches(); i++) {
-        setCurrentPatch(i);
+        setCurrentPatchByIndex(i);
     }
 
-    setCurrentPatch(startPatch);
+    setCurrentPatchByIndex(startPatch);
 }
-
-
 
 void MainWindow::on_pushButton_ExtApp_Replace_clicked()
 {
@@ -6233,21 +6145,22 @@ void MainWindow::on_toolButton_PatchListMenu_clicked()
 void MainWindow::toggleShowPatchListNumbers()
 {
     KonfytProject* prj = this->getCurrentProject();
-    if (prj == NULL) { return; }
-    prj->setShowPatchListNumbers( !prj->getShowPatchListNumbers() );
-    gui_updatePatchList();
+    if (prj == nullptr) { return; }
+
+    bool visible = !prj->getShowPatchListNumbers();
+    prj->setShowPatchListNumbers(visible);
+    patchListAdapter.setPatchNumbersVisible(visible);
 }
 
 void MainWindow::toggleShowPatchListNotes()
 {
-    // Toggle option in project
     KonfytProject* prj = this->getCurrentProject();
-    if (prj == NULL) { return; }
-    prj->setShowPatchListNotes( !prj->getShowPatchListNotes() );
-    gui_updatePatchList();
+    if (prj == nullptr) { return; }
+
+    bool visible = !prj->getShowPatchListNotes();
+    prj->setShowPatchListNotes(visible);
+    patchListAdapter.setPatchNotesVisible(visible);
 }
-
-
 
 void MainWindow::on_pushButton_JackAudioPorts_clicked()
 {
