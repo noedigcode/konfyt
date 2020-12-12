@@ -381,6 +381,9 @@ void KonfytJackEngine::removeAllMidiInAndOutPorts()
     foreach (KfJackMidiPort* port, midiInPorts) {
         removeMidiPort(port);
     }
+    foreach (KfJackMidiPort* port, midiOutPorts) {
+        removeMidiPort(port);
+    }
 
     pauseJackProcessing(false);
 }
@@ -905,7 +908,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
                 KfJackMidiRoute* route = midiRoutes[iRoute];
 
                 if (route->source != sourcePort) { continue; }
-                if (route->destIsJackPort && route->destPort == NULL) { continue; }
+                if (route->destIsJackPort && route->destPort == nullptr) { continue; }
                 if (!route->filter.passFilter(&ev)) { continue; }
 
                 KonfytMidiEvent evToSend = route->filter.modify(&ev);

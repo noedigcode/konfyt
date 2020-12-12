@@ -36,6 +36,7 @@
 #define KONFYT_PATCH_SUFFIX "konfytpatch"
 
 #define KONFYT_ASSERT_RETURN(cond) Q_ASSERT(cond); if (!cond) { return; }
+#define KONFYT_ASSERT_RETURN_VAL(cond, ret) Q_ASSERT(cond); if (!cond) { return ret; }
 
 QString sanitiseFilename(QString path);
 QString getCompileVersionText();

@@ -88,10 +88,8 @@ public:
     void setLayerSolo(int layerIndex, bool solo);
     void setLayerMute(KfPatchLayerWeakPtr patchLayer, bool mute);
     void setLayerMute(int layerIndex, bool mute);
-    void setLayerBus(KfPatchLayerWeakPtr patchLayer, int bus); // currentPatch
-    void setLayerBus(KonfytPatch* patch, KfPatchLayerWeakPtr patchLayer, int bus);
-    void setLayerMidiInPort(KfPatchLayerWeakPtr patchLayer, int portId); // currentPatch
-    void setLayerMidiInPort(KonfytPatch* patch, KfPatchLayerWeakPtr patchLayer, int portId);
+    void setLayerBus(KfPatchLayerWeakPtr patchLayer, int bus);
+    void setLayerMidiInPort(KfPatchLayerWeakPtr patchLayer, int portId);
 
     void sendCurrentPatchMidi();
     void sendLayerMidi(KfPatchLayerWeakPtr patchLayer);
@@ -113,7 +111,7 @@ public:
     KfPatchLayerWeakPtr addAudioInPortToPatch(int port);
 
 signals:
-    void userMessage(QString msg);
+    void print(QString msg);
     void statusInfo(QString msg);
     
 private:
@@ -124,7 +122,10 @@ private:
 
     QList<KonfytPatch*> patches;
 
-    void refreshAllGainsAndRouting();
+    void updateLayerRouting(KfPatchLayerSharedPtr layer);
+    void updateLayerGain(KfPatchLayerSharedPtr layer);
+    void updatePatchLayersGain(KonfytPatch* patch);
+    void updatePatchLayersSoloMute(KonfytPatch* patch);
 
     KonfytFluidsynthEngine* fluidsynthEngine;
 

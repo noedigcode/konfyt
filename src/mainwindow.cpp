@@ -219,7 +219,7 @@ void MainWindow::updateProjectsMenu()
 
 void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
 {
-    // TODO CHECK IF CURRENT PROJECT SHOULD BE SAVED
+    if (!requestCurrentProjectClose()) { return; }
 
     if ( projectsMenuMap.contains(action) ) {
         QFileInfo fi = projectsMenuMap.value(action);
@@ -525,18 +525,7 @@ void MainWindow::gui_updatePortsBussesTree()
      *
      */
 
-    // Clear tree before deleting items so that the onItemChanged signal is not emitted while
-    // deleting the items.
-    ui->tree_portsBusses->clear();
-
-    // Delete all tree items
-    if (busParent != NULL) {
-
-        tree_busMap.clear();
-        tree_audioInMap.clear();
-        tree_midiOutMap.clear();
-        tree_midiInMap.clear();
-    }
+    clearPortsBussesConnectionsData();
 
     busParent = new QTreeWidgetItem();
     busParent->setText(0, "Buses");
@@ -763,6 +752,28 @@ void MainWindow::gui_updateConnectionsTree()
     ui->tree_Connections->sortItems(0, Qt::AscendingOrder);
     ui->tree_Connections->expandAll();
 
+}
+
+void MainWindow::clearPortsBussesConnectionsData()
+{
+    // Clear tree before deleting items so that the onItemChanged signal is not emitted while
+    // deleting the items.
+    ui->tree_portsBusses->clear();
+
+    // Delete all tree items
+    if (busParent != NULL) {
+        tree_busMap.clear();
+        tree_audioInMap.clear();
+        tree_midiOutMap.clear();
+        tree_midiInMap.clear();
+    }
+
+    busParent = nullptr;
+    audioInParent = nullptr;
+    midiOutParent = nullptr;
+    midiInParent = nullptr;
+
+    clearConnectionsTree();
 }
 
 void MainWindow::clearConnectionsTree()
@@ -1061,12 +1072,8 @@ void MainWindow::loadProject(ProjectPtr prj)
         return;
     }
 
-    // First, disconnect signals from current project.
-    if (mCurrentProject) {
-        mCurrentProject->disconnect();
-    }
+    unloadCurrentProject();
 
-    // Set up the new project
     mCurrentProject = prj;
     pengine.setProject(mCurrentProject);
 
@@ -1075,11 +1082,6 @@ void MainWindow::loadProject(ProjectPtr prj)
     patchListAdapter.clear();
     patchListAdapter.addPatches(mCurrentProject->getPatchList());
 
-    jack.pauseJackProcessing(true);
-
-    // Remove all JACK audio and MIDI in/out ports
-    jack.removeAllAudioInAndOutPorts();
-    jack.removeAllMidiInAndOutPorts();
 
     // Process MIDI in ports
 
@@ -1208,7 +1210,7 @@ void MainWindow::loadProject(ProjectPtr prj)
     }
 
     // Update other JACK connections in JACK
-    jack.clearOtherJackConPair();
+
     // MIDI
     QList<KonfytJackConPair> jackCons = prj->getJackMidiConList();
     for (int i=0; i < jackCons.count(); i++) {
@@ -1243,9 +1245,26 @@ void MainWindow::loadProject(ProjectPtr prj)
     // Default to patch view (ensure no edit screens are open for previous projects)
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 
-    jack.pauseJackProcessing(false);
 
     print("Project loaded.");
+}
+
+void MainWindow::unloadCurrentProject()
+{
+    if (!mCurrentProject) { return; }
+
+    mCurrentProject->disconnect();
+
+    clearPortsBussesConnectionsData();
+
+    foreach (KonfytPatch* patch, mCurrentProject->getPatchList()) {
+        pengine.unloadPatch(patch);
+    }
+
+    // Remove all JACK audio and MIDI in/out ports
+    jack.removeAllAudioInAndOutPorts();
+    jack.removeAllMidiInAndOutPorts();
+    jack.clearOtherJackConPair();
 }
 
 /* Clears and fills the specified menu with items corresponding to project MIDI
@@ -2875,11 +2894,33 @@ bool MainWindow::saveProject(ProjectPtr prj)
             return false;
         }
 
-
     }
 
 } // end of saveProject()
 
+bool MainWindow::requestCurrentProjectClose()
+{
+    if (!mCurrentProject) { return true; }
+    if (!mCurrentProject->isModified()) { return true; }
+
+    QMessageBox msgbox;
+    msgbox.setText("Do you want to save the changes to project " +
+                   mCurrentProject->getProjectName() + "?");
+    msgbox.setIcon(QMessageBox::Question);
+    msgbox.setStandardButtons(QMessageBox::Cancel
+                              | QMessageBox::Yes
+                              | QMessageBox::No);
+    msgbox.setDefaultButton(QMessageBox::Cancel);
+    int ret = msgbox.exec();
+    if (ret == QMessageBox::Yes) {
+        bool saved = saveProject(mCurrentProject);
+        if (!saved) { return false; }
+    } else if (ret == QMessageBox::Cancel) {
+        return false;
+    }
+
+    return true;
+}
 
 void MainWindow::updateGUIWarnings()
 {
@@ -4979,7 +5020,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 for (int i=0; i<usingPatches.count(); i++) {
                     KonfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KfPatchLayerWeakPtr layer = patch->layers()[usingLayers[i]];
-                    pengine.setLayerBus( patch, layer, busToChangeTo );
+                    pengine.setLayerBus( layer, busToChangeTo );
                 }
                 // Removal will be done below.
 
@@ -5034,7 +5075,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 for (int i=0; i<usingPatches.count(); i++) {
                     KonfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KfPatchLayerWeakPtr layer = patch->layers()[usingLayers[i]];
-                    pengine.setLayerMidiInPort( patch, layer, portToChangeTo );
+                    pengine.setLayerMidiInPort( layer, portToChangeTo );
                 }
                 // Removal will be done below.
 
@@ -5177,7 +5218,7 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
 /* Initialises patch engine. Must be called after JACK engine has been set up. */
 void MainWindow::setupPatchEngine()
 {
-    connect(&pengine, &KonfytPatchEngine::userMessage, this, &MainWindow::print);
+    connect(&pengine, &KonfytPatchEngine::print, this, &MainWindow::print);
     connect(&pengine, &KonfytPatchEngine::statusInfo, [this](QString msg){
         ui->textBrowser_Testing->setText(msg);
     });
@@ -5211,32 +5252,11 @@ void MainWindow::updatePreviewPatchLayer()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    // Go through list of projects and ask to save for modified projects.
-
+    // Only accept event if user allows
     if (!appInfo.headless) {
-
-        ProjectPtr prj = mCurrentProject;
-        if (prj) {
-            if (prj->isModified()) {
-                QMessageBox msgbox;
-                msgbox.setText("Do you want to save the changes to project " +
-                               prj->getProjectName() + "?");
-                msgbox.setIcon(QMessageBox::Question);
-                msgbox.setStandardButtons(QMessageBox::Cancel
-                                          | QMessageBox::Yes
-                                          | QMessageBox::No);
-                msgbox.setDefaultButton(QMessageBox::Cancel);
-                int ret = msgbox.exec();
-                if (ret == QMessageBox::Yes) {
-                    if ( saveProject(prj) == false ) {
-                        event->ignore();
-                        return;
-                    }
-                } else if (ret == QMessageBox::Cancel) {
-                    event->ignore();
-                    return;
-                }
-            }
+        if (!requestCurrentProjectClose()) {
+            event->ignore();
+            return;
         }
     }
 
@@ -5535,10 +5555,10 @@ void MainWindow::setConsoleShowMidiMessages(bool show)
 
 void MainWindow::on_pushButton_RestartApp_clicked()
 {
-    // TODO CHECK IF CURRENT PROJECT SHOULD BE SAVED
-
-    // Restart the app (see code in main.cpp)
-    QCoreApplication::exit(APP_RESTART_CODE);
+    if (requestCurrentProjectClose()) {
+        // Restart the app (see code in main.cpp)
+        QCoreApplication::exit(APP_RESTART_CODE);
+    }
 }
 
 void MainWindow::on_actionProject_save_triggered()
@@ -5549,20 +5569,23 @@ void MainWindow::on_actionProject_save_triggered()
 
 void MainWindow::on_actionProject_New_triggered()
 {
-    // TODO CHECK IF CURRENT PROJECT SHOULD BE SAVED
-    loadNewProject(); // Create and load new project
+    if (requestCurrentProjectClose()) {
+        loadNewProject(); // Create and load new project
+        newPatchToProject(); // Create a new patch and add to current project.
+        setCurrentPatchByIndex(0);
+        mCurrentProject->setModified(false);
+    }
 }
 
 void MainWindow::on_actionProject_Open_triggered()
 {
-    // TODO CHECK IF CURRENT PROJECT SHOULD BE SAVED
+    if (!requestCurrentProjectClose()) { return; }
 
     // Show open dialog box
     QFileDialog* d = new QFileDialog();
-    QString filename = d->getOpenFileName(this,
-                                          "Select project to open",
-                                          projectsDir,
-                                          "*" + QString(PROJECT_FILENAME_EXTENSION) );
+    QString filename = d->getOpenFileName(
+                this, "Select project to open", projectsDir,
+                "*" + QString(PROJECT_FILENAME_EXTENSION) );
     if (filename == "") {
         print("Cancelled.");
         return;

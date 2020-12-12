@@ -173,9 +173,11 @@ private:
     void loadNewProject();
     bool loadProjectFromFile(QString filename);
     void loadProject(ProjectPtr prj);
+    void unloadCurrentProject();
     bool saveCurrentProject();
     bool saveProject(ProjectPtr prj);
     bool informedUserAboutProjectsDir = false;
+    bool requestCurrentProjectClose();
 
     KonfytPatch* newPatchToProject();
     void removePatchFromProject(int i);
@@ -465,6 +467,7 @@ private:
     void connectionsTreeSelectMidiOutPort(int portId);
     void gui_updatePortsBussesTree();
     void gui_updateConnectionsTree();
+    void clearPortsBussesConnectionsData();
 
     QTreeWidgetItem* busParent = nullptr;
     QTreeWidgetItem* audioInParent = nullptr;
