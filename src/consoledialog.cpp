@@ -36,10 +36,8 @@ ConsoleDialog::~ConsoleDialog()
     delete ui;
 }
 
-void ConsoleDialog::userMessage(QString message)
+void ConsoleDialog::print(QString message)
 {
-    static bool start = true;
-
     ui->textBrowser->append(message);
 
     /* Ensure textBrowser scrolls to maximum when it is filled with text. Usually
@@ -47,10 +45,10 @@ void ConsoleDialog::userMessage(QString message)
      * happen from the start. Once it's there, we set 'start=false' as the
      * user / textBrowser can then handle it themselves. */
     QScrollBar* v = ui->textBrowser->verticalScrollBar();
-    if (start) {
+    if (mFirstPrint) {
         if (v->value() != v->maximum()) {
             v->setValue(v->maximum());
-            start = false;
+            mFirstPrint = false;
         }
     }
 }

@@ -24,351 +24,71 @@
 
 MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     QMainWindow(parent),
+    appInfo(appInfoArg),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
 
-    // Initialise variables
-
-    appInfo = appInfoArg;
-
-    currentProject = -1;
-    panicState = false;
-    masterPatch = NULL;
-    previewMode = false;
-    patchNote_ignoreChange = false;
-    jackPage_audio = true;
-
-    midiFilter_lastChan = 0;
-    midiFilter_lastData1 = 0;
-    midiFilter_lastData2 = 0;
-
-    lastBankSelectMSB = -1;
-    lastBankSelectLSB = -1;
-
-    // Initialise console dialog
-    this->consoleDiag = new ConsoleDialog(this);
-
-    // USER MESSAGES CAN HAPPEN AFTER THIS POINT
-
+    // Sort out GUI style
     QString stylename = "Fusion";
     QStyle* style = QStyleFactory::create(stylename);
     if (style) {
         appInfoArg.a->setStyle(style);
     } else {
-        userMessage("Unable to create style " + stylename);
+        print("Unable to create style " + stylename);
     }
 
-    userMessage(QString(APP_NAME) + " " + APP_VERSION);
-    userMessage("Arguments:");
-    if (appInfo.bridge) { userMessage(" - Bridging is enabled."); }
+    // Print command-line arguments info
+    print(QString(APP_NAME) + " " + APP_VERSION);
+    print("Arguments:");
+    if (appInfo.bridge) { print(" - Bridging is enabled."); }
     ui->groupBox_Testing->setVisible(appInfo.bridge);
-    userMessage(" - Files to load:");
+    print(" - Files to load:");
     for (int i=0; i < appInfo.filesToLoad.count(); i++) {
-        userMessage("   - " + appInfo.filesToLoad[i]);
+        print("   - " + appInfo.filesToLoad[i]);
     }
-    userMessage(" - JackClientName: " + appInfo.jackClientName);
+    print(" - JackClientName: " + appInfo.jackClientName);
 
-    // Initialise About Dialog
+
     initAboutDialog();
+    setupSettings();
+    setupJack();
+    setupPatchEngine();
 
     // ----------------------------------------------------
-    // Sort out settings
-    // ----------------------------------------------------
-
-    // Settings dir is standard (XDG) config dir
-    bool showSettings = false;
-    settingsDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-    userMessage("Settings path: " + settingsDir);
-    // Check if settings file exists
-    if (loadSettingsFile(settingsDir)) {
-        userMessage("Settings loaded.");
-    } else {
-        userMessage("Could not load settings.");
-        // Check if old settings file exists.
-        QString oldDir = QDir::homePath() + "/.konfyt";
-        if (loadSettingsFile(oldDir)) {
-            userMessage("Loaded settings from old location: " + settingsDir);
-            userMessage("Saving to new settings location.");
-            if (saveSettingsFile()) {
-                userMessage("Saved settings file to new location: " + settingsDir);
-            } else {
-                userMessage("Could not save settings to new location: " + settingsDir);
-            }
-        } else {
-            // If settings file does not exist, it's probably the first run.
-            // Show about dialog and settings.
-            createSettingsDir();
-            showSettings = true;
-            showAboutDialog();
-        }
-    }
-
-    // Set up settings dialog
-    ui->label_SettingsPath->setText( ui->label_SettingsPath->text() + settingsDir );
-
-    ui->comboBox_settings_projectsDir->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Projects");
-    ui->comboBox_settings_projectsDir->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Projects");
-
-    ui->comboBox_settings_soundfontDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Soundfonts");
-    ui->comboBox_settings_soundfontDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Soundfonts");
-
-    ui->comboBox_settings_patchDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Patches");
-    ui->comboBox_settings_patchDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Patches");
-
-    ui->comboBox_settings_sfzDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/sfz");
-    ui->comboBox_settings_sfzDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/sfz");
-
-    // Initialise default settings
-    if (projectsDir.isEmpty()) {
-        projectsDir = ui->comboBox_settings_projectsDir->itemText(0);
-    }
-    if (patchesDir.isEmpty()) {
-        patchesDir = ui->comboBox_settings_patchDirs->itemText(0);
-    }
-    if (soundfontsDir.isEmpty()) {
-        soundfontsDir = ui->comboBox_settings_soundfontDirs->itemText(0);
-    }
-    if (sfzDir.isEmpty()) {
-        sfzDir = ui->comboBox_settings_sfzDirs->itemText(0);
-    }
-
-    // ----------------------------------------------------
-    // Initialise jack client
-    // ----------------------------------------------------
-
-    jack = new KonfytJackEngine();
-
-    connect(jack, &KonfytJackEngine::userMessage, this, &MainWindow::userMessage);
-
-    connect(jack, &KonfytJackEngine::jackPortRegisteredOrConnected,
-            this, &MainWindow::onJackPortRegisteredOrConnected);
-
-    connect(jack, &KonfytJackEngine::midiEventsReceived,
-            this, &MainWindow::onJackMidiEventsReceived);
-
-    connect(jack, &KonfytJackEngine::audioEventsReceived,
-            this, &MainWindow::onJackAudioEventsReceived);
-
-    connect(jack, &KonfytJackEngine::xrunOccurred, this, &MainWindow::onJackXrunOccurred);
-
-    QString jackClientName = appInfo.jackClientName;
-    if (jackClientName.isEmpty()) {
-        jackClientName = KONFYT_JACK_DEFAULT_CLIENT_NAME;
-    }
-    if ( jack->initJackClient(jackClientName) ) {
-        // Jack client initialised.
-        userMessage("Initialised JACK client with name " + jack->clientName());
-    } else {
-        // not.
-        userMessage("Could not initialise JACK client.");
-
-        // Remove all widgets in centralWidget, add the warning message, and put them back
-        // (Workaround to insert warning message at the top :/ )
-        QList<QLayoutItem*> l;
-        while (ui->centralWidget->layout()->count()) {
-            l.append(ui->centralWidget->layout()->takeAt(0));
-        }
-        ui->centralWidget->layout()->addWidget(ui->groupBox_JackError); // Add error message as first widget
-        // And add the rest of the widgets back:
-        for (int i=0; i<l.count(); i++) {
-            ui->centralWidget->layout()->addItem( l[i] );
-        }
-    }
-
-    ui->stackedWidget_Console->setCurrentIndex(0);
-
-
-    // ----------------------------------------------------
-    // Initialise patch engine
-    // ----------------------------------------------------
-    pengine = new KonfytPatchEngine();
-
-    connect(pengine, &KonfytPatchEngine::userMessage, this, &MainWindow::userMessage);
-    connect(pengine, &KonfytPatchEngine::statusInfo, [this](QString msg){
-        ui->textBrowser_Testing->setText(msg);
-    });
-
-    pengine->initPatchEngine(this->jack, appInfo);
-
-    // ----------------------------------------------------
-    // Set up gui stuff that needs to happen before loading project or commandline arguments
-    // ----------------------------------------------------
-
-    // Triggers Page (must happen before setting project)
+    // The following need to happen before loading project or cmdline arguments
     initTriggers();
-
-    // Library filesystem view
-    this->fsview_currentPath = QDir::homePath();
-    refreshFilesystemView();
-    ui->tabWidget_library->setCurrentWidget(ui->tab_library);
-
+    setupFilesystemView();
     setupPatchListAdapter();
-
-    // ----------------------------------------------------
-    // Initialise soundfont database
-    // ----------------------------------------------------
-
-    connect(&db, &konfytDatabase::userMessage, this, &MainWindow::userMessage);
-
-
-    connect(&db, &konfytDatabase::scanDirs_finished,
-            this, &MainWindow::database_scanDirsFinished);
-
-    connect(&db, &konfytDatabase::scanDirs_status,
-            this, &MainWindow::database_scanDirsStatus);
-
-    connect(&db, &konfytDatabase::returnSfont_finished,
-            this, &MainWindow::database_returnSfont);
-
-    // Check if database file exists.
-    if (db.loadDatabaseFromFile(settingsDir + "/" + DATABASE_FILE)) {
-        userMessage("Database loaded from file. Rescan to refresh.");
-        userMessage("Database contains:");
-        userMessage("   " + n2s(db.getNumSfonts()) + " soundfonts.");
-        userMessage("   " + n2s(db.getNumPatches()) + " patches.");
-        userMessage("   " + n2s(db.getNumSfz()) + " sfz/gig samples.");
-    } else {
-        userMessage("No database file found.");
-        // Check if old database location exists
-        QString oldDir = QDir::homePath() + "/.konfyt/konfyt.database";
-        if (db.loadDatabaseFromFile(oldDir)) {
-            userMessage("Found database file in old location. Saving to new location.");
-            db.saveDatabaseToFile(settingsDir + "/" + DATABASE_FILE);
-        } else {
-            // Still no database file.
-            userMessage("You can scan directories to create a database from Settings.");
-        }
-    }
-
-    fillTreeWithAll(); // Fill the tree widget with all the database entries
-
-    // ----------------------------------------------------
-    // Setup saved MIDI send items
-    // ----------------------------------------------------
+    setupDatabase();
     setupSavedMidiSendItems();
-
     // ----------------------------------------------------
-    // Projects / commandline arguments
-    // ----------------------------------------------------
+    setupInitialProjectFromCmdLineArgs();
 
-    // Tab widget has some tabs for design purposes. Remove all.
-    ui->tabWidget_Projects->blockSignals(true);
-    ui->tabWidget_Projects->clear();
-    ui->tabWidget_Projects->blockSignals(true);
-    // Scan projectsDir for projects.
-    if ( !scanDirForProjects(projectsDir) ) {
-        userMessage("No project directory " + projectsDir);
-    }
-    // Load project if one was passed as an argument
-    for (int i=0; i < appInfo.filesToLoad.count(); i++) {
-        QString file = appInfo.filesToLoad[i];
-        if ( fileIsPatch(file) || fileIsSfzOrGig(file) || fileIsSoundfont(file) ) {
-            // If no project loaded, create a new project
-            if (projectList.count() == 0) {
-                userMessage("Creating default new project to load " + file);
-                newProject();           // Create new project and add to list and GUI
-                setCurrentProject(0);   // Set current project to newly created project.
-            }
+    scanDirForProjects(projectsDir);
+    setupGuiMenuButtons();
+    setupConnectionsPage();
+    setupTriggersPage();
+    setupKeyboardShortcuts();
+    setupGuiDefaults();
+    setupExternalAppsMenu();
+    setMasterInTranspose(0, false);
 
-            if (fileIsPatch(file)) {
-                // Load patch into current project and switch to patch
+    // Show welcome message in statusbar
+    QString app_name(APP_NAME);
+    ui->statusBar->showMessage("Welkom by " + app_name + ".",5000);
+}
 
-                KonfytPatch* pt = new KonfytPatch();
-                QString errors;
-                if (pt->loadPatchFromFile(file, &errors)) {
-                    addPatchToProject(pt);
-                    setCurrentPatchByIndex(-1);
-                } else {
-                    userMessage("Failed loading patch " + file);
-                    delete pt;
-                }
-                if (!errors.isEmpty()) {
-                    userMessage("Load errors for patch " + file + ":\n" + errors);
-                }
-                // Locate in filesystem view
-                ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
-                cdFilesystemView(QFileInfo(file).absoluteFilePath());
-                selectItemInFilesystemView(file);
+MainWindow::~MainWindow()
+{
+    jack.stopJackClient();
+    consoleDialog.close();
 
-            } else if (fileIsSfzOrGig(file)) {
-                // Create new patch and load sfz into patch
-                newPatchToProject();    // Create a new patch and add to current project.
-                setCurrentPatchByIndex(-1);
+    delete ui;
+}
 
-                addSfzToCurrentPatch(file);
-                // Rename patch
-                ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(file) );
-                on_lineEdit_PatchName_editingFinished();
-
-                // Locate in filesystem view
-                ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
-                cdFilesystemView(QFileInfo(file).absoluteFilePath());
-                selectItemInFilesystemView(file);
-
-            } else if (fileIsSoundfont(file)) {
-                // Create new blank patch
-                newPatchToProject();    // Create a new patch and add to current project.
-                setCurrentPatchByIndex(-1);
-                // Locate soundfont in filebrowser, select it and show its programs
-
-                // Locate in filesystem view
-                ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
-                cdFilesystemView(QFileInfo(file).absoluteFilePath());
-                selectItemInFilesystemView(file);
-                // Load from filesystem view
-                on_treeWidget_filesystem_itemDoubleClicked( ui->treeWidget_filesystem->currentItem(), 0 );
-                // Add first program to current patch
-                if (ui->listWidget_LibraryBottom->count()) {
-                    ui->listWidget_LibraryBottom->setCurrentRow(0);
-                    addProgramToCurrentPatch( library_getSelectedProgram() );
-                }
-
-                // Rename patch
-                ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(file) );
-                on_lineEdit_PatchName_editingFinished();
-
-            }
-        } else {
-            // Try to load project
-            userMessage("Opening project " + file);
-            if (openProject(file)) {
-                userMessage("Project loaded from argument.");
-                setCurrentProject( -1 );
-                startupProject = false;
-            } else {
-                userMessage("Failed to load project from argument.");
-            }
-        }
-    }
-    // If no project is loaded yet, create default project
-    if (projectList.count() == 0) {
-        userMessage("Creating default new project.");
-        newProject();           // Create new project and add to list and GUI
-        setCurrentProject(0);   // Set current project to newly created project.
-        newPatchToProject();    // Create a new patch and add to current project.
-        setCurrentPatchByIndex(0);
-        startupProject = true;
-        KonfytProject *prj = getCurrentProject();
-        prj->setModified(false);
-    }
-
-
-    // ----------------------------------------------------
-    // Initialise and update GUI
-    // ----------------------------------------------------
-
-    // Global Transpose
-    ui->spinBox_MasterIn_Transpose->setValue(0);
-
+void MainWindow::setupGuiMenuButtons()
+{
     // Add-patch button menu
     QMenu* addPatchMenu = new QMenu();
     addPatchMenu->addAction(ui->actionNew_Patch);
@@ -432,13 +152,10 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     connect(&previewButtonMenu, &QMenu::aboutToShow,
             this, &MainWindow::preparePreviewMenu);
     ui->toolButton_LibraryPreview->setMenu(&previewButtonMenu);
+}
 
-    // Console
-    console_showMidiMessages = false;
-
-    setupConnectionsPage();
-    setupTriggersPage();
-
+void MainWindow::setupGuiDefaults()
+{
     // Resize some layouts
     QList<int> sizes;
     sizes << 8 << 2;
@@ -449,41 +166,20 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     ui->tabWidget_right->tabBar()->setVisible(false);
     ui->tabWidget_right->setCurrentIndex(0);
 
-    // Set up keyboard shortcuts
-    shortcut_save = new QShortcut(QKeySequence("Ctrl+S"), this);
-    connect(shortcut_save, &QShortcut::activated,
-            this, &MainWindow::shortcut_save_activated);
-
-    shortcut_panic = new QShortcut(QKeySequence("Ctrl+P"), this);
-    connect(shortcut_panic, &QShortcut::activated,
-            this, &MainWindow::shortcut_panic_activated);
-    ui->pushButton_Panic->setToolTip( ui->pushButton_Panic->toolTip() + " [" + shortcut_panic->key().toString() + "]");
-
-    // Set up external apps combo box
-    setupExtAppMenu();
+    // Console stacked widget page 1 houses the JACK engine warning and should never be seen
+    ui->stackedWidget_Console->setCurrentIndex(0);
 
     // Show library view (not live mode)
     ui->stackedWidget_left->setCurrentWidget(ui->pageLibrary);
 
     // Show default view
-    if (showSettings) {
+    if (mSettingsFirstRun) {
+        // Show settings on first run
         showSettingsDialog();
     } else {
         // Show normal patch view
         ui->stackedWidget->setCurrentWidget(ui->PatchPage);
     }
-
-    // Show welcome message in statusbar
-    QString app_name(APP_NAME);
-    ui->statusBar->showMessage("Welkom by " + app_name + ".",5000);
-}
-
-MainWindow::~MainWindow()
-{
-    delete pengine;
-    jack->stopJackClient();
-
-    delete ui;
 }
 
 void MainWindow::shortcut_save_activated()
@@ -523,17 +219,17 @@ void MainWindow::updateProjectsMenu()
 
 void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
 {
+    // TODO CHECK IF CURRENT PROJECT SHOULD BE SAVED
+
     if ( projectsMenuMap.contains(action) ) {
         QFileInfo fi = projectsMenuMap.value(action);
-        openProject(fi.filePath());
-        // Switch to newly opened project
-        setCurrentProject( -1 );
+        loadProjectFromFile(fi.filePath()); // Open project from file and load it
     }
 }
 
 void MainWindow::onJackXrunOccurred()
 {
-    userMessage("XRUN " + n2s(++mJackXrunCount));
+    print("XRUN " + n2s(++mJackXrunCount));
 }
 
 void MainWindow::onJackPortRegisteredOrConnected()
@@ -549,15 +245,13 @@ void MainWindow::onJackPortRegisteredOrConnected()
 }
 
 /* Scan given directory recursively and add project files to list. */
-bool MainWindow::scanDirForProjects(QString dirname)
+void MainWindow::scanDirForProjects(QString dirname)
 {
     if (!dirExists(dirname)) {
-        userMessage("scanDirForProjects: Dir does not exist.");
+        print("Projects directory does not exist: " + dirname);
+    } else {
+        projectDirList = scanDirForFiles(dirname, PROJECT_FILENAME_EXTENSION);
     }
-
-    projectDirList = scanDirForFiles(dirname, PROJECT_FILENAME_EXTENSION);
-
-    return true;
 }
 
 void MainWindow::showSettingsDialog()
@@ -592,9 +286,8 @@ void MainWindow::showMidiFilterEditor()
 
     KonfytMidiFilter f;
     if (midiFilterEditType == MidiFilterEditPort) {
-        KonfytProject* prj = getCurrentProject();
-        if (prj == NULL) { return; }
-        f = prj->midiInPort_getPort(midiFilterEditPort).filter;
+        if (!mCurrentProject) { return; }
+        f = mCurrentProject->midiInPort_getPort(midiFilterEditPort).filter;
     } else {
         f = midiFilterEditItem->getPatchLayer().toStrongRef()->midiFilter();
     }
@@ -639,13 +332,13 @@ void MainWindow::applySettings()
     sfzDir = ui->comboBox_settings_sfzDirs->currentText();
     filemanager = ui->comboBox_Settings_filemanager->currentText();
 
-    userMessage("Settings applied.");
+    print("Settings applied.");
 
     // Save the settings.
     if (saveSettingsFile()) {
-        userMessage("Settings saved.");
+        print("Settings saved.");
     } else {
-        userMessage("Failed to save settings to file.");
+        print("Failed to save settings to file.");
     }
 
     // Create directories if they don't exist
@@ -661,7 +354,7 @@ bool MainWindow::loadSettingsFile(QString dir)
     QString filename = dir + "/" + SETTINGS_FILE;
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        userMessage("Failed to open settings file: " + filename);
+        print("Failed to open settings file: " + filename);
         return false;
     }
 
@@ -708,7 +401,7 @@ bool MainWindow::saveSettingsFile()
     QString filename = settingsDir + "/" + SETTINGS_FILE;
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        userMessage("Failed to open settings file for writing: " + filename);
+        print("Failed to open settings file for writing: " + filename);
         return false;
     }
 
@@ -736,88 +429,29 @@ bool MainWindow::saveSettingsFile()
     return true;
 }
 
-/* Remove project from projectList and GUI. */
-void MainWindow::removeProject(int i)
+/* Create a new project and load it. */
+void MainWindow::loadNewProject()
 {
-    if ( (i >=0) && (i < projectList.count()) ) {
-        projectList.removeAt(i);
-        // Remove from tabs
-        ui->tabWidget_Projects->removeTab(i);
-    }
+    ProjectPtr prj(new KonfytProject());
+    prj->setProjectName("New Project");
+    loadProject(prj);
 }
 
-/* Create a new project and add new project to projectList and GUI. */
-void MainWindow::newProject()
+/* Open a project from the specified filename and load it. */
+bool MainWindow::loadProjectFromFile(QString filename)
 {
-    KonfytProject* prj = new KonfytProject();
-    QString name = "New Project";
-    // Check if a project with similar name doesn't already exist in list.
-    bool duplicate = true;
-    QString extra = "";
-    int count = 1;
-    while (duplicate) {
-        duplicate = false;
-        for (int i=0; i<projectList.count(); i++) {
-            if (name + extra == projectList.at(i)->getProjectName()) {
-                duplicate = true;
-                break;
-            }
-        }
-        if (duplicate) {
-            count++;
-            extra = " " + n2s(count);
-        }
-    }
-    // Finally we found a unique name.
-    name = name + extra;
-    prj->setProjectName(name);
-    addProject(prj);
-}
-
-/* Open a project from the specified filename and add to project list and GUI. */
-bool MainWindow::openProject(QString filename)
-{
-    KonfytProject* prj = new KonfytProject();
-    connect(prj, &KonfytProject::userMessage, this, &MainWindow::userMessage);
+    ProjectPtr prj(new KonfytProject());
 
     if (prj->loadProject(filename)) {
-        // Add project to list and gui
-        addProject(prj); // This will add to list, connect signal and add to gui.
-        userMessage("Project loaded.");
+        print("Project loaded from file.");
+        // Load project in engines and GUI
+        loadProject(prj);
         return true;
     } else {
-        userMessage("Failed to load project.");
+        print("Failed to load project from file: " + filename);
         messageBox("Error loading project " + filename);
-        delete prj;
         return false;
     }
-}
-
-/* Add project to projectList and GUI. */
-void MainWindow::addProject(KonfytProject* prj)
-{
-    // If startupProject is true, a default created project exists.
-    // If this project has not been modified, remove it.
-    if (startupProject) {
-        KonfytProject* prj = getCurrentProject();
-        if (prj == NULL) {
-            // So the project has already been removed.
-        } else {
-            if (prj->isModified() == false) {
-                // Remove it!
-                removeProject(0);
-            }
-        }
-        startupProject = false;
-    }
-
-    connect(prj, &KonfytProject::userMessage, this, &MainWindow::userMessage);
-    projectList.append(prj);
-    // Add to tabs
-    QLabel* lbl = new QLabel();
-    ui->tabWidget_Projects->blockSignals(true);
-    ui->tabWidget_Projects->addTab(lbl,prj->getProjectName());
-    ui->tabWidget_Projects->blockSignals(false);
 }
 
 void MainWindow::setupConnectionsPage()
@@ -867,8 +501,8 @@ void MainWindow::connectionsTreeSelectMidiOutPort(int portId)
 
 void MainWindow::gui_updatePortsBussesTree()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
 
     /* Buses
      *  |__ bus 1
@@ -968,13 +602,13 @@ void MainWindow::gui_updatePortsBussesTree()
 
 void MainWindow::gui_updateConnectionsTree()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) {
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) {
         clearConnectionsTree();
         return;
     }
 
-    if (ui->tree_portsBusses->currentItem() == NULL) {
+    if (ui->tree_portsBusses->currentItem() == nullptr) {
         clearConnectionsTree();
         return;
     }
@@ -984,19 +618,19 @@ void MainWindow::gui_updateConnectionsTree()
     int j; // Index/id of bus/port
     if ( ui->tree_portsBusses->currentItem()->parent() == busParent ) {
         // A bus is selected
-        l = jack->getAudioInputPortsList();
+        l = jack.getAudioInputPortsList();
         j = tree_busMap.value( ui->tree_portsBusses->currentItem() );
     } else if ( ui->tree_portsBusses->currentItem()->parent() == audioInParent ) {
         // An audio input port is selected
-        l = jack->getAudioOutputPortsList();
+        l = jack.getAudioOutputPortsList();
         j = tree_audioInMap.value( ui->tree_portsBusses->currentItem() );
     } else if ( ui->tree_portsBusses->currentItem()->parent() == midiOutParent ) {
         // A midi output port is selected
-        l = jack->getMidiInputPortsList();
+        l = jack.getMidiInputPortsList();
         j = tree_midiOutMap.value( ui->tree_portsBusses->currentItem() );
     } else if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
         // Midi input port is selected
-        l = jack->getMidiOutputPortsList();
+        l = jack.getMidiOutputPortsList();
         j = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
     } else {
         // One of the parents are selected.
@@ -1082,8 +716,8 @@ void MainWindow::gui_updateConnectionsTree()
     }
 
     QStringList ourJackClients;
-    ourJackClients.append(jack->clientName());
-    ourJackClients.append(pengine->ourJackClientNames());
+    ourJackClients.append(jack.clientName());
+    ourJackClients.append(pengine.ourJackClientNames());
 
     // Add all ports that are in toAdd
     for (int i=0; i < toAdd.count(); i++) {
@@ -1190,8 +824,8 @@ void MainWindow::addClientPortToTree(QString jackport)
 /* One of the connections page ports checkboxes have been clicked. */
 void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
 
     QTreeWidgetItem* t;
     portLeftRight leftRight;
@@ -1219,12 +853,12 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
 
         if (c->isChecked()) {
             // Connect
-            jack->addPortClient(jackPort, portString);
+            jack.addPortClient(jackPort, portString);
             // Also add in project
             prj->audioBus_addClient(busId, leftRight, portString);
         } else {
             // Disconnect
-            jack->removeAndDisconnectPortClient(jackPort, portString);
+            jack.removeAndDisconnectPortClient(jackPort, portString);
             // Also remove in project
             prj->audioBus_removeClient(busId, leftRight, portString);
         }
@@ -1241,12 +875,12 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
 
         if (c->isChecked()) {
             // Connect
-            jack->addPortClient(jackPort, portString);
+            jack.addPortClient(jackPort, portString);
             // Also add in project
             prj->audioInPort_addClient(portId, leftRight, portString);
         } else {
             // Disconnect
-            jack->removeAndDisconnectPortClient(jackPort, portString);
+            jack.removeAndDisconnectPortClient(jackPort, portString);
             // Also remove in project
             prj->audioInPort_removeClient(portId, leftRight, portString);
         }
@@ -1258,12 +892,12 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
 
         if (c->isChecked()) {
             // Connect
-            jack->addPortClient(p.jackPort, portString);
+            jack.addPortClient(p.jackPort, portString);
             // Also add in project
             prj->midiOutPort_addClient(portId, portString);
         } else {
             // Disconnect
-            jack->removeAndDisconnectPortClient(p.jackPort, portString);
+            jack.removeAndDisconnectPortClient(p.jackPort, portString);
             // Also remove in project
             prj->midiOutPort_removeClient(portId, portString);
         }
@@ -1275,12 +909,12 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
 
         if (c->isChecked()) {
             // Connect
-            jack->addPortClient(p.jackPort, portString);
+            jack.addPortClient(p.jackPort, portString);
             // Also add in project
             prj->midiInPort_addClient(portId, portString);
         } else {
             // Disconnect
-            jack->removeAndDisconnectPortClient(p.jackPort, portString);
+            jack.removeAndDisconnectPortClient(p.jackPort, portString);
             // Also remove in project
             prj->midiInPort_removeClient(portId, portString);
         }
@@ -1393,8 +1027,8 @@ void MainWindow::showTriggersPage()
 {
     ui->stackedWidget->setCurrentWidget(ui->triggersPage);
 
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
 
     // Clear trigger text for whole gui list
     QList<QTreeWidgetItem*> items = triggersItemActionHash.keys();
@@ -1418,37 +1052,34 @@ void MainWindow::showTriggersPage()
 
 }
 
-/* Set current project corresponding to specified index.
- * If index is -1, the last project in the list is loaded. */
-void MainWindow::setCurrentProject(int i)
+/* Load the specified project in the required engines and GUI. Unload the
+ * previous active project. */
+void MainWindow::loadProject(ProjectPtr prj)
 {
-    if (i==-1) { i = projectList.count()-1; }
-    if ( (i<0) || (i>=projectList.count()) ) {
-        userMessage("SET_CURRENT_PROJECT: INVALID INDEX " + n2s(i));
+    if (!prj) {
+        print("ERROR: loadProject: null pointer");
         return;
     }
 
     // First, disconnect signals from current project.
-    KonfytProject* oldprj = getCurrentProject();
-    if (oldprj != NULL) {
-        oldprj->disconnect();
+    if (mCurrentProject) {
+        mCurrentProject->disconnect();
     }
-    // Set up the current project
 
-    currentProject = i;
-    KonfytProject* prj = projectList.at(i);
-    pengine->setProject(prj); // patch engine needs a pointer to the current project for some stuff.
+    // Set up the new project
+    mCurrentProject = prj;
+    pengine.setProject(mCurrentProject);
 
     gui_updateProjectName();
     // Populate patch list for current project
     patchListAdapter.clear();
-    patchListAdapter.addPatches(prj->getPatchList());
+    patchListAdapter.addPatches(mCurrentProject->getPatchList());
 
-    jack->pauseJackProcessing(true);
+    jack.pauseJackProcessing(true);
 
     // Remove all JACK audio and MIDI in/out ports
-    jack->removeAllAudioInAndOutPorts();
-    jack->removeAllMidiInAndOutPorts();
+    jack.removeAllAudioInAndOutPorts();
+    jack.removeAllMidiInAndOutPorts();
 
     // Process MIDI in ports
 
@@ -1462,11 +1093,11 @@ void MainWindow::setCurrentProject(int i)
 
         // Also add port clients to Jack
         foreach (QString client, projectPort.clients) {
-            jack->addPortClient(projectPort.jackPort, client);
+            jack.addPortClient(projectPort.jackPort, client);
         }
 
         // Set port midi filter in Jack
-        jack->setPortFilter(projectPort.jackPort, projectPort.filter);
+        jack.setPortFilter(projectPort.jackPort, projectPort.filter);
     }
 
 
@@ -1482,7 +1113,7 @@ void MainWindow::setCurrentProject(int i)
 
         // Also add port clients to Jack
         foreach (QString client, projectPort.clients) {
-            jack->addPortClient(projectPort.jackPort, client);
+            jack.addPortClient(projectPort.jackPort, client);
         }
     }
 
@@ -1504,13 +1135,13 @@ void MainWindow::setCurrentProject(int i)
             prj->audioBus_replace_noModify( id, b ); // use noModify function as to not change the project's modified state.
             // Add port clients to jack client
             foreach (QString client, b.leftOutClients) {
-                jack->addPortClient(b.leftJackPort, client);
+                jack.addPortClient(b.leftJackPort, client);
             }
             foreach (QString client, b.rightOutClients) {
-                jack->addPortClient(b.rightJackPort, client);
+                jack.addPortClient(b.rightJackPort, client);
             }
         } else {
-            userMessage("ERROR: setCurrentProject: Failed to create audio bus Jack port(s).");
+            print("ERROR: setCurrentProject: Failed to create audio bus Jack port(s).");
         }
 
     }
@@ -1533,13 +1164,13 @@ void MainWindow::setCurrentProject(int i)
             prj->audioInPort_replace_noModify( id, p );
             // Add port clients to jack client
             foreach (QString client, p.leftInClients) {
-                jack->addPortClient(p.leftJackPort, client);
+                jack.addPortClient(p.leftJackPort, client);
             }
             foreach (QString client, p.rightInClients) {
-                jack->addPortClient(p.rightJackPort, client);
+                jack.addPortClient(p.rightJackPort, client);
             }
         } else {
-            userMessage("ERROR: setCurrentProject: Failed to create audio input Jack port(s).");
+            print("ERROR: setCurrentProject: Failed to create audio input Jack port(s).");
         }
 
     }
@@ -1556,9 +1187,13 @@ void MainWindow::setCurrentProject(int i)
         ui->listWidget_ExtApps->addItem(temp);
     }
     // Connect signals
-    connect(prj, &KonfytProject::processStartedSignal, this, &MainWindow::processStartedSlot);
-    connect(prj, &KonfytProject::processFinishedSignal, this, &MainWindow::processFinishedSlot);
-    connect(prj, &KonfytProject::projectModifiedChanged, this, &MainWindow::projectModifiedStateChanged);
+    connect(prj.data(), &KonfytProject::print, this, &MainWindow::print);
+    connect(prj.data(), &KonfytProject::processStartedSignal,
+            this, &MainWindow::processStartedSlot);
+    connect(prj.data(), &KonfytProject::processFinishedSignal,
+            this, &MainWindow::processFinishedSlot);
+    connect(prj.data(), &KonfytProject::projectModifiedChanged,
+            this, &MainWindow::projectModifiedStateChanged);
 
     // Get triggers from project and add to quick lookup hash
     QList<KonfytTrigger> trigs = prj->getTriggerList();
@@ -1573,22 +1208,22 @@ void MainWindow::setCurrentProject(int i)
     }
 
     // Update other JACK connections in JACK
-    jack->clearOtherJackConPair();
+    jack.clearOtherJackConPair();
     // MIDI
     QList<KonfytJackConPair> jackCons = prj->getJackMidiConList();
     for (int i=0; i < jackCons.count(); i++) {
-        jack->addOtherJackConPair( jackCons[i] );
+        jack.addOtherJackConPair( jackCons[i] );
     }
     // Audio
     jackCons = prj->getJackAudioConList();
     for (int i=0; i < jackCons.count(); i++) {
-        jack->addOtherJackConPair( jackCons[i] );
+        jack.addOtherJackConPair( jackCons[i] );
     }
 
     // Update project modified indication in GUI
     projectModifiedStateChanged(prj->isModified());
 
-    masterPatch = NULL;
+    masterPatch = nullptr;
     gui_updatePatchView();
 
 
@@ -1605,15 +1240,12 @@ void MainWindow::setCurrentProject(int i)
     // Indicate warnings to user
     updateGUIWarnings();
 
-    // Change project tab in GUI
-    ui->tabWidget_Projects->blockSignals(true);
-    ui->tabWidget_Projects->setCurrentIndex(currentProject);
-    ui->tabWidget_Projects->blockSignals(false);
-
     // Default to patch view (ensure no edit screens are open for previous projects)
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 
-    jack->pauseJackProcessing(false);
+    jack.pauseJackProcessing(false);
+
+    print("Project loaded.");
 }
 
 /* Clears and fills the specified menu with items corresponding to project MIDI
@@ -1623,8 +1255,8 @@ void MainWindow::updateMidiOutPortsMenu(QMenu *menu)
 {
     menu->clear();
 
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
 
     QList<int> midiOutIds = prj->midiOutPort_getAllPortIds();
     foreach (int id, midiOutIds) {
@@ -1645,8 +1277,8 @@ void MainWindow::updateAudioInPortsMenu(QMenu *menu)
 {
     menu->clear();
 
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
 
     QList<int> audioInIds = prj->audioInPort_getAllPortIds();
     foreach (int id, audioInIds) {
@@ -1674,8 +1306,8 @@ KonfytPatch *MainWindow::newPatchToProject()
 /* Remove the patch with specified index from the project. */
 void MainWindow::removePatchFromProject(int i)
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == nullptr) { return; }
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
 
     if ( (i>=0) && (i<prj->getNumPatches()) ) {
 
@@ -1683,7 +1315,7 @@ void MainWindow::removePatchFromProject(int i)
         KonfytPatch* patch = prj->removePatch(i);
 
         // Remove from patch engine
-        pengine->unloadPatch(patch);
+        pengine.unloadPatch(patch);
 
         // Remove from GUI
         patchListAdapter.removePatch(patch);
@@ -1692,7 +1324,7 @@ void MainWindow::removePatchFromProject(int i)
             masterPatch = nullptr;
             gui_updatePatchView();
         }
-        userMessage("Patch Removed.");
+        print("Patch Removed.");
 
         // Delete the patch
         delete patch;
@@ -1700,30 +1332,39 @@ void MainWindow::removePatchFromProject(int i)
 }
 
 /* Add a patch to the current project, and update the GUI. */
-void MainWindow::addPatchToProject(KonfytPatch* newPatch)
+void MainWindow::addPatchToProject(KonfytPatch* patch)
 {
-    KonfytProject *prj = getCurrentProject();
-    if (prj == nullptr) {
-        userMessage("Select a project.");
+    if (!mCurrentProject) {
+        print("ERROR: addPatchToProject: No active project.");
         return;
     }
 
-    prj->addPatch(newPatch);
+    mCurrentProject->addPatch(patch);
     // Add to list in gui
-    patchListAdapter.addPatch(newPatch);
+    patchListAdapter.addPatch(patch);
 }
 
-KonfytProject* MainWindow::getCurrentProject()
+KonfytPatch *MainWindow::addPatchToProjectFromFile(QString filename)
 {
-    if (projectList.count()) {
-        if ( (currentProject<0) || (currentProject >= projectList.count())) {
-            return NULL;
-        } else {
-            return projectList.at(currentProject);
-        }
-    } else {
-        return NULL;
+    if (!mCurrentProject) {
+        print("ERROR: addPatchToProjectFromFile: No active project.");
+        return nullptr;
     }
+
+    KonfytPatch* pt = new KonfytPatch();
+    QString errors;
+    if (pt->loadPatchFromFile(filename, &errors)) {
+        addPatchToProject(pt);
+    } else {
+        print("Failed loading patch from file: " + filename);
+        delete pt;
+        pt = nullptr;
+    }
+    if (!errors.isEmpty()) {
+        print("Load errors for patch " + filename + ":\n" + errors);
+    }
+
+    return pt;
 }
 
 /* Returns true if a program is selected in the library. */
@@ -1839,7 +1480,7 @@ void MainWindow::setMasterGain(float gain)
     } else {
         masterGain = gain;
     }
-    pengine->setMasterGain(gain);
+    pengine.setMasterGain(gain);
 }
 
 /* Load the appropriate patch based on the mode (preview mode or normal) and
@@ -1853,10 +1494,10 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
 
         // Load the selected item in the library to preview
 
-        pengine->loadPatch(&previewPatch);
+        pengine.loadPatch(&previewPatch);
         // Remove all layers
         foreach (KfPatchLayerWeakPtr layer, previewPatch.layers()) {
-            pengine->removeLayer(layer);
+            pengine.removeLayer(layer);
         }
 
         LibraryTreeItemType type = library_getSelectedTreeItemType();
@@ -1864,7 +1505,7 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
         if (library_isProgramSelected()) {
             // Program selected. Load program into preview patch
             KonfytSoundfontProgram program = library_getSelectedProgram();
-            pengine->addProgramLayer(program);
+            pengine.addProgramLayer(program);
 
         } else if ( type == libTreePatch ) {
 
@@ -1874,7 +1515,7 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
         } else if ( type == libTreeSFZ ) {
 
             // Sfz is selected. Add sfz layer to preview patch
-            pengine->addSfzLayer(library_selectedSfz);
+            pengine.addSfzLayer(library_selectedSfz);
         }
 
         setMasterGain(previewGain);
@@ -1884,7 +1525,7 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
         // Normal mode (not preview mode)
 
         if (masterPatch != nullptr) {
-            pengine->loadPatch(this->masterPatch);
+            pengine.loadPatch(this->masterPatch);
             setMasterGain(masterGain);
         }
 
@@ -1897,7 +1538,7 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
 
     // Update master slider (as this is different for normal/preview mode)
     ui->horizontalSlider_MasterGain->setValue(
-                pengine->getMasterGain()*ui->horizontalSlider_MasterGain->maximum());
+                pengine.getMasterGain()*ui->horizontalSlider_MasterGain->maximum());
 
     // Indicate to the user that the patch is not modified.
     setPatchModified(false);
@@ -1947,7 +1588,7 @@ void MainWindow::gui_updateWindowTitle()
     if (previewMode) {
         this->setWindowTitle("Preview - " + QString(APP_NAME));
     } else {
-        KonfytPatch* currentPatch = pengine->currentPatch();
+        KonfytPatch* currentPatch = pengine.currentPatch();
         if (currentPatch) {
             setWindowTitle(QString("%1 - %2").arg(currentPatch->name()).arg(APP_NAME));
         } else {
@@ -1963,7 +1604,7 @@ void MainWindow::setupPatchListAdapter()
             this, &MainWindow::onPatchSelected);
     connect(&patchListAdapter, &PatchListWidgetAdapter::patchMoved,
             [=](int indexFrom, int indexTo) {
-        KonfytProject* prj = getCurrentProject();
+        ProjectPtr prj = mCurrentProject;;
         if (!prj) { return; }
         prj->movePatch(indexFrom, indexTo);
     });
@@ -2231,11 +1872,16 @@ void MainWindow::fillTreeWithSearch(QString search)
     ui->treeWidget_Library->expandItem(library_sfRoot);
 }
 
-/* Displays a user message on the GUI. */
-void MainWindow::userMessage(QString message)
+void MainWindow::setupFilesystemView()
 {
-    static bool start = true;
+    this->fsview_currentPath = QDir::homePath();
+    refreshFilesystemView();
+    ui->tabWidget_library->setCurrentWidget(ui->tab_library);
+}
 
+/* Displays a message in the GUI console. */
+void MainWindow::print(QString message)
+{
     ui->textBrowser->append(message);
 
     /* Ensure textBrowser scrolls to maximum when it is filled with text. Usually
@@ -2243,16 +1889,29 @@ void MainWindow::userMessage(QString message)
      * happen from the start. Once it's there, we set 'start=false' as the
      * user / textBrowser can then handle it themselves. */
     QScrollBar* v = ui->textBrowser->verticalScrollBar();
-    if (start) {
+    if (mPrintStart) {
         if (v->value() != v->maximum()) {
             v->setValue(v->maximum());
-            start = false;
+            mPrintStart = false;
         }
     }
 
-    // Seperate console dialog
-    this->consoleDiag->userMessage(message);
+    // Separate console dialog
+    consoleDialog.print(message);
+}
 
+void MainWindow::setupKeyboardShortcuts()
+{
+    shortcut_save = new QShortcut(QKeySequence("Ctrl+S"), this);
+    connect(shortcut_save, &QShortcut::activated,
+            this, &MainWindow::shortcut_save_activated);
+
+    shortcut_panic = new QShortcut(QKeySequence("Ctrl+P"), this);
+    connect(shortcut_panic, &QShortcut::activated,
+            this, &MainWindow::shortcut_panic_activated);
+
+    ui->pushButton_Panic->setToolTip( ui->pushButton_Panic->toolTip() +
+            " [" + shortcut_panic->key().toString() + "]");
 }
 
 void MainWindow::error_abort(QString msg)
@@ -2282,7 +1941,7 @@ QStringList MainWindow::scanDirForFiles(QString dirname, QString filenameExtensi
     QStringList ret;
 
     if (!dirExists(dirname)) {
-        userMessage(QString("Scan dir for %1 files: Dir does not exist: %2")
+        print(QString("Scan dir for %1 files: Dir does not exist: %2")
                     .arg(filenameExtension, dirname));
         return ret;
     }
@@ -2318,12 +1977,102 @@ QStringList MainWindow::scanDirForFiles(QString dirname, QString filenameExtensi
     return ret;
 }
 
+/* Setup the initial project based on command-line arguments. */
+void MainWindow::setupInitialProjectFromCmdLineArgs()
+{
+    bool defaultProject = false;
+
+    // Find the first project file specified in cmdline arguments, if any
+    foreach (QString f, appInfo.filesToLoad) {
+        if ( !fileIsPatch(f) && !fileIsSfzOrGig(f) && !fileIsSoundfont(f) ) {
+            if (mCurrentProject) {
+                print("Project already loaded, skipping cmdline arg: " + f);
+                continue;
+            }
+            // Try to load project
+            print("Opening project from cmdline arg: " + f);
+            if (loadProjectFromFile(f)) {
+                print("Project loaded from cmdline arg.");
+            } else {
+                print("Failed to load project from cmdline arg.");
+            }
+        }
+    }
+
+    // If no project is loaded yet, create default project
+    if (!mCurrentProject) {
+        print("Creating default new project.");
+        defaultProject = true;
+        loadNewProject(); // Create and load new project
+        // Since this is a default startup project, mark as not modified.
+        mCurrentProject->setModified(false);
+    }
+
+    // Load non-project files specified in cmdline arguments, if any
+    foreach (QString f, appInfo.filesToLoad) {
+        if (fileIsPatch(f)) {
+            // Load patch into current project and switch to patch
+
+            addPatchToProjectFromFile(f);
+
+            // Locate in filesystem view
+            ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
+            cdFilesystemView(QFileInfo(f).absoluteFilePath());
+            selectItemInFilesystemView(f);
+
+        } else if (fileIsSfzOrGig(f)) {
+            // Create new patch and load sfz into patch
+            newPatchToProject(); // Create a new patch and add to current project.
+            setCurrentPatchByIndex(-1);
+
+            addSfzToCurrentPatch(f);
+            // Rename patch
+            ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(f) );
+            on_lineEdit_PatchName_editingFinished();
+
+            // Locate in filesystem view
+            ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
+            cdFilesystemView(QFileInfo(f).absoluteFilePath());
+            selectItemInFilesystemView(f);
+
+        } else if (fileIsSoundfont(f)) {
+            // Create new patch and load soundfont into patch
+            newPatchToProject(); // Create a new patch and add to current project.
+            setCurrentPatchByIndex(-1);
+
+            // Locate soundfont in filebrowser, select it and show its programs
+            ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
+            cdFilesystemView(QFileInfo(f).absoluteFilePath());
+            selectItemInFilesystemView(f);
+            // Load from filesystem view
+            on_treeWidget_filesystem_itemDoubleClicked( ui->treeWidget_filesystem->currentItem(), 0 );
+            // Add first program to current patch
+            if (ui->listWidget_LibraryBottom->count()) {
+                ui->listWidget_LibraryBottom->setCurrentRow(0);
+                addProgramToCurrentPatch( library_getSelectedProgram() );
+            }
+
+            // Rename patch
+            ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(f) );
+            on_lineEdit_PatchName_editingFinished();
+        }
+    }
+
+    // If no patches have been loaded from cmdline arguments, and the current
+    // project is a default created project, add a default patch.
+    if ( defaultProject && (mCurrentProject->getNumPatches() == 0) ) {
+        newPatchToProject(); // Create a new patch and add to current project.
+        setCurrentPatchByIndex(0);
+        // Since this is a default startup project, mark as not modified.
+        mCurrentProject->setModified(false);
+    }
+}
+
 QString MainWindow::getBaseNameWithoutExtension(QString filepath)
 {
     QFileInfo fi(filepath);
     return fi.baseName();
 }
-
 
 void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*column*/)
 {
@@ -2334,8 +2083,8 @@ void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*
 /* Set the current patch, and update the gui accordingly. */
 void MainWindow::setCurrentPatch(KonfytPatch* patch)
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == nullptr) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     this->masterPatch = patch;
     mCurrentPatchIndex = prj->getPatchIndex(patch);
@@ -2344,7 +2093,7 @@ void MainWindow::setCurrentPatch(KonfytPatch* patch)
 
     if (patch) {
         // Send MIDI events associated with patch layers
-        pengine->sendCurrentPatchMidi();
+        pengine.sendCurrentPatchMidi();
     }
 }
 
@@ -2353,8 +2102,8 @@ void MainWindow::setCurrentPatch(KonfytPatch* patch)
  * selected. */
 void MainWindow::setCurrentPatchByIndex(int index)
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == nullptr) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     // If index is -1, select the last patch
     if (index == -1) {
@@ -2475,7 +2224,7 @@ void MainWindow::addSfzToCurrentPatch(QString sfzPath)
     newPatchIfMasterNull();
 
     // Add layer to engine
-    KfPatchLayerWeakPtr layer = pengine->addSfzLayer(sfzPath);
+    KfPatchLayerWeakPtr layer = pengine.addSfzLayer(sfzPath);
 
     // Add layer to GUI
     addPatchLayerToGUI(layer);
@@ -2489,7 +2238,7 @@ void MainWindow::addProgramToCurrentPatch(KonfytSoundfontProgram p)
     newPatchIfMasterNull();
 
     // Add program to engine
-    KfPatchLayerWeakPtr layer = pengine->addProgramLayer(p);
+    KfPatchLayerWeakPtr layer = pengine.addProgramLayer(p);
 
     // Add layer to GUI
     addPatchLayerToGUI(layer);
@@ -2500,7 +2249,7 @@ void MainWindow::addProgramToCurrentPatch(KonfytSoundfontProgram p)
 /* If masterPatch is NULL, adds a new patch to the project and switches to it. */
 void MainWindow::newPatchIfMasterNull()
 {
-    KonfytProject* prj = getCurrentProject();
+    ProjectPtr prj = mCurrentProject;;
     Q_ASSERT( prj != NULL );
 
     if (masterPatch == NULL) {
@@ -2516,11 +2265,11 @@ void MainWindow::addMidiPortToCurrentPatch(int port)
     newPatchIfMasterNull();
 
     // Check if the port isn't already in the patch
-    QList<int> l = pengine->currentPatch()->getMidiOutputPortListProjectIds();
+    QList<int> l = pengine.currentPatch()->getMidiOutputPortListProjectIds();
     if (l.contains(port)) { return; }
 
     // Add port to current patch in engine
-    KfPatchLayerWeakPtr layer = pengine->addMidiOutPortToPatch(port);
+    KfPatchLayerWeakPtr layer = pengine.addMidiOutPortToPatch(port);
 
     // Add to GUI list
     addPatchLayerToGUI(layer);
@@ -2534,11 +2283,11 @@ void MainWindow::addAudioInPortToCurrentPatch(int port)
     newPatchIfMasterNull();
 
     // Check if the port isn't already in the patch
-    QList<int> l = pengine->currentPatch()->getAudioInPortListProjectIds();
+    QList<int> l = pengine.currentPatch()->getAudioInPortListProjectIds();
     if (l.contains(port)) { return; }
 
     // Add port to current patch in engine
-    KfPatchLayerWeakPtr layer = pengine->addAudioInPortToPatch(port);
+    KfPatchLayerWeakPtr layer = pengine.addAudioInPortToPatch(port);
 
     // Add to GUI list
     addPatchLayerToGUI(layer);
@@ -2576,13 +2325,13 @@ void MainWindow::on_lineEdit_PatchName_returnPressed()
 void MainWindow::on_lineEdit_PatchName_editingFinished()
 {
     // Rename patch
-    pengine->setPatchName(ui->lineEdit_PatchName->text());
-
-    // Update GUI
-    patchListAdapter.patchModified(pengine->currentPatch());
+    pengine.setPatchName(ui->lineEdit_PatchName->text());
 
     // Indicate to the user that the patch has been modified.
     setPatchModified(true);
+
+    patchListAdapter.patchModified(pengine.currentPatch());
+    gui_updateWindowTitle();
 }
 
 void MainWindow::onPatchMidiOutPortsMenu_aboutToShow()
@@ -2600,25 +2349,25 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
 {
     QDir dir(patchesDir);
     if (!dir.exists()) {
-        userMessage("Patches directory does not exist.");
+        print("Patches directory does not exist.");
         return false;
     }
 
     QString patchName = getUniqueFilename(dir.path(), patch->name(), "." + QString(KONFYT_PATCH_SUFFIX) );
     if (patchName == "") {
-        userMessage("Could not find a suitable filename.");
+        print("Could not find a suitable filename.");
         return false;
     }
 
     if (patchName != patch->name() + "." + KONFYT_PATCH_SUFFIX) {
-        userMessage("Duplicate name exists. Saving patch as:");
-        userMessage(patchName);
+        print("Duplicate name exists. Saving patch as:");
+        print(patchName);
     }
 
     // Add directory, and save.
     patchName = patchesDir + "/" + patchName;
     if (patch->savePatchToFile(patchName)) {
-        userMessage("Patch saved as " + patchName);
+        print("Patch saved as " + patchName);
         db.addPatch(patchName);
         // Refresh tree view if not in searchmode
         if (!searchMode) {
@@ -2629,7 +2378,7 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
 
         return true;
     } else {
-        userMessage("Failed saving patch to file " + patchName);
+        print("Failed saving patch to file " + patchName);
         return false;
     }
 }
@@ -2642,7 +2391,7 @@ QString MainWindow::getUniqueFilename(QString dirname, QString name, QString ext
 {
     QDir dir(dirname);
     if (!dir.exists()) {
-        emit userMessage("getUniqueFilename: Directory does not exist.");
+        emit print("getUniqueFilename: Directory does not exist.");
         return "";
     }
 
@@ -2677,62 +2426,54 @@ QString MainWindow::getUniqueFilename(QString dirname, QString name, QString ext
     return name + extra + extension;
 }
 
-
 /* Add process (External application) to GUI and current project. */
 void MainWindow::addProcess(konfytProcess* process)
 {
-    KonfytProject* p = getCurrentProject();
-    if (p == NULL) {
-        userMessage("Select a project.");
+    if (!mCurrentProject) {
+        print("No active project.");
         return;
     }
     // Add to project list
-    p->addProcess(process);
+    mCurrentProject->addProcess(process);
     // Add to GUI list
     ui->listWidget_ExtApps->addItem(process->toString_appAndArgs());
 }
 
 void MainWindow::runProcess(int index)
 {
-    KonfytProject* p = getCurrentProject();
-    if (p == NULL) {
-        return;
-    }
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
+
     // Abort if process is already running
-    if (p->isProcessRunning(index)) {
-        userMessage("Process is already running. Stop it before running it again.");
+    if (prj->isProcessRunning(index)) {
+        print("Process is already running. Stop it before running it again.");
         return;
     }
     // Start process
-    p->runProcess(index);
+    prj->runProcess(index);
     // Indicate in list widget
     if ( (index >=0) && (index < ui->listWidget_ExtApps->count()) ) {
         // Indicate in list widget
         QListWidgetItem* item = ui->listWidget_ExtApps->item(index);
         item->setText("[starting] " + item->text());
     } else {
-        userMessage("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
+        print("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
     }
 }
 
 void MainWindow::stopProcess(int index)
 {
-    KonfytProject* p = getCurrentProject();
-    if (p == NULL) {
-        return;
-    }
+    if (!mCurrentProject) { return; }
     // Stop process
-    p->stopProcess(index);
+    mCurrentProject->stopProcess(index);
 }
 
 void MainWindow::removeProcess(int index)
 {
-    KonfytProject* p = getCurrentProject();
-    if (p == NULL) {
-        return;
-    }
+    if (!mCurrentProject) { return; }
+
     // Remove process from project
-    p->removeProcess(index);
+    mCurrentProject->removeProcess(index);
     // Remove from GUI list
     QListWidgetItem* item = ui->listWidget_ExtApps->item(index);
     delete item;
@@ -2745,7 +2486,7 @@ void MainWindow::processStartedSlot(int index, konfytProcess *process)
         QListWidgetItem* item = ui->listWidget_ExtApps->item(index);
         item->setText("[running] " + process->toString_appAndArgs());
     } else {
-        userMessage("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
+        print("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
     }
 }
 
@@ -2756,7 +2497,7 @@ void MainWindow::processFinishedSlot(int index, konfytProcess *process)
         QListWidgetItem* item = ui->listWidget_ExtApps->item(index);
         item->setText("[stopped] " + process->toString_appAndArgs());
     } else {
-        userMessage("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
+        print("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
     }
 }
 
@@ -2856,7 +2597,7 @@ void MainWindow::scanForDatabase()
 {
     startWaiter("Scanning database directories...");
     // Display waiting screen.
-    userMessage("Starting database scan.");
+    print("Starting database scan.");
     showWaitingPage("Scanning database directories...");
     // Start scanning for directories.
     db.scanDirs(soundfontsDir, sfzDir, patchesDir);
@@ -2871,19 +2612,19 @@ void MainWindow::createSettingsDir()
     QDir dir(settingsDir);
     if (!dir.exists()) {
         if (dir.mkpath(settingsDir)) {
-            userMessage("Created settings directory: " + settingsDir);
+            print("Created settings directory: " + settingsDir);
         } else {
-            userMessage("Failed to create settings directory: " + settingsDir);
+            print("Failed to create settings directory: " + settingsDir);
         }
     }
 }
 
 void MainWindow::database_scanDirsFinished()
 {
-    userMessage("Database scanning complete.");
-    userMessage("   Found " + n2s(db.getNumSfonts()) + " soundfonts.");
-    userMessage("   Found " + n2s(db.getNumSfz()) + " sfz/gig samples.");
-    userMessage("   Found " + n2s(db.getNumPatches()) + " patches.");
+    print("Database scanning complete.");
+    print("   Found " + n2s(db.getNumSfonts()) + " soundfonts.");
+    print("   Found " + n2s(db.getNumSfz()) + " sfz/gig samples.");
+    print("   Found " + n2s(db.getNumPatches()) + " patches.");
 
     // Save to database file
     saveDatabase();
@@ -2893,14 +2634,50 @@ void MainWindow::database_scanDirsFinished()
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 }
 
+void MainWindow::setupDatabase()
+{
+    connect(&db, &konfytDatabase::print, this, &MainWindow::print);
+
+    connect(&db, &konfytDatabase::scanDirs_finished,
+            this, &MainWindow::database_scanDirsFinished);
+
+    connect(&db, &konfytDatabase::scanDirs_status,
+            this, &MainWindow::database_scanDirsStatus);
+
+    connect(&db, &konfytDatabase::returnSfont_finished,
+            this, &MainWindow::database_returnSfont);
+
+    // Check if database file exists.
+    if (db.loadDatabaseFromFile(settingsDir + "/" + DATABASE_FILE)) {
+        print("Database loaded from file. Rescan to refresh.");
+        print("Database contains:");
+        print("   " + n2s(db.getNumSfonts()) + " soundfonts.");
+        print("   " + n2s(db.getNumPatches()) + " patches.");
+        print("   " + n2s(db.getNumSfz()) + " sfz/gig samples.");
+    } else {
+        print("No database file found.");
+        // Check if old database location exists
+        QString oldDir = QDir::homePath() + "/.konfyt/konfyt.database";
+        if (db.loadDatabaseFromFile(oldDir)) {
+            print("Found database file in old location. Saving to new location.");
+            db.saveDatabaseToFile(settingsDir + "/" + DATABASE_FILE);
+        } else {
+            // Still no database file.
+            print("You can scan directories to create a database from Settings.");
+        }
+    }
+
+    fillTreeWithAll(); // Fill the tree widget with all the database entries
+}
+
 bool MainWindow::saveDatabase()
 {
     // Save to database file
     if (db.saveDatabaseToFile(settingsDir + "/" + DATABASE_FILE)) {
-        userMessage("Saved database to file " + settingsDir + "/" + DATABASE_FILE);
+        print("Saved database to file " + settingsDir + "/" + DATABASE_FILE);
         return true;
     } else {
-        userMessage("Failed to save database.");
+        print("Failed to save database.");
         return false;
     }
 }
@@ -2941,15 +2718,7 @@ void MainWindow::on_pushButtonSettings_QuickRescanLibrary_clicked()
 
 void MainWindow::scanThreadFihishedSlot()
 {
-    userMessage("ScanThread finished!");
-}
-
-
-void MainWindow::on_tabWidget_Projects_currentChanged(int index)
-{
-    if (index >=0) {
-        setCurrentProject(index);
-    }
+    print("ScanThread finished!");
 }
 
 void MainWindow::on_toolButton_RemovePatch_clicked()
@@ -2976,7 +2745,7 @@ void MainWindow::setPatchModified(bool modified)
 
 void MainWindow::setProjectModified()
 {
-    KonfytProject* prj = getCurrentProject();
+    ProjectPtr prj = mCurrentProject;;
     if (prj != NULL) {
         prj->setModified(true);
     }
@@ -2985,7 +2754,7 @@ void MainWindow::setProjectModified()
 /* Set the name of the current project and updates the GUI. */
 void MainWindow::setProjectName(QString name)
 {
-    KonfytProject* prj = getCurrentProject();
+    ProjectPtr prj = mCurrentProject;;
     if (prj != NULL) {
         prj->setProjectName(name);
         gui_updateProjectName();
@@ -2995,10 +2764,11 @@ void MainWindow::setProjectName(QString name)
 /* Update GUI with current project name. */
 void MainWindow::gui_updateProjectName()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj != NULL) {
-        ui->lineEdit_ProjectName->setText(prj->getProjectName());
+    QString name;
+    if (mCurrentProject) {
+        name = mCurrentProject->getProjectName();
     }
+    ui->lineEdit_ProjectName->setText(name);
 }
 
 void MainWindow::projectModifiedStateChanged(bool modified)
@@ -3013,40 +2783,34 @@ void MainWindow::projectModifiedStateChanged(bool modified)
 
     if (modified) {
         ui->toolButton_Project->setStyleSheet(stylesheet_orange);
-        ui->tabWidget_Projects->setTabText( currentProject, getCurrentProject()->getProjectName() + "*" );
     } else {
         ui->toolButton_Project->setStyleSheet(stylesheet_normal);
-        ui->tabWidget_Projects->setTabText( currentProject, getCurrentProject()->getProjectName() );
     }
 }
 
 // Save current project in its own folder, in the projects dir.
 bool MainWindow::saveCurrentProject()
 {
-    KonfytProject* p = getCurrentProject();
-
-    if (p == NULL) {
-        userMessage("Select a project.");
+    if (!mCurrentProject) {
+        print("No active project.");
         return false;
     }
 
-    return saveProject(p);
+    return saveProject(mCurrentProject);
 }
 
-bool MainWindow::saveProject(KonfytProject *p)
+bool MainWindow::saveProject(ProjectPtr prj)
 {
-    static bool InformedUserAboutProjectsDir = false;
-
-    if (p == NULL) {
-        userMessage("Select a project.");
+    if (!prj) {
+        print("ERROR: saveProject: project null.");
         return false;
     }
 
     // Try to save. If this fails, it means the project has not been saved
     // yet and we need to create a directory for it.
-    if (p->saveProject()) {
+    if (prj->saveProject()) {
         // Saved successfully.
-        userMessage("Project saved.");
+        print("Project saved.");
         return true;
     } else {
         // We need to find a directory for the project.
@@ -3055,23 +2819,23 @@ bool MainWindow::saveProject(KonfytProject *p)
 
         // See if a default projects directory is set
         if (this->projectsDir == "") {
-            userMessage("Projects directory is not set.");
+            print("Projects directory is not set.");
             // Inform the user about project directory that is not set
-            if (InformedUserAboutProjectsDir == false) {
+            if (informedUserAboutProjectsDir == false) {
                 messageBox("No default projects directory has been set. You can set this in Settings.");
-                InformedUserAboutProjectsDir = true; // So we only show it once
+                informedUserAboutProjectsDir = true; // So we only show it once
             }
             // We need to bring up a save dialog.
         } else {
             // Find a unique directory name within our default projects dir
-            QString dir = getUniqueFilename(this->projectsDir,sanitiseFilename( p->getProjectName() ),"");
+            QString dir = getUniqueFilename(this->projectsDir,sanitiseFilename( prj->getProjectName() ),"");
             if (dir == "") {
-                userMessage("Failed to obtain a unique directory name.");
+                print("Failed to obtain a unique directory name.");
             } else {
                 dir = this->projectsDir + "/" + dir;
                 // We now have a unique directory filename.
                 QMessageBox msgbox;
-                msgbox.setText("Do you want to save project \"" + p->getProjectName() + "\" to the following path? Selecting No will bring up a dialog box to select a location.");
+                msgbox.setText("Do you want to save project \"" + prj->getProjectName() + "\" to the following path? Selecting No will bring up a dialog box to select a location.");
                 msgbox.setInformativeText(dir);
                 msgbox.setIcon(QMessageBox::Question);
                 msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
@@ -3079,10 +2843,10 @@ bool MainWindow::saveProject(KonfytProject *p)
                 if (ret == QMessageBox::Yes) {
                     QDir d;
                     if (d.mkdir(dir)) {
-                        userMessage("Created project directory: " + dir);
+                        print("Created project directory: " + dir);
                         saveDir = dir;
                     } else {
-                        userMessage("Failed to create project directory: " + dir);
+                        print("Failed to create project directory: " + dir);
                         messageBox("Failed to create project directory " + dir);
                     }
                 } else if (ret == QMessageBox::Cancel) {
@@ -3101,12 +2865,12 @@ bool MainWindow::saveProject(KonfytProject *p)
         }
 
         // Save the project
-        if (getCurrentProject()->saveProjectAs(saveDir)) {
-            userMessage("Project Saved to " + saveDir);
+        if (mCurrentProject->saveProjectAs(saveDir)) {
+            print("Project Saved to " + saveDir);
             ui->statusBar->showMessage("Project saved.", 5000);
             return true;
         } else {
-            userMessage("Failed to save project.");
+            print("Failed to save project.");
             messageBox("Failed to save project to " + saveDir);
             return false;
         }
@@ -3121,13 +2885,13 @@ void MainWindow::updateGUIWarnings()
 {
     ui->listWidget_Warnings->clear();
 
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
-    QStringList moports = jack->getMidiOutputPortsList();
-    QStringList miports = jack->getMidiInputPortsList();
-    QStringList aoports = jack->getAudioOutputPortsList();
-    QStringList aiports = jack->getAudioInputPortsList();
+    QStringList moports = jack.getMidiOutputPortsList();
+    QStringList miports = jack.getMidiInputPortsList();
+    QStringList aoports = jack.getAudioOutputPortsList();
+    QStringList aiports = jack.getAudioInputPortsList();
 
 
     // Check warnings
@@ -3297,7 +3061,7 @@ void MainWindow::addWarning(QString warning)
 void MainWindow::triggerPanic(bool panic)
 {
     panicState = panic;
-    pengine->panic(panicState);
+    pengine.panic(panicState);
 
     // Indicate panic state in GUI
     ui->pushButton_Panic->setChecked(panicState);
@@ -3323,8 +3087,8 @@ void MainWindow::midi_setLayerGain(int layer, int midiValue)
     // Channel slider
     float temp = ((float)midiValue)/127.0;
     // Set channel gain in engine
-    if ((layer>=0) && (layer < pengine->getNumLayers()) ) {
-        pengine->setLayerGain(layer,temp);
+    if ((layer>=0) && (layer < pengine.getNumLayers()) ) {
+        pengine.setLayerGain(layer,temp);
         // Set channel gain in GUI slider
         this->layerWidgetList.at(layer)->setSliderGain(temp);
     }
@@ -3333,9 +3097,9 @@ void MainWindow::midi_setLayerGain(int layer, int midiValue)
 void MainWindow::midi_setLayerMute(int layer, int midiValue)
 {
     if (midiValue > 0) {
-        if ((layer>=0) && (layer < pengine->getNumLayers()) ) {
-            bool newMute = !(pengine->currentPatch()->layers().at(layer).toStrongRef()->isMute());
-            pengine->setLayerMute(layer, newMute);
+        if ((layer>=0) && (layer < pengine.getNumLayers()) ) {
+            bool newMute = !(pengine.currentPatch()->layers().at(layer).toStrongRef()->isMute());
+            pengine.setLayerMute(layer, newMute);
             // Set in GUI layer item
             this->layerWidgetList.at(layer)->setMuteButton(newMute);
         }
@@ -3345,9 +3109,9 @@ void MainWindow::midi_setLayerMute(int layer, int midiValue)
 void MainWindow::midi_setLayerSolo(int layer, int midiValue)
 {
     if (midiValue > 0) {
-        if ((layer>=0) && (layer < pengine->getNumLayers()) ) {
-            bool newSolo = !(pengine->currentPatch()->layers().at(layer).toStrongRef()->isSolo());
-            pengine->setLayerSolo(layer, newSolo);
+        if ((layer>=0) && (layer < pengine.getNumLayers()) ) {
+            bool newSolo = !(pengine.currentPatch()->layers().at(layer).toStrongRef()->isSolo());
+            pengine.setLayerSolo(layer, newSolo);
             // Set in GUI layer item
             this->layerWidgetList.at(layer)->setSoloButton(newSolo);
         }
@@ -3357,7 +3121,7 @@ void MainWindow::midi_setLayerSolo(int layer, int midiValue)
 /* MIDI events are waiting in the JACK engine. */
 void MainWindow::onJackMidiEventsReceived()
 {   
-    QList<KfJackMidiRxEvent> events = jack->getMidiRxEvents();
+    QList<KfJackMidiRxEvent> events = jack.getMidiRxEvents();
     foreach (KfJackMidiRxEvent event, events) {
         handleMidiEvent(event);
     }
@@ -3365,7 +3129,7 @@ void MainWindow::onJackMidiEventsReceived()
 
 void MainWindow::onJackAudioEventsReceived()
 {
-    QList<KfJackAudioRxEvent> events = jack->getAudioRxEvents();
+    QList<KfJackAudioRxEvent> events = jack.getAudioRxEvents();
     foreach (KfJackAudioRxEvent event, events) {
         layerIndicatorHandler.jackEventReceived(event);
     }
@@ -3373,8 +3137,8 @@ void MainWindow::onJackAudioEventsReceived()
 
 void MainWindow::handleMidiEvent(KfJackMidiRxEvent rxEvent)
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == nullptr) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     KonfytMidiEvent ev = rxEvent.midiEvent;
 
@@ -3386,7 +3150,7 @@ void MainWindow::handleMidiEvent(KfJackMidiRxEvent rxEvent)
     if (rxEvent.sourcePort) {
         int portIdInPrj = prj->midiInPort_getPortIdWithJackId(rxEvent.sourcePort);
         if (portIdInPrj < 0) {
-            userMessage("ERROR: NO PORT IN PROJECT MATCHING JACK PORT.");
+            print("ERROR: NO PORT IN PROJECT MATCHING JACK PORT.");
         }
 
         portIndicatorHandler.jackEventReceived(rxEvent);
@@ -3404,7 +3168,7 @@ void MainWindow::handleMidiEvent(KfJackMidiRxEvent rxEvent)
                 portName = prt.portName;
             }
             // Take last bank select info into account
-            userMessage("MIDI EVENT " + evInclBank.toString()
+            print("MIDI EVENT " + evInclBank.toString()
                         + " from port " + portName);
         }
     }
@@ -3506,7 +3270,7 @@ void MainWindow::handleMidiEvent(KfJackMidiRxEvent rxEvent)
     // If program change without bank select, switch patch if checkbox is checked.
     if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
         if ( (lastBankSelectLSB == -1) && (lastBankSelectMSB == -1) ) {
-            KonfytProject* prj = getCurrentProject();
+            ProjectPtr prj = mCurrentProject;;
             if (prj != NULL) {
                 if (prj->isProgramChangeSwitchPatches()) {
                     setCurrentPatchByIndex(ev.program());
@@ -3665,7 +3429,7 @@ void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
     // Update layer widget
     layerToolMenuSourceitem->refresh();
     // Update in pengine
-    pengine->setLayerFilter(layer.toWeakRef(), filter);
+    pengine.setLayerFilter(layer.toWeakRef(), filter);
 
     setPatchModified(true);
 }
@@ -3696,7 +3460,7 @@ void MainWindow::onLayerMidiInPortsMenu_ActionTrigger(QAction *action)
         // Update the layer widget
         layerToolMenuSourceitem->refresh();
         // Update in pengine
-        pengine->setLayerMidiInPort(layer.toWeakRef(), portId );
+        pengine.setLayerMidiInPort(layer.toWeakRef(), portId );
 
         setPatchModified(true);
     }
@@ -3714,14 +3478,14 @@ void MainWindow::onLayerMidiInChannelMenu_ActionTrigger(QAction *action)
     // Update the layer widget
     layerToolMenuSourceitem->refresh();
     // Update in pengine
-    pengine->setLayerFilter(layer.toWeakRef(), filter);
+    pengine.setLayerFilter(layer.toWeakRef(), filter);
 
     setPatchModified(true);
 }
 
 void MainWindow::onLayer_midiSend_clicked(KonfytLayerWidget *layerWidget)
 {
-    pengine->sendLayerMidi(layerWidget->getPatchLayer());
+    pengine.sendLayerMidi(layerWidget->getPatchLayer());
 }
 
 /* Layer bus menu item has been clicked. */
@@ -3750,7 +3514,7 @@ void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
         // Update the layer widget
         layerToolMenuSourceitem->refresh();
         // Update in pengine
-        pengine->setLayerBus(layer.toWeakRef(), busId);
+        pengine.setLayerBus(layer.toWeakRef(), busId);
 
         setPatchModified(true);
     }
@@ -3776,7 +3540,7 @@ void MainWindow::on_pushButton_ExtApp_RunSelected_clicked()
 {
     int row = ui->listWidget_ExtApps->currentRow();
     if (row < 0) {
-        userMessage("Select an application.");
+        print("Select an application.");
         return;
     }
     runProcess(row);
@@ -3789,7 +3553,7 @@ void MainWindow::on_pushButton_ExtApp_Stop_clicked()
 {
     int row = ui->listWidget_ExtApps->currentRow();
     if (row < 0) {
-        userMessage("Select an application.");
+        print("Select an application.");
         return;
     }
     stopProcess(row);
@@ -3817,7 +3581,7 @@ void MainWindow::on_pushButton_ExtApp_remove_clicked()
 {
     int row = ui->listWidget_ExtApps->currentRow();
     if (row < 0) {
-        userMessage("Select an application.");
+        print("Select an application.");
         return;
     }
     removeProcess(row);
@@ -3826,19 +3590,19 @@ void MainWindow::on_pushButton_ExtApp_remove_clicked()
 /* Slot: on layer item slider move. */
 void MainWindow::onLayer_slider_moved(KonfytLayerWidget *layerWidget, float gain)
 {
-    pengine->setLayerGain(layerWidget->getPatchLayer(), gain);
+    pengine.setLayerGain(layerWidget->getPatchLayer(), gain);
 }
 
 /* Slot: on layer item solo button clicked. */
 void MainWindow::onLayer_solo_clicked(KonfytLayerWidget *layerWidget, bool solo)
 {
-    pengine->setLayerSolo(layerWidget->getPatchLayer(), solo);
+    pengine.setLayerSolo(layerWidget->getPatchLayer(), solo);
 }
 
 /* Slot: on layer item mute button clicked. */
 void MainWindow::onLayer_mute_clicked(KonfytLayerWidget *layerWidget, bool mute)
 {
-    pengine->setLayerMute(layerWidget->getPatchLayer(), mute);
+    pengine.setLayerMute(layerWidget->getPatchLayer(), mute);
 }
 
 /* Slot: on layer item bus button clicked. */
@@ -3885,8 +3649,8 @@ void MainWindow::updateBusMenu(QMenu *menu, int currentBusId)
 {
     menu->clear();
 
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     QAction* a = menu->addAction("Current Bus Connections...");
     a->setProperty(PTY_AUDIO_OUT_BUS, -2);
@@ -3936,7 +3700,7 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer)
 {
     // Create new GUI layer item
     KonfytLayerWidget* layerWidget = new KonfytLayerWidget();
-    layerWidget->project = getCurrentProject();
+    layerWidget->project = mCurrentProject;
     QListWidgetItem* item = new QListWidgetItem();
     layerWidget->initLayer(patchLayer, item);
 
@@ -3948,13 +3712,13 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer)
     if (pl->layerType() == KonfytPatchLayer::TypeMidiOut) {
         midiRoute = pl->midiOutputPortData.jackRoute;
     } else if (pl->layerType() == KonfytPatchLayer::TypeSfz) {
-        midiRoute = jack->getPluginMidiRoute(pl->sfzData.portsInJackEngine);
-        QList<KfJackAudioRoute*> a = jack->getPluginAudioRoutes(pl->sfzData.portsInJackEngine);
+        midiRoute = jack.getPluginMidiRoute(pl->sfzData.portsInJackEngine);
+        QList<KfJackAudioRoute*> a = jack.getPluginAudioRoutes(pl->sfzData.portsInJackEngine);
         audioRoute1 = a.value(0);
         audioRoute2 = a.value(1);
     } else if (pl->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
-        midiRoute = jack->getPluginMidiRoute(pl->soundfontData.portsInJackEngine);
-        QList<KfJackAudioRoute*> a = jack->getPluginAudioRoutes(pl->soundfontData.portsInJackEngine);
+        midiRoute = jack.getPluginMidiRoute(pl->soundfontData.portsInJackEngine);
+        QList<KfJackAudioRoute*> a = jack.getPluginAudioRoutes(pl->soundfontData.portsInJackEngine);
         audioRoute1 = a.value(0);
         audioRoute2 = a.value(1);
     } else if (pl->layerType() == KonfytPatchLayer::TypeAudioIn) {
@@ -4002,7 +3766,7 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer)
 /* Remove a patch layer from the engine, GUI and the internal list. */
 void MainWindow::removePatchLayer(KonfytLayerWidget *layerWidget)
 {
-    pengine->removeLayer(layerWidget->getPatchLayer());
+    pengine.removeLayer(layerWidget->getPatchLayer());
 
     removePatchLayerFromGuiOnly(layerWidget);
 
@@ -4042,8 +3806,8 @@ void MainWindow::updateMidiInPortsMenu(QMenu *menu, int currentPortId)
 {
     menu->clear();
 
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     QAction* a = menu->addAction("Current Port Connections...");
     a->setProperty(PTY_MIDI_IN_PORT, -2);
@@ -4195,7 +3959,7 @@ void MainWindow::on_pushButton_Settings_Sfz_clicked()
 /* Action to save current patch as a copy in the current project. */
 void MainWindow::on_actionSave_Patch_As_Copy_triggered()
 {
-    KonfytPatch* p = pengine->currentPatch();
+    KonfytPatch* p = pengine.currentPatch();
     KonfytPatch* newPatch = new KonfytPatch();
     newPatch->fromByteArray(p->toByteArray());
 
@@ -4213,12 +3977,12 @@ void MainWindow::on_actionSave_Patch_As_Copy_triggered()
 /* Action to add current patch to the library. */
 void MainWindow::on_actionAdd_Patch_To_Library_triggered()
 {
-    KonfytPatch* pt = pengine->currentPatch(); // Get current patch
+    KonfytPatch* pt = pengine.currentPatch(); // Get current patch
 
     if (savePatchToLibrary(pt)) {
-        userMessage("Saved to library.");
+        print("Saved to library.");
     } else {
-        userMessage("Could not save patch to library.");
+        print("Could not save patch to library.");
     }
 }
 
@@ -4227,7 +3991,7 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
 {
     // Save patch to user selected file
 
-    KonfytPatch* pt = pengine->currentPatch(); // Get current patch
+    KonfytPatch* pt = pengine.currentPatch(); // Get current patch
     QFileDialog d;
     QString filename = d.getSaveFileName(this,"Save patch as file", patchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
     if (filename=="") {return;} // Dialog was cancelled.
@@ -4236,9 +4000,9 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
     if (!filename.contains("." + QString(KONFYT_PATCH_SUFFIX))) { filename = filename + "." + QString(KONFYT_PATCH_SUFFIX); }
 
     if (pt->savePatchToFile(filename)) {
-        userMessage("Patch saved.");
+        print("Patch saved.");
     } else {
-        userMessage("Failed saving patch to file.");
+        print("Failed saving patch to file.");
     }
 }
 
@@ -4259,32 +4023,26 @@ void MainWindow::on_actionAdd_Patch_From_Library_triggered()
         *newPatch = library_getSelectedPatch();
         addPatchToProject(newPatch);
     } else {
-        userMessage("Select a patch in the library.");
+        print("Select a patch in the library.");
     }
 }
 
-/* Action to add a patch from a file to the project. */
+/* Action to Let user browse and select a patch file to add to the project. */
 void MainWindow::on_actionAdd_Patch_From_File_triggered()
 {
-    // Load patch from user selected file
+    if (!mCurrentProject) {
+        print("No project active.");
+        return;
+    }
 
-    KonfytProject *prj = getCurrentProject();
-    if (prj == NULL) { return; }
-
-    KonfytPatch* pt = new KonfytPatch();
     QFileDialog d;
-    QString filename = d.getOpenFileName(this, "Open patch from file", patchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
-    if (filename=="") { return; }
-    QString errors;
-    if (pt->loadPatchFromFile(filename, &errors)) {
-        addPatchToProject(pt);
-    } else {
-        userMessage("Failed loading patch from file.");
-        delete pt;
-    }
-    if (!errors.isEmpty()) {
-        userMessage("Load errors for patch " + filename + ":\n" + errors);
-    }
+    QString filename = d.getOpenFileName(this,
+                                         "Open patch from file",
+                                         patchesDir,
+                                         "*." + QString(KONFYT_PATCH_SUFFIX));
+    if (filename.isEmpty()) { return; }
+
+    addPatchToProjectFromFile(filename);
 }
 
 /* Add button clicked (not its menu). */
@@ -4294,15 +4052,10 @@ void MainWindow::on_toolButton_AddPatch_clicked()
     on_actionNew_Patch_triggered();
 }
 
-
-
 void MainWindow::on_pushButton_ShowConsole_clicked()
 {
-    this->consoleDiag->show();
+    consoleDialog.show();
 }
-
-
-
 
 bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
 {
@@ -4438,9 +4191,9 @@ void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
 void MainWindow::on_pushButton_midiFilter_Apply_clicked()
 {
     KonfytMidiFilter f;
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) {
-        userMessage("ERROR: No current project.");
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) {
+        print("ERROR: No current project.");
         return;
     }
 
@@ -4448,7 +4201,7 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
         if (prj->midiInPort_exists(midiFilterEditPort)) {
             f = prj->midiInPort_getPort(midiFilterEditPort).filter;
         } else {
-            userMessage("ERROR: Port does not exist in project.");
+            print("ERROR: Port does not exist in project.");
             return;
         }
     } else {
@@ -4481,10 +4234,10 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
         // Update filter in project
         prj->midiInPort_setPortFilter(midiFilterEditPort, f);
         // And also in Jack.
-        jack->setPortFilter(prj->midiInPort_getPort(midiFilterEditPort).jackPort, f);
+        jack.setPortFilter(prj->midiInPort_getPort(midiFilterEditPort).jackPort, f);
     } else {
         // Update filter in gui layer item
-        pengine->setLayerFilter(midiFilterEditItem->getPatchLayer(), f);
+        pengine.setLayerFilter(midiFilterEditItem->getPatchLayer(), f);
         midiFilterEditItem->refresh();
     }
 
@@ -4568,8 +4321,8 @@ void MainWindow::on_listWidget_ExtApps_doubleClicked(const QModelIndex& /*index*
 void MainWindow::on_listWidget_ExtApps_clicked(const QModelIndex &index)
 {
     // Put the contents of the selected item in the External Apps text box
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     konfytProcess* p = prj->getProcessList()[index.row()];
     ui->lineEdit_ExtApp->setText(p->appname);
@@ -4672,7 +4425,7 @@ void MainWindow::refreshFilesystemView()
 {
     ui->lineEdit_filesystem_path->setText(fsview_currentPath);
 
-    KonfytProject* prj = getCurrentProject();
+    ProjectPtr prj = mCurrentProject;;
     QString project_dir;
     if (prj != NULL) {
         project_dir = prj->getDirname();
@@ -4810,19 +4563,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
 
     } else if ( fileIsPatch(info.filePath()) ) {
         // File is a patch
-
-        KonfytPatch* pt = new KonfytPatch();
-        QString errors;
-        if (pt->loadPatchFromFile(info.filePath(), &errors)) {
-            addPatchToProject(pt);
-        } else {
-            userMessage("Failed to load patch " + info.filePath());
-            delete pt;
-        }
-        if (!errors.isEmpty()) {
-            userMessage("Load errors for patch " + info.filePath() + ":\n" + errors);
-        }
-
+        addPatchToProjectFromFile(info.filePath());
     }
 
     // Refresh program list in the GUI based on contents of programList variable.
@@ -4872,17 +4613,17 @@ void MainWindow::on_lineEdit_filesystem_path_returnPressed()
  * are assigned to the leftPort and rightPort parameters. */
 void MainWindow::addAudioBusToJack(int busNo, KfJackAudioPort **leftPort, KfJackAudioPort **rightPort)
 {
-    *leftPort = jack->addAudioPort(QString("bus_%1_L").arg(busNo), false);
-    *rightPort = jack->addAudioPort(QString("bus_%1_R").arg(busNo), false);
+    *leftPort = jack.addAudioPort(QString("bus_%1_L").arg(busNo), false);
+    *rightPort = jack.addAudioPort(QString("bus_%1_R").arg(busNo), false);
 }
 
 /* Adds an audio bus to the current project and Jack. Returns bus index.
    Returns -1 on error. */
 int MainWindow::addBus()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) {
-        userMessage("Select a project.");
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) {
+        print("Select a project.");
         return -1;
     }
 
@@ -4901,7 +4642,7 @@ int MainWindow::addBus()
         return busId;
     } else {
         prj->audioBus_remove(busId);
-        userMessage("ERROR: Failed to create audio bus. Failed to add Jack port(s).");
+        print("ERROR: Failed to create audio bus. Failed to add Jack port(s).");
         return -1;
     }
 }
@@ -4920,9 +4661,9 @@ void MainWindow::on_actionAdd_Bus_triggered()
    Returns -1 on error. */
 int MainWindow::addAudioInPort()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) {
-        userMessage("Select a project.");
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) {
+        print("Select a project.");
         return -1;
     }
 
@@ -4940,7 +4681,7 @@ int MainWindow::addAudioInPort()
 
         return portId;
     } else {
-        userMessage("ERROR: Failed to create audio input port. Failed to add Jack port.");
+        print("ERROR: Failed to create audio input port. Failed to add Jack port.");
         prj->audioInPort_remove(portId);
         return -1;
     }
@@ -4950,9 +4691,9 @@ int MainWindow::addAudioInPort()
  * Returns -1 on error. */
 int MainWindow::addMidiInPort()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) {
-        userMessage("Select a project.");
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) {
+        print("Select a project.");
         return -1;
     }
 
@@ -4965,13 +4706,13 @@ int MainWindow::addMidiInPort()
         prj->midiInPort_replace(prjPortId, p);
 
         // Update filter in Jack
-        jack->setPortFilter(port, p.filter);
+        jack.setPortFilter(port, p.filter);
 
         return prjPortId;
 
     } else {
         // Could not create Jack port. Remove port from project again.
-        userMessage("ERROR: Could not add MIDI input port. Failed to create JACK port.");
+        print("ERROR: Could not add MIDI input port. Failed to create JACK port.");
         prj->midiInPort_removePort(prjPortId);
         return -1;
     }
@@ -4999,9 +4740,9 @@ void MainWindow::on_actionAdd_MIDI_In_Port_triggered()
  *  Returns -1 on error. */
 int MainWindow::addMidiOutPort()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) {
-        userMessage("Select a project.");
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) {
+        print("Select a project.");
         return -1;
     }
 
@@ -5017,7 +4758,7 @@ int MainWindow::addMidiOutPort()
         return prjPortId;
     } else {
         // Could not create Jack port. Remove port from project again.
-        userMessage("ERROR: Could not add MIDI output port. Failed to create JACK port.");
+        print("ERROR: Could not add MIDI output port. Failed to create JACK port.");
         prj->midiOutPort_removePort(prjPortId);
         return -1;
     }
@@ -5038,22 +4779,22 @@ void MainWindow::on_actionAdd_MIDI_Out_Port_triggered()
  * leftPortId and rightPortId function parameters. */
 void MainWindow::addAudioInPortsToJack(int portNo, KfJackAudioPort **leftPort, KfJackAudioPort **rightPort)
 {
-    *leftPort = jack->addAudioPort(QString("audio_in_%1_L").arg(portNo), true);
-    *rightPort = jack->addAudioPort(QString("audio_in_%1_R").arg(portNo), true);
+    *leftPort = jack.addAudioPort(QString("audio_in_%1_L").arg(portNo), true);
+    *rightPort = jack.addAudioPort(QString("audio_in_%1_R").arg(portNo), true);
 }
 
 /* Adds a new MIDI output port to JACK, named with the specified port ID. The
  * JACK engine port ID is returned, and null if an error occured. */
 KfJackMidiPort *MainWindow::addMidiOutPortToJack(int numberLabel)
 {
-    return jack->addMidiPort(QString("midi_out_%1").arg(numberLabel), false);
+    return jack.addMidiPort(QString("midi_out_%1").arg(numberLabel), false);
 }
 
 /* Adds a new MIDI port to JACK, named with the specified port ID. The JACK
  * engine port ID is returned, and null if an error occured. */
 KfJackMidiPort *MainWindow::addMidiInPortToJack(int numberLabel)
 {
-    return jack->addMidiPort(QString("midi_in_%1").arg(numberLabel), true);
+    return jack.addMidiPort(QString("midi_in_%1").arg(numberLabel), true);
 }
 
 bool MainWindow::jackPortBelongstoUs(QString jackPortName)
@@ -5061,8 +4802,8 @@ bool MainWindow::jackPortBelongstoUs(QString jackPortName)
     bool ret = false;
 
     QStringList ourJackClients;
-    ourJackClients.append(jack->clientName());
-    ourJackClients.append(pengine->ourJackClientNames());
+    ourJackClients.append(jack.clientName());
+    ourJackClients.append(pengine.ourJackClientNames());
 
     for (int i=0; i < ourJackClients.count(); i++) {
         QString name = ourJackClients[i] + ":";
@@ -5075,7 +4816,7 @@ bool MainWindow::jackPortBelongstoUs(QString jackPortName)
     return ret;
 }
 
-void MainWindow::setupExtAppMenu()
+void MainWindow::setupExternalAppsMenu()
 {
     extAppsMenuActions_Append.insert( extAppsMenu.addAction("Project Directory Reference: "
                                                             + QString(STRING_PROJECT_DIR)),
@@ -5134,8 +4875,8 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current
 /* Remove the bus/port selected in the connections ports/buses tree widget. */
 void MainWindow::on_actionRemove_BusPort_triggered()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     QTreeWidgetItem* item = portsBussesTreeMenuItem;
 
@@ -5238,7 +4979,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 for (int i=0; i<usingPatches.count(); i++) {
                     KonfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KfPatchLayerWeakPtr layer = patch->layers()[usingLayers[i]];
-                    pengine->setLayerBus( patch, layer, busToChangeTo );
+                    pengine.setLayerBus( patch, layer, busToChangeTo );
                 }
                 // Removal will be done below.
 
@@ -5255,7 +4996,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 for (int i=0; i<usingPatches.count(); i++) {
                     KonfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KfPatchLayerWeakPtr layer = patch->layers()[usingLayers[i]];
-                    pengine->removeLayer( patch, layer );
+                    pengine.removeLayer( patch, layer );
                 }
                 // Removal will be done below
 
@@ -5272,7 +5013,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 for (int i=0; i<usingPatches.count(); i++) {
                     KonfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KfPatchLayerWeakPtr layer = patch->layers()[usingLayers[i]];
-                    pengine->removeLayer( patch, layer );
+                    pengine.removeLayer( patch, layer );
                 }
                 // Removal will be done below
 
@@ -5293,7 +5034,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 for (int i=0; i<usingPatches.count(); i++) {
                     KonfytPatch* patch = prj->getPatch(usingPatches[i]);
                     KfPatchLayerWeakPtr layer = patch->layers()[usingLayers[i]];
-                    pengine->setLayerMidiInPort( patch, layer, portToChangeTo );
+                    pengine.setLayerMidiInPort( patch, layer, portToChangeTo );
                 }
                 // Removal will be done below.
 
@@ -5305,21 +5046,21 @@ void MainWindow::on_actionRemove_BusPort_triggered()
     // Remove the bus/port
     if (busSelected) {
         // Remove the bus
-        jack->removeAudioPort(bus.leftJackPort);
-        jack->removeAudioPort(bus.rightJackPort);
+        jack.removeAudioPort(bus.leftJackPort);
+        jack.removeAudioPort(bus.rightJackPort);
         prj->audioBus_remove(id);
         tree_busMap.remove(item);
     }
     else if (audioInSelected) {
         // Remove the port
-        jack->removeAudioPort(audioInPort.leftJackPort);
-        jack->removeAudioPort(audioInPort.rightJackPort);
+        jack.removeAudioPort(audioInPort.leftJackPort);
+        jack.removeAudioPort(audioInPort.rightJackPort);
         prj->audioInPort_remove(id);
         tree_audioInMap.remove(item);
     }
     else if (midiOutSelected) {
         // Remove the port
-        jack->removeMidiPort(midiOutPort.jackPort);
+        jack.removeMidiPort(midiOutPort.jackPort);
         portIndicatorHandler.portRemoved(midiOutPort.jackPort);
         prj->midiOutPort_removePort(id);
         tree_midiOutMap.remove(item);
@@ -5327,7 +5068,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         portIndicatorHandler.portRemoved(midiOutPort.jackPort);
     } else if (midiInSelected) {
         // Remove the port
-        jack->removeMidiPort(midiInPort.jackPort);
+        jack.removeMidiPort(midiInPort.jackPort);
         prj->midiInPort_removePort(id);
         tree_midiInMap.remove(item);
     }
@@ -5376,8 +5117,8 @@ void MainWindow::on_actionAdd_Path_To_External_App_Box_triggered()
 
 void MainWindow::on_toolButton_filesystem_projectDir_clicked()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
     if (prj->getDirname().length() == 0) { return; }
 
     cdFilesystemView( prj->getDirname() );
@@ -5418,7 +5159,7 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
     }
 
     // Make relative to project directory
-    KonfytProject* prj = getCurrentProject();
+    ProjectPtr prj = mCurrentProject;;
     if (prj != NULL) {
         QString projPath = prj->getDirname();
         QDir projDir(projPath);
@@ -5431,6 +5172,17 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
     ui->lineEdit_ExtApp->setText( ui->lineEdit_ExtApp->text()
                                   + path);
     ui->lineEdit_ExtApp->setFocus();
+}
+
+/* Initialises patch engine. Must be called after JACK engine has been set up. */
+void MainWindow::setupPatchEngine()
+{
+    connect(&pengine, &KonfytPatchEngine::userMessage, this, &MainWindow::print);
+    connect(&pengine, &KonfytPatchEngine::statusInfo, [this](QString msg){
+        ui->textBrowser_Testing->setText(msg);
+    });
+
+    pengine.initPatchEngine(&jack, appInfo);
 }
 
 /* Update the input and output port settings for the preview patch layer. */
@@ -5450,9 +5202,9 @@ void MainWindow::updatePreviewPatchLayer()
 
         // Update in patch engine (if we are in preview mode)
         if (previewMode) {
-            pengine->setLayerFilter(layer, filter);
-            pengine->setLayerMidiInPort(layer, previewPatchMidiInPort);
-            pengine->setLayerBus(layer, previewPatchBus);
+            pengine.setLayerFilter(layer, filter);
+            pengine.setLayerMidiInPort(layer, previewPatchMidiInPort);
+            pengine.setLayerBus(layer, previewPatchBus);
         }
     }
 }
@@ -5463,13 +5215,16 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     if (!appInfo.headless) {
 
-        for (int i=0; i<this->projectList.count(); i++) {
-            KonfytProject* prj = projectList[i];
+        ProjectPtr prj = mCurrentProject;
+        if (prj) {
             if (prj->isModified()) {
                 QMessageBox msgbox;
-                msgbox.setText("Do you want to save the changes to project " + prj->getProjectName() + "?");
+                msgbox.setText("Do you want to save the changes to project " +
+                               prj->getProjectName() + "?");
                 msgbox.setIcon(QMessageBox::Question);
-                msgbox.setStandardButtons(QMessageBox::Cancel | QMessageBox::Yes | QMessageBox::No);
+                msgbox.setStandardButtons(QMessageBox::Cancel
+                                          | QMessageBox::Yes
+                                          | QMessageBox::No);
                 msgbox.setDefaultButton(QMessageBox::Cancel);
                 int ret = msgbox.exec();
                 if (ret == QMessageBox::Yes) {
@@ -5582,12 +5337,12 @@ QString MainWindow::loadSfzFileText(QString filename)
 
     if ( fi.size() > 1024*500 ) {
 
-        userMessage("File exceeds max allowed size to show contents: " + filename);
+        print("File exceeds max allowed size to show contents: " + filename);
         text = "File exceeds max allowed size to show contents.";
 
     } else if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
 
-        userMessage("Failed to open file: " + filename);
+        print("Failed to open file: " + filename);
         text = "Failed to open file.";
 
     } else {
@@ -5602,8 +5357,8 @@ QString MainWindow::loadSfzFileText(QString filename)
 
 void MainWindow::on_actionRename_BusPort_triggered()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     QTreeWidgetItem* item = portsBussesTreeMenuItem;
 
@@ -5630,8 +5385,8 @@ void MainWindow::on_actionRename_BusPort_triggered()
 /* User has renamed a port or bus. */
 void MainWindow::on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int /*column*/)
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     if (item->parent() == busParent) {
         // Bus is selected
@@ -5687,8 +5442,8 @@ void MainWindow::on_pushButton_triggersPage_assign_clicked()
     QTreeWidgetItem* item = ui->tree_Triggers->currentItem();
     if (item == NULL) { return; }
 
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     int eventRow = ui->listWidget_triggers_eventList->currentRow();
     if (eventRow < 0) { return; }
@@ -5722,8 +5477,8 @@ void MainWindow::on_pushButton_triggersPage_clear_clicked()
     QTreeWidgetItem* item = ui->tree_Triggers->currentItem();
     if (item == NULL) { return; }
 
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     QAction* action = triggersItemActionHash[item];
 
@@ -5750,8 +5505,8 @@ void MainWindow::on_listWidget_triggers_eventList_itemDoubleClicked(QListWidgetI
 
 void MainWindow::on_checkBox_Triggers_ProgSwitchPatches_clicked()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     prj->setProgramChangeSwitchPatches( ui->checkBox_Triggers_ProgSwitchPatches->isChecked() );
 }
@@ -5774,12 +5529,14 @@ void MainWindow::updateGlobalPitchbendIndicator()
 void MainWindow::setConsoleShowMidiMessages(bool show)
 {
     ui->checkBox_ConsoleShowMidiMessages->setChecked( show );
-    consoleDiag->setShowMidiEvents( show );
+    consoleDialog.setShowMidiEvents( show );
     console_showMidiMessages = show;
 }
 
 void MainWindow::on_pushButton_RestartApp_clicked()
 {
+    // TODO CHECK IF CURRENT PROJECT SHOULD BE SAVED
+
     // Restart the app (see code in main.cpp)
     QCoreApplication::exit(APP_RESTART_CODE);
 }
@@ -5792,13 +5549,14 @@ void MainWindow::on_actionProject_save_triggered()
 
 void MainWindow::on_actionProject_New_triggered()
 {
-    newProject();
-    // Switch to newly created project
-    setCurrentProject(-1);
+    // TODO CHECK IF CURRENT PROJECT SHOULD BE SAVED
+    loadNewProject(); // Create and load new project
 }
 
 void MainWindow::on_actionProject_Open_triggered()
 {
+    // TODO CHECK IF CURRENT PROJECT SHOULD BE SAVED
+
     // Show open dialog box
     QFileDialog* d = new QFileDialog();
     QString filename = d->getOpenFileName(this,
@@ -5806,13 +5564,11 @@ void MainWindow::on_actionProject_Open_triggered()
                                           projectsDir,
                                           "*" + QString(PROJECT_FILENAME_EXTENSION) );
     if (filename == "") {
-        userMessage("Cancelled.");
+        print("Cancelled.");
         return;
     }
 
-    openProject(filename);
-    // Switch to newly opened project
-    setCurrentProject(-1);
+    loadProjectFromFile(filename); // Read project from file and load it
 }
 
 void MainWindow::on_actionProject_OpenDirectory_triggered()
@@ -5827,7 +5583,7 @@ void MainWindow::on_textBrowser_patchNote_textChanged()
         patchNote_ignoreChange = false;
     } else {
         // Change is due to user typing in box
-        pengine->setPatchNote(ui->textBrowser_patchNote->toPlainText());
+        pengine.setPatchNote(ui->textBrowser_patchNote->toPlainText());
         setPatchModified(true);
     }
 }
@@ -5839,32 +5595,32 @@ void MainWindow::on_toolButton_Project_clicked()
 
 void MainWindow::on_actionProject_SaveAs_triggered()
 {
-    KonfytProject* p = getCurrentProject();
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
 
-    if (p == NULL) { return; }
-    QString oldName = p->getProjectName();
-    bool oldModified = p->isModified();
-    QString oldDirname = p->getDirname();
+    QString oldName = prj->getProjectName();
+    bool oldModified = prj->isModified();
+    QString oldDirname = prj->getDirname();
 
     // Query user for new project name
     QString newName = QInputDialog::getText(this, "Save Project As", "New Project Name");
     if (newName.isEmpty()) { return; }
 
     // Clear the project dir name so it can be saved as new project
-    p->setDirname("");
+    prj->setDirname("");
 
     setProjectName(newName);
 
-    bool saved = saveProject(p);
+    bool saved = saveProject(prj);
     if (saved) {
-        userMessage("Saved project as new project.");
+        print("Saved project as new project.");
     } else {
-        userMessage("Project not saved as new project.");
+        print("Project not saved as new project.");
         messageBox("Project was not saved as a new project.");
         // Restore original project state
         setProjectName(oldName);
-        p->setDirname(oldDirname);
-        p->setModified(oldModified);
+        prj->setDirname(oldDirname);
+        prj->setModified(oldModified);
     }
 }
 
@@ -5896,8 +5652,8 @@ void MainWindow::on_actionPanicToggle_triggered()
 
 void MainWindow::on_pushButton_LoadAll_clicked()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     int startPatch = mCurrentPatchIndex;
 
@@ -5913,8 +5669,8 @@ void MainWindow::on_pushButton_ExtApp_Replace_clicked()
     int row = ui->listWidget_ExtApps->currentRow();
     if (row < 0) { return; }
 
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     konfytProcess* process = prj->getProcessList()[row];
     process->appname = ui->lineEdit_ExtApp->text();
@@ -5951,11 +5707,12 @@ void MainWindow::setMasterInTranspose(int transpose, bool relative)
         transpose += ui->spinBox_MasterIn_Transpose->value();
     }
     ui->spinBox_MasterIn_Transpose->setValue( transpose );
+    // See also on_spinBox_MasterIn_Transpose_valueChanged() slot.
 }
 
 void MainWindow::on_spinBox_MasterIn_Transpose_valueChanged(int arg1)
 {
-    this->jack->setGlobalTranspose(arg1);
+    jack.setGlobalTranspose(arg1);
 }
 
 void MainWindow::on_pushButton_MasterIn_TransposeSub12_clicked()
@@ -5993,21 +5750,21 @@ void MainWindow::showJackPage()
 
 void MainWindow::updateJackPage()
 {
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     QStringList outPorts;
     QStringList inPorts;
     QList<KonfytJackConPair> conList;
     if (jackPage_audio) {
         // Audio Jack ports
-        outPorts = jack->getAudioOutputPortsList();
-        inPorts = jack->getAudioInputPortsList();
+        outPorts = jack.getAudioOutputPortsList();
+        inPorts = jack.getAudioInputPortsList();
         conList = prj->getJackAudioConList();
     } else {
         // MIDI Jack ports
-        outPorts = jack->getMidiOutputPortsList();
-        inPorts = jack->getMidiInputPortsList();
+        outPorts = jack.getMidiOutputPortsList();
+        inPorts = jack.getMidiInputPortsList();
         conList = prj->getJackMidiConList();
     }
 
@@ -6050,8 +5807,8 @@ void MainWindow::on_pushButton_jackConAdd_clicked()
     QTreeWidgetItem* itemIn = ui->treeWidget_jackportsIn->currentItem();
     if ( (itemOut==NULL) || (itemIn==NULL) ) { return; }
 
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     KonfytJackConPair p;
     if (jackPage_audio) {
@@ -6063,7 +5820,7 @@ void MainWindow::on_pushButton_jackConAdd_clicked()
     }
 
     // Add to Jack engine
-    jack->addOtherJackConPair(p);
+    jack.addOtherJackConPair(p);
     // Add to jack connections GUI list
     ui->listWidget_jackConnections->addItem( p.toString() );
 
@@ -6074,8 +5831,8 @@ void MainWindow::on_pushButton_jackConRemove_clicked()
 {
     int row = ui->listWidget_jackConnections->currentRow();
     if (row<0) { return; }
-    KonfytProject* prj = getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
 
     // Remove from project
     KonfytJackConPair p;
@@ -6087,7 +5844,7 @@ void MainWindow::on_pushButton_jackConRemove_clicked()
         p = prj->removeJackMidiCon(row);
     }
     // Remove from JACK
-    jack->removeOtherJackConPair(p);
+    jack.removeOtherJackConPair(p);
     // Remove from GUI
     delete ui->listWidget_jackConnections->item(row);
 
@@ -6107,8 +5864,8 @@ void MainWindow::on_pushButton_LavaMonster_clicked()
 
 void MainWindow::on_toolButton_PatchListMenu_clicked()
 {
-    KonfytProject* prj = this->getCurrentProject();
-    if (prj == NULL) { return; }
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
 
     // Build patch list menu (first time only)
     if (patchListMenu.isEmpty()) {
@@ -6131,21 +5888,19 @@ void MainWindow::on_toolButton_PatchListMenu_clicked()
 
 void MainWindow::toggleShowPatchListNumbers()
 {
-    KonfytProject* prj = this->getCurrentProject();
-    if (prj == nullptr) { return; }
+    if (!mCurrentProject) { return; }
 
-    bool visible = !prj->getShowPatchListNumbers();
-    prj->setShowPatchListNumbers(visible);
+    bool visible = !mCurrentProject->getShowPatchListNumbers();
+    mCurrentProject->setShowPatchListNumbers(visible);
     patchListAdapter.setPatchNumbersVisible(visible);
 }
 
 void MainWindow::toggleShowPatchListNotes()
 {
-    KonfytProject* prj = this->getCurrentProject();
-    if (prj == nullptr) { return; }
+    if (!mCurrentProject) { return; }
 
-    bool visible = !prj->getShowPatchListNotes();
-    prj->setShowPatchListNotes(visible);
+    bool visible = !mCurrentProject->getShowPatchListNotes();
+    mCurrentProject->setShowPatchListNotes(visible);
     patchListAdapter.setPatchNotesVisible(visible);
 }
 
@@ -6168,6 +5923,73 @@ void MainWindow::on_pushButton_connectionsPage_MidiFilter_clicked()
         midiFilterEditPort = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
         midiFilterEditType = MidiFilterEditPort;
         showMidiFilterEditor();
+    }
+}
+
+void MainWindow::setupSettings()
+{
+    // Settings dir is standard (XDG) config dir
+    settingsDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    print("Settings path: " + settingsDir);
+    // Check if settings file exists
+    if (loadSettingsFile(settingsDir)) {
+        print("Settings loaded.");
+    } else {
+        print("Could not load settings.");
+        // Check if old settings file exists.
+        QString oldDir = QDir::homePath() + "/.konfyt";
+        if (loadSettingsFile(oldDir)) {
+            print("Loaded settings from old location: " + settingsDir);
+            print("Saving to new settings location.");
+            if (saveSettingsFile()) {
+                print("Saved settings file to new location: " + settingsDir);
+            } else {
+                print("Could not save settings to new location: " + settingsDir);
+            }
+        } else {
+            // If settings file does not exist, it's probably the first run.
+            // Show about dialog and settings.
+            createSettingsDir();
+            mSettingsFirstRun = true;
+            showAboutDialog();
+        }
+    }
+
+    // Set up settings dialog
+    ui->label_SettingsPath->setText( ui->label_SettingsPath->text() + settingsDir );
+
+    ui->comboBox_settings_projectsDir->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Projects");
+    ui->comboBox_settings_projectsDir->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Projects");
+
+    ui->comboBox_settings_soundfontDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Soundfonts");
+    ui->comboBox_settings_soundfontDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Soundfonts");
+
+    ui->comboBox_settings_patchDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Patches");
+    ui->comboBox_settings_patchDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Patches");
+
+    ui->comboBox_settings_sfzDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/sfz");
+    ui->comboBox_settings_sfzDirs->addItem(
+                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/sfz");
+
+    // Initialise default settings
+    if (projectsDir.isEmpty()) {
+        projectsDir = ui->comboBox_settings_projectsDir->itemText(0);
+    }
+    if (patchesDir.isEmpty()) {
+        patchesDir = ui->comboBox_settings_patchDirs->itemText(0);
+    }
+    if (soundfontsDir.isEmpty()) {
+        soundfontsDir = ui->comboBox_settings_soundfontDirs->itemText(0);
+    }
+    if (sfzDir.isEmpty()) {
+        sfzDir = ui->comboBox_settings_sfzDirs->itemText(0);
     }
 }
 
@@ -6290,13 +6112,12 @@ void MainWindow::on_pushButton_jackCon_OK_clicked()
 /* Action to toggle always-active for current patch. */
 void MainWindow::on_actionAlways_Active_triggered()
 {
-    KonfytPatch* p = pengine->currentPatch();
+    KonfytPatch* p = pengine.currentPatch();
     p->alwaysActive = !p->alwaysActive;
     ui->actionAlways_Active->setChecked(p->alwaysActive);
     ui->label_patch_alwaysActive->setVisible(p->alwaysActive);
 
-    KonfytProject *prj = getCurrentProject();
-    prj->setModified(true);
+    mCurrentProject->setModified(true);
 }
 
 void MainWindow::on_actionEdit_MIDI_Filter_triggered()
@@ -6308,7 +6129,7 @@ void MainWindow::on_actionEdit_MIDI_Filter_triggered()
 
 void MainWindow::on_actionReload_Layer_triggered()
 {
-    pengine->reloadLayer( layerToolMenuSourceitem->getPatchLayer() );
+    pengine.reloadLayer( layerToolMenuSourceitem->getPatchLayer() );
     layerToolMenuSourceitem->refresh();
 }
 
@@ -6440,9 +6261,9 @@ void MainWindow::setupSavedMidiSendItems()
     QDir dir(savedMidiListDir);
     if (!dir.exists()) {
         if (dir.mkpath(savedMidiListDir)) {
-            userMessage("Created Saved-MIDI-Send-Items directory: " + savedMidiListDir);
+            print("Created Saved-MIDI-Send-Items directory: " + savedMidiListDir);
         } else {
-            userMessage("Failed to create Saved-MIDI-Send-Items directory: " + savedMidiListDir);
+            print("Failed to create Saved-MIDI-Send-Items directory: " + savedMidiListDir);
         }
     }
 
@@ -6459,13 +6280,13 @@ void MainWindow::addSavedMidiSendItem(MidiSendItem item)
 
 void MainWindow::loadSavedMidiSendItems(QString dirname)
 {
-    userMessage("Scanning for saved MIDI Send Items...");
+    print("Scanning for saved MIDI Send Items...");
     QStringList files = scanDirForFiles(dirname);
 
     foreach (QString filename, files) {
         QFile file(filename);
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            userMessage("Failed to open MIDI Send Item file: " + filename);
+            print("Failed to open MIDI Send Item file: " + filename);
             continue;
         }
         QXmlStreamReader r(&file);
@@ -6473,22 +6294,22 @@ void MainWindow::loadSavedMidiSendItems(QString dirname)
         MidiSendItem item;
         QString error = item.readFromXmlStream(&r);
         if (!error.isEmpty()) {
-            userMessage("Errors for MIDI Send Item File " + filename + ":");
-            userMessage(error);
+            print("Errors for MIDI Send Item File " + filename + ":");
+            print(error);
         }
         item.filename = filename;
         addSavedMidiSendItem(item);
     }
 
 
-    userMessage("Saved MIDI send items loaded: " + n2s(savedMidiSendItems.count()) + " items.");
+    print("Saved MIDI send items loaded: " + n2s(savedMidiSendItems.count()) + " items.");
 }
 
 bool MainWindow::saveMidiSendItemToFile(QString filename, MidiSendItem item)
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        userMessage("Failed to open MIDI Send Item file for writing: " + filename);
+        print("Failed to open MIDI Send Item file for writing: " + filename);
         return false;
     }
 
@@ -6519,10 +6340,10 @@ void MainWindow::on_pushButton_savedMidiMsgs_save_clicked()
 
     // Save
     if (saveMidiSendItemToFile(filename, item)) {
-        userMessage("Saved MIDI Send Event to file: " + filename);
+        print("Saved MIDI Send Event to file: " + filename);
         item.filename = filename;
     } else {
-        userMessage("Failed to save MIDI Send event to file.");
+        print("Failed to save MIDI Send event to file.");
     }
 
     // Add to GUI
@@ -6538,7 +6359,7 @@ void MainWindow::on_pushButton_savedMidiMsgs_remove_clicked()
     MidiSendItem item = savedMidiSendItems[index];
 
     if (item.filename.isEmpty()) {
-        userMessage("Error removing saved MIDI send item: No filename associated with item.");
+        print("Error removing saved MIDI send item: No filename associated with item.");
         return;
     }
 
@@ -6553,12 +6374,12 @@ void MainWindow::on_pushButton_savedMidiMsgs_remove_clicked()
         QFile f(item.filename);
         bool removed = f.remove();
         if (removed) {
-            userMessage("Removed MIDI Send Event file " + f.fileName());
+            print("Removed MIDI Send Event file " + f.fileName());
             // Remove from list and GUI
             delete selected;
             savedMidiSendItems.removeAt(index);
         } else {
-            userMessage("Failed to remove MIDI Send Event file " + f.fileName());
+            print("Failed to remove MIDI Send Event file " + f.fileName());
         }
     }
 }
@@ -6567,6 +6388,46 @@ void MainWindow::on_treeWidget_savedMidiMessages_itemClicked(QTreeWidgetItem *it
 {
     int index = ui->treeWidget_savedMidiMessages->indexOfTopLevelItem(item);
     midiEventToMidiSendEditor(savedMidiSendItems[index]);
+}
+
+void MainWindow::setupJack()
+{
+    connect(&jack, &KonfytJackEngine::userMessage, this, &MainWindow::print);
+
+    connect(&jack, &KonfytJackEngine::jackPortRegisteredOrConnected,
+            this, &MainWindow::onJackPortRegisteredOrConnected);
+
+    connect(&jack, &KonfytJackEngine::midiEventsReceived,
+            this, &MainWindow::onJackMidiEventsReceived);
+
+    connect(&jack, &KonfytJackEngine::audioEventsReceived,
+            this, &MainWindow::onJackAudioEventsReceived);
+
+    connect(&jack, &KonfytJackEngine::xrunOccurred, this, &MainWindow::onJackXrunOccurred);
+
+    QString jackClientName = appInfo.jackClientName;
+    if (jackClientName.isEmpty()) {
+        jackClientName = KONFYT_JACK_DEFAULT_CLIENT_NAME;
+    }
+    if ( jack.initJackClient(jackClientName) ) {
+        // Jack client initialised.
+        print("Initialised JACK client with name " + jack.clientName());
+    } else {
+        // not.
+        print("Could not initialise JACK client.");
+
+        // Remove all widgets in centralWidget, add the warning message, and put them back
+        // (Workaround to insert warning message at the top :/ )
+        QList<QLayoutItem*> l;
+        while (ui->centralWidget->layout()->count()) {
+            l.append(ui->centralWidget->layout()->takeAt(0));
+        }
+        ui->centralWidget->layout()->addWidget(ui->groupBox_JackError); // Add error message as first widget
+        // And add the rest of the widgets back:
+        for (int i=0; i<l.count(); i++) {
+            ui->centralWidget->layout()->addItem( l[i] );
+        }
+    }
 }
 
 void MainWindow::on_listWidget_midiSendList_lastReceived_itemClicked(QListWidgetItem *item)
@@ -6635,7 +6496,7 @@ void MainWindow::on_pushButton_midiSendList_sendSelected_clicked()
     KonfytMidiEvent event = midiEventFromMidiSendEditor().midiEvent;
     KfPatchLayerSharedPtr layer = midiSendListEditItem->getPatchLayer();
     if (!layer->hasError()) {
-        jack->sendMidiEventsOnRoute(layer->midiOutputPortData.jackRoute, {event});
+        jack.sendMidiEventsOnRoute(layer->midiOutputPortData.jackRoute, {event});
     }
 }
 
@@ -6647,7 +6508,7 @@ void MainWindow::on_pushButton_midiSendList_sendAll_clicked()
         foreach (MidiSendItem item, midiSendList) {
             events.append(item.midiEvent);
         }
-        jack->sendMidiEventsOnRoute(layer->midiOutputPortData.jackRoute, events);
+        jack.sendMidiEventsOnRoute(layer->midiOutputPortData.jackRoute, events);
     }
 }
 
@@ -6669,6 +6530,8 @@ void MainWindow::on_toolButton_LibraryPreview_clicked()
 {
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
+
+
 
 
 

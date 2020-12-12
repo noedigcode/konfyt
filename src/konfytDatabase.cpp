@@ -243,7 +243,7 @@ konfytDatabase::konfytDatabase()
 
     // Initialise fluidsynth
     if (initFluidsynth()) {
-        emit userMessage("konfytDatabase: Failed to initialise fluidsynth.");
+        emit print("konfytDatabase: Failed to initialise fluidsynth.");
     }
 
 }
@@ -256,7 +256,7 @@ konfytDatabase::~konfytDatabase()
 
 void konfytDatabase::userMessageFromWorker(QString msg)
 {
-    userMessage(msg);
+    print(msg);
 }
 
 void konfytDatabase::scanDirsStatusFromWorker(QString msg)
@@ -275,7 +275,7 @@ void konfytDatabase::scanDirs(QString sfontsDir, QString sfzDir, QString patches
     emit scanDirs_status("Starting scan...");
 
     if (synth == NULL) {
-        emit userMessage("sfontFromFile: Fluidsynth not initialized.");
+        emit print("sfontFromFile: Fluidsynth not initialized.");
         emit scanDirs_finished();
         return;
     }
@@ -331,10 +331,10 @@ void konfytDatabase::addPatch(QString filename)
         patchList.append(p);
         patchFilenameList.append(filename);
     } else {
-        userMessage("konfytDatabase addPatch: Failed to load patch " + filename);
+        print("konfytDatabase addPatch: Failed to load patch " + filename);
     }
     if (!errors.isEmpty()) {
-        userMessage("Load errors for patch " + filename + ":\n" + errors);
+        print("Load errors for patch " + filename + ":\n" + errors);
     }
 }
 
@@ -421,14 +421,14 @@ int konfytDatabase::initFluidsynth()
     // Create settings object
     settings = new_fluid_settings();
     if (settings == NULL) {
-        emit userMessage("initFluidSynth: Failed to create fluidsynth settings.");
+        emit print("initFluidSynth: Failed to create fluidsynth settings.");
         return 1;
     }
 
     // Create the synthesizer
     synth = new_fluid_synth(settings);
     if (synth == NULL) {
-        emit userMessage("initFluidSynth: Failed to create fluidsnth synthesizer.");
+        emit print("initFluidSynth: Failed to create fluidsnth synthesizer.");
         return 1;
     }
 
@@ -442,7 +442,7 @@ bool konfytDatabase::saveDatabaseToFile(QString filename)
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        emit userMessage("Failed to open file for saving database.");
+        emit print("Failed to open file for saving database.");
         return false;
     }
 
@@ -707,7 +707,7 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 {
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit userMessage("Failed to open database file for reading.");
+        emit print("Failed to open database file for reading.");
         return false;
     }
 
@@ -762,7 +762,7 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
                     patchFilenameList.append(patchFilename);
                 }
                 if (!errors.isEmpty()) {
-                    userMessage("Load errors for patch " + patchFilename + ":\n" + errors);
+                    print("Load errors for patch " + patchFilename + ":\n" + errors);
                 }
                 r.skipCurrentElement();
 

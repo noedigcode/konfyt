@@ -133,18 +133,21 @@ public:
 private:
     Ui::MainWindow *ui;
     int eventFilterMode;
+    bool mPrintStart = true;
+    void setupGuiMenuButtons();
+    void setupGuiDefaults();
 
 private slots:
     void closeEvent(QCloseEvent *);
     bool eventFilter(QObject *object, QEvent *event);
 
-    // Display info to user
-    void userMessage(QString message);
+    void print(QString message);
 
     // Keyboard shortcuts
 private:
     QShortcut* shortcut_save;
     QShortcut* shortcut_panic;
+    void setupKeyboardShortcuts();
 private slots:
     void shortcut_save_activated();
     void shortcut_panic_activated();
@@ -161,23 +164,23 @@ private:
     // Project related
     // ========================================================================
 private:
+    typedef QSharedPointer<KonfytProject> ProjectPtr;
+
     QStringList projectDirList;
-    QList<KonfytProject*> projectList;
-    int currentProject;
-    bool startupProject;
-    KonfytProject* getCurrentProject();
-    bool scanDirForProjects(QString dirname);
-    void newProject();
-    bool openProject(QString filename);
-    void addProject(KonfytProject *prj);
-    void removeProject(int i);
-    void setCurrentProject(int i);
+    ProjectPtr mCurrentProject;
+    void setupInitialProjectFromCmdLineArgs();
+    void scanDirForProjects(QString dirname);
+    void loadNewProject();
+    bool loadProjectFromFile(QString filename);
+    void loadProject(ProjectPtr prj);
     bool saveCurrentProject();
-    bool saveProject(KonfytProject *p);
+    bool saveProject(ProjectPtr prj);
+    bool informedUserAboutProjectsDir = false;
 
     KonfytPatch* newPatchToProject();
     void removePatchFromProject(int i);
-    void addPatchToProject(KonfytPatch *newPatch);
+    void addPatchToProject(KonfytPatch* patch);
+    KonfytPatch* addPatchToProjectFromFile(QString filename);
     bool savePatchToLibrary(KonfytPatch* patch);
 
     QMenu projectsMenu;
@@ -238,6 +241,7 @@ private slots:
     // Database
 private:
     konfytDatabase db;
+    void setupDatabase();
     bool saveDatabase();
     int returnSfontRequester;
     QList<KonfytSoundfontProgram> programList; // List of programs currently displayed in program list view in library.
@@ -259,6 +263,7 @@ private:
     // Filesystem view in library
     QString fsview_currentPath;
     QStringList fsview_back;
+    void setupFilesystemView();
     void refreshFilesystemView();
     void cdFilesystemView(QString newpath);
     void selectItemInFilesystemView(QString path);
@@ -308,8 +313,9 @@ private slots:
     // Patches
     // ========================================================================
 private:
-    KonfytPatchEngine* pengine;
-    KonfytPatch* masterPatch;   // Current patch being played
+    KonfytPatchEngine pengine;
+    void setupPatchEngine();
+    KonfytPatch* masterPatch = nullptr; // Current patch being played
     float masterGain = 1.0;     // Master gain when not in preview mode
 
     KonfytPatch previewPatch;   // Patch played when in preview mode
@@ -340,13 +346,13 @@ private:
     void loadPatchForModeAndUpdateGUI();
 
     // GUI patch functions
-    bool previewMode;                   // Use setPreviewMode() to change.
+    bool previewMode = false;           // Use setPreviewMode() to change.
     void setPreviewMode(bool choice);   // Set preview mode on or off and updates GUI.
     void gui_updatePatchView();
     void gui_updateWindowTitle();
     PatchListWidgetAdapter patchListAdapter;
     void setupPatchListAdapter();
-    bool patchNote_ignoreChange;
+    bool patchNote_ignoreChange = false;
 private slots:
     void onPatchSelected(KonfytPatch* patch);
 
@@ -498,6 +504,8 @@ private slots:
     // Settings
     // ========================================================================
 private:
+    bool mSettingsFirstRun = false;
+    void setupSettings();
     void showSettingsDialog();
     void applySettings();
     void scanForDatabase();
@@ -547,9 +555,9 @@ private slots:
     // MIDI filter editor
     // ========================================================================
 private:
-    int midiFilter_lastChan;
-    int midiFilter_lastData1;
-    int midiFilter_lastData2;
+    int midiFilter_lastChan = 0;
+    int midiFilter_lastData1 = 0;
+    int midiFilter_lastData2 = 0;
     MidiFilterEditType midiFilterEditType;
     KonfytLayerWidget* midiFilterEditItem;
     int midiFilterEditPort;
@@ -630,8 +638,9 @@ private slots:
     // JACK / MIDI
     // ========================================================================
 private:
-    KonfytJackEngine* jack;
+    KonfytJackEngine jack;
     int mJackXrunCount = 0;
+    void setupJack();
     void addAudioBusToJack(int busNo, KfJackAudioPort** leftPort, KfJackAudioPort** rightPort);
     void addAudioInPortsToJack(int portNo, KfJackAudioPort** leftPort, KfJackAudioPort** rightPort);
     KfJackMidiPort* addMidiOutPortToJack(int numberLabel);
@@ -651,7 +660,7 @@ private:
     QHash<QAction*, QString> extAppsMenuActions_Append;
     QHash<QAction*, QString> extAppsMenuActions_Set;
     QMenu extAppsMenu;
-    void setupExtAppMenu();
+    void setupExternalAppsMenu();
     void addProcess(konfytProcess *process);
     void runProcess(int index);
     void stopProcess(int index);
@@ -702,8 +711,8 @@ private:
     void setupTriggersPage();
     void showTriggersPage();
     KonfytMidiEvent triggersLastEvent;
-    int lastBankSelectMSB;
-    int lastBankSelectLSB;
+    int lastBankSelectMSB = -1;
+    int lastBankSelectLSB = -1;
     QList<KonfytMidiEvent> triggersLastEvents;
 
     QList<QAction*> channelGainActions;
@@ -727,7 +736,7 @@ private slots:
     // Other JACK connections
     // ========================================================================
 private:
-    bool jackPage_audio; // True to display audio ports, false for MIDI
+    bool jackPage_audio = true; // True to display audio ports, false for MIDI
     void showJackPage();
     void updateJackPage();
 private slots:
@@ -754,7 +763,7 @@ private:
 
     // Panic
 private:
-    bool panicState;
+    bool panicState = false;
     void triggerPanic(bool panic);
 private slots:
     void on_pushButton_Panic_clicked();
@@ -772,8 +781,8 @@ private:
 public:
     void setConsoleShowMidiMessages(bool show);
 private:
-    ConsoleDialog* consoleDiag; // Console dialog (seperate console window)
-    bool console_showMidiMessages;
+    ConsoleDialog consoleDialog {this}; // Seperate console window
+    bool console_showMidiMessages = false;
 private slots:
     void on_pushButton_ClearConsole_clicked();
     void on_pushButton_ShowConsole_clicked();
@@ -850,8 +859,6 @@ private slots:
     void on_horizontalSlider_MasterGain_sliderMoved(int position);
 
     void on_pushButton_LiveMode_clicked();
-
-    void on_tabWidget_Projects_currentChanged(int index);
 
     void on_pushButton_RestartApp_clicked();
 

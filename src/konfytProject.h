@@ -281,7 +281,7 @@ private:
     bool modified; // Whether project has been modified since last load/save.
 
 signals:
-    void userMessage(QString msg);
+    void print(QString msg);
     void projectModifiedChanged(bool modified); // Emitted when project modified state changes.
 
     // Signals emitted when signals are recieved from Process objects.

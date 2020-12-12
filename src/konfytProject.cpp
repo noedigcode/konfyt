@@ -55,7 +55,7 @@ bool KonfytProject::saveProjectAs(QString dirname)
     // Directory in which the project will be saved (from parameter):
     QDir dir(dirname);
     if (!dir.exists()) {
-        userMessage("saveProjectAs: Directory does not exist.");
+        print("saveProjectAs: Directory does not exist.");
         return false;
     }
 
@@ -63,9 +63,9 @@ bool KonfytProject::saveProjectAs(QString dirname)
     QDir patchesDir(patchesPath);
     if (!patchesDir.exists()) {
         if (patchesDir.mkdir(patchesPath)) {
-            userMessage("saveProjectAs: Created patches directory " + patchesPath);
+            print("saveProjectAs: Created patches directory " + patchesPath);
         } else {
-            userMessage("ERROR: saveProjectAs: Could not create patches directory.");
+            print("ERROR: saveProjectAs: Could not create patches directory.");
             return false;
         }
     }
@@ -74,14 +74,14 @@ bool KonfytProject::saveProjectAs(QString dirname)
     QString filename = dirname + "/" + sanitiseFilename(projectName) + PROJECT_FILENAME_EXTENSION;
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        userMessage("saveProjectAs: Could not open file for writing: " + filename);
+        print("saveProjectAs: Could not open file for writing: " + filename);
         return false;
     }
 
     this->projectDirname = dirname;
 
-    userMessage("saveProjectAs: Project Directory: " + dirname);
-    userMessage("saveProjectAs: Project filename: " + filename);
+    print("saveProjectAs: Project Directory: " + dirname);
+    print("saveProjectAs: Project filename: " + filename);
 
 
     QXmlStreamWriter stream(&file);
@@ -110,9 +110,9 @@ bool KonfytProject::saveProjectAs(QString dirname)
         // Save the patch file in the same directory as the project file
         patchFilename = dirname + "/" + patchFilename;
         if ( !pat->savePatchToFile(patchFilename) ) {
-            userMessage("ERROR: saveProjectAs: Failed to save patch " + patchFilename);
+            print("ERROR: saveProjectAs: Failed to save patch " + patchFilename);
         } else {
-            userMessage("saveProjectAs: Saved patch: " + patchFilename);
+            print("saveProjectAs: Saved patch: " + patchFilename);
         }
 
         stream.writeEndElement();
@@ -257,7 +257,7 @@ bool KonfytProject::loadProject(QString filename)
 {
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        userMessage("loadProject: Could not open file for reading.");
+        print("loadProject: Could not open file for reading.");
         return false;
     }
 
@@ -266,8 +266,8 @@ bool KonfytProject::loadProject(QString filename)
     QFileInfo fi(file);
     QDir dir = fi.dir(); // Get file parent directory
     this->projectDirname = dir.path();
-    userMessage("loadProject: Loading project file " + filename);
-    userMessage("loadProject: in dir " + dir.path());
+    print("loadProject: Loading project file " + filename);
+    print("loadProject: in dir " + dir.path());
 
     QXmlStreamReader r(&file);
     r.setNamespaceProcessing(false);
@@ -297,7 +297,7 @@ bool KonfytProject::loadProject(QString filename)
                     if (r.name() == XML_PRJ_PATCH_FILENAME) {
                         patchFilename = r.readElementText();
                     } else {
-                        userMessage("loadProject: "
+                        print("loadProject: "
                                     "Unrecognized patch element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
@@ -308,15 +308,15 @@ bool KonfytProject::loadProject(QString filename)
                 KonfytPatch* pt = new KonfytPatch();
                 QString errors;
                 patchFilename = dir.path() + "/" + patchFilename;
-                userMessage("loadProject: Loading patch " + patchFilename);
+                print("loadProject: Loading patch " + patchFilename);
                 if (pt->loadPatchFromFile(patchFilename, &errors)) {
                     this->addPatch(pt);
                 } else {
                     // Error message on loading patch.
-                    userMessage("loadProject: Error loading patch: " + patchFilename);
+                    print("loadProject: Error loading patch: " + patchFilename);
                 }
                 if (!errors.isEmpty()) {
-                    userMessage("Load errors for patch " + patchFilename + ":\n" + errors);
+                    print("Load errors for patch " + patchFilename + ":\n" + errors);
                 }
 
             } else if (r.name() == XML_PRJ_PATCH_LIST_NUMBERS) {
@@ -342,12 +342,12 @@ bool KonfytProject::loadProject(QString filename)
                         } else if (r.name() == XML_MIDIFILTER) {
                             p.filter.readFromXMLStream(&r);
                         } else {
-                            userMessage("loadProject: "
+                            print("loadProject: "
                                         "Unrecognized midiInPortList port element: " + r.name().toString() );
                         }
                     }
                     if (midiInPortMap.contains(id)) {
-                        userMessage("loadProject: "
+                        print("loadProject: "
                                     "Duplicate midi in port id detected: " + n2s(id));
                     }
                     this->midiInPortMap.insert(id, p);
@@ -366,13 +366,13 @@ bool KonfytProject::loadProject(QString filename)
                         } else if (r.name() == XML_PRJ_MIDI_OUT_PORT_CLIENT) {
                             p.clients.append( r.readElementText() );
                         } else {
-                            userMessage("loadProject: "
+                            print("loadProject: "
                                         "Unrecognized midiOutPortList port element: " + r.name().toString() );
                             r.skipCurrentElement();
                         }
                     }
                     if (midiOutPortMap.contains(id)) {
-                        userMessage("loadProject: "
+                        print("loadProject: "
                                     "Duplicate midi out port id detected: " + n2s(id));
                     }
                     this->midiOutPortMap.insert(id, p);
@@ -397,13 +397,13 @@ bool KonfytProject::loadProject(QString filename)
                         } else if (r.name() == XML_PRJ_BUS_RCLIENT) {
                             b.rightOutClients.append( r.readElementText() );
                         } else {
-                            userMessage("loadProject: "
+                            print("loadProject: "
                                         "Unrecognized bus element: " + r.name().toString() );
                             r.skipCurrentElement();
                         }
                     }
                     if (audioBusMap.contains(id)) {
-                        userMessage("loadProject: "
+                        print("loadProject: "
                                     "Duplicate bus id detected: " + n2s(id));
                     }
                     this->audioBusMap.insert(id, b);
@@ -428,13 +428,13 @@ bool KonfytProject::loadProject(QString filename)
                         } else if (r.name() == XML_PRJ_AUDIOIN_PORT_RCLIENT) {
                             p.rightInClients.append( r.readElementText() );
                         } else {
-                            userMessage("loadProject: "
+                            print("loadProject: "
                                         "Unrecognized audio input port element: " + r.name().toString() );
                             r.skipCurrentElement();
                         }
                     }
                     if (audioInPortMap.contains(id)) {
-                        userMessage("loadProject: "
+                        print("loadProject: "
                                     "Duplicate audio in port id detected: " + n2s(id));
                     }
                     this->audioInPortMap.insert(id, p);
@@ -448,7 +448,7 @@ bool KonfytProject::loadProject(QString filename)
                         if (r.name() == XML_PRJ_PROCESS_APPNAME) {
                             gp->appname = r.readElementText();
                         } else {
-                            userMessage("loadProject: "
+                            print("loadProject: "
                                         "Unrecognized process element: " + r.name().toString() );
                             r.skipCurrentElement();
                         }
@@ -481,7 +481,7 @@ bool KonfytProject::loadProject(QString filename)
                             } else if (r.name() == XML_PRJ_TRIGGER_BANKLSB) {
                                 trig.bankLSB = r.readElementText().toInt();
                             } else {
-                                userMessage("loadProject: "
+                                print("loadProject: "
                                             "Unrecognized trigger element: " + r.name().toString() );
                                 r.skipCurrentElement();
                             }
@@ -489,7 +489,7 @@ bool KonfytProject::loadProject(QString filename)
                         this->addAndReplaceTrigger(trig);
 
                     } else {
-                        userMessage("loadProject: "
+                        print("loadProject: "
                                     "Unrecognized triggerList element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
@@ -509,7 +509,7 @@ bool KonfytProject::loadProject(QString filename)
                             } else if (r.name() == XML_PRJ_OTHERJACKCON_DEST) {
                                 destPort = r.readElementText();
                             } else {
-                                userMessage("loadProject: "
+                                print("loadProject: "
                                             "Unrecognized JACK con element: " + r.name().toString() );
                                 r.skipCurrentElement();
                             }
@@ -517,7 +517,7 @@ bool KonfytProject::loadProject(QString filename)
                         this->addJackMidiCon(srcPort, destPort);
 
                     } else {
-                        userMessage("loadProject: "
+                        print("loadProject: "
                                     "Unrecognized otherJackMidiConList element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
@@ -537,7 +537,7 @@ bool KonfytProject::loadProject(QString filename)
                             } else if (r.name() == XML_PRJ_OTHERJACKCON_DEST) {
                                 destPort = r.readElementText();
                             } else {
-                                userMessage("loadProject: "
+                                print("loadProject: "
                                             "Unrecognized JACK con element: " + r.name().toString() );
                                 r.skipCurrentElement();
                             }
@@ -545,14 +545,14 @@ bool KonfytProject::loadProject(QString filename)
                         addJackAudioCon(srcPort, destPort);
 
                     } else {
-                        userMessage("loadProject: "
+                        print("loadProject: "
                                     "Unrecognized otherJackAudioConList element: " + r.name().toString() );
                         r.skipCurrentElement();
                     }
                 }
 
             } else {
-                userMessage("loadProject: "
+                print("loadProject: "
                             "Unrecognized project element: " + r.name().toString() );
                 r.skipCurrentElement();
             }
@@ -1188,7 +1188,7 @@ void KonfytProject::addProcess(konfytProcess* process)
 bool KonfytProject::isProcessRunning(int index)
 {
     if ( (index < 0) || (index >= processList.count()) ) {
-        userMessage("ERROR: isProcessRunning: INVALID PROCESS INDEX " + n2s(index));
+        print("ERROR: isProcessRunning: INVALID PROCESS INDEX " + n2s(index));
     }
 
     return processList.at(index)->isRunning();
@@ -1199,9 +1199,9 @@ void KonfytProject::runProcess(int index)
     if ( (index>=0) && (index < processList.count()) ) {
         // Start process
         processList.at(index)->start();
-        userMessage("Starting process " + processList.at(index)->appname);
+        print("Starting process " + processList.at(index)->appname);
     } else {
-        userMessage("ERROR: runProcess: INVALID PROCESS INDEX " + n2s(index));
+        print("ERROR: runProcess: INVALID PROCESS INDEX " + n2s(index));
     }
 }
 
@@ -1210,9 +1210,9 @@ void KonfytProject::stopProcess(int index)
     if ( (index>=0) && (index < processList.count()) ) {
         // Stop process
         processList.at(index)->stop();
-        userMessage("Stopping process " + processList.at(index)->appname);
+        print("Stopping process " + processList.at(index)->appname);
     } else {
-        userMessage("ERROR: stopProcess: INVALID PROCESS INDEX " + n2s(index));
+        print("ERROR: stopProcess: INVALID PROCESS INDEX " + n2s(index));
     }
 }
 
@@ -1222,7 +1222,7 @@ void KonfytProject::removeProcess(int index)
         processList.removeAt(index);
         setModified(true);
     } else {
-        userMessage("ERROR: removeProcess: INVALID PROCESS INDEX " + n2s(index));
+        print("ERROR: removeProcess: INVALID PROCESS INDEX " + n2s(index));
     }
 }
 

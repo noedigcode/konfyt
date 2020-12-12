@@ -664,6 +664,12 @@ QStatusBar {
        </property>
        <item>
         <widget class="QPushButton" name="pushButton_LavaMonster">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="minimumSize">
           <size>
            <width>50</width>
@@ -687,6 +693,12 @@ QStatusBar {
        </item>
        <item>
         <widget class="QFrame" name="frame_3">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
@@ -724,7 +736,7 @@ QStatusBar {
           <item>
            <widget class="QPushButton" name="pushButton_LiveMode">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -790,7 +802,7 @@ border-bottom-left-radius: 0;</string>
           <item>
            <widget class="QToolButton" name="toolButton_Project">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -818,7 +830,7 @@ border-bottom-right-radius: 0;</string>
           <item>
            <widget class="QPushButton" name="pushButton_ShowConnections">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -843,7 +855,7 @@ border-bottom-left-radius: 0;</string>
           <item>
            <widget class="QPushButton" name="pushButton_ShowTriggersPage">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -868,7 +880,7 @@ border-bottom-left-radius: 0;</string>
           <item>
            <widget class="QPushButton" name="pushButton_ShowJackPage">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -892,111 +904,26 @@ border-bottom-left-radius: 0;</string>
         </widget>
        </item>
        <item>
-        <widget class="QTabWidget" name="tabWidget_Projects">
-         <property name="minimumSize">
+        <spacer name="horizontalSpacer_12">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
           <size>
-           <width>0</width>
-           <height>0</height>
+           <width>40</width>
+           <height>20</height>
           </size>
          </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>23</height>
-          </size>
-         </property>
-         <property name="styleSheet">
-          <string notr="true"/>
-         </property>
-         <property name="tabShape">
-          <enum>QTabWidget::Rounded</enum>
-         </property>
-         <property name="currentIndex">
-          <number>0</number>
-         </property>
-         <property name="elideMode">
-          <enum>Qt::ElideNone</enum>
-         </property>
-         <property name="usesScrollButtons">
-          <bool>true</bool>
-         </property>
-         <property name="tabsClosable">
-          <bool>false</bool>
-         </property>
-         <widget class="QWidget" name="tab">
-          <attribute name="title">
-           <string>Project 1</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_3">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_8">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_9">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_10">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_11">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_12">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_13">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_14">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_4">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_5">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_6">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_7">
-          <attribute name="title">
-           <string>Page</string>
-          </attribute>
-         </widget>
-         <widget class="QWidget" name="tab_2">
-          <attribute name="title">
-           <string>Project 2</string>
-          </attribute>
-         </widget>
-        </widget>
+        </spacer>
        </item>
        <item>
         <widget class="QCheckBox" name="MIDI_indicator_pitchbend">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="toolTip">
           <string>Pitchbend Indicator</string>
          </property>
@@ -1013,6 +940,12 @@ border-bottom-left-radius: 0;</string>
        </item>
        <item>
         <widget class="QCheckBox" name="MIDI_indicator_sustain">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="toolTip">
           <string>Sustain Pedal Indicator</string>
          </property>
@@ -1029,6 +962,12 @@ border-bottom-left-radius: 0;</string>
        </item>
        <item>
         <widget class="QCheckBox" name="MIDI_indicator">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="toolTip">
           <string>MIDI Activity Indicator</string>
          </property>
@@ -1045,6 +984,12 @@ border-bottom-left-radius: 0;</string>
        </item>
        <item>
         <widget class="QFrame" name="frame_29">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="maximumSize">
           <size>
            <width>16777215</width>
@@ -1082,7 +1027,7 @@ border-bottom-left-radius: 0;</string>
           <item>
            <widget class="QPushButton" name="pushButton_Panic">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+             <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -3704,8 +3649,8 @@ QSpinBox {
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>374</width>
-                        <height>398</height>
+                        <width>262</width>
+                        <height>376</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_14">

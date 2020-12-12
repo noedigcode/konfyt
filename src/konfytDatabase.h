@@ -131,7 +131,7 @@ public slots:
 
 signals:
     // Signals intended for outside world
-    void userMessage(QString message);
+    void print(QString message);
     void scanDirs_status(QString msg);
     void scanDirs_finished();
     void returnSfont_finished(KonfytSoundfont* sf);

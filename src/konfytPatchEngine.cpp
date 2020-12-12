@@ -90,9 +90,9 @@ void KonfytPatchEngine::panic(bool p)
     jack->panic(p);
 }
 
-void KonfytPatchEngine::setProject(KonfytProject *project)
+void KonfytPatchEngine::setProject(ProjectPtr project)
 {
-    this->currentProject = project;
+    mCurrentProject = project;
 }
 
 /* Reload current patch (e.g. if patch changed). */
@@ -243,20 +243,20 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
 
             // Get source ports
             int portId = layer->audioInPortData.portIdInProject;
-            if (!currentProject->audioInPort_exists(portId)) {
+            if (!mCurrentProject->audioInPort_exists(portId)) {
                 layer->setErrorMessage("No audio-in port in project: " + n2s(portId));
                 userMessage("loadPatch: " + layer->errorMessage());
                 continue;
             }
-            PrjAudioInPort srcPorts = currentProject->audioInPort_getPort(portId);
+            PrjAudioInPort srcPorts = mCurrentProject->audioInPort_getPort(portId);
 
             // Get destination ports (bus)
-            if (!currentProject->audioBus_exists(layer->busIdInProject())) {
+            if (!mCurrentProject->audioBus_exists(layer->busIdInProject())) {
                 layer->setErrorMessage("No bus in project: " + n2s(portId));
                 userMessage("loadPatch: " + layer->errorMessage());
                 continue;
             }
-            PrjAudioBus destPorts = currentProject->audioBus_getBus(layer->busIdInProject());
+            PrjAudioBus destPorts = mCurrentProject->audioBus_getBus(layer->busIdInProject());
 
             // Route for left port
             layer->audioInPortData.jackRouteLeft = jack->addAudioRoute(
@@ -277,20 +277,20 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
             // Route hasn't been created yet
 
             // Get source port
-            if (!currentProject->midiInPort_exists(layer->midiInPortIdInProject())) {
+            if (!mCurrentProject->midiInPort_exists(layer->midiInPortIdInProject())) {
                 layer->setErrorMessage("No MIDI-in port in project: " + n2s(layer->midiInPortIdInProject()));
                 userMessage("loadPatch: " + layer->errorMessage());
                 continue;
             }
-            PrjMidiPort srcPort = currentProject->midiInPort_getPort(layer->midiInPortIdInProject());
+            PrjMidiPort srcPort = mCurrentProject->midiInPort_getPort(layer->midiInPortIdInProject());
 
             // Get destination port
-            if (!currentProject->midiOutPort_exists(layer->midiOutputPortData.portIdInProject)) {
+            if (!mCurrentProject->midiOutPort_exists(layer->midiOutputPortData.portIdInProject)) {
                 layer->setErrorMessage("No MIDI-out port in project: " + n2s(layer->midiOutputPortData.portIdInProject));
                 userMessage("loadPatch: " + layer->errorMessage());
                 continue;
             }
-            PrjMidiPort destPort = currentProject->midiOutPort_getPort(layer->midiOutputPortData.portIdInProject);
+            PrjMidiPort destPort = mCurrentProject->midiOutPort_getPort(layer->midiOutputPortData.portIdInProject);
 
             // Create route
             layer->midiOutputPortData.jackRoute = jack->addMidiRoute(
@@ -320,11 +320,11 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addProgramLayer(KonfytSoundfontProgram ne
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
-    layer->setBusIdInProject(currentProject->audioBus_getFirstBusId(-1));
+    layer->setBusIdInProject(mCurrentProject->audioBus_getFirstBusId(-1));
 
     // The MIDI in port defaults to 0, but the project may not have a port 0.
     // Find the first port in the project.
-    layer->setMidiInPortIdInProject(currentProject->midiInPort_getFirstPortId(-1));
+    layer->setMidiInPortIdInProject(mCurrentProject->midiInPort_getFirstPortId(-1));
 
     reloadPatch();
 
@@ -400,11 +400,11 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addSfzLayer(QString path)
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
-    layer->setBusIdInProject(currentProject->audioBus_getFirstBusId(-1));
+    layer->setBusIdInProject(mCurrentProject->audioBus_getFirstBusId(-1));
 
     // The MIDI in port defaults to 0, but the project may not have a port 0.
     // Find the first port in the project.
-    layer->setMidiInPortIdInProject(currentProject->midiInPort_getFirstPortId(-1));
+    layer->setMidiInPortIdInProject(mCurrentProject->midiInPort_getFirstPortId(-1));
 
     reloadPatch();
 
@@ -452,19 +452,19 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
              (layerType == KonfytPatchLayer::TypeSfz) ||
              (layerType == KonfytPatchLayer::TypeAudioIn) )
         {
-            if ( !currentProject->audioBus_exists(layer->busIdInProject()) ) {
+            if ( !mCurrentProject->audioBus_exists(layer->busIdInProject()) ) {
                 // Invalid bus. Default to the first one.
                 userMessage("WARNING: Layer " + n2s(i+1) + " invalid bus " + n2s(layer->busIdInProject()));
 
-                QList<int> busList = currentProject->audioBus_getAllBusIds();
+                QList<int> busList = mCurrentProject->audioBus_getAllBusIds();
                 if (busList.count()) {
-                    bus = currentProject->audioBus_getBus(busList[0]);
+                    bus = mCurrentProject->audioBus_getBus(busList[0]);
                     userMessage("   Defaulting to bus " + n2s(busList[0]));
                 } else {
                     error_abort("refreshAllGainsAndRouting: Project has no buses.");
                 }
             } else {
-                bus = currentProject->audioBus_getBus(layer->busIdInProject());
+                bus = mCurrentProject->audioBus_getBus(layer->busIdInProject());
             }
         }
         PrjMidiPort midiInPort;
@@ -472,19 +472,19 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
              (layerType == KonfytPatchLayer::TypeSfz) ||
              (layerType == KonfytPatchLayer::TypeMidiOut) )
         {
-            if ( !currentProject->midiInPort_exists(layer->midiInPortIdInProject()) ) {
+            if ( !mCurrentProject->midiInPort_exists(layer->midiInPortIdInProject()) ) {
                 // Invalid Midi in port. Default to first one.
                 userMessage("WARNING: Layer " + n2s(i+1) + " invalid MIDI input port " + n2s(layer->midiInPortIdInProject()));
 
-                QList<int> midiInPortList = currentProject->midiInPort_getAllPortIds();
+                QList<int> midiInPortList = mCurrentProject->midiInPort_getAllPortIds();
                 if (midiInPortList.count()) {
-                    midiInPort = currentProject->midiInPort_getPort(midiInPortList[0]);
+                    midiInPort = mCurrentProject->midiInPort_getPort(midiInPortList[0]);
                     userMessage("   Defaulting to port " + n2s(midiInPortList[0]));
                 } else {
                     error_abort("refreshAllGainsAndRouting: Project has no MIDI Input Ports.");
                 }
             } else {
-                midiInPort = currentProject->midiInPort_getPort(layer->midiInPortIdInProject());
+                midiInPort = mCurrentProject->midiInPort_getPort(layer->midiInPortIdInProject());
             }
         }
 
@@ -526,9 +526,9 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
 
             // Set solo and mute in jack client
             LayerMidiOutData portData = layer->midiOutputPortData;
-            if (currentProject->midiOutPort_exists(portData.portIdInProject)) {
+            if (mCurrentProject->midiOutPort_exists(portData.portIdInProject)) {
 
-                PrjMidiPort prjMidiOutPort = currentProject->midiOutPort_getPort( portData.portIdInProject );
+                PrjMidiPort prjMidiOutPort = mCurrentProject->midiOutPort_getPort( portData.portIdInProject );
 
                 // Set routing
                 jack->setMidiRoute(portData.jackRoute, midiInPort.jackPort,
@@ -547,9 +547,9 @@ void KonfytPatchEngine::refreshAllGainsAndRouting()
             // The bus number in audioInLayerStruct refers to a bus in the project with a left and right jack port.
             // We have to retrieve the port pair and bus from the project in order to get the left and right port Jack port numbers.
             LayerAudioInData audioPortData = layer->audioInPortData;
-            if (currentProject->audioInPort_exists(audioPortData.portIdInProject)) {
+            if (mCurrentProject->audioInPort_exists(audioPortData.portIdInProject)) {
 
-                PrjAudioInPort portPair = currentProject->audioInPort_getPort(audioPortData.portIdInProject);
+                PrjAudioInPort portPair = mCurrentProject->audioInPort_getPort(audioPortData.portIdInProject);
                 // Left channel
                 // Gain
                 jack->setAudioRouteGain(audioPortData.jackRouteLeft,
@@ -771,7 +771,7 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addMidiOutPortToPatch(int port)
 
     // The MIDI in port defaults to 0, but the project may not have a port 0.
     // Find the first port in the project.
-    layer->setMidiInPortIdInProject(currentProject->midiInPort_getFirstPortId(-1));
+    layer->setMidiInPortIdInProject(mCurrentProject->midiInPort_getFirstPortId(-1));
 
     reloadPatch();
 
@@ -786,7 +786,7 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addAudioInPortToPatch(int port)
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
-    layer->setBusIdInProject(currentProject->audioBus_getFirstBusId(-1));
+    layer->setBusIdInProject(mCurrentProject->audioBus_getFirstBusId(-1));
 
     reloadPatch();
 

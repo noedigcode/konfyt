@@ -40,6 +40,8 @@ class KonfytPatchEngine : public QObject
 {
     Q_OBJECT
 public:
+    typedef QSharedPointer<KonfytProject> ProjectPtr;
+
     explicit KonfytPatchEngine(QObject *parent = 0);
     ~KonfytPatchEngine();
 
@@ -52,7 +54,7 @@ public:
     float getMasterGain();
     void setMasterGain(float newGain);
 
-    void setProject(KonfytProject* project);
+    void setProject(ProjectPtr project);
 
     // ----------------------------------------------------
     // Loading patches and programs
@@ -116,7 +118,7 @@ signals:
     
 private:
     KonfytPatch* mCurrentPatch = nullptr;
-    KonfytProject* currentProject = nullptr;
+    ProjectPtr mCurrentProject;
     float masterGain;
     float convertGain(float linearGain);
 

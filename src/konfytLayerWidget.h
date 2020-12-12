@@ -46,7 +46,8 @@ public:
     explicit KonfytLayerWidget(QWidget *parent = 0);
     ~KonfytLayerWidget();
 
-    KonfytProject* project; // Pointer to current project to get bus and port naming info
+    typedef QSharedPointer<KonfytProject> ProjectPtr;
+    ProjectPtr project; // Pointer to current project to get bus and port naming info
 
     // This function has to be called before using the object.
     void initLayer(KfPatchLayerWeakPtr patchLayer, QListWidgetItem* listItem);
