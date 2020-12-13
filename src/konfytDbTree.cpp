@@ -23,14 +23,11 @@
 
 KonfytDbTreeItem::KonfytDbTreeItem()
 {
-    this->name = "Item";
-    this->parent = NULL;
 }
 
 KonfytDbTreeItem::KonfytDbTreeItem(QString newName)
 {
     this->name = newName;
-    this->parent = NULL;
 }
 
 KonfytDbTreeItem::KonfytDbTreeItem(KonfytDbTreeItem *newParent, QString newName)
@@ -46,7 +43,7 @@ bool KonfytDbTreeItem::hasChildren()
 
 bool KonfytDbTreeItem::hasParent()
 {
-    return parent != NULL;
+    return (parent != nullptr);
 }
 
 KonfytDbTree::KonfytDbTree()

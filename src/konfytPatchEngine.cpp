@@ -97,7 +97,7 @@ void KonfytPatchEngine::setProject(ProjectPtr project)
 /* Reload current patch (e.g. if patch changed). */
 void KonfytPatchEngine::reloadPatch()
 {
-    loadPatch( mCurrentPatch );
+    loadPatch(mCurrentPatch);
 }
 
 /* Ensure patch and all layers are unloaded from their respective engines. */

@@ -39,9 +39,9 @@ public:
     bool hasParent();
 
     /* Additional data that can be assigned */
-    QString name;
+    QString name = "Item";
     QString path;
-    void* data;
+    void* data = nullptr;
 };
 
 

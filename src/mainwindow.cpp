@@ -754,10 +754,10 @@ void MainWindow::gui_updateConnectionsTree()
             // Do not mark red
             item->setBackground(0, QBrush(activeColor));
         }
-        QCheckBox* cb = conChecksMap1.key(item, NULL);
-        if (cb != NULL) { cb->setChecked(leftCons.contains(port)); }
-        cb = conChecksMap2.key(item, NULL);
-        if (cb != NULL) { cb->setChecked(rightCons.contains(port)); }
+        QCheckBox* cb = conChecksMap1.key(item, nullptr);
+        if (cb) { cb->setChecked(leftCons.contains(port)); }
+        cb = conChecksMap2.key(item, nullptr);
+        if (cb) { cb->setChecked(rightCons.contains(port)); }
     }
 
     ui->tree_Connections->sortItems(0, Qt::AscendingOrder);
@@ -772,7 +772,7 @@ void MainWindow::clearPortsBussesConnectionsData()
     ui->tree_portsBusses->clear();
 
     // Delete all tree items
-    if (busParent != NULL) {
+    if (busParent) {
         tree_busMap.clear();
         tree_audioInMap.clear();
         tree_midiOutMap.clear();
@@ -957,8 +957,8 @@ void MainWindow::tree_portsBusses_Menu(const QPoint &pos)
     QTreeWidgetItem* item = ui->tree_portsBusses->itemAt(pos);
     portsBussesTreeMenuItem = item;
 
-    if (item != NULL) {
-        if (item->parent() != NULL) {
+    if (item) {
+        if (item->parent()) {
             m->addAction(ui->actionRename_BusPort);
             m->addAction(ui->actionRemove_BusPort);
             m->addSeparator();
@@ -1462,15 +1462,14 @@ KonfytPatch MainWindow::library_getSelectedPatch()
     }
 }
 
-/* Returns the currently selected soundfont, or NULL if
- * nothing is selected. */
+/* Returns the currently selected soundfont, or nullptr if nothing is selected. */
 KonfytSoundfont* MainWindow::library_getSelectedSfont()
 {
     if ( library_getSelectedTreeItemType() == libTreeSoundfont ) {
         QTreeWidgetItem* current = ui->treeWidget_Library->currentItem();
         return library_sfMap.value(current);
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
@@ -1615,16 +1614,26 @@ void MainWindow::gui_updatePatchView()
 
 void MainWindow::gui_updateWindowTitle()
 {
+    QString title;
+
     if (previewMode) {
-        this->setWindowTitle("Preview - " + QString(APP_NAME));
+        title += "Preview";
     } else {
         KonfytPatch* currentPatch = pengine.currentPatch();
         if (currentPatch) {
-            setWindowTitle(QString("%1 - %2").arg(currentPatch->name()).arg(APP_NAME));
-        } else {
-            setWindowTitle(APP_NAME);
+            title += currentPatch->name();
         }
     }
+
+    if (mCurrentProject) {
+        if (!title.isEmpty()) { title += " - "; }
+        title += mCurrentProject->getProjectName();
+    }
+
+    if (!title.isEmpty()) { title += " "; }
+    title += "[" + jack.clientName() + "]";
+
+    setWindowTitle(title);
 }
 
 void MainWindow::setupPatchListAdapter()
@@ -2148,13 +2157,14 @@ void MainWindow::setCurrentPatchByIndex(int index)
     setCurrentPatch(prj->getPatch(index));
 }
 
-void MainWindow::on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
+void MainWindow::on_treeWidget_Library_currentItemChanged(
+        QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
 {
     ui->listWidget_LibraryBottom->clear();  // Program list view
     programList.clear();        // Our internal program list, corresponding to the list view
     ui->textBrowser_LibraryBottom->clear();
 
-    if (current == NULL) {
+    if (!current) {
         return;
     }
 
@@ -2280,9 +2290,9 @@ void MainWindow::addProgramToCurrentPatch(KonfytSoundfontProgram p)
 void MainWindow::newPatchIfMasterNull()
 {
     ProjectPtr prj = mCurrentProject;;
-    Q_ASSERT( prj != NULL );
+    KONFYT_ASSERT_RETURN(prj);
 
-    if (masterPatch == NULL) {
+    if (!masterPatch) {
         newPatchToProject();
         // Switch to latest patch
         setCurrentPatchByIndex(-1);
@@ -2775,20 +2785,19 @@ void MainWindow::setPatchModified(bool modified)
 
 void MainWindow::setProjectModified()
 {
-    ProjectPtr prj = mCurrentProject;;
-    if (prj != NULL) {
-        prj->setModified(true);
-    }
+    if (!mCurrentProject) { return; }
+
+    mCurrentProject->setModified(true);
 }
 
 /* Set the name of the current project and updates the GUI. */
 void MainWindow::setProjectName(QString name)
 {
-    ProjectPtr prj = mCurrentProject;;
-    if (prj != NULL) {
-        prj->setProjectName(name);
-        gui_updateProjectName();
-    }
+    if (!mCurrentProject) { return; }
+
+    mCurrentProject->setProjectName(name);
+    gui_updateProjectName();
+    gui_updateWindowTitle();
 }
 
 /* Update GUI with current project name. */
@@ -3322,9 +3331,8 @@ void MainWindow::handleMidiEvent(KfJackMidiRxEvent rxEvent)
     // If program change without bank select, switch patch if checkbox is checked.
     if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
         if ( (lastBankSelectLSB == -1) && (lastBankSelectMSB == -1) ) {
-            ProjectPtr prj = mCurrentProject;;
-            if (prj != NULL) {
-                if (prj->isProgramChangeSwitchPatches()) {
+            if (mCurrentProject) {
+                if (mCurrentProject->isProgramChangeSwitchPatches()) {
                     setCurrentPatchByIndex(ev.program());
                 }
             }
@@ -4479,7 +4487,7 @@ void MainWindow::refreshFilesystemView()
 
     ProjectPtr prj = mCurrentProject;;
     QString project_dir;
-    if (prj != NULL) {
+    if (prj) {
         project_dir = prj->getDirname();
     }
 
@@ -4909,9 +4917,10 @@ void MainWindow::on_pushButton_ShowConnections_clicked()
     }
 }
 
-void MainWindow::on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
+void MainWindow::on_tree_portsBusses_currentItemChanged(
+        QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
 {
-    if (current == NULL){ return; }
+    if (!current) { return; }
 
     // Enable MIDI Filter button if MIDI in port selected
     if ( current->parent() == midiInParent ) {
@@ -5150,7 +5159,7 @@ void MainWindow::on_actionAdd_Path_To_External_App_Box_triggered()
 {
     QString path;
 
-    if (fsViewMenuItem == NULL) {
+    if (!fsViewMenuItem) {
         // No item is selected in the filesystem list. Use current path
         path = fsview_currentPath;
     } else {
@@ -5181,7 +5190,7 @@ void MainWindow::on_actionOpen_In_File_Manager_fsview_triggered()
 {
     QString path;
 
-    if (fsViewMenuItem == NULL) {
+    if (!fsViewMenuItem) {
         // No item is selected. Use current path
         path = fsview_currentPath;
     } else {
@@ -5201,7 +5210,7 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
 {
     QString path;
 
-    if (fsViewMenuItem == NULL) {
+    if (!fsViewMenuItem) {
         // No item is selected in the filesystem list. Use current path
         path = fsview_currentPath;
     } else {
@@ -5212,7 +5221,7 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
 
     // Make relative to project directory
     ProjectPtr prj = mCurrentProject;;
-    if (prj != NULL) {
+    if (prj) {
         QString projPath = prj->getDirname();
         QDir projDir(projPath);
         path = QString(STRING_PROJECT_DIR) + "/" + projDir.relativeFilePath(path);
@@ -5297,7 +5306,7 @@ void MainWindow::on_treeWidget_Library_customContextMenuRequested(const QPoint &
 /* Action triggered from library tree view to open item in file manager. */
 void MainWindow::on_actionOpen_In_File_Manager_library_triggered()
 {
-    if (libraryMenuItem == NULL) { return; }
+    if (!libraryMenuItem) { return; }
 
     QString path;
 
@@ -5471,7 +5480,7 @@ void MainWindow::on_pushButton_triggersPage_OK_clicked()
 void MainWindow::on_pushButton_triggersPage_assign_clicked()
 {
     QTreeWidgetItem* item = ui->tree_Triggers->currentItem();
-    if (item == NULL) { return; }
+    if (!item) { return; }
 
     ProjectPtr prj = mCurrentProject;;
     if (!prj) { return; }
@@ -5506,7 +5515,7 @@ void MainWindow::on_pushButton_triggersPage_assign_clicked()
 void MainWindow::on_pushButton_triggersPage_clear_clicked()
 {
     QTreeWidgetItem* item = ui->tree_Triggers->currentItem();
-    if (item == NULL) { return; }
+    if (!item) { return; }
 
     ProjectPtr prj = mCurrentProject;;
     if (!prj) { return; }
@@ -5844,7 +5853,7 @@ void MainWindow::on_pushButton_jackConAdd_clicked()
 {
     QTreeWidgetItem* itemOut = ui->treeWidget_jackPortsOut->currentItem();
     QTreeWidgetItem* itemIn = ui->treeWidget_jackportsIn->currentItem();
-    if ( (itemOut==NULL) || (itemIn==NULL) ) { return; }
+    if ( (!itemOut) || (!itemIn) ) { return; }
 
     ProjectPtr prj = mCurrentProject;;
     if (!prj) { return; }

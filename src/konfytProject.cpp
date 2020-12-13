@@ -619,7 +619,7 @@ void KonfytProject::addPatch(KonfytPatch *newPatch)
 
 /* Removes the patch from project and returns the pointer.
  * Note that the pointer has not been freed.
- * Returns NULL if index out of bounds. */
+ * Returns nullptr if index out of bounds. */
 KonfytPatch *KonfytProject::removePatch(int i)
 {
     if ( (i>=0) && (i<patchList.count())) {
@@ -628,7 +628,7 @@ KonfytPatch *KonfytProject::removePatch(int i)
         setModified(true);
         return patch;
     } else {
-        return NULL;
+        return nullptr;
     }
 }
 
