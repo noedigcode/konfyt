@@ -56,6 +56,8 @@
 
 #define MIDI_DATA_MAX_SIZE 64
 
+#define MIDI_SUSTAIN_THRESH 63
+
 #define XML_MIDIEVENT "midiEvent"
 #define XML_MIDIEVENT_TYPE "type"
 #define XML_MIDIEVENT_CHANNEL "channel"

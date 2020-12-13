@@ -47,7 +47,7 @@ void LayerIndicatorHandler::jackEventReceived(KfJackMidiRxEvent ev)
 
     if ((ev.midiEvent.type() == MIDI_EVENT_TYPE_CC)
         && (ev.midiEvent.data1() == 64)) {
-        state.sustain = (ev.midiEvent.data2() > 0);
+        state.sustain = (ev.midiEvent.data2() > MIDI_SUSTAIN_THRESH);
     }
     if (ev.midiEvent.type() == MIDI_EVENT_TYPE_PITCHBEND) {
         state.pitchbend = (ev.midiEvent.pitchbendValueSigned() != 0);
@@ -98,7 +98,7 @@ void PortIndicatorHandler::jackEventReceived(KfJackMidiRxEvent ev)
 
     if ((ev.midiEvent.type() == MIDI_EVENT_TYPE_CC)
         && (ev.midiEvent.data1() == 64)) {
-        setPortSustain(state, ev.midiEvent.data2() > 0);
+        setPortSustain(state, ev.midiEvent.data2() > MIDI_SUSTAIN_THRESH);
     }
     if ((ev.midiEvent.type() == MIDI_EVENT_TYPE_PITCHBEND)) {
         setPortPitchbend(state, ev.midiEvent.pitchbendValueSigned() != 0);

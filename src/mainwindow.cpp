@@ -71,6 +71,8 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
 
 MainWindow::~MainWindow()
 {
+    mBlockPrint = true;
+
     jack.stopJackClient();
     consoleDialog.close();
 
@@ -1921,6 +1923,8 @@ void MainWindow::setupFilesystemView()
 /* Displays a message in the GUI console. */
 void MainWindow::print(QString message)
 {
+    if (mBlockPrint) { return; }
+
     ui->textBrowser->append(message);
 
     /* Ensure textBrowser scrolls to maximum when it is filled with text. Usually

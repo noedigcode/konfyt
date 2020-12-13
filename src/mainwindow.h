@@ -137,6 +137,7 @@ private:
     void setupGuiMenuButtons();
     void setupGuiDefaults();
     void printArgumentsInfo();
+    bool mBlockPrint = false;
 
 private slots:
     void closeEvent(QCloseEvent *);
