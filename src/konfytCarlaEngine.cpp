@@ -123,7 +123,7 @@ int KonfytCarlaEngine::addSfz(QString path)
     // Load the plugin
 
     bool returnValue;
-    userMessage("Loading sfz: " + pluginData.path + ", " + pluginData.name);
+    print("Loading sfz: " + pluginData.path + ", " + pluginData.name);
     #if CARLA_VERSION_HEX < 0x01095
     // Old carla used PLUGIN_FILE_SFZ below.
     returnValue = carla_add_plugin(BINARY_NATIVE, PLUGIN_FILE_SFZ,pluginData.path.toLocal8Bit(),
@@ -142,7 +142,7 @@ int KonfytCarlaEngine::addSfz(QString path)
 
     if ( !returnValue ) {
         // Not a success.
-        userMessage("Carla failed to load plugin.");
+        print("Carla failed to load plugin.");
         return -1;
     }
 
@@ -171,7 +171,7 @@ void KonfytCarlaEngine::removeSfz(int ID)
 
     bool ret = CARLA_FUNC(carla_remove_plugin, pluginIdInCarla);
     if (!ret) {
-        userMessage("ERROR - Failed to remove plugin from Carla. ID: " + n2s(ID) + ", pluginIdInCarla: " + n2s(pluginIdInCarla));
+        print("ERROR - Failed to remove plugin from Carla. ID: " + n2s(ID) + ", pluginIdInCarla: " + n2s(pluginIdInCarla));
     }
 }
 
@@ -212,7 +212,7 @@ void KonfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
     jack = jackEngine;
     jack_client_name = jack->clientName() + CARLA_CLIENT_POSTFIX;
 
-    userMessage("Carla version " + QString(CARLA_VERSION_STRING));
+    print("Carla version " + QString(CARLA_VERSION_STRING));
 
     // Initialise Carla Backend
 #ifdef CARLA_USE_HANDLE

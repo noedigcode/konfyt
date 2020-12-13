@@ -53,7 +53,7 @@ void KonfytBridgeEngine::setKonfytExePath(QString path)
 void KonfytBridgeEngine::initEngine(KonfytJackEngine *jackEngine)
 {
     jack = jackEngine;
-    userMessage("KonfytBridgeEngine initialised.");
+    print("KonfytBridgeEngine initialised.");
 }
 
 int KonfytBridgeEngine::addSfz(QString soundfilePath)
@@ -72,12 +72,12 @@ int KonfytBridgeEngine::addSfz(QString soundfilePath)
         KonfytBridgeItem &item = items[id];
         item.state = "Started";
         sendAllStatusInfo();
-        userMessage("Bridge client " + n2s(id) + " started.");
+        print("Bridge client " + n2s(id) + " started.");
     });
     connect(item.process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
             [this, id](int returnCode, QProcess::ExitStatus /*exitStatus*/){
         // Process has finished. Restart.
-        userMessage("Bridge client " + n2s(id) + " stopped: " + n2s(returnCode) + ". Restarting...");
+        print("Bridge client " + n2s(id) + " stopped: " + n2s(returnCode) + ". Restarting...");
         startProcess(id);
     });
 
@@ -120,13 +120,13 @@ QStringList KonfytBridgeEngine::audioOutJackPortNames(int id)
 void KonfytBridgeEngine::removeSfz(int id)
 {
     // TODO BRIDGE
-    userMessage("TODO BRIDGE: removeSfz " + n2s(id));
+    print("TODO BRIDGE: removeSfz " + n2s(id));
 }
 
 void KonfytBridgeEngine::setGain(int id, float newGain)
 {
     // TODO BRIDGE
-    userMessage("TODO BRIDGE: setGain of " + n2s(id) + " to " + n2s(newGain));
+    print("TODO BRIDGE: setGain of " + n2s(id) + " to " + n2s(newGain));
 }
 
 QString KonfytBridgeEngine::getAllStatusInfo()
@@ -150,8 +150,8 @@ void KonfytBridgeEngine::startProcess(int id)
 {
     KonfytBridgeItem &item = items[id];
 
-    userMessage("Bridge client " + n2s(id) + " starting:");
-    userMessage(   item.cmd);
+    print("Bridge client " + n2s(id) + " starting:");
+    print(   item.cmd);
 
     item.startCount++;
     item.state = "Starting...";

@@ -75,6 +75,9 @@ struct GidLsChannel
     QString audioLeftJackPort;
     QString audioRightJackPort;
     QString path;
+    int midiPortIndex = -1;
+    int audioLeftChanIndex = -1;
+    int audioRightChanIndex = -1;
 };
 
 // =============================================================================
@@ -90,22 +93,31 @@ public:
                                            const char *pchData, int cchData,
                                            void *pvData );
 
-    void init(QString deviceName);
+    /* Initialises the LSCP client and emits initialised() signal when done. */
+    void init();
+    /* Sets up Linuxsampler audio and MIDI devices. Call after successfull initialisation. */
+    void setupDevices(QString clientName);
     void deinit();
 
     void printEngines();
+    void resetSampler();
+    void removeAllRelatedToClient(QString clientName);
 
     void refreshAudioDevices();
     bool audioDeviceExists(QString name);
     int getAudioDeviceIdByName(QString name);
     bool addAudioDevice(QString name);
     int addAudioChannel();
+    void freeAudioChannel(int index);
+    int getFreeAudioChannel();
 
     void refreshMidiDevices();
     bool midiDeviceExists(QString name);
     int getMidiDeviceIdByName(QString name);
     bool addMidiDevice(QString name);
     int addMidiPort();
+    void freeMidiPort(int index);
+    int getFreeMidiPort();
 
     QString jackClientName();
     QString printDevices();
@@ -118,13 +130,16 @@ public:
     static QString escapeString(QString s);
     static QString i2s(int value);
     static QString indentString(QString s, QString indent);
+    static bool indexValid(int index, int listCount);
 
 private:
-    QString devName;
+    QString mClientName;
     lscp_client_t *client = NULL;
     QMap<int, GidLsDevice> adevs;
     QMap<int, GidLsDevice> mdevs;
     QMap<int, GidLsChannel> chans;
+    QList<int> freeAudioChannels;
+    QList<int> freeMidiPorts;
 
     const int SERVER_PORT = 8888;
 
@@ -133,9 +148,6 @@ private:
     const char* KEY_CHANNELS = "CHANNELS";
     const char* KEY_PORTS = "PORTS";
     const char* VAL_0 = "0";
-
-private slots:
-    void clientInitialised();
 
 signals:
     void print(QString msg);

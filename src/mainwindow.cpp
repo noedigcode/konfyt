@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setupConsoleDialog();
 
     // Sort out GUI style
     QString stylename = "Fusion";
@@ -38,18 +39,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
         print("Unable to create style " + stylename);
     }
 
-    // Print command-line arguments info
-    print(QString(APP_NAME) + " " + APP_VERSION);
-    print("Arguments:");
-    if (appInfo.bridge) { print(" - Bridging is enabled."); }
-    ui->groupBox_Testing->setVisible(appInfo.bridge);
-    print(" - Files to load:");
-    for (int i=0; i < appInfo.filesToLoad.count(); i++) {
-        print("   - " + appInfo.filesToLoad[i]);
-    }
-    print(" - JackClientName: " + appInfo.jackClientName);
-
-
+    printArgumentsInfo();
     initAboutDialog();
     setupSettings();
     setupJack();
@@ -156,6 +146,9 @@ void MainWindow::setupGuiMenuButtons()
 
 void MainWindow::setupGuiDefaults()
 {
+    // Bridge testing area visibility
+    ui->groupBox_Testing->setVisible(appInfo.bridge);
+
     // Resize some layouts
     QList<int> sizes;
     sizes << 8 << 2;
@@ -180,6 +173,24 @@ void MainWindow::setupGuiDefaults()
         // Show normal patch view
         ui->stackedWidget->setCurrentWidget(ui->PatchPage);
     }
+}
+
+void MainWindow::printArgumentsInfo()
+{
+    print(QString(APP_NAME) + " " + APP_VERSION);
+    print("Arguments:");
+    if (appInfo.bridge) { print(" - Bridging is enabled."); }
+
+
+    print(QString(" - Files to load: %1")
+          .arg(appInfo.filesToLoad.count() ? "" : "None specified"));
+    for (int i=0; i < appInfo.filesToLoad.count(); i++) {
+        print("   - " + appInfo.filesToLoad[i]);
+    }
+
+    print(QString(" - JackClientName: %1")
+          .arg(appInfo.jackClientName.isEmpty() ? "Not specified" : appInfo.jackClientName));
+
 }
 
 void MainWindow::shortcut_save_activated()
@@ -1916,7 +1927,7 @@ void MainWindow::print(QString message)
     }
 
     // Separate console dialog
-    consoleDialog.print(message);
+    emit printSignal(message);
 }
 
 void MainWindow::setupKeyboardShortcuts()
@@ -5553,6 +5564,11 @@ void MainWindow::setConsoleShowMidiMessages(bool show)
     console_showMidiMessages = show;
 }
 
+void MainWindow::setupConsoleDialog()
+{
+    connect(this, &MainWindow::printSignal, &consoleDialog, &ConsoleDialog::print);
+}
+
 void MainWindow::on_pushButton_RestartApp_clicked()
 {
     if (requestCurrentProjectClose()) {
@@ -6415,7 +6431,7 @@ void MainWindow::on_treeWidget_savedMidiMessages_itemClicked(QTreeWidgetItem *it
 
 void MainWindow::setupJack()
 {
-    connect(&jack, &KonfytJackEngine::userMessage, this, &MainWindow::print);
+    connect(&jack, &KonfytJackEngine::print, this, &MainWindow::print);
 
     connect(&jack, &KonfytJackEngine::jackPortRegisteredOrConnected,
             this, &MainWindow::onJackPortRegisteredOrConnected);

@@ -126,8 +126,9 @@ private:
     void updateLayerGain(KfPatchLayerSharedPtr layer);
     void updatePatchLayersGain(KonfytPatch* patch);
     void updatePatchLayersSoloMute(KonfytPatch* patch);
+    void setLayerActive(KfPatchLayerSharedPtr layer, bool active);
 
-    KonfytFluidsynthEngine* fluidsynthEngine;
+    KonfytFluidsynthEngine fluidsynthEngine;
 
     KonfytBaseSoundEngine* sfzEngine;
     bool bridge = false;

@@ -76,7 +76,7 @@ private:
     double mSampleRate = 44100;
     
 signals:
-    void userMessage(QString msg);
+    void print(QString msg);
     
 };
 

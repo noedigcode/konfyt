@@ -136,6 +136,7 @@ private:
     bool mPrintStart = true;
     void setupGuiMenuButtons();
     void setupGuiDefaults();
+    void printArgumentsInfo();
 
 private slots:
     void closeEvent(QCloseEvent *);
@@ -784,12 +785,15 @@ private:
 public:
     void setConsoleShowMidiMessages(bool show);
 private:
-    ConsoleDialog consoleDialog {this}; // Seperate console window
+    ConsoleDialog consoleDialog {this}; // Separate console window
+    void setupConsoleDialog();
     bool console_showMidiMessages = false;
 private slots:
     void on_pushButton_ClearConsole_clicked();
     void on_pushButton_ShowConsole_clicked();
     void on_checkBox_ConsoleShowMidiMessages_clicked();
+signals:
+    void printSignal(QString msg);
 
     // MIDI Indicators
 private:

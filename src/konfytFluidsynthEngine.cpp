@@ -98,7 +98,7 @@ KfFluidSynth* KonfytFluidsynthEngine::addSoundfontProgram(KonfytSoundfontProgram
     // Create settings object
     s->settings = new_fluid_settings();
     if (s->settings == NULL) {
-        emit userMessage("Failed to create Fluidsynth settings.");
+        emit print("Failed to create Fluidsynth settings.");
         delete s;
         return nullptr;
     }
@@ -109,7 +109,7 @@ KfFluidSynth* KonfytFluidsynthEngine::addSoundfontProgram(KonfytSoundfontProgram
     // Create the synthesizer
     s->synth = new_fluid_synth(s->settings);
     if (s->synth == NULL) {
-        emit userMessage("Failed to create Fluidsynth synthesizer.");
+        emit print("Failed to create Fluidsynth synthesizer.");
         delete s;
         return nullptr;
     }
@@ -117,7 +117,7 @@ KfFluidSynth* KonfytFluidsynthEngine::addSoundfontProgram(KonfytSoundfontProgram
     // Load soundfont file
     int sfID = fluid_synth_sfload(s->synth, p.parent_soundfont.toLocal8Bit().data(), 0);
     if (sfID == -1) {
-        emit userMessage("Failed to load soundfont " + p.parent_soundfont);
+        emit print("Failed to load soundfont " + p.parent_soundfont);
         delete s;
         return nullptr;
     }
@@ -145,9 +145,9 @@ void KonfytFluidsynthEngine::removeSoundfontProgram(KfFluidSynth *synth)
 
 void KonfytFluidsynthEngine::initFluidsynth(double sampleRate)
 {
-    userMessage("Fluidsynth version " + QString(fluid_version_str()));
+    print("Fluidsynth version " + QString(fluid_version_str()));
     mSampleRate = sampleRate;
-    userMessage("Fluidsynth sample rate: " + n2s(mSampleRate));
+    print("Fluidsynth sample rate: " + n2s(mSampleRate));
 }
 
 float KonfytFluidsynthEngine::getGain(KfFluidSynth *synth)

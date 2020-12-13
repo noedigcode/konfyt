@@ -73,7 +73,8 @@ public:
     bool initJackClient(QString name);
     void stopJackClient();
     bool clientIsActive();
-    QString clientName();
+    QString clientName(); // Actual client name as assigned by JACK
+    QString clientBaseName(); // Client name requested from JACK, before change for uniqueness
     void pauseJackProcessing(bool pause);
     uint32_t getSampleRate();
     uint32_t getBufferSize();
@@ -83,6 +84,7 @@ public:
     QStringList getMidiOutputPortsList();
     QStringList getAudioInputPortsList();
     QStringList getAudioOutputPortsList();
+    QSet<QString> getJackClientsList();
 
     // Audio / midi in/out ports
     KfJackMidiPort* addMidiPort(QString name, bool isInput);
@@ -145,7 +147,7 @@ public:
     void setGlobalTranspose(int transpose);
 
 signals:
-    void userMessage(QString msg);
+    void print(QString msg);
     void jackPortRegisteredOrConnected();
     void midiEventsReceived();
     void audioEventsReceived();
@@ -169,7 +171,8 @@ private:
     bool panicCmd = false;  // Panic command from outside
     int panicState = 0; // Internal panic state
 
-    QString ourJackClientName;
+    QString mJackClientName; // Actual client name as assigned by JACK
+    QString mJackClientBaseName; // Requested JACK client name before change for uniqueness
 
     float *fadeOutValues;
     unsigned int fadeOutValuesCount = 0;

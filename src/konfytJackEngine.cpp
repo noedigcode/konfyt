@@ -209,7 +209,7 @@ KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPo
     // Add a new midi output port which will be connected to the plugin midi input
     midiPort->jackPointer = registerJackMidiPort(spec.name, false);
     if (midiPort->jackPointer == nullptr) {
-        userMessage("Failed to create JACK MIDI output port '" + spec.name + "' for plugin.");
+        print("Failed to create JACK MIDI output port '" + spec.name + "' for plugin.");
     }
     midiPort->connectionList.append( spec.midiOutConnectTo );
 
@@ -217,7 +217,7 @@ KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPo
     QString nameL = spec.name + "_in_L";
     alPort->jackPointer = registerJackAudioPort(nameL, true);
     if (alPort->jackPointer == nullptr) {
-        userMessage("Failed to create left audio input port '" + nameL + "' for plugin.");
+        print("Failed to create left audio input port '" + nameL + "' for plugin.");
     }
     alPort->connectionList.append( spec.audioInLeftConnectTo );
 
@@ -225,7 +225,7 @@ KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPo
     QString nameR = spec.name + "_in_R";
     arPort->jackPointer = registerJackAudioPort(nameR, true);
     if (arPort->jackPointer == nullptr) {
-        userMessage("Failed to create right audio input port '" + nameR + "' for plugin.");
+        print("Failed to create right audio input port '" + nameR + "' for plugin.");
     }
     arPort->connectionList.append( spec.audioInRightConnectTo );
 
@@ -490,7 +490,7 @@ void KonfytJackEngine::removeAndDisconnectPortClient(KfJackMidiPort *port, QStri
     pauseJackProcessing(false);
 
     if (err) {
-        userMessage("Failed to disconnect JACK MIDI port client.");
+        print("Failed to disconnect JACK MIDI port client.");
     }
     refreshAllPortsConnections();
 }
@@ -524,7 +524,7 @@ void KonfytJackEngine::removeAndDisconnectPortClient(KfJackAudioPort *port, QStr
     pauseJackProcessing(false);
 
     if (err) {
-        userMessage("Failed to disconnect JACK audio port client.");
+        print("Failed to disconnect JACK audio port client.");
     }
     refreshAllPortsConnections();
 }
@@ -667,7 +667,7 @@ bool KonfytJackEngine::sendMidiEventsOnRoute(KfJackMidiRoute *route, QList<Konfy
     }
     route->eventsTxBuffer.commit();
     if (!success) {
-        userMessage("KonfytJackEngine::sendMidiEventsOnRoute event TX buffer full.");
+        print("KonfytJackEngine::sendMidiEventsOnRoute event TX buffer full.");
     }
     return success;
 }
@@ -676,12 +676,17 @@ bool KonfytJackEngine::sendMidiEventsOnRoute(KfJackMidiRoute *route, QList<Konfy
  * a client. */
 bool KonfytJackEngine::clientIsActive()
 {
-    return this->mClientActive;
+    return mClientActive;
 }
 
 QString KonfytJackEngine::clientName()
 {
-    return ourJackClientName;
+    return mJackClientName;
+}
+
+QString KonfytJackEngine::clientBaseName()
+{
+    return mJackClientBaseName;
 }
 
 /* Pauses (pause=true) or unpauses (pause=false) the Jack process callback function.
@@ -724,6 +729,13 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes, void *arg)
 {
     KonfytJackEngine* e = (KonfytJackEngine*)arg;
     return e->jackProcessCallback(nframes);
+}
+
+int KonfytJackEngine::jackXrunCallback(void *arg)
+{
+    KonfytJackEngine* e = (KonfytJackEngine*)arg;
+    e->xrunOccurred();
+    return 0;
 }
 
 /* Non-static class instance-specific JACK process callback. */
@@ -1062,13 +1074,6 @@ void KonfytJackEngine::setFluidsynthEngine(KonfytFluidsynthEngine *e)
     fluidsynthEngine = e;
 }
 
-int KonfytJackEngine::jackXrunCallback(void *arg)
-{   
-    KonfytJackEngine* e = (KonfytJackEngine*)arg;
-    e->xrunOccurred();
-    return 0;
-}
-
 /* Return list of MIDI events that were buffered during JACK process callback(s). */
 QList<KfJackMidiRxEvent> KonfytJackEngine::getMidiRxEvents()
 {
@@ -1196,40 +1201,47 @@ void KonfytJackEngine::sendMidiClosureEvents_allChannels(KfJackMidiPort *port)
 
 bool KonfytJackEngine::initJackClient(QString name)
 {
-    // Try to become a client of the jack server
+    mJackClientBaseName = name;
+    // Try to become a client of the JACK server
     if ( (mJackClient = jack_client_open(name.toLocal8Bit(), JackNullOption, NULL)) == NULL) {
-        userMessage("JACK: Error becoming client.");
+        print("JACK: Error becoming client.");
         this->mClientActive = false;
         return false;
     } else {
-        ourJackClientName = jack_get_client_name(mJackClient); // jack_client_open modifies the given name if another client already uses it.
-        userMessage("JACK: Client created: " + ourJackClientName);
+        // jack_client_open modifies the given name if another client already
+        // uses it. Get our actual client name.
+        mJackClientName = jack_get_client_name(mJackClient);
+        print("JACK: Client created: " + mJackClientName);
         this->mClientActive = true;
     }
 
 
     // Set up callback functions
-    jack_set_port_connect_callback(mJackClient, KonfytJackEngine::jackPortConnectCallback, this);
-    jack_set_port_registration_callback(mJackClient, KonfytJackEngine::jackPortRegistrationCallback, this);
-    jack_set_process_callback (mJackClient, KonfytJackEngine::jackProcessCallback, this);
-    jack_set_xrun_callback(mJackClient, KonfytJackEngine::jackXrunCallback, this);
+    jack_set_port_connect_callback(mJackClient,
+                KonfytJackEngine::jackPortConnectCallback, this);
+    jack_set_port_registration_callback(mJackClient,
+                KonfytJackEngine::jackPortRegistrationCallback, this);
+    jack_set_process_callback (mJackClient,
+                KonfytJackEngine::jackProcessCallback, this);
+    jack_set_xrun_callback(mJackClient,
+                KonfytJackEngine::jackXrunCallback, this);
 
     nframes = jack_get_buffer_size(mJackClient);
 
     // Activate the client
     if (jack_activate(mJackClient)) {
-        userMessage("JACK: Cannot activate client.");
+        print("JACK: Cannot activate client.");
         jack_free(mJackClient);
         this->mClientActive = false;
         return false;
     } else {
-        userMessage("JACK: Activated client.");
+        print("JACK: Activated client.");
         this->mClientActive = true;
     }
 
     // Get sample rate
     this->samplerate = jack_get_sample_rate(mJackClient);
-    userMessage("JACK: Samplerate " + n2s(samplerate));
+    print("JACK: Samplerate " + n2s(samplerate));
 
     audioBufferCycleCount = samplerate/nframes/10;
 
@@ -1252,9 +1264,9 @@ void KonfytJackEngine::stopJackClient()
     if (clientIsActive()) {
         pauseJackProcessing(true);
         jack_client_close(mJackClient);
-        pauseJackProcessing(false);
         mJackClient = nullptr;
         mClientActive = false;
+        pauseJackProcessing(false);
     }
 }
 
@@ -1324,6 +1336,23 @@ QStringList KonfytJackEngine::getAudioInputPortsList()
 QStringList KonfytJackEngine::getAudioOutputPortsList()
 {
     return getJackPorts("audio", JackPortIsOutput);
+}
+
+QSet<QString> KonfytJackEngine::getJackClientsList()
+{
+    QSet<QString> clients;
+
+    QStringList ports;
+    ports.append(getMidiInputPortsList());
+    ports.append(getMidiOutputPortsList());
+    ports.append(getAudioInputPortsList());
+    ports.append(getAudioOutputPortsList());
+
+    foreach (const QString& port, ports) {
+        clients.insert(port.split(":").value(0));
+    }
+
+    return clients;
 }
 
 KfJackMidiPort *KonfytJackEngine::addMidiPort(QString name, bool isInput)
@@ -1466,7 +1495,7 @@ jack_port_t *KonfytJackEngine::registerJackMidiPort(QString name, bool input)
                                     input ? JackPortIsInput : JackPortIsOutput,
                                             0);
     if (!port) {
-        userMessage(QString("Failed to register JACK MIDI %1 port: %2")
+        print(QString("Failed to register JACK MIDI %1 port: %2")
                 .arg(input ? "input" : "output")
                 .arg(name));
     }
@@ -1481,7 +1510,7 @@ jack_port_t *KonfytJackEngine::registerJackAudioPort(QString name, bool input)
                                     input ? JackPortIsInput : JackPortIsOutput,
                                             0);
     if (!port) {
-        userMessage(QString("Failed to register JACK MIDI %1 port: %2")
+        print(QString("Failed to register JACK MIDI %1 port: %2")
                 .arg(input ? "input" : "output")
                 .arg(name));
     }

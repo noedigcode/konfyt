@@ -42,10 +42,8 @@ lscp_status_t GidLs::client_callback(lscp_client_t* /*pClient*/, lscp_event_t ev
     return ret;
 }
 
-void GidLs::init(QString deviceName)
+void GidLs::init()
 {
-    devName = deviceName;
-
     print("Initialising client.");
     client = lscp_client_create("localhost", SERVER_PORT, client_callback, NULL);
     if (client == NULL) {
@@ -66,7 +64,8 @@ void GidLs::init(QString deviceName)
                     t->start(1000);
                 } else {
                     t->deleteLater();
-                    clientInitialised();
+                    print("Client initialised.");
+                    emit initialised(false, "");
                 }
             });
 
@@ -86,13 +85,45 @@ void GidLs::init(QString deviceName)
         p->start("linuxsampler");
 
     } else {
-        clientInitialised();
+        print("Client initialised.");
+        emit initialised(false, "");
+    }
+}
+
+void GidLs::setupDevices(QString clientName)
+{
+    mClientName = clientName;
+
+    print("Connected to Linuxsampler.");
+
+    lscp_set_volume(client, 1);
+
+    if (audioDeviceExists(mClientName)) {
+        print("Audio device '" + mClientName + "' already exists.");
+    } else {
+        print("Creating audio device '" + mClientName + "'.");
+        if (addAudioDevice(mClientName)) {
+            print("Audio device created.");
+        } else {
+            print("Error creating audio device.");
+        }
+    }
+
+    if (midiDeviceExists(mClientName)) {
+        print("MIDI device '" + mClientName + "' already exists.");
+    } else {
+        print("Creating MIDI device '" + mClientName + "'.");
+        if (addMidiDevice(mClientName)) {
+            print("MIDI device created.");
+        } else {
+            print("Error creating MIDI device.");
+        }
     }
 }
 
 void GidLs::deinit()
 {
-    lscp_reset_sampler(client);
+    removeAllRelatedToClient(mClientName);
     lscp_client_destroy(client);
 }
 
@@ -104,6 +135,75 @@ void GidLs::printEngines()
     while (engines[i] != NULL) {
         print(" - " + QString(engines[i]));
         i++;
+    }
+}
+
+void GidLs::resetSampler()
+{
+    print("Resetting sampler");
+    lscp_status_t rst = lscp_reset_sampler(client);
+    if (rst != LSCP_OK) {
+        print("Error resetting sampler.");
+    }
+}
+
+void GidLs::removeAllRelatedToClient(QString clientName)
+{
+    print("Removing everything related to " + clientName + "...");
+
+    // Get audio device with name
+    int adev = getAudioDeviceIdByName(clientName);
+    if (adev >= 0) {
+        print("    Found audio device: " + i2s(adev));
+    } else {
+        print("    No audio device found.");
+    }
+
+    // Get MIDI device with name
+    int mdev = getMidiDeviceIdByName(clientName);
+    if (mdev >= 0) {
+        print("    Found MIDI device: " + i2s(mdev));
+    } else {
+        print("    No MIDI device found.");
+    }
+
+    // Remove all channels (sfzs) connected to above devices
+    int* chans = lscp_list_channels(client);
+    if (chans != NULL) {
+        int i = 0;
+        while (chans[i] >= 0) {
+            lscp_channel_info_t* info = lscp_get_channel_info(client, chans[i]);
+            bool remove = false;
+            if ( (adev >= 0) && (info->audio_device == adev) ) { remove = true; }
+            if ( (mdev >= 0) && (info->midi_device == mdev) ) { remove = true; }
+            if (remove) {
+                print(QString("    Found related channel: %1").arg(info->instrument_file));
+                lscp_status_t ok = lscp_remove_channel(client, chans[i]);
+                if (ok == LSCP_OK) {
+                    print("        Channel removed.");
+                } else {
+                    print("        Could not remove channel.");
+                }
+            }
+            i++;
+        }
+    }
+
+    if (adev >= 0) {
+        lscp_status_t ok = lscp_destroy_audio_device(client, adev);
+        if (ok == LSCP_OK) {
+            print("    Destroyed audio device.");
+        } else {
+            print("    Could not destroy audio device.");
+        }
+    }
+    if (mdev >= 0) {
+        lscp_status_t ok = lscp_destroy_midi_device(client, mdev);
+        if (ok == LSCP_OK) {
+            print("    Destoryed MIDI device.");
+        } else {
+            print("    Could not destroy MIDI device.");
+        }
     }
 }
 
@@ -233,6 +333,18 @@ int GidLs::addSfzChannelAndPorts(QString file)
 {
     lscp_status_t status;
 
+    int iAudioDev = getAudioDeviceIdByName(mClientName);
+    if (iAudioDev < 0) {
+        print("Error getting audio device named " + mClientName);
+        return -1;
+    }
+
+    int iMidiDev = getMidiDeviceIdByName(mClientName);
+    if (iMidiDev < 0) {
+        print("Error getting MIDI device named " + mClientName);
+        return -1;
+    }
+
     int chan = lscp_add_channel(client);
     if (chan < 0) {
         print("Failed adding channel.");
@@ -247,22 +359,28 @@ int GidLs::addSfzChannelAndPorts(QString file)
         return -1;
     }
 
-    status = lscp_set_channel_audio_device(client, chan, 0);
+    int audioPortLeft = getFreeAudioChannel();
+    int audioPortRight = getFreeAudioChannel();
+    int midiPort = getFreeMidiPort();
+
+    status = lscp_set_channel_audio_device(client, chan, iAudioDev);
     if (status != LSCP_OK) {
-        print("Failed connecting audio device to channel.");
+        print(QString("Failed connecting audio device %1 to channel %2.")
+              .arg(iAudioDev).arg(chan));
         print("Result: " + QString( lscp_client_get_result(client) ));
         return -1;
     }
+    lscp_set_channel_audio_channel(client, chan, 0, audioPortLeft);
+    lscp_set_channel_audio_channel(client, chan, 1, audioPortRight);
 
-    int aleft = addAudioChannel();
-    int aright = addAudioChannel();
-    int midi = addMidiPort();
-
-    lscp_set_channel_audio_channel(client, chan, 0, aleft);
-    lscp_set_channel_audio_channel(client, chan, 1, aright);
-
-    lscp_set_channel_midi_device(client, chan, 0);
-    lscp_set_channel_midi_port(client, chan, midi);
+    status = lscp_set_channel_midi_device(client, chan, iMidiDev);
+    if (status != LSCP_OK) {
+        print(QString("Failed connecting MIDI device %1 to port %2.")
+              .arg(iMidiDev).arg(chan));
+        print("Result: " + QString( lscp_client_get_result(client) ));
+        return -1;
+    }
+    lscp_set_channel_midi_port(client, chan, midiPort);
 
     QString fileEscaped = escapeString(file);
     status = lscp_load_instrument_non_modal(client,
@@ -276,23 +394,34 @@ int GidLs::addSfzChannelAndPorts(QString file)
 
     GidLsChannel info;
     info.path = file;
+    info.midiPortIndex = midiPort;
+    info.audioLeftChanIndex = audioPortLeft;
+    info.audioRightChanIndex = audioPortRight;
 
-    int idev = getAudioDeviceIdByName(devName);
-    if (idev < 0) {
-        print("Error getting audio device named " + devName);
-        return -1;
-    }
-    GidLsDevice &dev = adevs[idev];
-    info.audioLeftJackPort = devName + ":" + dev.ports[aleft].name();
-    info.audioRightJackPort = devName + ":" + dev.ports[aright].name();
+    // Refresh device info for added audio/midi ports to be listed
+    refreshAudioDevices();
+    refreshMidiDevices();
 
-    idev = getMidiDeviceIdByName(devName);
-    if (idev < 0) {
-        print("Error getting MIDI device named " + devName);
-        return -1;
+    GidLsDevice &adev = adevs[iAudioDev];
+    if (indexValid(audioPortLeft, adev.ports.count())) {
+        info.audioLeftJackPort = mClientName + ":" + adev.ports[audioPortLeft].name();
+    } else {
+        print("Audio left port out of bounds: " + i2s(audioPortLeft));
     }
-    GidLsDevice &dev2 = mdevs[idev];
-    info.midiJackPort = devName + ":" + dev2.ports[midi].name();
+    if (indexValid(audioPortRight, adev.ports.count())) {
+        info.audioRightJackPort = mClientName + ":" + adev.ports[audioPortRight].name();
+    } else {
+        print("Audio right port out of bounds: " + i2s(audioPortRight));
+    }
+
+    GidLsDevice &mdev = mdevs[iMidiDev];
+    //if (qBound(0, midiPort, mdev.ports.count()-1)) {
+
+    if (indexValid(midiPort, mdev.ports.count())) {
+        info.midiJackPort = mClientName + ":" + mdev.ports[midiPort].name();
+    } else {
+        print("MIDI port out of bounds: " + i2s(midiPort));
+    }
 
     chans.insert(chan, info);
 
@@ -307,7 +436,11 @@ GidLsChannel GidLs::getSfzChannelInfo(int id)
 void GidLs::removeSfzChannel(int id)
 {
     if (chans.contains(id)) {
-        chans.remove(id);
+        GidLsChannel chan = chans.take(id);
+        // Free right before left as they are assigned FIFO left then right again
+        freeAudioChannel(chan.audioRightChanIndex);
+        freeAudioChannel(chan.audioLeftChanIndex);
+        freeMidiPort(chan.midiPortIndex);
         lscp_remove_channel(client, id);
     }
 }
@@ -341,57 +474,16 @@ QString GidLs::indentString(QString s, QString indent)
     return ret;
 }
 
-void GidLs::clientInitialised()
+bool GidLs::indexValid(int index, int listCount)
 {
-    QString errString;
-    bool error = false;
-
-    print("Connected to Linuxsampler.");
-
-    print("Resetting sampler");
-    lscp_status_t rst = lscp_reset_sampler(client);
-    if (rst != LSCP_OK) {
-        print("Error resetting sampler.");
-    }
-
-    lscp_set_volume(client, 1);
-
-    if (audioDeviceExists(devName)) {
-        print("Audio device '" + devName + "' already exists.");
-    } else {
-        print("Creating audio device '" + devName + "'.");
-        if (addAudioDevice(devName)) {
-            print("Audio device created.");
-        } else {
-            print("Error creating audio device.");
-            error = true;
-            errString += "Error creating audio device.\n";
-        }
-    }
-
-    if (midiDeviceExists(devName)) {
-        print("MIDI device '" + devName + "' already exists.");
-    } else {
-        print("Creating MIDI device '" + devName + "'.");
-        if (addMidiDevice(devName)) {
-            print("MIDI device created.");
-        } else {
-            print("Error creating MIDI device.");
-            error = true;
-            errString += "Error creating MIDI device.\n";
-        }
-    }
-
-    print("Initialisation complete.");
-
-    emit initialised(error, errString);
+    return ( (index >= 0) && (index < listCount) );
 }
 
 int GidLs::addAudioChannel()
 {
-    int index = getAudioDeviceIdByName(devName);
+    int index = getAudioDeviceIdByName(mClientName);
     if (index < 0) {
-        print("Error getting audio device named " + devName);
+        print("Error getting audio device named " + mClientName);
         return -1;
     }
 
@@ -403,6 +495,22 @@ int GidLs::addAudioChannel()
     param.value = (char*)i2s(chan+1).toLocal8Bit().constData();
     lscp_set_audio_device_param(client, dev.index, &param);
 
+    return chan;
+}
+
+void GidLs::freeAudioChannel(int index)
+{
+    freeAudioChannels.append(index);
+}
+
+int GidLs::getFreeAudioChannel()
+{
+    int chan = -1;
+    if (freeAudioChannels.count()) {
+        chan = freeAudioChannels.takeLast();
+    } else {
+        chan = addAudioChannel();
+    }
     return chan;
 }
 
@@ -461,9 +569,9 @@ bool GidLs::addMidiDevice(QString name)
 
 int GidLs::addMidiPort()
 {
-    int index = getMidiDeviceIdByName(devName);
+    int index = getMidiDeviceIdByName(mClientName);
     if (index < 0) {
-        print("Error getting MIDI device named " + devName);
+        print("Error getting MIDI device named " + mClientName);
         return -1;
     }
 
@@ -478,9 +586,25 @@ int GidLs::addMidiPort()
     return port;
 }
 
+void GidLs::freeMidiPort(int index)
+{
+    freeMidiPorts.append(index);
+}
+
+int GidLs::getFreeMidiPort()
+{
+    int port = -1;
+    if (freeMidiPorts.count()) {
+        port = freeMidiPorts.takeLast();
+    } else {
+        port = addMidiPort();
+    }
+    return port;
+}
+
 QString GidLs::jackClientName()
 {
-    return devName;
+    return mClientName;
 }
 
 

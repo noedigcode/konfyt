@@ -37,8 +37,10 @@ public:
     explicit ConsoleDialog(QWidget *parent = 0);
     ~ConsoleDialog();
 
-    void print(QString message);
     void setShowMidiEvents(bool show);
+
+public slots:
+    void print(QString message);
     
 private slots:
     void on_pushButton_Clear_clicked();

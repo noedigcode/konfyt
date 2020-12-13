@@ -23,15 +23,8 @@
 
 KonfytLscpEngine::KonfytLscpEngine(QObject *parent) : KonfytBaseSoundEngine(parent)
 {
-    connect(&ls, &GidLs::print, this, &KonfytLscpEngine::userMessage);
-    connect(&ls, &GidLs::initialised, [this](bool error, QString errMsg){
-        if (error) {
-            userMessage("LSCP engine initialisation error:");
-            userMessage(errMsg);
-        } else {
-            userMessage("LSCP engine initialised!");
-        }
-    });
+    connect(&ls, &GidLs::print, this, &KonfytLscpEngine::print);
+    connect(&ls, &GidLs::initialised, this, &KonfytLscpEngine::onLsInitialised);
 }
 
 KonfytLscpEngine::~KonfytLscpEngine()
@@ -46,7 +39,9 @@ QString KonfytLscpEngine::engineName()
 
 void KonfytLscpEngine::initEngine(KonfytJackEngine *jackEngine)
 {
-    ls.init( jackEngine->clientName() + "_LS" );
+    mJackEngine = jackEngine;
+
+    ls.init();
 }
 
 QString KonfytLscpEngine::jackClientName()
@@ -86,5 +81,46 @@ void KonfytLscpEngine::removeSfz(int id)
 
 void KonfytLscpEngine::setGain(int id, float newGain)
 {
-    userMessage("TODO: setGain " + n2s(id) + " to " + n2s(newGain));
+    print("TODO: setGain " + n2s(id) + " to " + n2s(newGain));
+}
+
+void KonfytLscpEngine::onLsInitialised(bool error, QString errMsg)
+{
+    if (error) {
+        print("LSCP engine initialisation error:");
+        print(errMsg);
+        return;
+    }
+
+    // Clean up:
+    // Check for all Linuxsampler clients starting with basename and ending with
+    // "end". If any exist without corresponding Konfyt JACK clients, they are
+    // orphaned from a previous Konfyt session (crash) and can be deleted.
+
+    QString basename = mJackEngine->clientBaseName();
+    static QString end = "_LS";
+    QSet<QString> clients = mJackEngine->getJackClientsList();
+
+    QStringList orphaned;
+
+    foreach (const QString& client, clients) {
+        // Check for Konfyt LS client (starts with basename, ends with "end")
+        if (client.startsWith(basename) && (client.endsWith(end))) {
+            QString konfytName = client.left(client.length() - end.length());
+            // Check for corresponding Konfyt client
+            if (!clients.contains(konfytName)) {
+                orphaned.append(client);
+                print("Orphaned LS client detected: " + client);
+            } else {
+                print("Other LS instance pair detected: " + konfytName + ", " + client);
+            }
+        }
+    }
+
+    foreach (const QString& client, orphaned) {
+        ls.removeAllRelatedToClient(client);
+    }
+
+    // Device setup
+    ls.setupDevices(mJackEngine->clientName() + end);
 }

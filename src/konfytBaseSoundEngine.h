@@ -44,7 +44,7 @@ public:
     virtual void setGain(int id, float newGain) = 0;
 
 signals:
-    void userMessage(QString msg);
+    void print(QString msg);
     void statusInfo(QString msg);
 };
 

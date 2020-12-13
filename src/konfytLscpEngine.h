@@ -34,7 +34,7 @@ public:
     ~KonfytLscpEngine();
 
     QString engineName() override;
-    void initEngine(KonfytJackEngine *jackEngine) override;
+    void initEngine(KonfytJackEngine *mJackEngine) override;
     QString jackClientName() override;
     int addSfz(QString path) override;
     QString pluginName(int id) override;
@@ -45,6 +45,10 @@ public:
 
 private:
     GidLs ls;
+    KonfytJackEngine* mJackEngine = nullptr;
+
+private slots:
+    void onLsInitialised(bool error, QString errMsg);
 
 };
 
