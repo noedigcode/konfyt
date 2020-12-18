@@ -1102,11 +1102,12 @@ void MainWindow::loadProject(ProjectPtr prj)
     for (int j=0; j < midiInIds.count(); j++) {
         int prjPortId = midiInIds[j];
         // Add to Jack, and update Jack port reference in project
-        PrjMidiPort projectPort = prj->midiInPort_getPort(prjPortId);
-        projectPort.jackPort = addMidiInPortToJack(prjPortId);
-        prj->midiInPort_replace_noModify(prjPortId, projectPort); // Replace in project since the port has been updated with the jackPort
+        // TODO: PROJECT IS NOT TECHNICALLY THE BEST PLACE TO KEEP THE PORT
+        // REFERENCE. KEEP IN MAINWINDOW OR PATCHENGINE.
+        prj->midiInPort_setJackPort(prjPortId, addMidiInPortToJack(prjPortId));
 
         // Also add port clients to Jack
+        PrjMidiPort projectPort = prj->midiInPort_getPort(prjPortId);
         foreach (QString client, projectPort.clients) {
             jack.addPortClient(projectPort.jackPort, client);
         }
@@ -1122,11 +1123,10 @@ void MainWindow::loadProject(ProjectPtr prj)
     for (int j=0; j<midiOutIds.count(); j++) {
         int prjPortId = midiOutIds[j];
         // Add to Jack, and update Jack port reference in project
-        PrjMidiPort projectPort = prj->midiOutPort_getPort(prjPortId);
-        projectPort.jackPort = addMidiOutPortToJack(prjPortId);
-        prj->midiOutPort_replace_noModify(prjPortId, projectPort); // Replace in project since the port has been updated with the jackPort
+        prj->midiOutPort_setJackPort(prjPortId, addMidiOutPortToJack(prjPortId));
 
         // Also add port clients to Jack
+        PrjMidiPort projectPort = prj->midiOutPort_getPort(prjPortId);
         foreach (QString client, projectPort.clients) {
             jack.addPortClient(projectPort.jackPort, client);
         }
@@ -1166,7 +1166,6 @@ void MainWindow::loadProject(ProjectPtr prj)
     QList<int> audioInIds = prj->audioInPort_getAllPortIds();
     for (int j=0; j<audioInIds.count(); j++) {
         int id = audioInIds[j];
-        PrjAudioInPort p = prj->audioInPort_getPort(id);
 
         // Add audio ports to jack client
         KfJackAudioPort* left;
@@ -1174,10 +1173,9 @@ void MainWindow::loadProject(ProjectPtr prj)
         addAudioInPortsToJack( id, &left, &right );
         if ((left != nullptr) && (right != nullptr)) {
             // Update left and right port numbers in project
-            p.leftJackPort = left;
-            p.rightJackPort = right;
-            prj->audioInPort_replace_noModify( id, p );
+            prj->audioInPort_setJackPorts(id, left, right);
             // Add port clients to jack client
+            PrjAudioInPort p = prj->audioInPort_getPort(id);
             foreach (QString client, p.leftInClients) {
                 jack.addPortClient(p.leftJackPort, client);
             }
@@ -3483,19 +3481,26 @@ void MainWindow::onPatchAudioInPortsMenu_ActionTrigger(QAction *action)
 /* Layer midi output channel menu item has been clicked. */
 void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
 {
-    int channel = action->property("midiChannel").toInt();
-
+    int channel = action->property(PTY_MIDI_CHANNEL).toInt();
     KfPatchLayerSharedPtr layer = layerToolMenuSourceitem->getPatchLayer().toStrongRef();
-    KonfytMidiFilter filter = layer->midiFilter();
-    filter.outChan = channel;
-    layer->setMidiFilter(filter);
 
-    // Update layer widget
-    layerToolMenuSourceitem->refresh();
-    // Update in pengine
-    pengine.setLayerFilter(layer.toWeakRef(), filter);
+    if (channel == -2) {
+        // Get current port id and show it in the connections page
+        showConnectionsPage();
+        connectionsTreeSelectMidiOutPort(layer->midiOutputPortData.portIdInProject);
+    } else {
+        // Update layer MIDI filter with output channel
+        KonfytMidiFilter filter = layer->midiFilter();
+        filter.outChan = channel;
+        layer->setMidiFilter(filter);
 
-    setPatchModified(true);
+        // Update layer widget
+        layerToolMenuSourceitem->refresh();
+        // Update in pengine
+        pengine.setLayerFilter(layer.toWeakRef(), filter);
+
+        setPatchModified(true);
+    }
 }
 
 /* Menu item has been clicked in the layer MIDI-In port menu. */
@@ -3742,6 +3747,9 @@ void MainWindow::updateLayerMidiOutChannelMenu(QMenu *menu, int currentMidiPort)
 {
     menu->clear();
 
+    QAction* a = menu->addAction("Output Port Connections...");
+    a->setProperty(PTY_MIDI_CHANNEL, -2);
+
     menu->addSection("MIDI Out Channel");
 
     QAction* action = menu->addAction("Original Channel");
@@ -3764,7 +3772,7 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer)
 {
     // Create new GUI layer item
     KonfytLayerWidget* layerWidget = new KonfytLayerWidget();
-    layerWidget->project = mCurrentProject;
+    layerWidget->setProject(mCurrentProject);
     QListWidgetItem* item = new QListWidgetItem();
     layerWidget->initLayer(patchLayer, item);
 
@@ -3938,7 +3946,7 @@ void MainWindow::gui_updateLayerToolMenu()
     }
     // Menu items for Audio input port layers
     if (type == KonfytPatchLayer::TypeAudioIn) {
-        QAction* a = layerToolMenu.addAction("Port Connections...");
+        QAction* a = layerToolMenu.addAction("Input Port Connections...");
         connect(a, &QAction::triggered, [=](){
             // Show port in connections page
             showConnectionsPage();
@@ -4738,10 +4746,7 @@ int MainWindow::addAudioInPort()
     addAudioInPortsToJack( portId, &left, &right );
     if ( (left != nullptr) && (right != nullptr) ) {
         // Update in project
-        PrjAudioInPort p = prj->audioInPort_getPort(portId);
-        p.leftJackPort = left;
-        p.rightJackPort = right;
-        prj->audioInPort_replace(portId, p);
+        prj->audioInPort_setJackPorts(portId, left, right);
 
         return portId;
     } else {
@@ -4765,11 +4770,10 @@ int MainWindow::addMidiInPort()
     KfJackMidiPort* port = addMidiInPortToJack(prjPortId);
     if (port) {
 
-        PrjMidiPort p = prj->midiInPort_getPort(prjPortId);
-        p.jackPort = port;
-        prj->midiInPort_replace(prjPortId, p);
+        prj->midiInPort_setJackPort(prjPortId, port);
 
         // Update filter in Jack
+        PrjMidiPort p = prj->midiInPort_getPort(prjPortId);
         jack.setPortFilter(port, p.filter);
 
         return prjPortId;
@@ -4814,11 +4818,7 @@ int MainWindow::addMidiOutPort()
     int prjPortId = prj->midiOutPort_addPort("New MIDI Out Port"); // Add to current project
     KfJackMidiPort* port = addMidiOutPortToJack(prjPortId);
     if (port) {
-
-        PrjMidiPort p = prj->midiOutPort_getPort(prjPortId);
-        p.jackPort = port;
-        prj->midiOutPort_replace(prjPortId, p);
-
+        prj->midiOutPort_setJackPort(prjPortId, port);
         return prjPortId;
     } else {
         // Could not create Jack port. Remove port from project again.
@@ -5443,26 +5443,17 @@ void MainWindow::on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int /*co
     } else if (item->parent() == audioInParent) {
         // Audio input port selected
         int id = tree_audioInMap.value(item);
-        PrjAudioInPort p = prj->audioInPort_getPort(id);
-
-        p.portName = item->text(0);
-        prj->audioInPort_replace(id, p);
+        prj->audioInPort_setName(id, item->text(0));
 
     } else if (item->parent() == midiOutParent) {
         // MIDI Output port selected
         int id = tree_midiOutMap.value(item);
-        PrjMidiPort p = prj->midiOutPort_getPort(id);
-
-        p.portName = item->text(0);
-        prj->midiOutPort_replace(id, p);
+        prj->midiOutPort_setName(id, item->text(0));
 
     } else if (item->parent() == midiInParent) {
         // MIDI Input port selected
         int id = tree_midiInMap.value(item);
-        PrjMidiPort p = prj->midiInPort_getPort(id);
-
-        p.portName = item->text(0);
-        prj->midiInPort_replace(id, p);
+        prj->midiInPort_setName(id, item->text(0));
     }
 
 }

@@ -761,19 +761,21 @@ int KonfytProject::midiInPort_count()
     return midiInPortMap.count();
 }
 
-void KonfytProject::midiInPort_replace(int portId, PrjMidiPort port)
+void KonfytProject::midiInPort_setName(int portId, QString name)
 {
-    midiInPort_replace_noModify(portId, port);
+    KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
+
+    midiInPortMap[portId].portName = name;
     setModified(true);
+    emit midiInPortNameChanged(portId);
 }
 
-void KonfytProject::midiInPort_replace_noModify(int portId, PrjMidiPort port)
+void KonfytProject::midiInPort_setJackPort(int portId, KfJackMidiPort *jackport)
 {
-    if (midiInPort_exists(portId)) {
-        midiInPortMap.insert(portId, port);
-    } else {
-        error_abort("midiInPort_replace_noModify: Port with id " + n2s(portId) + " does not exist.");
-    }
+    KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
+
+    midiInPortMap[portId].jackPort = jackport;
+    // Do not set the project modified
 }
 
 QStringList KonfytProject::midiInPort_getClients(int portId)
@@ -1024,6 +1026,22 @@ int KonfytProject::audioInPort_count()
     return audioInPortMap.count();
 }
 
+void KonfytProject::audioInPort_setName(int portId, QString name)
+{
+    KONFYT_ASSERT_RETURN(audioInPort_exists(portId));
+    audioInPortMap[portId].portName = name;
+    setModified(true);
+    emit audioInPortNameChanged(portId);
+}
+
+void KonfytProject::audioInPort_setJackPorts(int portId, KfJackAudioPort *left, KfJackAudioPort *right)
+{
+    KONFYT_ASSERT_RETURN(audioInPort_exists(portId));
+    audioInPortMap[portId].leftJackPort = left;
+    audioInPortMap[portId].rightJackPort = right;
+    // Do not set modified
+}
+
 bool KonfytProject::audioInPort_exists(int portId) const
 {
     return audioInPortMap.contains(portId);
@@ -1036,22 +1054,6 @@ PrjAudioInPort KonfytProject::audioInPort_getPort(int portId) const
     }
 
     return audioInPortMap.value(portId);
-}
-
-void KonfytProject::audioInPort_replace(int portId, PrjAudioInPort newPort)
-{
-    audioInPort_replace_noModify(portId, newPort);
-    setModified(true);
-}
-
-/* Do not change the project's modify state. */
-void KonfytProject::audioInPort_replace_noModify(int portId, PrjAudioInPort newPort)
-{
-    if (audioInPortMap.contains(portId)) {
-        audioInPortMap.insert(portId, newPort);
-    } else {
-        error_abort("audioInPort_replace_noModify: port with id " + n2s(portId) + " does not exist.");
-    }
 }
 
 void KonfytProject::audioInPort_addClient(int portId, portLeftRight leftRight, QString client)
@@ -1105,6 +1107,21 @@ int KonfytProject::midiOutPort_count()
     return midiOutPortMap.count();
 }
 
+void KonfytProject::midiOutPort_setName(int portId, QString name)
+{
+    KONFYT_ASSERT_RETURN(midiOutPort_exists(portId));
+    midiOutPortMap[portId].portName = name;
+    setModified(true);
+    emit midiOutPortNameChanged(portId);
+}
+
+void KonfytProject::midiOutPort_setJackPort(int portId, KfJackMidiPort *jackport)
+{
+    KONFYT_ASSERT_RETURN(midiOutPort_exists(portId));
+    midiOutPortMap[portId].jackPort = jackport;
+    // Do not set modified
+}
+
 bool KonfytProject::midiOutPort_exists(int portId) const
 {
     return midiOutPortMap.contains(portId);
@@ -1140,22 +1157,6 @@ void KonfytProject::midiOutPort_removeClient(int portId, QString client)
         setModified(true);
     } else {
         error_abort("midiOutPort_removeClient: port with id " + n2s(portId) + " does not exist.");
-    }
-}
-
-void KonfytProject::midiOutPort_replace(int portId, PrjMidiPort port)
-{
-    midiOutPort_replace_noModify(portId, port);
-    setModified(true);
-}
-
-/* Do not change the project's modify state. */
-void KonfytProject::midiOutPort_replace_noModify(int portId, PrjMidiPort port)
-{
-    if (midiOutPortMap.contains(portId)) {
-        midiOutPortMap.insert(portId, port);
-    } else {
-        error_abort("midiOutPort_replace_noModify: Port with id " + n2s(portId) + " does not exist.");
     }
 }
 

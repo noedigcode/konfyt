@@ -47,7 +47,7 @@ public:
     ~KonfytLayerWidget();
 
     typedef QSharedPointer<KonfytProject> ProjectPtr;
-    ProjectPtr project; // Pointer to current project to get bus and port naming info
+    void setProject(ProjectPtr project);
 
     // This function has to be called before using the object.
     void initLayer(KfPatchLayerWeakPtr patchLayer, QListWidgetItem* listItem);
@@ -67,9 +67,18 @@ public:
     void indicatePitchbend(bool pitchbend);
     void indicateAudioLeft(float value);
     void indicateAudioRight(float value);
+
+signals:
+    void slider_moved_signal(KonfytLayerWidget* layerItem, float gain);
+    void solo_clicked_signal(KonfytLayerWidget* layerItem, bool solo);
+    void mute_clicked_signal(KonfytLayerWidget* layerItem, bool mute);
+    void rightToolbutton_clicked_signal(KonfytLayerWidget* layerItem);
+    void leftToolbutton_clicked_signal(KonfytLayerWidget* layerItem);
+    void sendMidiEvents_clicked_signal(KonfytLayerWidget* layerItem);
     
 private:
     Ui::KonfytLayerWidget *ui;
+    ProjectPtr mProject; // Pointer to current project to get bus and port naming info
 
     KfPatchLayerWeakPtr mPatchLayer;
     QListWidgetItem* mListWidgetItem;
@@ -94,15 +103,10 @@ private:
     float audioRightValue = 0;
     const float audioZeroLimit = 1E-3;
 
-signals:
-    void slider_moved_signal(KonfytLayerWidget* layerItem, float gain);
-    void solo_clicked_signal(KonfytLayerWidget* layerItem, bool solo);
-    void mute_clicked_signal(KonfytLayerWidget* layerItem, bool mute);
-    void rightToolbutton_clicked_signal(KonfytLayerWidget* layerItem);
-    void leftToolbutton_clicked_signal(KonfytLayerWidget* layerItem);
-    void sendMidiEvents_clicked_signal(KonfytLayerWidget* layerItem);
-
 private slots:
+    void onProjectMidiOutPortNameChanged(int portId);
+    void onProjectAudioInPortNameChanged(int portId);
+
     void on_toolButton_left_clicked();
     void on_gainSlider_sliderMoved(int position);
     void on_gainSlider_valueChanged(int value);

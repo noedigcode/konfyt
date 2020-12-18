@@ -115,7 +115,7 @@ struct PrjMidiPort
 {
     QString portName;
     QStringList clients;
-    KfJackMidiPort* jackPort = nullptr;
+    KfJackMidiPort* jackPort = nullptr; // TODO THIS MUST NOT BE IN PROJECT
     KonfytMidiFilter filter;
 };
 
@@ -176,8 +176,8 @@ public:
     int midiInPort_getPortIdWithJackId(KfJackMidiPort *jackPort);
     int midiInPort_getFirstPortId(int skipId);
     int midiInPort_count();
-    void midiInPort_replace(int portId, PrjMidiPort port);
-    void midiInPort_replace_noModify(int portId, PrjMidiPort port);
+    void midiInPort_setName(int portId, QString name);
+    void midiInPort_setJackPort(int portId, KfJackMidiPort* jackport);
     QStringList midiInPort_getClients(int portId);  // Get client list of single port
     void midiInPort_addClient(int portId, QString client);
     void midiInPort_removeClient(int portId, QString client);
@@ -190,8 +190,8 @@ public:
     bool midiOutPort_exists(int portId) const;
     PrjMidiPort midiOutPort_getPort(int portId) const;
     int midiOutPort_count();
-    void midiOutPort_replace(int portId, PrjMidiPort port);
-    void midiOutPort_replace_noModify(int portId, PrjMidiPort port);
+    void midiOutPort_setName(int portId, QString name);
+    void midiOutPort_setJackPort(int portId, KfJackMidiPort* jackport);
     QStringList midiOutPort_getClients(int portId);  // Get client list of single port
     void midiOutPort_addClient(int portId, QString client);
     void midiOutPort_removeClient(int portId, QString client);
@@ -203,8 +203,8 @@ public:
     bool audioInPort_exists(int portId) const;
     PrjAudioInPort audioInPort_getPort(int portId) const;
     int audioInPort_count();
-    void audioInPort_replace(int portId, PrjAudioInPort newPort);
-    void audioInPort_replace_noModify(int portId, PrjAudioInPort newPort);
+    void audioInPort_setName(int portId, QString name);
+    void audioInPort_setJackPorts(int portId, KfJackAudioPort* left, KfJackAudioPort* right);
     void audioInPort_addClient(int portId, portLeftRight leftRight, QString client);
     void audioInPort_removeClient(int portId, portLeftRight leftRight, QString client);
 
@@ -249,6 +249,17 @@ public:
     void setModified(bool mod);
 
     void error_abort(QString msg) const;
+
+signals:
+    void print(QString msg);
+    void projectModifiedChanged(bool modified); // Emitted when project modified state changes.
+    void midiInPortNameChanged(int portId);
+    void midiOutPortNameChanged(int portId);
+    void audioInPortNameChanged(int portId);
+
+    // Signals emitted when signals are recieved from Process objects.
+    void processStartedSignal(int index, konfytProcess* process);
+    void processFinishedSignal(int index, konfytProcess* process);
     
 private:
     QList<KonfytPatch*> patchList;
@@ -279,14 +290,6 @@ private:
     QList<KonfytJackConPair> jackAudioConList;
 
     bool modified; // Whether project has been modified since last load/save.
-
-signals:
-    void print(QString msg);
-    void projectModifiedChanged(bool modified); // Emitted when project modified state changes.
-
-    // Signals emitted when signals are recieved from Process objects.
-    void processStartedSignal(int index, konfytProcess* process);
-    void processFinishedSignal(int index, konfytProcess* process);
 
 private slots:
     // Slots for signals from Process objects.
