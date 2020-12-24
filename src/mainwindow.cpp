@@ -28,17 +28,10 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
     setupConsoleDialog();
 
-    // Sort out GUI style
-    QString stylename = "Fusion";
-    QStyle* style = QStyleFactory::create(stylename);
-    if (style) {
-        appInfoArg.a->setStyle(style);
-    } else {
-        print("Unable to create style " + stylename);
-    }
-
+    setupGuiStyle();
     printArgumentsInfo();
     initAboutDialog();
     setupSettings();
@@ -77,6 +70,17 @@ MainWindow::~MainWindow()
     consoleDialog.close();
 
     delete ui;
+}
+
+void MainWindow::setupGuiStyle()
+{
+    QString stylename = "Fusion";
+    QStyle* style = QStyleFactory::create(stylename);
+    if (style) {
+        appInfo.a->setStyle(style);
+    } else {
+        print("Unable to create style " + stylename);
+    }
 }
 
 void MainWindow::setupGuiMenuButtons()
@@ -181,6 +185,7 @@ void MainWindow::printArgumentsInfo()
 {
     print(QString(APP_NAME) + " " + APP_VERSION);
     print("Arguments:");
+    if (appInfo.carla) { print(" - Carla mode"); }
     if (appInfo.bridge) { print(" - Bridging is enabled."); }
 
 
@@ -269,10 +274,10 @@ void MainWindow::scanDirForProjects(QString dirname)
 
 void MainWindow::showSettingsDialog()
 {
-    ui->comboBox_settings_patchDirs->setCurrentText(this->patchesDir);
+    ui->comboBox_settings_patchDirs->setCurrentText(this->mPatchesDir);
     ui->comboBox_settings_projectsDir->setCurrentText(this->projectsDir);
-    ui->comboBox_settings_sfzDirs->setCurrentText(this->sfzDir);
-    ui->comboBox_settings_soundfontDirs->setCurrentText(this->soundfontsDir);
+    ui->comboBox_settings_sfzDirs->setCurrentText(this->mSfzDir);
+    ui->comboBox_settings_soundfontDirs->setCurrentText(this->mSoundfontsDir);
 
     int i = ui->comboBox_Settings_filemanager->findText( this->filemanager );
     if (i>=0) {
@@ -340,9 +345,9 @@ void MainWindow::applySettings()
 {
     // Get settings from dialog.
     projectsDir = ui->comboBox_settings_projectsDir->currentText();
-    patchesDir = ui->comboBox_settings_patchDirs->currentText();
-    soundfontsDir = ui->comboBox_settings_soundfontDirs->currentText();
-    sfzDir = ui->comboBox_settings_sfzDirs->currentText();
+    setPatchesDir(ui->comboBox_settings_patchDirs->currentText());
+    setSoundfontsDir(ui->comboBox_settings_soundfontDirs->currentText());
+    setSfzDir(ui->comboBox_settings_sfzDirs->currentText());
     filemanager = ui->comboBox_Settings_filemanager->currentText();
 
     print("Settings applied.");
@@ -357,9 +362,9 @@ void MainWindow::applySettings()
     // Create directories if they don't exist
     QDir d;
     d.mkpath(projectsDir);
-    d.mkpath(patchesDir);
-    d.mkpath(soundfontsDir);
-    d.mkpath(sfzDir);
+    d.mkpath(mPatchesDir);
+    d.mkpath(mSoundfontsDir);
+    d.mkpath(mSfzDir);
 }
 
 bool MainWindow::loadSettingsFile(QString dir)
@@ -383,11 +388,11 @@ bool MainWindow::loadSettingsFile(QString dir)
                 if (r.name() == XML_SETTINGS_PRJDIR) {
                     projectsDir = r.readElementText();
                 } else if (r.name() == XML_SETTINGS_SFDIR) {
-                    soundfontsDir = r.readElementText();
+                    setSoundfontsDir(r.readElementText());
                 } else if (r.name() == XML_SETTINGS_PATCHESDIR) {
-                    patchesDir = r.readElementText();
+                    setPatchesDir(r.readElementText());
                 } else if (r.name() == XML_SETTINGS_SFZDIR) {
-                    sfzDir = r.readElementText();
+                    setSfzDir(r.readElementText());
                 } else if (r.name() == XML_SETTINGS_FILEMAN) {
                     filemanager = r.readElementText();
                 }
@@ -429,9 +434,9 @@ bool MainWindow::saveSettingsFile()
 
     // Settings
     stream.writeTextElement(XML_SETTINGS_PRJDIR, projectsDir);
-    stream.writeTextElement(XML_SETTINGS_SFDIR, soundfontsDir);
-    stream.writeTextElement(XML_SETTINGS_PATCHESDIR, patchesDir);
-    stream.writeTextElement(XML_SETTINGS_SFZDIR, sfzDir);
+    stream.writeTextElement(XML_SETTINGS_SFDIR, mSoundfontsDir);
+    stream.writeTextElement(XML_SETTINGS_PATCHESDIR, mPatchesDir);
+    stream.writeTextElement(XML_SETTINGS_SFZDIR, mSfzDir);
     stream.writeTextElement(XML_SETTINGS_FILEMAN, filemanager);
 
     stream.writeEndElement(); // Settings
@@ -1398,7 +1403,7 @@ KonfytPatch *MainWindow::addPatchToProjectFromFile(QString filename)
 }
 
 /* Returns true if a program is selected in the library. */
-bool MainWindow::library_isProgramSelected()
+bool MainWindow::libraryIsProgramSelected()
 {
     // This is possible only if the list widget contains programs
     if (programList.count()) {
@@ -1415,62 +1420,111 @@ bool MainWindow::library_isProgramSelected()
     }
 }
 
-/* Returns the currently selected program, or a blank one
- * if nothing is selected. */
-KonfytSoundfontProgram MainWindow::library_getSelectedProgram()
+/* Returns the currently selected program, or a blank one if nothing is selected. */
+KonfytSoundPreset MainWindow::librarySelectedProgram()
 {
-    if (library_isProgramSelected()) {
-        KonfytSoundfontProgram p = programList.at(ui->listWidget_LibraryBottom->currentRow());
-        return p;
-    } else {
-        // Return blank one
-        KonfytSoundfontProgram p;
-        return p;
+    KonfytSoundPreset p;
+    if (libraryIsProgramSelected()) {
+        p = programList.at(ui->listWidget_LibraryBottom->currentRow());
     }
+    return p;
 }
 
 /* Returns the type of item in the library tree. */
-LibraryTreeItemType MainWindow::library_getTreeItemType(QTreeWidgetItem *item)
+LibraryTreeItemType MainWindow::libraryTreeItemType(QTreeWidgetItem *item)
 {
-    if (item == library_patchRoot) { return libTreePatchesRoot; }
-    else if (library_patchMap.contains(item)) { return libTreePatch; }
-    else if (item == library_sfzRoot) { return libTreeSFZRoot; }
-    else if (library_sfzFolders.contains(item)) { return libTreeSFZFolder; }
-    else if (library_sfzMap.contains(item)) { return libTreeSFZ; }
-    else if (item == library_sfRoot) { return libTreeSoundfontRoot; }
-    else if (library_sfFolders.contains(item)) { return libTreeSoundfontFolder; }
-    else if (library_sfMap.contains(item)) { return libTreeSoundfont; }
+    if (item == libraryPatchTree.rootTreeItem) { return libTreePatchesRoot; }
+    else if (libraryPatchTree.soundsMap.contains(item)) { return libTreePatch; }
+    else if (item == librarySfTree.rootTreeItem) { return libTreeSFZRoot; }
+    else if (librarySfzTree.foldersMap.contains(item)) { return libTreeSFZFolder; }
+    else if (librarySfzTree.soundsMap.contains(item)) { return libTreeSFZ; }
+    else if (item == librarySfTree.rootTreeItem) { return libTreeSoundfontRoot; }
+    else if (librarySfTree.foldersMap.contains(item)) { return libTreeSoundfontFolder; }
+    else if (librarySfTree.soundsMap.contains(item)) { return libTreeSoundfont; }
     else { return libTreeInvalid; }
 }
 
-LibraryTreeItemType MainWindow::library_getSelectedTreeItemType()
+LibraryTreeItemType MainWindow::librarySelectedTreeItemType()
 {
-    return library_getTreeItemType( ui->treeWidget_Library->currentItem() );
+    return libraryTreeItemType( ui->treeWidget_Library->currentItem() );
 }
 
-/* Returns the currently selected patch, or a blank one
- * if nothing is selected. */
-KonfytPatch MainWindow::library_getSelectedPatch()
+/* Returns the currently selected patch, or a null one if nothing is selected. */
+KfSoundPtr MainWindow::librarySelectedPatch()
 {
-    if ( library_getSelectedTreeItemType() == libTreePatch ) {
-        KonfytPatch p = library_patchMap.value(ui->treeWidget_Library->currentItem());
-        return p;
+    KfSoundPtr ret;
+    if ( librarySelectedTreeItemType() == libTreePatch ) {
+        ret = libraryPatchTree.soundsMap.value(ui->treeWidget_Library->currentItem());
+    }
+    return ret;
+}
+
+/* Returns the currently selected soundfont, or null one if nothing is selected. */
+KfSoundPtr MainWindow::librarySelectedSfont()
+{
+    KfSoundPtr ret;
+    if ( librarySelectedTreeItemType() == libTreeSoundfont ) {
+        ret = librarySfTree.soundsMap.value(ui->treeWidget_Library->currentItem());
+    }
+    return ret;
+}
+
+KfSoundPtr MainWindow::librarySelectedSfz()
+{
+    KfSoundPtr ret;
+    if ( librarySelectedTreeItemType() == libTreeSFZ ) {
+        ret = librarySfzTree.soundsMap.value(ui->treeWidget_Library->currentItem());
+    }
+    return ret;
+}
+
+void MainWindow::resetLibraryTree(MainWindow::LibraryTree &libTree, QString name)
+{
+    libTree.rootTreeItem = new QTreeWidgetItem();
+    libTree.rootTreeItem->setText(0, name);
+    libTree.rootTreeItem->setIcon(0, mFolderIcon);
+    libTree.foldersMap.clear();
+    libTree.soundsMap.clear();
+}
+
+void MainWindow::buildLibraryTree(QTreeWidgetItem *twi, KfDbTreeItemPtr dbTreeItem,
+                                  MainWindow::LibraryTree *libTree)
+{
+    if (!dbTreeItem->hasChildren() && (twi != libTree->rootTreeItem)) {
+        // Sound item: has no children and is not the root item
+        libTree->soundsMap.insert(twi, dbTreeItem->data);
+        twi->setIcon(0, mFileIcon);
     } else {
-        // Return blank one
-        KonfytPatch p;
-        return p;
+        // Root or intermediate folder item
+        twi->setIcon(0, mFolderIcon);
+        if (twi != libTree->rootTreeItem) {
+            // Not the root, add to folders map
+            libTree->foldersMap.insert(twi, dbTreeItem->path);
+        }
+    }
+    twi->setToolTip(0, twi->text(0));
+
+    foreach (KfDbTreeItemPtr dbChild, dbTreeItem->children) {
+        QTreeWidgetItem* child = new QTreeWidgetItem();
+        child->setText(0, dbChild->name);
+        buildLibraryTree(child, dbChild, libTree);
+        twi->addChild(child);
     }
 }
 
-/* Returns the currently selected soundfont, or nullptr if nothing is selected. */
-KonfytSoundfont* MainWindow::library_getSelectedSfont()
+void MainWindow::buildSfzTree(KfDbTreeItemPtr dbTreeItem)
 {
-    if ( library_getSelectedTreeItemType() == libTreeSoundfont ) {
-        QTreeWidgetItem* current = ui->treeWidget_Library->currentItem();
-        return library_sfMap.value(current);
-    } else {
-        return nullptr;
-    }
+    buildLibraryTree(librarySfzTree.rootTreeItem, dbTreeItem, &librarySfzTree);
+}
+
+void MainWindow::buildSfTree(KfDbTreeItemPtr dbTreeItem)
+{
+    buildLibraryTree(librarySfTree.rootTreeItem, dbTreeItem, &librarySfTree);
+}
+
+void MainWindow::buildPatchTree(KfDbTreeItemPtr dbTreeItem)
+{
+    buildLibraryTree(libraryPatchTree.rootTreeItem, dbTreeItem, &libraryPatchTree);
 }
 
 /* Determine if file suffix is as specified. The specified suffix should not
@@ -1529,12 +1583,15 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
             pengine.removeLayer(layer);
         }
 
-        LibraryTreeItemType type = library_getSelectedTreeItemType();
+        LibraryTreeItemType type = librarySelectedTreeItemType();
 
-        if (library_isProgramSelected()) {
+        if (libraryIsProgramSelected()) {
             // Program selected. Load program into preview patch
-            KonfytSoundfontProgram program = library_getSelectedProgram();
-            pengine.addProgramLayer(program);
+            KfSoundPtr sf = librarySelectedSfont();
+            if (sf) {
+                KonfytSoundPreset program = librarySelectedProgram();
+                pengine.addSfProgramLayer(sf->filename, program);
+            }
 
         } else if ( type == libTreePatch ) {
 
@@ -1544,7 +1601,7 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
         } else if ( type == libTreeSFZ ) {
 
             // Sfz is selected. Add sfz layer to preview patch
-            pengine.addSfzLayer(library_selectedSfz);
+            pengine.addSfzLayer(librarySelectedSfz()->filename);
         }
 
         setMasterGain(previewGain);
@@ -1580,8 +1637,8 @@ void MainWindow::gui_updatePatchView()
     clearPatchLayersFromGuiOnly();
 
     // Only for master patch, not preview mode patch
-    KonfytPatch* p = masterPatch;
-    if (p == nullptr) {
+    KonfytPatch* patch = masterPatch;
+    if (patch == nullptr) {
         // No patch active
         ui->lineEdit_PatchName->setText("");
         ui->lineEdit_PatchName->setEnabled(false);
@@ -1595,21 +1652,21 @@ void MainWindow::gui_updatePatchView()
     }
 
     // Get list of layer items
-    foreach (KfPatchLayerWeakPtr layer, p->layers()) {
+    foreach (KfPatchLayerWeakPtr layer, patch->layers()) {
         // Add to gui layer list
         addPatchLayerToGUI(layer);
     }
 
     // Patch title
-    ui->lineEdit_PatchName->setText(p->name());
+    ui->lineEdit_PatchName->setText(patch->name());
     // Patch note
     patchNote_ignoreChange = true;
-    ui->textBrowser_patchNote->setText(p->note());
+    ui->textBrowser_patchNote->setText(patch->note());
 
     // Always-active text
-    ui->label_patch_alwaysActive->setVisible(p->alwaysActive);
+    ui->label_patch_alwaysActive->setVisible(patch->alwaysActive);
     // Always-active menu item
-    ui->actionAlways_Active->setChecked(p->alwaysActive);
+    ui->actionAlways_Active->setChecked(patch->alwaysActive);
 }
 
 void MainWindow::gui_updateWindowTitle()
@@ -1654,6 +1711,15 @@ void MainWindow::onPatchSelected(KonfytPatch *patch)
     setCurrentPatch(patch);
 }
 
+void MainWindow::onPatchLayerLoaded(KfPatchLayerWeakPtr patchLayer)
+{
+    foreach (KonfytLayerWidget* w, layerWidgetList) {
+        if (w->getPatchLayer() == patchLayer) {
+            w->refresh();
+        }
+    }
+}
+
 /* Fill the tree widget with all the entries in the soundfont database. */
 void MainWindow::fillTreeWithAll()
 {
@@ -1661,117 +1727,25 @@ void MainWindow::fillTreeWithAll()
     ui->treeWidget_Library->clear();
     programList.clear(); // Internal list of programs displayed
 
-
     // Create parent soundfonts tree item, with soundfont children
-    library_sfRoot = new QTreeWidgetItem();
-    library_sfRoot->setText(0,QString(TREE_ITEM_SOUNDFONTS) + " [" + n2s(db.getNumSfonts()) + "]");
-    library_sfFolders.clear();
-    library_sfMap.clear();
-    buildSfTree(library_sfRoot, db.sfontTree->root);
-    library_sfRoot->setIcon(0, QIcon(":/icons/folder.png"));
+    resetLibraryTree(librarySfTree, QString("%1 [%2]")
+                     .arg(TREE_ITEM_SOUNDFONTS).arg(db.soundfontCount()));
+    buildSfTree(db.sfontTree.root);
 
     // Create parent patches tree item, with patch children
-    library_patchRoot = new QTreeWidgetItem();
-    library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db.getNumPatches()) + "]");
-    library_patchRoot->setIcon(0, QIcon(":/icons/folder.png"));
-    QList<KonfytPatch> pl = db.getPatchList();
-    for (int i=0; i<pl.count(); i++) {
-        KonfytPatch pt = pl.at(i);
-
-        QTreeWidgetItem* twiChild = new QTreeWidgetItem();
-        twiChild->setIcon(0, QIcon(":/icons/picture.png"));
-        twiChild->setText(0, pt.name());
-        library_patchMap.insert(twiChild, pt);
-
-        library_patchRoot->addChild(twiChild);
-
-    }
+    resetLibraryTree(libraryPatchTree, QString("%1 [%2]")
+                     .arg(TREE_ITEM_PATCHES).arg(db.patchCount()));
+    buildPatchTree(db.patchTree.root);
 
     // Create parent sfz item, with one child indicating the number of items
-    library_sfzRoot = new QTreeWidgetItem();
-    library_sfzRoot->setText(0,QString(TREE_ITEM_SFZ) + " [" + n2s(db.getNumSfz()) + "]");
-    library_sfzFolders.clear();
-    library_sfzMap.clear();
-    buildSfzTree(library_sfzRoot, db.sfzTree->root);
-    library_sfzRoot->setIcon(0, QIcon(":/icons/folder.png"));
+    resetLibraryTree(librarySfzTree, QString("%1 [%2]")
+                     .arg(TREE_ITEM_SFZ).arg(db.sfzCount()));
+    buildSfzTree(db.sfzTree.root);
 
     // Add items to tree
-    ui->treeWidget_Library->insertTopLevelItem(0,library_sfRoot);
-    //ui->treeWidget_Library->expandItem(soundfontsParent);
-    ui->treeWidget_Library->insertTopLevelItem(0,library_sfzRoot);
-    //ui->treeWidget_Library->expandItem(sfzParent);
-    ui->treeWidget_Library->insertTopLevelItem(0,library_patchRoot);
-}
-
-/* Build TreeWidget tree from the database's tree. */
-void MainWindow::buildSfzTree(QTreeWidgetItem* twi, KonfytDbTreeItem* item)
-{
-    if ( !item->hasChildren() ) {
-        // Remove soundfont directory from item name if present
-        QString rem = sfzDir + "/";
-        rem.remove(0,1); // sfzDir probably starts with "/", tree item does not. And yes, this is less than ideal.
-        QString pathRemoved = twi->text(0).remove(rem);
-        twi->setText(0, pathRemoved);
-
-        library_sfzMap.insert(twi, item->path); // Add to sfz map
-        twi->setToolTip(0,twi->text(0));
-        twi->setIcon(0, QIcon(":/icons/picture.png"));
-    } else {
-        twi->setIcon(0, QIcon(":/icons/folder.png"));
-        // If this is not the root item, add to sfz folders map
-        if (twi != library_sfzRoot) {
-            library_sfzFolders.insert(twi, item->path);
-        }
-    }
-
-    // If database tree item has only one child that is not a leaf, skip it.
-    if (item->hasChildren()) {
-        if ( (item->children.count() == 1) && (item->children[0]->hasChildren()) ) {
-            buildSfzTree( twi, item->children[0] );
-        } else {
-            for (int i=0; i<item->children.count(); i++) {
-                QTreeWidgetItem* child = new QTreeWidgetItem();
-                child->setText( 0, item->children.at(i)->name );
-                buildSfzTree(child, item->children.at(i));
-                twi->addChild(child);
-            }
-        }
-    }
-}
-
-void MainWindow::buildSfTree(QTreeWidgetItem *twi, KonfytDbTreeItem *item)
-{
-    if ( !item->hasChildren() ) {
-        // Remove soundfont directory from item name if present
-        QString rem = soundfontsDir + "/";
-        rem.remove(0,1); // soundfontsDir probably starts with "/", tree item does not. And yes, this is less than ideal.
-        QString pathRemoved = twi->text(0).remove(rem);
-        twi->setText(0, pathRemoved);
-
-        library_sfMap.insert(twi, (KonfytSoundfont*)(item->data)); // Add to soundfonts map
-        twi->setToolTip(0,twi->text(0));
-        twi->setIcon(0, QIcon(":/icons/picture.png"));
-    } else {
-        twi->setIcon(0, QIcon(":/icons/folder.png"));
-        // If item is not the root, add to soundfont folders map
-        if (twi != library_sfRoot) {
-            library_sfFolders.insert(twi, item->path);
-        }
-    }
-
-    if (item->hasChildren()) {
-        if ( (item->children.count() == 1) && (item->children[0]->hasChildren()) ) {
-            // If database tree item has only one child that is not a leaf, skip it.
-            buildSfTree( twi, item->children[0] );
-        } else {
-            for (int i=0; i<item->children.count(); i++) {
-                QTreeWidgetItem* child = new QTreeWidgetItem();
-                child->setText( 0, item->children.at(i)->name );
-                buildSfTree(child, item->children.at(i));
-                twi->addChild(child);
-            }
-        }
-    }
+    ui->treeWidget_Library->insertTopLevelItem(0, librarySfTree.rootTreeItem);
+    ui->treeWidget_Library->insertTopLevelItem(0, librarySfzTree.rootTreeItem);
+    ui->treeWidget_Library->insertTopLevelItem(0, libraryPatchTree.rootTreeItem);
 }
 
 void MainWindow::preparePreviewMenu()
@@ -1859,56 +1833,31 @@ void MainWindow::fillTreeWithSearch(QString search)
     twiResults->setText(0, TREE_ITEM_SEARCH_RESULTS);
 
     // Soundfonts
-
-    library_sfRoot = new QTreeWidgetItem();
-    library_sfRoot->setText(0,QString(TREE_ITEM_SOUNDFONTS) + " [" + n2s(db.getNumSfontsResults()) + " / " + n2s(db.getNumSfontProgramResults()) + "]");
-
-    library_sfFolders.clear();
-    library_sfMap.clear();
-
-    buildSfTree(library_sfRoot, db.sfontTree_results->root);
-    library_sfRoot->setIcon(0, QIcon(":/icons/folder.png"));
+    resetLibraryTree(librarySfTree, QString("%1 [%2 (%3 programs)]")
+                     .arg(TREE_ITEM_SOUNDFONTS).arg(db.getNumSfontsResults())
+                     .arg(db.getNumSfontProgramResults()));
+    buildSfTree(db.sfontTree_results.root);
 
     // Patches
-
-    library_patchRoot = new QTreeWidgetItem();
-    library_patchRoot->setText(0,QString(TREE_ITEM_PATCHES) + " [" + n2s(db.getNumPatchesResults()) + "]");
-    library_patchRoot->setIcon(0, QIcon(":/icons/folder.png"));
-
-    QList<KonfytPatch> pl = db.getResultsPatches();
-
-    for (int i=0; i<pl.count(); i++) {
-        KonfytPatch pt = pl.at(i);
-
-        QTreeWidgetItem* twiChild = new QTreeWidgetItem();
-        twiChild->setText(0,pt.name());
-        library_patchMap.insert(twiChild, pt);
-
-        library_patchRoot->addChild(twiChild);
-    }
+    resetLibraryTree(libraryPatchTree, QString("%1 [%2]")
+                     .arg(TREE_ITEM_PATCHES).arg(db.getNumPatchesResults()));
+    buildPatchTree(db.patchTree_results.root);
 
     // SFZ
-
-    library_sfzRoot = new QTreeWidgetItem();
-    library_sfzRoot->setText(0,QString(TREE_ITEM_SFZ) + " [" + n2s(db.getNumSfzResults()) + "]");
-    library_sfzFolders.clear();
-    library_sfzMap.clear();
-
-    buildSfzTree(library_sfzRoot, db.sfzTree_results->root);
-    library_sfzRoot->setIcon(0, QIcon(":/icons/folder.png"));
+    resetLibraryTree(librarySfzTree, QString("%1 [%2]")
+                     .arg(TREE_ITEM_SFZ).arg(db.getNumSfzResults()));
+    buildSfzTree(db.sfzTree_results.root);
 
     // Add items to tree
+    twiResults->addChild(libraryPatchTree.rootTreeItem);
+    twiResults->addChild(librarySfzTree.rootTreeItem);
+    twiResults->addChild(librarySfTree.rootTreeItem);
 
-    twiResults->addChild(library_patchRoot);
-    twiResults->addChild(library_sfzRoot);
-    twiResults->addChild(library_sfRoot);
-
-
-    ui->treeWidget_Library->insertTopLevelItem(0,twiResults);
+    ui->treeWidget_Library->insertTopLevelItem(0, twiResults);
     ui->treeWidget_Library->expandItem(twiResults);
-    ui->treeWidget_Library->expandItem(library_patchRoot);
-    ui->treeWidget_Library->expandItem(library_sfzRoot);
-    ui->treeWidget_Library->expandItem(library_sfRoot);
+    ui->treeWidget_Library->expandItem(libraryPatchTree.rootTreeItem);
+    ui->treeWidget_Library->expandItem(librarySfzTree.rootTreeItem);
+    ui->treeWidget_Library->expandItem(librarySfTree.rootTreeItem);
 }
 
 void MainWindow::setupFilesystemView()
@@ -2090,7 +2039,7 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
             // Add first program to current patch
             if (ui->listWidget_LibraryBottom->count()) {
                 ui->listWidget_LibraryBottom->setCurrentRow(0);
-                addProgramToCurrentPatch( library_getSelectedProgram() );
+                addSoundfontProgramToCurrentPatch(f, librarySelectedProgram());
             }
 
             // Rename patch
@@ -2170,28 +2119,19 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(
         return;
     }
 
-    if ( library_getSelectedTreeItemType() == libTreeSFZ ) {
+    if ( librarySelectedTreeItemType() == libTreeSFZ ) {
 
-        library_selectedSfz = library_sfzMap.value(current);
         if (previewMode) {
             loadPatchForModeAndUpdateGUI();
         }
 
         // Display contents in text view below library
-        showSfzContentsBelowLibrary(library_selectedSfz);
+        showSfzContentsBelowLibrary(librarySelectedSfz()->filename);
 
-    } else if ( library_getSelectedTreeItemType() == libTreeSoundfont ) {
+    } else if ( librarySelectedTreeItemType() == libTreeSoundfont ) {
 
         // Soundfont is selected.
-        if (searchMode) {
-            // Fill programList variable with program results of selected soundfont
-            KonfytSoundfont* sf = library_getSelectedSfont();
-            programList = db.getResultsSfontPrograms(sf);
-        } else {
-            // Fill programList variable with all programs of selected soundfont
-            KonfytSoundfont* sf = library_getSelectedSfont();
-            programList = sf->programlist;
-        }
+        programList = librarySelectedSfont()->presets;
         // Refresh the GUI program list with programs (if any).
         ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_ProgramList);
         library_refreshGUIProgramList();
@@ -2200,7 +2140,7 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(
             ui->listWidget_LibraryBottom->setCurrentRow(0);
         }
 
-    } else if ( library_getSelectedTreeItemType() == libTreePatch ) {
+    } else if ( librarySelectedTreeItemType() == libTreePatch ) {
 
         if (previewMode) {
             // Patch is selected in preview mode. Load patch.
@@ -2227,20 +2167,20 @@ void MainWindow::library_refreshGUIProgramList()
 /* Enter pressed in the search box. */
 void MainWindow::on_lineEdit_Search_returnPressed()
 {
-    fillTreeWithSearch(ui->lineEdit_Search->text());
-    return;
-
+    QString str = ui->lineEdit_Search->text();
+    if (str.trimmed().isEmpty()) {
+        on_toolButton_ClearSearch_clicked();
+    } else {
+        fillTreeWithSearch(str);
+    }
 }
 
 /* Clear search button clicked. */
 void MainWindow::on_toolButton_ClearSearch_clicked()
 {
     ui->lineEdit_Search->clear();
-
     fillTreeWithAll();
-
     ui->lineEdit_Search->setFocus();
-
 }
 
 /* Library program list: Soundfont program selected. */
@@ -2275,12 +2215,12 @@ void MainWindow::addSfzToCurrentPatch(QString sfzPath)
 }
 
 /* Adds soundfont program to current patch in engine and in GUI. */
-void MainWindow::addProgramToCurrentPatch(KonfytSoundfontProgram p)
+void MainWindow::addSoundfontProgramToCurrentPatch(QString soundfontPath, KonfytSoundPreset p)
 {
     newPatchIfMasterNull();
 
     // Add program to engine
-    KfPatchLayerWeakPtr layer = pengine.addProgramLayer(p);
+    KfPatchLayerWeakPtr layer = pengine.addSfProgramLayer(soundfontPath, p);
 
     // Add layer to GUI
     addPatchLayerToGUI(layer);
@@ -2389,7 +2329,7 @@ void MainWindow::on_lineEdit_ProjectName_editingFinished()
 /* Save patch to library (in other words, to patchesDir directory.) */
 bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
 {
-    QDir dir(patchesDir);
+    QDir dir(mPatchesDir);
     if (!dir.exists()) {
         print("Patches directory does not exist.");
         return false;
@@ -2407,7 +2347,7 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
     }
 
     // Add directory, and save.
-    patchName = patchesDir + "/" + patchName;
+    patchName = mPatchesDir + "/" + patchName;
     if (patch->savePatchToFile(patchName)) {
         print("Patch saved as " + patchName);
         db.addPatch(patchName);
@@ -2642,10 +2582,28 @@ void MainWindow::scanForDatabase()
     print("Starting database scan.");
     showWaitingPage("Scanning database directories...");
     // Start scanning for directories.
-    db.scanDirs(soundfontsDir, sfzDir, patchesDir);
+    db.scan();
     // When the finished signal is received, remove waiting screen.
-    // See database_scanDirsFinished()
-    // Periodic status info might be received in database_scanDirsStatus()
+    // See onDatabaseScanFinished()
+    // Periodic status info might be received in onDatabaseScanStatus()
+}
+
+void MainWindow::setSoundfontsDir(QString path)
+{
+    mSoundfontsDir = path;
+    db.setSoundfontsDir(path);
+}
+
+void MainWindow::setPatchesDir(QString path)
+{
+    mPatchesDir = path;
+    db.setPatchesDir(path);
+}
+
+void MainWindow::setSfzDir(QString path)
+{
+    mSfzDir = path;
+    db.setSfzDir(path);
 }
 
 /* Creates the settings dir if it doesn't exist. */
@@ -2661,12 +2619,12 @@ void MainWindow::createSettingsDir()
     }
 }
 
-void MainWindow::database_scanDirsFinished()
+void MainWindow::onDatabaseScanFinished()
 {
     print("Database scanning complete.");
-    print("   Found " + n2s(db.getNumSfonts()) + " soundfonts.");
-    print("   Found " + n2s(db.getNumSfz()) + " sfz/gig samples.");
-    print("   Found " + n2s(db.getNumPatches()) + " patches.");
+    print("   Found " + n2s(db.soundfontCount()) + " soundfonts.");
+    print("   Found " + n2s(db.sfzCount()) + " sfz/gig samples.");
+    print("   Found " + n2s(db.patchCount()) + " patches.");
 
     // Save to database file
     saveDatabase();
@@ -2680,22 +2638,22 @@ void MainWindow::setupDatabase()
 {
     connect(&db, &konfytDatabase::print, this, &MainWindow::print);
 
-    connect(&db, &konfytDatabase::scanDirs_finished,
-            this, &MainWindow::database_scanDirsFinished);
+    connect(&db, &konfytDatabase::scanFinished,
+            this, &MainWindow::onDatabaseScanFinished);
 
-    connect(&db, &konfytDatabase::scanDirs_status,
-            this, &MainWindow::database_scanDirsStatus);
+    connect(&db, &konfytDatabase::scanStatus,
+            this, &MainWindow::onDatabaseScanStatus);
 
     connect(&db, &konfytDatabase::returnSfont_finished,
-            this, &MainWindow::database_returnSfont);
+            this, &MainWindow::onDatabaseReturnSfont);
 
     // Check if database file exists.
     if (db.loadDatabaseFromFile(settingsDir + "/" + DATABASE_FILE)) {
         print("Database loaded from file. Rescan to refresh.");
         print("Database contains:");
-        print("   " + n2s(db.getNumSfonts()) + " soundfonts.");
-        print("   " + n2s(db.getNumPatches()) + " patches.");
-        print("   " + n2s(db.getNumSfz()) + " sfz/gig samples.");
+        print("   " + n2s(db.soundfontCount()) + " soundfonts.");
+        print("   " + n2s(db.patchCount()) + " patches.");
+        print("   " + n2s(db.sfzCount()) + " sfz/gig samples.");
     } else {
         print("No database file found.");
         // Check if old database location exists
@@ -2724,17 +2682,17 @@ bool MainWindow::saveDatabase()
     }
 }
 
-void MainWindow::database_scanDirsStatus(QString msg)
+void MainWindow::onDatabaseScanStatus(QString msg)
 {
     ui->label_WaitingStatus->setText(msg);
 }
 
-void MainWindow::database_returnSfont(KonfytSoundfont *sf)
+void MainWindow::onDatabaseReturnSfont(KfSoundPtr sf)
 {
     if (returnSfontRequester == returnSfontRequester_on_treeWidget_filesystem_itemDoubleClicked) {
         // Soundfont received from database after request was made from
         // on_treeWidget_filesystem_itemDoubleClicked()
-        programList = sf->programlist;
+        programList = sf->presets;
         library_refreshGUIProgramList();
     }
 
@@ -3815,7 +3773,7 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer)
     // Use zero width so that horizontal scrollbars don't appear when shrinking.
     item->setSizeHint(QSize(0, layerWidget->size().height()));
 
-    // Make all connections
+    // Layer widget connections
     connect(layerWidget, &KonfytLayerWidget::slider_moved_signal,
             this, &MainWindow::onLayer_slider_moved);
 
@@ -4065,7 +4023,7 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
 
     KonfytPatch* pt = pengine.currentPatch(); // Get current patch
     QFileDialog d;
-    QString filename = d.getSaveFileName(this,"Save patch as file", patchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
+    QString filename = d.getSaveFileName(this,"Save patch as file", mPatchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
     if (filename=="") {return;} // Dialog was cancelled.
 
     // Add suffix if not already added (this is not foolproof, but what the hell.)
@@ -4090,10 +4048,8 @@ void MainWindow::on_actionNew_Patch_triggered()
 /* Action to add patch from the library (currently selected) to the project. */
 void MainWindow::on_actionAdd_Patch_From_Library_triggered()
 {
-    if ( library_getSelectedTreeItemType() == libTreePatch ) {
-        KonfytPatch* newPatch = new KonfytPatch();
-        *newPatch = library_getSelectedPatch();
-        addPatchToProject(newPatch);
+    if ( librarySelectedTreeItemType() == libTreePatch ) {
+        addPatchToProjectFromFile(librarySelectedPatch()->filename);
     } else {
         print("Select a patch in the library.");
     }
@@ -4110,7 +4066,7 @@ void MainWindow::on_actionAdd_Patch_From_File_triggered()
     QFileDialog d;
     QString filename = d.getOpenFileName(this,
                                          "Open patch from file",
-                                         patchesDir,
+                                         mPatchesDir,
                                          "*." + QString(KONFYT_PATCH_SUFFIX));
     if (filename.isEmpty()) { return; }
 
@@ -4413,9 +4369,12 @@ void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem* 
 
     if (previewMode) { setPreviewMode(false); }
 
-    if (library_isProgramSelected()) {
+    if (libraryIsProgramSelected()) {
 
-        addProgramToCurrentPatch( library_getSelectedProgram() );
+        KfSoundPtr sf = librarySelectedSfont();
+        if (sf) {
+            addSoundfontProgramToCurrentPatch(sf->filename, librarySelectedProgram());
+        }
     }
 }
 
@@ -4425,19 +4384,20 @@ void MainWindow::on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, 
 {
     if (previewMode) { setPreviewMode(false); }
 
-    if (library_isProgramSelected()) {
+    if (libraryIsProgramSelected()) {
 
-        addProgramToCurrentPatch( library_getSelectedProgram() );
+        KfSoundPtr sf = librarySelectedSfont();
+        if (sf) {
+            addSoundfontProgramToCurrentPatch(sf->filename, librarySelectedProgram());
+        }
 
-    } else if ( library_getTreeItemType(item) == libTreeSFZ ) {
+    } else if ( libraryTreeItemType(item) == libTreeSFZ ) {
 
-        addSfzToCurrentPatch( library_selectedSfz );
+        addSfzToCurrentPatch( librarySelectedSfz()->filename );
 
-    } else if ( library_getTreeItemType(item) == libTreePatch ) {
+    } else if ( libraryTreeItemType(item) == libTreePatch ) {
 
-        KonfytPatch* p = new KonfytPatch();
-        *p = library_getSelectedPatch();
-        addPatchToProject( p );
+        addPatchToProjectFromFile(librarySelectedPatch()->filename);
     }
 }
 
@@ -4517,7 +4477,7 @@ void MainWindow::refreshFilesystemView()
 
         if (info.isDir()) {
             QTreeWidgetItem* item = new QTreeWidgetItem();
-            item->setIcon(0, QIcon(":/icons/folder.png"));
+            item->setIcon(0, mFolderIcon);
             item->setText(0, info.fileName());
             ui->treeWidget_filesystem->addTopLevelItem(item);
             fsMap.insert(item, info);
@@ -4533,15 +4493,13 @@ void MainWindow::refreshFilesystemView()
             if ( show ) {
 
                 QTreeWidgetItem* item = new QTreeWidgetItem();
-                item->setIcon(0, QIcon(":/icons/picture.png"));
+                item->setIcon(0, mFileIcon);
                 item->setText(0, info.fileName());
                 ui->treeWidget_filesystem->addTopLevelItem(item);
                 fsMap.insert(item, info);
             }
         }
-
     }
-
 }
 
 /* Change filesystem view directory, storing current path for the 'back' functionality. */
@@ -4624,7 +4582,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
         returnSfontRequester = returnSfontRequester_on_treeWidget_filesystem_itemDoubleClicked;
         this->db.returnSfont(info.filePath());
         // This might take a while. The result will be sent by signal to the
-        // database_returnSfont() slot where we will continue.
+        // onDatabaseReturnSfont() slot where we will continue.
         return;
 
     } else if ( fileIsSfzOrGig(info.filePath()) ) {
@@ -5246,6 +5204,8 @@ void MainWindow::setupPatchEngine()
     connect(&pengine, &KonfytPatchEngine::statusInfo, [this](QString msg){
         ui->textBrowser_Testing->setText(msg);
     });
+    connect(&pengine, &KonfytPatchEngine::patchLayerLoaded,
+            this, &MainWindow::onPatchLayerLoaded);
 
     pengine.initPatchEngine(&jack, appInfo);
 }
@@ -5291,7 +5251,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::on_treeWidget_Library_customContextMenuRequested(const QPoint &pos)
 {
     libraryMenuItem = ui->treeWidget_Library->itemAt(pos);
-    LibraryTreeItemType itemType = library_getTreeItemType( libraryMenuItem );
+    LibraryTreeItemType itemType = libraryTreeItemType( libraryMenuItem );
 
     libraryMenu.clear();
 
@@ -5314,25 +5274,25 @@ void MainWindow::on_actionOpen_In_File_Manager_library_triggered()
 
     QString path;
 
-    LibraryTreeItemType itemType = library_getTreeItemType( libraryMenuItem );
+    LibraryTreeItemType itemType = libraryTreeItemType( libraryMenuItem );
 
-    if ( itemType == libTreeSoundfontRoot ) { path = this->soundfontsDir; }
-    else if ( itemType == libTreePatchesRoot ) { path = this->patchesDir; }
-    else if ( itemType == libTreeSFZRoot) { path = this->sfzDir; }
+    if ( itemType == libTreeSoundfontRoot ) { path = this->mSoundfontsDir; }
+    else if ( itemType == libTreePatchesRoot ) { path = this->mPatchesDir; }
+    else if ( itemType == libTreeSFZRoot) { path = this->mSfzDir; }
     else if ( itemType == libTreeSoundfontFolder ) {
-        path = library_sfFolders.value( libraryMenuItem );
+        path = librarySfTree.foldersMap.value( libraryMenuItem );
     }
     else if ( itemType == libTreeSoundfont ) {
-        path = library_sfMap.value(libraryMenuItem)->filename;
+        path = librarySfTree.soundsMap.value(libraryMenuItem)->filename;
     }
     else if ( itemType == libTreeSFZFolder ) {
-        path = library_sfzFolders.value( libraryMenuItem );
+        path = librarySfzTree.foldersMap.value( libraryMenuItem );
     }
     else if ( itemType == libTreeSFZ ) {
-        path = library_sfzMap.value(libraryMenuItem);
+        path = librarySfzTree.soundsMap.value(libraryMenuItem)->filename;
     }
     else if ( itemType == libTreePatch ) {
-        path = this->patchesDir;
+        path = this->mPatchesDir;
     } else {
         return;
     }
@@ -6001,38 +5961,35 @@ void MainWindow::setupSettings()
     // Set up settings dialog
     ui->label_SettingsPath->setText( ui->label_SettingsPath->text() + settingsDir );
 
-    ui->comboBox_settings_projectsDir->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Projects");
-    ui->comboBox_settings_projectsDir->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Projects");
+    QString docsPath = QString("%1/%2")
+            .arg(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
+            .arg(APP_NAME);
+    QString appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
 
-    ui->comboBox_settings_soundfontDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Soundfonts");
-    ui->comboBox_settings_soundfontDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Soundfonts");
+    ui->comboBox_settings_projectsDir->addItem(docsPath + "/Projects");
+    ui->comboBox_settings_projectsDir->addItem(appDataPath + "/Projects");
 
-    ui->comboBox_settings_patchDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/Patches");
-    ui->comboBox_settings_patchDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/Patches");
+    ui->comboBox_settings_soundfontDirs->addItem(docsPath + "/Soundfonts");
+    ui->comboBox_settings_soundfontDirs->addItem(appDataPath + "/Soundfonts");
 
-    ui->comboBox_settings_sfzDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + "/" + APP_NAME + "/sfz");
-    ui->comboBox_settings_sfzDirs->addItem(
-                QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/sfz");
+    ui->comboBox_settings_patchDirs->addItem(docsPath + "/Patches");
+    ui->comboBox_settings_patchDirs->addItem(appDataPath + "/Patches");
+
+    ui->comboBox_settings_sfzDirs->addItem(docsPath + "/sfz");
+    ui->comboBox_settings_sfzDirs->addItem(appDataPath + "/sfz");
 
     // Initialise default settings
     if (projectsDir.isEmpty()) {
         projectsDir = ui->comboBox_settings_projectsDir->itemText(0);
     }
-    if (patchesDir.isEmpty()) {
-        patchesDir = ui->comboBox_settings_patchDirs->itemText(0);
+    if (mPatchesDir.isEmpty()) {
+        setPatchesDir(ui->comboBox_settings_patchDirs->itemText(0));
     }
-    if (soundfontsDir.isEmpty()) {
-        soundfontsDir = ui->comboBox_settings_soundfontDirs->itemText(0);
+    if (mSoundfontsDir.isEmpty()) {
+        setSoundfontsDir(ui->comboBox_settings_soundfontDirs->itemText(0));
     }
-    if (sfzDir.isEmpty()) {
-        sfzDir = ui->comboBox_settings_sfzDirs->itemText(0);
+    if (mSfzDir.isEmpty()) {
+        setSfzDir(ui->comboBox_settings_sfzDirs->itemText(0));
     }
 }
 

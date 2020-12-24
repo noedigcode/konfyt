@@ -49,7 +49,7 @@ void KonfytPatchLayer::initLayer(LayerSoundfontData newLayerData)
 {
     mLayerType = TypeSoundfontProgram;
     soundfontData = newLayerData;
-    mName = soundfontData.program.parent_soundfont + "/" + soundfontData.program.name;
+    mName = soundfontData.parentSoundfont + "/" + soundfontData.program.name;
 }
 
 void KonfytPatchLayer::initLayer(LayerSfzData newLayerData)

@@ -181,6 +181,13 @@ void KonfytLayerWidget::refresh()
 void KonfytLayerWidget::setUpGUI()
 {
     mFilepath = "";
+    bool gainSliderVisible = true;
+    bool soloButtonVisible = true;
+    bool muteButtonVisible = true;
+    bool toolButtonRightVisible = true;
+    QString text;
+    QString tooltip;
+    bool backgroundFilter = true;
 
     KfPatchLayerSharedPtr layer = mPatchLayer.toStrongRef();
     if (layer.isNull()) {
@@ -190,35 +197,24 @@ void KonfytLayerWidget::setUpGUI()
 
     if (layer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
 
-        mFilepath = layer->soundfontData.program.parent_soundfont;
+        mFilepath = layer->soundfontData.parentSoundfont;
         // Display soundfont and program name
-        ui->lineEdit->setText(layer->soundfontData.program.parent_soundfont + "/" +
-                              layer->soundfontData.program.name);
-        ui->lineEdit->setToolTip(ui->lineEdit->text());
-        // Indicate note range of the midi filter
-        this->updateBackgroundFromFilter();
-        // Volume
-        ui->gainSlider->setVisible(true);
-
+        text = (layer->soundfontData.parentSoundfont + "/" +
+                layer->soundfontData.program.name);
+        tooltip = text;
 
     } else if (layer->layerType() == KonfytPatchLayer::TypeSfz) {
 
         mFilepath = layer->sfzData.path;
-
         // Display sfz name
-        ui->lineEdit->setText(layer->sfzData.path);
-        ui->lineEdit->setToolTip( layer->name() + ": " + layer->sfzData.path );
-
-        // Indicate note range of the midi filter
-        this->updateBackgroundFromFilter();
-        // Volume
-        ui->gainSlider->setVisible(true);
+        text = layer->sfzData.path;
+        tooltip = layer->name() + ": " + layer->sfzData.path;
 
     } else if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {
 
         // Display port id and name
         int portId = layer->midiOutputPortData.portIdInProject;
-        QString text = "MIDI Out " + n2s(portId);
+        text = "MIDI Out " + n2s(portId);
         if (mProject) {
             // TODO: setErrorMessage should not be done here, it should be set
             //       in the engine when loading the patch
@@ -228,11 +224,7 @@ void KonfytLayerWidget::setUpGUI()
                 layer->setErrorMessage("No MIDI out port " + n2s(portId) + " in project.");
             }
         }
-        ui->lineEdit->setText( text );
-        // Indicate note range of the midi filter
-        this->updateBackgroundFromFilter();
-        // Volume
-        ui->gainSlider->setVisible(false);
+        gainSliderVisible = false;
         // Use right toolbutton as MIDI output channel
         int outchan = layer->midiFilter().outChan;
         if (outchan >= 0) {
@@ -246,7 +238,7 @@ void KonfytLayerWidget::setUpGUI()
 
         // Display port id and name
         int portId = layer->audioInPortData.portIdInProject;
-        QString text = "Audio In " + n2s(portId);
+        text = "Audio In " + n2s(portId);
         if (mProject) {
             // TODO: setErrorMessage should not be done here, it should be set
             //       in the engine when loading the patch
@@ -256,25 +248,73 @@ void KonfytLayerWidget::setUpGUI()
                 layer->setErrorMessage("No audio in port " + n2s(portId) + " in project.");
             }
         }
-        ui->lineEdit->setText( text );
-        changeBackground(0,127);
-        // Volume
-        ui->gainSlider->setVisible(true);
+        backgroundFilter = false;
 
     } else {
 
-        ui->lineEdit->setText("ERROR: Layer not initialised.");
-        ui->gainSlider->setVisible(false);
+        text = "ERROR: Layer not initialised.";
+        gainSliderVisible = false;
+        soloButtonVisible = false;
+        muteButtonVisible = false;
+        toolButtonRightVisible = false;
+        backgroundFilter = false;
 
     }
 
-    // Volume
-    this->setSliderGain(layer->gain());
+    // Gain
+    setSliderGain(layer->gain());
     // Solo and mute
     ui->toolButton_solo->setChecked(layer->isSolo());
     ui->toolButton_mute->setChecked(layer->isMute());
 
-    // Bus button
+    // Update buttons
+    updateRightToolButton();
+    updateInputSideToolButton();
+
+    // MIDI Events Send button
+    ui->toolButton_sendEvents->setVisible( layer->midiSendList.count() > 0 );
+
+    // If the layer has an error (marked when loading in patchEngine), indicate it.
+    if (layer->hasError()) {
+
+        text = "ERROR: " + layer->errorMessage();
+
+        gainSliderVisible = false;
+        soloButtonVisible = false;
+        muteButtonVisible = false;
+        toolButtonRightVisible = false;
+        backgroundFilter = false;
+    }
+
+    // Apply visibility and text settings
+    ui->gainSlider->setVisible(gainSliderVisible);
+    ui->toolButton_solo->setVisible(soloButtonVisible);
+    ui->toolButton_mute->setVisible(muteButtonVisible);
+    ui->toolButton_right->setVisible(toolButtonRightVisible);
+    ui->lineEdit->setText(text);
+    ui->lineEdit->setToolTip(tooltip);
+    // Background
+    if (backgroundFilter) { updateBackgroundFromFilter(); }
+    else { changeBackground(0,127); }
+
+    ui->lineEdit->setProperty("konfytError", layer->hasError());
+    ui->lineEdit->style()->unpolish(ui->lineEdit);
+    ui->lineEdit->style()->polish(ui->lineEdit);
+}
+
+/* Change the background to indicate MIDI filter zone. */
+void KonfytLayerWidget::updateBackgroundFromFilter()
+{
+    KonfytMidiFilter filter = mPatchLayer.toStrongRef()->midiFilter();
+    KonfytMidiFilterZone z = filter.zone;
+    this->changeBackground(z.lowNote, z.highNote);
+}
+
+void KonfytLayerWidget::updateRightToolButton()
+{
+    KfPatchLayerSharedPtr layer = mPatchLayer.toStrongRef();
+    if (!layer) { return; }
+
     if ( (mProject) && (layer->layerType() != KonfytPatchLayer::TypeMidiOut) ) {
         int busId = layer->busIdInProject();
         if ( mProject->audioBus_exists(busId) ) {
@@ -287,8 +327,13 @@ void KonfytLayerWidget::setUpGUI()
             ui->toolButton_right->setStyleSheet("background-color: red;");
         }
     }
+}
 
-    // Input-side tool button
+void KonfytLayerWidget::updateInputSideToolButton()
+{
+    KfPatchLayerSharedPtr layer = mPatchLayer.toStrongRef();
+    if (!layer) { return; }
+
     if ( (mProject) && (layer->layerType() != KonfytPatchLayer::TypeAudioIn) ) {
         int midiPortId = layer->midiInPortIdInProject();
         if (mProject->midiInPort_exists(midiPortId)) {
@@ -312,33 +357,6 @@ void KonfytLayerWidget::setUpGUI()
             ui->toolButton_left->setStyleSheet("background-color: red;");
         }
     }
-
-    // MIDI Events Send button
-    ui->toolButton_sendEvents->setVisible( layer->midiSendList.count() > 0 );
-
-    // If the layer has an error (marked when loading in patchEngine), indicate it.
-    if (layer->hasError()) {
-
-        ui->lineEdit->setText("ERROR: " + layer->errorMessage());
-
-        ui->gainSlider->setVisible(false);
-        ui->toolButton_solo->setVisible(false);
-        ui->toolButton_mute->setVisible(false);
-        ui->toolButton_right->setVisible(false);
-
-        ui->lineEdit->setProperty("konfytError", true);
-        ui->lineEdit->style()->unpolish(ui->lineEdit);
-        ui->lineEdit->style()->polish(ui->lineEdit);
-
-    }
-}
-
-/* Change the background to indicate MIDI filter zone. */
-void KonfytLayerWidget::updateBackgroundFromFilter()
-{
-    KonfytMidiFilter filter = mPatchLayer.toStrongRef()->midiFilter();
-    KonfytMidiFilterZone z = filter.zone;
-    this->changeBackground(z.lowNote, z.highNote);
 }
 
 /* Change the background depending on the min and max values (between 0 and 127),

@@ -21,19 +21,16 @@
 
 #include "konfytDbTree.h"
 
-KonfytDbTreeItem::KonfytDbTreeItem()
-{
-}
 
-KonfytDbTreeItem::KonfytDbTreeItem(QString newName)
+KfDbTreeItemPtr KonfytDbTreeItem::addChild(QString newName, QString newPath, KfSoundPtr data)
 {
-    this->name = newName;
-}
-
-KonfytDbTreeItem::KonfytDbTreeItem(KonfytDbTreeItem *newParent, QString newName)
-{
-    this->parent = newParent;
-    this->name = newName;
+    KfDbTreeItemPtr child = KfDbTreeItemPtr(new KonfytDbTreeItem());
+    child->parent = this;
+    child->name = newName;
+    child->path = newPath;
+    child->data = data;
+    children.append(child);
+    return child;
 }
 
 bool KonfytDbTreeItem::hasChildren()
@@ -46,29 +43,21 @@ bool KonfytDbTreeItem::hasParent()
     return (parent != nullptr);
 }
 
-KonfytDbTree::KonfytDbTree()
-{
-    root = new KonfytDbTreeItem();
-}
-
 KonfytDbTree::~KonfytDbTree()
 {
     clearTree();
-    delete root;
 }
 
 void KonfytDbTree::clearTree()
 {
-    removeAllChildren(this->root);
+    removeAllChildren(root);
 }
 
 /* Recursively remove and delete all children items of a tree item. */
-void KonfytDbTree::removeAllChildren(KonfytDbTreeItem *item)
+void KonfytDbTree::removeAllChildren(KfDbTreeItemPtr item)
 {
     while (item->children.count()) {
-        KonfytDbTreeItem* child = item->children.at(0);
+        KfDbTreeItemPtr child = item->children.takeFirst();
         removeAllChildren(child);
-        item->children.removeAt(0);
-        delete child;
     }
 }

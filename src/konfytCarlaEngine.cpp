@@ -226,7 +226,15 @@ void KonfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
     // Set the engine callback
     //carla_set_engine_callback(KonfytCarlaEngine::carlaEngineCallback, this);
     // TODO: Handle the case where this name is already taken.
-    CARLA_FUNC(carla_engine_init, "JACK", jack_client_name.toLocal8Bit().constData());
+    bool ok = CARLA_FUNC(carla_engine_init, "JACK", jack_client_name.toLocal8Bit().constData());
+
+    QString error;
+    if (!ok) {
+        error = CARLA_FUNC_V(carla_get_last_error);
+        print("Carla engine initialisation error:");
+        print(error);
+    }
+    emit initDone(error);
 }
 
 QString KonfytCarlaEngine::jackClientName()

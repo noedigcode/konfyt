@@ -32,7 +32,8 @@
 // ----------------------------------------------------
 struct LayerSoundfontData
 {
-    KonfytSoundfontProgram program;
+    QString parentSoundfont;
+    KonfytSoundPreset program;
     KfFluidSynth* synthInEngine = nullptr;
     KfJackPluginPorts* portsInJackEngine = nullptr;
 };

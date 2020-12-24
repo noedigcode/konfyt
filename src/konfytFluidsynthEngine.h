@@ -45,7 +45,7 @@ struct KfFluidSynth
 protected:
     fluid_synth_t* synth = nullptr;
     fluid_settings_t* settings = nullptr;
-    KonfytSoundfontProgram program;
+    KonfytSoundPreset program;
     int soundfontIDinSynth;
 };
 
@@ -63,7 +63,7 @@ public:
     void processJackMidi(KfFluidSynth *synth, const KonfytMidiEvent* ev);
     int fluidsynthWriteFloat(KfFluidSynth *synth, void* leftBuffer, void* rightBuffer, int len);
 
-    KfFluidSynth* addSoundfontProgram(KonfytSoundfontProgram p);
+    KfFluidSynth* addSoundfontProgram(QString soundfontFilename, KonfytSoundPreset p);
     void removeSoundfontProgram(KfFluidSynth *synth);
 
     float getGain(KfFluidSynth *synth);

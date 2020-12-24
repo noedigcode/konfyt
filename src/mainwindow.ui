@@ -1074,7 +1074,7 @@ border-bottom-left-radius: 0;</string>
         </size>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="pageLibrary">
         <layout class="QGridLayout" name="gridLayout_6">
@@ -1403,6 +1403,48 @@ QScrollBar:horizontal {
                  <property name="spacing">
                   <number>2</number>
                  </property>
+                 <item row="2" column="0">
+                  <widget class="QTreeWidget" name="treeWidget_filesystem">
+                   <property name="contextMenuPolicy">
+                    <enum>Qt::CustomContextMenu</enum>
+                   </property>
+                   <property name="styleSheet">
+                    <string notr="true">QTreeWidget {
+background-color: rgb(38, 38, 38);
+border-color: rgb(40, 40, 40);
+}</string>
+                   </property>
+                   <property name="verticalScrollBarPolicy">
+                    <enum>Qt::ScrollBarAlwaysOn</enum>
+                   </property>
+                   <property name="horizontalScrollBarPolicy">
+                    <enum>Qt::ScrollBarAsNeeded</enum>
+                   </property>
+                   <property name="autoExpandDelay">
+                    <number>-1</number>
+                   </property>
+                   <property name="indentation">
+                    <number>8</number>
+                   </property>
+                   <property name="wordWrap">
+                    <bool>false</bool>
+                   </property>
+                   <property name="headerHidden">
+                    <bool>true</bool>
+                   </property>
+                   <property name="expandsOnDoubleClick">
+                    <bool>false</bool>
+                   </property>
+                   <attribute name="headerVisible">
+                    <bool>false</bool>
+                   </attribute>
+                   <column>
+                    <property name="text">
+                     <string>Soundfonts</string>
+                    </property>
+                   </column>
+                  </widget>
+                 </item>
                  <item row="0" column="0">
                   <widget class="QFrame" name="frame_24">
                    <property name="minimumSize">
@@ -1671,48 +1713,6 @@ border-bottom-left-radius: 0;</string>
                   </widget>
                  </item>
                  <item row="1" column="0">
-                  <widget class="QTreeWidget" name="treeWidget_filesystem">
-                   <property name="contextMenuPolicy">
-                    <enum>Qt::CustomContextMenu</enum>
-                   </property>
-                   <property name="styleSheet">
-                    <string notr="true">QTreeWidget {
-background-color: rgb(38, 38, 38);
-border-color: rgb(40, 40, 40);
-}</string>
-                   </property>
-                   <property name="verticalScrollBarPolicy">
-                    <enum>Qt::ScrollBarAlwaysOn</enum>
-                   </property>
-                   <property name="horizontalScrollBarPolicy">
-                    <enum>Qt::ScrollBarAsNeeded</enum>
-                   </property>
-                   <property name="autoExpandDelay">
-                    <number>-1</number>
-                   </property>
-                   <property name="indentation">
-                    <number>8</number>
-                   </property>
-                   <property name="wordWrap">
-                    <bool>false</bool>
-                   </property>
-                   <property name="headerHidden">
-                    <bool>true</bool>
-                   </property>
-                   <property name="expandsOnDoubleClick">
-                    <bool>false</bool>
-                   </property>
-                   <attribute name="headerVisible">
-                    <bool>false</bool>
-                   </attribute>
-                   <column>
-                    <property name="text">
-                     <string>Soundfonts</string>
-                    </property>
-                   </column>
-                  </widget>
-                 </item>
-                 <item row="2" column="0">
                   <widget class="QCheckBox" name="checkBox_filesystem_ShowOnlySounds">
                    <property name="text">
                     <string>Only show sound files</string>
@@ -1765,7 +1765,7 @@ border-color: rgb(40, 40, 40);
                  <property name="spacing">
                   <number>0</number>
                  </property>
-                 <item row="1" column="0">
+                 <item row="0" column="0">
                   <widget class="QTextBrowser" name="textBrowser_LibraryBottom">
                    <property name="verticalScrollBarPolicy">
                     <enum>Qt::ScrollBarAlwaysOn</enum>
@@ -8121,7 +8121,7 @@ border-top-right-radius: 0;
         <enum>QTabWidget::South</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_15">
         <attribute name="title">

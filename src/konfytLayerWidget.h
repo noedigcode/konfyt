@@ -89,6 +89,8 @@ private:
     float background_rectRight;
     void changeBackground(int min, int max);
     void updateBackgroundFromFilter();
+    void updateRightToolButton();
+    void updateInputSideToolButton();
 
     void paintEvent(QPaintEvent *);
 

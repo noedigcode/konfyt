@@ -32,7 +32,7 @@
 #include <QXmlStreamWriter>
 
 
-#define XML_PATCH "sfpatch"
+#define XML_PATCH "sfpatch" // TODO: Change this to simply "patch"
 #define XML_PATCH_NAME "name"
 #define XML_PATCH_NOTE "patchNote"
 #define XML_PATCH_ALWAYSACTIVE "alwaysActive"
@@ -104,8 +104,7 @@ public:
     // Soundfont layer related functions
     // ----------------------------------------------------
 
-    KfPatchLayerWeakPtr addProgram(KonfytSoundfontProgram p);
-    KfPatchLayerWeakPtr addSfLayer(LayerSoundfontData newSfLayer);
+    KfPatchLayerWeakPtr addSfLayer(QString soundfontPath, KonfytSoundPreset preset);
     QList<KfPatchLayerWeakPtr> getSfLayerList() const;
 
     // ----------------------------------------------------
@@ -153,6 +152,15 @@ private:
 
     void writeToXmlStream(QXmlStreamWriter* stream) const;
     void readFromXmlStream(QXmlStreamReader* r, QString* errors = nullptr);
+
+    void xmlWriteSfontLayer(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
+    void xmlReadSfontLayer(QXmlStreamReader* r, QString* errors = nullptr);
+    void xmlWriteSfzLayer(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
+    void xmlReadSfzLayer(QXmlStreamReader* r, QString* errors = nullptr);
+    void xmlWriteMidiOutLayer(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
+    void xmlReadMidiOutLayer(QXmlStreamReader* r, QString* errors = nullptr);
+    void xmlWriteAudioInLayer(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
+    void xmlReadAudioInLayer(QXmlStreamReader* r, QString* errors = nullptr);
 
     void appendError(QString *errorString, QString msg);
     void error_abort(QString msg);

@@ -46,6 +46,7 @@ public:
 signals:
     void print(QString msg);
     void statusInfo(QString msg);
+    void initDone(QString error);
 };
 
 #endif // KONFYTBASESOUNDENGINE_H

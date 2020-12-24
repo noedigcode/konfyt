@@ -91,7 +91,7 @@ int KonfytFluidsynthEngine::fluidsynthWriteFloat(KfFluidSynth *synth, void *left
 }
 
 /* Adds a new soundfont engine and returns a pointer to the synth. Returns nullptr on error. */
-KfFluidSynth* KonfytFluidsynthEngine::addSoundfontProgram(KonfytSoundfontProgram p)
+KfFluidSynth* KonfytFluidsynthEngine::addSoundfontProgram(QString soundfontFilename, KonfytSoundPreset p)
 {
     KfFluidSynth* s = new KfFluidSynth();
 
@@ -115,9 +115,9 @@ KfFluidSynth* KonfytFluidsynthEngine::addSoundfontProgram(KonfytSoundfontProgram
     }
 
     // Load soundfont file
-    int sfID = fluid_synth_sfload(s->synth, p.parent_soundfont.toLocal8Bit().data(), 0);
+    int sfID = fluid_synth_sfload(s->synth, soundfontFilename.toLocal8Bit().data(), 0);
     if (sfID == -1) {
-        emit print("Failed to load soundfont " + p.parent_soundfont);
+        emit print("Failed to load soundfont " + soundfontFilename);
         delete s;
         return nullptr;
     }

@@ -23,25 +23,25 @@
 #define KONFYT_STRUCTS_H
 
 #include <QApplication>
+#include <QSharedPointer>
 #include <QString>
 
 
-/* This represents a program/preset within a soundfont (i.e. a single voice/instrument). */
-struct KonfytSoundfontProgram
+struct KonfytSoundPreset
 {
-    QString name;               // Program name
-    int bank = 0;               // Bank number
-    int program = 0;            // Program/preset number
-    QString parent_soundfont;   // Filename of parent soundfont
+    QString name;
+    int bank = 0;       // Bank number
+    int program = 0;    // Program/preset number
 };
 
-struct KonfytSoundfont
+struct KonfytSound
 {
     QString filename;
     QString name;
-    QList<KonfytSoundfontProgram> programlist;
-    QList<KonfytSoundfontProgram> searchResults;
+    QList<KonfytSoundPreset> presets;
 };
+
+typedef QSharedPointer<KonfytSound> KfSoundPtr;
 
 struct KonfytAppInfo
 {

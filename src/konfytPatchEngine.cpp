@@ -71,6 +71,8 @@ void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient,
     });
     connect(sfzEngine, &KonfytBaseSoundEngine::statusInfo,
             this, &KonfytPatchEngine::statusInfo);
+    connect(sfzEngine, &KonfytBaseSoundEngine::initDone,
+            this, &KonfytPatchEngine::onSfzEngineInitDone);
 
     sfzEngine->initEngine(jack);
 }
@@ -157,6 +159,8 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
                 layer->setErrorMessage("Failed to load SFZ: " + layer->sfzData.path);
                 ret = false;
             } else {
+                layer->setErrorMessage("");
+
                 layer->sfzData.indexInEngine = ID;
                 layer->setName(sfzEngine->pluginName(ID));
                 // Add to JACK engine
@@ -183,6 +187,8 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
                 KfJackPluginPorts* jackPorts = jack->addPluginPortsAndConnect( spec );
                 layer->sfzData.portsInJackEngine = jackPorts;
 
+                emit patchLayerLoaded(layer);
+
                 // Gain, solo, mute and bus are set later in refershAllGainsAndRouting()
             }
         }
@@ -199,6 +205,7 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
             // Load in Fluidsynth engine
             layer->soundfontData.synthInEngine =
                     fluidsynthEngine.addSoundfontProgram(
+                        layer->soundfontData.parentSoundfont,
                         layer->soundfontData.program);
             if (layer->soundfontData.synthInEngine) {
                 // Add to Jack engine (this also assigns the midi filter)
@@ -297,11 +304,14 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
     return ret;
 }
 
-KfPatchLayerWeakPtr KonfytPatchEngine::addProgramLayer(KonfytSoundfontProgram newProgram)
+KfPatchLayerWeakPtr KonfytPatchEngine::addSfProgramLayer(
+        QString soundfontPath,
+        KonfytSoundPreset newProgram)
 {
     KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, KfPatchLayerWeakPtr());
 
-    KfPatchLayerSharedPtr layer = mCurrentPatch->addProgram(newProgram).toStrongRef();
+    KfPatchLayerSharedPtr layer = mCurrentPatch->addSfLayer(soundfontPath,
+                                                            newProgram).toStrongRef();
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
@@ -842,5 +852,15 @@ void KonfytPatchEngine::error_abort(QString msg)
 {
     std::cout << "\n" << "Konfyt ERROR, ABORTING: patchEngine:" << msg.toLocal8Bit().constData();
     abort();
+}
+
+void KonfytPatchEngine::onSfzEngineInitDone(QString error)
+{
+    if (error.isEmpty()) {
+        print("SFZ engine initialised successfully.");
+        reloadPatch();
+    } else {
+        print("SFZ engine initialisation error: " + error);
+    }
 }
 

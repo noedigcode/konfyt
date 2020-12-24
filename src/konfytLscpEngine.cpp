@@ -89,6 +89,7 @@ void KonfytLscpEngine::onLsInitialised(bool error, QString errMsg)
     if (error) {
         print("LSCP engine initialisation error:");
         print(errMsg);
+        emit initDone(errMsg);
         return;
     }
 
@@ -123,4 +124,6 @@ void KonfytLscpEngine::onLsInitialised(bool error, QString errMsg)
 
     // Device setup
     ls.setupDevices(mJackEngine->clientName() + end);
+
+    emit initDone("");
 }

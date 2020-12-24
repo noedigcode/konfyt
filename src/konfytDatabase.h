@@ -45,28 +45,42 @@
 // konfytDatabaseWorker
 // ============================================================================
 
-class konfytDatabaseWorker : public QObject
+class KonfytDatabaseWorker : public QObject
 {
     Q_OBJECT
 public:
-    explicit konfytDatabaseWorker();
+    explicit KonfytDatabaseWorker();
 
-    fluid_synth_t* synth;
+    fluid_synth_t* synth = NULL;
+
+    QString sfontDir;
+    QList<KfSoundPtr> sfontIgnoreList;
+    QString sfzDir;
+    QString patchDir;
+
+    QList<KfSoundPtr> sfontResults;
+    QList<KfSoundPtr> sfzResults;
+    QList<KfSoundPtr> patchResults;
+
+    KfSoundPtr patchFromFile(QString filename);
 
 public slots:
-    void scanDirs(QString sfontDir, QString sfzDir, QString patchesDir, QList<KonfytSoundfont*> sfontIgnoreList);
-    void sfontFromFile(QString filename, int source);
+    void scan();
+    void requestSfontFromFile(QString filename, int source);
+
+signals:
+    void print(QString msg);
+    void scanFinished();
+    void scanStatus(QString msg);
+    void sfontFromFileFinished(KfSoundPtr sfont, int source);
 
 private:
     void scanDirForFiles(QString dirname, QStringList suffixes, QStringList &list);
-    KonfytSoundfont* _sfontFromFile(QString filename);
+    void scanSfonts();
+    void scanSfzs();
+    void scanPatches();
 
-signals:
-    void userMessage(QString msg);
-    void scanDirsFihished(QList<KonfytSoundfont*> sfonts, QStringList sfzs, QStringList patches);
-    void scanDirsStatus(QString msg);
-    void sfontFromFileFinished(KonfytSoundfont* sfont, int source);
-
+    KfSoundPtr sfontFromFile(QString filename);
 };
 
 // ============================================================================
@@ -81,27 +95,26 @@ public:
     konfytDatabase();
     ~konfytDatabase();
 
-    QList<KonfytSoundfont*> getSfontList();
-    int getNumSfonts();
-    QList<KonfytPatch> getPatchList();
-    int getNumPatches();
-    QStringList getSfzList();
-    int getNumSfz();
-    KonfytDbTree* sfzTree;
-    KonfytDbTree* sfzTree_results;
-    KonfytDbTree* sfontTree;
-    KonfytDbTree* sfontTree_results;
-    void buildSfzTree();
-    void buildSfzTree_results();
-    void buildSfontTree();
-    void buildSfontTree_results();
-    void compactTree(KonfytDbTreeItem* item);
+    QList<KfSoundPtr> allSoundfonts();
+    int soundfontCount();
+    QList<KfSoundPtr> allPatches();
+    int patchCount();
+    QList<KfSoundPtr> allSfzs();
+    int sfzCount();
+    KonfytDbTree sfzTree;
+    KonfytDbTree sfzTree_results;
+    KonfytDbTree sfontTree;
+    KonfytDbTree sfontTree_results;
+    KonfytDbTree patchTree;
+    KonfytDbTree patchTree_results;
 
-    void scanDirs(QString sfontsDir, QString sfzDir, QString patchesDir);
+    void setSoundfontsDir(QString path);
+    void setSfzDir(QString path);
+    void setPatchesDir(QString path);
+    void scan();
 
     // General-use operations to return sfont objects
     void returnSfont(QString filename);
-    void returnSfont(KonfytSoundfontProgram p);
 
     void clearDatabase();
     void clearDatabase_exceptSoundfonts();
@@ -113,55 +126,61 @@ public:
     void search(QString str);
     int getNumSfontsResults();
     int getNumSfontProgramResults();
-    QList<KonfytSoundfont*> getResultsSfonts();
-    QList<KonfytSoundfontProgram> getResultsSfontPrograms(KonfytSoundfont *sf);
+    QList<KfSoundPtr> getResultsSfonts();
     int getNumPatchesResults();
-    QList<KonfytPatch> getResultsPatches();
+    QList<KfSoundPtr> getResultsPatches();
     int getNumSfzResults();
-    QStringList getResultsSfz();
+    QList<KfSoundPtr> getResultsSfz();
 
     void addPatch(QString filename);
 
 public slots:
-
-    void scanDirsFinished(QList<KonfytSoundfont*> sfonts, QStringList sfzs, QStringList patches);
-    void sfontFromFileFinished(KonfytSoundfont* sfont, int source);
+    void onScanFinished();
+    void sfontFromFileFinished(KfSoundPtr sfont, int source);
     void userMessageFromWorker(QString msg);
-    void scanDirsStatusFromWorker(QString msg);
+    void scanStatusFromWorker(QString msg);
 
 signals:
     // Signals intended for outside world
     void print(QString message);
-    void scanDirs_status(QString msg);
-    void scanDirs_finished();
-    void returnSfont_finished(KonfytSoundfont* sf);
+    void scanStatus(QString msg);
+    void scanFinished();
+    void returnSfont_finished(KfSoundPtr sf);
     // Signals intended for worker thread
-    void start_scanDirs(QString sfontDir, QString sfzDir, QString patchesDir, QList<KonfytSoundfont*> sfontIgnoreList);
+    void start_scanDirs();
     void start_sfontFromFile(QString filename, int source);
 
 private:
-    QList<KonfytSoundfont*> sfontlist;
-    QList<KonfytPatch> patchList;
-    QList<QString> patchFilenameList;
-    QStringList sfzList;
+    QList<KfSoundPtr> mAllSoundfonts;
+    QList<KfSoundPtr> mAllPatches;
+    QList<KfSoundPtr> mAllSfzs;
 
-    fluid_settings_t* settings;
-    fluid_synth_t* synth;
+    QList<KfSoundPtr> sfontResults;
+    QList<KfSoundPtr> patchResults;
+    QList<KfSoundPtr> sfzResults;
+
+    fluid_settings_t* mFluidsynthSettings = NULL;
+    fluid_synth_t* mFluidSynth = NULL;
     int initFluidsynth();
 
-    QMap<QString, KonfytSoundfont*> sfontResults;      // Map (soundfont filename:soundfont pointer) holding search results
-    QList<KonfytPatch> patchResults;
-    QStringList sfzResults;
-
     QThread workerThread;
-    konfytDatabaseWorker worker;
-    QString _sfontsDir;
-    QString _sfzDir;
-    QString _patchesDir;
+    KonfytDatabaseWorker worker;
+    QString mSfontsDir;
+    QString mSfzDir;
+    QString mPatchesDir;
 
-    void addSfont(KonfytSoundfont *sf);
-    void addSfz(QString filename);
+    void addSfont(KfSoundPtr sf);
+    void addSfz(KfSoundPtr sfz);
+    void addPatch(KfSoundPtr patch);
 
+    void buildTree(KonfytDbTree* tree, const QList<KfSoundPtr> &list, QString rootPath);
+    void buildSfzTree();
+    void buildSfzTree_results();
+    void buildSfontTree();
+    void buildSfontTree_results();
+    void buildPatchTree();
+    void buildPatchTree_results();
+    void compactTree(KfDbTreeItemPtr item);
 };
 
 #endif // SFDATABASE_H

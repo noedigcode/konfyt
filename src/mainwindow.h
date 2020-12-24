@@ -134,6 +134,7 @@ private:
     Ui::MainWindow *ui;
     int eventFilterMode;
     bool mPrintStart = true;
+    void setupGuiStyle();
     void setupGuiMenuButtons();
     void setupGuiDefaults();
     void printArgumentsInfo();
@@ -210,27 +211,33 @@ private slots:
     // Library and filesystem view
     // ========================================================================
 private:
-    bool library_isProgramSelected();
-    KonfytSoundfontProgram library_getSelectedProgram();
+    bool libraryIsProgramSelected();
+    KonfytSoundPreset librarySelectedProgram();
 
-    LibraryTreeItemType library_getTreeItemType(QTreeWidgetItem* item);
-    LibraryTreeItemType library_getSelectedTreeItemType();
+    LibraryTreeItemType libraryTreeItemType(QTreeWidgetItem* item);
+    LibraryTreeItemType librarySelectedTreeItemType();
 
-    KonfytPatch library_getSelectedPatch();
-    KonfytSoundfont* library_getSelectedSfont();
-    QString library_selectedSfz;
+    KfSoundPtr librarySelectedPatch();
+    KfSoundPtr librarySelectedSfont();
+    KfSoundPtr librarySelectedSfz();
 
     // Library tree items
-    QTreeWidgetItem*                         library_sfRoot;
-    QMap<QTreeWidgetItem*, QString>          library_sfFolders; // All intermediate (non-root, non-bottom) items in soundfont tree and item path
-    QMap<QTreeWidgetItem*, KonfytSoundfont*> library_sfMap;     // Bottom-most items in soundfont tree
-    QTreeWidgetItem*                    library_patchRoot;
-    QMap<QTreeWidgetItem*, KonfytPatch> library_patchMap;
-    QTreeWidgetItem*                 library_sfzRoot;
-    QMap<QTreeWidgetItem*, QString>  library_sfzFolders; // All the non-root and non-bottom items in the sfz tree and item path
-    QMap<QTreeWidgetItem*, QString>  library_sfzMap;     // Bottom-most items in the sfz tree with corresponding path
-    void buildSfzTree(QTreeWidgetItem* twi, KonfytDbTreeItem* item);
-    void buildSfTree(QTreeWidgetItem* twi, KonfytDbTreeItem* item);
+    struct LibraryTree {
+        QTreeWidgetItem* rootTreeItem = nullptr;
+        QMap<QTreeWidgetItem*, QString> foldersMap; // Intermediate (non-root, non-bottom) items
+        QMap<QTreeWidgetItem*, KfSoundPtr> soundsMap; // Bottom-most items in tree
+    };
+    LibraryTree librarySfTree;
+    LibraryTree librarySfzTree;
+    LibraryTree libraryPatchTree;
+    void resetLibraryTree(LibraryTree &libTree, QString name);
+
+    QIcon mFolderIcon {":/icons/folder.png"};
+    QIcon mFileIcon {":/icons/picture.png"};
+    void buildLibraryTree(QTreeWidgetItem* twi, KfDbTreeItemPtr dbTreeItem, LibraryTree* libTree);
+    void buildSfzTree(KfDbTreeItemPtr dbTreeItem);
+    void buildSfTree(KfDbTreeItemPtr dbTreeItem);
+    void buildPatchTree(KfDbTreeItemPtr dbTreeItem);
 
     // Preview button & menu
 private:
@@ -248,12 +255,12 @@ private:
     void setupDatabase();
     bool saveDatabase();
     int returnSfontRequester;
-    QList<KonfytSoundfontProgram> programList; // List of programs currently displayed in program list view in library.
+    QList<KonfytSoundPreset> programList; // List of programs currently displayed in program list view in library.
     void library_refreshGUIProgramList();      // Refresh the GUI program list to match programList
 private slots:
-    void database_scanDirsFinished();
-    void database_scanDirsStatus(QString msg);
-    void database_returnSfont(KonfytSoundfont* sf);
+    void onDatabaseScanFinished();
+    void onDatabaseScanStatus(QString msg);
+    void onDatabaseReturnSfont(KfSoundPtr sf);
 
 private:
     bool searchMode;
@@ -343,7 +350,7 @@ private:
 
     void newPatchIfMasterNull();
     void addSfzToCurrentPatch(QString sfzPath);
-    void addProgramToCurrentPatch(KonfytSoundfontProgram p);
+    void addSoundfontProgramToCurrentPatch(QString soundfontPath, KonfytSoundPreset p);
     void addMidiPortToCurrentPatch(int port);
     void addAudioInPortToCurrentPatch(int port);
 
@@ -359,6 +366,7 @@ private:
     bool patchNote_ignoreChange = false;
 private slots:
     void onPatchSelected(KonfytPatch* patch);
+    void onPatchLayerLoaded(KfPatchLayerWeakPtr patchLayer);
 
     // Layers
 private:
@@ -516,9 +524,12 @@ private:
     void scanForDatabase();
     QString settingsDir;
     QString projectsDir;
-    QString soundfontsDir;
-    QString patchesDir;
-    QString sfzDir;
+    QString mSoundfontsDir;
+    void setSoundfontsDir(QString path);
+    QString mPatchesDir;
+    void setPatchesDir(QString path);
+    QString mSfzDir;
+    void setSfzDir(QString path);
     QString filemanager;
     void createSettingsDir();
     bool loadSettingsFile(QString dir);

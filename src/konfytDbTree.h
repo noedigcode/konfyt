@@ -22,39 +22,39 @@
 #ifndef KONFYT_DB_TREE_H
 #define KONFYT_DB_TREE_H
 
-#include <QString>
+#include "konfytStructs.h"
+
 #include <QList>
+#include <QSharedPointer>
+#include <QString>
+
+class KonfytDbTreeItem;
+typedef QSharedPointer<KonfytDbTreeItem> KfDbTreeItemPtr;
 
 class KonfytDbTreeItem
 {
 public:
-    KonfytDbTreeItem();
-    KonfytDbTreeItem(QString newName);
-    KonfytDbTreeItem(KonfytDbTreeItem* newParent, QString newName);
+    KfDbTreeItemPtr addChild(QString newName, QString newPath, KfSoundPtr data);
 
-    KonfytDbTreeItem* parent;
-    QList<KonfytDbTreeItem*> children;
+    KonfytDbTreeItem* parent = nullptr;
+    QList<KfDbTreeItemPtr> children;
 
     bool hasChildren();
     bool hasParent();
 
-    /* Additional data that can be assigned */
-    QString name = "Item";
+    QString name;
     QString path;
-    void* data = nullptr;
+    KfSoundPtr data;
 };
-
-
 
 class KonfytDbTree
 {
 public:
-    KonfytDbTree();
     ~KonfytDbTree();
 
     void clearTree();
-    void removeAllChildren(KonfytDbTreeItem* item);
-    KonfytDbTreeItem* root;
+    void removeAllChildren(KfDbTreeItemPtr item);
+    KfDbTreeItemPtr root {new KonfytDbTreeItem()};
 };
 
 #endif // KONFYT_DB_TREE_H

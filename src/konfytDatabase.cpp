@@ -26,76 +26,50 @@
 // konfytDatabaseWorker
 // ============================================================================
 
-konfytDatabaseWorker::konfytDatabaseWorker()
+KonfytDatabaseWorker::KonfytDatabaseWorker()
 {
-    synth = NULL;
+}
+
+KfSoundPtr KonfytDatabaseWorker::patchFromFile(QString filename)
+{
+    KfSoundPtr ret;
+
+    KonfytPatch p;
+    if (p.loadPatchFromFile(filename)) {
+        ret.reset(new KonfytSound());
+        ret->filename = filename;
+        ret->name = p.name();
+        foreach (KfPatchLayerSharedPtr layer, p.layers()) {
+            KonfytSoundPreset preset;
+            preset.name = layer->name();
+            ret->presets.append(preset);
+        }
+    }
+
+    return ret;
 }
 
 /* Scan specified directories for soundfonts, SFZs and patches.
  * To get info on soundfonts, they have to be loaded into Fluidsynth.
  * To save time, soundfonts in the specified ignoreList will not be loaded into
  * Fluidsynth. */
-void konfytDatabaseWorker::scanDirs(QString sfontDir, QString sfzDir, QString patchesDir, QList<KonfytSoundfont *> sfontIgnoreList)
+void KonfytDatabaseWorker::scan()
 {
-    QStringList sfontPaths, sfzPaths, patchPaths;
-    QStringList sfontSuffix, sfzSuffix, patchSuffix;
-    sfontSuffix << "sf2" << "sf3";
-    sfzSuffix << "sfz" << "gig";
-    patchSuffix << KONFYT_PATCH_SUFFIX;
-    QStringList sfontsToLoad;
-    QList<KonfytSoundfont*> sfontsToReturn;
+    scanSfonts();
+    scanSfzs();
+    scanPatches();
 
-    // -----------------------------------------------------------------
-    // Soundfonts
-    emit scanDirsStatus("Scanning for soundfonts in " + sfontDir);
-    scanDirForFiles(sfontDir, sfontSuffix, sfontPaths);
-    emit scanDirsStatus("Loading new soundfonts...");
-    // For each soundfont path, if it is not a soundfont in the ignore list, add it to the load list.
-    for (int i=0; i<sfontPaths.count(); i++) {
-        bool ignore = false;
-        for (int j=0; j<sfontIgnoreList.count(); j++) {
-            KonfytSoundfont* sf = sfontIgnoreList[j];
-            if (sf->filename == sfontPaths[i]) {
-                ignore = true;
-                break;
-            }
-        }
-        if (!ignore) { sfontsToLoad.append(sfontPaths[i]); }
-    }
-    // For each soundfont path in the load list, load it in fluidsynth to extract its data.
-    for (int i=0; i<sfontsToLoad.count(); i++) {
-        emit scanDirsStatus("Loading soundfont " + sfontsToLoad[i]);
-        KonfytSoundfont* newSfont = _sfontFromFile(sfontsToLoad[i]);
-        if (newSfont == NULL) {
-            emit userMessage("Failed to create sfont from filename " + sfontsToLoad[i]);
-        } else {
-            sfontsToReturn.append(newSfont);
-        }
-    }
-
-    // -----------------------------------------------------------------
-    // SFZs
-    emit scanDirsStatus("Scanning for SFZs in " + sfzDir);
-    scanDirForFiles(sfzDir, sfzSuffix, sfzPaths);
-
-    // -----------------------------------------------------------------
-    // Patches
-    emit scanDirsStatus("Scanning for patches in " + patchesDir);
-    scanDirForFiles(patchesDir, patchSuffix, patchPaths);
-
-    // -----------------------------------------------------------------
-    // Finally, return lists.
-    emit scanDirsFihished(sfontsToReturn, sfzPaths, patchPaths);
+    emit scanFinished();
 }
 
 /* Scans directory and subdirectories recursively and add all files with specified suffixes
  * to the list. */
-void konfytDatabaseWorker::scanDirForFiles(QString dirname, QStringList suffixes, QStringList &list)
+void KonfytDatabaseWorker::scanDirForFiles(QString dirname, QStringList suffixes, QStringList &list)
 {
     if (dirname.length() == 0) { return; }
     QDir dir(dirname);
     if (!dir.exists()) {
-        emit userMessage("scanDirForFiles: Dir does not exist.");
+        emit print("scanDirForFiles: Dir does not exist.");
         return;
     }
 
@@ -124,42 +98,113 @@ void konfytDatabaseWorker::scanDirForFiles(QString dirname, QStringList suffixes
 
 }
 
+void KonfytDatabaseWorker::scanSfonts()
+{
+    QStringList sfontSuffix = {"sf2", "sf3"};
+    sfontResults.clear();
+
+    emit scanStatus("Scanning for soundfonts in " + sfontDir);
+    QStringList sfontPaths;
+    scanDirForFiles(sfontDir, sfontSuffix, sfontPaths);
+
+    emit scanStatus("Loading new soundfonts...");
+    QStringList sfontsToLoad;
+    // Load each soundfont that is not in the ignore list.
+    foreach (QString path, sfontPaths) {
+        bool ignore = false;
+        foreach (KfSoundPtr sf, sfontIgnoreList) {
+            if (sf->filename == path) {
+                ignore = true;
+                break;
+            }
+        }
+        if (!ignore) { sfontsToLoad.append(path); }
+    }
+
+    // For each soundfont path in the load list, load it in fluidsynth to extract its data.
+    foreach (QString path, sfontsToLoad) {
+        emit scanStatus("Loading soundfont " + path);
+        KfSoundPtr newSfont = sfontFromFile(path);
+        if (newSfont) {
+            sfontResults.append(newSfont);
+        } else {
+            emit print("Failed to load soundfont " + path);
+        }
+    }
+}
+
+void KonfytDatabaseWorker::scanSfzs()
+{
+    QStringList sfzSuffix = {"sfz", "gig"};
+    sfzResults.clear();
+
+    emit scanStatus("Scanning for SFZs in " + sfzDir);
+    QStringList sfzPaths;
+    scanDirForFiles(sfzDir, sfzSuffix, sfzPaths);
+
+    foreach (QString path, sfzPaths) {
+        KfSoundPtr sfz = KfSoundPtr(new KonfytSound());
+        sfz->filename = path;
+        sfz->name = QFileInfo(sfz->filename).fileName();
+        sfzResults.append(sfz);
+    }
+}
+
+void KonfytDatabaseWorker::scanPatches()
+{
+    QStringList patchSuffix = {KONFYT_PATCH_SUFFIX};
+
+    emit scanStatus("Scanning for patches in " + patchDir);
+    QStringList patchPaths;
+    scanDirForFiles(patchDir, patchSuffix, patchPaths);
+
+    // For each patch, load it to extract its data
+    foreach (QString path, patchPaths) {
+        emit scanStatus("Loading patch " + path);
+        KfSoundPtr patch = patchFromFile(path);
+        if (patch) {
+            patchResults.append(patch);
+        } else {
+            emit print("Failed to load patch " + path);
+        }
+    }
+}
+
 /* Slot to create a konfytSoundfont object from a filename by loading it into
  * Fluidsynth in order to extract soundfont info, returning it with a signal so
  * the rest of the application can continue during this potentially long
  * operation. */
-void konfytDatabaseWorker::sfontFromFile(QString filename, int source)
+void KonfytDatabaseWorker::requestSfontFromFile(QString filename, int source)
 {
-    KonfytSoundfont* newSfont = _sfontFromFile(filename);
+    KfSoundPtr newSfont = sfontFromFile(filename);
     emit sfontFromFileFinished(newSfont, source);
 }
 
-/* Create an sfont object from a file. Returns NULL on error.
+/* Create a soundfont object from a file. On error, the returned object is null.
  * The soundfont is loaded in a Fluidsynth engine in order to extract the
  * program information. */
-KonfytSoundfont* konfytDatabaseWorker::_sfontFromFile(QString filename)
+KfSoundPtr KonfytDatabaseWorker::sfontFromFile(QString filename)
 {
+    KfSoundPtr ret;
+
     if (synth == NULL) {
-        emit userMessage("sfontFromFile: Fluidsynth is not initialised.");
-        return NULL;
+        emit print("sfontFromFile: Fluidsynth is not initialised.");
+        return ret;
     }
 
     // Load soundfont file
     int sfID = fluid_synth_sfload(synth, filename.toLocal8Bit().data(), 1);
     if (sfID == -1) {
-        emit userMessage("sfontFromFile: Fluidsynth failed to load soundfont " + filename);
-        return NULL;
+        emit print("sfontFromFile: Fluidsynth failed to load soundfont " + filename);
+        return ret;
     }
 
-    KonfytSoundfont* newSfont = new KonfytSoundfont();
-    newSfont->filename = filename;
+    ret.reset(new KonfytSound);
+    ret->filename = filename;
+    ret->name = QFileInfo(filename).fileName();
 
     // Get fluidsynth soundfont object
-    fluid_sfont_t* sf = fluid_synth_get_sfont_by_id(synth,sfID);
-
-    // Get soundfont name
-    QDir dir(filename);
-    newSfont->name = dir.dirName();
+    fluid_sfont_t* sf = fluid_synth_get_sfont_by_id(synth, sfID);
 
     // Iterate through all the presets within the soundfont
 #if FLUIDSYNTH_VERSION_MAJOR == 1
@@ -167,39 +212,38 @@ KonfytSoundfont* konfytDatabaseWorker::_sfontFromFile(QString filename)
     sf->iteration_start(sf);
     int more = sf->iteration_next(sf, preset);
     while (more) {
-        KonfytSoundfontProgram p;
+        KonfytSoundPreset p;
 
         p.name = QString(QByteArray( preset->get_name(preset) ));
         p.bank = preset->get_banknum(preset);
         p.program = preset->get_num(preset);
         p.parent_soundfont = newSfont->filename;
 
-        newSfont->programlist.append(p);
+        ret->programlist.append(p);
         more = sf->iteration_next(sf, preset);
     }
 #else
     fluid_sfont_iteration_start(sf);
     fluid_preset_t* preset = fluid_sfont_iteration_next(sf);
     while (preset) {
-        KonfytSoundfontProgram p;
+        KonfytSoundPreset p;
 
         p.name = QString(QByteArray( fluid_preset_get_name(preset) ));
         p.bank = fluid_preset_get_banknum(preset);
         p.program = fluid_preset_get_num(preset);
-        p.parent_soundfont = newSfont->filename;
 
-        newSfont->programlist.append(p);
+        ret->presets.append(p);
         preset = fluid_sfont_iteration_next(sf);
     }
 #endif
 
     // Unload soundfont to save memory
-    fluid_synth_sfunload(synth,sfID,1);
+    fluid_synth_sfunload(synth, sfID, 1);
 #if FLUIDSYNTH_VERSION_MAJOR == 1
     delete preset;
 #endif
 
-    return newSfont;
+    return ret;
 }
 
 
@@ -210,32 +254,22 @@ KonfytSoundfont* konfytDatabaseWorker::_sfontFromFile(QString filename)
 
 konfytDatabase::konfytDatabase()
 {
-    settings = NULL;
-    synth = NULL;
-
-    sfontTree = new KonfytDbTree();
-    sfontTree_results = new KonfytDbTree();
-    sfzTree = new KonfytDbTree();
-    sfzTree_results = new KonfytDbTree();
-
-    qRegisterMetaType<QList<KonfytSoundfont*> >("QList<KonfytSoundfont*>");
-
-    connect(&worker, &konfytDatabaseWorker::userMessage,
+    connect(&worker, &KonfytDatabaseWorker::print,
             this, &konfytDatabase::userMessageFromWorker);
 
-    connect(&worker, &konfytDatabaseWorker::scanDirsStatus,
-            this, &konfytDatabase::scanDirsStatusFromWorker);
+    connect(&worker, &KonfytDatabaseWorker::scanStatus,
+            this, &konfytDatabase::scanStatusFromWorker);
 
-    connect(&worker, &konfytDatabaseWorker::scanDirsFihished,
-            this, &konfytDatabase::scanDirsFinished);
+    connect(&worker, &KonfytDatabaseWorker::scanFinished,
+            this, &konfytDatabase::onScanFinished);
 
     connect(this, &konfytDatabase::start_scanDirs,
-            &worker, &konfytDatabaseWorker::scanDirs);
+            &worker, &KonfytDatabaseWorker::scan);
 
     connect(this, &konfytDatabase::start_sfontFromFile,
-            &worker, &konfytDatabaseWorker::sfontFromFile);
+            &worker, &KonfytDatabaseWorker::requestSfontFromFile);
 
-    connect(&worker, &konfytDatabaseWorker::sfontFromFileFinished,
+    connect(&worker, &KonfytDatabaseWorker::sfontFromFileFinished,
             this, &konfytDatabase::sfontFromFileFinished);
 
     worker.moveToThread(&workerThread);
@@ -245,7 +279,6 @@ konfytDatabase::konfytDatabase()
     if (initFluidsynth()) {
         emit print("konfytDatabase: Failed to initialise fluidsynth.");
     }
-
 }
 
 konfytDatabase::~konfytDatabase()
@@ -254,64 +287,112 @@ konfytDatabase::~konfytDatabase()
     workerThread.wait();
 }
 
+QList<KfSoundPtr> konfytDatabase::allSoundfonts()
+{
+    return mAllSoundfonts;
+}
+
+int konfytDatabase::soundfontCount()
+{
+    return mAllSoundfonts.count();
+}
+
+QList<KfSoundPtr> konfytDatabase::allPatches()
+{
+    return mAllPatches;
+}
+
+int konfytDatabase::patchCount()
+{
+    return mAllPatches.count();
+}
+
+QList<KfSoundPtr> konfytDatabase::allSfzs()
+{
+    return mAllSfzs;
+}
+
+int konfytDatabase::sfzCount()
+{
+    return mAllSfzs.count();
+}
+
+void konfytDatabase::setSoundfontsDir(QString path)
+{
+    mSfontsDir = path;
+}
+
+void konfytDatabase::setSfzDir(QString path)
+{
+    mSfzDir = path;
+}
+
+void konfytDatabase::setPatchesDir(QString path)
+{
+    mPatchesDir = path;
+}
+
 void konfytDatabase::userMessageFromWorker(QString msg)
 {
     print(msg);
 }
 
-void konfytDatabase::scanDirsStatusFromWorker(QString msg)
+void konfytDatabase::scanStatusFromWorker(QString msg)
 {
-    emit scanDirs_status(msg);
+    emit scanStatus(msg);
 }
 
 /* Starts scanning directories and returns. Finished signal will be emitted
  * later when done. */
-void konfytDatabase::scanDirs(QString sfontsDir, QString sfzDir, QString patchesDir)
+void konfytDatabase::scan()
 {
-    _sfontsDir = sfontsDir;
-    _sfzDir = sfzDir;
-    _patchesDir = patchesDir;
+    emit scanStatus("Starting scan...");
 
-    emit scanDirs_status("Starting scan...");
-
-    if (synth == NULL) {
-        emit print("sfontFromFile: Fluidsynth not initialized.");
-        emit scanDirs_finished();
+    if (mFluidSynth == NULL) {
+        emit print("Scan Error: Fluidsynth not initialized.");
+        emit scanFinished();
         return;
     }
 
     // Signal the worker to start scanning.
-    // We pass the current sfontlist as ignoreList parameter to not reload soundfonts we already have info on.
-    emit start_scanDirs(_sfontsDir, _sfzDir, _patchesDir, sfontlist);
-    // We now wait for the scanDirsFinished signal from the worker. See the scanDirsFinished() slot.
+    // We pass the current sfontlist as ignoreList parameter to not reload
+    // soundfonts we already have info on.
+    worker.sfontDir = mSfontsDir;
+    worker.sfontIgnoreList = mAllSoundfonts;
+    worker.sfzDir = mSfzDir;
+    worker.patchDir = mPatchesDir;
+    emit start_scanDirs();
+    // We now wait for the scanDirsFinished signal from the worker.
+    // See the onScanFinished() slot.
 }
 
-void konfytDatabase::scanDirsFinished(QList<KonfytSoundfont*> sfonts, QStringList sfzs, QStringList patches)
+void konfytDatabase::onScanFinished()
 {
-    // We have received lists from the worker thread.
+    // The worker has finished scanning
 
-    // Add sfonts
-    for (int i=0; i<sfonts.count(); i++) {
-        addSfont(sfonts[i]);
+    // Soundfonts
+    foreach (KfSoundPtr sf, worker.sfontResults) {
+        addSfont(sf);
     }
     buildSfontTree();
 
-    // Add SFZs
-    for (int i=0; i<sfzs.count(); i++) {
-        addSfz(sfzs[i]);
+    // SFZs
+    foreach (KfSoundPtr sfz, worker.sfzResults) {
+        addSfz(sfz);
     }
     buildSfzTree();
 
-    // Add patches
-    for (int i=0; i<patches.count(); i++) {
-        addPatch(patches[i]);
+    // Patches
+    foreach (KfSoundPtr patch, worker.patchResults) {
+        addPatch(patch);
     }
+    buildPatchTree();
 
-    // Directory scanning has finished. Emit signal to user.
-    emit scanDirs_finished();
+    // Scanning has finished. Emit signal.
+    emit scanFinished();
 }
 
-void konfytDatabase::sfontFromFileFinished(KonfytSoundfont *sfont, int source)
+void konfytDatabase::sfontFromFileFinished(KfSoundPtr sfont, int source)
 {
     if (source == konfytDatabaseSource_returnSfont) {
         // The original command was sent from returnSfont()
@@ -319,62 +400,111 @@ void konfytDatabase::sfontFromFileFinished(KonfytSoundfont *sfont, int source)
     }
 }
 
-
-/* Adds a patch object to the database from a given filename.
- * Returns true if patch could be successfully loaded from filename, false
- * otherwise. */
 void konfytDatabase::addPatch(QString filename)
 {
-    KonfytPatch p;
-    QString errors;
-    if ( p.loadPatchFromFile(filename, &errors) ) {
-        patchList.append(p);
-        patchFilenameList.append(filename);
-    } else {
-        print("konfytDatabase addPatch: Failed to load patch " + filename);
-    }
-    if (!errors.isEmpty()) {
-        print("Load errors for patch " + filename + ":\n" + errors);
+    KfSoundPtr patch = worker.patchFromFile(filename);
+    if (patch) {
+        addPatch(patch);
+        buildPatchTree();
     }
 }
 
-void konfytDatabase::addSfz(QString filename)
+void konfytDatabase::addSfont(KfSoundPtr sf)
 {
-    sfzList.append(filename);
+    mAllSoundfonts.append(sf);
 }
 
-/* Adds an sfont object to the database. */
-void konfytDatabase::addSfont(KonfytSoundfont *sf)
+void konfytDatabase::addSfz(KfSoundPtr sfz)
 {
-    sfontlist.append(sf);
+    mAllSfzs.append(sfz);
+}
+
+void konfytDatabase::addPatch(KfSoundPtr patch)
+{
+    mAllPatches.append(patch);
+}
+
+/* Build a tree of all list items based on their directory structure. */
+void konfytDatabase::buildTree(KonfytDbTree *tree, const QList<KfSoundPtr> &list,
+                               QString rootPath)
+{
+    tree->clearTree();
+
+    QDir rootDir(rootPath);
+
+    // Add children to tree corresponding to directories in path
+    foreach (KfSoundPtr sound, list) {
+        QString relativePath = rootDir.relativeFilePath(sound->filename);
+        QStringList pathList = relativePath.split("/");
+        if (pathList.value(0, "default") == "") { pathList.removeFirst(); }
+        QString pathStr = rootPath;
+        KfDbTreeItemPtr item = tree->root;
+        foreach (QString dir, pathList) {
+            pathStr += "/" + dir;
+            bool contains = false;
+            foreach (KfDbTreeItemPtr child, item->children) {
+                if (child->name == dir) {
+                    contains = true;
+                    item = child;
+                    break;
+                }
+            }
+            if (contains == false) {
+                item = item->addChild(dir, pathStr, nullptr);
+            }
+        }
+        // Last item is the leaf
+        item->path = sound->filename;
+        item->data = sound;
+    }
+
+    compactTree(tree->root);
+}
+
+/* Compact a tree, by combining branches with their children
+ * if they only have single children. E.g. a->b->c.sfz becomes a/b->c.sfz */
+void konfytDatabase::compactTree(KfDbTreeItemPtr item)
+{
+    foreach (KfDbTreeItemPtr c, item->children) {
+        compactTree(c);
+    }
+
+    if (item->parent == nullptr) { return; } // Skip root tree item
+    if (item->children.count() != 1) { return; }
+
+    // Merge item with its child
+    KfDbTreeItemPtr child = item->children.at(0);
+    item->name = item->name + "/" + child->name;
+    // NB remember to copy all of the child's data over
+    item->path = child->path;
+    item->data = child->data;
+    item->children = child->children;
 }
 
 /* Clears the database soundfont list and results. */
 void konfytDatabase::clearDatabase()
 {
     // Clear soundfonts
-    sfontlist.clear();
+    mAllSoundfonts.clear();
     sfontResults.clear();
 
     // Clear patches
-    patchList.clear();
-    patchFilenameList.clear();
+    mAllPatches.clear();
     patchResults.clear();
 
     // Clear sfz
-    sfzList.clear();
+    mAllSfzs.clear();
     sfzResults.clear();
 }
 
 void konfytDatabase::clearDatabase_exceptSoundfonts()
 {
     // Clear patches
-    patchList.clear();
-    patchFilenameList.clear();
+    mAllPatches.clear();
     patchResults.clear();
 
     // Clear sfz
-    sfzList.clear();
+    mAllSfzs.clear();
     sfzResults.clear();
 }
 
@@ -386,9 +516,10 @@ void konfytDatabase::clearDatabase_exceptSoundfonts()
 void konfytDatabase::returnSfont(QString filename)
 {
     // First check in database.
-    for (int i=0; i<sfontlist.count(); i++) {
-        if (filename == sfontlist.at(i)->filename) {
-            emit returnSfont_finished(sfontlist.at(i));
+    foreach (KfSoundPtr sf, mAllSoundfonts) {
+        if (filename == sf->filename) {
+            emit returnSfont_finished(sf);
+            return;
         }
     }
     // Not found in database. Load from file.
@@ -397,42 +528,33 @@ void konfytDatabase::returnSfont(QString filename)
     // when finished to the returnSfontFinished() slot.
 }
 
-/* General use function to return a sfont object parent of given program.
- * Similar to returnSfont(QString filename).
- * This function does not block and the soundfont is actually returned by the
- * returnSfont_finished() signal. */
-void konfytDatabase::returnSfont(KonfytSoundfontProgram p)
-{
-    return returnSfont(p.parent_soundfont);
-}
-
 /* Initialise Fluidsynth and return 0. Returns 1 on error. */
 int konfytDatabase::initFluidsynth()
 {
-    if (settings != NULL) {
-        delete_fluid_settings(settings);
+    if (mFluidsynthSettings != NULL) {
+        delete_fluid_settings(mFluidsynthSettings);
     }
-    if (synth != NULL) {
-        delete_fluid_synth(synth);
+    if (mFluidSynth != NULL) {
+        delete_fluid_synth(mFluidSynth);
     }
-    settings = NULL;
-    synth = NULL;
+    mFluidsynthSettings = NULL;
+    mFluidSynth = NULL;
 
     // Create settings object
-    settings = new_fluid_settings();
-    if (settings == NULL) {
+    mFluidsynthSettings = new_fluid_settings();
+    if (mFluidsynthSettings == NULL) {
         emit print("initFluidSynth: Failed to create fluidsynth settings.");
         return 1;
     }
 
     // Create the synthesizer
-    synth = new_fluid_synth(settings);
-    if (synth == NULL) {
+    mFluidSynth = new_fluid_synth(mFluidsynthSettings);
+    if (mFluidSynth == NULL) {
         emit print("initFluidSynth: Failed to create fluidsnth synthesizer.");
         return 1;
     }
 
-    worker.synth = synth;
+    worker.synth = mFluidSynth;
 
     return 0;
 }
@@ -455,23 +577,21 @@ bool konfytDatabase::saveDatabaseToFile(QString filename)
     stream.writeStartElement(XML_DATABASE);
 
     // All the soundfonts
-    for (int i=0; i<sfontlist.count(); i++) {
+    foreach (KfSoundPtr sf, mAllSoundfonts) {
 
         stream.writeStartElement("soundfont");
-
-        KonfytSoundfont* sf = sfontlist.at(i);
 
         stream.writeAttribute("filename", sf->filename);
         stream.writeAttribute("name", sf->name);
 
         // All the programs ("presets")
-        for (int j=0; j<sf->programlist.count(); j++) {
+        foreach (const KonfytSoundPreset &preset, sf->presets) {
 
             stream.writeStartElement("preset");
 
-            stream.writeTextElement("bank", n2s(sf->programlist.at(j).bank));
-            stream.writeTextElement("program", n2s(sf->programlist.at(j).program));
-            stream.writeTextElement("name", sf->programlist.at(j).name);
+            stream.writeTextElement("bank", n2s(preset.bank));
+            stream.writeTextElement("program", n2s(preset.program));
+            stream.writeTextElement("name", preset.name);
 
             stream.writeEndElement();
         }
@@ -480,24 +600,29 @@ bool konfytDatabase::saveDatabaseToFile(QString filename)
     }
 
     // All the patches
-    for (int i=0; i<patchList.count(); i++) {
+    foreach (KfSoundPtr patch, mAllPatches) {
 
         stream.writeStartElement("patch");
+        stream.writeAttribute("filename", patch->filename);
+        stream.writeAttribute("name", patch->name);
 
-        KonfytPatch pt = patchList.at(i);
+        // Layers
+        foreach (const KonfytSoundPreset &preset, patch->presets) {
+            stream.writeStartElement("layer");
 
-        stream.writeAttribute("filename", patchFilenameList.at(i));
-        stream.writeAttribute("name", pt.name());
+            stream.writeTextElement("name", preset.name);
 
+            stream.writeEndElement();
+        }
 
         stream.writeEndElement(); // patch
     }
 
     // All the SFZs
-    for (int i=0; i<sfzList.count(); i++) {
+    foreach (KfSoundPtr sfz, mAllSfzs) {
 
         stream.writeStartElement("sfz");
-        stream.writeAttribute("filename", sfzList.at(i));
+        stream.writeAttribute("filename", sfz->filename);
         stream.writeEndElement();
 
     }
@@ -510,196 +635,35 @@ bool konfytDatabase::saveDatabaseToFile(QString filename)
     return true;
 }
 
-QList<KonfytSoundfont*> konfytDatabase::getSfontList()
-{
-    return sfontlist;
-}
-
-int konfytDatabase::getNumSfonts()
-{
-    return sfontlist.count();
-}
-
-QStringList konfytDatabase::getSfzList()
-{
-    return sfzList;
-}
-
-int konfytDatabase::getNumSfz()
-{
-    return sfzList.count();
-}
-
 /* Build a tree of all sfz items, based on their directory structure. */
 void konfytDatabase::buildSfzTree()
 {
-    sfzTree->clearTree();
-
-    for (int sfz=0; sfz<sfzList.count(); sfz++) {
-
-        QStringList l = sfzList.at(sfz).split("/");
-
-        if (l[0] == "") { l.removeAt(0); }
-        QString path;
-
-        KonfytDbTreeItem* item = this->sfzTree->root;
-        for (int i=0; i<l.count(); i++) {
-            path += "/" + l.at(i);
-            bool contains = false;
-            QList<KonfytDbTreeItem*> children = item->children;
-            for (int j=0; j<children.count(); j++) {
-                if (children.at(j)->name == l.at(i)) {
-                    contains = true;
-                    item = children.at(j);
-                }
-            }
-            if (contains==false) {
-                KonfytDbTreeItem* newItem = new KonfytDbTreeItem(item, l.at(i));
-                newItem->path = path;
-                item->children.append(newItem);
-                item = newItem;
-            }
-        }
-        // Last item is the leaf
-        item->path = sfzList.at(sfz);
-    }
-
-
-    // Compact tree
-    compactTree(sfzTree->root);
+    buildTree(&sfzTree, mAllSfzs, mSfzDir);
 }
 
 void konfytDatabase::buildSfzTree_results()
 {
-    sfzTree_results->clearTree();
-
-    for (int sfz=0; sfz<sfzResults.count(); sfz++) {
-
-        QStringList l = sfzResults.at(sfz).split("/");
-
-        if (l[0] == "") { l.removeAt(0); }
-        QString path;
-
-        KonfytDbTreeItem* item = this->sfzTree_results->root;
-        for (int i=0; i<l.count(); i++) {
-            path += "/" + l.at(i);
-            bool contains = false;
-            QList<KonfytDbTreeItem*> children = item->children;
-            for (int j=0; j<children.count(); j++) {
-                if (children.at(j)->name == l.at(i)) {
-                    contains = true;
-                    item = children.at(j);
-                }
-            }
-            if (contains==false) {
-                KonfytDbTreeItem* newItem = new KonfytDbTreeItem(item, l.at(i));
-                newItem->path = path;
-                item->children.append(newItem);
-                item = newItem;
-            }
-        }
-        // Last item is the leaf
-        item->path = sfzResults.at(sfz);
-    }
-
-
-    // Compact tree
-    compactTree(sfzTree_results->root);
+    buildTree(&sfzTree_results, sfzResults, mSfzDir);
 }
 
 void konfytDatabase::buildSfontTree()
 {
-    sfontTree->clearTree();
-
-    for (int sf=0; sf<sfontlist.count(); sf++) {
-        QStringList l = sfontlist.at(sf)->filename.split("/");
-
-        if (l[0] == "") { l.removeAt(0); }
-        QString path;
-
-        KonfytDbTreeItem* item = this->sfontTree->root;
-        for (int i=0; i<l.count(); i++) {
-            path += "/" + l.at(i);
-            bool contains = false;
-            QList<KonfytDbTreeItem*> children = item->children;
-            for (int j=0; j<children.count(); j++) {
-                if (children.at(j)->name == l.at(i)) {
-                    contains = true;
-                    item = children.at(j);
-                }
-            }
-            if (contains == false) {
-                KonfytDbTreeItem* newItem = new KonfytDbTreeItem(item, l.at(i));
-                newItem->path = path;
-                item->children.append(newItem);
-                item = newItem;
-            }
-        }
-        // Last item is the leaf
-        item->path = sfontlist.at(sf)->filename;
-        item->data = sfontlist.at(sf);
-    }
-
-    // Compact tree
-    compactTree(sfontTree->root);
+    buildTree(&sfontTree, mAllSoundfonts, mSfontsDir);
 }
 
 void konfytDatabase::buildSfontTree_results()
 {
-    sfontTree_results->clearTree();
-
-    QList<KonfytSoundfont*> sfResultsList = getResultsSfonts();
-    for (int sf=0; sf<sfResultsList.count(); sf++) {
-        QStringList l = sfResultsList.at(sf)->filename.split("/");
-
-        if (l[0] == "") { l.removeAt(0); }
-        QString path;
-
-        KonfytDbTreeItem* item = this->sfontTree_results->root;
-        for (int i=0; i<l.count(); i++) {
-            path += "/" + l.at(i);
-            bool contains = false;
-            QList<KonfytDbTreeItem*> children = item->children;
-            for (int j=0; j<children.count(); j++) {
-                if (children.at(j)->name == l.at(i)) {
-                    contains = true;
-                    item = children.at(j);
-                }
-            }
-            if (contains == false) {
-                KonfytDbTreeItem* newItem = new KonfytDbTreeItem(item, l.at(i));
-                newItem->path = path;
-                item->children.append(newItem);
-                item = newItem;
-            }
-        }
-        // Last item is the leaf
-        item->path = sfResultsList.at(sf)->filename;
-        item->data = sfResultsList.at(sf);
-    }
-
-    // Compact tree
-    compactTree(sfontTree_results->root);
+    buildTree(&sfontTree_results, sfontResults, mSfontsDir);
 }
 
-/* Compact a tree, by combining branches with their children
- * if they only have single children. E.g. a->b->c.sfz becomes a/b->c.sfz */
-void konfytDatabase::compactTree(KonfytDbTreeItem* item)
+void konfytDatabase::buildPatchTree()
 {
-    for (int i=0; i<item->children.count(); i++) {
-        compactTree(item->children.at(i));
-    }
+    buildTree(&patchTree, mAllPatches, mPatchesDir);
+}
 
-    if (item->parent != NULL) { // Do not do this for the root item
-        if (item->children.count() == 1) {
-            KonfytDbTreeItem* child = item->children.at(0);
-            item->name = item->name + "/" + child->name;
-            // NB remember to copy all of the child's data over
-            item->path = child->path;
-            item->data = child->data;
-            item->children = child->children;
-        }
-    }
+void konfytDatabase::buildPatchTree_results()
+{
+    buildTree(&patchTree_results, patchResults, mPatchesDir);
 }
 
 /* Clears the database and loads it from a single saved database xml file. */
@@ -722,7 +686,7 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 
             if (r.name() == "soundfont") {
 
-                KonfytSoundfont* sf = new KonfytSoundfont();
+                KfSoundPtr sf(new KonfytSound());
                 sf->filename = r.attributes().value("filename").toString();
                 sf->name = r.attributes().value("name").toString();
 
@@ -730,7 +694,7 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 
                     if (r.name() == "preset") {
 
-                        KonfytSoundfontProgram p;
+                        KonfytSoundPreset p;
 
                         while (r.readNextStartElement()) {
                             if (r.name() == "bank") {
@@ -742,34 +706,45 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
                             }
                         }
 
-                        p.parent_soundfont = sf->filename;
-                        sf->programlist.append(p);
+                        sf->presets.append(p);
 
                     } else {
                         r.skipCurrentElement();
                     }
                 }
 
-                this->addSfont(sf);
+                addSfont(sf);
 
             } else if (r.name() == "patch") {
 
-                QString patchFilename = r.attributes().value("filename").toString();
-                KonfytPatch pt;
-                QString errors;
-                if (pt.loadPatchFromFile(patchFilename, &errors)) {
-                    patchList.append(pt);
-                    patchFilenameList.append(patchFilename);
+                KfSoundPtr patch(new KonfytSound());
+                patch->filename = r.attributes().value("filename").toString();
+                patch->name = r.attributes().value("name").toString();
+                if (patch->name.isEmpty()) {
+                    patch->name = QFileInfo(patch->filename).baseName();
                 }
-                if (!errors.isEmpty()) {
-                    print("Load errors for patch " + patchFilename + ":\n" + errors);
+
+                while (r.readNextStartElement()) { // layer
+                    if (r.name() == "layer") {
+                        KonfytSoundPreset p;
+                        while (r.readNextStartElement()) {
+                            if (r.name() == "name") {
+                                p.name = r.readElementText();
+                            }
+                        }
+                        patch->presets.append(p);
+                    } else {
+                        r.skipCurrentElement();
+                    }
                 }
-                r.skipCurrentElement();
+                addPatch(patch);
 
             } else if (r.name() == "sfz") {
 
-                QString sfzFilename = r.attributes().value("filename").toString();
-                sfzList.append(sfzFilename);
+                KfSoundPtr sfz(new KonfytSound());
+                sfz->filename = r.attributes().value("filename").toString();
+                sfz->name = QFileInfo(sfz->filename).fileName();
+                addSfz(sfz);
                 r.skipCurrentElement();
 
             } else {
@@ -782,91 +757,90 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 
     buildSfontTree();
     buildSfzTree();
+    buildPatchTree();
 
     return true;
-
 }
 
 /* Search all soundfonts (and their programs), SFZs and patches for the specified
  * string. Results can be accessed with the getResults functions. */
 void konfytDatabase::search(QString str)
 {
+    str = str.toLower();
+
     // Search all the soundfonts.
     // If a soundfont's filename matches the search string, the entire
     // soundfont (with all its programs) is included in the results.
     // Otherwise, the soundfont is only included if one or more of its
     // programs match the search string (and only those programs are included).
     sfontResults.clear();
-    for (int i=0; i<sfontlist.count(); i++) {
-        KonfytSoundfont* sf = sfontlist.at(i);
-        sf->searchResults.clear();
-        if (sf->filename.toLower().contains(str.toLower())) {
+    foreach (KfSoundPtr sf, mAllSoundfonts) {
+        if (sf->filename.toLower().contains(str)) {
             // Soundfont name match. Include all programs
-            sf->searchResults = sf->programlist;
+            sfontResults.append(sf);
         } else {
             // Search soundfont programs
-            for (int j=0; j<sf->programlist.count(); j++) {
-                KonfytSoundfontProgram p = sf->programlist.at(j);
-                if (p.name.toLower().contains(str.toLower())) {
-                    sf->searchResults.append(p);
+            QList<KonfytSoundPreset> presetsFound;
+            foreach (const KonfytSoundPreset& preset, sf->presets) {
+                if (preset.name.toLower().contains(str)) {
+                    presetsFound.append(preset);
                 }
             }
-        }
-        if (sf->searchResults.count()) {
-            sfontResults.insert(sf->filename,sf);
+            if (presetsFound.count()) {
+                KfSoundPtr sfresult(new KonfytSound());
+                sfresult->filename = sf->filename;
+                sfresult->name = sf->name;
+                sfresult->presets = presetsFound;
+                sfontResults.append(sfresult);
+            }
         }
     }
     buildSfontTree_results();
 
-    // Search all the patches (patch names as well as programs)
+    // Search all the patchest
     patchResults.clear();
-    for (int i=0; i<patchList.count(); i++) {
-        KonfytPatch pt = patchList.at(i);
-        // First check patch name
-        if (pt.name().toLower().contains(str.toLower())) {
-            patchResults.append(pt);
+    foreach (KfSoundPtr patch, mAllPatches) {
+        // Search filename. If it doesn't match, search layers
+        if (patch->filename.toLower().contains(str)) {
+            patchResults.append(patch);
         } else {
-            // Else check patch layers
-            foreach (KfPatchLayerSharedPtr layer, pt.layers()) {
-                if (layer->name().toLower().contains(str.toLower())) {
-                    patchResults.append(pt);
+            // Search layers
+            foreach (const KonfytSoundPreset& preset, patch->presets) {
+                if (preset.name.toLower().contains(str)) {
+                    patchResults.append(patch);
                     break;
                 }
             }
         }
     }
+    buildPatchTree_results();
 
     // Search all the SFZs
     sfzResults.clear();
-    for (int i=0; i<sfzList.count(); i++) {
-        if (sfzList.at(i).toLower().contains(str.toLower())) {
-            sfzResults.append(sfzList.at(i));
+    foreach (KfSoundPtr sfz, mAllSfzs) {
+        if (sfz->filename.toLower().contains(str)) {
+            sfzResults.append(sfz);
         }
     }
     buildSfzTree_results();
 }
 
 /* Returns a list of patches from the search results. */
-QList<KonfytPatch> konfytDatabase::getResultsPatches()
+QList<KfSoundPtr> konfytDatabase::getResultsPatches()
 {
     return patchResults;
 }
 
-QStringList konfytDatabase::getResultsSfz()
+QList<KfSoundPtr> konfytDatabase::getResultsSfz()
 {
     return sfzResults;
 }
 
 /* Returns a list of soundfonts from the search results.
  * The soundfonts only contain the programs matching the search. */
-QList<KonfytSoundfont*> konfytDatabase::getResultsSfonts()
+QList<KfSoundPtr> konfytDatabase::getResultsSfonts()
 {
-    QList<KonfytSoundfont*> l;
-    QList<QString> keys = sfontResults.keys();
-    for (int i=0; i<keys.count(); i++) {
-        l.append(sfontResults.value(keys.at(i)));
-    }
-    return l;
+    return sfontResults;
 }
 
 int konfytDatabase::getNumSfontsResults()
@@ -877,17 +851,10 @@ int konfytDatabase::getNumSfontsResults()
 int konfytDatabase::getNumSfontProgramResults()
 {
     int programs = 0;
-    QList<KonfytSoundfont*> sfonts = sfontResults.values();
-    for (int i=0; i<sfonts.count(); i++) {
-        programs += sfonts[i]->searchResults.count();
+    foreach (KfSoundPtr sf, sfontResults) {
+        programs += sf->presets.count();
     }
     return programs;
-}
-
-/* Returns a list of all programs within a specific sounfont matching the search. */
-QList<KonfytSoundfontProgram> konfytDatabase::getResultsSfontPrograms(KonfytSoundfont* sf)
-{
-    return sfontResults.value(sf->filename)->searchResults;
 }
 
 int konfytDatabase::getNumPatchesResults()
@@ -900,13 +867,5 @@ int konfytDatabase::getNumSfzResults()
     return sfzResults.count();
 }
 
-QList<KonfytPatch> konfytDatabase::getPatchList()
-{
-    return patchList;
-}
 
-int konfytDatabase::getNumPatches()
-{
-    return patchList.count();
-}
 

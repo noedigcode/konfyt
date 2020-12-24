@@ -99,7 +99,7 @@ public:
     void removeLayer(KonfytPatch* patch, KfPatchLayerWeakPtr layer);
 
     // Soundfont / Fluidsynth layers
-    KfPatchLayerWeakPtr addProgramLayer(KonfytSoundfontProgram newProgram);
+    KfPatchLayerWeakPtr addSfProgramLayer(QString soundfontPath, KonfytSoundPreset newProgram);
 
     // SFZ layers
     KfPatchLayerWeakPtr addSfzLayer(QString path);
@@ -113,6 +113,7 @@ public:
 signals:
     void print(QString msg);
     void statusInfo(QString msg);
+    void patchLayerLoaded(KfPatchLayerWeakPtr layer);
     
 private:
     KonfytPatch* mCurrentPatch = nullptr;
@@ -136,6 +137,9 @@ private:
     KonfytJackEngine* jack;
     
     void error_abort(QString msg);
+
+private slots:
+    void onSfzEngineInitDone(QString error);
 };
 
 #endif // KONFYT_PATCH_ENGINE_H
