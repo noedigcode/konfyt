@@ -247,7 +247,13 @@ void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
 
 void MainWindow::onJackXrunOccurred()
 {
-    print("XRUN " + n2s(++mJackXrunCount));
+    mJackXrunCount += 1;
+    QString text = QString("XRUN %1").arg(mJackXrunCount);
+    if (mJackXrunCount > 1) {
+        text += QString(" (%1)").arg(xrunTimeString(mXrunTimer.elapsed()));
+    }
+    mXrunTimer.start();
+    print(text);
 }
 
 void MainWindow::onJackPortRegisteredOrConnected()
@@ -6388,6 +6394,19 @@ void MainWindow::on_treeWidget_savedMidiMessages_itemClicked(QTreeWidgetItem *it
 {
     int index = ui->treeWidget_savedMidiMessages->indexOfTopLevelItem(item);
     midiEventToMidiSendEditor(savedMidiSendItems[index]);
+}
+
+QString MainWindow::xrunTimeString(qint64 ms)
+{
+    int min = ms/1000/60;
+    int sec = (ms/1000) % 60;
+    int msec = ms % 1000;
+    QString str = QString("+%1:%2:%L3")
+            .arg(min)
+            .arg(sec, 2, 10, QChar('0'))
+            .arg(msec, 3, 10, QChar('0'));
+
+    return str;
 }
 
 void MainWindow::setupJack()

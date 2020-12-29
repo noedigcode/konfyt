@@ -41,6 +41,7 @@
 #include <QCheckBox>
 #include <QCloseEvent>
 #include <QDesktopServices>
+#include <QElapsedTimer>
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QKeyEvent>
@@ -656,6 +657,8 @@ private slots:
 private:
     KonfytJackEngine jack;
     int mJackXrunCount = 0;
+    QElapsedTimer mXrunTimer;
+    QString xrunTimeString(qint64 ms);
     void setupJack();
     void addAudioBusToJack(int busNo, KfJackAudioPort** leftPort, KfJackAudioPort** rightPort);
     void addAudioInPortsToJack(int portNo, KfJackAudioPort** leftPort, KfJackAudioPort** rightPort);
