@@ -4745,9 +4745,8 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
 
     } else if (action == ui->actionMaster_Volume_Slider) {
 
-        ui->horizontalSlider_MasterGain->setValue(((float)ev.data2())/127.0*ui->horizontalSlider_MasterGain->maximum());
-        ui->horizontalSlider_MasterGain->triggerAction(QSlider::SliderMove);
-        on_horizontalSlider_MasterGain_sliderMoved(ui->horizontalSlider_MasterGain->value());
+        int value = ((float)ev.data2())/127.0 * ui->horizontalSlider_MasterGain->maximum();
+        ui->horizontalSlider_MasterGain->setSliderPosition(value); // Triggers sliderMoved signal
 
     } else if (action == ui->actionMaster_Volume_Up) {
 
@@ -4779,23 +4778,23 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
 
     } else if (action == ui->actionGlobal_Transpose_12_Down) {
 
-        if (buttonPass) { setMasterInTranspose(-12,true); }
+        if (buttonPass) { setMasterInTranspose(-12, true); }
 
     } else if (action == ui->actionGlobal_Transpose_12_Up) {
 
-        if (buttonPass) { setMasterInTranspose(12,true); }
+        if (buttonPass) { setMasterInTranspose(12, true); }
 
     } else if (action == ui->actionGlobal_Transpose_1_Down) {
 
-        if (buttonPass) { setMasterInTranspose(-1,true); }
+        if (buttonPass) { setMasterInTranspose(-1, true); }
 
     } else if (action == ui->actionGlobal_Transpose_1_Up) {
 
-        if (buttonPass) { setMasterInTranspose(1,true); }
+        if (buttonPass) { setMasterInTranspose(1, true); }
 
     } else if (action == ui->actionGlobal_Transpose_Zero) {
 
-        if (buttonPass) { setMasterInTranspose(0,false); }
+        if (buttonPass) { setMasterInTranspose(0, false); }
 
     }
 
@@ -4803,26 +4802,30 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
 
 void MainWindow::setupExternalAppsMenu()
 {
-    extAppsMenuActions_Append.insert( extAppsMenu.addAction("Project Directory Reference: "
-                                                            + QString(STRING_PROJECT_DIR)),
-                               STRING_PROJECT_DIR );
+    extAppsMenuActions_Append.insert(
+                extAppsMenu.addAction(
+                    "Project Directory Reference: " + QString(STRING_PROJECT_DIR)),
+                STRING_PROJECT_DIR );
 
     extAppsMenu.addSeparator();
 
-    extAppsMenuActions_Set.insert( extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)"),
-                               "a2jmidid -ue" );
-    extAppsMenuActions_Set.insert( extAppsMenu.addAction("zynaddsubfx -l (Load .xmz state file)"),
-                               "zynaddsubfx -l " );
-    extAppsMenuActions_Set.insert( extAppsMenu.addAction("zynaddsubfx -L (Load .xiz instrument file)"),
-                               "zynaddsubfx -L " );
-    extAppsMenuActions_Set.insert( extAppsMenu.addAction("jack-keyboard"),
-                               "jack-keyboard" );
-    extAppsMenuActions_Set.insert( extAppsMenu.addAction("VMPK (Virtual Keyboard)"),
-                               "vmpk" );
-    extAppsMenuActions_Set.insert( extAppsMenu.addAction("Ardour"),
-                               "ardour " );
-    extAppsMenuActions_Set.insert( extAppsMenu.addAction("Carla"),
-                               "carla " );
+    extAppsMenuActions_Set.insert(
+                extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)"),
+                "a2jmidid -ue" );
+    extAppsMenuActions_Set.insert(
+                extAppsMenu.addAction("zynaddsubfx -l (Load .xmz state file)"),
+                "zynaddsubfx -l " );
+    extAppsMenuActions_Set.insert(
+                extAppsMenu.addAction("zynaddsubfx -L (Load .xiz instrument file)"),
+                "zynaddsubfx -L " );
+    extAppsMenuActions_Set.insert(
+                extAppsMenu.addAction("jack-keyboard"),
+                "jack-keyboard" );
+    extAppsMenuActions_Set.insert(
+                extAppsMenu.addAction("VMPK (Virtual Keyboard)"),
+                "vmpk" );
+    extAppsMenuActions_Set.insert( extAppsMenu.addAction("Ardour"), "ardour " );
+    extAppsMenuActions_Set.insert( extAppsMenu.addAction("Carla"), "carla " );
 
     connect(&extAppsMenu, &QMenu::triggered, this, &MainWindow::extAppsMenuTriggered);
 }
