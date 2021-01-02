@@ -227,6 +227,7 @@ private:
     void sendMidiClosureEvents(KfJackMidiPort* port, int channel);
     void sendMidiClosureEvents_chanZeroOnly(KfJackMidiPort* port);
     void sendMidiClosureEvents_allChannels(KfJackMidiPort* port);
+    void handleBankSelect(int bankMSB[16], int bankLSB[16], KonfytMidiEvent* ev);
 
     void error_abort(QString msg);
 };

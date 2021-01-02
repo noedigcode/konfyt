@@ -69,6 +69,8 @@ protected:
     bool sustainNonZero = false;
     bool pitchbendNonZero = false;
     RingbufferQMutex<KonfytMidiEvent> traffic{8192};
+    int bankMSB[16] = {-1};
+    int bankLSB[16] = {-1};
 };
 
 struct KonfytJackNoteOnRecord
@@ -93,6 +95,8 @@ protected:
     uint16_t sustain = 0;
     uint16_t pitchbend = 0;
     KonfytArrayList<KonfytJackNoteOnRecord> noteOnList;
+    int bankMSB[16] = {-1};
+    int bankLSB[16] = {-1};
 };
 
 struct KfJackAudioRoute

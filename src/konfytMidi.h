@@ -77,6 +77,9 @@ int hashMidiEventToInt(int type, int channel, int data1, int bankMSB, int bankLS
 QString midiNoteName(int note);
 QString midiEventToString(int type, int channel, int data1, int bankMSB, int bankLSB);
 QString midiEventToString(int type, int channel, int data1, int data2, int bankMSB, int bankLSB);
+int midiBanksToInt(int bankMSB, int bankLSB);
+int midiBankMSB(int bankCombined);
+int midiBankLSB(int bankCombined);
 
 
 struct KonfytMidiEvent

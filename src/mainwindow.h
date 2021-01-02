@@ -25,6 +25,7 @@
 #include "aboutdialog.h"
 #include "consoledialog.h"
 #include "indicatorHandlers.h"
+#include "midiEventListWidgetAdapter.h"
 #include "konfytDatabase.h"
 #include "konfytDefines.h"
 #include "konfytFluidsynthEngine.h"
@@ -376,6 +377,7 @@ private:
     void removePatchLayer(KonfytLayerWidget *layerWidget);
     void removePatchLayerFromGuiOnly(KonfytLayerWidget *layerWidget);
     void clearPatchLayersFromGuiOnly();
+    KfJackMidiRoute* jackMidiRouteFromLayerWidget(KonfytLayerWidget* layerWidget);
 private slots:
     void onLayer_slider_moved(KonfytLayerWidget* layerWidget, float gain);
     void onLayer_solo_clicked(KonfytLayerWidget* layerWidget, bool solo);
@@ -572,14 +574,13 @@ private slots:
     // MIDI filter editor
     // ========================================================================
 private:
-    int midiFilter_lastChan = 0;
-    int midiFilter_lastData1 = 0;
-    int midiFilter_lastData2 = 0;
     MidiFilterEditType midiFilterEditType;
-    KonfytLayerWidget* midiFilterEditItem;
+    KonfytLayerWidget* midiFilterEditItem = nullptr;
+    KfJackMidiRoute* midiFilterEditRoute = nullptr;
     int midiFilterEditPort;
     void showMidiFilterEditor();
-    void updateMidiFilterEditorLastRx();
+    KonfytMidiEvent midiFilterLastEvent;
+    void updateMidiFilterEditorLastRx(KonfytMidiEvent ev);
 private slots:
     void on_pushButton_midiFilter_Cancel_clicked();
     void on_pushButton_midiFilter_Apply_clicked();
@@ -603,8 +604,10 @@ private slots:
 
     // MIDI send list editor
 private:
-    KonfytLayerWidget* midiSendListEditItem;
+    KonfytLayerWidget* midiSendListEditItem = nullptr;
+    KfJackMidiRoute* midiSendListEditRoute = nullptr;
     QList<MidiSendItem> midiSendList;
+    void setupMidiSendListEditor();
     void showMidiSendListEditor();
     void midiEventToMidiSendEditor(MidiSendItem item);
     MidiSendItem midiEventFromMidiSendEditor();
@@ -616,7 +619,7 @@ private:
                 MIDI_EVENT_TYPE_NOTEOFF,
                 MIDI_EVENT_TYPE_PITCHBEND,
                 MIDI_EVENT_TYPE_SYSTEM};
-    QList<KonfytMidiEvent> midiSendEditorLastEvents;
+    MidiEventListWidgetAdapter midiSendListEditorMidiRxList;
 
 private slots:
     void on_pushButton_midiSendList_apply_clicked();
@@ -630,7 +633,7 @@ private slots:
     void on_pushButton_midiSendList_pbzero_clicked();
     void on_pushButton_midiSendList_pbmax_clicked();
     void on_actionEdit_MIDI_Send_List_triggered();
-    void on_listWidget_midiSendList_lastReceived_itemClicked(QListWidgetItem *item);
+    void onMidiSendListEditorMidiRxListItemClicked();
     void on_pushButton_midiSendList_replace_clicked();
     void on_toolButton_midiSendList_down_clicked();
     void on_toolButton_midiSendList_up_clicked();
@@ -665,7 +668,8 @@ private:
     KfJackMidiPort* addMidiOutPortToJack(int numberLabel);
     KfJackMidiPort* addMidiInPortToJack(int numberLabel);
     bool jackPortBelongstoUs(QString jackPortName);
-    void handleMidiEvent(KfJackMidiRxEvent rxEvent);
+    void handleRouteMidiEvent(KfJackMidiRxEvent rxEvent);
+    void handlePortMidiEvent(KfJackMidiRxEvent rxEvent);
 private slots:
     void onJackMidiEventsReceived();
     void onJackAudioEventsReceived();
@@ -729,10 +733,7 @@ private:
     void initTriggers();
     void setupTriggersPage();
     void showTriggersPage();
-    KonfytMidiEvent triggersLastEvent;
-    int lastBankSelectMSB = -1;
-    int lastBankSelectLSB = -1;
-    QList<KonfytMidiEvent> triggersLastEvents;
+    MidiEventListWidgetAdapter triggersPageMidiEventList;
 
     QList<QAction*> channelGainActions;
     QList<QAction*> channelSoloActions;
@@ -748,7 +749,7 @@ private slots:
     void on_pushButton_triggersPage_assign_clicked();
     void on_pushButton_triggersPage_clear_clicked();
     void on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem *item, int column);
-    void on_listWidget_triggers_eventList_itemDoubleClicked(QListWidgetItem *item);
+    void onTriggersMidiEventListDoubleClicked();
     void on_checkBox_Triggers_ProgSwitchPatches_clicked();
 
     // ========================================================================

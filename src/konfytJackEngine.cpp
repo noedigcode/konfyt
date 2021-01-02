@@ -856,7 +856,8 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 
 
     if (panicState == 1) {
-        // We just entered panic state. Send note off messages etc, and proceed to state 2 where we just wait.
+        // We just entered panic state. Send note off messages etc,
+        // and proceed to state 2 where we just wait.
 
         // Send to fluidsynth
         for (int p = 0; p < fluidsynthPorts.count(); p++) {
@@ -907,6 +908,9 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
                 continue;
             }
 
+            // Handle bank select: modify event and store bank select
+            handleBankSelect(sourcePort->bankMSB, sourcePort->bankLSB, &ev);
+
             // Send to GUI
             midiRxBuffer.stash({.sourcePort = sourcePort,
                                   .midiRoute = nullptr,
@@ -924,6 +928,9 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
                 if (!route->filter.passFilter(&ev)) { continue; }
 
                 KonfytMidiEvent evToSend = route->filter.modify(&ev);
+
+                // Handle bank select: modify event and store bank select
+                handleBankSelect(route->bankMSB, route->bankLSB, &evToSend);
 
                 bool passEvent = route->active;
                 bool guiOnly = false;
@@ -1196,6 +1203,49 @@ void KonfytJackEngine::sendMidiClosureEvents_allChannels(KfJackMidiPort *port)
 {
     for (int i=0; i<15; i++) {
         sendMidiClosureEvents(port, i);
+    }
+}
+
+/* Modify MIDI event with stored bank select (if any), or store bank select
+ * (if applicable).
+ * If the MIDI event is a PROGRAM, previously stored bank MSB and LSB with the
+ * same channel (if any) are added to the event. Otherwise the MIDI event bank
+ * MSB and LSB are cleared.
+ * If the MIDI event is a bank MSB or LSB, it is stored. Otherwise, stored bank
+ * selects are cleared. */
+void KonfytJackEngine::handleBankSelect(int bankMSB[], int bankLSB[], KonfytMidiEvent *ev)
+{
+    // Modify MIDI event with stored bank select, or clear.
+    if (ev->type() == MIDI_EVENT_TYPE_PROGRAM) {
+        if ( (bankMSB[ev->channel] >= 0) &&
+             (bankLSB[ev->channel] >= 0) ) {
+            // MIDI event is a program and bank MSB and LSB with the same channel
+            // have been stored previously. Modify the MIDI event.
+            ev->bankMSB = bankMSB[ev->channel];
+            ev->bankLSB = bankLSB[ev->channel];
+        } else {
+            ev->bankMSB = -1;
+            ev->bankLSB = -1;
+        }
+    }
+
+    // Save bank
+    if (ev->type() == MIDI_EVENT_TYPE_CC) {
+        if (ev->data1() == 0) {
+            // Bank select MSB
+            bankMSB[ev->channel] = ev->data2();
+        } else if (ev->data1() == 32) {
+            // Bank select LSB
+            bankLSB[ev->channel] = ev->data2();
+        } else {
+            // Cancel bank select
+            bankMSB[ev->channel] = -1;
+            bankLSB[ev->channel] = -1;
+        }
+    } else {
+        // Cancel bank select
+        bankMSB[ev->channel] = -1;
+        bankLSB[ev->channel] = -1;
     }
 }
 

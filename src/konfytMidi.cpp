@@ -103,7 +103,6 @@ QString midiEventToString(int type, int channel, int data1, int data2, int bankM
     } else if (type == MIDI_EVENT_TYPE_NOTEON) {
         text = "Noteon " + n2s(data1) + ", " + n2s(data2) + "  (" + midiNoteName(data1) + ")";
     } else if (type == MIDI_EVENT_TYPE_PITCHBEND) {
-        //text = "Pitchbend " + n2s( ( ((data2 & 0x7F)<<7) | (data1 & 0x7F) ) - 8192 );
         unsigned char data12[2];
         data12[0] = data1 & 0x7F;
         data12[1] = data2 & 0x7F;
@@ -113,8 +112,7 @@ QString midiEventToString(int type, int channel, int data1, int data2, int bankM
         if (bankMSB >= 0) {
             if (bankLSB >= 0) {
                 text = ("Prog " + n2s(data1) + " Bank "
-                        + n2s( ((bankMSB & 0x7F)<<7)
-                               | (bankLSB & 0x7F) ));
+                        + n2s( midiBanksToInt(bankMSB, bankLSB) ));
             }
         }
     } else {
@@ -124,6 +122,20 @@ QString midiEventToString(int type, int channel, int data1, int data2, int bankM
     return text;
 }
 
+int midiBanksToInt(int bankMSB, int bankLSB)
+{
+    return ( ((bankMSB & 0x7F)<<7) | (bankLSB & 0x7F) );
+}
+
+int midiBankMSB(int bankCombined)
+{
+    return ( (bankCombined >> 7) & 0x7F );
+}
+
+int midiBankLSB(int bankCombined)
+{
+    return ( bankCombined & 0x7F );
+}
 
 QString midiNoteName(int note)
 {
@@ -390,3 +402,4 @@ QString MidiSendItem::readFromXmlStream(QXmlStreamReader *r)
     }
     return error;
 }
+

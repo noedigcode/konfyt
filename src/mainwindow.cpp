@@ -52,6 +52,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupGuiMenuButtons();
     setupConnectionsPage();
     setupTriggersPage();
+    setupMidiSendListEditor();
     setupKeyboardShortcuts();
     setupGuiDefaults();
     setupExternalAppsMenu();
@@ -297,11 +298,13 @@ void MainWindow::showSettingsDialog()
     ui->stackedWidget->setCurrentWidget(ui->SettingsPage);
 }
 
-void MainWindow::updateMidiFilterEditorLastRx()
+void MainWindow::updateMidiFilterEditorLastRx(KonfytMidiEvent ev)
 {
-    ui->lineEdit_MidiFilter_Last->setText("Ch " + n2s(midiFilter_lastChan+1)
-                                          + " - " + n2s(midiFilter_lastData1)
-                                          + ", " + n2s(midiFilter_lastData2));
+    midiFilterLastEvent = ev;
+    ui->lineEdit_MidiFilter_Last->setText(ev.toString());
+//    ui->lineEdit_MidiFilter_Last->setText("Ch " + n2s(midiFilter_lastChan+1)
+//                                          + " - " + n2s(midiFilter_lastData1)
+//                                          + ", " + n2s(midiFilter_lastData2));
 }
 
 void MainWindow::showMidiFilterEditor()
@@ -338,8 +341,6 @@ void MainWindow::showMidiFilterEditor()
     for (int i=0; i<f.passCC.count(); i++) {
         ui->listWidget_midiFilter_CC->addItem( n2s( f.passCC.at(i) ) );
     }
-
-    updateMidiFilterEditorLastRx();
 
     // Switch to midi filter page
     ui->stackedWidget->setCurrentWidget(ui->FilterPage);
@@ -1056,6 +1057,11 @@ void MainWindow::setupTriggersPage()
 {
     // Tree widget column widths
     ui->tree_Triggers->header()->setSectionResizeMode(QHeaderView::Stretch);
+
+    // Received MIDI events list
+    connect(&triggersPageMidiEventList, &MidiEventListWidgetAdapter::itemDoubleClicked,
+            this, &MainWindow::onTriggersMidiEventListDoubleClicked);
+    triggersPageMidiEventList.init(ui->listWidget_triggers_eventList);
 }
 
 void MainWindow::showTriggersPage()
@@ -3150,7 +3156,13 @@ void MainWindow::onJackMidiEventsReceived()
 {   
     QList<KfJackMidiRxEvent> events = jack.getMidiRxEvents();
     foreach (KfJackMidiRxEvent event, events) {
-        handleMidiEvent(event);
+        if (event.sourcePort) {
+            handlePortMidiEvent(event);
+        } else if (event.midiRoute) {
+            handleRouteMidiEvent(event);
+        } else {
+            print("ERROR: MIDI EVENT BOTH PORT AND ROUTE NULL");
+        }
     }
 }
 
@@ -3160,242 +3172,6 @@ void MainWindow::onJackAudioEventsReceived()
     foreach (KfJackAudioRxEvent event, events) {
         layerIndicatorHandler.jackEventReceived(event);
     }
-}
-
-void MainWindow::handleMidiEvent(KfJackMidiRxEvent rxEvent)
-{
-    ProjectPtr prj = mCurrentProject;;
-    if (!prj) { return; }
-
-    KonfytMidiEvent ev = rxEvent.midiEvent;
-
-    KonfytMidiEvent evInclBank = ev;
-    evInclBank.bankMSB = lastBankSelectMSB;
-    evInclBank.bankLSB = lastBankSelectLSB;
-
-    // Indicate global sustain/pitchbend based on MIDI port input
-    if (rxEvent.sourcePort) {
-        int portIdInPrj = prj->midiInPort_getPortIdWithJackId(rxEvent.sourcePort);
-        if (portIdInPrj < 0) {
-            print("ERROR: NO PORT IN PROJECT MATCHING JACK PORT.");
-        }
-
-        portIndicatorHandler.jackEventReceived(rxEvent);
-
-        // Global sustain indicator
-        updateGlobalSustainIndicator();
-        // Global pitchbend indicator
-        updateGlobalPitchbendIndicator();
-
-        // Show in console if enabled.
-        if (console_showMidiMessages) {
-            QString portName = "UNKNOWN";
-            if (portIdInPrj >= 0) {
-                PrjMidiPort prt = prj->midiInPort_getPort(portIdInPrj);
-                portName = prt.portName;
-            }
-            // Take last bank select info into account
-            print("MIDI EVENT " + evInclBank.toString()
-                        + " from port " + portName);
-        }
-    }
-
-    // Indicate MIDI, sustain and pitchbend for layers
-    if (rxEvent.midiRoute) {
-        layerIndicatorHandler.jackEventReceived(rxEvent);
-    }
-
-    // Global MIDI indicator "LED"
-    ui->MIDI_indicator->setChecked(true);
-    midiIndicatorTimer.start(500, this);
-
-    // Save bank selects
-    if (ev.type() == MIDI_EVENT_TYPE_CC) {
-        if (ev.data1() == 0) {
-            // Bank select MSB
-            lastBankSelectMSB = ev.data2();
-        } else if (ev.data1() == 32) {
-            // Bank select LSB
-            lastBankSelectLSB = ev.data2();
-        } else {
-            // Otherwise, reset bank select. Bank select
-            // should only be taken into account if a program
-            // is received directly after it. If not, it is cleared.
-            lastBankSelectMSB = -1;
-            lastBankSelectLSB = -1;
-        }
-    } else if (ev.type() != MIDI_EVENT_TYPE_PROGRAM) {
-        // Otherwise, reset bank select. Bank select
-        // should only be taken into account if a program
-        // is received directly after it. If not, it is cleared.
-        lastBankSelectMSB = -1;
-        lastBankSelectLSB = -1;
-    }
-
-    // MIDI Filter Editor "last" lineEdits
-    midiFilter_lastChan = ev.channel;
-    midiFilter_lastData1 = ev.data1();
-    midiFilter_lastData2 = ev.data2();
-    updateMidiFilterEditorLastRx();
-
-    // MIDI send list editor page
-    if (ui->stackedWidget->currentWidget() == ui->midiSendListPage) {
-
-        // Add event to last received events list
-        ui->listWidget_midiSendList_lastReceived->addItem( ev.toString() );
-        midiSendEditorLastEvents.append(ev);
-
-        // If event is a program and the previous messages happened to be bank MSB and LSB,
-        // then add an extra program event which includes the bank.
-        if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
-            if (lastBankSelectMSB >= 0) {
-                if (lastBankSelectLSB >= 0) {
-                    ui->listWidget_midiSendList_lastReceived->addItem( evInclBank.toString() );
-                    midiSendEditorLastEvents.append(evInclBank);
-                }
-            }
-        }
-
-        // The list shouldn't get too crowded
-        while (midiSendEditorLastEvents.count() > 15) {
-            midiSendEditorLastEvents.removeFirst();
-            delete ui->listWidget_midiSendList_lastReceived->item(0);
-        }
-    }
-
-    // Triggers page events list
-    if (ui->stackedWidget->currentWidget() == ui->triggersPage) {
-
-        // Add event to last received events list
-        ui->listWidget_triggers_eventList->addItem( ev.toString() );
-        triggersLastEvents.append(ev);
-
-        // If event is a program and the previous messages happened to be bank MSB and LSB,
-        // then add an extra program event which includes the bank.
-        if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
-            if (lastBankSelectMSB >= 0) {
-                if (lastBankSelectLSB >= 0) {
-                    ui->listWidget_triggers_eventList->addItem( evInclBank.toString() );
-                    triggersLastEvents.append(evInclBank);
-                }
-            }
-        }
-
-        // The list shouldn't get too crowded
-        while (triggersLastEvents.count() > 15) {
-            triggersLastEvents.removeFirst();
-            delete ui->listWidget_triggers_eventList->item(0);
-        }
-
-        // Make sure the last received event is selected in the gui list
-        ui->listWidget_triggers_eventList->setCurrentRow( ui->listWidget_triggers_eventList->count()-1 );
-
-        return; // Skip normal processing
-
-    }
-
-    // If program change without bank select, switch patch if checkbox is checked.
-    if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
-        if ( (lastBankSelectLSB == -1) && (lastBankSelectMSB == -1) ) {
-            if (mCurrentProject) {
-                if (mCurrentProject->isProgramChangeSwitchPatches()) {
-                    setCurrentPatchByIndex(ev.program());
-                }
-            }
-        }
-    }
-
-    // Hash midi event to a key
-    int key;
-    if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
-        key = hashMidiEventToInt(ev.type(), ev.channel, ev.data1(), lastBankSelectMSB, lastBankSelectLSB);
-    } else {
-        key = hashMidiEventToInt(ev.type(), ev.channel, ev.data1(), -1, -1);
-    }
-    // Determine if event passes as button press
-    bool buttonPass = 0;
-    if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
-        buttonPass = true;
-    } else {
-        buttonPass = ev.data2() > 0;
-    }
-
-    // Get the appropriate action based on the key
-    QAction* action = triggersMidiActionHash[key];
-
-    // Perform the action
-    if (action == ui->actionPanic) {
-
-        if (buttonPass) { ui->actionPanic->trigger(); }
-
-    } else if (action == ui->actionPanicToggle) {
-
-        if (buttonPass) { ui->actionPanicToggle->trigger(); }
-
-    } else if (action == ui->actionNext_Patch) {
-
-        if (buttonPass) { setCurrentPatchByIndex( mCurrentPatchIndex+1 ); }
-
-    } else if (action == ui->actionPrevious_Patch) {
-
-        if (buttonPass) { setCurrentPatchByIndex( mCurrentPatchIndex-1 ); }
-
-    } else if (action == ui->actionMaster_Volume_Slider) {
-
-        ui->horizontalSlider_MasterGain->setValue(((float)ev.data2())/127.0*ui->horizontalSlider_MasterGain->maximum());
-        ui->horizontalSlider_MasterGain->triggerAction(QSlider::SliderMove);
-        on_horizontalSlider_MasterGain_sliderMoved(ui->horizontalSlider_MasterGain->value());
-
-    } else if (action == ui->actionMaster_Volume_Up) {
-
-        if (buttonPass) { ui->actionMaster_Volume_Up->trigger(); }
-
-    } else if (action == ui->actionMaster_Volume_Down) {
-
-        if (buttonPass) { ui->actionMaster_Volume_Down->trigger(); }
-
-    } else if (action == ui->actionProject_save) {
-
-        if (buttonPass) { ui->actionProject_save->trigger(); }
-
-    } else if (channelGainActions.contains(action)) {
-
-        midi_setLayerGain( channelGainActions.indexOf(action), ev.data2() );
-
-    } else if (channelSoloActions.contains(action)) {
-
-        midi_setLayerSolo( channelSoloActions.indexOf(action), ev.data2() );
-
-    } else if (channelMuteActions.contains(action)) {
-
-        midi_setLayerMute( channelMuteActions.indexOf(action), ev.data2() );
-
-    } else if (patchActions.contains(action)) {
-
-        setCurrentPatchByIndex( patchActions.indexOf(action) );
-
-    } else if (action == ui->actionGlobal_Transpose_12_Down) {
-
-        if (buttonPass) { setMasterInTranspose(-12,true); }
-
-    } else if (action == ui->actionGlobal_Transpose_12_Up) {
-
-        if (buttonPass) { setMasterInTranspose(12,true); }
-
-    } else if (action == ui->actionGlobal_Transpose_1_Down) {
-
-        if (buttonPass) { setMasterInTranspose(-1,true); }
-
-    } else if (action == ui->actionGlobal_Transpose_1_Up) {
-
-        if (buttonPass) { setMasterInTranspose(1,true); }
-
-    } else if (action == ui->actionGlobal_Transpose_Zero) {
-
-        if (buttonPass) { setMasterInTranspose(0,false); }
-
-    }
-
 }
 
 void MainWindow::on_pushButton_ClearConsole_clicked()
@@ -3830,6 +3606,25 @@ void MainWindow::clearPatchLayersFromGuiOnly()
     while (this->layerWidgetList.count()) {
         removePatchLayerFromGuiOnly(this->layerWidgetList.at(0));
     }
+}
+
+KfJackMidiRoute *MainWindow::jackMidiRouteFromLayerWidget(KonfytLayerWidget *layerWidget)
+{
+    KfJackMidiRoute* route = nullptr;
+
+    KfPatchLayerSharedPtr patchLayer = layerWidget->getPatchLayer();
+    if (!patchLayer) { return nullptr; }
+
+    KonfytPatchLayer::LayerType type = patchLayer->layerType();
+    if (type == KonfytPatchLayer::TypeMidiOut) {
+        route = patchLayer->midiOutputPortData.jackRoute;
+    } else if (type == KonfytPatchLayer::TypeSfz) {
+        route = jack.getPluginMidiRoute(patchLayer->sfzData.portsInJackEngine);
+    } else if (type == KonfytPatchLayer::TypeSoundfontProgram) {
+        route = jack.getPluginMidiRoute(patchLayer->soundfontData.portsInJackEngine);
+    }
+
+    return route;
 }
 
 /* Clears and fills specified menu with items corresponding to project MIDI
@@ -4286,17 +4081,17 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
 
 void MainWindow::on_toolButton_MidiFilter_lowNote_clicked()
 {
-    ui->spinBox_midiFilter_LowNote->setValue(midiFilter_lastData1);
+    ui->spinBox_midiFilter_LowNote->setValue(midiFilterLastEvent.data1());
 }
 
 void MainWindow::on_toolButton_MidiFilter_HighNote_clicked()
 {
-    ui->spinBox_midiFilter_HighNote->setValue(midiFilter_lastData1);
+    ui->spinBox_midiFilter_HighNote->setValue(midiFilterLastEvent.data1());
 }
 
 void MainWindow::on_toolButton_MidiFilter_Add_clicked()
 {
-    ui->spinBox_midiFilter_Add->setValue(midiFilter_lastData1);
+    ui->spinBox_midiFilter_Add->setValue(midiFilterLastEvent.data1());
 }
 
 void MainWindow::on_toolButton_MidiFilter_Add_Plus12_clicked()
@@ -4409,17 +4204,17 @@ void MainWindow::on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, 
 
 void MainWindow::on_toolButton_MidiFilter_lowVel_clicked()
 {
-    ui->spinBox_midiFilter_LowVel->setValue( midiFilter_lastData2 );
+    ui->spinBox_midiFilter_LowVel->setValue( midiFilterLastEvent.data2() );
 }
 
 void MainWindow::on_toolButton_MidiFilter_HighVel_clicked()
 {
-    ui->spinBox_midiFilter_HighVel->setValue( midiFilter_lastData2 );
+    ui->spinBox_midiFilter_HighVel->setValue( midiFilterLastEvent.data2() );
 }
 
 void MainWindow::on_toolButton_MidiFilter_lastCC_clicked()
 {
-    ui->lineEdit_MidiFilter_CC->setText( n2s(midiFilter_lastData1) );
+    ui->lineEdit_MidiFilter_CC->setText( n2s(midiFilterLastEvent.data1()) );
 }
 
 void MainWindow::on_toolButton_MidiFilter_Add_CC_clicked()
@@ -4842,6 +4637,168 @@ bool MainWindow::jackPortBelongstoUs(QString jackPortName)
     }
 
     return ret;
+}
+
+void MainWindow::handleRouteMidiEvent(KfJackMidiRxEvent rxEvent)
+{
+    KONFYT_ASSERT_RETURN(rxEvent.midiRoute);
+
+    // Indicate MIDI, sustain and pitchbend for layers
+    layerIndicatorHandler.jackEventReceived(rxEvent);
+
+    // Layer MIDI Filter Editor last received
+    if (midiFilterEditType == MidiFilterEditLayer) {
+        if (midiFilterEditRoute == rxEvent.midiRoute) {
+            updateMidiFilterEditorLastRx(rxEvent.midiEvent);
+        }
+    }
+
+    // List of received MIDI events on MIDI send list editor page
+    if (ui->stackedWidget->currentWidget() == ui->midiSendListPage) {
+        midiSendListEditorMidiRxList.addMidiEvent(rxEvent.midiEvent);
+    }
+}
+
+void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
+{
+    KONFYT_ASSERT_RETURN(rxEvent.sourcePort);
+
+    ProjectPtr prj = mCurrentProject;;
+    if (!prj) { return; }
+
+    KonfytMidiEvent ev = rxEvent.midiEvent;
+
+    // Indicate global sustain/pitchbend
+    portIndicatorHandler.jackEventReceived(rxEvent);
+    updateGlobalSustainIndicator();
+    updateGlobalPitchbendIndicator();
+
+    // Show in console if enabled.
+    int portIdInPrj = prj->midiInPort_getPortIdWithJackId(rxEvent.sourcePort);
+    if (portIdInPrj < 0) {
+        print("ERROR: NO PORT IN PROJECT MATCHING JACK PORT.");
+    }
+    if (console_showMidiMessages) {
+        QString portName = "UNKNOWN";
+        if (portIdInPrj >= 0) {
+            PrjMidiPort prt = prj->midiInPort_getPort(portIdInPrj);
+            portName = prt.portName;
+        }
+        print("MIDI EVENT " + ev.toString() + " from port " + portName);
+    }
+
+    // Global MIDI indicator "LED"
+    ui->MIDI_indicator->setChecked(true);
+    midiIndicatorTimer.start(500, this);
+
+    // Route MIDI Filter Editor last received
+    if (midiFilterEditType == MidiFilterEditPort) {
+        if (portIdInPrj == midiFilterEditPort) {
+            updateMidiFilterEditorLastRx(ev);
+        }
+    }
+
+    // List of received MIDI events in Triggers page
+    if (ui->stackedWidget->currentWidget() == ui->triggersPage) {
+        triggersPageMidiEventList.addMidiEvent(ev);
+        return; // We are on the Triggers page, skip normal processing
+    }
+
+    // If program change without bank select, switch patch if checkbox is checked.
+    if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
+        if ( (ev.bankMSB == -1) && (ev.bankLSB == -1) ) {
+            if (prj->isProgramChangeSwitchPatches()) {
+                setCurrentPatchByIndex(ev.program());
+            }
+        }
+    }
+
+    // Hash midi event to a key
+    int key = hashMidiEventToInt(ev.type(), ev.channel, ev.data1(), ev.bankMSB, ev.bankLSB);
+    // Determine if event passes as button press
+    bool buttonPass = 0;
+    if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
+        buttonPass = true;
+    } else {
+        buttonPass = ev.data2() > 0;
+    }
+
+    // Get the appropriate action based on the key
+    QAction* action = triggersMidiActionHash[key];
+
+    // Perform the action
+    if (action == ui->actionPanic) {
+
+        if (buttonPass) { ui->actionPanic->trigger(); }
+
+    } else if (action == ui->actionPanicToggle) {
+
+        if (buttonPass) { ui->actionPanicToggle->trigger(); }
+
+    } else if (action == ui->actionNext_Patch) {
+
+        if (buttonPass) { setCurrentPatchByIndex( mCurrentPatchIndex+1 ); }
+
+    } else if (action == ui->actionPrevious_Patch) {
+
+        if (buttonPass) { setCurrentPatchByIndex( mCurrentPatchIndex-1 ); }
+
+    } else if (action == ui->actionMaster_Volume_Slider) {
+
+        ui->horizontalSlider_MasterGain->setValue(((float)ev.data2())/127.0*ui->horizontalSlider_MasterGain->maximum());
+        ui->horizontalSlider_MasterGain->triggerAction(QSlider::SliderMove);
+        on_horizontalSlider_MasterGain_sliderMoved(ui->horizontalSlider_MasterGain->value());
+
+    } else if (action == ui->actionMaster_Volume_Up) {
+
+        if (buttonPass) { ui->actionMaster_Volume_Up->trigger(); }
+
+    } else if (action == ui->actionMaster_Volume_Down) {
+
+        if (buttonPass) { ui->actionMaster_Volume_Down->trigger(); }
+
+    } else if (action == ui->actionProject_save) {
+
+        if (buttonPass) { ui->actionProject_save->trigger(); }
+
+    } else if (channelGainActions.contains(action)) {
+
+        midi_setLayerGain( channelGainActions.indexOf(action), ev.data2() );
+
+    } else if (channelSoloActions.contains(action)) {
+
+        midi_setLayerSolo( channelSoloActions.indexOf(action), ev.data2() );
+
+    } else if (channelMuteActions.contains(action)) {
+
+        midi_setLayerMute( channelMuteActions.indexOf(action), ev.data2() );
+
+    } else if (patchActions.contains(action)) {
+
+        setCurrentPatchByIndex( patchActions.indexOf(action) );
+
+    } else if (action == ui->actionGlobal_Transpose_12_Down) {
+
+        if (buttonPass) { setMasterInTranspose(-12,true); }
+
+    } else if (action == ui->actionGlobal_Transpose_12_Up) {
+
+        if (buttonPass) { setMasterInTranspose(12,true); }
+
+    } else if (action == ui->actionGlobal_Transpose_1_Down) {
+
+        if (buttonPass) { setMasterInTranspose(-1,true); }
+
+    } else if (action == ui->actionGlobal_Transpose_1_Up) {
+
+        if (buttonPass) { setMasterInTranspose(1,true); }
+
+    } else if (action == ui->actionGlobal_Transpose_Zero) {
+
+        if (buttonPass) { setMasterInTranspose(0,false); }
+
+    }
+
 }
 
 void MainWindow::setupExternalAppsMenu()
@@ -5449,7 +5406,7 @@ void MainWindow::on_pushButton_triggersPage_assign_clicked()
     int eventRow = ui->listWidget_triggers_eventList->currentRow();
     if (eventRow < 0) { return; }
 
-    KonfytMidiEvent selectedEvent = triggersLastEvents[eventRow];
+    KonfytMidiEvent selectedEvent = triggersPageMidiEventList.selectedMidiEvent();
     QAction* action = triggersItemActionHash[item];
     KonfytTrigger trig = KonfytTrigger();
 
@@ -5499,7 +5456,7 @@ void MainWindow::on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem* /*item*/, i
     on_pushButton_triggersPage_assign_clicked();
 }
 
-void MainWindow::on_listWidget_triggers_eventList_itemDoubleClicked(QListWidgetItem* /*item*/)
+void MainWindow::onTriggersMidiEventListDoubleClicked()
 {
     on_pushButton_triggersPage_assign_clicked();
 }
@@ -5707,7 +5664,7 @@ void MainWindow::on_MIDI_indicator_pitchbend_clicked()
 
 void MainWindow::on_toolButton_MidiFilter_inChan_last_clicked()
 {
-    ui->comboBox_midiFilter_inChannel->setCurrentIndex( midiFilter_lastChan+1 );
+    ui->comboBox_midiFilter_inChannel->setCurrentIndex(midiFilterLastEvent.channel+1);
 }
 
 void MainWindow::setMasterInTranspose(int transpose, bool relative)
@@ -5726,12 +5683,12 @@ void MainWindow::on_spinBox_MasterIn_Transpose_valueChanged(int arg1)
 
 void MainWindow::on_pushButton_MasterIn_TransposeSub12_clicked()
 {
-    setMasterInTranspose(-12,true);
+    setMasterInTranspose(-12, true);
 }
 
 void MainWindow::on_pushButton_MasterIn_TransposeAdd12_clicked()
 {
-    setMasterInTranspose(12,true);
+    setMasterInTranspose(12, true);
 }
 
 void MainWindow::on_pushButton_MasterIn_TransposeZero_clicked()
@@ -6001,7 +5958,7 @@ void MainWindow::setupSettings()
 
 void MainWindow::on_toolButton_MidiFilter_VelLimitMin_last_clicked()
 {
-    ui->spinBox_midiFilter_VelLimitMin->setValue( midiFilter_lastData2 );
+    ui->spinBox_midiFilter_VelLimitMin->setValue( midiFilterLastEvent.data2() );
 }
 
 /* User right-clicked on panic button. */
@@ -6013,7 +5970,14 @@ void MainWindow::on_pushButton_Panic_customContextMenuRequested(const QPoint& /*
 
 void MainWindow::on_toolButton_MidiFilter_VelLimitMax_last_clicked()
 {
-    ui->spinBox_midiFilter_VelLimitMax->setValue( midiFilter_lastData2 );
+    ui->spinBox_midiFilter_VelLimitMax->setValue( midiFilterLastEvent.data2() );
+}
+
+void MainWindow::setupMidiSendListEditor()
+{
+    connect(&midiSendListEditorMidiRxList, &MidiEventListWidgetAdapter::itemClicked,
+            this, &MainWindow::onMidiSendListEditorMidiRxListItemClicked);
+    midiSendListEditorMidiRxList.init(ui->listWidget_midiSendList_lastReceived);
 }
 
 void MainWindow::showMidiSendListEditor()
@@ -6130,6 +6094,7 @@ void MainWindow::on_actionEdit_MIDI_Filter_triggered()
 {
     midiFilterEditType = MidiFilterEditLayer;
     midiFilterEditItem = layerToolMenuSourceitem;
+    midiFilterEditRoute = jackMidiRouteFromLayerWidget(midiFilterEditItem);
     showMidiFilterEditor();
 }
 
@@ -6256,6 +6221,7 @@ void MainWindow::on_pushButton_midiSendList_pbmax_clicked()
 void MainWindow::on_actionEdit_MIDI_Send_List_triggered()
 {
     midiSendListEditItem = layerToolMenuSourceitem;
+    midiSendListEditRoute = jackMidiRouteFromLayerWidget(midiSendListEditItem);
     showMidiSendListEditor();
 }
 
@@ -6449,11 +6415,13 @@ void MainWindow::setupJack()
     }
 }
 
-void MainWindow::on_listWidget_midiSendList_lastReceived_itemClicked(QListWidgetItem *item)
+void MainWindow::onMidiSendListEditorMidiRxListItemClicked()
 {
-    int index = ui->listWidget_midiSendList_lastReceived->row(item);
+    // User clicked on an item in the list of received MIDI events.
+    // Load the event in the editor
+
     MidiSendItem m;
-    m.midiEvent = midiSendEditorLastEvents[index];
+    m.midiEvent = midiSendListEditorMidiRxList.selectedMidiEvent();
     midiEventToMidiSendEditor(m);
 }
 

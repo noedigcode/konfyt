@@ -39,6 +39,7 @@ SOURCES += src/main.cpp\
     src/konfytBaseSoundEngine.cpp \
     src/konfytLscpEngine.cpp \
     src/gidls.cpp \
+    src/midiEventListWidgetAdapter.cpp \
     src/patchListWidgetAdapter.cpp
 
 HEADERS  += src/mainwindow.h \
@@ -65,6 +66,7 @@ HEADERS  += src/mainwindow.h \
     src/konfytBaseSoundEngine.h \
     src/konfytLscpEngine.h \
     src/gidls.h \
+    src/midiEventListWidgetAdapter.h \
     src/patchListWidgetAdapter.h \
     src/ringbufferqmutex.h
 
