@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2020 Gideon van der Kolf
+ * Copyright 2021 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -31,7 +31,7 @@ void printAppNameAndVersion()
 {
     std::cout << std::endl << APP_NAME << std::endl;
     std::cout << "Version " << APP_VERSION << std::endl;
-    std::cout << "Gideon van der Kolf 2014-2020" << std::endl;
+    std::cout << "Gideon van der Kolf 2014-2021" << std::endl;
 }
 
 void printAllVersionInfo()
