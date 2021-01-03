@@ -9055,11 +9055,6 @@ border-bottom-left-radius: 0;
     <string>New Patch</string>
    </property>
   </action>
-  <action name="actionAdd_Patch_From_Library">
-   <property name="text">
-    <string>Add Patch From Library</string>
-   </property>
-  </action>
   <action name="actionAdd_Patch_From_File">
    <property name="text">
     <string>Add Patch From File</string>

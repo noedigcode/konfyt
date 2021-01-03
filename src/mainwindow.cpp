@@ -89,7 +89,6 @@ void MainWindow::setupGuiMenuButtons()
     // Add-patch button menu
     QMenu* addPatchMenu = new QMenu();
     addPatchMenu->addAction(ui->actionNew_Patch);
-    addPatchMenu->addAction(ui->actionAdd_Patch_From_Library);
     addPatchMenu->addAction(ui->actionAdd_Patch_From_File);
     ui->toolButton_AddPatch->setMenu(addPatchMenu);
 
@@ -3865,16 +3864,6 @@ void MainWindow::on_actionNew_Patch_triggered()
     setCurrentPatch(patch);
     ui->lineEdit_PatchName->setFocus();
     ui->lineEdit_PatchName->selectAll();
-}
-
-/* Action to add patch from the library (currently selected) to the project. */
-void MainWindow::on_actionAdd_Patch_From_Library_triggered()
-{
-    if ( librarySelectedTreeItemType() == libTreePatch ) {
-        addPatchToProjectFromFile(librarySelectedPatch()->filename);
-    } else {
-        print("Select a patch in the library.");
-    }
 }
 
 /* Action to Let user browse and select a patch file to add to the project. */

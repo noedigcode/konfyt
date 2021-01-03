@@ -847,8 +847,6 @@ private slots:
 
     void on_actionNew_Patch_triggered();
 
-    void on_actionAdd_Patch_From_Library_triggered();
-
     void on_actionAdd_Patch_From_File_triggered();
 
     void on_actionMaster_Volume_Up_triggered();
