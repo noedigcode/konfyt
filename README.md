@@ -4,7 +4,7 @@ Konfyt
 Digital Keyboard Workstation for Linux
 --------------------------------------
 
-2014-2020 Gideon van der Kolf, noedigcode@gmail.com
+2014-2021 Gideon van der Kolf, noedigcode@gmail.com
 
 Welkom by Konfyt.
 

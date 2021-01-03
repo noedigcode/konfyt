@@ -55,6 +55,7 @@ public:
     // Update the layer widget
     void refresh();
 
+    void setHighlighted(bool highlight);
     void setSliderGain(float newGain);
     void setSoloButton(bool solo);
     void setMuteButton(bool mute);
@@ -83,6 +84,7 @@ private:
     KfPatchLayerWeakPtr mPatchLayer;
     QListWidgetItem* mListWidgetItem;
     QString mFilepath;
+    bool mHighlighted = false;
 
     void setUpGUI();
     float background_rectLeft;

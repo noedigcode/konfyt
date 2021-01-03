@@ -373,10 +373,11 @@ private slots:
     // Layers
 private:
     QList<KonfytLayerWidget*> layerWidgetList;
-    void addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer);
+    void addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer, int index = -1);
     void removePatchLayer(KonfytLayerWidget *layerWidget);
     void removePatchLayerFromGuiOnly(KonfytLayerWidget *layerWidget);
     void clearPatchLayersFromGuiOnly();
+    void movePatchLayer(int indexFrom, int indexTo);
     KfJackMidiRoute* jackMidiRouteFromLayerWidget(KonfytLayerWidget* layerWidget);
 private slots:
     void onLayer_slider_moved(KonfytLayerWidget* layerWidget, float gain);
@@ -445,12 +446,13 @@ private:
 
 private slots:
     // Patch view area
-
-    // Patch related
     void on_lineEdit_PatchName_returnPressed();
     void on_lineEdit_PatchName_editingFinished();
     void on_lineEdit_ProjectName_editingFinished();
     void on_textBrowser_patchNote_textChanged();
+    void on_toolButton_layer_down_clicked();
+    void on_toolButton_layer_up_clicked();
+    void on_listWidget_Layers_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
 
     // Patch List
     void on_toolButton_RemovePatch_clicked();
@@ -890,6 +892,7 @@ private slots:
     void on_pushButton_LavaMonster_clicked();    
 
     void on_stackedWidget_currentChanged(int arg1);
+
 
 };
 

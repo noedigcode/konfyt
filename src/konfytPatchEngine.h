@@ -97,6 +97,7 @@ public:
     int getNumLayers() const;
     void removeLayer(KfPatchLayerWeakPtr layer); // currentPatch
     void removeLayer(KonfytPatch* patch, KfPatchLayerWeakPtr layer);
+    void moveLayer(KfPatchLayerWeakPtr layer, int newIndex);
 
     // Soundfont / Fluidsynth layers
     KfPatchLayerWeakPtr addSfProgramLayer(QString soundfontPath, KonfytSoundPreset newProgram);

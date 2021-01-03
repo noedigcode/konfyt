@@ -343,6 +343,13 @@ void KonfytPatchEngine::removeLayer(KonfytPatch *patch, KfPatchLayerWeakPtr laye
     if (patch == mCurrentPatch) { reloadPatch(); }
 }
 
+void KonfytPatchEngine::moveLayer(KfPatchLayerWeakPtr layer, int newIndex)
+{
+    KONFYT_ASSERT_RETURN(mCurrentPatch);
+
+    mCurrentPatch->moveLayer(layer, newIndex);
+}
+
 void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
 {
     KfPatchLayerSharedPtr l = layer.toStrongRef();

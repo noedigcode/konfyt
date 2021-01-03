@@ -461,6 +461,17 @@ void KonfytPatch::removeLayer(KfPatchLayerWeakPtr layer)
     layerList.removeAll(layer.toStrongRef());
 }
 
+void KonfytPatch::moveLayer(KfPatchLayerWeakPtr layer, int newIndex)
+{
+    KONFYT_ASSERT_RETURN(newIndex >= 0);
+    KONFYT_ASSERT_RETURN(newIndex < layerList.count());
+
+    int oldIndex = layerIndex(layer);
+    KONFYT_ASSERT_RETURN(oldIndex >= 0);
+
+    layerList.move(oldIndex, newIndex);
+}
+
 /* Removes all the layers in the patch. */
 void KonfytPatch::clearLayers()
 {

@@ -3507,8 +3507,9 @@ void MainWindow::updateLayerMidiOutChannelMenu(QMenu *menu, int currentMidiPort)
     }
 }
 
-/* Add a patch layer to the GUI layer list. */
-void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer)
+/* Add a patch layer to the GUI layer list. If index is -1, it is added to the
+ * end of the list. */
+void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer, int index)
 {
     // Create new GUI layer item
     KonfytLayerWidget* layerWidget = new KonfytLayerWidget();
@@ -3545,10 +3546,11 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer)
     }
 
     // Add to our internal list
-    this->layerWidgetList.append(layerWidget);
+    if (index < 0) { index = layerWidgetList.count(); }
+    this->layerWidgetList.insert(index, layerWidget);
 
     // Add to gui layer list
-    ui->listWidget_Layers->addItem(item);
+    ui->listWidget_Layers->insertItem(index, item);
     // and set the item widget
     ui->listWidget_Layers->setItemWidget(item, layerWidget);
     // Put setSizeHint() after setItemWidget() so size is accurate since widget is already displayed.
@@ -3589,7 +3591,8 @@ void MainWindow::removePatchLayer(KonfytLayerWidget *layerWidget)
  * This is used if the layers in the engine should not be modified. */
 void MainWindow::removePatchLayerFromGuiOnly(KonfytLayerWidget *layerWidget)
 {
-    // Remove from our internal list
+    // Remove from our internal list (do first since layerWidget will be deleted
+    // when QListWidgetItem is removed from list widget)
     layerWidgetList.removeAll(layerWidget);
 
     // Remove from indicators handler
@@ -3606,6 +3609,24 @@ void MainWindow::clearPatchLayersFromGuiOnly()
     while (this->layerWidgetList.count()) {
         removePatchLayerFromGuiOnly(this->layerWidgetList.at(0));
     }
+}
+
+void MainWindow::movePatchLayer(int indexFrom, int indexTo)
+{
+    KONFYT_ASSERT_RETURN(indexFrom >= 0);
+    KONFYT_ASSERT_RETURN(indexFrom < layerWidgetList.count());
+    KONFYT_ASSERT_RETURN(indexTo >= 0);
+    KONFYT_ASSERT_RETURN(indexTo < layerWidgetList.count());
+
+    KonfytLayerWidget* layerWidget = layerWidgetList.value(indexFrom);
+    KfPatchLayerWeakPtr patchLayer = layerWidget->getPatchLayer();
+
+    pengine.moveLayer(patchLayer, indexTo);
+
+    removePatchLayerFromGuiOnly(layerWidget);
+    addPatchLayerToGUI(patchLayer, indexTo);
+
+    setPatchModified(true);
 }
 
 KfJackMidiRoute *MainWindow::jackMidiRouteFromLayerWidget(KonfytLayerWidget *layerWidget)
@@ -5557,6 +5578,33 @@ void MainWindow::on_textBrowser_patchNote_textChanged()
     }
 }
 
+void MainWindow::on_toolButton_layer_down_clicked()
+{
+    int index = ui->listWidget_Layers->currentRow();
+    if (index < 0) { return; } // Nothing selected
+    int to = wrapIndex(index + 1, layerWidgetList.count());
+    movePatchLayer(index, to);
+    // Keep moved item selected
+    ui->listWidget_Layers->setCurrentRow(to);
+}
+
+void MainWindow::on_toolButton_layer_up_clicked()
+{
+    int index = ui->listWidget_Layers->currentRow();
+    if (index < 0) { return; } // Nothing selected
+    int to = wrapIndex(index - 1, layerWidgetList.count());
+    movePatchLayer(index, to);
+    // Keep moved item selected
+    ui->listWidget_Layers->setCurrentRow(to);
+}
+
+void MainWindow::on_listWidget_Layers_currentItemChanged(QListWidgetItem* current, QListWidgetItem* /*previous*/)
+{
+    foreach (KonfytLayerWidget* w, layerWidgetList) {
+        w->setHighlighted(w->getListWidgetItem() == current);
+    }
+}
+
 void MainWindow::on_toolButton_Project_clicked()
 {
     saveCurrentProject();
@@ -6520,6 +6568,8 @@ void MainWindow::on_toolButton_LibraryPreview_clicked()
 {
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
+
+
 
 
 

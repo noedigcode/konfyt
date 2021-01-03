@@ -97,6 +97,7 @@ public:
     int layerCount() const;
     bool isValidLayerIndex(int layerIndex) const;
     void removeLayer(KfPatchLayerWeakPtr layer);
+    void moveLayer(KfPatchLayerWeakPtr layer, int newIndex);
     void clearLayers();
     int layerIndex(KfPatchLayerWeakPtr layer) const;
 

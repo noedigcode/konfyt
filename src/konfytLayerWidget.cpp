@@ -58,10 +58,12 @@ void KonfytLayerWidget::setProject(KonfytLayerWidget::ProjectPtr project)
 
 void KonfytLayerWidget::paintEvent(QPaintEvent* /*e*/)
 {
-    QColor colorFG = QColor(24, 87, 127, 255);
-    QColor colorBG = QColor(0,0,0,0);
+    static QColor colorFG = QColor(24, 87, 127, 255);
+    static QColor colorBG = QColor(30, 30, 30, 255);
+    static QColor colorHighlighted = QColor(255, 255, 255, 255);
 
     QPainter p(this);
+    p.setPen(mHighlighted ? colorHighlighted : colorFG);
 
     QBrush b;
     b.setStyle(Qt::SolidPattern);
@@ -175,6 +177,11 @@ void KonfytLayerWidget::initLayer(KfPatchLayerWeakPtr patchLayer, QListWidgetIte
 void KonfytLayerWidget::refresh()
 {
     setUpGUI();
+}
+
+void KonfytLayerWidget::setHighlighted(bool highlight)
+{
+    mHighlighted = highlight;
 }
 
 /* Set up the widgets corresponding to the layer item. */

@@ -35,9 +35,10 @@
 #define STRING_PROJECT_DIR "$PROJ_DIR$"
 #define KONFYT_PATCH_SUFFIX "konfytpatch"
 
-#define KONFYT_ASSERT_RETURN(cond) Q_ASSERT(cond); if (!cond) { return; }
-#define KONFYT_ASSERT_RETURN_VAL(cond, ret) Q_ASSERT(cond); if (!cond) { return ret; }
+#define KONFYT_ASSERT_RETURN(cond) Q_ASSERT(cond); if (!(cond)) { return; }
+#define KONFYT_ASSERT_RETURN_VAL(cond, ret) Q_ASSERT(cond); if (!(cond)) { return ret; }
 
+int wrapIndex(int index, int listLength);
 QString sanitiseFilename(QString path);
 QString getCompileVersionText();
 

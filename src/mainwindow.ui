@@ -237,6 +237,11 @@ QListView#listWidget_Layers {
 	border-color: rgba(255,255,255,50);
 }
 
+/* Selected layer */
+QListView#listWidget_Layers::item:selected {
+	background: transparent;
+}
+
 /* ---------------------------------------------------------------------- */
 QMainWindow {
 	background-color: rgb(59, 59, 59);
@@ -2603,33 +2608,6 @@ p, li { white-space: pre-wrap; }
                          <property name="spacing">
                           <number>1</number>
                          </property>
-                         <item row="0" column="0">
-                          <widget class="QToolButton" name="toolButton_SavePatch">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="styleSheet">
-                            <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;
-</string>
-                           </property>
-                           <property name="text">
-                            <string>Patch Menu</string>
-                           </property>
-                           <property name="popupMode">
-                            <enum>QToolButton::InstantPopup</enum>
-                           </property>
-                           <property name="toolButtonStyle">
-                            <enum>Qt::ToolButtonTextOnly</enum>
-                           </property>
-                           <property name="arrowType">
-                            <enum>Qt::NoArrow</enum>
-                           </property>
-                          </widget>
-                         </item>
                          <item row="0" column="1">
                           <widget class="QToolButton" name="toolButton_layer_AddMidiPort">
                            <property name="sizePolicy">
@@ -2661,6 +2639,53 @@ border-bottom-right-radius: 0;</string>
                            </property>
                           </widget>
                          </item>
+                         <item row="0" column="3">
+                          <widget class="QToolButton" name="toolButton_layer_down">
+                           <property name="toolTip">
+                            <string>Move selected layer down</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                           </property>
+                           <property name="text">
+                            <string>V</string>
+                           </property>
+                           <property name="icon">
+                            <iconset resource="../images.qrc">
+                             <normaloff>:/icons/down.png</normaloff>:/icons/down.png</iconset>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="0" column="0">
+                          <widget class="QToolButton" name="toolButton_SavePatch">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;
+</string>
+                           </property>
+                           <property name="text">
+                            <string>Patch Menu</string>
+                           </property>
+                           <property name="popupMode">
+                            <enum>QToolButton::InstantPopup</enum>
+                           </property>
+                           <property name="toolButtonStyle">
+                            <enum>Qt::ToolButtonTextOnly</enum>
+                           </property>
+                           <property name="arrowType">
+                            <enum>Qt::NoArrow</enum>
+                           </property>
+                          </widget>
+                         </item>
                          <item row="0" column="2">
                           <widget class="QToolButton" name="toolButton_layer_AddAudioInput">
                            <property name="sizePolicy">
@@ -2674,7 +2699,9 @@ border-bottom-right-radius: 0;</string>
                            </property>
                            <property name="styleSheet">
                             <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
                            </property>
                            <property name="text">
                             <string>Add Audio In Port</string>
@@ -2687,6 +2714,24 @@ border-bottom-left-radius: 0;</string>
                            </property>
                            <property name="arrowType">
                             <enum>Qt::NoArrow</enum>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="0" column="4">
+                          <widget class="QToolButton" name="toolButton_layer_up">
+                           <property name="toolTip">
+                            <string>Move selected layer up</string>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                           </property>
+                           <property name="text">
+                            <string>^</string>
+                           </property>
+                           <property name="icon">
+                            <iconset resource="../images.qrc">
+                             <normaloff>:/icons/up.png</normaloff>:/icons/up.png</iconset>
                            </property>
                           </widget>
                          </item>
