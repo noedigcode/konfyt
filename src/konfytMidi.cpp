@@ -181,7 +181,7 @@ void KonfytMidiEvent::setVelocity(uint8_t vel)
 
 void KonfytMidiEvent::setData2(unsigned char value)
 {
-    mData[2] = value;
+    mData[1] = value;
 }
 
 void KonfytMidiEvent::setDataFromHexString(QString hexString)
