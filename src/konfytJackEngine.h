@@ -35,6 +35,7 @@
 
 #include <QBasicTimer>
 #include <QObject>
+#include <QSet>
 #include <QStringList>
 #include <QTimerEvent>
 
