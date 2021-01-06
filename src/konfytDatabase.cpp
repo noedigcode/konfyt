@@ -217,9 +217,8 @@ KfSoundPtr KonfytDatabaseWorker::sfontFromFile(QString filename)
         p.name = QString(QByteArray( preset->get_name(preset) ));
         p.bank = preset->get_banknum(preset);
         p.program = preset->get_num(preset);
-        p.parent_soundfont = newSfont->filename;
 
-        ret->programlist.append(p);
+        ret->presets.append(p);
         more = sf->iteration_next(sf, preset);
     }
 #else
