@@ -45,6 +45,11 @@ QList<KonfytMidiEvent> KonfytPatchLayer::getMidiSendListEvents()
     return events;
 }
 
+KonfytPatchLayer::KonfytPatchLayer()
+{
+    gainMidiCtrl.setValue(mGain * 127.0);
+}
+
 void KonfytPatchLayer::initLayer(LayerSoundfontData newLayerData)
 {
     mLayerType = TypeSoundfontProgram;
@@ -91,6 +96,24 @@ float KonfytPatchLayer::gain() const
 void KonfytPatchLayer::setGain(float gain)
 {
     mGain = gain;
+    gainMidiCtrl.setValue(gain * 127.0);
+}
+
+void KonfytPatchLayer::setGainByMidi(int value)
+{
+    if (gainMidiCtrl.midiInput(value)) {
+        setGain((float)gainMidiCtrl.value()/127.0);
+    }
+}
+
+void KonfytPatchLayer::setGainMidiCatchupRange(int range)
+{
+    gainMidiCtrl.catchupRange = range;
+}
+
+int KonfytPatchLayer::gainMidiCatchupRange()
+{
+    return gainMidiCtrl.catchupRange;
 }
 
 void KonfytPatchLayer::setSolo(bool isSolo)

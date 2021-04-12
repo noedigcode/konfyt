@@ -53,6 +53,7 @@ public:
     void panic(bool p);
     float getMasterGain();
     void setMasterGain(float newGain);
+    void setMidiCatchupRange(int range);
 
     void setProject(ProjectPtr project);
 
@@ -84,6 +85,7 @@ public:
     void setLayerFilter(KfPatchLayerWeakPtr patchLayer, KonfytMidiFilter filter);
     void setLayerGain(KfPatchLayerWeakPtr patchLayer, float newGain);
     void setLayerGain(int layerIndex, float newGain);
+    void setLayerGainByMidi(int layerIndex, int midiValue);
     void setLayerSolo(KfPatchLayerWeakPtr patchLayer, bool solo);
     void setLayerSolo(int layerIndex, bool solo);
     void setLayerMute(KfPatchLayerWeakPtr patchLayer, bool mute);
@@ -119,7 +121,8 @@ signals:
 private:
     KonfytPatch* mCurrentPatch = nullptr;
     ProjectPtr mCurrentProject;
-    float masterGain;
+    float mMasterGain;
+    int mMidiCatchupRange = 127;
     float convertGain(float linearGain);
 
     QList<KonfytPatch*> patches;

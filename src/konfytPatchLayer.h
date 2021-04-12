@@ -24,6 +24,7 @@
 
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackStructs.h"
+#include "konfytMidi.h"
 #include "konfytMidiFilter.h"
 #include "konfytStructs.h"
 
@@ -85,6 +86,8 @@ public:
         TypeAudioIn          = 3
     };
 
+    KonfytPatchLayer();
+
     // Use to initialize layer
     void initLayer(LayerSoundfontData newLayerData);
     void initLayer(LayerSfzData newLayerData);
@@ -97,6 +100,9 @@ public:
     void setName(QString name);
     float gain() const;
     void setGain(float gain);
+    void setGainByMidi(int value);
+    void setGainMidiCatchupRange(int range);
+    int gainMidiCatchupRange();
     void setSolo(bool isSolo);
     void setMute(bool isMute);
     bool isSolo() const;
@@ -133,6 +139,8 @@ private:
     QString mName = "UNINITIALIZED LAYER";
     int mBusIdInProject = 0;
     int mMidiInPortIdInProject = 0;
+
+    MidiValueController gainMidiCtrl;
 };
 
 #endif // KONFYT_PATCH_LAYER_H

@@ -544,7 +544,7 @@ void KonfytPatchEngine::updateLayerGain(KfPatchLayerSharedPtr layer)
         LayerSoundfontData sfData = layer->soundfontData;
         if (sfData.synthInEngine == nullptr) { return; } // Layer not loaded yet
         // Gain = layer gain * master gain
-        fluidsynthEngine.setGain( sfData.synthInEngine, convertGain(layer->gain()*masterGain) );
+        fluidsynthEngine.setGain( sfData.synthInEngine, convertGain(layer->gain()*mMasterGain) );
 
     } else if (layerType == KonfytPatchLayer::TypeSfz) {
 
@@ -552,7 +552,7 @@ void KonfytPatchEngine::updateLayerGain(KfPatchLayerSharedPtr layer)
         if (pluginData.indexInEngine == -1) { return; } // Layer not loaded yet
         // Gain = layer gain * master gain
         // Set gain of JACK ports instead of sfzEngine->setGain() since this isn't implemented for all engine types yet.
-        jack->setPluginGain(pluginData.portsInJackEngine, convertGain(layer->gain()*masterGain) );
+        jack->setPluginGain(pluginData.portsInJackEngine, convertGain(layer->gain()*mMasterGain) );
 
     } else if (layerType == KonfytPatchLayer::TypeAudioIn) {
 
@@ -563,9 +563,9 @@ void KonfytPatchEngine::updateLayerGain(KfPatchLayerSharedPtr layer)
         if (audioPortData.jackRouteLeft == nullptr) { return; } // Layer not loaded yet
         // Left channel Gain
         jack->setAudioRouteGain(audioPortData.jackRouteLeft,
-                                convertGain(layer->gain()*masterGain));
+                                convertGain(layer->gain()*mMasterGain));
         // Right channel Gain
-        jack->setAudioRouteGain(audioPortData.jackRouteRight, convertGain(layer->gain()*masterGain));
+        jack->setAudioRouteGain(audioPortData.jackRouteRight, convertGain(layer->gain()*mMasterGain));
 
     } else if (layerType == KonfytPatchLayer::TypeMidiOut) {
 
@@ -662,12 +662,12 @@ KonfytPatch *KonfytPatchEngine::currentPatch()
 
 float KonfytPatchEngine::getMasterGain()
 {
-    return masterGain;
+    return mMasterGain;
 }
 
 void KonfytPatchEngine::setMasterGain(float newGain)
 {
-    masterGain = newGain;
+    mMasterGain = newGain;
 
     updatePatchLayersGain(mCurrentPatch);
     // Also for all always-active patches
@@ -677,6 +677,11 @@ void KonfytPatchEngine::setMasterGain(float newGain)
         if (!patch->alwaysActive) { continue; }
         updatePatchLayersGain(patch);
     }
+}
+
+void KonfytPatchEngine::setMidiCatchupRange(int range)
+{
+    mMidiCatchupRange = range;
 }
 
 void KonfytPatchEngine::setLayerGain(KfPatchLayerWeakPtr patchLayer, float newGain)
@@ -692,6 +697,16 @@ void KonfytPatchEngine::setLayerGain(int layerIndex, float newGain)
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
     setLayerGain( mCurrentPatch->layer(layerIndex), newGain );
+}
+
+void KonfytPatchEngine::setLayerGainByMidi(int layerIndex, int midiValue)
+{
+    KONFYT_ASSERT_RETURN(mCurrentPatch);
+
+    KfPatchLayerSharedPtr patchLayer = mCurrentPatch->layer(layerIndex);
+    patchLayer->setGainMidiCatchupRange(mMidiCatchupRange);
+    patchLayer->setGainByMidi(midiValue);
+    updateLayerGain(patchLayer);
 }
 
 void KonfytPatchEngine::setLayerSolo(KfPatchLayerWeakPtr patchLayer, bool solo)

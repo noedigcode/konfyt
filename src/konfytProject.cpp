@@ -26,13 +26,6 @@
 KonfytProject::KonfytProject(QObject *parent) :
     QObject(parent)
 {
-    // Initialise variables
-    projectName = "New Project";
-    patchListNumbers = true;
-    patchListNotes = false;
-    programChangeSwitchPatches = true;
-    modified = false;
-
     // Project has to have a minimum 1 bus
     this->audioBus_add("Master Bus"); // Ports will be assigned later when loading project
     // Add at least 1 MIDI input port also
@@ -97,6 +90,7 @@ bool KonfytProject::saveProjectAs(QString dirname)
     // Write misc settings
     stream.writeTextElement(XML_PRJ_PATCH_LIST_NUMBERS, bool2str(patchListNumbers));
     stream.writeTextElement(XML_PRJ_PATCH_LIST_NOTES, bool2str(patchListNotes));
+    stream.writeTextElement(XML_PRJ_MIDI_CATCHUP_RANGE, n2s(midiCatchupRange));
 
     // Write patches
     for (int i=0; i<patchList.count(); i++) {
@@ -198,7 +192,7 @@ bool KonfytProject::saveProjectAs(QString dirname)
     stream.writeStartElement(XML_PRJ_PROCESSLIST);
     for (int i=0; i<processList.count(); i++) {
         stream.writeStartElement(XML_PRJ_PROCESS);
-        konfytProcess* gp = processList.at(i);
+        KonfytProcess* gp = processList.at(i);
         stream.writeTextElement(XML_PRJ_PROCESS_APPNAME, gp->appname);
         stream.writeEndElement(); // end of process
     }
@@ -327,6 +321,10 @@ bool KonfytProject::loadProject(QString filename)
 
                 patchListNotes = Qstr2bool(r.readElementText());
 
+            } else if (r.name() == XML_PRJ_MIDI_CATCHUP_RANGE) {
+
+                setMidiCatchupRange(r.readElementText().toInt());
+
             } else if (r.name() == XML_PRJ_MIDI_IN_PORTLIST) {
 
                 while (r.readNextStartElement()) { // port
@@ -443,7 +441,7 @@ bool KonfytProject::loadProject(QString filename)
             } else if (r.name() == XML_PRJ_PROCESSLIST) {
 
                 while (r.readNextStartElement()) { // process
-                    konfytProcess* gp = new konfytProcess();
+                    KonfytProcess* gp = new KonfytProcess();
                     while (r.readNextStartElement()) {
                         if (r.name() == XML_PRJ_PROCESS_APPNAME) {
                             gp->appname = r.readElementText();
@@ -604,6 +602,20 @@ void KonfytProject::setShowPatchListNotes(bool show)
 {
     patchListNotes = show;
     setModified(true);
+}
+
+void KonfytProject::setMidiCatchupRange(int range)
+{
+    if (midiCatchupRange != range) {
+        midiCatchupRange = range;
+        setModified(true);
+        emit midiCatchupRangeChanged(range);
+    }
+}
+
+int KonfytProject::getMidiCatchupRange()
+{
+    return midiCatchupRange;
 }
 
 QString KonfytProject::getProjectName()
@@ -1175,14 +1187,14 @@ QStringList KonfytProject::midiOutPort_getClients(int portId)
 }
 
 /* Add process (External program) to GUI and current project. */
-void KonfytProject::addProcess(konfytProcess* process)
+void KonfytProject::addProcess(KonfytProcess* process)
 {
     // Add to internal list
     process->projectDir = this->getDirname();
     processList.append(process);
     // Connect signals
-    connect(process, &konfytProcess::started, this, &KonfytProject::processStartedSlot);
-    connect(process, &konfytProcess::finished, this, &KonfytProject::processFinishedSlot);
+    connect(process, &KonfytProcess::started, this, &KonfytProject::processStartedSlot);
+    connect(process, &KonfytProcess::finished, this, &KonfytProject::processFinishedSlot);
     setModified(true);
 }
 
@@ -1228,19 +1240,19 @@ void KonfytProject::removeProcess(int index)
 }
 
 /* Slot for signal from Process object, when the process was started. */
-void KonfytProject::processStartedSlot(konfytProcess *process)
+void KonfytProject::processStartedSlot(KonfytProcess *process)
 {
     int index = processList.indexOf(process);
     processStartedSignal(index, process);
 }
 
-void KonfytProject::processFinishedSlot(konfytProcess *process)
+void KonfytProject::processFinishedSlot(KonfytProcess *process)
 {
     int index = processList.indexOf(process);
     processFinishedSignal(index, process);
 }
 
-QList<konfytProcess*> KonfytProject::getProcessList()
+QList<KonfytProcess*> KonfytProject::getProcessList()
 {
     return processList;
 }

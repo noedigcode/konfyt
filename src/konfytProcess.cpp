@@ -21,32 +21,30 @@
 
 #include "konfytProcess.h"
 
-konfytProcess::konfytProcess()
+KonfytProcess::KonfytProcess()
 {
-    connect(&process, &QProcess::started, this, &konfytProcess::processStarted);
-    connect(&process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-            this, &konfytProcess::processFinished);
-
-    state = KONFYTPROCESS_NOT_STARTED;
+    connect(&process, &QProcess::started, this, &KonfytProcess::processStarted);
+    connect(&process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+            this, &KonfytProcess::processFinished);
 }
 
 /* Slot for signal from process when it is started. */
-void konfytProcess::processStarted()
+void KonfytProcess::processStarted()
 {
-    state = KONFYTPROCESS_RUNNING;
+    state = RUNNING;
     emit started(this);
 }
 
 /* Slot for signal from process when it is finished. */
-void konfytProcess::processFinished(int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/)
+void KonfytProcess::processFinished(int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/)
 {
-    if (state != KONFYTPROCESS_STOPPED) {
-        state = KONFYTPROCESS_FINISHED;
+    if (state != STOPPED) {
+        state = FINISHED;
     }
     emit finished(this);
 }
 
-void konfytProcess::start()
+void KonfytProcess::start()
 {
     // Replace variables in strings
     QString runAppname = appname;
@@ -55,29 +53,29 @@ void konfytProcess::start()
     process.start(runAppname);
 }
 
-void konfytProcess::stop()
+void KonfytProcess::stop()
 {
-    if (state == KONFYTPROCESS_RUNNING) {
-        state = KONFYTPROCESS_STOPPED;
+    if (state == RUNNING) {
+        state = STOPPED;
         process.kill();
     }
 }
 
-konfytProcessState konfytProcess::getState()
+KonfytProcess::State KonfytProcess::getState()
 {
     return state;
 }
 
-bool konfytProcess::isRunning()
+bool KonfytProcess::isRunning()
 {
-    if (state == KONFYTPROCESS_RUNNING) {
+    if (state == RUNNING) {
         return true;
     } else {
         return false;
     }
 }
 
-QString konfytProcess::toString_appAndArgs()
+QString KonfytProcess::toString_appAndArgs()
 {
     QString out = appname;
     return out;

@@ -57,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupGuiDefaults();
     setupExternalAppsMenu();
     setMasterInTranspose(0, false);
+    setMasterGain(1);
 
     // Show welcome message in statusbar
     QString app_name(APP_NAME);
@@ -1206,9 +1207,9 @@ void MainWindow::loadProject(ProjectPtr prj)
 
     // Update external applications list
     ui->listWidget_ExtApps->clear();
-    QList<konfytProcess*> prl = prj->getProcessList();
+    QList<KonfytProcess*> prl = prj->getProcessList();
     for (int j=0; j<prl.count(); j++) {
-        konfytProcess* gp = prl.at(j);
+        KonfytProcess* gp = prl.at(j);
         QString temp = gp->toString_appAndArgs();
         if (gp->isRunning()) {
             temp = "[running] " + temp;
@@ -1222,7 +1223,9 @@ void MainWindow::loadProject(ProjectPtr prj)
     connect(prj.data(), &KonfytProject::processFinishedSignal,
             this, &MainWindow::processFinishedSlot);
     connect(prj.data(), &KonfytProject::projectModifiedChanged,
-            this, &MainWindow::projectModifiedStateChanged);
+            this, &MainWindow::onProjectModifiedStateChanged);
+    connect(prj.data(), &KonfytProject::midiCatchupRangeChanged,
+            this, &MainWindow::onProjectMidiCatchupRangeChanged);
 
     // Get triggers from project and add to quick lookup hash
     QList<KonfytTrigger> trigs = prj->getTriggerList();
@@ -1250,7 +1253,9 @@ void MainWindow::loadProject(ProjectPtr prj)
     }
 
     // Update project modified indication in GUI
-    projectModifiedStateChanged(prj->isModified());
+    onProjectModifiedStateChanged(prj->isModified());
+
+    onProjectMidiCatchupRangeChanged(prj->getMidiCatchupRange());
 
     masterPatch = nullptr;
     gui_updatePatchView();
@@ -1569,12 +1574,19 @@ bool MainWindow::fileIsSoundfont(QString file)
  * and set the master gain in the patch engine. */
 void MainWindow::setMasterGain(float gain)
 {
+    if (gain > 1.0) { gain = 1.0; }
+    if (gain < 0) { gain = 0; }
+
+    masterGainMidiCtrlr.setValue(gain * 127.0);
     if (previewMode) {
         previewGain = gain;
     } else {
         masterGain = gain;
     }
     pengine.setMasterGain(gain);
+
+    ui->horizontalSlider_MasterGain->setValue(
+                gain * ui->horizontalSlider_MasterGain->maximum());
 }
 
 /* Load the appropriate patch based on the mode (preview mode or normal) and
@@ -1632,10 +1644,6 @@ void MainWindow::loadPatchForModeAndUpdateGUI()
     }
 
     gui_updatePatchView();
-
-    // Update master slider (as this is different for normal/preview mode)
-    ui->horizontalSlider_MasterGain->setValue(
-                pengine.getMasterGain()*ui->horizontalSlider_MasterGain->maximum());
 
     // Indicate to the user that the patch is not modified.
     setPatchModified(false);
@@ -2301,10 +2309,9 @@ void MainWindow::setPreviewMode(bool choice)
 }
 
 /* Master gain slider moved. */
-void MainWindow::on_horizontalSlider_MasterGain_sliderMoved(int /*position*/)
+void MainWindow::on_horizontalSlider_MasterGain_sliderMoved(int position)
 {
-    setMasterGain( (float)ui->horizontalSlider_MasterGain->value() /
-                   (float)ui->horizontalSlider_MasterGain->maximum() );
+    setMasterGain( (float)position / (float)ui->horizontalSlider_MasterGain->maximum() );
 }
 
 void MainWindow::on_lineEdit_PatchName_returnPressed()
@@ -2420,7 +2427,7 @@ QString MainWindow::getUniqueFilename(QString dirname, QString name, QString ext
 }
 
 /* Add process (External application) to GUI and current project. */
-void MainWindow::addProcess(konfytProcess* process)
+void MainWindow::addProcess(KonfytProcess* process)
 {
     if (!mCurrentProject) {
         print("No active project.");
@@ -2472,7 +2479,7 @@ void MainWindow::removeProcess(int index)
     delete item;
 }
 
-void MainWindow::processStartedSlot(int index, konfytProcess *process)
+void MainWindow::processStartedSlot(int index, KonfytProcess *process)
 {
     if ( (index >=0) && (index < ui->listWidget_ExtApps->count()) ) {
         // Indicate in list widget
@@ -2483,7 +2490,7 @@ void MainWindow::processStartedSlot(int index, konfytProcess *process)
     }
 }
 
-void MainWindow::processFinishedSlot(int index, konfytProcess *process)
+void MainWindow::processFinishedSlot(int index, KonfytProcess *process)
 {
     if ( (index >=0) && (index < ui->listWidget_ExtApps->count()) ) {
         // Indicate in list widget
@@ -2781,7 +2788,7 @@ void MainWindow::gui_updateProjectName()
     ui->lineEdit_ProjectName->setText(name);
 }
 
-void MainWindow::projectModifiedStateChanged(bool modified)
+void MainWindow::onProjectModifiedStateChanged(bool modified)
 {
     QString stylesheet_base = "border-top-left-radius: 0;"
             "border-bottom-left-radius: 0;"
@@ -2796,6 +2803,13 @@ void MainWindow::projectModifiedStateChanged(bool modified)
     } else {
         ui->toolButton_Project->setStyleSheet(stylesheet_normal);
     }
+}
+
+void MainWindow::onProjectMidiCatchupRangeChanged(int range)
+{
+    ui->spinBox_Triggers_midiCatchupRange->setValue(range);
+    pengine.setMidiCatchupRange(range);
+    masterGainMidiCtrlr.catchupRange = range;
 }
 
 // Save current project in its own folder, in the projects dir.
@@ -3114,15 +3128,14 @@ void MainWindow::triggerPanic(bool panic)
     updateGlobalPitchbendIndicator();
 }
 
-void MainWindow::midi_setLayerGain(int layer, int midiValue)
+void MainWindow::midi_setLayerGain(int layerIndex, int midiValue)
 {
-    // Channel slider
-    float temp = ((float)midiValue)/127.0;
     // Set channel gain in engine
-    if ((layer>=0) && (layer < pengine.getNumLayers()) ) {
-        pengine.setLayerGain(layer,temp);
+    if ((layerIndex>=0) && (layerIndex < pengine.getNumLayers()) ) {
+        pengine.setLayerGainByMidi(layerIndex, midiValue);
         // Set channel gain in GUI slider
-        this->layerWidgetList.at(layer)->setSliderGain(temp);
+        this->layerWidgetList.at(layerIndex)->setSliderGain(
+            pengine.currentPatch()->layer(layerIndex).toStrongRef()->gain());
     }
 }
 
@@ -3331,7 +3344,7 @@ void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
 void MainWindow::on_pushButton_ExtApp_add_clicked()
 {
     // Create a new process and call addProcess function
-    konfytProcess* p = new konfytProcess();
+    KonfytProcess* p = new KonfytProcess();
 
     p->appname = ui->lineEdit_ExtApp->text();
 
@@ -4140,14 +4153,14 @@ void MainWindow::on_pushButton_LiveMode_clicked()
 
 void MainWindow::on_actionMaster_Volume_Up_triggered()
 {
-    ui->horizontalSlider_MasterGain->setValue(ui->horizontalSlider_MasterGain->value() + 1);
-    on_horizontalSlider_MasterGain_sliderMoved(ui->horizontalSlider_MasterGain->value());
+    on_horizontalSlider_MasterGain_sliderMoved(
+                ui->horizontalSlider_MasterGain->value() + 1);
 }
 
 void MainWindow::on_actionMaster_Volume_Down_triggered()
 {
-    ui->horizontalSlider_MasterGain->setValue(ui->horizontalSlider_MasterGain->value() -1);
-    on_horizontalSlider_MasterGain_sliderMoved(ui->horizontalSlider_MasterGain->value());
+    on_horizontalSlider_MasterGain_sliderMoved(
+                ui->horizontalSlider_MasterGain->value() - 1);
 }
 
 /* External apps list: item double clicked. */
@@ -4163,7 +4176,7 @@ void MainWindow::on_listWidget_ExtApps_clicked(const QModelIndex &index)
     ProjectPtr prj = mCurrentProject;;
     if (!prj) { return; }
 
-    konfytProcess* p = prj->getProcessList()[index.row()];
+    KonfytProcess* p = prj->getProcessList()[index.row()];
     ui->lineEdit_ExtApp->setText(p->appname);
 }
 
@@ -4755,8 +4768,9 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
 
     } else if (action == ui->actionMaster_Volume_Slider) {
 
-        int value = ((float)ev.data2())/127.0 * ui->horizontalSlider_MasterGain->maximum();
-        ui->horizontalSlider_MasterGain->setSliderPosition(value); // Triggers sliderMoved signal
+        if (masterGainMidiCtrlr.midiInput(ev.data2())) {
+            setMasterGain((float)masterGainMidiCtrlr.value()/127.0);
+        }
 
     } else if (action == ui->actionMaster_Volume_Up) {
 
@@ -5678,7 +5692,7 @@ void MainWindow::on_pushButton_ExtApp_Replace_clicked()
     ProjectPtr prj = mCurrentProject;;
     if (!prj) { return; }
 
-    konfytProcess* process = prj->getProcessList()[row];
+    KonfytProcess* process = prj->getProcessList()[row];
     process->appname = ui->lineEdit_ExtApp->text();
 
     QListWidgetItem* item = ui->listWidget_ExtApps->item(row);
@@ -6558,12 +6572,10 @@ void MainWindow::on_toolButton_LibraryPreview_clicked()
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
 
+void MainWindow::on_spinBox_Triggers_midiCatchupRange_valueChanged(int arg1)
+{
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
 
-
-
-
-
-
-
-
-
+    prj->setMidiCatchupRange(arg1);
+}

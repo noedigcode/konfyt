@@ -28,21 +28,15 @@
 #include <QFileInfo>
 
 
-enum konfytProcessState {
-    KONFYTPROCESS_NOT_STARTED = 0,
-    KONFYTPROCESS_RUNNING = 1,
-    KONFYTPROCESS_FINISHED = 2,
-    KONFYTPROCESS_STOPPED = 3
-};
-
-
 /* Class for running an external application. */
-class konfytProcess : public QObject
+class KonfytProcess : public QObject
 {
     Q_OBJECT
 
 public:
-    konfytProcess();
+    KonfytProcess();
+
+    enum State { NOT_STARTED, RUNNING, FINISHED, STOPPED };
 
     QProcess process;
     QString appname;
@@ -50,21 +44,21 @@ public:
 
     void start();
     void stop();
-    konfytProcessState getState();
+    State getState();
     bool isRunning();
 
     QString toString_appAndArgs();
-
-private:
-    konfytProcessState state;
 
 public slots:
     void processStarted();
     void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
 signals:
-    void started(konfytProcess* process);
-    void finished(konfytProcess* process);
+    void started(KonfytProcess* process);
+    void finished(KonfytProcess* process);
+
+private:
+    State state = NOT_STARTED;
 
 };
 

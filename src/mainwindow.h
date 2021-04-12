@@ -101,16 +101,17 @@ class MainWindow;
 }
 
 
-
-enum LibraryTreeItemType { libTreeInvalid,
-                           libTreePatchesRoot,
-                           libTreePatch,
-                           libTreeSFZRoot,
-                           libTreeSFZFolder,
-                           libTreeSFZ,
-                           libTreeSoundfontRoot,
-                           libTreeSoundfontFolder,
-                           libTreeSoundfont };
+enum LibraryTreeItemType {
+    libTreeInvalid,
+   libTreePatchesRoot,
+   libTreePatch,
+   libTreeSFZRoot,
+   libTreeSFZFolder,
+   libTreeSFZ,
+   libTreeSoundfontRoot,
+   libTreeSoundfontFolder,
+   libTreeSoundfont
+};
 
 enum MidiFilterEditType {
     MidiFilterEditPort,
@@ -204,7 +205,8 @@ private:
 
 private slots:
     // Project modified
-    void projectModifiedStateChanged(bool modified);
+    void onProjectModifiedStateChanged(bool modified);
+    void onProjectMidiCatchupRangeChanged(int range);
 
     // Projects Menu
     void onprojectMenu_ActionTrigger(QAction* action);
@@ -330,6 +332,7 @@ private:
     void setupPatchEngine();
     KonfytPatch* masterPatch = nullptr; // Current patch being played
     float masterGain = 1.0;     // Master gain when not in preview mode
+    MidiValueController masterGainMidiCtrlr;
 
     KonfytPatch previewPatch;   // Patch played when in preview mode
     float previewGain = 1.0;    // Gain when in preview mode
@@ -686,14 +689,14 @@ private:
     QHash<QAction*, QString> extAppsMenuActions_Set;
     QMenu extAppsMenu;
     void setupExternalAppsMenu();
-    void addProcess(konfytProcess *process);
+    void addProcess(KonfytProcess *process);
     void runProcess(int index);
     void stopProcess(int index);
     void removeProcess(int index);
 private slots:
     // Processes (external apps)
-    void processStartedSlot(int index, konfytProcess* process);
-    void processFinishedSlot(int index, konfytProcess* process);
+    void processStartedSlot(int index, KonfytProcess* process);
+    void processFinishedSlot(int index, KonfytProcess* process);
 
     // External apps menu
     void extAppsMenuTriggered(QAction* action);
@@ -741,7 +744,7 @@ private:
     QList<QAction*> channelSoloActions;
     QList<QAction*> channelMuteActions;
     QList<QAction*> patchActions;
-    void midi_setLayerGain(int layer, int midiValue);
+    void midi_setLayerGain(int layerIndex, int midiValue);
     void midi_setLayerSolo(int layer, int midiValue);
     void midi_setLayerMute(int layer, int midiValue);
 
@@ -891,7 +894,7 @@ private slots:
 
     void on_stackedWidget_currentChanged(int arg1);
 
-
+    void on_spinBox_Triggers_midiCatchupRange_valueChanged(int arg1);
 };
 
 #endif // MAINWINDOW_H

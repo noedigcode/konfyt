@@ -172,4 +172,32 @@ struct MidiSendItem
 };
 
 
+struct MidiValueController
+{
+    int catchupRange = 127;
+    void setValue(int value)
+    {
+        mValue = value;
+    }
+    int value()
+    {
+        return mValue;
+    }
+    bool midiInput(int value)
+    {
+        bool updated = false;
+
+        int delta = qAbs(mValue - value);
+        if (delta < catchupRange) {
+            mValue = value;
+            updated = true;
+        }
+
+        return updated;
+    }
+private:
+    int mValue = 0;
+};
+
+
 #endif // KONFYTMIDI_H

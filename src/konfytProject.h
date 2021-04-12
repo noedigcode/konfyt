@@ -39,56 +39,6 @@
 #define PROJECT_FILENAME_EXTENSION ".konfytproject"
 #define PROJECT_PATCH_DIR "patches"
 
-#define XML_PRJ "konfytProject"
-#define XML_PRJ_NAME "name"
-#define XML_PRJ_PATCH "patch"
-#define XML_PRJ_PATCH_FILENAME "filename"
-#define XML_PRJ_PATCH_LIST_NUMBERS "patchListNumbers"
-#define XML_PRJ_PATCH_LIST_NOTES "patchListNotes"
-#define XML_PRJ_MIDI_IN_PORTLIST "midiInPortList"
-#define XML_PRJ_MIDI_IN_PORT "port"
-#define XML_PRJ_MIDI_IN_PORT_ID "portId"
-#define XML_PRJ_MIDI_IN_PORT_NAME "portName"
-#define XML_PRJ_MIDI_IN_PORT_CLIENT "client"
-#define XML_PRJ_MIDI_OUT_PORTLIST "midiOutPortList"
-#define XML_PRJ_MIDI_OUT_PORT "port"
-#define XML_PRJ_MIDI_OUT_PORT_ID "portId"
-#define XML_PRJ_MIDI_OUT_PORT_NAME "portName"
-#define XML_PRJ_MIDI_OUT_PORT_CLIENT "client"
-#define XML_PRJ_BUSLIST "audioBusList"
-#define XML_PRJ_BUS "bus"
-#define XML_PRJ_BUS_ID "busId"
-#define XML_PRJ_BUS_NAME "busName"
-#define XML_PRJ_BUS_LGAIN "leftGain"
-#define XML_PRJ_BUS_RGAIN "rightGain"
-#define XML_PRJ_BUS_LCLIENT "leftClient"
-#define XML_PRJ_BUS_RCLIENT "rightClient"
-#define XML_PRJ_AUDIOINLIST "audioInputPortList"
-#define XML_PRJ_AUDIOIN_PORT "port"
-#define XML_PRJ_AUDIOIN_PORT_ID "portId"
-#define XML_PRJ_AUDIOIN_PORT_NAME "portName"
-#define XML_PRJ_AUDIOIN_PORT_LGAIN "leftGain"
-#define XML_PRJ_AUDIOIN_PORT_RGAIN "rightGain"
-#define XML_PRJ_AUDIOIN_PORT_LCLIENT "leftClient"
-#define XML_PRJ_AUDIOIN_PORT_RCLIENT "rightClient"
-#define XML_PRJ_PROCESSLIST "processList"
-#define XML_PRJ_PROCESS "process"
-#define XML_PRJ_PROCESS_APPNAME "appname"
-#define XML_PRJ_TRIGGERLIST "triggerList"
-#define XML_PRJ_TRIGGER "trigger"
-#define XML_PRJ_TRIGGER_ACTIONTEXT "actionText"
-#define XML_PRJ_TRIGGER_TYPE "type"
-#define XML_PRJ_TRIGGER_CHAN "channel"
-#define XML_PRJ_TRIGGER_DATA1 "data1"
-#define XML_PRJ_TRIGGER_BANKMSB "bankMSB"
-#define XML_PRJ_TRIGGER_BANKLSB "bankLSB"
-#define XML_PRJ_PROG_CHANGE_SWITCH_PATCHES "programChangeSwitchPatches"
-#define XML_PRJ_OTHERJACK_MIDI_CON_LIST "otherJackMidiConList"
-#define XML_PRJ_OTHERJACK_AUDIO_CON_LIST "otherJackAudioConList"
-#define XML_PRJ_OTHERJACKCON "otherJackCon"
-#define XML_PRJ_OTHERJACKCON_SRC "srcPort"
-#define XML_PRJ_OTHERJACKCON_DEST "destPort"
-
 struct PrjAudioBus
 {
     QString busName;
@@ -166,6 +116,8 @@ public:
     void setShowPatchListNumbers(bool show);
     bool getShowPatchListNotes();
     void setShowPatchListNotes(bool show);
+    void setMidiCatchupRange(int range);
+    int getMidiCatchupRange();
 
     // MIDI input ports
     QList<int> midiInPort_getAllPortIds();  // Get list of port ids
@@ -222,12 +174,12 @@ public:
     void audioBus_removeClient(int busId, portLeftRight leftRight, QString client);
 
     // External Programs
-    void addProcess(konfytProcess *process);
+    void addProcess(KonfytProcess *process);
     bool isProcessRunning(int index);
     void runProcess(int index);
     void stopProcess(int index);
     void removeProcess(int index);
-    QList<konfytProcess*> getProcessList();
+    QList<KonfytProcess*> getProcessList();
 
     // Triggers
     void addAndReplaceTrigger(KonfytTrigger newTrigger);
@@ -256,15 +208,16 @@ signals:
     void midiInPortNameChanged(int portId);
     void midiOutPortNameChanged(int portId);
     void audioInPortNameChanged(int portId);
+    void midiCatchupRangeChanged(int range);
 
     // Signals emitted when signals are recieved from Process objects.
-    void processStartedSignal(int index, konfytProcess* process);
-    void processFinishedSignal(int index, konfytProcess* process);
+    void processStartedSignal(int index, KonfytProcess* process);
+    void processFinishedSignal(int index, KonfytProcess* process);
     
 private:
     QList<KonfytPatch*> patchList;
     QString projectDirname;
-    QString projectName;
+    QString projectName = "New Project";
 
     QMap<int, PrjMidiPort> midiInPortMap;
     int midiInPort_getUniqueId();
@@ -280,22 +233,75 @@ private:
 
     int getUniqueIdHelper(QList<int> ids);
 
-    QList<konfytProcess*> processList;
+    QList<KonfytProcess*> processList;
     QHash<QString, KonfytTrigger> triggerHash;
-    bool programChangeSwitchPatches;
-    bool patchListNumbers;
-    bool patchListNotes;
+    bool programChangeSwitchPatches = true;
+    bool patchListNumbers = true;
+    bool patchListNotes = false;
+    int midiCatchupRange = 127;
 
     QList<KonfytJackConPair> jackMidiConList;
     QList<KonfytJackConPair> jackAudioConList;
 
-    bool modified; // Whether project has been modified since last load/save.
+    bool modified = false; // Whether project has been modified since last load/save.
 
 private slots:
     // Slots for signals from Process objects.
     // Will then emit the processStarted/Finished signals.
-    void processStartedSlot(konfytProcess* process);
-    void processFinishedSlot(konfytProcess* process);
+    void processStartedSlot(KonfytProcess* process);
+    void processFinishedSlot(KonfytProcess* process);
+
+private:
+    const char* XML_PRJ = "konfytProject";
+    const char* XML_PRJ_NAME = "name";
+    const char* XML_PRJ_PATCH = "patch";
+    const char* XML_PRJ_PATCH_FILENAME = "filename";
+    const char* XML_PRJ_PATCH_LIST_NUMBERS = "patchListNumbers";
+    const char* XML_PRJ_PATCH_LIST_NOTES = "patchListNotes";
+    const char* XML_PRJ_MIDI_CATCHUP_RANGE = "midiCatchupRange";
+    const char* XML_PRJ_MIDI_IN_PORTLIST = "midiInPortList";
+    const char* XML_PRJ_MIDI_IN_PORT = "port";
+    const char* XML_PRJ_MIDI_IN_PORT_ID = "portId";
+    const char* XML_PRJ_MIDI_IN_PORT_NAME = "portName";
+    const char* XML_PRJ_MIDI_IN_PORT_CLIENT = "client";
+    const char* XML_PRJ_MIDI_OUT_PORTLIST = "midiOutPortList";
+    const char* XML_PRJ_MIDI_OUT_PORT = "port";
+    const char* XML_PRJ_MIDI_OUT_PORT_ID = "portId";
+    const char* XML_PRJ_MIDI_OUT_PORT_NAME = "portName";
+    const char* XML_PRJ_MIDI_OUT_PORT_CLIENT = "client";
+    const char* XML_PRJ_BUSLIST = "audioBusList";
+    const char* XML_PRJ_BUS = "bus";
+    const char* XML_PRJ_BUS_ID = "busId";
+    const char* XML_PRJ_BUS_NAME = "busName";
+    const char* XML_PRJ_BUS_LGAIN = "leftGain";
+    const char* XML_PRJ_BUS_RGAIN = "rightGain";
+    const char* XML_PRJ_BUS_LCLIENT = "leftClient";
+    const char* XML_PRJ_BUS_RCLIENT = "rightClient";
+    const char* XML_PRJ_AUDIOINLIST = "audioInputPortList";
+    const char* XML_PRJ_AUDIOIN_PORT = "port";
+    const char* XML_PRJ_AUDIOIN_PORT_ID = "portId";
+    const char* XML_PRJ_AUDIOIN_PORT_NAME = "portName";
+    const char* XML_PRJ_AUDIOIN_PORT_LGAIN = "leftGain";
+    const char* XML_PRJ_AUDIOIN_PORT_RGAIN = "rightGain";
+    const char* XML_PRJ_AUDIOIN_PORT_LCLIENT = "leftClient";
+    const char* XML_PRJ_AUDIOIN_PORT_RCLIENT = "rightClient";
+    const char* XML_PRJ_PROCESSLIST = "processList";
+    const char* XML_PRJ_PROCESS = "process";
+    const char* XML_PRJ_PROCESS_APPNAME = "appname";
+    const char* XML_PRJ_TRIGGERLIST = "triggerList";
+    const char* XML_PRJ_TRIGGER = "trigger";
+    const char* XML_PRJ_TRIGGER_ACTIONTEXT = "actionText";
+    const char* XML_PRJ_TRIGGER_TYPE = "type";
+    const char* XML_PRJ_TRIGGER_CHAN = "channel";
+    const char* XML_PRJ_TRIGGER_DATA1 = "data1";
+    const char* XML_PRJ_TRIGGER_BANKMSB = "bankMSB";
+    const char* XML_PRJ_TRIGGER_BANKLSB = "bankLSB";
+    const char* XML_PRJ_PROG_CHANGE_SWITCH_PATCHES = "programChangeSwitchPatches";
+    const char* XML_PRJ_OTHERJACK_MIDI_CON_LIST = "otherJackMidiConList";
+    const char* XML_PRJ_OTHERJACK_AUDIO_CON_LIST = "otherJackAudioConList";
+    const char* XML_PRJ_OTHERJACKCON = "otherJackCon";
+    const char* XML_PRJ_OTHERJACKCON_SRC = "srcPort";
+    const char* XML_PRJ_OTHERJACKCON_DEST = "destPort";
 };
 
 #endif // KONFYT_PROJECT_H
