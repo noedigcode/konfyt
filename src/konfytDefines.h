@@ -25,7 +25,7 @@
 #include <QString>
 
 #define APP_NAME "Konfyt"
-#define APP_VERSION "1.1.3"
+#define APP_VERSION "1.1.4-testing"
 
 #define n2s(x) QString::number(x)
 #define bool2int(x) (x ? 1 : 0)
