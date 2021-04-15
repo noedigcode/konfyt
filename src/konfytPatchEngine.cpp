@@ -679,9 +679,9 @@ void KonfytPatchEngine::setMasterGain(float newGain)
     }
 }
 
-void KonfytPatchEngine::setMidiCatchupRange(int range)
+void KonfytPatchEngine::setMidiPickupRange(int range)
 {
-    mMidiCatchupRange = range;
+    mMidiPickupRange = range;
 }
 
 void KonfytPatchEngine::setLayerGain(KfPatchLayerWeakPtr patchLayer, float newGain)
@@ -704,7 +704,7 @@ void KonfytPatchEngine::setLayerGainByMidi(int layerIndex, int midiValue)
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
     KfPatchLayerSharedPtr patchLayer = mCurrentPatch->layer(layerIndex);
-    patchLayer->setGainMidiCatchupRange(mMidiCatchupRange);
+    patchLayer->setGainMidiPickupRange(mMidiPickupRange);
     patchLayer->setGainByMidi(midiValue);
     updateLayerGain(patchLayer);
 }

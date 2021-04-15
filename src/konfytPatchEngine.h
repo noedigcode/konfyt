@@ -53,7 +53,7 @@ public:
     void panic(bool p);
     float getMasterGain();
     void setMasterGain(float newGain);
-    void setMidiCatchupRange(int range);
+    void setMidiPickupRange(int range);
 
     void setProject(ProjectPtr project);
 
@@ -122,7 +122,7 @@ private:
     KonfytPatch* mCurrentPatch = nullptr;
     ProjectPtr mCurrentProject;
     float mMasterGain;
-    int mMidiCatchupRange = 127;
+    int mMidiPickupRange = 127;
     float convertGain(float linearGain);
 
     QList<KonfytPatch*> patches;

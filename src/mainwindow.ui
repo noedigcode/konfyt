@@ -2066,7 +2066,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>5</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <property name="konfytGradient" stdset="0">
@@ -3382,7 +3382,7 @@ border-bottom-left-radius: 0;</string>
                 <item>
                  <widget class="QLabel" name="label_SettingsPath">
                   <property name="text">
-                   <string>Settings and database files are saved in </string>
+                   <string>Settings and database files are saved in: </string>
                   </property>
                   <property name="wordWrap">
                    <bool>true</bool>
@@ -3694,8 +3694,8 @@ QSpinBox {
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>262</width>
-                        <height>379</height>
+                        <width>374</width>
+                        <height>400</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -5594,12 +5594,12 @@ QScrollBar:horizontal {
                <item>
                 <widget class="QLabel" name="label_41">
                  <property name="text">
-                  <string>Slider MIDI Catchup Range</string>
+                  <string>Slider MIDI Pickup Range</string>
                  </property>
                 </widget>
                </item>
                <item>
-                <widget class="QSpinBox" name="spinBox_Triggers_midiCatchupRange">
+                <widget class="QSpinBox" name="spinBox_Triggers_midiPickupRange">
                  <property name="minimum">
                   <number>1</number>
                  </property>
@@ -6061,7 +6061,7 @@ border-bottom-right-radius: 0;</string>
                     </property>
                     <property name="icon">
                      <iconset resource="../images.qrc">
-                      <normaloff>:/icons/down.png</normaloff>:/icons/down.png</iconset>
+                      <normaloff>:/icons/down_w_tail.png</normaloff>:/icons/down_w_tail.png</iconset>
                     </property>
                    </widget>
                   </item>
@@ -6170,11 +6170,10 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
 	border: 0px solid;
 	border-radius: 4px;
 	margin-top: 0ex;
-	padding-top: 1em;
 }</string>
                </property>
                <property name="title">
-                <string>MIDI messages that will be sent from layer when patch is activated</string>
+                <string/>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_22">
                 <item>
@@ -6383,11 +6382,11 @@ border-bottom-right-radius: 0;</string>
                       </property>
                       <property name="styleSheet">
                        <string notr="true">QGroupBox{
+	padding: 1px;
 	margin-top: 0;	
 	background-color:  rgba(107, 107, 107, 255);
 	border: 2px solid rgb(212, 212, 212);
 	border-radius: 1px;
-	padding: 1px;
 }
 
 QGroupBox::title {
@@ -7494,7 +7493,7 @@ border-bottom-right-radius: 0;</string>
                            </property>
                            <property name="icon">
                             <iconset resource="../images.qrc">
-                             <normaloff>:/icons/down.png</normaloff>:/icons/down.png</iconset>
+                             <normaloff>:/icons/down_w_tail.png</normaloff>:/icons/down_w_tail.png</iconset>
                            </property>
                            <property name="checkable">
                             <bool>false</bool>
@@ -7542,7 +7541,11 @@ border-bottom-left-radius: 0;</string>
                     <item>
                      <widget class="QLabel" name="label_34">
                       <property name="text">
-                       <string>MIDI Send List:</string>
+                       <string>Layer's MIDI send list:
+(Will be sent when the patch is activated)</string>
+                      </property>
+                      <property name="wordWrap">
+                       <bool>true</bool>
                       </property>
                      </widget>
                     </item>
@@ -9117,12 +9120,12 @@ border-bottom-left-radius: 0;
   </action>
   <action name="actionMaster_Volume_Up">
    <property name="text">
-    <string>Master Volume Up</string>
+    <string>Global Volume Up</string>
    </property>
   </action>
   <action name="actionMaster_Volume_Down">
    <property name="text">
-    <string>Master Volume Down</string>
+    <string>Global Volume Down</string>
    </property>
   </action>
   <action name="actionAdd_Bus">
@@ -9177,7 +9180,7 @@ border-bottom-left-radius: 0;
   </action>
   <action name="actionMaster_Volume_Slider">
    <property name="text">
-    <string>Master Volume Slider</string>
+    <string>Global Volume Slider</string>
    </property>
   </action>
   <action name="actionLayer_1_Gain">
@@ -9305,7 +9308,7 @@ border-bottom-left-radius: 0;
   </action>
   <action name="actionProject_OpenDirectory">
    <property name="text">
-    <string>Open Projects Directory</string>
+    <string>Open Projects Directory in File Manager</string>
    </property>
   </action>
   <action name="actionPanicToggle">

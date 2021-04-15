@@ -1224,8 +1224,8 @@ void MainWindow::loadProject(ProjectPtr prj)
             this, &MainWindow::processFinishedSlot);
     connect(prj.data(), &KonfytProject::projectModifiedChanged,
             this, &MainWindow::onProjectModifiedStateChanged);
-    connect(prj.data(), &KonfytProject::midiCatchupRangeChanged,
-            this, &MainWindow::onProjectMidiCatchupRangeChanged);
+    connect(prj.data(), &KonfytProject::midiPickupRangeChanged,
+            this, &MainWindow::onProjectMidiPickupRangeChanged);
 
     // Get triggers from project and add to quick lookup hash
     QList<KonfytTrigger> trigs = prj->getTriggerList();
@@ -1255,7 +1255,7 @@ void MainWindow::loadProject(ProjectPtr prj)
     // Update project modified indication in GUI
     onProjectModifiedStateChanged(prj->isModified());
 
-    onProjectMidiCatchupRangeChanged(prj->getMidiCatchupRange());
+    onProjectMidiPickupRangeChanged(prj->getMidiPickupRange());
 
     masterPatch = nullptr;
     gui_updatePatchView();
@@ -2805,11 +2805,11 @@ void MainWindow::onProjectModifiedStateChanged(bool modified)
     }
 }
 
-void MainWindow::onProjectMidiCatchupRangeChanged(int range)
+void MainWindow::onProjectMidiPickupRangeChanged(int range)
 {
-    ui->spinBox_Triggers_midiCatchupRange->setValue(range);
-    pengine.setMidiCatchupRange(range);
-    masterGainMidiCtrlr.catchupRange = range;
+    ui->spinBox_Triggers_midiPickupRange->setValue(range);
+    pengine.setMidiPickupRange(range);
+    masterGainMidiCtrlr.pickupRange = range;
 }
 
 // Save current project in its own folder, in the projects dir.
@@ -5623,7 +5623,10 @@ void MainWindow::on_actionProject_SaveAs_triggered()
     QString oldDirname = prj->getDirname();
 
     // Query user for new project name
-    QString newName = QInputDialog::getText(this, "Save Project As", "New Project Name");
+    QString newName = QInputDialog::getText(this, "Save Project As",
+                                            "New Project Name",
+                                            QLineEdit::Normal,
+                                            prj->getProjectName());
     if (newName.isEmpty()) { return; }
 
     // Clear the project dir name so it can be saved as new project
@@ -5976,7 +5979,9 @@ void MainWindow::setupSettings()
     }
 
     // Set up settings dialog
-    ui->label_SettingsPath->setText( ui->label_SettingsPath->text() + settingsDir );
+    ui->label_SettingsPath->setText(QString("%1\n%2")
+                                    .arg(ui->label_SettingsPath->text())
+                                    .arg(settingsDir));
 
     QString docsPath = QString("%1/%2")
             .arg(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
@@ -6572,10 +6577,10 @@ void MainWindow::on_toolButton_LibraryPreview_clicked()
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
 
-void MainWindow::on_spinBox_Triggers_midiCatchupRange_valueChanged(int arg1)
+void MainWindow::on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1)
 {
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    prj->setMidiCatchupRange(arg1);
+    prj->setMidiPickupRange(arg1);
 }

@@ -174,7 +174,7 @@ struct MidiSendItem
 
 struct MidiValueController
 {
-    int catchupRange = 127;
+    int pickupRange = 127;
     void setValue(int value)
     {
         mValue = value;
@@ -188,7 +188,7 @@ struct MidiValueController
         bool updated = false;
 
         int delta = qAbs(mValue - value);
-        if (delta < catchupRange) {
+        if (delta < pickupRange) {
             mValue = value;
             updated = true;
         }

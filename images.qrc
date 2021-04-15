@@ -20,5 +20,6 @@
         <file>icons/alwaysactive.png</file>
         <file>icons/empty.png</file>
         <file>icons/right_w_outline.png</file>
+        <file>icons/down_w_tail.png</file>
     </qresource>
 </RCC>

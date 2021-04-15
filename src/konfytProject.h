@@ -116,8 +116,8 @@ public:
     void setShowPatchListNumbers(bool show);
     bool getShowPatchListNotes();
     void setShowPatchListNotes(bool show);
-    void setMidiCatchupRange(int range);
-    int getMidiCatchupRange();
+    void setMidiPickupRange(int range);
+    int getMidiPickupRange();
 
     // MIDI input ports
     QList<int> midiInPort_getAllPortIds();  // Get list of port ids
@@ -208,7 +208,7 @@ signals:
     void midiInPortNameChanged(int portId);
     void midiOutPortNameChanged(int portId);
     void audioInPortNameChanged(int portId);
-    void midiCatchupRangeChanged(int range);
+    void midiPickupRangeChanged(int range);
 
     // Signals emitted when signals are recieved from Process objects.
     void processStartedSignal(int index, KonfytProcess* process);
@@ -238,7 +238,7 @@ private:
     bool programChangeSwitchPatches = true;
     bool patchListNumbers = true;
     bool patchListNotes = false;
-    int midiCatchupRange = 127;
+    int midiPickupRange = 127;
 
     QList<KonfytJackConPair> jackMidiConList;
     QList<KonfytJackConPair> jackAudioConList;
@@ -258,7 +258,7 @@ private:
     const char* XML_PRJ_PATCH_FILENAME = "filename";
     const char* XML_PRJ_PATCH_LIST_NUMBERS = "patchListNumbers";
     const char* XML_PRJ_PATCH_LIST_NOTES = "patchListNotes";
-    const char* XML_PRJ_MIDI_CATCHUP_RANGE = "midiCatchupRange";
+    const char* XML_PRJ_MIDI_PICKUP_RANGE = "midiPickupRange";
     const char* XML_PRJ_MIDI_IN_PORTLIST = "midiInPortList";
     const char* XML_PRJ_MIDI_IN_PORT = "port";
     const char* XML_PRJ_MIDI_IN_PORT_ID = "portId";

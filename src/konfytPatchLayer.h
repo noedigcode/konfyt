@@ -101,8 +101,8 @@ public:
     float gain() const;
     void setGain(float gain);
     void setGainByMidi(int value);
-    void setGainMidiCatchupRange(int range);
-    int gainMidiCatchupRange();
+    void setGainMidiPickupRange(int range);
+    int gainMidiPickupRange();
     void setSolo(bool isSolo);
     void setMute(bool isMute);
     bool isSolo() const;

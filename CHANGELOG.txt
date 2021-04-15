@@ -1,12 +1,12 @@
 Changelog
 =========
 
-[1.1.4] - Coming soon
----------------------
+[1.1.4] - April 2021
+--------------------
 
 Added
 
-- Basic MIDI catchup for layer and master gain sliders. Range setting can be
+- Basic MIDI pickup for layer and master gain sliders. Range setting can be
   set in the Triggers page.
 
 

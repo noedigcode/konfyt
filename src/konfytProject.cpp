@@ -90,7 +90,7 @@ bool KonfytProject::saveProjectAs(QString dirname)
     // Write misc settings
     stream.writeTextElement(XML_PRJ_PATCH_LIST_NUMBERS, bool2str(patchListNumbers));
     stream.writeTextElement(XML_PRJ_PATCH_LIST_NOTES, bool2str(patchListNotes));
-    stream.writeTextElement(XML_PRJ_MIDI_CATCHUP_RANGE, n2s(midiCatchupRange));
+    stream.writeTextElement(XML_PRJ_MIDI_PICKUP_RANGE, n2s(midiPickupRange));
 
     // Write patches
     for (int i=0; i<patchList.count(); i++) {
@@ -321,9 +321,9 @@ bool KonfytProject::loadProject(QString filename)
 
                 patchListNotes = Qstr2bool(r.readElementText());
 
-            } else if (r.name() == XML_PRJ_MIDI_CATCHUP_RANGE) {
+            } else if (r.name() == XML_PRJ_MIDI_PICKUP_RANGE) {
 
-                setMidiCatchupRange(r.readElementText().toInt());
+                setMidiPickupRange(r.readElementText().toInt());
 
             } else if (r.name() == XML_PRJ_MIDI_IN_PORTLIST) {
 
@@ -604,18 +604,18 @@ void KonfytProject::setShowPatchListNotes(bool show)
     setModified(true);
 }
 
-void KonfytProject::setMidiCatchupRange(int range)
+void KonfytProject::setMidiPickupRange(int range)
 {
-    if (midiCatchupRange != range) {
-        midiCatchupRange = range;
+    if (midiPickupRange != range) {
+        midiPickupRange = range;
         setModified(true);
-        emit midiCatchupRangeChanged(range);
+        emit midiPickupRangeChanged(range);
     }
 }
 
-int KonfytProject::getMidiCatchupRange()
+int KonfytProject::getMidiPickupRange()
 {
-    return midiCatchupRange;
+    return midiPickupRange;
 }
 
 QString KonfytProject::getProjectName()

@@ -106,14 +106,14 @@ void KonfytPatchLayer::setGainByMidi(int value)
     }
 }
 
-void KonfytPatchLayer::setGainMidiCatchupRange(int range)
+void KonfytPatchLayer::setGainMidiPickupRange(int range)
 {
-    gainMidiCtrl.catchupRange = range;
+    gainMidiCtrl.pickupRange = range;
 }
 
-int KonfytPatchLayer::gainMidiCatchupRange()
+int KonfytPatchLayer::gainMidiPickupRange()
 {
-    return gainMidiCtrl.catchupRange;
+    return gainMidiCtrl.pickupRange;
 }
 
 void KonfytPatchLayer::setSolo(bool isSolo)

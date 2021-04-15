@@ -206,7 +206,7 @@ private:
 private slots:
     // Project modified
     void onProjectModifiedStateChanged(bool modified);
-    void onProjectMidiCatchupRangeChanged(int range);
+    void onProjectMidiPickupRangeChanged(int range);
 
     // Projects Menu
     void onprojectMenu_ActionTrigger(QAction* action);
@@ -894,7 +894,7 @@ private slots:
 
     void on_stackedWidget_currentChanged(int arg1);
 
-    void on_spinBox_Triggers_midiCatchupRange_valueChanged(int arg1);
+    void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
 };
 
 #endif // MAINWINDOW_H
