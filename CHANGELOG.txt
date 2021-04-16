@@ -7,7 +7,11 @@ Changelog
 Added
 
 - Basic MIDI pickup for layer and master gain sliders. Range setting can be
-  set in the Triggers page.
+  set on the Triggers screen.
+
+Changed
+
+- Some small GUI and other tweaks.
 
 
 [1.1.3] - January 2021
