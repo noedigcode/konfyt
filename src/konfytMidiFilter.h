@@ -42,6 +42,7 @@
 #define XML_MIDIFILTER_PASSALLCC "passAllCC"
 #define XML_MIDIFILTER_PASSPB "passPitchbend"
 #define XML_MIDIFILTER_PASSPROG "passProg"
+#define XML_MIDIFILTER_IGNORE_GLOBAL_TRANSPOSE "ignoreGlobalTranspose"
 #define XML_MIDIFILTER_CC "cc"
 #define XML_MIDIFILTER_INCHAN "inChan"
 #define XML_MIDIFILTER_OUTCHAN "outChan"
@@ -76,6 +77,7 @@ public:
     bool passPitchbend = true;
     int inChan = -1; // -1 = any
     int outChan = -1; // -1 = original
+    bool ignoreGlobalTranspose = false;
 
     void writeToXMLStream(QXmlStreamWriter* stream);
     void readFromXMLStream(QXmlStreamReader *r);

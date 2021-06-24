@@ -963,7 +963,10 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
                         recordPitchbend = true;
                     }
                 } else if ( evToSend.type() == MIDI_EVENT_TYPE_NOTEON ) {
-                    int note = evToSend.note() + globalTranspose;
+                    int note = evToSend.note();
+                    if (!route->filter.ignoreGlobalTranspose) {
+                        note += mGlobalTranspose;
+                    }
                     evToSend.setNote(note);
                     if ( (note < 0) || (note > 127) ) {
                         passEvent = false;
@@ -986,7 +989,11 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
                 // Record noteon, sustain or pitchbend for off events later.
                 if (recordNoteon) {
                     KonfytJackNoteOnRecord rec;
-                    rec.globalTranspose = globalTranspose;
+                    if (route->filter.ignoreGlobalTranspose) {
+                        rec.globalTranspose = 0;
+                    } else {
+                        rec.globalTranspose = mGlobalTranspose;
+                    }
                     rec.note = evToSend.note();
                     rec.channel = evToSend.channel;
                     route->noteOnList.add(rec);
@@ -1534,7 +1541,7 @@ void KonfytJackEngine::clearOtherJackConPair()
 
 void KonfytJackEngine::setGlobalTranspose(int transpose)
 {
-    this->globalTranspose = transpose;
+    this->mGlobalTranspose = transpose;
 }
 
 jack_port_t *KonfytJackEngine::registerJackMidiPort(QString name, bool input)

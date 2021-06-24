@@ -165,6 +165,10 @@ void KonfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
     if (this->passProg) { tempBool = "1"; } else { tempBool = "0"; }
     stream->writeTextElement(XML_MIDIFILTER_PASSPROG, tempBool);
 
+    // ignoreGlobalTranspose
+    stream->writeTextElement(XML_MIDIFILTER_IGNORE_GLOBAL_TRANSPOSE,
+                             bool2str(this->ignoreGlobalTranspose));
+
     // CC list
     for (int i=0; i<this->passCC.count(); i++) {
         stream->writeTextElement(XML_MIDIFILTER_CC, n2s(this->passCC.at(i)));
@@ -210,6 +214,8 @@ void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
             this->passPitchbend = (r->readElementText() == "1");
         } else if (r->name() == XML_MIDIFILTER_PASSPROG) {
             this->passProg = (r->readElementText() == "1");
+        } else if (r->name() == XML_MIDIFILTER_IGNORE_GLOBAL_TRANSPOSE) {
+            this->ignoreGlobalTranspose = (r->readElementText() == "1");
         } else if (r->name() == XML_MIDIFILTER_CC) {
             this->passCC.append(r->readElementText().toInt());
         } else if (r->name() == XML_MIDIFILTER_INCHAN) {

@@ -2066,7 +2066,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <property name="konfytGradient" stdset="0">
@@ -3695,7 +3695,7 @@ QSpinBox {
                         <x>0</x>
                         <y>0</y>
                         <width>374</width>
-                        <height>400</height>
+                        <height>398</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -4259,11 +4259,17 @@ border-bottom-left-radius: 0;</string>
                         </layout>
                        </item>
                        <item>
-                        <layout class="QVBoxLayout" name="verticalLayout_13">
+                        <layout class="QHBoxLayout" name="horizontalLayout_65">
                          <item>
                           <widget class="QLabel" name="label_15">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
                            <property name="text">
-                            <string>Add To Note</string>
+                            <string>Transpose Note</string>
                            </property>
                           </widget>
                          </item>
@@ -4406,6 +4412,13 @@ border-bottom-left-radius: 0;</string>
                           </widget>
                          </item>
                         </layout>
+                       </item>
+                       <item>
+                        <widget class="QCheckBox" name="checkBox_midiFilter_ignoreGlobalTranspose">
+                         <property name="text">
+                          <string>Ignore Global Transpose</string>
+                         </property>
+                        </widget>
                        </item>
                        <item>
                         <layout class="QGridLayout" name="gridLayout_24">

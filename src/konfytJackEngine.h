@@ -217,7 +217,7 @@ private:
     void refreshAllPortsConnections();
     void refreshConnections(jack_port_t* jackPort, QStringList clients, bool inNotOut);
 
-    int globalTranspose = 0;
+    int mGlobalTranspose = 0;
 
     QStringList getJackPorts(QString typePattern, unsigned long flags);
 
