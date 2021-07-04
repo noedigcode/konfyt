@@ -48,6 +48,7 @@ struct PrjAudioBus
     KfJackAudioPort* rightJackPort = nullptr;
     float rightGain = 1;
     QStringList rightOutClients;
+    bool ignoreMasterGain = false;
 };
 
 struct PrjAudioInPort
@@ -275,6 +276,7 @@ private:
     const char* XML_PRJ_BUS_NAME = "busName";
     const char* XML_PRJ_BUS_LGAIN = "leftGain";
     const char* XML_PRJ_BUS_RGAIN = "rightGain";
+    const char* XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME = "ignoreGlobalVolume";
     const char* XML_PRJ_BUS_LCLIENT = "leftClient";
     const char* XML_PRJ_BUS_RCLIENT = "rightClient";
     const char* XML_PRJ_AUDIOINLIST = "audioInputPortList";

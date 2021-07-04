@@ -540,6 +540,17 @@ void KonfytJackEngine::setPortFilter(KfJackMidiPort *port, KonfytMidiFilter filt
     }
 }
 
+void KonfytJackEngine::setPortGain(KfJackAudioPort *port, float gain)
+{
+    if (!clientIsActive()) { return; }
+
+    if (port) {
+        port->gain = gain;
+    } else {
+        error_abort("setPortGain: Invalid port.");
+    }
+}
+
 KfJackAudioRoute *KonfytJackEngine::addAudioRoute(KfJackAudioPort *sourcePort, KfJackAudioPort *destPort)
 {
     KfJackAudioRoute* route = addAudioRoute();

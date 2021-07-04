@@ -22,7 +22,7 @@
 #include "konfytPatchEngine.h"
 
 #include <iostream>
-#include <math.h>
+
 
 KonfytPatchEngine::KonfytPatchEngine(QObject *parent) :
     QObject(parent)
@@ -297,8 +297,9 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
     // All layers are now loaded. Now set gains, activate routes, etc.
     foreach (KfPatchLayerSharedPtr layer, mCurrentPatch->layers()) {
         updateLayerRouting(layer);
+        updateLayerGain(layer);
     }
-    updatePatchLayersGain(mCurrentPatch);
+
     updatePatchLayersSoloMute(mCurrentPatch);
 
     return ret;
@@ -411,16 +412,6 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addSfzLayer(QString path)
     reloadPatch();
 
     return layer.toWeakRef();
-}
-
-/* Converts gain between 0 and 1 from linear to an exponential function that is more
- * suited for human hearing. Input is clipped between 0 and 1. */
-float KonfytPatchEngine::convertGain(float linearGain)
-{
-    if (linearGain < 0) { linearGain = 0; }
-    if (linearGain > 1) { linearGain = 1; }
-
-    return pow(linearGain, 3.0); // x^3
 }
 
 void KonfytPatchEngine::updateLayerRouting(KfPatchLayerSharedPtr layer)
@@ -543,29 +534,26 @@ void KonfytPatchEngine::updateLayerGain(KfPatchLayerSharedPtr layer)
 
         LayerSoundfontData sfData = layer->soundfontData;
         if (sfData.synthInEngine == nullptr) { return; } // Layer not loaded yet
-        // Gain = layer gain * master gain
-        fluidsynthEngine.setGain( sfData.synthInEngine, convertGain(layer->gain()*mMasterGain) );
+        fluidsynthEngine.setGain( sfData.synthInEngine, konfytConvertGain(layer->gain()) );
 
     } else if (layerType == KonfytPatchLayer::TypeSfz) {
 
         LayerSfzData pluginData = layer->sfzData;
         if (pluginData.indexInEngine == -1) { return; } // Layer not loaded yet
-        // Gain = layer gain * master gain
-        // Set gain of JACK ports instead of sfzEngine->setGain() since this isn't implemented for all engine types yet.
-        jack->setPluginGain(pluginData.portsInJackEngine, convertGain(layer->gain()*mMasterGain) );
+        // Set gain of JACK ports instead of sfzEngine->setGain() since this
+        // isn't implemented for all engine types yet.
+        jack->setPluginGain(pluginData.portsInJackEngine, konfytConvertGain(layer->gain()) );
 
     } else if (layerType == KonfytPatchLayer::TypeAudioIn) {
 
-        // The port number in audioInLayerStruct refers to a stereo port pair index in the project.
-        // The bus number in audioInLayerStruct refers to a bus in the project with a left and right jack port.
-        // We have to retrieve the port pair and bus from the project in order to get the left and right port Jack port numbers.
         LayerAudioInData audioPortData = layer->audioInPortData;
         if (audioPortData.jackRouteLeft == nullptr) { return; } // Layer not loaded yet
         // Left channel Gain
         jack->setAudioRouteGain(audioPortData.jackRouteLeft,
-                                convertGain(layer->gain()*mMasterGain));
+                                konfytConvertGain(layer->gain()));
         // Right channel Gain
-        jack->setAudioRouteGain(audioPortData.jackRouteRight, convertGain(layer->gain()*mMasterGain));
+        jack->setAudioRouteGain(audioPortData.jackRouteRight,
+                                konfytConvertGain(layer->gain()));
 
     } else if (layerType == KonfytPatchLayer::TypeMidiOut) {
 
@@ -579,14 +567,6 @@ void KonfytPatchEngine::updateLayerGain(KfPatchLayerSharedPtr layer)
 
         error_abort("updateLayerGain: Unknown layer type.");
 
-    }
-}
-
-void KonfytPatchEngine::updatePatchLayersGain(KonfytPatch *patch)
-{
-    if (!patch) { return; }
-    foreach (KfPatchLayerSharedPtr layer, patch->layers()) {
-        updateLayerGain(layer);
     }
 }
 
@@ -658,25 +638,6 @@ void KonfytPatchEngine::setLayerActive(KfPatchLayerSharedPtr layer, bool active)
 KonfytPatch *KonfytPatchEngine::currentPatch()
 {
     return mCurrentPatch;
-}
-
-float KonfytPatchEngine::getMasterGain()
-{
-    return mMasterGain;
-}
-
-void KonfytPatchEngine::setMasterGain(float newGain)
-{
-    mMasterGain = newGain;
-
-    updatePatchLayersGain(mCurrentPatch);
-    // Also for all always-active patches
-    foreach (KonfytPatch* patch, patches) {
-        if (patch == mCurrentPatch) { continue; }
-        if (!isPatchLoaded(patch)) { continue; }
-        if (!patch->alwaysActive) { continue; }
-        updatePatchLayersGain(patch);
-    }
 }
 
 void KonfytPatchEngine::setMidiPickupRange(int range)

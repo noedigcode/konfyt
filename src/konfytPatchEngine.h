@@ -22,6 +22,7 @@
 #ifndef KONFYT_PATCH_ENGINE_H
 #define KONFYT_PATCH_ENGINE_H
 
+#include "konfytAudio.h"
 #include "konfytBridgeEngine.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackEngine.h"
@@ -51,8 +52,6 @@ public:
     void initPatchEngine(KonfytJackEngine* newJackClient, KonfytAppInfo appInfo);
     QStringList ourJackClientNames();
     void panic(bool p);
-    float getMasterGain();
-    void setMasterGain(float newGain);
     void setMidiPickupRange(int range);
 
     void setProject(ProjectPtr project);
@@ -121,15 +120,12 @@ signals:
 private:
     KonfytPatch* mCurrentPatch = nullptr;
     ProjectPtr mCurrentProject;
-    float mMasterGain;
     int mMidiPickupRange = 127;
-    float convertGain(float linearGain);
 
     QList<KonfytPatch*> patches;
 
     void updateLayerRouting(KfPatchLayerSharedPtr layer);
     void updateLayerGain(KfPatchLayerSharedPtr layer);
-    void updatePatchLayersGain(KonfytPatch* patch);
     void updatePatchLayersSoloMute(KonfytPatch* patch);
     void setLayerActive(KfPatchLayerSharedPtr layer, bool active);
 

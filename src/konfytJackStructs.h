@@ -54,7 +54,6 @@ protected:
     jack_port_t* jackPointer = nullptr;
     void* buffer;
     QStringList connectionList;
-    RingbufferQMutex<float> traffic{8192};
 };
 
 struct KfJackMidiPort
@@ -68,7 +67,6 @@ protected:
     int noteOns = 0;
     bool sustainNonZero = false;
     bool pitchbendNonZero = false;
-    RingbufferQMutex<KonfytMidiEvent> traffic{8192};
     int bankMSB[16] = {-1};
     int bankLSB[16] = {-1};
 };

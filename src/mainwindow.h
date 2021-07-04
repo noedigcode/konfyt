@@ -26,6 +26,7 @@
 #include "consoledialog.h"
 #include "indicatorHandlers.h"
 #include "midiEventListWidgetAdapter.h"
+#include "konfytAudio.h"
 #include "konfytDatabase.h"
 #include "konfytDefines.h"
 #include "konfytFluidsynthEngine.h"
@@ -347,6 +348,7 @@ private:
     bool fileIsSfzOrGig(QString file);
 
     void setMasterGain(float gain);
+    void updateBusGainInJackEngine(int busId);
 
     // Current patch functions
     int mCurrentPatchIndex = -1;
@@ -895,6 +897,7 @@ private slots:
     void on_stackedWidget_currentChanged(int arg1);
 
     void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
+    void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
 };
 
 #endif // MAINWINDOW_H

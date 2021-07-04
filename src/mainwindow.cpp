@@ -502,6 +502,7 @@ void MainWindow::showConnectionsPage()
 {
     ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
     ui->frame_connectionsPage_MidiFilter->setVisible(false);
+    ui->checkBox_connectionsPage_ignoreGlobalVolume->setVisible(false);
 
     gui_updatePortsBussesTree();
     gui_updateConnectionsTree();
@@ -1178,6 +1179,7 @@ void MainWindow::loadProject(ProjectPtr prj)
         } else {
             print("ERROR: setCurrentProject: Failed to create audio bus Jack port(s).");
         }
+        updateBusGainInJackEngine(id);
 
     }
 
@@ -1586,10 +1588,36 @@ void MainWindow::setMasterGain(float gain)
     } else {
         masterGain = gain;
     }
-    pengine.setMasterGain(gain);
 
     ui->horizontalSlider_MasterGain->setValue(
                 gain * ui->horizontalSlider_MasterGain->maximum());
+
+    // Update all bus gains
+    if (mCurrentProject) {
+        foreach (int busId, mCurrentProject->audioBus_getAllBusIds()) {
+            updateBusGainInJackEngine(busId);
+        }
+    }
+}
+
+void MainWindow::updateBusGainInJackEngine(int busId)
+{
+    KONFYT_ASSERT_RETURN(!mCurrentProject.isNull());
+    KONFYT_ASSERT_RETURN(mCurrentProject->audioBus_exists(busId));
+
+    PrjAudioBus bus = mCurrentProject->audioBus_getBus(busId);
+    float gain = 1;
+    if (!bus.ignoreMasterGain) {
+        if (previewMode) {
+            gain *= previewGain;
+        } else {
+            gain *= masterGain;
+        }
+    }
+    gain = konfytConvertGain(gain);
+
+    jack.setPortGain(bus.leftJackPort, gain);
+    jack.setPortGain(bus.rightJackPort, gain);
 }
 
 /* Load the appropriate patch based on the mode (preview mode or normal) and
@@ -2253,7 +2281,7 @@ void MainWindow::addSoundfontProgramToCurrentPatch(QString soundfontPath, Konfyt
 /* If masterPatch is NULL, adds a new patch to the project and switches to it. */
 void MainWindow::newPatchIfMasterNull()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     KONFYT_ASSERT_RETURN(prj);
 
     if (!masterPatch) {
@@ -4492,17 +4520,19 @@ int MainWindow::addBus()
     KfJackAudioPort* left;
     KfJackAudioPort* right;
     addAudioBusToJack( busId, &left, &right );
-    if ( (left != nullptr) && (right != nullptr) ) {
-        PrjAudioBus bus = prj->audioBus_getBus(busId);
-        bus.leftJackPort = left;
-        bus.rightJackPort = right;
-        prj->audioBus_replace(busId, bus);
-        return busId;
-    } else {
+    if ( (left == nullptr) || (right == nullptr) ) {
         prj->audioBus_remove(busId);
         print("ERROR: Failed to create audio bus. Failed to add Jack port(s).");
         return -1;
     }
+    PrjAudioBus bus = prj->audioBus_getBus(busId);
+    bus.leftJackPort = left;
+    bus.rightJackPort = right;
+    prj->audioBus_replace(busId, bus);
+
+    updateBusGainInJackEngine(busId);
+
+    return busId;
 }
 
 void MainWindow::on_actionAdd_Bus_triggered()
@@ -4884,6 +4914,19 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(
         ui->frame_connectionsPage_MidiFilter->setVisible(true);
     } else {
         ui->frame_connectionsPage_MidiFilter->setVisible(false);
+    }
+
+    // Show/hide and update ignore-global-volume checkbox if bus selected
+    if (mCurrentProject) {
+        if (current->parent() == busParent) {
+            ui->checkBox_connectionsPage_ignoreGlobalVolume->setVisible(true);
+            int busId = tree_busMap.value(current);
+            PrjAudioBus bus = mCurrentProject->audioBus_getBus(busId);
+            ui->checkBox_connectionsPage_ignoreGlobalVolume->setChecked(
+                        bus.ignoreMasterGain);
+        } else {
+            ui->checkBox_connectionsPage_ignoreGlobalVolume->setVisible(false);
+        }
     }
 
     gui_updateConnectionsTree();
@@ -6587,4 +6630,21 @@ void MainWindow::on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1)
     if (!prj) { return; }
 
     prj->setMidiPickupRange(arg1);
+}
+
+void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
+{
+    if (!mCurrentProject) { return; }
+    QTreeWidgetItem* currentItem = ui->tree_portsBusses->currentItem();
+    if (currentItem->parent() != busParent) { return; }
+
+    int busId = tree_busMap.value(currentItem);
+    PrjAudioBus bus = mCurrentProject->audioBus_getBus(busId);
+    bus.ignoreMasterGain = ui->checkBox_connectionsPage_ignoreGlobalVolume->isChecked();
+
+    // Update in project
+    mCurrentProject->audioBus_replace(busId, bus);
+
+    // Update in JACK engine
+    updateBusGainInJackEngine(busId);
 }

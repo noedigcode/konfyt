@@ -157,6 +157,8 @@ bool KonfytProject::saveProjectAs(QString dirname)
         stream.writeTextElement( XML_PRJ_BUS_NAME, b.busName );
         stream.writeTextElement( XML_PRJ_BUS_LGAIN, n2s(b.leftGain) );
         stream.writeTextElement( XML_PRJ_BUS_RGAIN, n2s(b.rightGain) );
+        stream.writeTextElement( XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME,
+                                 bool2str(b.ignoreMasterGain) );
         for (int j=0; j<b.leftOutClients.count(); j++) {
             stream.writeTextElement( XML_PRJ_BUS_LCLIENT, b.leftOutClients.at(j) );
         }
@@ -394,6 +396,8 @@ bool KonfytProject::loadProject(QString filename)
                             b.leftOutClients.append( r.readElementText() );
                         } else if (r.name() == XML_PRJ_BUS_RCLIENT) {
                             b.rightOutClients.append( r.readElementText() );
+                        } else if (r.name() == XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME) {
+                            b.ignoreMasterGain = Qstr2bool(r.readElementText());
                         } else {
                             print("loadProject: "
                                         "Unrecognized bus element: " + r.name().toString() );

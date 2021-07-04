@@ -87,7 +87,7 @@ public:
     QStringList getAudioOutputPortsList();
     QSet<QString> getJackClientsList();
 
-    // Audio / midi in/out ports
+    // Audio / MIDI in/out ports
     KfJackMidiPort* addMidiPort(QString name, bool isInput);
     KfJackAudioPort* addAudioPort(QString name, bool isInput);
     void removeMidiPort(KfJackMidiPort* port);
@@ -101,6 +101,7 @@ public:
     void removeAndDisconnectPortClient(KfJackMidiPort *port, QString mJackClient);
     void removeAndDisconnectPortClient(KfJackAudioPort *port, QString mJackClient);
     void setPortFilter(KfJackMidiPort *port, KonfytMidiFilter filter);
+    void setPortGain(KfJackAudioPort *port, float gain);
 
     // Audio routes
     KfJackAudioRoute* addAudioRoute(KfJackAudioPort* sourcePort, KfJackAudioPort* destPort);
