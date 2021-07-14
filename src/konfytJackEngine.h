@@ -157,9 +157,9 @@ signals:
 
 private:
     jack_client_t* mJackClient;
-    jack_nframes_t nframes; // TODO THIS MIGHT CHANGE, REGISTER BUFSIZE CALLBACK TO UPDATE
+    jack_nframes_t mJackBufferSize; // TODO THIS MIGHT CHANGE, REGISTER BUFSIZE CALLBACK TO UPDATE
     bool mClientActive = false;      // Flag to indicate if the client has been successfully activated
-    uint32_t samplerate;
+    uint32_t mJackSampleRate;
     RingbufferQMutex<KfJackMidiRxEvent> midiRxBuffer{1000};
     QList<KfJackMidiRxEvent> extractedMidiRx;
     int audioBufferCycleCount = 100;
@@ -176,7 +176,7 @@ private:
     QString mJackClientName; // Actual client name as assigned by JACK
     QString mJackClientBaseName; // Requested JACK client name before change for uniqueness
 
-    float *fadeOutValues;
+    float* fadeOutValues = nullptr;
     unsigned int fadeOutValuesCount = 0;
     float fadeOutSecs = 1.0;
 
@@ -230,8 +230,6 @@ private:
     void sendMidiClosureEvents_chanZeroOnly(KfJackMidiPort* port);
     void sendMidiClosureEvents_allChannels(KfJackMidiPort* port);
     void handleBankSelect(int bankMSB[16], int bankLSB[16], KonfytMidiEvent* ev);
-
-    void error_abort(QString msg);
 };
 
 

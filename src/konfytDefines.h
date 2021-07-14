@@ -24,6 +24,8 @@
 
 #include <QString>
 
+#include <iostream>
+
 #define APP_NAME "Konfyt"
 #define APP_VERSION "1.1.5-testing"
 
@@ -35,8 +37,14 @@
 #define STRING_PROJECT_DIR "$PROJ_DIR$"
 #define KONFYT_PATCH_SUFFIX "konfytpatch"
 
-#define KONFYT_ASSERT_RETURN(cond) Q_ASSERT(cond); if (!(cond)) { return; }
-#define KONFYT_ASSERT_RETURN_VAL(cond, ret) Q_ASSERT(cond); if (!(cond)) { return ret; }
+
+#define KONFYT_ASSERT(cond) Q_ASSERT(cond); if (!(cond)) { konfytAssertMsg(__FILE__, __LINE__, __func__, #cond); }
+#define KONFYT_ASSERT_FAIL(text) KONFYT_ASSERT(!text)
+#define KONFYT_ASSERT_RETURN(cond) Q_ASSERT(cond); if (!(cond)) { konfytAssertMsg(__FILE__, __LINE__, __func__, #cond); return; }
+#define KONFYT_ASSERT_RETURN_VAL(cond, ret) Q_ASSERT(cond); if (!(cond)) { konfytAssertMsg(__FILE__, __LINE__, __func__, #cond); return ret; }
+
+void konfytAssertMsg(const char* file, int line, const char* func,
+                  const char* text);
 
 int wrapIndex(int index, int listLength);
 QString sanitiseFilename(QString path);

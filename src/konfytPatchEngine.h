@@ -135,8 +135,6 @@ private:
     bool bridge = false;
 
     KonfytJackEngine* jack;
-    
-    void error_abort(QString msg);
 
 private slots:
     void onSfzEngineInitDone(QString error);

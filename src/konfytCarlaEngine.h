@@ -72,8 +72,6 @@ public:
     void setGain(int ID, float newGain);
     QString pluginName(int ID);
 
-    void error_abort(QString msg);
-
 private:
 #ifdef CARLA_USE_HANDLE
     CarlaHostHandle carlaHandle;

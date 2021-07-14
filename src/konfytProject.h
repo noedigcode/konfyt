@@ -201,8 +201,6 @@ public:
     bool isModified(); // Returns whether the project has been modified since last load/save.
     void setModified(bool mod);
 
-    void error_abort(QString msg) const;
-
 signals:
     void print(QString msg);
     void projectModifiedChanged(bool modified); // Emitted when project modified state changes.

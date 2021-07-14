@@ -162,7 +162,6 @@ private slots:
     // General helper functions
 private:
     QString getBaseNameWithoutExtension(QString filepath);
-    void error_abort(QString msg);
     void messageBox(QString msg);
     bool dirExists(QString dirname);
     QStringList scanDirForFiles(QString dirname, QString filenameExtension = "");
@@ -678,6 +677,7 @@ private:
     void handleRouteMidiEvent(KfJackMidiRxEvent rxEvent);
     void handlePortMidiEvent(KfJackMidiRxEvent rxEvent);
 private slots:
+    void onJackPrint(QString msg);
     void onJackMidiEventsReceived();
     void onJackAudioEventsReceived();
     void onJackXrunOccurred();

@@ -147,8 +147,8 @@ KfJackPluginPorts* KonfytJackEngine::addSoundfont(KfFluidSynth *fluidSynth)
 
     // Because our audio is not received from jack audio ports, we have to allocate
     // the buffers now so fluidsynth can write to them in the jack process callback.
-    p->audioInLeft->buffer = malloc(sizeof(jack_default_audio_sample_t)*nframes);
-    p->audioInRight->buffer = malloc(sizeof(jack_default_audio_sample_t)*nframes);
+    p->audioInLeft->buffer = malloc(sizeof(jack_default_audio_sample_t)*mJackBufferSize);
+    p->audioInRight->buffer = malloc(sizeof(jack_default_audio_sample_t)*mJackBufferSize);
 
     p->midi = new KfJackMidiPort(); // Dummy port for note records, etc.
     p->fluidSynthInEngine = fluidSynth;
@@ -390,24 +390,20 @@ void KonfytJackEngine::removeAllMidiInAndOutPorts()
 
 void KonfytJackEngine::clearPortClients(KfJackMidiPort *port)
 {
-    if (port) {
-        QStringList clients = port->connectionList;
-        foreach (QString client, clients) {
-            removeAndDisconnectPortClient(port, client);
-        }
-    } else {
-        error_abort("clearPortClients: MIDI port null.");
+    KONFYT_ASSERT_RETURN(port);
+
+    QStringList clients = port->connectionList;
+    foreach (QString client, clients) {
+        removeAndDisconnectPortClient(port, client);
     }
 }
 
 void KonfytJackEngine::clearPortClients(KfJackAudioPort *port)
 {
-    if (port) {
-        foreach (QString client, port->connectionList) {
-            removeAndDisconnectPortClient(port, client);
-        }
-    } else {
-        error_abort("clearPortClients: Audio port null.");
+    KONFYT_ASSERT_RETURN(port);
+
+    foreach (QString client, port->connectionList) {
+        removeAndDisconnectPortClient(port, client);
     }
 }
 
@@ -441,34 +437,27 @@ void KonfytJackEngine::addPortClient(KfJackMidiPort *port, QString newClient)
 {
     if (!clientIsActive()) { return; }
 
-    if (port) {
-        port->connectionList.append(newClient);
-        refreshAllPortsConnections();
-    } else {
-        error_abort("addPortClient: MIDI port null.");
-    }
+    KONFYT_ASSERT_RETURN(port);
+
+    port->connectionList.append(newClient);
+    refreshAllPortsConnections();
 }
 
 void KonfytJackEngine::addPortClient(KfJackAudioPort *port, QString newClient)
 {
     if (!clientIsActive()) { return; }
 
-    if (port) {
-        port->connectionList.append(newClient);
-        refreshAllPortsConnections();
-    } else {
-        error_abort("addPortClient: Audio port null.");
-    }
+    KONFYT_ASSERT_RETURN(port);
+
+    port->connectionList.append(newClient);
+    refreshAllPortsConnections();
 }
 
 void KonfytJackEngine::removeAndDisconnectPortClient(KfJackMidiPort *port, QString client)
 {
     if (!clientIsActive()) { return; }
 
-    if (!port) {
-        error_abort("removeAndDisconnectPortClient: MIDI port null.");
-        return;
-    }
+    KONFYT_ASSERT_RETURN(port);
 
     if (!port->connectionList.contains(client)) { return; }
 
@@ -499,10 +488,7 @@ void KonfytJackEngine::removeAndDisconnectPortClient(KfJackAudioPort *port, QStr
 {
     if (!clientIsActive()) { return; }
 
-    if (!port) {
-        error_abort("removeAndDisconnectPortClient: Audio port null.");
-        return;
-    }
+    KONFYT_ASSERT_RETURN(port);
 
     if (!port->connectionList.contains(client)) { return; }
 
@@ -533,22 +519,18 @@ void KonfytJackEngine::setPortFilter(KfJackMidiPort *port, KonfytMidiFilter filt
 {
     if (!clientIsActive()) { return; }
 
-    if (port) {
-        port->filter = filter;
-    } else {
-        error_abort("setPortFilter: Invalid port.");
-    }
+    KONFYT_ASSERT_RETURN(port);
+
+    port->filter = filter;
 }
 
 void KonfytJackEngine::setPortGain(KfJackAudioPort *port, float gain)
 {
     if (!clientIsActive()) { return; }
 
-    if (port) {
-        port->gain = gain;
-    } else {
-        error_abort("setPortGain: Invalid port.");
-    }
+    KONFYT_ASSERT_RETURN(port);
+
+    port->gain = gain;
 }
 
 KfJackAudioRoute *KonfytJackEngine::addAudioRoute(KfJackAudioPort *sourcePort, KfJackAudioPort *destPort)
@@ -714,10 +696,12 @@ void KonfytJackEngine::pauseJackProcessing(bool pause)
         jackProcessLocks++;
     } else {
         jackProcessLocks--;
-        if (jackProcessLocks == 0) {
+        if (jackProcessLocks <= 0) {
             jackProcessMutex.unlock();
-        } else if (jackProcessLocks < 0) {
-            error_abort("jackProcessLocks < 0");
+        }
+        if (jackProcessLocks < 0) {
+            KONFYT_ASSERT_FAIL("jackProcessLocks less than 0");
+            jackProcessLocks = 0;
         }
     }
 }
@@ -1270,17 +1254,18 @@ void KonfytJackEngine::handleBankSelect(int bankMSB[], int bankLSB[], KonfytMidi
 bool KonfytJackEngine::initJackClient(QString name)
 {
     mJackClientBaseName = name;
+    mClientActive = false;
+
     // Try to become a client of the JACK server
-    if ( (mJackClient = jack_client_open(name.toLocal8Bit(), JackNullOption, NULL)) == NULL) {
-        print("JACK: Error becoming client.");
-        this->mClientActive = false;
+    mJackClient = jack_client_open(name.toLocal8Bit(), JackNullOption, NULL);
+    if (mJackClient == NULL) {
+        print("Error creating client.");
         return false;
     } else {
         // jack_client_open modifies the given name if another client already
         // uses it. Get our actual client name.
         mJackClientName = jack_get_client_name(mJackClient);
-        print("JACK: Client created: " + mJackClientName);
-        this->mClientActive = true;
+        print("Client created: " + mJackClientName);
     }
 
 
@@ -1294,26 +1279,26 @@ bool KonfytJackEngine::initJackClient(QString name)
     jack_set_xrun_callback(mJackClient,
                 KonfytJackEngine::jackXrunCallback, this);
 
-    nframes = jack_get_buffer_size(mJackClient);
+    mJackBufferSize = jack_get_buffer_size(mJackClient);
 
     // Activate the client
     if (jack_activate(mJackClient)) {
-        print("JACK: Cannot activate client.");
+        print("Cannot activate client.");
         jack_free(mJackClient);
-        this->mClientActive = false;
+        mClientActive = false;
         return false;
     } else {
-        print("JACK: Activated client.");
-        this->mClientActive = true;
+        print("Activated client.");
+        mClientActive = true;
     }
 
     // Get sample rate
-    this->samplerate = jack_get_sample_rate(mJackClient);
-    print("JACK: Samplerate " + n2s(samplerate));
+    mJackSampleRate = jack_get_sample_rate(mJackClient);
+    print("Samplerate " + n2s(mJackSampleRate));
 
-    audioBufferCycleCount = samplerate/nframes/10;
+    audioBufferCycleCount = mJackSampleRate/mJackBufferSize/10;
 
-    fadeOutValuesCount = samplerate*fadeOutSecs;
+    fadeOutValuesCount = mJackSampleRate*fadeOutSecs;
     // Linear fadeout
     fadeOutValues = (float*)malloc(sizeof(float)*fadeOutValuesCount);
     for (unsigned int i=0; i<fadeOutValuesCount; i++) {
@@ -1459,9 +1444,7 @@ KfJackAudioPort *KonfytJackEngine::addAudioPort(QString name, bool isInput)
 
 void KonfytJackEngine::removeMidiPort(KfJackMidiPort *port)
 {
-    if (!port) {
-        error_abort("removeMidiPort: port null.");
-    }
+    KONFYT_ASSERT_RETURN(port);
 
     pauseJackProcessing(true);
 
@@ -1478,9 +1461,7 @@ void KonfytJackEngine::removeMidiPort(KfJackMidiPort *port)
 
 void KonfytJackEngine::removeAudioPort(KfJackAudioPort *port)
 {
-    if (!port) {
-        error_abort("removeAudioPort: Audio port null.");
-    }
+    KONFYT_ASSERT_RETURN(port);
 
     pauseJackProcessing(true);
 
@@ -1497,13 +1478,13 @@ void KonfytJackEngine::removeAudioPort(KfJackAudioPort *port)
 
 uint32_t KonfytJackEngine::getSampleRate()
 {
-    return this->samplerate;
+    return this->mJackSampleRate;
 }
 
 /* Returns the JACK nframes size (passed to process callback). */
 uint32_t KonfytJackEngine::getBufferSize()
 {
-    return this->nframes;
+    return this->mJackBufferSize;
 }
 
 void KonfytJackEngine::addOtherJackConPair(KonfytJackConPair p)
@@ -1585,11 +1566,4 @@ jack_port_t *KonfytJackEngine::registerJackAudioPort(QString name, bool input)
     return port;
 }
 
-
-/* Print error message to stdout, and abort app. */
-void KonfytJackEngine::error_abort(QString msg)
-{
-    std::cout << "\n" << "Konfyt ERROR, ABORTING: konfytJackClient:" << msg.toLocal8Bit().constData();
-    abort();
-}
 

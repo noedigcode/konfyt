@@ -69,8 +69,6 @@ public:
     float getGain(KfFluidSynth *synth);
     void setGain(KfFluidSynth *synth, float newGain);
 
-    void error_abort(QString msg);
-
 private:
     QList<KfFluidSynth*> synths;
     double mSampleRate = 44100;

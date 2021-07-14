@@ -22,6 +22,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+
 MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     QMainWindow(parent),
     appInfo(appInfoArg),
@@ -1952,13 +1953,6 @@ void MainWindow::setupKeyboardShortcuts()
 
     ui->pushButton_Panic->setToolTip( ui->pushButton_Panic->toolTip() +
             " [" + shortcut_panic->key().toString() + "]");
-}
-
-void MainWindow::error_abort(QString msg)
-{
-    std::cout << "\n\n" << "Konfyt ERROR, ABORTING: MainWindow:"
-              << msg.toLocal8Bit().constData() << "\n\n";
-    abort();
 }
 
 void MainWindow::messageBox(QString msg)
@@ -4054,7 +4048,7 @@ bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
         }
 
     } else {
-        error_abort("MainWindow EventFilter: Invalid eventFilterMode " + n2s(eventFilterMode));
+        KONFYT_ASSERT_FAIL("Invalid eventFilterMode");
     }
 
     return false; // event not handled
@@ -4856,6 +4850,11 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
 
     }
 
+}
+
+void MainWindow::onJackPrint(QString msg)
+{
+    print("JACK Engine: " + msg);
 }
 
 void MainWindow::setupExternalAppsMenu()
@@ -6483,7 +6482,7 @@ QString MainWindow::xrunTimeString(qint64 ms)
 
 void MainWindow::setupJack()
 {
-    connect(&jack, &KonfytJackEngine::print, this, &MainWindow::print);
+    connect(&jack, &KonfytJackEngine::print, this, &MainWindow::onJackPrint);
 
     connect(&jack, &KonfytJackEngine::jackPortRegisteredOrConnected,
             this, &MainWindow::onJackPortRegisteredOrConnected);

@@ -63,4 +63,8 @@ QString getCompileVersionText()
     return txt;
 }
 
-
+void konfytAssertMsg(const char *file, int line, const char *func, const char *text)
+{
+    std::cout << "KONFYT ASSERT: FILE " << file << ", LINE " << line
+              << ", FUNCTION " << func << ", " << text << std::endl << std::flush;
+}

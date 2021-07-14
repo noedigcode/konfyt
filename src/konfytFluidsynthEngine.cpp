@@ -160,9 +160,3 @@ void KonfytFluidsynthEngine::setGain(KfFluidSynth *synth, float newGain)
     fluid_synth_set_gain( synth->synth, newGain );
 }
 
-/* Print error message to stdout, and abort app. */
-void KonfytFluidsynthEngine::error_abort(QString msg)
-{
-    std::cout << "\n" << "Konfyt ERROR, ABORTING: sfengine:" << msg.toLocal8Bit().constData();
-    abort();
-}

@@ -23,15 +23,6 @@
 
 #include "konfytDefines.h"
 
-#include <iostream>
-
-
-void KonfytPatch::error_abort(QString msg)
-{
-    std::cout << "\n\n" << "Konfyt ERROR, ABORTING: konfytPatch:"
-              << msg.toLocal8Bit().constData() << "\n\n";
-    abort();
-}
 
 QList<KfPatchLayerWeakPtr> KonfytPatch::getSfLayerList() const
 {
@@ -589,18 +580,16 @@ KfPatchLayerWeakPtr KonfytPatch::addAudioInPort(LayerAudioInData newPort, QStrin
 
     // Check if port not already in patch
     QList<int> audioInPortList = this->getAudioInPortListProjectIds();
-    if (audioInPortList.contains(newPort.portIdInProject) == false) {
-        // Set up layer item
-        layer.reset(new KonfytPatchLayer());
-        layer->setName(name);
-        layer->initLayer(newPort);
-        // Add to layer list
-        layerList.append(layer);
-    } else {
-        // We do not handle duplicate ports well yet. Throw an error.
-        error_abort("addAudioInPort: Audio input port " + n2s(newPort.portIdInProject)
-                    + " already exists in patch.");
-    }
+
+    // Duplicate ports are not handled yet.
+    KONFYT_ASSERT_RETURN_VAL(!audioInPortList.contains(newPort.portIdInProject), layer);
+
+    // Set up layer item
+    layer.reset(new KonfytPatchLayer());
+    layer->setName(name);
+    layer->initLayer(newPort);
+    // Add to layer list
+    layerList.append(layer);
 
     return layer.toWeakRef();
 }
@@ -617,18 +606,15 @@ KfPatchLayerWeakPtr KonfytPatch::addMidiOutputPort(LayerMidiOutData newPort)
 {
     KfPatchLayerSharedPtr layer;
 
-    // Check if we already contain a MIDI out port with the same project id
     QList<int> midiOutputPortList = this->getMidiOutputPortListProjectIds();
-    if (midiOutputPortList.contains(newPort.portIdInProject) == false) {
-        layer.reset(new KonfytPatchLayer());
-        layer->initLayer(newPort);
-        // Add to layer list
-        layerList.append(layer);
-    } else {
-        // We don't know how to handle duplicate ports yet. Let's just throw an error.
-        error_abort("addMidiOutputPort: Midi output port " + n2s(newPort.portIdInProject)
-                    + " already exists in patch.");
-    }
+
+    // Duplicate ports are not handled yet.
+    KONFYT_ASSERT_RETURN_VAL(!midiOutputPortList.contains(newPort.portIdInProject), layer);
+
+    layer.reset(new KonfytPatchLayer());
+    layer->initLayer(newPort);
+    // Add to layer list
+    layerList.append(layer);
 
     return layer.toWeakRef();
 }

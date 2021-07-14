@@ -94,10 +94,8 @@ QString KonfytBridgeEngine::pluginName(int id)
 
 QString KonfytBridgeEngine::midiInJackPortName(int id)
 {
-    if (!items.contains(id)) {
-        // TODO BRIDGE error_abort()
-        return "Invalid id " + n2s(id);
-    }
+    KONFYT_ASSERT_RETURN_VAL(items.contains(id), QString("Invalid id %1").arg(id));
+
     KonfytBridgeItem &item = items[id];
     return item.jackname + ":" + "midi_in_0"; // TODO BRIDGE Detect ports with less fragility
 }
@@ -106,10 +104,8 @@ QStringList KonfytBridgeEngine::audioOutJackPortNames(int id)
 {
     QStringList ret;
 
-    if (!items.contains(id)) {
-        // TODO BRIDGE error_abort()
-        return ret;
-    }
+    KONFYT_ASSERT_RETURN_VAL(items.contains(id), ret);
+
     KonfytBridgeItem &item = items[id];
     ret.append( item.jackname + ":" + "bus_0_L" ); // TODO BRIDGE Detect ports with less fragility
     ret.append( item.jackname + ":" + "bus_0_R" ); // TODO BRIDGE Detect ports with less fragility

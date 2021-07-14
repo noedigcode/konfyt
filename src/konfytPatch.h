@@ -164,7 +164,6 @@ private:
     void xmlReadAudioInLayer(QXmlStreamReader* r, QString* errors = nullptr);
 
     void appendError(QString *errorString, QString msg);
-    void error_abort(QString msg);
 };
 
 #endif // KONFYT_PATCH_H

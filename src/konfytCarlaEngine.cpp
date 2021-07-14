@@ -252,9 +252,3 @@ void KonfytCarlaEngine::setGain(int ID, float newGain)
     CARLA_FUNC(carla_set_volume, pluginIdInCarla, newGain);
 }
 
-// Print error message to stdout, and abort app.
-void KonfytCarlaEngine::error_abort(QString msg)
-{
-    std::cout << "\n" << "Konfyt ERROR, ABORTING: sfengine:" << msg.toLocal8Bit().constData();
-    abort();
-}

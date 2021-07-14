@@ -431,11 +431,10 @@ void KonfytPatchEngine::updateLayerRouting(KfPatchLayerSharedPtr layer)
                   .arg(layer->name()).arg(layer->busIdInProject()));
 
             QList<int> busList = mCurrentProject->audioBus_getAllBusIds();
+            KONFYT_ASSERT(busList.count());
             if (busList.count()) {
                 bus = mCurrentProject->audioBus_getBus(busList[0]);
                 print("   Defaulting to bus " + n2s(busList[0]));
-            } else {
-                error_abort("updateLayerRouting: Project has no buses.");
             }
         } else {
             bus = mCurrentProject->audioBus_getBus(layer->busIdInProject());
@@ -452,11 +451,10 @@ void KonfytPatchEngine::updateLayerRouting(KfPatchLayerSharedPtr layer)
                   .arg(layer->name()).arg(layer->midiInPortIdInProject()));
 
             QList<int> midiInPortList = mCurrentProject->midiInPort_getAllPortIds();
+            KONFYT_ASSERT(midiInPortList.count());
             if (midiInPortList.count()) {
                 midiInPort = mCurrentProject->midiInPort_getPort(midiInPortList[0]);
                 print("   Defaulting to port " + n2s(midiInPortList[0]));
-            } else {
-                error_abort("updateLayerRouting: Project has no MIDI Input Ports.");
             }
         } else {
             midiInPort = mCurrentProject->midiInPort_getPort(layer->midiInPortIdInProject());
@@ -515,11 +513,11 @@ void KonfytPatchEngine::updateLayerRouting(KfPatchLayerSharedPtr layer)
 
     } else if (layerType == KonfytPatchLayer::TypeUninitialized) {
 
-        error_abort("updateLayerRouting: Layer type uninitialized.");
+        KONFYT_ASSERT_FAIL("Layer type uninitialized.");
 
     } else {
 
-        error_abort("updateLayerRouting: Unknown layer type.");
+        KONFYT_ASSERT_FAIL("Unknown layer type.");
 
     }
 }
@@ -561,11 +559,11 @@ void KonfytPatchEngine::updateLayerGain(KfPatchLayerSharedPtr layer)
 
     } else if (layerType == KonfytPatchLayer::TypeUninitialized) {
 
-        error_abort("updateLayerGain: Layer type uninitialized.");
+        KONFYT_ASSERT_FAIL("Layer type uninitialized.");
 
     } else {
 
-        error_abort("updateLayerGain: Unknown layer type.");
+        KONFYT_ASSERT_FAIL("Unknown layer type.");
 
     }
 }
@@ -625,11 +623,11 @@ void KonfytPatchEngine::setLayerActive(KfPatchLayerSharedPtr layer, bool active)
 
     } else if (layerType == KonfytPatchLayer::TypeUninitialized) {
 
-        error_abort("setLayerActive: layer type uninitialized.");
+        KONFYT_ASSERT_FAIL("Layer type uninitialized.");
 
     } else {
 
-        error_abort("setLayerActive: unknown layer type.");
+        KONFYT_ASSERT_FAIL("Unknown layer type.");
 
     }
 }
@@ -828,13 +826,6 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addAudioInPortToPatch(int port)
     reloadPatch();
 
     return layer.toWeakRef();
-}
-
-/* Print error message to stdout, and abort app. */
-void KonfytPatchEngine::error_abort(QString msg)
-{
-    std::cout << "\n" << "Konfyt ERROR, ABORTING: patchEngine:" << msg.toLocal8Bit().constData();
-    abort();
 }
 
 void KonfytPatchEngine::onSfzEngineInitDone(QString error)
