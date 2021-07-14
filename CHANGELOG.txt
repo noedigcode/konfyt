@@ -1,6 +1,15 @@
 Changelog
 =========
 
+[1.1.5] - July 2021
+-------------------
+
+Added
+
+- Ignore global transpose option in layer MIDI filter
+- Ignore global volume option for buses (checkbox on Ports and Buses screen)
+
+
 [1.1.4] - April 2021
 --------------------
 
