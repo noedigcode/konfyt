@@ -30,11 +30,6 @@
 #include <QObject>
 #include <QTime>
 
-#define CARLA_CLIENT_POSTFIX "_plugins"
-#define CARLA_MIDI_IN_PORT_POSTFIX "events-in"
-#define CARLA_OUT_LEFT_PORT_POSTFIX "out-left"
-#define CARLA_OUT_RIGHT_PORT_POSTFIX "out-right"
-
 CARLA_BACKEND_USE_NAMESPACE
 
 #if CARLA_VERSION_HEX >= 0x020200
@@ -77,10 +72,15 @@ private:
     CarlaHostHandle carlaHandle;
 #endif
     int pluginUniqueIDCounter = 10;
-    QString jack_client_name;
-    KonfytJackEngine* jack;
+    QString mJackClientName;
+    KonfytJackEngine* jack = nullptr;
     QMap<int, KonfytCarlaPluginData> pluginDataMap;
     QList<int> pluginList; // List with indexes matching id's in Carla engine, i.e. maps this class' unique IDs to pluginIds in Carla engine.
+
+    const QString CARLA_CLIENT_POSTFIX = "_plugins";
+    const QString CARLA_MIDI_IN_PORT_POSTFIX = "events-in";
+    const QString CARLA_OUT_LEFT_PORT_POSTFIX = "out-left";
+    const QString CARLA_OUT_RIGHT_PORT_POSTFIX = "out-right";
 };
 
 #endif // KONFYT_CARLA_ENGINE_H

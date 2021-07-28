@@ -40,79 +40,7 @@ QString KonfytCarlaEngine::engineName()
     return "CarlaEngine";
 }
 
-/************************************************************************
- * OLD CODE FOR LOADING OTHER TYPES OF PLUGINS
- *
-            if ( plugin.carlaPluginData.pluginType == KonfytCarlaPluginType_LV2 ) {
-                #if CARLA_VERSION_HEX > 0x01095
-
-
-                //plugin.carlaPluginData.name = "plugin_" + n2s(index) + "_lv2";
-                //returnValue = carla_add_plugin( BINARY_NATIVE,  // Binary type
-                //                                PLUGIN_LV2,     // Plugin type
-                //                                plugin.carlaPluginData.path.toLocal8Bit(),  // Filename
-                //                                plugin.carlaPluginData.name.toLocal8Bit(),  // Name of plugin
-                //                                "http://kxstudio.sf.net/carla/plugins/zynaddsubfx",  // Plugin label
-                //                                0,      // Plugin unique id, if applicable
-                //                                NULL,   // Extra pointer (defined per plugin type)
-                //                                0       // Initial plugin options
-                //                                );
-
-                // BINARY_NATIVE, PLUGIN_LV2, "/usr/lib/lv2/amsynth.lv2/", NULL, "http://code.google.com/p/amsynth/amsynth", 0, NULL
-                plugin.carlaPluginData.name = "plugin_" + n2s(index) + "_lv2";
-                returnValue = carla_add_plugin( BINARY_NATIVE,  // Binary type
-                                                PLUGIN_LV2,     // Plugin type
-                                                NULL,  // Filename
-                                                plugin.carlaPluginData.name.toLocal8Bit(),  // Name of plugin
-                                                plugin.carlaPluginData.path.toLocal8Bit(),  // Plugin label
-                                                0,      // Plugin unique id, if applicable
-                                                NULL,   // Extra pointer (defined per plugin type)
-                                                0       // Initial plugin options
-                                                );
-
-                #endif
-
-            } else if (plugin.carlaPluginData.pluginType == KonfytCarlaPluginType_SFZ ) {
-
-                plugin.carlaPluginData.name = "plugin_" + n2s(index) + "_sfz";
-
-                // Old carla used PLUGIN_FILE_SFZ below.
-                #if CARLA_VERSION_HEX < 0x01095
-                returnValue = carla_add_plugin(BINARY_NATIVE, PLUGIN_FILE_SFZ,plugin.carlaPluginData.path.toLocal8Bit(),
-                                      plugin.carlaPluginData.name.toLocal8Bit(),"sfz",0,NULL);
-                #elif CARLA_VERSION_HEX == 0x01095
-                // Carla 1.9.5 (2.0-beta3) changed to PLUGIN_SFZ.
-                returnValue = carla_add_plugin(BINARY_NATIVE, PLUGIN_SFZ,plugin.carlaPluginData.path.toLocal8Bit(),
-                                      plugin.carlaPluginData.name.toLocal8Bit(),"sfz",0,NULL);
-                #else
-                // 2015-03-28 Updated to Carla 1.9.6 (2.0-beta4). carla_add_plugin now has an additional parameter.
-                returnValue = carla_add_plugin(BINARY_NATIVE, PLUGIN_SFZ,plugin.carlaPluginData.path.toLocal8Bit(),
-                                                  plugin.carlaPluginData.name.toLocal8Bit(),"sfz",0,NULL,0);
-
-                userMessage("Loading sfz: " + plugin.carlaPluginData.path + ", " + plugin.carlaPluginData.name);
-                #endif
-            } else if ( plugin.carlaPluginData.pluginType == KonfytCarlaPluginType_Internal ) {
-
-                #if CARLA_VERSION_HEX > 0x01095
-
-                plugin.carlaPluginData.name.prepend("plugin_" + n2s(index));
-                returnValue = carla_add_plugin( BINARY_NATIVE,      // Binary type
-                                                PLUGIN_INTERNAL,    // Plugin type
-                                                NULL,               // Filename
-                                                plugin.carlaPluginData.name.toLocal8Bit(),  // Name of plugin
-                                                plugin.carlaPluginData.path.toLocal8Bit(),  // Plugin label
-                                                0,      // Plugin unique id, if applicable
-                                                NULL,   // Extra pointer (defined per plugin type)
-                                                0       // Initial plugin options
-                                                );
-
-                #endif
-
-            }
-*******************************************************************************/
-
-
-// Adds a new plugin and returns the unique ID. Returns -1 on error.
+/* Adds a new plugin and returns the unique ID. Returns -1 on error. */
 int KonfytCarlaEngine::addSfz(QString path)
 {
     KonfytCarlaPluginData pluginData;
@@ -147,7 +75,10 @@ int KonfytCarlaEngine::addSfz(QString path)
     }
 
     CARLA_FUNC(carla_set_active, pluginIdInCarla, true);
-    CARLA_FUNC(carla_set_option, pluginIdInCarla, PLUGIN_OPTION_SEND_CONTROL_CHANGES, true);
+    CARLA_FUNC(carla_set_option, pluginIdInCarla,
+               PLUGIN_OPTION_SEND_CONTROL_CHANGES, true);
+    CARLA_FUNC(carla_set_option, pluginIdInCarla,
+               PLUGIN_OPTION_SEND_PITCHBEND, true);
 
     // Insert to map of unique IDs (in this class) and plugin data
     pluginDataMap.insert( pluginData.ID, pluginData );
@@ -156,53 +87,58 @@ int KonfytCarlaEngine::addSfz(QString path)
 
     pluginUniqueIDCounter++;
 
-    return pluginData.ID; // Return the unique ID used by this class to distinguish the plugin
+    // Return the unique ID used by this class to distinguish the plugin
+    return pluginData.ID;
 }
 
 void KonfytCarlaEngine::removeSfz(int ID)
 {
-    Q_ASSERT( pluginDataMap.contains(ID) );
-    Q_ASSERT( pluginList.contains(ID) );
+    KONFYT_ASSERT( pluginDataMap.contains(ID) );
+    KONFYT_ASSERT( pluginList.contains(ID) );
 
-    KonfytCarlaPluginData pluginData = pluginDataMap.value(ID);
     pluginDataMap.remove(ID);
     int pluginIdInCarla = pluginList.indexOf(ID);
     pluginList.removeAt(pluginIdInCarla);
 
     bool ret = CARLA_FUNC(carla_remove_plugin, pluginIdInCarla);
     if (!ret) {
-        print("ERROR - Failed to remove plugin from Carla. ID: " + n2s(ID) + ", pluginIdInCarla: " + n2s(pluginIdInCarla));
+        print(QString("ERROR - Failed to remove plugin from Carla. "
+                      "ID: %1, pluginIdInCarla: %2")
+              .arg(ID).arg(pluginIdInCarla));
     }
 }
 
 QString KonfytCarlaEngine::pluginName(int ID)
 {
-    Q_ASSERT( pluginDataMap.contains(ID) );
+    KONFYT_ASSERT( pluginDataMap.contains(ID) );
 
-    return pluginDataMap[ID].name;
+    return pluginDataMap.value(ID).name;
 }
 
 QString KonfytCarlaEngine::midiInJackPortName(int ID)
 {
-    Q_ASSERT( pluginDataMap.contains(ID) );
+    KONFYT_ASSERT( pluginDataMap.contains(ID) );
 
-    // TODO: This depends on Carla naming the ports as we expect. A better way would be
-    // to get the port names from a Carla callback.
+    // TODO: This depends on Carla naming the ports as we expect. A better way
+    // would be to get the port names from a Carla callback.
 
-    return jack_client_name + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_MIDI_IN_PORT_POSTFIX);
+    return QString("%1:%2:%3").arg(mJackClientName, pluginName(ID),
+                                   CARLA_MIDI_IN_PORT_POSTFIX);
 }
 
 QStringList KonfytCarlaEngine::audioOutJackPortNames(int ID)
 {
-    Q_ASSERT( pluginDataMap.contains(ID) );
+    KONFYT_ASSERT( pluginDataMap.contains(ID) );
 
-    // TODO: This depends on Carla naming the ports as we expect. A better way would be
-    // to get the port names from a Carla callback.
+    // TODO: This depends on Carla naming the ports as we expect. A better way
+    // would be to get the port names from a Carla callback.
 
     QStringList ret;
 
-    ret.append( jack_client_name + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_OUT_LEFT_PORT_POSTFIX) );
-    ret.append( jack_client_name + ":" + pluginName(ID) + ":" + QString::fromLocal8Bit(CARLA_OUT_RIGHT_PORT_POSTFIX) );
+    ret.append(QString("%1:%2:%3").arg(mJackClientName, pluginName(ID),
+                                       CARLA_OUT_LEFT_PORT_POSTFIX));
+    ret.append(QString("%1:%2:%3").arg(mJackClientName, pluginName(ID),
+                                       CARLA_OUT_RIGHT_PORT_POSTFIX));
 
     return ret;
 }
@@ -210,7 +146,7 @@ QStringList KonfytCarlaEngine::audioOutJackPortNames(int ID)
 void KonfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
 {
     jack = jackEngine;
-    jack_client_name = jack->clientName() + CARLA_CLIENT_POSTFIX;
+    mJackClientName = jack->clientName() + CARLA_CLIENT_POSTFIX;
 
     print("Carla version " + QString(CARLA_VERSION_STRING));
 
@@ -218,15 +154,18 @@ void KonfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
 #ifdef CARLA_USE_HANDLE
     carlaHandle = carla_standalone_host_init();
 #endif
-    CARLA_FUNC(carla_set_engine_option, ENGINE_OPTION_PROCESS_MODE, ENGINE_PROCESS_MODE_SINGLE_CLIENT, NULL);
+    CARLA_FUNC(carla_set_engine_option, ENGINE_OPTION_PROCESS_MODE,
+               ENGINE_PROCESS_MODE_SINGLE_CLIENT, NULL);
     // Set path to the resource files.
     // Default unset.
     // Must be set for some internal plugins to work
-    CARLA_FUNC(carla_set_engine_option, ENGINE_OPTION_PATH_RESOURCES, 0, "/usr/lib/lv2/carla.lv2/resources/");
+    CARLA_FUNC(carla_set_engine_option, ENGINE_OPTION_PATH_RESOURCES, 0,
+               "/usr/lib/lv2/carla.lv2/resources/");
     // Set the engine callback
     //carla_set_engine_callback(KonfytCarlaEngine::carlaEngineCallback, this);
     // TODO: Handle the case where this name is already taken.
-    bool ok = CARLA_FUNC(carla_engine_init, "JACK", jack_client_name.toLocal8Bit().constData());
+    bool ok = CARLA_FUNC(carla_engine_init, "JACK",
+                         mJackClientName.toLocal8Bit().constData());
 
     QString error;
     if (!ok) {
@@ -239,13 +178,13 @@ void KonfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
 
 QString KonfytCarlaEngine::jackClientName()
 {
-    return jack_client_name;
+    return mJackClientName;
 }
 
 void KonfytCarlaEngine::setGain(int ID, float newGain)
 {
-    Q_ASSERT( pluginDataMap.contains(ID) );
-    Q_ASSERT( pluginList.contains(ID) );
+    KONFYT_ASSERT( pluginDataMap.contains(ID) );
+    KONFYT_ASSERT( pluginList.contains(ID) );
 
     int pluginIdInCarla = pluginList.indexOf(ID);
 
