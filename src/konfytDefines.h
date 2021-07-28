@@ -24,10 +24,9 @@
 
 #include <QString>
 
-#include <iostream>
 
 #define APP_NAME "Konfyt"
-#define APP_VERSION "1.1.5"
+#define APP_VERSION "1.1.6-testing"
 
 #define n2s(x) QString::number(x)
 #define bool2int(x) (x ? 1 : 0)
@@ -37,14 +36,22 @@
 #define STRING_PROJECT_DIR "$PROJ_DIR$"
 #define KONFYT_PATCH_SUFFIX "konfytpatch"
 
-
+/* Q_ASSERT if in debug mode. If not in debug mode and the condition is false,
+ * print file, line, function name and condition to stdout. */
 #define KONFYT_ASSERT(cond) Q_ASSERT(cond); if (!(cond)) { konfytAssertMsg(__FILE__, __LINE__, __func__, #cond); }
+
+/* Calls a failing KONFYT_ASSERT. text must be a non-null string literal. */
 #define KONFYT_ASSERT_FAIL(text) KONFYT_ASSERT(!text)
+
+/* Like KONFYT_ASSERT but contains a return statement to return out of the
+ * current function if the condition is false. */
 #define KONFYT_ASSERT_RETURN(cond) Q_ASSERT(cond); if (!(cond)) { konfytAssertMsg(__FILE__, __LINE__, __func__, #cond); return; }
+
+/* Like KONFYT_ASSERT_RETURN with a return value. */
 #define KONFYT_ASSERT_RETURN_VAL(cond, ret) Q_ASSERT(cond); if (!(cond)) { konfytAssertMsg(__FILE__, __LINE__, __func__, #cond); return ret; }
 
 void konfytAssertMsg(const char* file, int line, const char* func,
-                  const char* text);
+                     const char* text);
 
 int wrapIndex(int index, int listLength);
 QString sanitiseFilename(QString path);

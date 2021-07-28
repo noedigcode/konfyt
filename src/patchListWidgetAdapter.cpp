@@ -35,7 +35,7 @@ void PatchListWidgetAdapter::init(QListWidget *listWidget)
 
 void PatchListWidgetAdapter::addPatch(KonfytPatch *patch)
 {
-    Q_ASSERT(!patchDataMap.contains(patch));
+    KONFYT_ASSERT(!patchDataMap.contains(patch));
 
     PatchData data;
     data.item = new QListWidgetItem();
@@ -54,11 +54,11 @@ void PatchListWidgetAdapter::addPatches(QList<KonfytPatch *> patches)
 
 void PatchListWidgetAdapter::removePatch(KonfytPatch *patch)
 {
-    Q_ASSERT(patchDataMap.contains(patch));
-    Q_ASSERT(itemPatchMap.values().contains(patch));
+    KONFYT_ASSERT(patchDataMap.contains(patch));
+    KONFYT_ASSERT(itemPatchMap.values().contains(patch));
     QListWidgetItem* item = patchDataMap.take(patch).item;
     itemPatchMap.remove(item);
-    Q_ASSERT(item);
+    KONFYT_ASSERT(item);
     delete item;
     updateAll();
 }
@@ -194,7 +194,7 @@ void PatchListWidgetAdapter::moveItem(int indexFrom, int indexTo)
 
     w->blockSignals(true);
     QListWidgetItem* item = w->takeItem(indexFrom);
-    KONFYT_ASSERT_RETURN(item);
+    KONFYT_ASSERT(item);
     w->insertItem(indexTo, item);
     w->setCurrentItem(item);
     w->blockSignals(false);

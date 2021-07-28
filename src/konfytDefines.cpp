@@ -26,6 +26,8 @@
 #endif
 #include <fluidsynth.h>
 
+#include <iostream>
+
 
 int wrapIndex(int index, int listLength)
 {
