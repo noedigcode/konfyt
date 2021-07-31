@@ -1523,7 +1523,7 @@ KfSoundPtr MainWindow::selectedSoundInLibOrFs()
 
             // Create new SoundPtr from selected soundfont, containing only the
             // selected program as preset (if any)
-            ret.reset(new KonfytSound(KonfytSoundSoundfont));
+            ret.reset(new KonfytSound(KfSoundTypeSoundfont));
             if (selectedSfont) {
                 ret->filename = selectedSfont->filename;
                 ret->name = selectedSfont->name;
@@ -1544,13 +1544,13 @@ KfSoundPtr MainWindow::selectedSoundInLibOrFs()
         QString path = fsMap.value(ui->treeWidget_filesystem->currentItem()).filePath();
         if (isPatchSelectedInFilesystem()) {
 
-            ret.reset(new KonfytSound(KonfytSoundPatch));
+            ret.reset(new KonfytSound(KfSoundTypePatch));
             ret->filename = path;
             ret->name = path;
 
         } else if (isSoundfontSelectedInFilesystem()) {
 
-            ret.reset(new KonfytSound(KonfytSoundSoundfont));
+            ret.reset(new KonfytSound(KfSoundTypeSoundfont));
             ret->filename = path;
             ret->name = path;
             // If a program is selected, add it as the only preset
@@ -1560,7 +1560,7 @@ KfSoundPtr MainWindow::selectedSoundInLibOrFs()
 
         } else if (isSfzSelectedInFilesystem()) {
 
-            ret.reset(new KonfytSound(KonfytSoundSfz));
+            ret.reset(new KonfytSound(KfSoundTypeSfz));
             ret->filename = path;
             ret->name = path;
 
@@ -1756,17 +1756,17 @@ void MainWindow::loadPreviewPatchAndUpdateGui()
 
     KfSoundPtr s = selectedSoundInLibOrFs();
     if (s) {
-        if (s->type == KonfytSoundSoundfont) {
+        if (s->type == KfSoundTypeSoundfont) {
 
             if (s->presets.count()) {
                 pengine.addSfProgramLayer(s->filename, s->presets.value(0));
             }
 
-        } else if (s->type == KonfytSoundPatch) {
+        } else if (s->type == KfSoundTypePatch) {
 
             // We don't do preview for patches.
 
-        } else if (s->type == KonfytSoundSfz) {
+        } else if (s->type == KfSoundTypeSfz) {
 
             pengine.addSfzLayer(s->filename);
 
@@ -2164,9 +2164,6 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
             selectItemInFilesystemView(f);
 
         } else if (fileIsSoundfont(f)) {
-            // Create new patch and load soundfont into patch
-            newPatchToProject(); // Create a new patch and add to current project.
-            setCurrentPatchByIndex(-1);
 
             // Locate soundfont in filebrowser, select it and show its programs
             ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
@@ -2174,15 +2171,6 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
             selectItemInFilesystemView(f);
             // Load from filesystem view
             on_treeWidget_filesystem_itemDoubleClicked( ui->treeWidget_filesystem->currentItem(), 0 );
-            // Add first program to current patch
-            if (ui->listWidget_LibraryBottom->count()) {
-                ui->listWidget_LibraryBottom->setCurrentRow(0);
-            }
-            // TODO FIX addSoundfontProgramToCurrentPatch(f, ???); -- must wait for soundfont to be loaded
-
-            // Rename patch
-            ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(f) );
-            on_lineEdit_PatchName_editingFinished();
         }
     }
 
@@ -2404,8 +2392,10 @@ void MainWindow::setPreviewMode(bool previewModeOn)
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 
     if (mPreviewMode) {
+        setMasterGain(previewGain); // To update GUI slider
         loadPreviewPatchAndUpdateGui();
     } else {
+        setMasterGain(masterGain); // To update GUI slider
         pengine.unloadPatch(&mPreviewPatch);
         loadPatchAndUpdateGui();
     }
@@ -5321,6 +5311,8 @@ void MainWindow::setupPatchEngine()
 void MainWindow::updatePreviewPatchLayer()
 {
     foreach (KfPatchLayerSharedPtr layer, mPreviewPatch.layers()) {
+        if (layer->hasError()) { continue; }
+
         // Set the MIDI input channel
         KonfytMidiFilter filter = layer->midiFilter();
         filter.inChan = previewPatchMidiInChannel;

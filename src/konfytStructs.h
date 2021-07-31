@@ -28,10 +28,10 @@
 
 enum KonfytSoundType
 {
-    KonfytSoundUndefined,
-    KonfytSoundSoundfont,
-    KonfytSoundSfz,
-    KonfytSoundPatch
+    KfSoundTypeUndefined,
+    KfSoundTypeSoundfont,
+    KfSoundTypeSfz,
+    KfSoundTypePatch
 };
 
 struct KonfytSoundPreset
@@ -44,7 +44,7 @@ struct KonfytSoundPreset
 struct KonfytSound
 {
     KonfytSound(KonfytSoundType type) : type(type) {}
-    KonfytSoundType type = KonfytSoundUndefined;
+    KonfytSoundType type = KfSoundTypeUndefined;
     QString filename;
     QString name;
     QList<KonfytSoundPreset> presets;

@@ -36,7 +36,7 @@ KfSoundPtr KonfytDatabaseWorker::patchFromFile(QString filename)
 
     KonfytPatch p;
     if (p.loadPatchFromFile(filename)) {
-        ret.reset(new KonfytSound(KonfytSoundPatch));
+        ret.reset(new KonfytSound(KfSoundTypePatch));
         ret->filename = filename;
         ret->name = p.name();
         foreach (KfPatchLayerSharedPtr layer, p.layers()) {
@@ -143,7 +143,7 @@ void KonfytDatabaseWorker::scanSfzs()
     scanDirForFiles(sfzDir, sfzSuffix, sfzPaths);
 
     foreach (QString path, sfzPaths) {
-        KfSoundPtr sfz = KfSoundPtr(new KonfytSound(KonfytSoundSfz));
+        KfSoundPtr sfz = KfSoundPtr(new KonfytSound(KfSoundTypeSfz));
         sfz->filename = path;
         sfz->name = QFileInfo(sfz->filename).fileName();
         sfzResults.append(sfz);
@@ -199,7 +199,7 @@ KfSoundPtr KonfytDatabaseWorker::sfontFromFile(QString filename)
         return ret;
     }
 
-    ret.reset(new KonfytSound(KonfytSoundSoundfont));
+    ret.reset(new KonfytSound(KfSoundTypeSoundfont));
     ret->filename = filename;
     ret->name = QFileInfo(filename).fileName();
 
@@ -670,7 +670,7 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 
             if (r.name() == "soundfont") {
 
-                KfSoundPtr sf(new KonfytSound(KonfytSoundSoundfont));
+                KfSoundPtr sf(new KonfytSound(KfSoundTypeSoundfont));
                 sf->filename = r.attributes().value("filename").toString();
                 sf->name = r.attributes().value("name").toString();
 
@@ -701,7 +701,7 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 
             } else if (r.name() == "patch") {
 
-                KfSoundPtr patch(new KonfytSound(KonfytSoundPatch));
+                KfSoundPtr patch(new KonfytSound(KfSoundTypePatch));
                 patch->filename = r.attributes().value("filename").toString();
                 patch->name = r.attributes().value("name").toString();
                 if (patch->name.isEmpty()) {
@@ -725,7 +725,7 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 
             } else if (r.name() == "sfz") {
 
-                KfSoundPtr sfz(new KonfytSound(KonfytSoundSfz));
+                KfSoundPtr sfz(new KonfytSound(KfSoundTypeSfz));
                 sfz->filename = r.attributes().value("filename").toString();
                 sfz->name = QFileInfo(sfz->filename).fileName();
                 addSfz(sfz);
@@ -771,7 +771,7 @@ void konfytDatabase::search(QString str)
                 }
             }
             if (presetsFound.count()) {
-                KfSoundPtr sfresult(new KonfytSound(KonfytSoundSoundfont));
+                KfSoundPtr sfresult(new KonfytSound(KfSoundTypeSoundfont));
                 sfresult->filename = sf->filename;
                 sfresult->name = sf->name;
                 sfresult->presets = presetsFound;
