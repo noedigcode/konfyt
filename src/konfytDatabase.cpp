@@ -36,7 +36,7 @@ KfSoundPtr KonfytDatabaseWorker::patchFromFile(QString filename)
 
     KonfytPatch p;
     if (p.loadPatchFromFile(filename)) {
-        ret.reset(new KonfytSound());
+        ret.reset(new KonfytSound(KonfytSoundPatch));
         ret->filename = filename;
         ret->name = p.name();
         foreach (KfPatchLayerSharedPtr layer, p.layers()) {
@@ -143,7 +143,7 @@ void KonfytDatabaseWorker::scanSfzs()
     scanDirForFiles(sfzDir, sfzSuffix, sfzPaths);
 
     foreach (QString path, sfzPaths) {
-        KfSoundPtr sfz = KfSoundPtr(new KonfytSound());
+        KfSoundPtr sfz = KfSoundPtr(new KonfytSound(KonfytSoundSfz));
         sfz->filename = path;
         sfz->name = QFileInfo(sfz->filename).fileName();
         sfzResults.append(sfz);
@@ -174,10 +174,10 @@ void KonfytDatabaseWorker::scanPatches()
  * Fluidsynth in order to extract soundfont info, returning it with a signal so
  * the rest of the application can continue during this potentially long
  * operation. */
-void KonfytDatabaseWorker::requestSfontFromFile(QString filename, int source)
+void KonfytDatabaseWorker::requestSfontFromFile(QString filename)
 {
     KfSoundPtr newSfont = sfontFromFile(filename);
-    emit sfontFromFileFinished(newSfont, source);
+    emit sfontFromFileFinished(newSfont);
 }
 
 /* Create a soundfont object from a file. On error, the returned object is null.
@@ -199,7 +199,7 @@ KfSoundPtr KonfytDatabaseWorker::sfontFromFile(QString filename)
         return ret;
     }
 
-    ret.reset(new KonfytSound);
+    ret.reset(new KonfytSound(KonfytSoundSoundfont));
     ret->filename = filename;
     ret->name = QFileInfo(filename).fileName();
 
@@ -268,8 +268,9 @@ konfytDatabase::konfytDatabase()
     connect(this, &konfytDatabase::start_sfontFromFile,
             &worker, &KonfytDatabaseWorker::requestSfontFromFile);
 
+    qRegisterMetaType<KfSoundPtr>("KfSoundPtr");
     connect(&worker, &KonfytDatabaseWorker::sfontFromFileFinished,
-            this, &konfytDatabase::sfontFromFileFinished);
+            this, &konfytDatabase::onSfontInfoLoadedFromFile);
 
     worker.moveToThread(&workerThread);
     workerThread.start();
@@ -391,12 +392,9 @@ void konfytDatabase::onScanFinished()
     emit scanFinished();
 }
 
-void konfytDatabase::sfontFromFileFinished(KfSoundPtr sfont, int source)
+void konfytDatabase::onSfontInfoLoadedFromFile(KfSoundPtr sfont)
 {
-    if (source == konfytDatabaseSource_returnSfont) {
-        // The original command was sent from returnSfont()
-        emit returnSfont_finished(sfont);
-    }
+    emit sfontInfoLoadedFromFile(sfont);
 }
 
 void konfytDatabase::addPatch(QString filename)
@@ -507,24 +505,11 @@ void konfytDatabase::clearDatabase_exceptSoundfonts()
     sfzResults.clear();
 }
 
-/* General use function to return a sfont object based on the filename.
- * The database is first search for the sfont. If it is not in the database,
- * the sfont is loaded from file and returned.
- * This function does not block and the soundfont is actually returned by the
- * returnSfont_finished() signal. */
-void konfytDatabase::returnSfont(QString filename)
+/* Loads soundfont info from file in worker thread. Signal is emitted when done. */
+void konfytDatabase::loadSfontInfoFromFile(QString filename)
 {
-    // First check in database.
-    foreach (KfSoundPtr sf, mAllSoundfonts) {
-        if (filename == sf->filename) {
-            emit returnSfont_finished(sf);
-            return;
-        }
-    }
-    // Not found in database. Load from file.
-    emit start_sfontFromFile(filename, konfytDatabaseSource_returnSfont);
-    // The worker thread will now load the soundfont and return a signal
-    // when finished to the returnSfontFinished() slot.
+    emit start_sfontFromFile(filename);
+    // The worker thread will now load the soundfont and emit a signal when done
 }
 
 /* Initialise Fluidsynth and return 0. Returns 1 on error. */
@@ -685,7 +670,7 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 
             if (r.name() == "soundfont") {
 
-                KfSoundPtr sf(new KonfytSound());
+                KfSoundPtr sf(new KonfytSound(KonfytSoundSoundfont));
                 sf->filename = r.attributes().value("filename").toString();
                 sf->name = r.attributes().value("name").toString();
 
@@ -716,7 +701,7 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 
             } else if (r.name() == "patch") {
 
-                KfSoundPtr patch(new KonfytSound());
+                KfSoundPtr patch(new KonfytSound(KonfytSoundPatch));
                 patch->filename = r.attributes().value("filename").toString();
                 patch->name = r.attributes().value("name").toString();
                 if (patch->name.isEmpty()) {
@@ -740,7 +725,7 @@ bool konfytDatabase::loadDatabaseFromFile(QString filename)
 
             } else if (r.name() == "sfz") {
 
-                KfSoundPtr sfz(new KonfytSound());
+                KfSoundPtr sfz(new KonfytSound(KonfytSoundSfz));
                 sfz->filename = r.attributes().value("filename").toString();
                 sfz->name = QFileInfo(sfz->filename).fileName();
                 addSfz(sfz);
@@ -786,7 +771,7 @@ void konfytDatabase::search(QString str)
                 }
             }
             if (presetsFound.count()) {
-                KfSoundPtr sfresult(new KonfytSound());
+                KfSoundPtr sfresult(new KonfytSound(KonfytSoundSoundfont));
                 sfresult->filename = sf->filename;
                 sfresult->name = sf->name;
                 sfresult->presets = presetsFound;

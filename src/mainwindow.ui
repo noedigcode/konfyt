@@ -121,6 +121,14 @@ QFrame#frame_MainToolbar{
 }
 
 /* ---------------------------------------------------------------------- */
+/* Layer list &quot;toolbar&quot; frame*/
+QFrame#frame_layerListToolbar{
+	margin: 0px;
+	border-radius: 0px;
+	background-color: rgba(80, 80, 80, 100);
+}
+
+/* ---------------------------------------------------------------------- */
 /* GroupBox */
 
 QGroupBox{
@@ -157,8 +165,11 @@ QGroupBox#groupBox_PatchPage {
 /* Patch Layers Groupbox */
 QGroupBox#groupBox_PatchLayers {
 	background-color:  rgba(107, 107, 107, 80);
-	border: 2px solid;
-	border-color: rgba(255,255,255,50);
+	border: 1px solid;
+border-radius: 0px;
+/*	border-color: rgba(255,255,255,50);*/
+	border-color: rgb(40,40,40);
+padding: 0px;
 }
 
 /* ---------------------------------------------------------------------- */
@@ -225,16 +236,14 @@ QListView{
 
 /* Patch List */
 QListView#listWidget_Patches {
-	background-color: rgba(38, 38, 38,50);
-	border: 1px solid rgba(255, 255, 255,80);
-	border-radius: 5px;
+	background-color: rgba(38, 38, 38,50);	
+	border-color: rgb(80,80,80);
 }
 
 /* Layers list widget */
 QListView#listWidget_Layers {
 	background-color:  rgba(107, 107, 107, 0);
-	border: 0px solid;
-	border-color: rgba(255,255,255,50);
+	border: 0px solid;;
 }
 
 /* Selected layer */
@@ -460,7 +469,6 @@ QTabWidget::pane { /* The tab widget frame */
  }
 
  QTabWidget::tab-bar {
-     left: 5px; /* move to the right by 5px */
 
  }
 
@@ -472,8 +480,7 @@ QTabWidget::pane { /* The tab widget frame */
      border-top-left-radius: 2px;
      border-top-right-radius: 2px;
      min-width: 3ex;
-     padding: 1px;
-	height:20px;
+     padding: 4px;
  }
 
  QTabBar::tab:selected, QTabBar::tab:hover {
@@ -482,12 +489,10 @@ QTabWidget::pane { /* The tab widget frame */
 
  QTabBar::tab:selected {
      border-color: #9B9B9B;
-	height: 19px;
  }
 
  QTabBar::tab:!selected {
-     /*margin-top: 2px; /* make non-selected tabs look smaller */
-	height: 18px;
+	/* make non-selected tabs look smaller */
 	margin-top: 1px;
  }
 
@@ -501,8 +506,11 @@ QTextBrowser {
 
 /* Patch note textbrowser */
 QTextBrowser#textBrowser_patchNote {
-	border: 1px solid grey;
-	background-color: rgba(0,0,0,0);
+	border: 1px solid rgb(80,80,80);
+	border-left: 0px;
+	border-right: 0px;
+	border-bottom: 0px;
+	background-color: rgba(0,0,0,50);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -1128,7 +1136,7 @@ border-bottom-left-radius: 0;</string>
             <property name="horizontalSpacing">
              <number>5</number>
             </property>
-            <item row="0" column="0">
+            <item row="1" column="0">
              <widget class="QSplitter" name="splitter_library">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
@@ -1271,42 +1279,11 @@ border-bottom-right-radius: 0;</string>
                        <string>Search library</string>
                       </property>
                       <property name="styleSheet">
-                       <string notr="true">border-radius: 0;</string>
-                      </property>
-                      <property name="placeholderText">
-                       <string>Search</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QToolButton" name="toolButton_LibraryPreview">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="toolTip">
-                       <string>Toggle Preview Mode for previewing library items</string>
-                      </property>
-                      <property name="styleSheet">
                        <string notr="true">border-top-left-radius: 0;
 border-bottom-left-radius: 0;</string>
                       </property>
-                      <property name="text">
-                       <string>Preview</string>
-                      </property>
-                      <property name="checkable">
-                       <bool>true</bool>
-                      </property>
-                      <property name="popupMode">
-                       <enum>QToolButton::MenuButtonPopup</enum>
+                      <property name="placeholderText">
+                       <string>Search</string>
                       </property>
                      </widget>
                     </item>
@@ -1788,6 +1765,83 @@ border-bottom-left-radius: 0;</string>
               </widget>
              </widget>
             </item>
+            <item row="0" column="0">
+             <widget class="QFrame" name="frame_preview">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>26</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>26</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::StyledPanel</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Raised</enum>
+              </property>
+              <property name="buttonFrame" stdset="0">
+               <bool>true</bool>
+              </property>
+              <layout class="QHBoxLayout" name="horizontalLayout_66">
+               <property name="spacing">
+                <number>1</number>
+               </property>
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QToolButton" name="toolButton_LibraryPreview">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>16777215</height>
+                  </size>
+                 </property>
+                 <property name="toolTip">
+                  <string>Toggle Preview Mode for previewing library items</string>
+                 </property>
+                 <property name="styleSheet">
+                  <string notr="true">
+</string>
+                 </property>
+                 <property name="text">
+                  <string>Preview</string>
+                 </property>
+                 <property name="checkable">
+                  <bool>true</bool>
+                 </property>
+                 <property name="popupMode">
+                  <enum>QToolButton::MenuButtonPopup</enum>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
            </layout>
           </widget>
          </item>
@@ -2066,7 +2120,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>4</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <property name="konfytGradient" stdset="0">
@@ -2142,7 +2196,7 @@ td
                   </size>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true"/>
+                  <string notr="true">border-radius: 0;</string>
                  </property>
                  <property name="dragEnabled">
                   <bool>false</bool>
@@ -2531,12 +2585,19 @@ color: white;</string>
                       <property name="bottomMargin">
                        <number>0</number>
                       </property>
-                      <property name="horizontalSpacing">
+                      <property name="spacing">
                        <number>0</number>
                       </property>
-                      <property name="verticalSpacing">
-                       <number>2</number>
-                      </property>
+                      <item row="3" column="0">
+                       <widget class="QLabel" name="label_21">
+                        <property name="styleSheet">
+                         <string notr="true">padding-left: 2px;</string>
+                        </property>
+                        <property name="text">
+                         <string>Note:</string>
+                        </property>
+                       </widget>
+                      </item>
                       <item row="4" column="0">
                        <widget class="QTextBrowser" name="textBrowser_patchNote">
                         <property name="maximumSize">
@@ -2560,184 +2621,6 @@ p, li { white-space: pre-wrap; }
                         </property>
                        </widget>
                       </item>
-                      <item row="0" column="0">
-                       <widget class="QFrame" name="frame_20">
-                        <property name="sizePolicy">
-                         <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
-                          <horstretch>0</horstretch>
-                          <verstretch>0</verstretch>
-                         </sizepolicy>
-                        </property>
-                        <property name="minimumSize">
-                         <size>
-                          <width>0</width>
-                          <height>26</height>
-                         </size>
-                        </property>
-                        <property name="maximumSize">
-                         <size>
-                          <width>16777215</width>
-                          <height>26</height>
-                         </size>
-                        </property>
-                        <property name="styleSheet">
-                         <string notr="true"/>
-                        </property>
-                        <property name="frameShape">
-                         <enum>QFrame::StyledPanel</enum>
-                        </property>
-                        <property name="frameShadow">
-                         <enum>QFrame::Raised</enum>
-                        </property>
-                        <property name="buttonFrame" stdset="0">
-                         <bool>true</bool>
-                        </property>
-                        <layout class="QGridLayout" name="gridLayout_25">
-                         <property name="leftMargin">
-                          <number>0</number>
-                         </property>
-                         <property name="topMargin">
-                          <number>0</number>
-                         </property>
-                         <property name="rightMargin">
-                          <number>0</number>
-                         </property>
-                         <property name="bottomMargin">
-                          <number>0</number>
-                         </property>
-                         <property name="spacing">
-                          <number>1</number>
-                         </property>
-                         <item row="0" column="1">
-                          <widget class="QToolButton" name="toolButton_layer_AddMidiPort">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="toolTip">
-                            <string>Add MIDI output port layer to patch</string>
-                           </property>
-                           <property name="styleSheet">
-                            <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;
-border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                           </property>
-                           <property name="text">
-                            <string>Add MIDI Port</string>
-                           </property>
-                           <property name="popupMode">
-                            <enum>QToolButton::InstantPopup</enum>
-                           </property>
-                           <property name="toolButtonStyle">
-                            <enum>Qt::ToolButtonTextBesideIcon</enum>
-                           </property>
-                           <property name="arrowType">
-                            <enum>Qt::NoArrow</enum>
-                           </property>
-                          </widget>
-                         </item>
-                         <item row="0" column="3">
-                          <widget class="QToolButton" name="toolButton_layer_down">
-                           <property name="toolTip">
-                            <string>Move selected layer down</string>
-                           </property>
-                           <property name="styleSheet">
-                            <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;
-border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                           </property>
-                           <property name="text">
-                            <string>V</string>
-                           </property>
-                           <property name="icon">
-                            <iconset resource="../images.qrc">
-                             <normaloff>:/icons/down.png</normaloff>:/icons/down.png</iconset>
-                           </property>
-                          </widget>
-                         </item>
-                         <item row="0" column="0">
-                          <widget class="QToolButton" name="toolButton_SavePatch">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="styleSheet">
-                            <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;
-</string>
-                           </property>
-                           <property name="text">
-                            <string>Patch Menu</string>
-                           </property>
-                           <property name="popupMode">
-                            <enum>QToolButton::InstantPopup</enum>
-                           </property>
-                           <property name="toolButtonStyle">
-                            <enum>Qt::ToolButtonTextOnly</enum>
-                           </property>
-                           <property name="arrowType">
-                            <enum>Qt::NoArrow</enum>
-                           </property>
-                          </widget>
-                         </item>
-                         <item row="0" column="2">
-                          <widget class="QToolButton" name="toolButton_layer_AddAudioInput">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="toolTip">
-                            <string>Add audio input port layer to patch</string>
-                           </property>
-                           <property name="styleSheet">
-                            <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;
-border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                           </property>
-                           <property name="text">
-                            <string>Add Audio In Port</string>
-                           </property>
-                           <property name="popupMode">
-                            <enum>QToolButton::InstantPopup</enum>
-                           </property>
-                           <property name="toolButtonStyle">
-                            <enum>Qt::ToolButtonTextBesideIcon</enum>
-                           </property>
-                           <property name="arrowType">
-                            <enum>Qt::NoArrow</enum>
-                           </property>
-                          </widget>
-                         </item>
-                         <item row="0" column="4">
-                          <widget class="QToolButton" name="toolButton_layer_up">
-                           <property name="toolTip">
-                            <string>Move selected layer up</string>
-                           </property>
-                           <property name="styleSheet">
-                            <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                           </property>
-                           <property name="text">
-                            <string>^</string>
-                           </property>
-                           <property name="icon">
-                            <iconset resource="../images.qrc">
-                             <normaloff>:/icons/up.png</normaloff>:/icons/up.png</iconset>
-                           </property>
-                          </widget>
-                         </item>
-                        </layout>
-                       </widget>
-                      </item>
                       <item row="2" column="0">
                        <widget class="QListWidget" name="listWidget_Layers">
                         <property name="styleSheet">
@@ -2748,18 +2631,235 @@ border-bottom-left-radius: 0;</string>
                         </property>
                        </widget>
                       </item>
-                      <item row="3" column="0">
-                       <widget class="QLabel" name="label_21">
-                        <property name="text">
-                         <string>Note:</string>
+                      <item row="0" column="0">
+                       <widget class="QFrame" name="frame_layerListToolbar">
+                        <property name="minimumSize">
+                         <size>
+                          <width>0</width>
+                          <height>0</height>
+                         </size>
                         </property>
+                        <property name="frameShape">
+                         <enum>QFrame::StyledPanel</enum>
+                        </property>
+                        <property name="frameShadow">
+                         <enum>QFrame::Raised</enum>
+                        </property>
+                        <layout class="QHBoxLayout" name="horizontalLayout_67">
+                         <property name="leftMargin">
+                          <number>2</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>3</number>
+                         </property>
+                         <property name="rightMargin">
+                          <number>2</number>
+                         </property>
+                         <property name="bottomMargin">
+                          <number>3</number>
+                         </property>
+                         <item>
+                          <widget class="QFrame" name="frame_20">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>26</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>26</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true"/>
+                           </property>
+                           <property name="frameShape">
+                            <enum>QFrame::StyledPanel</enum>
+                           </property>
+                           <property name="frameShadow">
+                            <enum>QFrame::Raised</enum>
+                           </property>
+                           <property name="buttonFrame" stdset="0">
+                            <bool>true</bool>
+                           </property>
+                           <layout class="QGridLayout" name="gridLayout_25">
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="spacing">
+                             <number>1</number>
+                            </property>
+                            <item row="0" column="1">
+                             <widget class="QToolButton" name="toolButton_layer_AddMidiPort">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
+                              <property name="toolTip">
+                               <string>Add MIDI output port layer to patch</string>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                              </property>
+                              <property name="text">
+                               <string>Add MIDI Port</string>
+                              </property>
+                              <property name="popupMode">
+                               <enum>QToolButton::InstantPopup</enum>
+                              </property>
+                              <property name="toolButtonStyle">
+                               <enum>Qt::ToolButtonTextBesideIcon</enum>
+                              </property>
+                              <property name="arrowType">
+                               <enum>Qt::NoArrow</enum>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="0" column="3">
+                             <widget class="QToolButton" name="toolButton_layer_down">
+                              <property name="toolTip">
+                               <string>Move selected layer down</string>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                              </property>
+                              <property name="text">
+                               <string>V</string>
+                              </property>
+                              <property name="icon">
+                               <iconset resource="../images.qrc">
+                                <normaloff>:/icons/down.png</normaloff>:/icons/down.png</iconset>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="0" column="0">
+                             <widget class="QToolButton" name="toolButton_SavePatch">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;
+</string>
+                              </property>
+                              <property name="text">
+                               <string>Patch Menu</string>
+                              </property>
+                              <property name="popupMode">
+                               <enum>QToolButton::InstantPopup</enum>
+                              </property>
+                              <property name="toolButtonStyle">
+                               <enum>Qt::ToolButtonTextOnly</enum>
+                              </property>
+                              <property name="arrowType">
+                               <enum>Qt::NoArrow</enum>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="0" column="2">
+                             <widget class="QToolButton" name="toolButton_layer_AddAudioInput">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
+                              <property name="toolTip">
+                               <string>Add audio input port layer to patch</string>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                              </property>
+                              <property name="text">
+                               <string>Add Audio In Port</string>
+                              </property>
+                              <property name="popupMode">
+                               <enum>QToolButton::InstantPopup</enum>
+                              </property>
+                              <property name="toolButtonStyle">
+                               <enum>Qt::ToolButtonTextBesideIcon</enum>
+                              </property>
+                              <property name="arrowType">
+                               <enum>Qt::NoArrow</enum>
+                              </property>
+                             </widget>
+                            </item>
+                            <item row="0" column="4">
+                             <widget class="QToolButton" name="toolButton_layer_up">
+                              <property name="toolTip">
+                               <string>Move selected layer up</string>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                              </property>
+                              <property name="text">
+                               <string>^</string>
+                              </property>
+                              <property name="icon">
+                               <iconset resource="../images.qrc">
+                                <normaloff>:/icons/up.png</normaloff>:/icons/up.png</iconset>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item>
+                          <spacer name="horizontalSpacer_18">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>40</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                        </layout>
                        </widget>
                       </item>
                       <item row="1" column="0">
                        <widget class="QLabel" name="label_patch_alwaysActive">
                         <property name="styleSheet">
                          <string notr="true">background-color: qlineargradient(spread:pad, x1:0, y1:0, x2:1, y2:0, stop:0 rgba(229, 130, 64, 200), stop:1 rgba(255, 170, 0, 200));
-color: rgb(0, 0, 0);</string>
+color: rgb(0, 0, 0);
+padding: 1px;
+border-top: 1px solid rgb(40,40,40);
+border-bottom: 1px solid rgb(40,40,40);</string>
                         </property>
                         <property name="text">
                          <string>Always Active</string>
@@ -2771,10 +2871,10 @@ color: rgb(0, 0, 0);</string>
                       </item>
                      </layout>
                      <zorder>listWidget_Layers</zorder>
-                     <zorder>frame_20</zorder>
                      <zorder>textBrowser_patchNote</zorder>
                      <zorder>label_21</zorder>
                      <zorder>label_patch_alwaysActive</zorder>
+                     <zorder>frame_layerListToolbar</zorder>
                     </widget>
                    </item>
                   </layout>

@@ -26,6 +26,13 @@
 #include <QSharedPointer>
 #include <QString>
 
+enum KonfytSoundType
+{
+    KonfytSoundUndefined,
+    KonfytSoundSoundfont,
+    KonfytSoundSfz,
+    KonfytSoundPatch
+};
 
 struct KonfytSoundPreset
 {
@@ -36,6 +43,8 @@ struct KonfytSoundPreset
 
 struct KonfytSound
 {
+    KonfytSound(KonfytSoundType type) : type(type) {}
+    KonfytSoundType type = KonfytSoundUndefined;
     QString filename;
     QString name;
     QList<KonfytSoundPreset> presets;

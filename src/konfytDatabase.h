@@ -36,8 +36,6 @@
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 
-#define konfytDatabaseSource_returnSfont 1
-
 #define XML_DATABASE "database"
 
 
@@ -66,13 +64,13 @@ public:
 
 public slots:
     void scan();
-    void requestSfontFromFile(QString filename, int source);
+    void requestSfontFromFile(QString filename);
 
 signals:
     void print(QString msg);
     void scanFinished();
     void scanStatus(QString msg);
-    void sfontFromFileFinished(KfSoundPtr sfont, int source);
+    void sfontFromFileFinished(KfSoundPtr sfont);
 
 private:
     void scanDirForFiles(QString dirname, QStringList suffixes, QStringList &list);
@@ -113,8 +111,7 @@ public:
     void setPatchesDir(QString path);
     void scan();
 
-    // General-use operations to return sfont objects
-    void returnSfont(QString filename);
+    void loadSfontInfoFromFile(QString filename);
 
     void clearDatabase();
     void clearDatabase_exceptSoundfonts();
@@ -134,21 +131,21 @@ public:
 
     void addPatch(QString filename);
 
-public slots:
-    void onScanFinished();
-    void sfontFromFileFinished(KfSoundPtr sfont, int source);
-    void userMessageFromWorker(QString msg);
-    void scanStatusFromWorker(QString msg);
-
 signals:
     // Signals intended for outside world
     void print(QString message);
     void scanStatus(QString msg);
     void scanFinished();
-    void returnSfont_finished(KfSoundPtr sf);
+    void sfontInfoLoadedFromFile(KfSoundPtr sf);
     // Signals intended for worker thread
     void start_scanDirs();
-    void start_sfontFromFile(QString filename, int source);
+    void start_sfontFromFile(QString filename);
+
+private slots:
+    void onScanFinished();
+    void onSfontInfoLoadedFromFile(KfSoundPtr sfont);
+    void userMessageFromWorker(QString msg);
+    void scanStatusFromWorker(QString msg);
 
 private:
     QList<KfSoundPtr> mAllSoundfonts;

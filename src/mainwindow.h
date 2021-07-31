@@ -73,8 +73,6 @@
 #define EVENT_FILTER_MODE_LIVE 0
 #define EVENT_FILTER_MODE_WAITER 1
 
-#define returnSfontRequester_on_treeWidget_filesystem_itemDoubleClicked 0
-
 #define TREE_ITEM_SEARCH_RESULTS "Search Results:"
 #define TREE_ITEM_SOUNDFONTS "Soundfonts"
 #define TREE_ITEM_PATCHES "Patches"
@@ -198,7 +196,7 @@ private:
     // Misc helper functions
     QString getUniqueFilename(QString dirname, QString name, QString extension);
 
-    void setPatchModified(bool modified);
+    void patchModified();
     void setProjectModified();
     void setProjectName(QString name);
     void gui_updateProjectName();
@@ -215,15 +213,25 @@ private slots:
     // Library and filesystem view
     // ========================================================================
 private:
-    bool libraryIsProgramSelected();
-    KonfytSoundPreset librarySelectedProgram();
-
     LibraryTreeItemType libraryTreeItemType(QTreeWidgetItem* item);
     LibraryTreeItemType librarySelectedTreeItemType();
 
     KfSoundPtr librarySelectedPatch();
     KfSoundPtr librarySelectedSfont();
     KfSoundPtr librarySelectedSfz();
+
+    // Library/filesystem common
+private:
+    KfSoundPtr selectedSfont;
+    KfSoundPtr selectedSoundInLibOrFs();
+    bool isSoundfontProgramSelectedInLibOrFs();
+    KonfytSoundPreset selectedSoundfontProgramInLibOrFs();
+    void clearLibFsInfoArea();
+    void showPatchInLibFsInfoArea();
+    void showSfontInfoInLibFsInfoArea(QString filename);
+    void showSelectedSfontProgramList();
+    void showSfzContentInLibFsInfoArea(QString filename);
+    QString loadSfzFileText(QString filename);
 
     // Library tree items
     struct LibraryTree {
@@ -258,13 +266,10 @@ private:
     konfytDatabase db;
     void setupDatabase();
     bool saveDatabase();
-    int returnSfontRequester;
-    QList<KonfytSoundPreset> programList; // List of programs currently displayed in program list view in library.
-    void library_refreshGUIProgramList();      // Refresh the GUI program list to match programList
 private slots:
     void onDatabaseScanFinished();
     void onDatabaseScanStatus(QString msg);
-    void onDatabaseReturnSfont(KfSoundPtr sf);
+    void onDatabaseSfontInfoLoaded(KfSoundPtr sf);
 
 private:
     bool searchMode;
@@ -275,21 +280,21 @@ private:
     QMenu libraryMenu;
     QTreeWidgetItem* libraryMenuItem;
 
-    // Filesystem view in library
+    // Filesystem view
     QString fsview_currentPath;
     QStringList fsview_back;
     void setupFilesystemView();
     void refreshFilesystemView();
     void cdFilesystemView(QString newpath);
     void selectItemInFilesystemView(QString path);
+    bool isSfzSelectedInFilesystem();
+    bool isPatchSelectedInFilesystem();
+    bool isSoundfontSelectedInFilesystem();
     QMap<QTreeWidgetItem*, QFileInfo> fsMap;
     QMenu fsViewMenu;
     QTreeWidgetItem* fsViewMenuItem;
 
     void openFileManager(QString path);
-
-    void showSfzContentsBelowLibrary(QString filename);
-    QString loadSfzFileText(QString filename);
 
 private slots:
     void on_tabWidget_library_currentChanged(int index);
@@ -330,11 +335,11 @@ private slots:
 private:
     KonfytPatchEngine pengine;
     void setupPatchEngine();
-    KonfytPatch* masterPatch = nullptr; // Current patch being played
+    KonfytPatch* mCurrentPatch = nullptr; // Current patch being played
     float masterGain = 1.0;     // Master gain when not in preview mode
     MidiValueController masterGainMidiCtrlr;
 
-    KonfytPatch previewPatch;   // Patch played when in preview mode
+    KonfytPatch mPreviewPatch;  // Patch played when in preview mode
     float previewGain = 1.0;    // Gain when in preview mode
     int previewPatchMidiInPort = 0;
     int previewPatchMidiInChannel = -1;
@@ -350,7 +355,7 @@ private:
     void updateBusGainInJackEngine(int busId);
 
     // Current patch functions
-    int mCurrentPatchIndex = -1;
+    int currentPatchIndex();
     void setCurrentPatch(KonfytPatch *patch);
     void setCurrentPatchByIndex(int index);
 
@@ -360,11 +365,12 @@ private:
     void addMidiPortToCurrentPatch(int port);
     void addAudioInPortToCurrentPatch(int port);
 
-    void loadPatchForModeAndUpdateGUI();
+    void loadPatchAndUpdateGui();
+    void loadPreviewPatchAndUpdateGui();
 
     // GUI patch functions
-    bool previewMode = false;           // Use setPreviewMode() to change.
-    void setPreviewMode(bool choice);   // Set preview mode on or off and updates GUI.
+    bool mPreviewMode = false;               // Set by setPreviewMode()
+    void setPreviewMode(bool previewModeOn); // Set preview mode on or off and updates GUI.
     void gui_updatePatchView();
     void gui_updateWindowTitle();
     PatchListWidgetAdapter patchListAdapter;

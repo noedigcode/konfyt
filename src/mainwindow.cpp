@@ -150,6 +150,9 @@ void MainWindow::setupGuiMenuButtons()
     connect(&previewButtonMenu, &QMenu::aboutToShow,
             this, &MainWindow::preparePreviewMenu);
     ui->toolButton_LibraryPreview->setMenu(&previewButtonMenu);
+
+    ui->tabWidget_library->setCornerWidget(ui->frame_preview);
+    //ui->tabWidget_library->tabBar()->setFixedHeight(ui->frame_preview->height() + 2);
 }
 
 void MainWindow::setupGuiDefaults()
@@ -1263,7 +1266,7 @@ void MainWindow::loadProject(ProjectPtr prj)
 
     onProjectMidiPickupRangeChanged(prj->getMidiPickupRange());
 
-    masterPatch = nullptr;
+    mCurrentPatch = nullptr;
     gui_updatePatchView();
 
 
@@ -1377,8 +1380,8 @@ void MainWindow::removePatchFromProject(int i)
         // Remove from GUI
         patchListAdapter.removePatch(patch);
 
-        if (masterPatch == patch) {
-            masterPatch = nullptr;
+        if (mCurrentPatch == patch) {
+            mCurrentPatch = nullptr;
             gui_updatePatchView();
         }
         print("Patch Removed.");
@@ -1425,29 +1428,17 @@ KonfytPatch *MainWindow::addPatchToProjectFromFile(QString filename)
 }
 
 /* Returns true if a program is selected in the library. */
-bool MainWindow::libraryIsProgramSelected()
+bool MainWindow::isSoundfontProgramSelectedInLibOrFs()
 {
-    // This is possible only if the list widget contains programs
-    if (programList.count()) {
-        // If the currentrow of the program list widget is positive,
-        // it contains programs and one is currently selected.
-        int currentRow = ui->listWidget_LibraryBottom->currentRow();
-        if (currentRow>=0) {
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        return false;
-    }
+    return (selectedSfont && (ui->listWidget_LibraryBottom->currentRow() >= 0));
 }
 
 /* Returns the currently selected program, or a blank one if nothing is selected. */
-KonfytSoundPreset MainWindow::librarySelectedProgram()
+KonfytSoundPreset MainWindow::selectedSoundfontProgramInLibOrFs()
 {
     KonfytSoundPreset p;
-    if (libraryIsProgramSelected()) {
-        p = programList.at(ui->listWidget_LibraryBottom->currentRow());
+    if (isSoundfontProgramSelectedInLibOrFs()) {
+        p = selectedSfont->presets.value(ui->listWidget_LibraryBottom->currentRow());
     }
     return p;
 }
@@ -1498,6 +1489,113 @@ KfSoundPtr MainWindow::librarySelectedSfz()
         ret = librarySfzTree.soundsMap.value(ui->treeWidget_Library->currentItem());
     }
     return ret;
+}
+
+bool MainWindow::isSfzSelectedInFilesystem()
+{
+    QFileInfo info = fsMap.value(ui->treeWidget_filesystem->currentItem());
+    return fileIsSfzOrGig(info.filePath());
+}
+
+bool MainWindow::isPatchSelectedInFilesystem()
+{
+    QFileInfo info = fsMap.value(ui->treeWidget_filesystem->currentItem());
+    return fileIsPatch(info.filePath());
+}
+
+bool MainWindow::isSoundfontSelectedInFilesystem()
+{
+    QFileInfo info = fsMap.value(ui->treeWidget_filesystem->currentItem());
+    return fileIsSoundfont(info.filePath());
+}
+
+KfSoundPtr MainWindow::selectedSoundInLibOrFs()
+{
+    KfSoundPtr ret;
+
+    if (ui->tabWidget_library->currentWidget() == ui->tab_library) {
+        // Library is currently visible
+
+        if ( librarySelectedTreeItemType() == libTreePatch ) {
+            ret = libraryPatchTree.soundsMap.value(ui->treeWidget_Library->currentItem());
+
+        } else if ( librarySelectedTreeItemType() == libTreeSoundfont ) {
+
+            // Create new SoundPtr from selected soundfont, containing only the
+            // selected program as preset (if any)
+            ret.reset(new KonfytSound(KonfytSoundSoundfont));
+            if (selectedSfont) {
+                ret->filename = selectedSfont->filename;
+                ret->name = selectedSfont->name;
+                if (isSoundfontProgramSelectedInLibOrFs()) {
+                    ret->presets.append(selectedSoundfontProgramInLibOrFs());
+                }
+            } else {
+                KONFYT_ASSERT_FAIL("Selected KfSoundPtr null");
+            }
+
+        } else if ( librarySelectedTreeItemType() == libTreeSFZ ) {
+            ret = librarySfzTree.soundsMap.value(ui->treeWidget_Library->currentItem());
+        }
+
+    } else {
+        // Filesystem is currently visible
+
+        QString path = fsMap.value(ui->treeWidget_filesystem->currentItem()).filePath();
+        if (isPatchSelectedInFilesystem()) {
+
+            ret.reset(new KonfytSound(KonfytSoundPatch));
+            ret->filename = path;
+            ret->name = path;
+
+        } else if (isSoundfontSelectedInFilesystem()) {
+
+            ret.reset(new KonfytSound(KonfytSoundSoundfont));
+            ret->filename = path;
+            ret->name = path;
+            // If a program is selected, add it as the only preset
+            if (isSoundfontProgramSelectedInLibOrFs()) {
+                ret->presets.append(selectedSoundfontProgramInLibOrFs());
+            }
+
+        } else if (isSfzSelectedInFilesystem()) {
+
+            ret.reset(new KonfytSound(KonfytSoundSfz));
+            ret->filename = path;
+            ret->name = path;
+
+        }
+
+    }
+
+    return ret;
+}
+
+void MainWindow::clearLibFsInfoArea()
+{
+    ui->listWidget_LibraryBottom->clear();
+    ui->textBrowser_LibraryBottom->clear();
+}
+
+void MainWindow::showPatchInLibFsInfoArea()
+{
+    ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
+    QString text = "Double-click to load patch.";
+    if (mPreviewMode) {
+        text.prepend("Patches cannot be previewed.\n");
+    }
+    ui->textBrowser_LibraryBottom->setPlainText(text);
+}
+
+void MainWindow::showSfontInfoInLibFsInfoArea(QString filename)
+{
+    ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
+    ui->textBrowser_LibraryBottom->clear();
+
+    QFileInfo info(filename);
+    ui->textBrowser_LibraryBottom->append("SF2 Soundfont");
+    ui->textBrowser_LibraryBottom->append("File size: " + n2s(info.size()/1024/1024) + " MB");
+    ui->textBrowser_LibraryBottom->append("\nDouble-click to load program list.");
 }
 
 void MainWindow::resetLibraryTree(MainWindow::LibraryTree &libTree, QString name)
@@ -1584,7 +1682,7 @@ void MainWindow::setMasterGain(float gain)
     if (gain < 0) { gain = 0; }
 
     masterGainMidiCtrlr.setValue(gain * 127.0);
-    if (previewMode) {
+    if (mPreviewMode) {
         previewGain = gain;
     } else {
         masterGain = gain;
@@ -1609,7 +1707,7 @@ void MainWindow::updateBusGainInJackEngine(int busId)
     PrjAudioBus bus = mCurrentProject->audioBus_getBus(busId);
     float gain = 1;
     if (!bus.ignoreMasterGain) {
-        if (previewMode) {
+        if (mPreviewMode) {
             gain *= previewGain;
         } else {
             gain *= masterGain;
@@ -1621,64 +1719,61 @@ void MainWindow::updateBusGainInJackEngine(int busId)
     jack.setPortGain(bus.rightJackPort, gain);
 }
 
-/* Load the appropriate patch based on the mode (preview mode or normal) and
- * updates the GUI accordingly. */
-void MainWindow::loadPatchForModeAndUpdateGUI()
+/* Returns index of current patch, or -1 if none. */
+int MainWindow::currentPatchIndex()
 {
-    // Make sure the appropriate "preview mode" gui buttons are checked
-    ui->toolButton_LibraryPreview->setChecked(previewMode);
+    int ret = -1;
 
-    if (previewMode) {
-
-        // Load the selected item in the library to preview
-
-        pengine.loadPatch(&previewPatch);
-        // Remove all layers
-        foreach (KfPatchLayerWeakPtr layer, previewPatch.layers()) {
-            pengine.removeLayer(layer);
-        }
-
-        LibraryTreeItemType type = librarySelectedTreeItemType();
-
-        if (libraryIsProgramSelected()) {
-            // Program selected. Load program into preview patch
-            KfSoundPtr sf = librarySelectedSfont();
-            if (sf) {
-                KonfytSoundPreset program = librarySelectedProgram();
-                pengine.addSfProgramLayer(sf->filename, program);
-            }
-
-        } else if ( type == libTreePatch ) {
-
-            // Patch is selected.
-            // We don't do preview for patches yet.
-
-        } else if ( type == libTreeSFZ ) {
-
-            // Sfz is selected. Add sfz layer to preview patch
-            pengine.addSfzLayer(librarySelectedSfz()->filename);
-        }
-
-        setMasterGain(previewGain);
-        updatePreviewPatchLayer();
-
-    } else {
-        // Normal mode (not preview mode)
-
-        if (masterPatch != nullptr) {
-            pengine.loadPatch(this->masterPatch);
-            setMasterGain(masterGain);
-        }
-
-        patchListAdapter.setCurrentPatch(this->masterPatch);
-        patchListAdapter.setPatchLoaded(this->masterPatch, true);
-
+    ProjectPtr prj = mCurrentProject;
+    if (prj) {
+        ret = prj->getPatchIndex(mCurrentPatch);
     }
 
-    gui_updatePatchView();
+    return ret;
+}
 
-    // Indicate to the user that the patch is not modified.
-    setPatchModified(false);
+/* Load mCurrentPatch and update the GUI accordingly. */
+void MainWindow::loadPatchAndUpdateGui()
+{
+    pengine.loadPatch(mCurrentPatch);
+    patchListAdapter.setCurrentPatch(mCurrentPatch);
+    patchListAdapter.setPatchLoaded(mCurrentPatch, true);
+
+    gui_updatePatchView();
+    gui_updateWindowTitle();
+}
+
+void MainWindow::loadPreviewPatchAndUpdateGui()
+{
+    // Unload preview patch if it is loaded
+    pengine.unloadPatch(&mPreviewPatch);
+    // Clear preview patch
+    mPreviewPatch.clearLayers();
+    // Load empty preview patch
+    pengine.loadPatch(&mPreviewPatch);
+
+    // Add selected library/filesystem item as a layer to the patch
+
+    KfSoundPtr s = selectedSoundInLibOrFs();
+    if (s) {
+        if (s->type == KonfytSoundSoundfont) {
+
+            if (s->presets.count()) {
+                pengine.addSfProgramLayer(s->filename, s->presets.value(0));
+            }
+
+        } else if (s->type == KonfytSoundPatch) {
+
+            // We don't do preview for patches.
+
+        } else if (s->type == KonfytSoundSfz) {
+
+            pengine.addSfzLayer(s->filename);
+
+        }
+    }
+
+    updatePreviewPatchLayer();
 
     gui_updateWindowTitle();
 }
@@ -1688,7 +1783,7 @@ void MainWindow::gui_updatePatchView()
     clearPatchLayersFromGuiOnly();
 
     // Only for master patch, not preview mode patch
-    KonfytPatch* patch = masterPatch;
+    KonfytPatch* patch = mCurrentPatch;
     if (patch == nullptr) {
         // No patch active
         ui->lineEdit_PatchName->setText("");
@@ -1697,10 +1792,9 @@ void MainWindow::gui_updatePatchView()
         ui->textBrowser_patchNote->clear();
         ui->stackedWidget_patchLayers->setCurrentWidget(ui->page_notPatchLayers);
         return;
-    } else {
-        ui->stackedWidget_patchLayers->setCurrentWidget(ui->page_patchLayers);
-        ui->lineEdit_PatchName->setEnabled(true);
     }
+
+    ui->stackedWidget_patchLayers->setCurrentWidget(ui->page_patchLayers);
 
     // Get list of layer items
     foreach (KfPatchLayerWeakPtr layer, patch->layers()) {
@@ -1710,6 +1804,7 @@ void MainWindow::gui_updatePatchView()
 
     // Patch title
     ui->lineEdit_PatchName->setText(patch->name());
+    ui->lineEdit_PatchName->setEnabled(true);
     // Patch note
     patchNote_ignoreChange = true;
     ui->textBrowser_patchNote->setText(patch->note());
@@ -1724,7 +1819,7 @@ void MainWindow::gui_updateWindowTitle()
 {
     QString title;
 
-    if (previewMode) {
+    if (mPreviewMode) {
         title += "Preview";
     } else {
         KonfytPatch* currentPatch = pengine.currentPatch();
@@ -1776,7 +1871,6 @@ void MainWindow::fillTreeWithAll()
 {
     searchMode = false; // Controls the behaviour when the user selects a tree item
     ui->treeWidget_Library->clear();
-    programList.clear(); // Internal list of programs displayed
 
     // Create parent soundfonts tree item, with soundfont children
     resetLibraryTree(librarySfTree, QString("%1 [%2]")
@@ -2083,8 +2177,8 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
             // Add first program to current patch
             if (ui->listWidget_LibraryBottom->count()) {
                 ui->listWidget_LibraryBottom->setCurrentRow(0);
-                addSoundfontProgramToCurrentPatch(f, librarySelectedProgram());
             }
+            // TODO FIX addSoundfontProgramToCurrentPatch(f, ???); -- must wait for soundfont to be loaded
 
             // Rename patch
             ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(f) );
@@ -2117,13 +2211,8 @@ void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*
 /* Set the current patch, and update the gui accordingly. */
 void MainWindow::setCurrentPatch(KonfytPatch* patch)
 {
-    ProjectPtr prj = mCurrentProject;;
-    if (!prj) { return; }
-
-    this->masterPatch = patch;
-    mCurrentPatchIndex = prj->getPatchIndex(patch);
-
-    loadPatchForModeAndUpdateGUI();
+    mCurrentPatch = patch;
+    loadPatchAndUpdateGui();
 
     if (patch) {
         // Send MIDI events associated with patch layers
@@ -2153,59 +2242,48 @@ void MainWindow::setCurrentPatchByIndex(int index)
 }
 
 void MainWindow::on_treeWidget_Library_currentItemChanged(
-        QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
+        QTreeWidgetItem* /*current*/, QTreeWidgetItem* /*previous*/)
 {
-    ui->listWidget_LibraryBottom->clear();  // Program list view
-    programList.clear();        // Our internal program list, corresponding to the list view
-    ui->textBrowser_LibraryBottom->clear();
+    if ( librarySelectedTreeItemType() == libTreePatch ) {
 
-    if (!current) {
-        return;
-    }
-
-    if ( librarySelectedTreeItemType() == libTreeSFZ ) {
-
-        if (previewMode) {
-            loadPatchForModeAndUpdateGUI();
-        }
-
-        // Display contents in text view below library
-        showSfzContentsBelowLibrary(librarySelectedSfz()->filename);
+        showPatchInLibFsInfoArea();
 
     } else if ( librarySelectedTreeItemType() == libTreeSoundfont ) {
 
-        // Soundfont is selected.
-        programList = librarySelectedSfont()->presets;
-        // Refresh the GUI program list with programs (if any).
-        ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_ProgramList);
-        library_refreshGUIProgramList();
-        // Automatically select the first program
-        if (ui->listWidget_LibraryBottom->count()) {
-            ui->listWidget_LibraryBottom->setCurrentRow(0);
-        }
+        selectedSfont = librarySelectedSfont();
+        showSelectedSfontProgramList();
 
-    } else if ( librarySelectedTreeItemType() == libTreePatch ) {
+    } else if ( librarySelectedTreeItemType() == libTreeSFZ ) {
 
-        if (previewMode) {
-            // Patch is selected in preview mode. Load patch.
-            loadPatchForModeAndUpdateGUI();
-        }
-        // Do nothing
+        showSfzContentInLibFsInfoArea(librarySelectedSfz()->filename);
 
+    } else {
+        clearLibFsInfoArea();
+    }
+
+    if (mPreviewMode) {
+        loadPreviewPatchAndUpdateGui();
     }
 }
 
 /* Refresh the program list view in the library, according to programList. */
-void MainWindow::library_refreshGUIProgramList()
+void MainWindow::showSelectedSfontProgramList()
 {
     ui->listWidget_LibraryBottom->clear();
     ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_ProgramList);
-    for (int i=0; i<programList.count(); i++) {
-        ui->listWidget_LibraryBottom->addItem(n2s(programList.at(i).bank)
-                                  + "-"
-                                  + n2s(programList.at(i).program)
-                                  + " " + programList.at(i).name);
+
+    if (selectedSfont.isNull()) { return; }
+
+    // Do not automatically select a preset
+    ui->listWidget_LibraryBottom->blockSignals(true);
+
+    foreach (const KonfytSoundPreset preset, selectedSfont->presets) {
+        ui->listWidget_LibraryBottom->addItem(QString("%1-%2 %3")
+            .arg(preset.bank).arg(preset.program).arg(preset.name));
     }
+
+    ui->listWidget_LibraryBottom->setCurrentRow(-1);
+    ui->listWidget_LibraryBottom->blockSignals(false);
 }
 
 /* Enter pressed in the search box. */
@@ -2230,17 +2308,12 @@ void MainWindow::on_toolButton_ClearSearch_clicked()
 /* Library program list: Soundfont program selected. */
 void MainWindow::on_listWidget_LibraryBottom_currentRowChanged(int currentRow)
 {
-    if (currentRow < 0) {
-        return;
-    }
+    if (currentRow < 0) { return; }
 
-    if (programList.count()) {
-        // List contains soundfont programs.
+    KONFYT_ASSERT_RETURN(!selectedSfont.isNull());
 
-        // Load program, if in previewMode
-        if (previewMode) {
-            loadPatchForModeAndUpdateGUI();
-        }
+    if (mPreviewMode) {
+        loadPreviewPatchAndUpdateGui();
     }
 }
 
@@ -2255,7 +2328,7 @@ void MainWindow::addSfzToCurrentPatch(QString sfzPath)
     // Add layer to GUI
     addPatchLayerToGUI(layer);
 
-    setPatchModified(true);
+    patchModified();
 }
 
 /* Adds soundfont program to current patch in engine and in GUI. */
@@ -2269,7 +2342,7 @@ void MainWindow::addSoundfontProgramToCurrentPatch(QString soundfontPath, Konfyt
     // Add layer to GUI
     addPatchLayerToGUI(layer);
 
-    setPatchModified(true);
+    patchModified();
 }
 
 /* If masterPatch is NULL, adds a new patch to the project and switches to it. */
@@ -2278,7 +2351,7 @@ void MainWindow::newPatchIfMasterNull()
     ProjectPtr prj = mCurrentProject;
     KONFYT_ASSERT_RETURN(prj);
 
-    if (!masterPatch) {
+    if (!mCurrentPatch) {
         newPatchToProject();
         // Switch to latest patch
         setCurrentPatchByIndex(-1);
@@ -2300,7 +2373,7 @@ void MainWindow::addMidiPortToCurrentPatch(int port)
     // Add to GUI list
     addPatchLayerToGUI(layer);
 
-    setPatchModified(true);
+    patchModified();
 }
 
 /* Adds an audio bus to the current patch in engine and GUI. */
@@ -2318,19 +2391,24 @@ void MainWindow::addAudioInPortToCurrentPatch(int port)
     // Add to GUI list
     addPatchLayerToGUI(layer);
 
-    setPatchModified(true);
+    patchModified();
 }
 
 /* Sets previewMode based on choice, and updates the GUI. */
-void MainWindow::setPreviewMode(bool choice)
+void MainWindow::setPreviewMode(bool previewModeOn)
 {
-    previewMode = choice;
+    mPreviewMode = previewModeOn;
 
-    ui->PatchPage->setEnabled(!previewMode);
+    ui->toolButton_LibraryPreview->setChecked(mPreviewMode);
+    ui->PatchPage->setEnabled(!mPreviewMode);
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 
-    // Update the GUI
-    loadPatchForModeAndUpdateGUI();
+    if (mPreviewMode) {
+        loadPreviewPatchAndUpdateGui();
+    } else {
+        pengine.unloadPatch(&mPreviewPatch);
+        loadPatchAndUpdateGui();
+    }
 }
 
 /* Master gain slider moved. */
@@ -2353,7 +2431,7 @@ void MainWindow::on_lineEdit_PatchName_editingFinished()
     pengine.setPatchName(ui->lineEdit_PatchName->text());
 
     // Indicate to the user that the patch has been modified.
-    setPatchModified(true);
+    patchModified();
 
     patchListAdapter.patchModified(pengine.currentPatch());
     gui_updateWindowTitle();
@@ -2687,8 +2765,8 @@ void MainWindow::setupDatabase()
     connect(&db, &konfytDatabase::scanStatus,
             this, &MainWindow::onDatabaseScanStatus);
 
-    connect(&db, &konfytDatabase::returnSfont_finished,
-            this, &MainWindow::onDatabaseReturnSfont);
+    connect(&db, &konfytDatabase::sfontInfoLoadedFromFile,
+            this, &MainWindow::onDatabaseSfontInfoLoaded);
 
     // Check if database file exists.
     if (db.loadDatabaseFromFile(settingsDir + "/" + DATABASE_FILE)) {
@@ -2730,14 +2808,12 @@ void MainWindow::onDatabaseScanStatus(QString msg)
     ui->label_WaitingStatus->setText(msg);
 }
 
-void MainWindow::onDatabaseReturnSfont(KfSoundPtr sf)
+void MainWindow::onDatabaseSfontInfoLoaded(KfSoundPtr sf)
 {
-    if (returnSfontRequester == returnSfontRequester_on_treeWidget_filesystem_itemDoubleClicked) {
-        // Soundfont received from database after request was made from
-        // on_treeWidget_filesystem_itemDoubleClicked()
-        programList = sf->presets;
-        library_refreshGUIProgramList();
-    }
+    // Soundfont received from database after request was made from
+    // on_treeWidget_filesystem_itemDoubleClicked()
+    selectedSfont = sf;
+    showSelectedSfontProgramList();
 
     // Enable GUI again
     stopWaiter();
@@ -2780,10 +2856,9 @@ void MainWindow::on_toolButton_PatchDown_clicked()
     patchListAdapter.moveSelectedPatchDown();
 }
 
-/* Indicate to the user whether the patch has been modified and needs to be saved. */
-void MainWindow::setPatchModified(bool modified)
+void MainWindow::patchModified()
 {
-    if (modified) { setProjectModified(); }
+    setProjectModified();
 }
 
 void MainWindow::setProjectModified()
@@ -3276,7 +3351,7 @@ void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
         // Update in pengine
         pengine.setLayerFilter(layer.toWeakRef(), filter);
 
-        setPatchModified(true);
+        patchModified();
     }
 }
 
@@ -3308,7 +3383,7 @@ void MainWindow::onLayerMidiInPortsMenu_ActionTrigger(QAction *action)
         // Update in pengine
         pengine.setLayerMidiInPort(layer.toWeakRef(), portId );
 
-        setPatchModified(true);
+        patchModified();
     }
 }
 
@@ -3326,7 +3401,7 @@ void MainWindow::onLayerMidiInChannelMenu_ActionTrigger(QAction *action)
     // Update in pengine
     pengine.setLayerFilter(layer.toWeakRef(), filter);
 
-    setPatchModified(true);
+    patchModified();
 }
 
 void MainWindow::onLayer_midiSend_clicked(KonfytLayerWidget *layerWidget)
@@ -3362,7 +3437,7 @@ void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
         // Update in pengine
         pengine.setLayerBus(layer.toWeakRef(), busId);
 
-        setPatchModified(true);
+        patchModified();
     }
 }
 
@@ -3621,7 +3696,7 @@ void MainWindow::removePatchLayer(KonfytLayerWidget *layerWidget)
 
     removePatchLayerFromGuiOnly(layerWidget);
 
-    setPatchModified(true);
+    patchModified();
 }
 
 /* Remove a layer item from the GUI (and our internal list) only.
@@ -3663,7 +3738,7 @@ void MainWindow::movePatchLayer(int indexFrom, int indexTo)
     removePatchLayerFromGuiOnly(layerWidget);
     addPatchLayerToGUI(patchLayer, indexTo);
 
-    setPatchModified(true);
+    patchModified();
 }
 
 KfJackMidiRoute *MainWindow::jackMidiRouteFromLayerWidget(KonfytLayerWidget *layerWidget)
@@ -3858,9 +3933,6 @@ void MainWindow::on_actionSave_Patch_As_Copy_triggered()
 
     ui->lineEdit_PatchName->setFocus();
     ui->lineEdit_PatchName->selectAll();
-
-    // Indicate to the user that the patch is not modified anymore.
-    setPatchModified(false);
 }
 
 /* Action to add current patch to the library. */
@@ -3971,18 +4043,15 @@ bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
                 ui->actionMaster_Volume_Down->trigger();
                 break;
             case Qt::Key_Space:
-                // Next patch
-                setCurrentPatchByIndex( mCurrentPatchIndex+1 );
-                break;
             case Qt::Key_Right:
             case Qt::Key_Down:
                 // Next patch
-                setCurrentPatchByIndex( mCurrentPatchIndex+1 );
+                setCurrentPatchByIndex(currentPatchIndex() + 1);
                 break;
             case Qt::Key_Left:
             case Qt::Key_Up:
                 // Previous patch
-                setCurrentPatchByIndex( mCurrentPatchIndex-1 );
+                setCurrentPatchByIndex(currentPatchIndex() - 1);
                 break;
             case Qt::Key_1:
                 setCurrentPatchByIndex( 0 );
@@ -4215,39 +4284,37 @@ void MainWindow::on_toolButton_layer_AddMidiPort_clicked()
 /* Library soundfont program list: item double clicked. */
 void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem* /*item*/)
 {
-    // Add soundfont program to current patch.
+    if (mPreviewMode) { setPreviewMode(false); }
 
-    if (previewMode) { setPreviewMode(false); }
+    KONFYT_ASSERT_RETURN(!selectedSfont.isNull());
 
-    if (libraryIsProgramSelected()) {
-
-        KfSoundPtr sf = librarySelectedSfont();
-        if (sf) {
-            addSoundfontProgramToCurrentPatch(sf->filename, librarySelectedProgram());
-        }
-    }
+    addSoundfontProgramToCurrentPatch(selectedSfont->filename,
+        selectedSfont->presets.value(ui->listWidget_LibraryBottom->currentRow()));
 }
 
-
 /* Library tree: item double clicked. */
-void MainWindow::on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, int /*column*/)
+void MainWindow::on_treeWidget_Library_itemDoubleClicked(
+        QTreeWidgetItem *item, int /*column*/)
 {
-    if (previewMode) { setPreviewMode(false); }
+    if (mPreviewMode) { setPreviewMode(false); }
 
-    if (libraryIsProgramSelected()) {
+    if ( libraryTreeItemType(item) == libTreePatch ) {
 
+        addPatchToProjectFromFile(librarySelectedPatch()->filename);
+
+    } else if (libraryTreeItemType(item) == libTreeSoundfont) {
+
+        // Select the first soundfont program
+        ui->listWidget_LibraryBottom->setCurrentRow(0);
         KfSoundPtr sf = librarySelectedSfont();
         if (sf) {
-            addSoundfontProgramToCurrentPatch(sf->filename, librarySelectedProgram());
+            addSoundfontProgramToCurrentPatch(sf->filename, selectedSoundfontProgramInLibOrFs());
         }
 
     } else if ( libraryTreeItemType(item) == libTreeSFZ ) {
 
         addSfzToCurrentPatch( librarySelectedSfz()->filename );
 
-    } else if ( libraryTreeItemType(item) == libTreePatch ) {
-
-        addPatchToProjectFromFile(librarySelectedPatch()->filename);
     }
 }
 
@@ -4292,17 +4359,21 @@ void MainWindow::on_toolButton_MidiFilter_removeCC_clicked()
     }
 }
 
-/* Library tab widget current tab changed. */
+/* Change library / filesystem view tab */
 void MainWindow::on_tabWidget_library_currentChanged(int /*index*/)
 {
     if (ui->tabWidget_library->currentWidget() == ui->tab_filesystem) {
         // Filesystem tab selected
-        // Refresh
         refreshFilesystemView();
+        on_treeWidget_filesystem_currentItemChanged(
+                    ui->treeWidget_filesystem->currentItem(), nullptr);
+    } else {
+        // Library tab selected
+        on_treeWidget_Library_currentItemChanged(
+                    ui->treeWidget_Library->currentItem(), nullptr);
     }
 }
 
-/* Refresh the library file system view. */
 void MainWindow::refreshFilesystemView()
 {
     ui->lineEdit_filesystem_path->setText(fsview_currentPath);
@@ -4382,45 +4453,53 @@ void MainWindow::selectItemInFilesystemView(QString path)
     }
 }
 
-
-void MainWindow::on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
+void MainWindow::on_treeWidget_filesystem_currentItemChanged(
+        QTreeWidgetItem *current, QTreeWidgetItem* /*previous*/)
 {
-    ui->textBrowser_LibraryBottom->clear();
-    ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
+    if (current == nullptr) {
 
-    QFileInfo info = fsMap.value(current);
-    if (info.isDir()) {
-        // Do nothing
-    } else if ( fileIsSoundfont(info.filePath()) ) {
+        clearLibFsInfoArea();
 
-        ui->textBrowser_LibraryBottom->append("SF2 Soundfont");
-        ui->textBrowser_LibraryBottom->append("File size: " + n2s(info.size()/1024/1024) + " MB");
-        ui->textBrowser_LibraryBottom->append("\nDouble-click to load program list.");
+    } else {
 
-    } else if ( fileIsSfzOrGig(info.filePath()) ) {
+        QFileInfo info = fsMap.value(current);
+        if ( fileIsPatch(info.filePath())) {
 
-        showSfzContentsBelowLibrary(info.filePath());
+            showPatchInLibFsInfoArea();
 
-    } else if ( fileIsPatch(info.filePath())) {
+        } else if ( fileIsSoundfont(info.filePath()) ) {
 
-        ui->textBrowser_LibraryBottom->append("Double-click to load patch.");
+            selectedSfont.clear();
+            showSfontInfoInLibFsInfoArea(info.filePath());
 
+        } else if ( fileIsSfzOrGig(info.filePath()) ) {
+
+            showSfzContentInLibFsInfoArea(info.filePath());
+
+        } else {
+            clearLibFsInfoArea();
+        }
+    }
+
+    if (mPreviewMode) {
+        loadPreviewPatchAndUpdateGui();
     }
 }
-
 
 /* Filesystem view: double clicked file or folder in file list. */
 void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int /*column*/)
 {
-    ui->textBrowser_LibraryBottom->clear();
-    ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
-    ui->listWidget_LibraryBottom->clear();
-    programList.clear();
-
     QFileInfo info = fsMap.value(item);
     if (info.isDir()) {
         // If directory, cd to directory.
         cdFilesystemView(info.filePath());
+
+    } else if ( fileIsPatch(info.filePath()) ) {
+
+        // File is a patch
+        if (mPreviewMode) { setPreviewMode(false); }
+        addPatchToProjectFromFile(info.filePath());
+
     } else if ( fileIsSoundfont(info.filePath()) ) {
         // If soundfont, read soundfont and fill program list.
 
@@ -4429,25 +4508,17 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
         startWaiter("Loading soundfont...");
         ui->textBrowser_LibraryBottom->append("Loading soundfont...");
         // Request soundfont from database
-        returnSfontRequester = returnSfontRequester_on_treeWidget_filesystem_itemDoubleClicked;
-        this->db.returnSfont(info.filePath());
+        db.loadSfontInfoFromFile(info.filePath());
         // This might take a while. The result will be sent by signal to the
-        // onDatabaseReturnSfont() slot where we will continue.
-        return;
+        // onDatabaseSfontInfoLoaded() slot where we will continue.
 
     } else if ( fileIsSfzOrGig(info.filePath()) ) {
+
         // If sfz or gig, load file.
-
+        if (mPreviewMode) { setPreviewMode(false); }
         addSfzToCurrentPatch( info.filePath() );
-        showSfzContentsBelowLibrary(info.filePath());
 
-    } else if ( fileIsPatch(info.filePath()) ) {
-        // File is a patch
-        addPatchToProjectFromFile(info.filePath());
     }
-
-    // Refresh program list in the GUI based on contents of programList variable.
-    library_refreshGUIProgramList();
 }
 
 /* Filesystem view: one up button clicked. */
@@ -4788,11 +4859,11 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
 
     } else if (action == ui->actionNext_Patch) {
 
-        if (buttonPass) { setCurrentPatchByIndex( mCurrentPatchIndex+1 ); }
+        if (buttonPass) { setCurrentPatchByIndex(currentPatchIndex() + 1); }
 
     } else if (action == ui->actionPrevious_Patch) {
 
-        if (buttonPass) { setCurrentPatchByIndex( mCurrentPatchIndex-1 ); }
+        if (buttonPass) { setCurrentPatchByIndex(currentPatchIndex() - 1); }
 
     } else if (action == ui->actionMaster_Volume_Slider) {
 
@@ -5249,7 +5320,7 @@ void MainWindow::setupPatchEngine()
 /* Update the input and output port settings for the preview patch layer. */
 void MainWindow::updatePreviewPatchLayer()
 {
-    foreach (KfPatchLayerSharedPtr layer, previewPatch.layers()) {
+    foreach (KfPatchLayerSharedPtr layer, mPreviewPatch.layers()) {
         // Set the MIDI input channel
         KonfytMidiFilter filter = layer->midiFilter();
         filter.inChan = previewPatchMidiInChannel;
@@ -5262,7 +5333,7 @@ void MainWindow::updatePreviewPatchLayer()
         layer->setBusIdInProject(previewPatchBus);
 
         // Update in patch engine (if we are in preview mode)
-        if (previewMode) {
+        if (mPreviewMode) {
             pengine.setLayerFilter(layer, filter);
             pengine.setLayerMidiInPort(layer, previewPatchMidiInPort);
             pengine.setLayerBus(layer, previewPatchBus);
@@ -5357,7 +5428,7 @@ void MainWindow::openFileManager(QString path)
     }
 }
 
-void MainWindow::showSfzContentsBelowLibrary(QString filename)
+void MainWindow::showSfzContentInLibFsInfoArea(QString filename)
 {
     ui->stackedWidget_libraryBottom->setCurrentWidget(ui->page_libraryBottom_Text);
     ui->textBrowser_LibraryBottom->clear();
@@ -5623,7 +5694,7 @@ void MainWindow::on_textBrowser_patchNote_textChanged()
     } else {
         // Change is due to user typing in box
         pengine.setPatchNote(ui->textBrowser_patchNote->toPlainText());
-        setPatchModified(true);
+        patchModified();
     }
 }
 
@@ -5724,7 +5795,7 @@ void MainWindow::on_pushButton_LoadAll_clicked()
     ProjectPtr prj = mCurrentProject;;
     if (!prj) { return; }
 
-    int startPatch = mCurrentPatchIndex;
+    int startPatch = currentPatchIndex();
 
     for (int i=0; i<prj->getNumPatches(); i++) {
         setCurrentPatchByIndex(i);
