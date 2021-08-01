@@ -177,6 +177,8 @@ KfJackPluginPorts* KonfytJackEngine::addSoundfont(KfFluidSynth *fluidSynth)
 
 void KonfytJackEngine::removeSoundfont(KfJackPluginPorts *p)
 {
+    KONFYT_ASSERT_RETURN(p);
+
     pauseJackProcessing(true);
 
     // Delete all objects created in addSoundfont()
@@ -288,32 +290,44 @@ void KonfytJackEngine::removePlugin(KfJackPluginPorts *p)
 
 void KonfytJackEngine::setSoundfontMidiFilter(KfJackPluginPorts *p, KonfytMidiFilter filter)
 {
+    KONFYT_ASSERT_RETURN(p);
+
     p->midiRoute->filter = filter;
 }
 
 void KonfytJackEngine::setSoundfontActive(KfJackPluginPorts *p, bool active)
 {
+    KONFYT_ASSERT_RETURN(p);
+
     setMidiRouteActive(p->midiRoute, active);
 }
 
 void KonfytJackEngine::setPluginMidiFilter(KfJackPluginPorts *p, KonfytMidiFilter filter)
 {
+    KONFYT_ASSERT_RETURN(p);
+
     p->midiRoute->filter = filter;
 }
 
 void KonfytJackEngine::setPluginActive(KfJackPluginPorts *p, bool active)
 {
+    KONFYT_ASSERT_RETURN(p);
+
     setMidiRouteActive(p->midiRoute, active);
 }
 
 void KonfytJackEngine::setPluginGain(KfJackPluginPorts *p, float gain)
 {
+    KONFYT_ASSERT_RETURN(p);
+
     p->audioLeftRoute->gain = gain;
     p->audioRightRoute->gain = gain;
 }
 
 void KonfytJackEngine::setSoundfontRouting(KfJackPluginPorts *p, KfJackMidiPort *midiInPort, KfJackAudioPort *leftPort, KfJackAudioPort *rightPort)
 {
+    KONFYT_ASSERT_RETURN(p);
+
     if (!clientIsActive()) { return; }
 
     pauseJackProcessing(true);
@@ -332,6 +346,8 @@ void KonfytJackEngine::setSoundfontRouting(KfJackPluginPorts *p, KfJackMidiPort 
 
 void KonfytJackEngine::setPluginRouting(KfJackPluginPorts *p, KfJackMidiPort *midiInPort, KfJackAudioPort *leftPort, KfJackAudioPort *rightPort)
 {
+    KONFYT_ASSERT_RETURN(p);
+
     if (!clientIsActive()) { return; }
 
     pauseJackProcessing(true);
@@ -435,9 +451,9 @@ void KonfytJackEngine::removePortFromAllRoutes(KfJackAudioPort *port)
 
 void KonfytJackEngine::addPortClient(KfJackMidiPort *port, QString newClient)
 {
-    if (!clientIsActive()) { return; }
-
     KONFYT_ASSERT_RETURN(port);
+
+    if (!clientIsActive()) { return; }
 
     port->connectionList.append(newClient);
     refreshAllPortsConnections();
@@ -445,9 +461,9 @@ void KonfytJackEngine::addPortClient(KfJackMidiPort *port, QString newClient)
 
 void KonfytJackEngine::addPortClient(KfJackAudioPort *port, QString newClient)
 {
-    if (!clientIsActive()) { return; }
-
     KONFYT_ASSERT_RETURN(port);
+
+    if (!clientIsActive()) { return; }
 
     port->connectionList.append(newClient);
     refreshAllPortsConnections();
@@ -455,9 +471,9 @@ void KonfytJackEngine::addPortClient(KfJackAudioPort *port, QString newClient)
 
 void KonfytJackEngine::removeAndDisconnectPortClient(KfJackMidiPort *port, QString client)
 {
-    if (!clientIsActive()) { return; }
-
     KONFYT_ASSERT_RETURN(port);
+
+    if (!clientIsActive()) { return; }
 
     if (!port->connectionList.contains(client)) { return; }
 
@@ -486,9 +502,9 @@ void KonfytJackEngine::removeAndDisconnectPortClient(KfJackMidiPort *port, QStri
 
 void KonfytJackEngine::removeAndDisconnectPortClient(KfJackAudioPort *port, QString client)
 {
-    if (!clientIsActive()) { return; }
-
     KONFYT_ASSERT_RETURN(port);
+
+    if (!clientIsActive()) { return; }
 
     if (!port->connectionList.contains(client)) { return; }
 
@@ -517,18 +533,18 @@ void KonfytJackEngine::removeAndDisconnectPortClient(KfJackAudioPort *port, QStr
 
 void KonfytJackEngine::setPortFilter(KfJackMidiPort *port, KonfytMidiFilter filter)
 {
-    if (!clientIsActive()) { return; }
-
     KONFYT_ASSERT_RETURN(port);
+
+    if (!clientIsActive()) { return; }
 
     port->filter = filter;
 }
 
 void KonfytJackEngine::setPortGain(KfJackAudioPort *port, float gain)
 {
-    if (!clientIsActive()) { return; }
-
     KONFYT_ASSERT_RETURN(port);
+
+    if (!clientIsActive()) { return; }
 
     port->gain = gain;
 }
@@ -557,6 +573,8 @@ KfJackAudioRoute* KonfytJackEngine::addAudioRoute()
 
 void KonfytJackEngine::setAudioRoute(KfJackAudioRoute *route, KfJackAudioPort *sourcePort, KfJackAudioPort *destPort)
 {
+    KONFYT_ASSERT_RETURN(route);
+
     if (!clientIsActive()) { return; }
 
     pauseJackProcessing(true);
@@ -581,6 +599,8 @@ void KonfytJackEngine::removeAudioRoute(KfJackAudioRoute* route)
 
 void KonfytJackEngine::setAudioRouteActive(KfJackAudioRoute *route, bool active)
 {
+    KONFYT_ASSERT_RETURN(route);
+
     if (!clientIsActive()) { return; }
 
     route->active = active;
@@ -588,6 +608,8 @@ void KonfytJackEngine::setAudioRouteActive(KfJackAudioRoute *route, bool active)
 
 void KonfytJackEngine::setAudioRouteGain(KfJackAudioRoute *route, float gain)
 {
+    KONFYT_ASSERT_RETURN(route);
+
     if (!clientIsActive()) { return; }
 
     route->gain = gain;
@@ -617,6 +639,8 @@ KfJackMidiRoute* KonfytJackEngine::addMidiRoute()
 
 void KonfytJackEngine::setMidiRoute(KfJackMidiRoute *route, KfJackMidiPort *sourcePort, KfJackMidiPort *destPort)
 {
+    KONFYT_ASSERT_RETURN(route);
+
     if (!clientIsActive()) { return; }
 
     pauseJackProcessing(true);
@@ -641,6 +665,8 @@ void KonfytJackEngine::removeMidiRoute(KfJackMidiRoute *route)
 
 void KonfytJackEngine::setMidiRouteActive(KfJackMidiRoute *route, bool active)
 {
+    KONFYT_ASSERT_RETURN(route);
+
     if (!clientIsActive()) { return; }
 
     route->active = active;
@@ -648,11 +674,15 @@ void KonfytJackEngine::setMidiRouteActive(KfJackMidiRoute *route, bool active)
 
 void KonfytJackEngine::setRouteMidiFilter(KfJackMidiRoute *route, KonfytMidiFilter filter)
 {
+    KONFYT_ASSERT_RETURN(route);
+
     route->filter = filter;
 }
 
 bool KonfytJackEngine::sendMidiEventsOnRoute(KfJackMidiRoute *route, QList<KonfytMidiEvent> events)
 {
+    KONFYT_ASSERT_RETURN_VAL(route, false);
+
     bool success = true;
     foreach (KonfytMidiEvent event, events) {
         success = route->eventsTxBuffer.stash(event);

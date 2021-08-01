@@ -37,8 +37,8 @@ enum KonfytSoundType
 struct KonfytSoundPreset
 {
     QString name;
-    int bank = 0;       // Bank number
-    int program = 0;    // Program/preset number
+    int bank = -1;       // Bank number
+    int program = -1;    // Program/preset number
 };
 
 struct KonfytSound

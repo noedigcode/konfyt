@@ -264,7 +264,7 @@ void MainWindow::onJackXrunOccurred()
 void MainWindow::onJackPortRegisteredOrConnected()
 {
     // Refresh ports/connections tree
-    gui_updateConnectionsTree();
+    updateConnectionsTree();
 
     // Refresh the other JACK connections page
     updateJackPage();
@@ -306,9 +306,6 @@ void MainWindow::updateMidiFilterEditorLastRx(KonfytMidiEvent ev)
 {
     midiFilterLastEvent = ev;
     ui->lineEdit_MidiFilter_Last->setText(ev.toString());
-//    ui->lineEdit_MidiFilter_Last->setText("Ch " + n2s(midiFilter_lastChan+1)
-//                                          + " - " + n2s(midiFilter_lastData1)
-//                                          + ", " + n2s(midiFilter_lastData2));
 }
 
 void MainWindow::showMidiFilterEditor()
@@ -353,8 +350,6 @@ void MainWindow::showMidiFilterEditor()
     ui->stackedWidget->setCurrentWidget(ui->FilterPage);
 }
 
-/* This slot is called when the settings dialog sends a signal to update the
- * settings. */
 void MainWindow::applySettings()
 {
     // Get settings from dialog.
@@ -508,8 +503,8 @@ void MainWindow::showConnectionsPage()
     ui->frame_connectionsPage_MidiFilter->setVisible(false);
     ui->checkBox_connectionsPage_ignoreGlobalVolume->setVisible(false);
 
-    gui_updatePortsBussesTree();
-    gui_updateConnectionsTree();
+    updatePortsBussesTree();
+    updateConnectionsTree();
 }
 
 void MainWindow::connectionsTreeSelectBus(int busId)
@@ -532,7 +527,7 @@ void MainWindow::connectionsTreeSelectMidiOutPort(int portId)
     ui->tree_portsBusses->setCurrentItem( tree_midiOutMap.key(portId) );
 }
 
-void MainWindow::gui_updatePortsBussesTree()
+void MainWindow::updatePortsBussesTree()
 {
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
@@ -622,7 +617,7 @@ void MainWindow::gui_updatePortsBussesTree()
 
 }
 
-void MainWindow::gui_updateConnectionsTree()
+void MainWindow::updateConnectionsTree()
 {
     ProjectPtr prj = mCurrentProject;
     if (!prj) {
@@ -1115,7 +1110,7 @@ void MainWindow::loadProject(ProjectPtr prj)
     mCurrentProject = prj;
     pengine.setProject(mCurrentProject);
 
-    gui_updateProjectName();
+    updateProjectNameInGui();
     // Populate patch list for current project
     patchListAdapter.clear();
     patchListAdapter.addPatches(mCurrentProject->getPatchList());
@@ -1267,7 +1262,7 @@ void MainWindow::loadProject(ProjectPtr prj)
     onProjectMidiPickupRangeChanged(prj->getMidiPickupRange());
 
     mCurrentPatch = nullptr;
-    gui_updatePatchView();
+    updatePatchView();
 
 
     if (ui->stackedWidget->currentWidget() == ui->connectionsPage) {
@@ -1352,7 +1347,7 @@ void MainWindow::updateAudioInPortsMenu(QMenu *menu)
     action->setProperty(PTY_AUDIO_IN_PORT, -1);
 }
 
-/* Create a new patch, and add it to the current project. (and update the GUI). */
+/* Create a new patch, and add it to the current project. (And update the GUI.) */
 KonfytPatch *MainWindow::newPatchToProject()
 {
     KonfytPatch* patch = new KonfytPatch();
@@ -1382,7 +1377,7 @@ void MainWindow::removePatchFromProject(int i)
 
         if (mCurrentPatch == patch) {
             mCurrentPatch = nullptr;
-            gui_updatePatchView();
+            updatePatchView();
         }
         print("Patch Removed.");
 
@@ -1427,13 +1422,14 @@ KonfytPatch *MainWindow::addPatchToProjectFromFile(QString filename)
     return pt;
 }
 
-/* Returns true if a program is selected in the library. */
+/* Returns true if a soundfont program is selected in the library/filesystem. */
 bool MainWindow::isSoundfontProgramSelectedInLibOrFs()
 {
     return (selectedSfont && (ui->listWidget_LibraryBottom->currentRow() >= 0));
 }
 
-/* Returns the currently selected program, or a blank one if nothing is selected. */
+/* Returns the currently selected soundfont program in the library/filesystem,
+ * or a blank one if nothing is selected. */
 KonfytSoundPreset MainWindow::selectedSoundfontProgramInLibOrFs()
 {
     KonfytSoundPreset p;
@@ -1462,7 +1458,8 @@ LibraryTreeItemType MainWindow::librarySelectedTreeItemType()
     return libraryTreeItemType( ui->treeWidget_Library->currentItem() );
 }
 
-/* Returns the currently selected patch, or a null one if nothing is selected. */
+/* Returns the currently selected patch in the library, or a null one if nothing
+ * is selected. */
 KfSoundPtr MainWindow::librarySelectedPatch()
 {
     KfSoundPtr ret;
@@ -1472,7 +1469,8 @@ KfSoundPtr MainWindow::librarySelectedPatch()
     return ret;
 }
 
-/* Returns the currently selected soundfont, or null one if nothing is selected. */
+/* Returns the currently selected soundfont in the library, or null one if
+ * nothing is selected. */
 KfSoundPtr MainWindow::librarySelectedSfont()
 {
     KfSoundPtr ret;
@@ -1674,8 +1672,8 @@ bool MainWindow::fileIsSoundfont(QString file)
     return ( fileSuffixIs(file, "sf2") || fileSuffixIs(file, "sf3") );
 }
 
-/* Set master gain if in normal mode, or preview gain if in preview mode,
- * and set the master gain in the patch engine. */
+/* Set master gain if in normal mode, or preview gain if in preview mode.
+ * Also updates the GUI slider and the appropriate sound engine. */
 void MainWindow::setMasterGain(float gain)
 {
     if (gain > 1.0) { gain = 1.0; }
@@ -1739,10 +1737,12 @@ void MainWindow::loadPatchAndUpdateGui()
     patchListAdapter.setCurrentPatch(mCurrentPatch);
     patchListAdapter.setPatchLoaded(mCurrentPatch, true);
 
-    gui_updatePatchView();
-    gui_updateWindowTitle();
+    updatePatchView();
+    updateWindowTitle();
 }
 
+/* Loads the currently selected sound in the library/filesystem into the
+ * preview patch, and loads the preview patch into the patch engine. */
 void MainWindow::loadPreviewPatchAndUpdateGui()
 {
     // Unload preview patch if it is loaded
@@ -1775,10 +1775,10 @@ void MainWindow::loadPreviewPatchAndUpdateGui()
 
     updatePreviewPatchLayer();
 
-    gui_updateWindowTitle();
+    updateWindowTitle();
 }
 
-void MainWindow::gui_updatePatchView()
+void MainWindow::updatePatchView()
 {
     clearPatchLayersFromGuiOnly();
 
@@ -1815,7 +1815,7 @@ void MainWindow::gui_updatePatchView()
     ui->actionAlways_Active->setChecked(patch->alwaysActive);
 }
 
-void MainWindow::gui_updateWindowTitle()
+void MainWindow::updateWindowTitle()
 {
     QString title;
 
@@ -1866,10 +1866,10 @@ void MainWindow::onPatchLayerLoaded(KfPatchLayerWeakPtr patchLayer)
     }
 }
 
-/* Fill the tree widget with all the entries in the soundfont database. */
-void MainWindow::fillTreeWithAll()
+/* Fill the library tree widget with all the entries in the database. */
+void MainWindow::fillLibraryTreeWithAll()
 {
-    searchMode = false; // Controls the behaviour when the user selects a tree item
+    mLibrarySearchModeActive = false; // Controls the behaviour when the user selects a tree item
     ui->treeWidget_Library->clear();
 
     // Create parent soundfonts tree item, with soundfont children
@@ -1967,9 +1967,9 @@ void MainWindow::previewButtonBusMenuTrigger(QAction *action)
     }
 }
 
-void MainWindow::fillTreeWithSearch(QString search)
+void MainWindow::fillLibraryTreeWithSearch(QString search)
 {
-    searchMode = true; // Controls the behaviour when the user selects a tree item
+    mLibrarySearchModeActive = true; // Controls the behaviour when the user selects a tree item
     db.search(search);
 
     ui->treeWidget_Library->clear();
@@ -2012,7 +2012,7 @@ void MainWindow::setupFilesystemView()
     ui->tabWidget_library->setCurrentWidget(ui->tab_library);
 }
 
-/* Displays a message in the GUI console. */
+/* Log a message in the GUI console. */
 void MainWindow::print(QString message)
 {
     if (mBlockPrint) { return; }
@@ -2103,6 +2103,23 @@ QStringList MainWindow::scanDirForFiles(QString dirname, QString filenameExtensi
     }
 
     return ret;
+}
+
+void MainWindow::openFileManager(QString path)
+{
+    if (this->filemanager.length()) {
+        QProcess* process = new QProcess();
+
+        connect(process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+                [this, process](int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/){
+            process->deleteLater();
+        });
+
+        process->start( this->filemanager, QStringList() << path );
+
+    } else {
+        QDesktopServices::openUrl( path );
+    }
 }
 
 /* Setup the initial project based on command-line arguments. */
@@ -2196,7 +2213,7 @@ void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*
     item->setExpanded(!item->isExpanded());
 }
 
-/* Set the current patch, and update the gui accordingly. */
+/* Set the current patch, and update the GUI accordingly. */
 void MainWindow::setCurrentPatch(KonfytPatch* patch)
 {
     mCurrentPatch = patch;
@@ -2254,7 +2271,8 @@ void MainWindow::on_treeWidget_Library_currentItemChanged(
     }
 }
 
-/* Refresh the program list view in the library, according to programList. */
+/* Refresh the library/filesystem program list view according to the selected
+ * soundfont. */
 void MainWindow::showSelectedSfontProgramList()
 {
     ui->listWidget_LibraryBottom->clear();
@@ -2281,7 +2299,7 @@ void MainWindow::on_lineEdit_Search_returnPressed()
     if (str.trimmed().isEmpty()) {
         on_toolButton_ClearSearch_clicked();
     } else {
-        fillTreeWithSearch(str);
+        fillLibraryTreeWithSearch(str);
     }
 }
 
@@ -2289,11 +2307,11 @@ void MainWindow::on_lineEdit_Search_returnPressed()
 void MainWindow::on_toolButton_ClearSearch_clicked()
 {
     ui->lineEdit_Search->clear();
-    fillTreeWithAll();
+    fillLibraryTreeWithAll();
     ui->lineEdit_Search->setFocus();
 }
 
-/* Library program list: Soundfont program selected. */
+/* Library/filesystem program list: Soundfont program selected. */
 void MainWindow::on_listWidget_LibraryBottom_currentRowChanged(int currentRow)
 {
     if (currentRow < 0) { return; }
@@ -2308,7 +2326,7 @@ void MainWindow::on_listWidget_LibraryBottom_currentRowChanged(int currentRow)
 /* Adds SFZ to current patch in engine and in GUI. */
 void MainWindow::addSfzToCurrentPatch(QString sfzPath)
 {
-    newPatchIfMasterNull();
+    newPatchIfCurrentNull();
 
     // Add layer to engine
     KfPatchLayerWeakPtr layer = pengine.addSfzLayer(sfzPath);
@@ -2322,7 +2340,7 @@ void MainWindow::addSfzToCurrentPatch(QString sfzPath)
 /* Adds soundfont program to current patch in engine and in GUI. */
 void MainWindow::addSoundfontProgramToCurrentPatch(QString soundfontPath, KonfytSoundPreset p)
 {
-    newPatchIfMasterNull();
+    newPatchIfCurrentNull();
 
     // Add program to engine
     KfPatchLayerWeakPtr layer = pengine.addSfProgramLayer(soundfontPath, p);
@@ -2333,8 +2351,8 @@ void MainWindow::addSoundfontProgramToCurrentPatch(QString soundfontPath, Konfyt
     patchModified();
 }
 
-/* If masterPatch is NULL, adds a new patch to the project and switches to it. */
-void MainWindow::newPatchIfMasterNull()
+/* If the current patch is null, adds a new patch to the project and activates it. */
+void MainWindow::newPatchIfCurrentNull()
 {
     ProjectPtr prj = mCurrentProject;
     KONFYT_ASSERT_RETURN(prj);
@@ -2349,7 +2367,7 @@ void MainWindow::newPatchIfMasterNull()
 /* Adds a midi port to the current patch in engine and GUI. */
 void MainWindow::addMidiPortToCurrentPatch(int port)
 {
-    newPatchIfMasterNull();
+    newPatchIfCurrentNull();
 
     // Check if the port isn't already in the patch
     QList<int> l = pengine.currentPatch()->getMidiOutputPortListProjectIds();
@@ -2367,7 +2385,7 @@ void MainWindow::addMidiPortToCurrentPatch(int port)
 /* Adds an audio bus to the current patch in engine and GUI. */
 void MainWindow::addAudioInPortToCurrentPatch(int port)
 {
-    newPatchIfMasterNull();
+    newPatchIfCurrentNull();
 
     // Check if the port isn't already in the patch
     QList<int> l = pengine.currentPatch()->getAudioInPortListProjectIds();
@@ -2382,7 +2400,7 @@ void MainWindow::addAudioInPortToCurrentPatch(int port)
     patchModified();
 }
 
-/* Sets previewMode based on choice, and updates the GUI. */
+/* Sets previewMode as specified, and updates the GUI. */
 void MainWindow::setPreviewMode(bool previewModeOn)
 {
     mPreviewMode = previewModeOn;
@@ -2424,7 +2442,7 @@ void MainWindow::on_lineEdit_PatchName_editingFinished()
     patchModified();
 
     patchListAdapter.patchModified(pengine.currentPatch());
-    gui_updateWindowTitle();
+    updateWindowTitle();
 }
 
 void MainWindow::onPatchMidiOutPortsMenu_aboutToShow()
@@ -2463,8 +2481,8 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
         print("Patch saved as " + patchName);
         db.addPatch(patchName);
         // Refresh tree view if not in searchmode
-        if (!searchMode) {
-            fillTreeWithAll();
+        if (!mLibrarySearchModeActive) {
+            fillLibraryTreeWithAll();
         }
         // Now save database
         saveDatabase();
@@ -2519,7 +2537,7 @@ QString MainWindow::getUniqueFilename(QString dirname, QString name, QString ext
     return name + extra + extension;
 }
 
-/* Add process (External application) to GUI and current project. */
+/* Add process (external application) to GUI and current project. */
 void MainWindow::addProcess(KonfytProcess* process)
 {
     if (!mCurrentProject) {
@@ -2605,12 +2623,10 @@ void MainWindow::extAppsMenuTriggered(QAction *action)
     }
 }
 
-
 void MainWindow::on_toolButton_ExtAppsMenu_clicked()
 {
     extAppsMenu.popup(QCursor::pos());
 }
-
 
 void MainWindow::showWaitingPage(QString title)
 {
@@ -2740,7 +2756,7 @@ void MainWindow::onDatabaseScanFinished()
     // Save to database file
     saveDatabase();
 
-    fillTreeWithAll();
+    fillLibraryTreeWithAll();
     stopWaiter();
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 }
@@ -2778,7 +2794,7 @@ void MainWindow::setupDatabase()
         }
     }
 
-    fillTreeWithAll(); // Fill the tree widget with all the database entries
+    fillLibraryTreeWithAll(); // Fill the tree widget with all the database entries
 }
 
 bool MainWindow::saveDatabase()
@@ -2809,7 +2825,7 @@ void MainWindow::onDatabaseSfontInfoLoaded(KfSoundPtr sf)
     stopWaiter();
 }
 
-// Rescan database button pressed.
+/* Rescan database button pressed. */
 void MainWindow::on_pushButtonSettings_RescanLibrary_clicked()
 {
     applySettings();
@@ -2817,7 +2833,7 @@ void MainWindow::on_pushButtonSettings_RescanLibrary_clicked()
     scanForDatabase();
 }
 
-// Quick scan database button clicked
+/* Quick scan database button clicked. */
 void MainWindow::on_pushButtonSettings_QuickRescanLibrary_clicked()
 {
     applySettings();
@@ -2864,12 +2880,12 @@ void MainWindow::setProjectName(QString name)
     if (!mCurrentProject) { return; }
 
     mCurrentProject->setProjectName(name);
-    gui_updateProjectName();
-    gui_updateWindowTitle();
+    updateProjectNameInGui();
+    updateWindowTitle();
 }
 
 /* Update GUI with current project name. */
-void MainWindow::gui_updateProjectName()
+void MainWindow::updateProjectNameInGui()
 {
     QString name;
     if (mCurrentProject) {
@@ -2902,7 +2918,6 @@ void MainWindow::onProjectMidiPickupRangeChanged(int range)
     masterGainMidiCtrlr.pickupRange = range;
 }
 
-// Save current project in its own folder, in the projects dir.
 bool MainWindow::saveCurrentProject()
 {
     if (!mCurrentProject) {
@@ -3439,7 +3454,6 @@ void MainWindow::on_pushButton_ExtApp_add_clicked()
     p->appname = ui->lineEdit_ExtApp->text();
 
     addProcess(p);
-
 }
 
 void MainWindow::on_lineEdit_ExtApp_returnPressed()
@@ -3456,9 +3470,6 @@ void MainWindow::on_pushButton_ExtApp_RunSelected_clicked()
     }
     runProcess(row);
 }
-
-
-
 
 void MainWindow::on_pushButton_ExtApp_Stop_clicked()
 {
@@ -3477,8 +3488,6 @@ void MainWindow::on_pushButton_ExtApp_RunAll_clicked()
         runProcess(i);
     }
 }
-
-
 
 void MainWindow::on_pushButton_ExtApp_StopAll_clicked()
 {
@@ -3544,7 +3553,7 @@ void MainWindow::onLayer_leftToolbutton_clicked(KonfytLayerWidget *layerItem)
     // Save the layer item for future use
     layerToolMenuSourceitem = layerItem;
 
-    gui_updateLayerToolMenu();
+    updateLayerToolMenu();
     layerToolMenu.popup(QCursor::pos());
 
     // The rest will be done in the menu/submenu trigger slots.
@@ -3808,7 +3817,7 @@ void MainWindow::updateMidiInChannelMenu(QMenu *menu, int currentChannel)
     }
 }
 
-void MainWindow::gui_updateLayerToolMenu()
+void MainWindow::updateLayerToolMenu()
 {
     KonfytLayerWidget* layerWidget = layerToolMenuSourceitem;
     KfPatchLayerSharedPtr patchLayer = layerWidget->getPatchLayer().toStrongRef();
@@ -4123,7 +4132,7 @@ void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
     }
 }
 
-// The user has been editing the midi filter and has now clicked apply.
+/* Apply clicked on the MIDI filter editor dialog. */
 void MainWindow::on_pushButton_midiFilter_Apply_clicked()
 {
     KonfytMidiFilter f;
@@ -4185,8 +4194,6 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     on_pushButton_midiFilter_Cancel_clicked();
 }
 
-
-
 void MainWindow::on_toolButton_MidiFilter_lowNote_clicked()
 {
     ui->spinBox_midiFilter_LowNote->setValue(midiFilterLastEvent.data1());
@@ -4218,7 +4225,7 @@ void MainWindow::on_toolButton_Settings_clicked()
     showSettingsDialog();
 }
 
-/* Live mode button clicked */
+/* Live mode button clicked. */
 void MainWindow::on_pushButton_LiveMode_clicked()
 {
     if (ui->pushButton_LiveMode->isChecked()) {
@@ -4232,7 +4239,6 @@ void MainWindow::on_pushButton_LiveMode_clicked()
         ui->stackedWidget_left->setCurrentWidget(ui->pageLibrary);
         // Remove event filter
         appInfo.a->removeEventFilter(this);
-
     }
 }
 
@@ -4271,15 +4277,15 @@ void MainWindow::on_toolButton_layer_AddMidiPort_clicked()
     // See patchMidiOutPortsMenu and on_patchMidiOutPortsMenu_ActionTrigger().
 }
 
-/* Library soundfont program list: item double clicked. */
-void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem* /*item*/)
+/* Library/filesystem soundfont program list: item double clicked. */
+void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem* item)
 {
     if (mPreviewMode) { setPreviewMode(false); }
 
     KONFYT_ASSERT_RETURN(!selectedSfont.isNull());
 
     addSoundfontProgramToCurrentPatch(selectedSfont->filename,
-        selectedSfont->presets.value(ui->listWidget_LibraryBottom->currentRow()));
+        selectedSfont->presets.value(ui->listWidget_LibraryBottom->row(item)));
 }
 
 /* Library tree: item double clicked. */
@@ -4349,7 +4355,7 @@ void MainWindow::on_toolButton_MidiFilter_removeCC_clicked()
     }
 }
 
-/* Change library / filesystem view tab */
+/* Change library/filesystem view tab. */
 void MainWindow::on_tabWidget_library_currentChanged(int /*index*/)
 {
     if (ui->tabWidget_library->currentWidget() == ui->tab_filesystem) {
@@ -4413,7 +4419,8 @@ void MainWindow::refreshFilesystemView()
     }
 }
 
-/* Change filesystem view directory, storing current path for the 'back' functionality. */
+/* Change filesystem view directory, storing current path for the 'back'
+ * functionality. */
 void MainWindow::cdFilesystemView(QString newpath)
 {
     QFileInfo info(newpath);
@@ -4548,7 +4555,6 @@ void MainWindow::on_lineEdit_filesystem_path_returnPressed()
     cdFilesystemView( ui->lineEdit_filesystem_path->text() );
 }
 
-
 /* Add left and right audio output ports to JACK client for a bus, named
  * according to the given bus number. The left and right port references in JACK
  * are assigned to the leftPort and rightPort parameters. */
@@ -4676,7 +4682,7 @@ void MainWindow::on_actionAdd_MIDI_In_Port_triggered()
 }
 
 /* Adds new midi output port to project and Jack. Returns the port index.
- *  Returns -1 on error. */
+ * Returns -1 on error. */
 int MainWindow::addMidiOutPort()
 {
     ProjectPtr prj = mCurrentProject;;
@@ -4910,7 +4916,6 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
         if (buttonPass) { setMasterInTranspose(0, false); }
 
     }
-
 }
 
 void MainWindow::onJackPrint(QString msg)
@@ -4989,7 +4994,7 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(
         }
     }
 
-    gui_updateConnectionsTree();
+    updateConnectionsTree();
 }
 
 /* Remove the bus/port selected in the connections ports/buses tree widget. */
@@ -5194,24 +5199,24 @@ void MainWindow::on_actionRemove_BusPort_triggered()
     }
 
     delete item;
-    gui_updatePatchView();
+    updatePatchView();
 }
 
 
 /* Prepare and show the filesystem tree view context menu. */
 void MainWindow::on_treeWidget_filesystem_customContextMenuRequested(const QPoint &pos)
 {
-    fsViewMenu.clear();
+    fsViewContextMenu.clear();
 
     QList<QAction*> actions;
     actions.append( ui->actionAdd_Path_To_External_App_Box );
     actions.append( ui->actionAdd_Path_to_External_App_Box_Relative_to_Project );
     actions.append( ui->actionOpen_In_File_Manager_fsview );
-    fsViewMenu.addActions(actions);
+    fsViewContextMenu.addActions(actions);
 
     fsViewMenuItem = ui->treeWidget_filesystem->itemAt(pos);
 
-    fsViewMenu.popup(QCursor::pos());
+    fsViewContextMenu.popup(QCursor::pos());
 }
 
 void MainWindow::on_actionAdd_Path_To_External_App_Box_triggered()
@@ -5352,7 +5357,7 @@ void MainWindow::on_treeWidget_Library_customContextMenuRequested(const QPoint &
     libraryMenuItem = ui->treeWidget_Library->itemAt(pos);
     LibraryTreeItemType itemType = libraryTreeItemType( libraryMenuItem );
 
-    libraryMenu.clear();
+    libraryContextMenu.clear();
 
     QList<QAction*> actions;
 
@@ -5360,11 +5365,10 @@ void MainWindow::on_treeWidget_Library_customContextMenuRequested(const QPoint &
     // Disable menu item if no applicable tree widget item is selected
     ui->actionOpen_In_File_Manager_library->setEnabled( itemType != libTreeInvalid );
 
-    libraryMenu.addActions(actions);
+    libraryContextMenu.addActions(actions);
 
-    libraryMenu.popup(QCursor::pos());
+    libraryContextMenu.popup(QCursor::pos());
 }
-
 
 /* Action triggered from library tree view to open item in file manager. */
 void MainWindow::on_actionOpen_In_File_Manager_library_triggered()
@@ -5401,23 +5405,6 @@ void MainWindow::on_actionOpen_In_File_Manager_library_triggered()
     if (!info.isDir()) { path = info.path(); }
 
     openFileManager(path);
-}
-
-void MainWindow::openFileManager(QString path)
-{
-    if (this->filemanager.length()) {
-        QProcess* process = new QProcess();
-
-        connect(process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-                [this, process](int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/){
-            process->deleteLater();
-        });
-
-        process->start( this->filemanager, QStringList() << path );
-
-    } else {
-        QDesktopServices::openUrl( path );
-    }
 }
 
 void MainWindow::showSfzContentInLibFsInfoArea(QString filename)
@@ -5514,7 +5501,6 @@ void MainWindow::on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int /*co
         int id = tree_midiInMap.value(item);
         prj->midiInPort_setName(id, item->text(0));
     }
-
 }
 
 void MainWindow::on_pushButton_ShowTriggersPage_clicked()
@@ -5710,7 +5696,8 @@ void MainWindow::on_toolButton_layer_up_clicked()
     ui->listWidget_Layers->setCurrentRow(to);
 }
 
-void MainWindow::on_listWidget_Layers_currentItemChanged(QListWidgetItem* current, QListWidgetItem* /*previous*/)
+void MainWindow::on_listWidget_Layers_currentItemChanged(
+        QListWidgetItem* current, QListWidgetItem* /*previous*/)
 {
     foreach (KonfytLayerWidget* w, layerWidgetList) {
         w->setHighlighted(w->getListWidgetItem() == current);
@@ -5981,7 +5968,6 @@ void MainWindow::on_pushButton_jackConRemove_clicked()
     delete ui->listWidget_jackConnections->item(row);
 
     updateGUIWarnings();
-
 }
 
 void MainWindow::on_checkBox_filesystem_ShowOnlySounds_toggled(bool /*checked*/)
@@ -6441,8 +6427,8 @@ void MainWindow::loadSavedMidiSendItems(QString dirname)
         addSavedMidiSendItem(item);
     }
 
-
-    print("Saved MIDI send items loaded: " + n2s(savedMidiSendItems.count()) + " items.");
+    print(QString("Saved MIDI send items loaded: %1 items.")
+          .arg(savedMidiSendItems.count()));
 }
 
 bool MainWindow::saveMidiSendItemToFile(QString filename, MidiSendItem item)

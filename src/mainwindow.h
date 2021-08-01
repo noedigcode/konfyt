@@ -163,6 +163,7 @@ private:
     void messageBox(QString msg);
     bool dirExists(QString dirname);
     QStringList scanDirForFiles(QString dirname, QString filenameExtension = "");
+    void openFileManager(QString path);
 
     // ========================================================================
     // Project related
@@ -199,7 +200,7 @@ private:
     void patchModified();
     void setProjectModified();
     void setProjectName(QString name);
-    void gui_updateProjectName();
+    void updateProjectNameInGui();
 
 private slots:
     // Project modified
@@ -212,13 +213,6 @@ private slots:
     // ========================================================================
     // Library and filesystem view
     // ========================================================================
-private:
-    LibraryTreeItemType libraryTreeItemType(QTreeWidgetItem* item);
-    LibraryTreeItemType librarySelectedTreeItemType();
-
-    KfSoundPtr librarySelectedPatch();
-    KfSoundPtr librarySelectedSfont();
-    KfSoundPtr librarySelectedSfz();
 
     // Library/filesystem common
 private:
@@ -232,8 +226,23 @@ private:
     void showSelectedSfontProgramList();
     void showSfzContentInLibFsInfoArea(QString filename);
     QString loadSfzFileText(QString filename);
+private slots:
+    void on_tabWidget_library_currentChanged(int index);
+    void on_listWidget_LibraryBottom_currentRowChanged(int currentRow);
+    void on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem *item);
 
-    // Library tree items
+    // Preview button & menu
+private:
+    QMenu previewButtonMenu;
+private slots:
+    void preparePreviewMenu();
+    void previewButtonMidiInPortMenuTrigger(QAction* action);
+    void previewButtonMidiInChannelMenuTrigger(QAction* action);
+    void previewButtonBusMenuTrigger(QAction* action);
+    void on_toolButton_LibraryPreview_clicked();
+
+    // Library tree
+private:
     struct LibraryTree {
         QTreeWidgetItem* rootTreeItem = nullptr;
         QMap<QTreeWidgetItem*, QString> foldersMap; // Intermediate (non-root, non-bottom) items
@@ -251,15 +260,27 @@ private:
     void buildSfTree(KfDbTreeItemPtr dbTreeItem);
     void buildPatchTree(KfDbTreeItemPtr dbTreeItem);
 
-    // Preview button & menu
-private:
-    QMenu previewButtonMenu;
+    LibraryTreeItemType libraryTreeItemType(QTreeWidgetItem* item);
+    LibraryTreeItemType librarySelectedTreeItemType();
+    KfSoundPtr librarySelectedPatch();
+    KfSoundPtr librarySelectedSfont();
+    KfSoundPtr librarySelectedSfz();
+
+    bool mLibrarySearchModeActive;
+    void fillLibraryTreeWithAll();
+    void fillLibraryTreeWithSearch(QString search);
+
+    QMenu libraryContextMenu;
+    QTreeWidgetItem* libraryMenuItem;
+
 private slots:
-    void preparePreviewMenu();
-    void previewButtonMidiInPortMenuTrigger(QAction* action);
-    void previewButtonMidiInChannelMenuTrigger(QAction* action);
-    void previewButtonBusMenuTrigger(QAction* action);
-    void on_toolButton_LibraryPreview_clicked();
+    void on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int column);
+    void on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, int column);
+    void on_treeWidget_Library_customContextMenuRequested(const QPoint &pos);
+    void on_lineEdit_Search_returnPressed();
+    void on_toolButton_ClearSearch_clicked();
+    void on_actionOpen_In_File_Manager_library_triggered();
 
     // Database
 private:
@@ -271,16 +292,8 @@ private slots:
     void onDatabaseScanStatus(QString msg);
     void onDatabaseSfontInfoLoaded(KfSoundPtr sf);
 
-private:
-    bool searchMode;
-    void fillTreeWithAll();
-    void fillTreeWithSearch(QString search);
-    void gui_updateTree();
-
-    QMenu libraryMenu;
-    QTreeWidgetItem* libraryMenuItem;
-
     // Filesystem view
+private:
     QString fsview_currentPath;
     QStringList fsview_back;
     void setupFilesystemView();
@@ -291,29 +304,13 @@ private:
     bool isPatchSelectedInFilesystem();
     bool isSoundfontSelectedInFilesystem();
     QMap<QTreeWidgetItem*, QFileInfo> fsMap;
-    QMenu fsViewMenu;
+
+    QMenu fsViewContextMenu;
     QTreeWidgetItem* fsViewMenuItem;
 
-    void openFileManager(QString path);
-
 private slots:
-    void on_tabWidget_library_currentChanged(int index);
-
-    void on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int column);
-    void on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
-    void on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, int column);
-    /* When the user right-clicks on the library tree. */
-    void on_treeWidget_Library_customContextMenuRequested(const QPoint &pos);
-
-    void on_listWidget_LibraryBottom_currentRowChanged(int currentRow);
-    void on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem *item);
-
-    void on_lineEdit_Search_returnPressed();
-    void on_toolButton_ClearSearch_clicked();
-
     void on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
     void on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *item, int column);
-    /* When the user right-clicks on the filesystem tree. */
     void on_treeWidget_filesystem_customContextMenuRequested(const QPoint &pos);
 
     void on_toolButton_filesystem_up_clicked();
@@ -324,9 +321,8 @@ private slots:
     void on_toolButton_filesystem_projectDir_clicked();
     void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
 
-    void on_actionOpen_In_File_Manager_library_triggered();
-    void on_actionAdd_Path_To_External_App_Box_triggered();
     void on_actionOpen_In_File_Manager_fsview_triggered();
+    void on_actionAdd_Path_To_External_App_Box_triggered();
     void on_actionAdd_Path_to_External_App_Box_Relative_to_Project_triggered();
 
     // ========================================================================
@@ -359,7 +355,7 @@ private:
     void setCurrentPatch(KonfytPatch *patch);
     void setCurrentPatchByIndex(int index);
 
-    void newPatchIfMasterNull();
+    void newPatchIfCurrentNull();
     void addSfzToCurrentPatch(QString sfzPath);
     void addSoundfontProgramToCurrentPatch(QString soundfontPath, KonfytSoundPreset p);
     void addMidiPortToCurrentPatch(int port);
@@ -371,8 +367,8 @@ private:
     // GUI patch functions
     bool mPreviewMode = false;               // Set by setPreviewMode()
     void setPreviewMode(bool previewModeOn); // Set preview mode on or off and updates GUI.
-    void gui_updatePatchView();
-    void gui_updateWindowTitle();
+    void updatePatchView();
+    void updateWindowTitle();
     PatchListWidgetAdapter patchListAdapter;
     void setupPatchListAdapter();
     bool patchNote_ignoreChange = false;
@@ -416,7 +412,7 @@ private slots:
 private:
     QMenu layerToolMenu;
     KonfytLayerWidget* layerToolMenuSourceitem;
-    void gui_updateLayerToolMenu();
+    void updateLayerToolMenu();
 private slots:
     void onLayer_leftToolbutton_clicked(KonfytLayerWidget* layerItem);
 
@@ -490,8 +486,8 @@ private:
     void connectionsTreeSelectAudioInPort(int portId);
     void connectionsTreeSelectMidiInPort(int portId);
     void connectionsTreeSelectMidiOutPort(int portId);
-    void gui_updatePortsBussesTree();
-    void gui_updateConnectionsTree();
+    void updatePortsBussesTree();
+    void updateConnectionsTree();
     void clearPortsBussesConnectionsData();
 
     QTreeWidgetItem* busParent = nullptr;
