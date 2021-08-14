@@ -290,11 +290,11 @@ void MainWindow::showSettingsDialog()
     ui->comboBox_settings_sfzDirs->setCurrentText(this->mSfzDir);
     ui->comboBox_settings_soundfontDirs->setCurrentText(this->mSoundfontsDir);
 
-    int i = ui->comboBox_Settings_filemanager->findText( this->filemanager );
+    int i = ui->comboBox_Settings_filemanager->findText( this->mFilemanager );
     if (i>=0) {
         ui->comboBox_Settings_filemanager->setCurrentIndex(i);
     } else {
-        ui->comboBox_Settings_filemanager->addItem(this->filemanager);
+        ui->comboBox_Settings_filemanager->addItem(this->mFilemanager);
         ui->comboBox_Settings_filemanager->setCurrentIndex( ui->comboBox_Settings_filemanager->count()-1 );
     }
 
@@ -357,7 +357,7 @@ void MainWindow::applySettings()
     setPatchesDir(ui->comboBox_settings_patchDirs->currentText());
     setSoundfontsDir(ui->comboBox_settings_soundfontDirs->currentText());
     setSfzDir(ui->comboBox_settings_sfzDirs->currentText());
-    filemanager = ui->comboBox_Settings_filemanager->currentText();
+    mFilemanager = ui->comboBox_Settings_filemanager->currentText();
 
     print("Settings applied.");
 
@@ -403,7 +403,7 @@ bool MainWindow::loadSettingsFile(QString dir)
                 } else if (r.name() == XML_SETTINGS_SFZDIR) {
                     setSfzDir(r.readElementText());
                 } else if (r.name() == XML_SETTINGS_FILEMAN) {
-                    filemanager = r.readElementText();
+                    mFilemanager = r.readElementText();
                 }
 
             }
@@ -446,7 +446,7 @@ bool MainWindow::saveSettingsFile()
     stream.writeTextElement(XML_SETTINGS_SFDIR, mSoundfontsDir);
     stream.writeTextElement(XML_SETTINGS_PATCHESDIR, mPatchesDir);
     stream.writeTextElement(XML_SETTINGS_SFZDIR, mSfzDir);
-    stream.writeTextElement(XML_SETTINGS_FILEMAN, filemanager);
+    stream.writeTextElement(XML_SETTINGS_FILEMAN, mFilemanager);
 
     stream.writeEndElement(); // Settings
 
@@ -2107,7 +2107,7 @@ QStringList MainWindow::scanDirForFiles(QString dirname, QString filenameExtensi
 
 void MainWindow::openFileManager(QString path)
 {
-    if (this->filemanager.length()) {
+    if (mFilemanager.length()) {
         QProcess* process = new QProcess();
 
         connect(process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
@@ -2115,10 +2115,10 @@ void MainWindow::openFileManager(QString path)
             process->deleteLater();
         });
 
-        process->start( this->filemanager, QStringList() << path );
+        process->start(mFilemanager, QStringList() << path);
 
     } else {
-        QDesktopServices::openUrl( path );
+        QDesktopServices::openUrl(QUrl::fromLocalFile(path));
     }
 }
 

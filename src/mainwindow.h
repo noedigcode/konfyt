@@ -541,7 +541,7 @@ private:
     void setPatchesDir(QString path);
     QString mSfzDir;
     void setSfzDir(QString path);
-    QString filemanager;
+    QString mFilemanager;
     void createSettingsDir();
     bool loadSettingsFile(QString dir);
     bool saveSettingsFile();
