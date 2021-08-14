@@ -1825,8 +1825,7 @@ border-bottom-left-radius: 0;</string>
                   <string>Toggle Preview Mode for previewing library items</string>
                  </property>
                  <property name="styleSheet">
-                  <string notr="true">
-</string>
+                  <string notr="true"/>
                  </property>
                  <property name="text">
                   <string>Preview</string>
@@ -2120,7 +2119,7 @@ td
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <property name="konfytGradient" stdset="0">
@@ -3794,8 +3793,8 @@ QSpinBox {
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>374</width>
-                        <height>400</height>
+                        <width>272</width>
+                        <height>380</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_14">

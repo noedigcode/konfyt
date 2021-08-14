@@ -22,7 +22,7 @@
 #ifndef KONFYTLSCPENGINE_H
 #define KONFYTLSCPENGINE_H
 
-#include "gidls.h"
+#include "konfytLscp.h"
 #include "konfytBaseSoundEngine.h"
 
 #include <QObject>
@@ -44,7 +44,7 @@ public:
     void setGain(int id, float newGain) override;
 
 private:
-    GidLs ls;
+    KonfytLscp ls;
     KonfytJackEngine* mJackEngine = nullptr;
 
 private slots:

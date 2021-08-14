@@ -24,8 +24,8 @@
 // https://www.linuxsampler.org/api/draft-linuxsampler-protocol.html
 
 
-#ifndef GIDLS_H
-#define GIDLS_H
+#ifndef KONFYT_LSCP_H
+#define KONFYT_LSCP_H
 
 #include "lscp/client.h"
 #include "lscp/device.h"
@@ -35,58 +35,55 @@
 #include <QProcess>
 #include <QTimer>
 
-// =============================================================================
-struct GidLsPort
-{
-    GidLsPort(int index, lscp_device_port_info_t* port);
 
-    QString name();
-
-    QMap<QString, QString> params;
-    int index;
-
-    QString paramsToString();
-};
-
-// =============================================================================
-struct GidLsDevice
-{
-    GidLsDevice();
-    GidLsDevice(lscp_client_t *client, int index, bool audio, lscp_device_info_t* dev);
-
-    QMap<QString, QString> params;
-    QList<GidLsPort> ports;
-
-    bool audio;
-    int index;
-    int numPorts();
-    QString name() { return params.value("NAME", ""); }
-    QString driver() { return params.value("DRIVER", ""); }
-
-    QString toString();
-    QString paramsToString();
-};
-
-// =============================================================================
-
-struct GidLsChannel
-{
-    QString midiJackPort;
-    QString audioLeftJackPort;
-    QString audioRightJackPort;
-    QString path;
-    int midiPortIndex = -1;
-    int audioLeftChanIndex = -1;
-    int audioRightChanIndex = -1;
-};
-
-// =============================================================================
-
-class GidLs : public QObject
+class KonfytLscp : public QObject
 {
     Q_OBJECT
 public:
-    explicit GidLs(QObject *parent = 0);
+    // ----------------------------------------------------
+    struct LsPort
+    {
+        LsPort(int index, lscp_device_port_info_t* port);
+
+        QString name();
+
+        QMap<QString, QString> params;
+        int index;
+
+        QString paramsToString();
+    };
+    // ----------------------------------------------------
+    struct LsDevice
+    {
+        LsDevice();
+        LsDevice(lscp_client_t *client, int index, bool audio, lscp_device_info_t* dev);
+
+        QMap<QString, QString> params;
+        QList<LsPort> ports;
+
+        bool audio;
+        int index;
+        int numPorts();
+        QString name() { return params.value("NAME", ""); }
+        QString driver() { return params.value("DRIVER", ""); }
+
+        QString toString();
+        QString paramsToString();
+    };
+    // ----------------------------------------------------
+    struct LsChannel
+    {
+        QString midiJackPort;
+        QString audioLeftJackPort;
+        QString audioRightJackPort;
+        QString path;
+        int midiPortIndex = -1;
+        int audioLeftChanIndex = -1;
+        int audioRightChanIndex = -1;
+    };
+    // ----------------------------------------------------
+
+    explicit KonfytLscp(QObject *parent = 0);
 
     static lscp_status_t client_callback ( lscp_client_t *pClient,
                                            lscp_event_t event,
@@ -95,7 +92,8 @@ public:
 
     /* Initialises the LSCP client and emits initialised() signal when done. */
     void init();
-    /* Sets up Linuxsampler audio and MIDI devices. Call after successfull initialisation. */
+    /* Sets up Linuxsampler audio and MIDI devices.
+     * Call after successfull initialisation. */
     void setupDevices(QString clientName);
     void deinit();
 
@@ -124,7 +122,7 @@ public:
 
     QString printChannels();
     int addSfzChannelAndPorts(QString file);
-    GidLsChannel getSfzChannelInfo(int id);
+    LsChannel getSfzChannelInfo(int id);
     void removeSfzChannel(int id);
 
     static QString escapeString(QString s);
@@ -132,12 +130,16 @@ public:
     static QString indentString(QString s, QString indent);
     static bool indexValid(int index, int listCount);
 
+signals:
+    void print(QString msg);
+    void initialised(bool error, QString errString);
+
 private:
     QString mClientName;
     lscp_client_t *client = NULL;
-    QMap<int, GidLsDevice> adevs;
-    QMap<int, GidLsDevice> mdevs;
-    QMap<int, GidLsChannel> chans;
+    QMap<int, LsDevice> adevs;
+    QMap<int, LsDevice> mdevs;
+    QMap<int, LsChannel> chans;
     QList<int> freeAudioChannels;
     QList<int> freeMidiPorts;
 
@@ -148,10 +150,6 @@ private:
     const char* KEY_CHANNELS = "CHANNELS";
     const char* KEY_PORTS = "PORTS";
     const char* VAL_0 = "0";
-
-signals:
-    void print(QString msg);
-    void initialised(bool error, QString errString);
 };
 
-#endif // GIDLS_H
+#endif // KONFYT_LSCP_H

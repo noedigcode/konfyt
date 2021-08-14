@@ -87,18 +87,14 @@ struct KonfytMidiEvent
 private:
     int mType = MIDI_EVENT_TYPE_NOTEON; // Status byte without channel (i.e. same as channel=0)
     int mDatasize = 0;
-    unsigned char mData[MIDI_DATA_MAX_SIZE];
+    unsigned char mData[MIDI_DATA_MAX_SIZE] = {0};
 
 public:
     int channel = 0;
     int bankMSB = -1;
     int bankLSB = -1;
 
-    KonfytMidiEvent()
-    {
-        mData[0] = 0;
-        mData[1] = 0;
-    }
+    KonfytMidiEvent() {}
     KonfytMidiEvent(const unsigned char* buffer, int size);
 
     /* Returns the number of data bytes, excluding the type/channel byte. */

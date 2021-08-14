@@ -69,13 +69,12 @@ public:
     float getGain(KfFluidSynth *synth);
     void setGain(KfFluidSynth *synth, float newGain);
 
+signals:
+    void print(QString msg);
+
 private:
     QList<KfFluidSynth*> synths;
     double mSampleRate = 44100;
-    
-signals:
-    void print(QString msg);
-    
 };
 
 #endif // KONFYT_FLUIDSYNTH_ENGINE_H

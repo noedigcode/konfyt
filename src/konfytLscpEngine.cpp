@@ -23,8 +23,8 @@
 
 KonfytLscpEngine::KonfytLscpEngine(QObject *parent) : KonfytBaseSoundEngine(parent)
 {
-    connect(&ls, &GidLs::print, this, &KonfytLscpEngine::print);
-    connect(&ls, &GidLs::initialised, this, &KonfytLscpEngine::onLsInitialised);
+    connect(&ls, &KonfytLscp::print, this, &KonfytLscpEngine::print);
+    connect(&ls, &KonfytLscp::initialised, this, &KonfytLscpEngine::onLsInitialised);
 }
 
 KonfytLscpEngine::~KonfytLscpEngine()
@@ -61,13 +61,13 @@ QString KonfytLscpEngine::pluginName(int id)
 
 QString KonfytLscpEngine::midiInJackPortName(int id)
 {
-    GidLsChannel info = ls.getSfzChannelInfo(id);
+    KonfytLscp::LsChannel info = ls.getSfzChannelInfo(id);
     return info.midiJackPort;
 }
 
 QStringList KonfytLscpEngine::audioOutJackPortNames(int id)
 {
-    GidLsChannel info = ls.getSfzChannelInfo(id);
+    KonfytLscp::LsChannel info = ls.getSfzChannelInfo(id);
     QStringList ret;
     ret.append(info.audioLeftJackPort);
     ret.append(info.audioRightJackPort);

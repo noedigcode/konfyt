@@ -160,13 +160,17 @@ private:
     jack_nframes_t mJackBufferSize; // TODO THIS MIGHT CHANGE, REGISTER BUFSIZE CALLBACK TO UPDATE
     bool mClientActive = false;      // Flag to indicate if the client has been successfully activated
     uint32_t mJackSampleRate;
+    bool mConnectCallback = false;
+    bool mRegisterCallback = false;
+
+    // MIDI data received from JACK thread
     RingbufferQMutex<KfJackMidiRxEvent> midiRxBuffer{1000};
     QList<KfJackMidiRxEvent> extractedMidiRx;
-    int audioBufferCycleCount = 100;
+
+    // Audio data received from JACK thread
+    int mAudioBufferSumCycleCount = 100;
     RingbufferQMutex<KfJackAudioRxEvent> audioRxBuffer{1000};
     QList<KfJackAudioRxEvent> extractedAudioRx;
-    bool connectCallback = false;
-    bool registerCallback = false;
 
     KonfytFluidsynthEngine* fluidsynthEngine = nullptr;
 

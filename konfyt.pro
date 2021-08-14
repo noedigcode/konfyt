@@ -19,6 +19,7 @@ INCLUDEPATH += src
 SOURCES += src/main.cpp\
     src/indicatorHandlers.cpp \
     src/konfytAudio.cpp \
+    src/konfytLscp.cpp \
         src/mainwindow.cpp \
     src/consoledialog.cpp \
     src/konfytPatchEngine.cpp \
@@ -39,7 +40,6 @@ SOURCES += src/main.cpp\
     src/konfytBridgeEngine.cpp \
     src/konfytBaseSoundEngine.cpp \
     src/konfytLscpEngine.cpp \
-    src/gidls.cpp \
     src/midiEventListWidgetAdapter.cpp \
     src/patchListWidgetAdapter.cpp
 
@@ -47,6 +47,7 @@ HEADERS  += src/mainwindow.h \
     src/consoledialog.h \
     src/indicatorHandlers.h \
     src/konfytAudio.h \
+    src/konfytLscp.h \
     src/konfytPatchEngine.h \
     src/konfytPatch.h \
     src/konfytPatchLayer.h \
@@ -67,7 +68,6 @@ HEADERS  += src/mainwindow.h \
     src/konfytBridgeEngine.h \
     src/konfytBaseSoundEngine.h \
     src/konfytLscpEngine.h \
-    src/gidls.h \
     src/midiEventListWidgetAdapter.h \
     src/patchListWidgetAdapter.h \
     src/ringbufferqmutex.h

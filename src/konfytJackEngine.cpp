@@ -44,14 +44,17 @@ void KonfytJackEngine::panic(bool p)
 void KonfytJackEngine::timerEvent(QTimerEvent* /*event*/)
 {
     // JACK port connections
-    if (connectCallback || registerCallback) {
-        connectCallback = false;
-        registerCallback = false;
+    if (mConnectCallback || mRegisterCallback) {
+        mConnectCallback = false;
+        mRegisterCallback = false;
         refreshAllPortsConnections();
         emit jackPortRegisteredOrConnected();
     }
 
-    // Received MIDI events
+    // Transfer events that were received in JACK tread from ringbuffers to lists
+    // that will be retrieved later by the GUI thread.
+
+    // Received MIDI data
     extractedMidiRx.append(midiRxBuffer.readAll());
     if (!extractedMidiRx.isEmpty()) {
         emit midiEventsReceived();
@@ -1100,12 +1103,12 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 
 void KonfytJackEngine::jackPortConnectCallback()
 {
-    connectCallback = true;
+    mConnectCallback = true;
 }
 
 void KonfytJackEngine::jackPortRegistrationCallback()
 {
-    registerCallback = true;
+    mRegisterCallback = true;
 }
 
 void KonfytJackEngine::setFluidsynthEngine(KonfytFluidsynthEngine *e)
@@ -1179,8 +1182,11 @@ void KonfytJackEngine::mixBufferToDestinationPort(KfJackAudioRoute *route,
             }
         }
     }
+
+    // Maintain a sum of the audio buffer and preiodically add it to a ringbuffer
+    // so it can be given to the GUI thread later for display purposes.
     route->rxCycleCount++;
-    if (route->rxCycleCount >= audioBufferCycleCount) {
+    if (route->rxCycleCount >= mAudioBufferSumCycleCount) {
         KfJackAudioRxEvent ev;
         ev.audioRoute = route;
         ev.data = route->rxBufferSum / route->rxCycleCount / nframes;
@@ -1326,7 +1332,7 @@ bool KonfytJackEngine::initJackClient(QString name)
     mJackSampleRate = jack_get_sample_rate(mJackClient);
     print("Samplerate " + n2s(mJackSampleRate));
 
-    audioBufferCycleCount = mJackSampleRate/mJackBufferSize/10;
+    mAudioBufferSumCycleCount = mJackSampleRate/mJackBufferSize/10;
 
     fadeOutValuesCount = mJackSampleRate*fadeOutSecs;
     // Linear fadeout

@@ -44,10 +44,10 @@ public:
 
     void start();
     void stop();
-    State getState();
+    State state();
     bool isRunning();
 
-    QString toString_appAndArgs();
+    QString toString();
 
 public slots:
     void processStarted();
@@ -58,7 +58,7 @@ signals:
     void finished(KonfytProcess* process);
 
 private:
-    State state = NOT_STARTED;
+    State mState = NOT_STARTED;
 
 };
 

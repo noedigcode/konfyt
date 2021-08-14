@@ -30,13 +30,6 @@
 #include <jack/jack.h>
 
 
-enum KonfytJackPortType {
-    KonfytJackPortType_AudioIn  = 0,
-    KonfytJackPortType_AudioOut = 1,
-    KonfytJackPortType_MidiIn   = 2,
-    KonfytJackPortType_MidiOut  = 3,
-};
-
 struct KonfytJackPortsSpec
 {
     QString name;

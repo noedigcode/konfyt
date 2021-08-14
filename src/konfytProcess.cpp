@@ -31,15 +31,15 @@ KonfytProcess::KonfytProcess()
 /* Slot for signal from process when it is started. */
 void KonfytProcess::processStarted()
 {
-    state = RUNNING;
+    mState = RUNNING;
     emit started(this);
 }
 
 /* Slot for signal from process when it is finished. */
 void KonfytProcess::processFinished(int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/)
 {
-    if (state != STOPPED) {
-        state = FINISHED;
+    if (mState != STOPPED) {
+        mState = FINISHED;
     }
     emit finished(this);
 }
@@ -55,27 +55,27 @@ void KonfytProcess::start()
 
 void KonfytProcess::stop()
 {
-    if (state == RUNNING) {
-        state = STOPPED;
+    if (mState == RUNNING) {
+        mState = STOPPED;
         process.kill();
     }
 }
 
-KonfytProcess::State KonfytProcess::getState()
+KonfytProcess::State KonfytProcess::state()
 {
-    return state;
+    return mState;
 }
 
 bool KonfytProcess::isRunning()
 {
-    if (state == RUNNING) {
+    if (mState == RUNNING) {
         return true;
     } else {
         return false;
     }
 }
 
-QString KonfytProcess::toString_appAndArgs()
+QString KonfytProcess::toString()
 {
     QString out = appname;
     return out;

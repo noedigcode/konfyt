@@ -1214,7 +1214,7 @@ void MainWindow::loadProject(ProjectPtr prj)
     QList<KonfytProcess*> prl = prj->getProcessList();
     for (int j=0; j<prl.count(); j++) {
         KonfytProcess* gp = prl.at(j);
-        QString temp = gp->toString_appAndArgs();
+        QString temp = gp->toString();
         if (gp->isRunning()) {
             temp = "[running] " + temp;
         }
@@ -1846,7 +1846,7 @@ void MainWindow::setupPatchListAdapter()
             this, &MainWindow::onPatchSelected);
     connect(&patchListAdapter, &PatchListWidgetAdapter::patchMoved,
             [=](int indexFrom, int indexTo) {
-        ProjectPtr prj = mCurrentProject;;
+        ProjectPtr prj = mCurrentProject;
         if (!prj) { return; }
         prj->movePatch(indexFrom, indexTo);
     });
@@ -2230,7 +2230,7 @@ void MainWindow::setCurrentPatch(KonfytPatch* patch)
  * selected. */
 void MainWindow::setCurrentPatchByIndex(int index)
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     // If index is -1, select the last patch
@@ -2547,7 +2547,7 @@ void MainWindow::addProcess(KonfytProcess* process)
     // Add to project list
     mCurrentProject->addProcess(process);
     // Add to GUI list
-    ui->listWidget_ExtApps->addItem(process->toString_appAndArgs());
+    ui->listWidget_ExtApps->addItem(process->toString());
 }
 
 void MainWindow::runProcess(int index)
@@ -2595,7 +2595,7 @@ void MainWindow::processStartedSlot(int index, KonfytProcess *process)
     if ( (index >=0) && (index < ui->listWidget_ExtApps->count()) ) {
         // Indicate in list widget
         QListWidgetItem* item = ui->listWidget_ExtApps->item(index);
-        item->setText("[running] " + process->toString_appAndArgs());
+        item->setText("[running] " + process->toString());
     } else {
         print("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
     }
@@ -2606,7 +2606,7 @@ void MainWindow::processFinishedSlot(int index, KonfytProcess *process)
     if ( (index >=0) && (index < ui->listWidget_ExtApps->count()) ) {
         // Indicate in list widget
         QListWidgetItem* item = ui->listWidget_ExtApps->item(index);
-        item->setText("[stopped] " + process->toString_appAndArgs());
+        item->setText("[stopped] " + process->toString());
     } else {
         print("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
     }
@@ -3036,7 +3036,7 @@ void MainWindow::updateGUIWarnings()
 {
     ui->listWidget_Warnings->clear();
 
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     QStringList moports = jack.getMidiOutputPortsList();
@@ -3569,7 +3569,7 @@ void MainWindow::updateBusMenu(QMenu *menu, int currentBusId)
 {
     menu->clear();
 
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     QAction* a = menu->addAction("Current Bus Connections...");
@@ -3769,7 +3769,7 @@ void MainWindow::updateMidiInPortsMenu(QMenu *menu, int currentPortId)
 {
     menu->clear();
 
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     QAction* a = menu->addAction("Current Port Connections...");
@@ -4068,7 +4068,7 @@ bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
                 setCurrentPatchByIndex( 4 );
                 break;
             case Qt::Key_6:
-                setCurrentPatchByIndex( 5 );;
+                setCurrentPatchByIndex( 5 );
                 break;
             case Qt::Key_7:
                 setCurrentPatchByIndex( 6 );
@@ -4136,7 +4136,7 @@ void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
 void MainWindow::on_pushButton_midiFilter_Apply_clicked()
 {
     KonfytMidiFilter f;
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) {
         print("ERROR: No current project.");
         return;
@@ -4264,7 +4264,7 @@ void MainWindow::on_listWidget_ExtApps_doubleClicked(const QModelIndex& /*index*
 void MainWindow::on_listWidget_ExtApps_clicked(const QModelIndex &index)
 {
     // Put the contents of the selected item in the External Apps text box
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     KonfytProcess* p = prj->getProcessList()[index.row()];
@@ -4374,7 +4374,7 @@ void MainWindow::refreshFilesystemView()
 {
     ui->lineEdit_filesystem_path->setText(fsview_currentPath);
 
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     QString project_dir;
     if (prj) {
         project_dir = prj->getDirname();
@@ -4568,7 +4568,7 @@ void MainWindow::addAudioBusToJack(int busNo, KfJackAudioPort **leftPort, KfJack
    Returns -1 on error. */
 int MainWindow::addBus()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) {
         print("Select a project.");
         return -1;
@@ -4610,7 +4610,7 @@ void MainWindow::on_actionAdd_Bus_triggered()
    Returns -1 on error. */
 int MainWindow::addAudioInPort()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) {
         print("Select a project.");
         return -1;
@@ -4637,7 +4637,7 @@ int MainWindow::addAudioInPort()
  * Returns -1 on error. */
 int MainWindow::addMidiInPort()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) {
         print("Select a project.");
         return -1;
@@ -4685,7 +4685,7 @@ void MainWindow::on_actionAdd_MIDI_In_Port_triggered()
  * Returns -1 on error. */
 int MainWindow::addMidiOutPort()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) {
         print("Select a project.");
         return -1;
@@ -4781,7 +4781,7 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
 {
     KONFYT_ASSERT_RETURN(rxEvent.sourcePort);
 
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     KonfytMidiEvent ev = rxEvent.midiEvent;
@@ -5000,7 +5000,7 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(
 /* Remove the bus/port selected in the connections ports/buses tree widget. */
 void MainWindow::on_actionRemove_BusPort_triggered()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     QTreeWidgetItem* item = portsBussesTreeMenuItem;
@@ -5242,7 +5242,7 @@ void MainWindow::on_actionAdd_Path_To_External_App_Box_triggered()
 
 void MainWindow::on_toolButton_filesystem_projectDir_clicked()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
     if (prj->getDirname().length() == 0) { return; }
 
@@ -5284,7 +5284,7 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
     }
 
     // Make relative to project directory
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (prj) {
         QString projPath = prj->getDirname();
         QDir projDir(projPath);
@@ -5447,7 +5447,7 @@ QString MainWindow::loadSfzFileText(QString filename)
 
 void MainWindow::on_actionRename_BusPort_triggered()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     QTreeWidgetItem* item = portsBussesTreeMenuItem;
@@ -5475,7 +5475,7 @@ void MainWindow::on_actionRename_BusPort_triggered()
 /* User has renamed a port or bus. */
 void MainWindow::on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int /*column*/)
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     if (item->parent() == busParent) {
@@ -5522,7 +5522,7 @@ void MainWindow::on_pushButton_triggersPage_assign_clicked()
     QTreeWidgetItem* item = ui->tree_Triggers->currentItem();
     if (!item) { return; }
 
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     int eventRow = ui->listWidget_triggers_eventList->currentRow();
@@ -5557,7 +5557,7 @@ void MainWindow::on_pushButton_triggersPage_clear_clicked()
     QTreeWidgetItem* item = ui->tree_Triggers->currentItem();
     if (!item) { return; }
 
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     QAction* action = triggersItemActionHash[item];
@@ -5585,7 +5585,7 @@ void MainWindow::onTriggersMidiEventListDoubleClicked()
 
 void MainWindow::on_checkBox_Triggers_ProgSwitchPatches_clicked()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     prj->setProgramChangeSwitchPatches( ui->checkBox_Triggers_ProgSwitchPatches->isChecked() );
@@ -5771,7 +5771,7 @@ void MainWindow::on_actionPanicToggle_triggered()
 
 void MainWindow::on_pushButton_LoadAll_clicked()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     int startPatch = currentPatchIndex();
@@ -5788,7 +5788,7 @@ void MainWindow::on_pushButton_ExtApp_Replace_clicked()
     int row = ui->listWidget_ExtApps->currentRow();
     if (row < 0) { return; }
 
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     KonfytProcess* process = prj->getProcessList()[row];
@@ -5869,7 +5869,7 @@ void MainWindow::showJackPage()
 
 void MainWindow::updateJackPage()
 {
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     QStringList outPorts;
@@ -5926,7 +5926,7 @@ void MainWindow::on_pushButton_jackConAdd_clicked()
     QTreeWidgetItem* itemIn = ui->treeWidget_jackportsIn->currentItem();
     if ( (!itemOut) || (!itemIn) ) { return; }
 
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     KonfytJackConPair p;
@@ -5950,7 +5950,7 @@ void MainWindow::on_pushButton_jackConRemove_clicked()
 {
     int row = ui->listWidget_jackConnections->currentRow();
     if (row<0) { return; }
-    ProjectPtr prj = mCurrentProject;;
+    ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
     // Remove from project

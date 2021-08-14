@@ -19,14 +19,14 @@
  *
  *****************************************************************************/
 
-#include "gidls.h"
+#include "konfytLscp.h"
 
-GidLs::GidLs(QObject *parent) : QObject(parent)
+KonfytLscp::KonfytLscp(QObject *parent) : QObject(parent)
 {
 
 }
 
-lscp_status_t GidLs::client_callback(lscp_client_t* /*pClient*/, lscp_event_t event, const char *pchData, int cchData, void* /*pvData*/)
+lscp_status_t KonfytLscp::client_callback(lscp_client_t* /*pClient*/, lscp_event_t event, const char *pchData, int cchData, void* /*pvData*/)
 {
     lscp_status_t ret = LSCP_FAILED;
 
@@ -42,7 +42,7 @@ lscp_status_t GidLs::client_callback(lscp_client_t* /*pClient*/, lscp_event_t ev
     return ret;
 }
 
-void GidLs::init()
+void KonfytLscp::init()
 {
     print("Initialising client.");
     client = lscp_client_create("localhost", SERVER_PORT, client_callback, NULL);
@@ -90,7 +90,7 @@ void GidLs::init()
     }
 }
 
-void GidLs::setupDevices(QString clientName)
+void KonfytLscp::setupDevices(QString clientName)
 {
     mClientName = clientName;
 
@@ -121,13 +121,13 @@ void GidLs::setupDevices(QString clientName)
     }
 }
 
-void GidLs::deinit()
+void KonfytLscp::deinit()
 {
     removeAllRelatedToClient(mClientName);
     lscp_client_destroy(client);
 }
 
-void GidLs::printEngines()
+void KonfytLscp::printEngines()
 {
     const char** engines = lscp_list_available_engines(client);
     int i=0;
@@ -138,7 +138,7 @@ void GidLs::printEngines()
     }
 }
 
-void GidLs::resetSampler()
+void KonfytLscp::resetSampler()
 {
     print("Resetting sampler");
     lscp_status_t rst = lscp_reset_sampler(client);
@@ -147,7 +147,7 @@ void GidLs::resetSampler()
     }
 }
 
-void GidLs::removeAllRelatedToClient(QString clientName)
+void KonfytLscp::removeAllRelatedToClient(QString clientName)
 {
     print("Removing everything related to " + clientName + "...");
 
@@ -207,7 +207,7 @@ void GidLs::removeAllRelatedToClient(QString clientName)
     }
 }
 
-void GidLs::refreshAudioDevices()
+void KonfytLscp::refreshAudioDevices()
 {
     adevs.clear();
 
@@ -217,7 +217,7 @@ void GidLs::refreshAudioDevices()
         while (devs[i] >= 0) {
             lscp_device_info_t* dev = lscp_get_audio_device_info(client, devs[i]);
             if (dev != NULL) {
-                GidLsDevice device(client, devs[i], true, dev);
+                LsDevice device(client, devs[i], true, dev);
                 adevs.insert(devs[i], device);
             }
             i++;
@@ -225,12 +225,12 @@ void GidLs::refreshAudioDevices()
     }
 }
 
-bool GidLs::audioDeviceExists(QString name)
+bool KonfytLscp::audioDeviceExists(QString name)
 {
     return getAudioDeviceIdByName(name) >= 0;
 }
 
-int GidLs::getAudioDeviceIdByName(QString name)
+int KonfytLscp::getAudioDeviceIdByName(QString name)
 {
     refreshAudioDevices();
 
@@ -239,7 +239,7 @@ int GidLs::getAudioDeviceIdByName(QString name)
     QList<int> keys = adevs.keys();
     for (int i=0; i < keys.count(); i++) {
         int key = keys[i];
-        GidLsDevice &dev = adevs[key];
+        LsDevice &dev = adevs[key];
         if (dev.name() == name) {
             ret = key;
             break;
@@ -248,7 +248,7 @@ int GidLs::getAudioDeviceIdByName(QString name)
     return ret;
 }
 
-bool GidLs::addAudioDevice(QString name)
+bool KonfytLscp::addAudioDevice(QString name)
 {
     lscp_param_t params[3];
     params[0].key = (char*)KEY_NAME; params[0].value = (char*)name.toLocal8Bit().constData();
@@ -259,7 +259,7 @@ bool GidLs::addAudioDevice(QString name)
     return ret >= 0;
 }
 
-QString GidLs::printDevices()
+QString KonfytLscp::printDevices()
 {
     QString ret;
 
@@ -268,13 +268,13 @@ QString GidLs::printDevices()
 
     ret += "Audio devices:\n";
     for (int i=0; i < adevs.count(); i++) {
-        GidLsDevice &d = adevs[i];
+        LsDevice &d = adevs[i];
         ret += " - " + d.toString();
         ret += indentString(d.paramsToString(), "   ");
     }
     ret += "\nMIDI devices:\n";
     for (int i=0; i < mdevs.count(); i++) {
-        GidLsDevice &d = mdevs[i];
+        LsDevice &d = mdevs[i];
         ret += " - " + d.toString();
         ret += indentString(d.paramsToString(), "   ");
     }
@@ -282,7 +282,7 @@ QString GidLs::printDevices()
     return ret;
 }
 
-QString GidLs::printChannels()
+QString KonfytLscp::printChannels()
 {
     QString ret;
 
@@ -311,7 +311,7 @@ QString GidLs::printChannels()
         ret += "   MIDI device: " + i2s(info->midi_device) + "\n";
         ret += "   MIDI port: " + i2s(info->midi_port) + "\n";
         if (this->chans.contains(chans[i])) {
-            GidLsChannel info2 = getSfzChannelInfo(chans[i]);
+            LsChannel info2 = getSfzChannelInfo(chans[i]);
             ret += "   Channel belongs to us:\n";
             ret += "   Left JACK port: " + info2.audioLeftJackPort + "\n";
             ret += "   Right JACK port: " + info2.audioRightJackPort + "\n";
@@ -329,7 +329,7 @@ QString GidLs::printChannels()
  * returns ID. (The ID is also the same ID that Linuxsampler uses for the
  * channel.)
  * On error, -1 is returned. */
-int GidLs::addSfzChannelAndPorts(QString file)
+int KonfytLscp::addSfzChannelAndPorts(QString file)
 {
     lscp_status_t status;
 
@@ -392,7 +392,7 @@ int GidLs::addSfzChannelAndPorts(QString file)
         return -1;
     }
 
-    GidLsChannel info;
+    LsChannel info;
     info.path = file;
     info.midiPortIndex = midiPort;
     info.audioLeftChanIndex = audioPortLeft;
@@ -402,7 +402,7 @@ int GidLs::addSfzChannelAndPorts(QString file)
     refreshAudioDevices();
     refreshMidiDevices();
 
-    GidLsDevice &adev = adevs[iAudioDev];
+    LsDevice &adev = adevs[iAudioDev];
     if (indexValid(audioPortLeft, adev.ports.count())) {
         info.audioLeftJackPort = mClientName + ":" + adev.ports[audioPortLeft].name();
     } else {
@@ -414,7 +414,7 @@ int GidLs::addSfzChannelAndPorts(QString file)
         print("Audio right port out of bounds: " + i2s(audioPortRight));
     }
 
-    GidLsDevice &mdev = mdevs[iMidiDev];
+    LsDevice &mdev = mdevs[iMidiDev];
     //if (qBound(0, midiPort, mdev.ports.count()-1)) {
 
     if (indexValid(midiPort, mdev.ports.count())) {
@@ -428,15 +428,15 @@ int GidLs::addSfzChannelAndPorts(QString file)
     return chan;
 }
 
-GidLsChannel GidLs::getSfzChannelInfo(int id)
+KonfytLscp::LsChannel KonfytLscp::getSfzChannelInfo(int id)
 {
     return chans.value(id);
 }
 
-void GidLs::removeSfzChannel(int id)
+void KonfytLscp::removeSfzChannel(int id)
 {
     if (chans.contains(id)) {
-        GidLsChannel chan = chans.take(id);
+        LsChannel chan = chans.take(id);
         // Free right before left as they are assigned FIFO left then right again
         freeAudioChannel(chan.audioRightChanIndex);
         freeAudioChannel(chan.audioLeftChanIndex);
@@ -445,7 +445,7 @@ void GidLs::removeSfzChannel(int id)
     }
 }
 
-QString GidLs::escapeString(QString s)
+QString KonfytLscp::escapeString(QString s)
 {
     s.replace("\\", "\\\\"); // Must be first to not interfere with rest.
     s.replace("\n", "\\n");
@@ -459,12 +459,12 @@ QString GidLs::escapeString(QString s)
     return s;
 }
 
-QString GidLs::i2s(int value)
+QString KonfytLscp::i2s(int value)
 {
     return QString::number(value);
 }
 
-QString GidLs::indentString(QString s, QString indent)
+QString KonfytLscp::indentString(QString s, QString indent)
 {
     QStringList l = s.split("\n");
     QString ret;
@@ -474,12 +474,12 @@ QString GidLs::indentString(QString s, QString indent)
     return ret;
 }
 
-bool GidLs::indexValid(int index, int listCount)
+bool KonfytLscp::indexValid(int index, int listCount)
 {
     return ( (index >= 0) && (index < listCount) );
 }
 
-int GidLs::addAudioChannel()
+int KonfytLscp::addAudioChannel()
 {
     int index = getAudioDeviceIdByName(mClientName);
     if (index < 0) {
@@ -487,7 +487,7 @@ int GidLs::addAudioChannel()
         return -1;
     }
 
-    GidLsDevice &dev = adevs[index];
+    LsDevice &dev = adevs[index];
     int chan = dev.numPorts();
 
     lscp_param_t param;
@@ -498,12 +498,12 @@ int GidLs::addAudioChannel()
     return chan;
 }
 
-void GidLs::freeAudioChannel(int index)
+void KonfytLscp::freeAudioChannel(int index)
 {
     freeAudioChannels.append(index);
 }
 
-int GidLs::getFreeAudioChannel()
+int KonfytLscp::getFreeAudioChannel()
 {
     int chan = -1;
     if (freeAudioChannels.count()) {
@@ -514,7 +514,7 @@ int GidLs::getFreeAudioChannel()
     return chan;
 }
 
-void GidLs::refreshMidiDevices()
+void KonfytLscp::refreshMidiDevices()
 {
     mdevs.clear();
 
@@ -524,7 +524,7 @@ void GidLs::refreshMidiDevices()
         while (devs[i] >= 0) {
             lscp_device_info_t* dev = lscp_get_midi_device_info(client, devs[i]);
             if (dev != NULL) {
-                GidLsDevice device(client, devs[i], false, dev);
+                LsDevice device(client, devs[i], false, dev);
                 mdevs.insert(devs[i], device);
             }
             i++;
@@ -532,12 +532,12 @@ void GidLs::refreshMidiDevices()
     }
 }
 
-bool GidLs::midiDeviceExists(QString name)
+bool KonfytLscp::midiDeviceExists(QString name)
 {
     return getMidiDeviceIdByName(name) >= 0;
 }
 
-int GidLs::getMidiDeviceIdByName(QString name)
+int KonfytLscp::getMidiDeviceIdByName(QString name)
 {
     refreshMidiDevices();
 
@@ -546,7 +546,7 @@ int GidLs::getMidiDeviceIdByName(QString name)
     QList<int> keys = mdevs.keys();
     for (int i=0; i < keys.count(); i++) {
         int key = keys[i];
-        GidLsDevice &dev = mdevs[key];
+        LsDevice &dev = mdevs[key];
         if (dev.name() == name) {
             ret = key;
             break;
@@ -556,7 +556,7 @@ int GidLs::getMidiDeviceIdByName(QString name)
     return ret;
 }
 
-bool GidLs::addMidiDevice(QString name)
+bool KonfytLscp::addMidiDevice(QString name)
 {
     lscp_param_t params[3];
     params[0].key = (char*)KEY_NAME; params[0].value = (char*)name.toLocal8Bit().constData();
@@ -567,7 +567,7 @@ bool GidLs::addMidiDevice(QString name)
     return ret >= 0;
 }
 
-int GidLs::addMidiPort()
+int KonfytLscp::addMidiPort()
 {
     int index = getMidiDeviceIdByName(mClientName);
     if (index < 0) {
@@ -575,7 +575,7 @@ int GidLs::addMidiPort()
         return -1;
     }
 
-    GidLsDevice &dev = mdevs[index];
+    LsDevice &dev = mdevs[index];
     int port = dev.numPorts();
 
     lscp_param_t param;
@@ -586,12 +586,12 @@ int GidLs::addMidiPort()
     return port;
 }
 
-void GidLs::freeMidiPort(int index)
+void KonfytLscp::freeMidiPort(int index)
 {
     freeMidiPorts.append(index);
 }
 
-int GidLs::getFreeMidiPort()
+int KonfytLscp::getFreeMidiPort()
 {
     int port = -1;
     if (freeMidiPorts.count()) {
@@ -602,16 +602,16 @@ int GidLs::getFreeMidiPort()
     return port;
 }
 
-QString GidLs::jackClientName()
+QString KonfytLscp::jackClientName()
 {
     return mClientName;
 }
 
 
 
-GidLsDevice::GidLsDevice() : audio(true), index(-1) {}
+KonfytLscp::LsDevice::LsDevice() : audio(true), index(-1) {}
 
-GidLsDevice::GidLsDevice(lscp_client_t *client, int index, bool audio, lscp_device_info_t *dev) :
+KonfytLscp::LsDevice::LsDevice(lscp_client_t *client, int index, bool audio, lscp_device_info_t *dev) :
     audio(audio), index(index)
 {
     if (dev->params != NULL) {
@@ -633,14 +633,14 @@ GidLsDevice::GidLsDevice(lscp_client_t *client, int index, bool audio, lscp_devi
         }
         else { port = lscp_get_midi_port_info(client, index, i); }
         if (port != NULL) {
-            GidLsPort prt(i, port);
+            LsPort prt(i, port);
             ports.append(prt);
         }
     }
 
 }
 
-int GidLsDevice::numPorts() {
+int KonfytLscp::LsDevice::numPorts() {
     if (audio) {
         return params.value("CHANNELS", "0").toInt();
     } else {
@@ -648,7 +648,7 @@ int GidLsDevice::numPorts() {
     }
 }
 
-QString GidLsDevice::toString()
+QString KonfytLscp::LsDevice::toString()
 {
     QString ret = QString("Device %1: '%2', %3 %4, (%5)\n")
             .arg(index)
@@ -659,12 +659,12 @@ QString GidLsDevice::toString()
     for (int i=0; i < ports.count(); i++) {
         ret += QString("   Port %1:\n%2\n")
                 .arg(i)
-                .arg( GidLs::indentString( ports[i].paramsToString(), "      ") );
+                .arg( KonfytLscp::indentString( ports[i].paramsToString(), "      ") );
     }
     return ret;
 }
 
-QString GidLsDevice::paramsToString()
+QString KonfytLscp::LsDevice::paramsToString()
 {
     QString ret;
     QList<QString> keys = params.keys();
@@ -675,7 +675,7 @@ QString GidLsDevice::paramsToString()
     return ret;
 }
 
-GidLsPort::GidLsPort(int index, lscp_device_port_info_t *port) :
+KonfytLscp::LsPort::LsPort(int index, lscp_device_port_info_t *port) :
     index(index)
 {
     if (port->params != NULL) {
@@ -689,12 +689,12 @@ GidLsPort::GidLsPort(int index, lscp_device_port_info_t *port) :
     }
 }
 
-QString GidLsPort::name()
+QString KonfytLscp::LsPort::name()
 {
     return params.value("NAME", "");
 }
 
-QString GidLsPort::paramsToString()
+QString KonfytLscp::LsPort::paramsToString()
 {
     QString ret;
     QList<QString> keys = params.keys();
