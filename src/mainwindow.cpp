@@ -4129,6 +4129,15 @@ bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
             case Qt::Key_P:
                 midi_setLayerMute(9, 127);
                 break;
+            case Qt::Key_PageUp:
+                setMasterInTranspose(1, true);
+                break;
+            case Qt::Key_PageDown:
+                setMasterInTranspose(-1, true);
+                break;
+            case Qt::Key_Tab:
+                setMasterInTranspose(0, false);
+                break;
             default:
                 break;
             }

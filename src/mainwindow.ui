@@ -2070,7 +2070,87 @@ border-color: rgb(40, 40, 40);
             <item row="0" column="0">
              <widget class="QLabel" name="label_17">
               <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Live Mode!&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;table border=&quot;0&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px;&quot; cellspacing=&quot;2&quot; cellpadding=&quot;0&quot;&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Esc&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Panic&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;+, -&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Global volume up/down&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Space&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Next patch&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Right, Down&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Next patch&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Up, Left&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Previous patch&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;1 to 8&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Select patch&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Q, W, E, ... P&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Toggle layer mute&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;
+   &lt;head/&gt;
+   &lt;body&gt;
+      &lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Live Mode!&lt;/span&gt;&lt;/p&gt;
+      &lt;p&gt;&lt;br/&gt;&lt;/p&gt;
+      &lt;table border=&quot;0&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px;&quot; cellspacing=&quot;2&quot; cellpadding=&quot;0&quot;&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Esc&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Panic&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;+, -&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Global volume up/down&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Space&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Next patch&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Right, Down&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Next patch&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Up, Left&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Previous patch&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;1 to 8&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Select patch&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Q, W, E, ... P&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Toggle layer mute&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;PageUp/Down&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Global transpose Up/Down&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Tab&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Global transpose zero&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+      &lt;/table&gt;
+   &lt;/body&gt;
+&lt;/html&gt;</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
