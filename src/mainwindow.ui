@@ -1087,7 +1087,7 @@ border-bottom-left-radius: 0;</string>
         </size>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="pageLibrary">
         <layout class="QGridLayout" name="gridLayout_6">
@@ -2070,25 +2070,7 @@ border-color: rgb(40, 40, 40);
             <item row="0" column="0">
              <widget class="QLabel" name="label_17">
               <property name="text">
-               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
-&lt;style type=&quot;text/css&quot;&gt;
-td
-{
-  padding: 5 15px 0 0;
-}s
-&lt;/style&gt;
-&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Live Mode!&lt;/span&gt;&lt;/p&gt;
-&lt;br&gt;
-&lt;table&gt;
-&lt;tr&gt;&lt;td&gt;Esc&lt;/td&gt;&lt;td&gt;Panic&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;+, -&lt;/td&gt;&lt;td&gt;Master volume up/down&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;Space&lt;/td&gt;&lt;td&gt;Next patch&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;Right, Down&lt;/td&gt;&lt;td&gt;Next patch&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;Up, Left&lt;/td&gt;&lt;td&gt;Previous patch&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;1 to 8&lt;/td&gt;&lt;td&gt;Select patch&lt;/td&gt;&lt;/tr&gt;
-&lt;tr&gt;&lt;td&gt;Q, W, E, ... P&lt;/td&gt;&lt;td&gt;Toggle layer mute&lt;/td&gt;&lt;/tr&gt;
-&lt;/table&gt;
-&lt;/body&gt;&lt;/html&gt;</string>
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Live Mode!&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;table border=&quot;0&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px;&quot; cellspacing=&quot;2&quot; cellpadding=&quot;0&quot;&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Esc&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Panic&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;+, -&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Global volume up/down&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Space&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Next patch&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Right, Down&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Next patch&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Up, Left&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Previous patch&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;1 to 8&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Select patch&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Q, W, E, ... P&lt;/p&gt;&lt;/td&gt;&lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;&lt;p&gt;Toggle layer mute&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>

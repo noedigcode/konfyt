@@ -347,7 +347,9 @@ private:
     bool fileIsSoundfont(QString file);
     bool fileIsSfzOrGig(QString file);
 
-    void setMasterGain(float gain);
+    void setMasterGainFloat(float gain);
+    void setMasterGainMidi(int value);
+    void updateMasterGainCommon(float gain);
     void updateBusGainInJackEngine(int busId);
 
     // Current patch functions

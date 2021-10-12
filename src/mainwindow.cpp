@@ -58,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupGuiDefaults();
     setupExternalAppsMenu();
     setMasterInTranspose(0, false);
-    setMasterGain(1);
+    setMasterGainFloat(1);
 
     // Show welcome message in statusbar
     QString app_name(APP_NAME);
@@ -1672,14 +1672,37 @@ bool MainWindow::fileIsSoundfont(QString file)
     return ( fileSuffixIs(file, "sf2") || fileSuffixIs(file, "sf3") );
 }
 
-/* Set master gain if in normal mode, or preview gain if in preview mode.
+/* Sets gain from a float value of 0 to 1.0.
+ * Master gain is set if in normal mode, or preview gain if in preview mode.
  * Also updates the GUI slider and the appropriate sound engine. */
-void MainWindow::setMasterGain(float gain)
+void MainWindow::setMasterGainFloat(float gain)
 {
     if (gain > 1.0) { gain = 1.0; }
     if (gain < 0) { gain = 0; }
 
     masterGainMidiCtrlr.setValue(gain * 127.0);
+
+    updateMasterGainCommon(gain);
+}
+
+/* Sets gain from a MIDI integer value of 0 to 127.
+ * Master gain is set if in normal mode, or preview gain if in preview mode.
+ * Also updates the GUI slider and the appropriate sound engine. */
+void MainWindow::setMasterGainMidi(int value)
+{
+    if (value > 127) { value = 127; }
+    if (value < 0) { value = 0; }
+
+    masterGainMidiCtrlr.setValue(value);
+
+    updateMasterGainCommon((float)value / 127.0);
+}
+
+/* Helper function called by setMasterGain* functions.
+ * Master gain is set if in normal mode, or preview gain if in preview mode.
+ * Also updates the GUI slider and the appropriate sound engine. */
+void MainWindow::updateMasterGainCommon(float gain)
+{
     if (mPreviewMode) {
         previewGain = gain;
     } else {
@@ -2410,10 +2433,10 @@ void MainWindow::setPreviewMode(bool previewModeOn)
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 
     if (mPreviewMode) {
-        setMasterGain(previewGain); // To update GUI slider
+        setMasterGainFloat(previewGain); // To update GUI slider
         loadPreviewPatchAndUpdateGui();
     } else {
-        setMasterGain(masterGain); // To update GUI slider
+        setMasterGainFloat(masterGain); // To update GUI slider
         pengine.unloadPatch(&mPreviewPatch);
         loadPatchAndUpdateGui();
     }
@@ -2422,7 +2445,7 @@ void MainWindow::setPreviewMode(bool previewModeOn)
 /* Master gain slider moved. */
 void MainWindow::on_horizontalSlider_MasterGain_sliderMoved(int position)
 {
-    setMasterGain( (float)position / (float)ui->horizontalSlider_MasterGain->maximum() );
+    setMasterGainFloat( (float)position / (float)ui->horizontalSlider_MasterGain->maximum() );
 }
 
 void MainWindow::on_lineEdit_PatchName_returnPressed()
@@ -4244,14 +4267,14 @@ void MainWindow::on_pushButton_LiveMode_clicked()
 
 void MainWindow::on_actionMaster_Volume_Up_triggered()
 {
-    on_horizontalSlider_MasterGain_sliderMoved(
-                ui->horizontalSlider_MasterGain->value() + 1);
+    int value = qMin(masterGainMidiCtrlr.value() + 1, 127);
+    setMasterGainMidi(value);
 }
 
 void MainWindow::on_actionMaster_Volume_Down_triggered()
 {
-    on_horizontalSlider_MasterGain_sliderMoved(
-                ui->horizontalSlider_MasterGain->value() - 1);
+    int value = qMax(masterGainMidiCtrlr.value() - 1, 0);
+    setMasterGainMidi(value);
 }
 
 /* External apps list: item double clicked. */
@@ -4864,7 +4887,7 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
     } else if (action == ui->actionMaster_Volume_Slider) {
 
         if (masterGainMidiCtrlr.midiInput(ev.data2())) {
-            setMasterGain((float)masterGainMidiCtrlr.value()/127.0);
+            setMasterGainMidi(masterGainMidiCtrlr.value());
         }
 
     } else if (action == ui->actionMaster_Volume_Up) {
