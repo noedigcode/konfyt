@@ -1,6 +1,26 @@
 Changelog
 =========
 
+[1.1.6] - October 2021
+----------------------
+
+Added
+
+- Filesystem view now supports previewing of instruments like the library.
+- Global transpose keyboard shortcuts added to live mode.
+
+Fixes
+
+- Pitchbend now works if Carla backend is used to play SFZ files.
+- Fix SF2 loading from command-line arguments.
+- Fix global volume up action getting stuck due to rounding errors.
+
+Changes
+
+- Some GUI tweaks in the patch layer view and library/filesystem preview.
+- Misc code refactoring, cleanup and fixes.
+
+
 [1.1.5] - July 2021
 -------------------
 
