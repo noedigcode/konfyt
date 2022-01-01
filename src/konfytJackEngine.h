@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2022 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -220,7 +220,9 @@ private:
     void timerEvent(QTimerEvent *event);
     void startTimer();
     void refreshAllPortsConnections();
-    void refreshConnections(jack_port_t* jackPort, QStringList clients, bool inNotOut);
+    enum PortDirection { INPUT_PORT, OUTPUT_PORT };
+    void refreshConnections(jack_port_t* jackPort, QStringList clients,
+                            PortDirection dir);
 
     int mGlobalTranspose = 0;
 

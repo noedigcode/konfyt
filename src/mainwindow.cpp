@@ -1,6 +1,6 @@
 ﻿/******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2022 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -2772,8 +2772,8 @@ void MainWindow::createSettingsDir()
 void MainWindow::onDatabaseScanFinished()
 {
     print("Database scanning complete.");
-    print("   Found " + n2s(db.soundfontCount()) + " soundfonts.");
-    print("   Found " + n2s(db.sfzCount()) + " sfz/gig samples.");
+    print("   Found " + n2s(db.soundfontCount()) + " sf2/3 soundfonts.");
+    print("   Found " + n2s(db.sfzCount()) + " sfz/gig instruments.");
     print("   Found " + n2s(db.patchCount()) + " patches.");
 
     // Save to database file
@@ -2801,9 +2801,9 @@ void MainWindow::setupDatabase()
     if (db.loadDatabaseFromFile(settingsDir + "/" + DATABASE_FILE)) {
         print("Database loaded from file. Rescan to refresh.");
         print("Database contains:");
-        print("   " + n2s(db.soundfontCount()) + " soundfonts.");
+        print("   " + n2s(db.soundfontCount()) + " sf2/3 soundfonts.");
+        print("   " + n2s(db.sfzCount()) + " sfz/gig instruments.");
         print("   " + n2s(db.patchCount()) + " patches.");
-        print("   " + n2s(db.sfzCount()) + " sfz/gig samples.");
     } else {
         print("No database file found.");
         // Check if old database location exists

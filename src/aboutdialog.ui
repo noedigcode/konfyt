@@ -139,10 +139,13 @@
 	border-bottom-right-radius: 0;
 }</string>
            </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
            <property name="plainText">
             <string>Konfyt
 Virtual Keyboard Workstation
-Gideon van der Kolf 2014-2021
+Gideon van der Kolf 2014-2022
 
 Konfyt version: %APP_VERSION%
 %MORE_VERSION_TEXT%

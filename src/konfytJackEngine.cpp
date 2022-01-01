@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2022 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -78,35 +78,35 @@ void KonfytJackEngine::refreshAllPortsConnections()
 
     // Refresh connections to each midi input port
     foreach (KfJackMidiPort* port, midiInPorts) {
-        refreshConnections(port->jackPointer, port->connectionList, true);
+        refreshConnections(port->jackPointer, port->connectionList, INPUT_PORT);
     }
 
     // For each midi output port to external apps, refresh connections to all their clients
     foreach (KfJackMidiPort* port, midiOutPorts) {
-        refreshConnections(port->jackPointer, port->connectionList, false);
+        refreshConnections(port->jackPointer, port->connectionList, OUTPUT_PORT);
     }
 
     // Refresh connections for plugin midi and audio ports
     foreach (KfJackPluginPorts* pluginPort, pluginPorts) {
         // Midi out
         refreshConnections(pluginPort->midi->jackPointer,
-                           pluginPort->midi->connectionList, false);
+                           pluginPort->midi->connectionList, OUTPUT_PORT);
         // Audio in left
         refreshConnections(pluginPort->audioInLeft->jackPointer,
-                           pluginPort->audioInLeft->connectionList, true);
+                           pluginPort->audioInLeft->connectionList, INPUT_PORT);
         // Audio in right
         refreshConnections(pluginPort->audioInRight->jackPointer,
-                           pluginPort->audioInRight->connectionList, true);
+                           pluginPort->audioInRight->connectionList, INPUT_PORT);
     }
 
     // Refresh connections for audio input ports
     foreach (KfJackAudioPort* port, audioInPorts) {
-        refreshConnections(port->jackPointer, port->connectionList, true);
+        refreshConnections(port->jackPointer, port->connectionList, INPUT_PORT);
     }
 
     // Refresh connections for audio output ports (aka buses)
     foreach (KfJackAudioPort* port, audioOutPorts) {
-        refreshConnections(port->jackPointer, port->connectionList, false);
+        refreshConnections(port->jackPointer, port->connectionList, OUTPUT_PORT);
     }
 
     // Refresh other JACK connections
@@ -116,19 +116,20 @@ void KonfytJackEngine::refreshAllPortsConnections()
 
 }
 
-void KonfytJackEngine::refreshConnections(jack_port_t *jackPort, QStringList clients, bool inNotOut)
+void KonfytJackEngine::refreshConnections(jack_port_t *jackPort,
+                                          QStringList clients, PortDirection dir)
 {
     const char* src = nullptr;
     const char* dest = nullptr;
     const char* portname = jack_port_name(jackPort);
-    if (inNotOut) {
+    if (dir == INPUT_PORT) {
         dest = portname;
     } else {
         src = portname;
     }
     foreach (QString s, clients) {
         const char* clientname = s.toLocal8Bit().constData();
-        if (inNotOut) {
+        if (dir == INPUT_PORT) {
             src = clientname;
         } else {
             dest = clientname;

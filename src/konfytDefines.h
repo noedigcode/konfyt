@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2022 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -26,7 +26,7 @@
 
 
 #define APP_NAME "Konfyt"
-#define APP_VERSION "1.1.6"
+#define APP_VERSION "1.1.7-testing"
 
 #define n2s(x) QString::number(x)
 #define bool2int(x) (x ? 1 : 0)

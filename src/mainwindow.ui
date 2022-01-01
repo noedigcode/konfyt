@@ -1087,7 +1087,7 @@ border-bottom-left-radius: 0;</string>
         </size>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="pageLibrary">
         <layout class="QGridLayout" name="gridLayout_6">
@@ -1697,7 +1697,7 @@ border-bottom-left-radius: 0;</string>
                  <item row="1" column="0">
                   <widget class="QCheckBox" name="checkBox_filesystem_ShowOnlySounds">
                    <property name="text">
-                    <string>Only show sound files</string>
+                    <string>Only show instrument files</string>
                    </property>
                    <property name="checked">
                     <bool>true</bool>

@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2022 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -43,28 +43,44 @@ void printAllVersionInfo()
 
 void printUsage()
 {
-    printAppNameAndVersion();
-    std::cout << std::endl;
-    std::cout << "   Usage: konfyt [OPTION]... [PROJECT_FILE] [SOUNDFILE]" << std::endl;
-    std::cout << std::endl;
-    std::cout << "      [PROJECT_FILE]         Path of project file to load" << std::endl;
-    std::cout << "      [SOUNDFILE]            Path of patch, sf2 or sfz file to load. If a project is specified," << std::endl;
-    std::cout << "                               the item will be loaded as a new patch in the project. If no" << std::endl;
-    std::cout << "                               project is specified, the item is loaded in a new project." << std::endl;
-    std::cout << "      -v, --version          Print version information" << std::endl;
-    std::cout << "      -h, --help             Print usage information" << std::endl;
-    std::cout << "      -j, --jackname <name>  Set name of JACK client" << std::endl;
-    std::cout << "      -q, --headless         Hide GUI" << std::endl;
-    std::cout << "      -b, --bridge           Load sfz's in separate processes (experimental feature, uses Carla)" << std::endl;
-    std::cout << "      -c, --carla            Use Carla to load sfz's and not Linuxsampler" << std::endl;
+    QStringList lines;
+    //        |------------------------------------------------------------------------------|
+    lines << ""
+          << "Usage: konfyt [OPTION]... [PROJECT_FILE] [SOUNDFILE]"
+          << ""
+          << "  [PROJECT_FILE]         Path of project file to load"
+          << "  [SOUNDFILE]            Path of patch, sf2 or sfz file to load. If a project is"
+          << "                           specified, the item will be loaded as a new patch in"
+          << "                           the project. If no project is specified, the item is"
+          << "                           loaded in a new project."
+          << "  -v, --version          Print version information"
+          << "  -h, --help             Print usage information"
+          << "  -j, --jackname <name>  Set name of JACK client"
+          << "  -q, --headless         Hide GUI"
+          << "  -b, --bridge           Load sfz's in separate processes (experimental feature,"
+          << "                           uses Carla)"
+          << "  -c, --carla            Use Carla to load sfz's and not Linuxsampler"
 #ifndef KONFYT_USE_CARLA
-    std::cout << "                             Note: This version of Konfyt was compiled without Carla support." << std::endl;
+          << "                           Note: This version of Konfyt was compiled without"
+          << "                           Carla support."
 #endif
-    std::cout << std::endl;
+          << "  -x, --noxcbev          Do not set the QT_XCB_GL_INTEGRATION=none environment"
+          << "                           variable. This environment variable is used to"
+          << "                           prevent some functionality from stopping when the"
+          << "                           screen is locked on some systems."
+          << "                           See the Konfyt documentation for more details."
+          << "";
+    //        |------------------------------------------------------------------------------|
+
+    printAppNameAndVersion();
+    foreach (QString s, lines) {
+        std::cout << s.toStdString() << std::endl;
+    }
 }
 
 enum KonfytArgument {KonfytArg_Help, KonfytArg_Version, KonfytArg_Jackname,
-                    KonfytArg_Bridge, KonfytArg_Headless, KonfytArg_Carla};
+                    KonfytArg_Bridge, KonfytArg_Headless, KonfytArg_Carla,
+                    KonfytArg_NoXcbEv};
 
 bool matchArgument(QString arg, KonfytArgument expected)
 {
@@ -87,6 +103,9 @@ bool matchArgument(QString arg, KonfytArgument expected)
     case KonfytArg_Carla:
         return ( (arg=="-c") || (arg=="--carla") );
         break;
+    case KonfytArg_NoXcbEv:
+        return ( (arg=="-x") || (arg=="--noxcbev") );
+        break;
     }
     return false;
 }
@@ -106,6 +125,7 @@ int main(int argc, char *argv[])
         bool nextIsValue = false;
         QString prevArg;
         KonfytAppInfo appInfo;
+        bool setXcbEv = true;
         appInfo.a = &a;
         appInfo.exePath = a.arguments()[0];
 
@@ -140,6 +160,10 @@ int main(int argc, char *argv[])
 
                     appInfo.carla = true;
 
+                } else if ( matchArgument(arg, KonfytArg_NoXcbEv) ) {
+
+                    setXcbEv = false;
+
                 } else {
                     if (arg[0] == '-') {
                         std::cout << "Invalid argument \"" << arg.toLocal8Bit().constData() << "\". Ignoring it." << std::endl;
@@ -154,6 +178,13 @@ int main(int argc, char *argv[])
                 }
                 nextIsValue = false;
             }
+        }
+
+        // If not disabled by a command-line argument, set an environment variable
+        // that prevents the event loop from stopping when the screen is locked
+        // on some systems.
+        if (setXcbEv) {
+            qputenv("QT_XCB_GL_INTEGRATION", "none");
         }
 
         // Create MainWindow
