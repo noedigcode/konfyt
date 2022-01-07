@@ -352,7 +352,11 @@ int KonfytLscp::addSfzChannelAndPorts(QString file)
         return -1;
     }
 
-    status = lscp_load_engine(client, "SFZ", chan);
+    QString engineName = "SFZ";
+    if (file.toLower().endsWith(".gig")) {
+        engineName = "GIG";
+    }
+    status = lscp_load_engine(client, engineName.toLocal8Bit().constData(), chan);
     if (status != LSCP_OK) {
         print("Failed loading SFZ engine.");
         print("Result: " + QString( lscp_client_get_result(client) ));
