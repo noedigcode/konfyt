@@ -1,6 +1,17 @@
 Changelog
 =========
 
+[1.1.7]
+-------
+
+Fixes
+
+- Set QT_XCB_GL_INTEGRATION=none environment variable at startup to prevent
+  event loop from stopping when screen is locked on some systems which caused
+  some functionality like MIDI triggers and port reconnections to stop working.
+- Fix .gig file loading.
+
+
 [1.1.6] - October 2021
 ----------------------
 
