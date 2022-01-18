@@ -145,7 +145,7 @@
            <property name="plainText">
             <string>Konfyt
 Virtual Keyboard Workstation
-Gideon van der Kolf 2014-2022
+Gideon van der Kolf 2014-%APP_YEAR%
 
 Konfyt version: %APP_VERSION%
 %MORE_VERSION_TEXT%

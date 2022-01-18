@@ -30,6 +30,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
 
     QString txt = ui->plainTextEdit->document()->toPlainText();
     txt.replace(REPLACE_TXT_APP_VERSION, APP_VERSION);
+    txt.replace(REPLACE_TXT_APP_YEAR, APP_YEAR);
     ui->plainTextEdit->document()->setPlainText(txt);
 }
 

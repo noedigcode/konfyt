@@ -2,8 +2,8 @@
 Version=1.0
 Type=Application
 Name=Konfyt
-Icon=/home/gideon/bin/konfyt.png
-Exec=/home/gideon/bin/konfyt
+Icon=konfyt.png
+Exec=/usr/bin/konfyt
 NoDisplay=false
 Categories=AudioVideo
 StartupNotify=false
