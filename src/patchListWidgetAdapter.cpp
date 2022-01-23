@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2022 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -31,6 +31,8 @@ void PatchListWidgetAdapter::init(QListWidget *listWidget)
     w = listWidget;
     connect(w, &QListWidget::currentItemChanged,
             this, &PatchListWidgetAdapter::onListWidgetCurrentChanged);
+    connect(w->model(), &QAbstractItemModel::rowsMoved,
+            this, &PatchListWidgetAdapter::onListWidgetModelRowsMoved);
 }
 
 void PatchListWidgetAdapter::addPatch(KonfytPatch *patch)
@@ -134,6 +136,22 @@ void PatchListWidgetAdapter::onListWidgetCurrentChanged(QListWidgetItem *item)
 {
     KonfytPatch* patch = itemPatchMap.value(item);
     emit patchSelected(patch);
+}
+
+void PatchListWidgetAdapter::onListWidgetModelRowsMoved(
+        const QModelIndex& /*parent*/, int start, int /*end*/,
+        const QModelIndex& /*destination*/, int row)
+{
+    int from = start;
+    int to = row;
+    // The destination row is the row number to which the item is to be moved
+    // before it has been removed from the list. Thus, to get the destination
+    // row after the item has been moved (i.e. as if calling list.take(from) and
+    // then list.insert(to)), "to" becomes one less if the destination row is
+    // higher than the source (start) row.
+    if (from < to) { to--; }
+    emit patchMoved(from, to);
+    updateAll();
 }
 
 void PatchListWidgetAdapter::updatePatchItem(KonfytPatch *patch)

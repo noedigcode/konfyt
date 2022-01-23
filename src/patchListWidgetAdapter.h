@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2022 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -71,6 +71,9 @@ private:
 
 private slots:
     void onListWidgetCurrentChanged(QListWidgetItem* item);
+    void onListWidgetModelRowsMoved(const QModelIndex &parent, int start,
+                                    int end, const QModelIndex &destination,
+                                    int row);
     void updatePatchItem(KonfytPatch* patch);
     void updatePatchIcon(KonfytPatch* patch);
     void updateAll();
