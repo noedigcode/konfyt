@@ -1281,6 +1281,9 @@ void MainWindow::loadProject(ProjectPtr prj)
     // Default to patch view (ensure no edit screens are open for previous projects)
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
 
+    patchListAdapter.setPatchNumbersVisible(prj->getShowPatchListNumbers());
+    patchListAdapter.setPatchNotesVisible(prj->getShowPatchListNotes());
+
 
     print("Project loaded.");
 }
