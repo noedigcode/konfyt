@@ -137,11 +137,15 @@ signals:
 private:
     QString mClientName;
     lscp_client_t *client = NULL;
+    void createClient();
+    void destroyClient();
     QMap<int, LsDevice> adevs;
     QMap<int, LsDevice> mdevs;
     QMap<int, LsChannel> chans;
     QList<int> freeAudioChannels;
     QList<int> freeMidiPorts;
+
+    QProcess* process = nullptr;
 
     const int SERVER_PORT = 8888;
 
@@ -150,6 +154,9 @@ private:
     const char* KEY_CHANNELS = "CHANNELS";
     const char* KEY_PORTS = "PORTS";
     const char* VAL_0 = "0";
+
+    QTimer connectionCheckTimer;
+    void setupConnectionCheckTimer();
 };
 
 #endif // KONFYT_LSCP_H

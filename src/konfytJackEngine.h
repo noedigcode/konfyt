@@ -236,6 +236,10 @@ private:
     void sendMidiClosureEvents_chanZeroOnly(KfJackMidiPort* port);
     void sendMidiClosureEvents_allChannels(KfJackMidiPort* port);
     void handleBankSelect(int bankMSB[16], int bankLSB[16], KonfytMidiEvent* ev);
+    void* getJackPortBuffer(jack_port_t *port, jack_nframes_t nframes) const;
+    jack_midi_data_t* reserveJackMidiEvent(void *portBuffer,
+                                           jack_nframes_t time,
+                                           size_t size) const;
 };
 
 

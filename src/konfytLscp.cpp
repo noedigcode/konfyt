@@ -23,18 +23,23 @@
 
 KonfytLscp::KonfytLscp(QObject *parent) : QObject(parent)
 {
-
+    setupConnectionCheckTimer();
 }
 
-lscp_status_t KonfytLscp::client_callback(lscp_client_t* /*pClient*/, lscp_event_t event, const char *pchData, int cchData, void* /*pvData*/)
+lscp_status_t KonfytLscp::client_callback(lscp_client_t* /*pClient*/,
+                                          lscp_event_t event, const char *pchData,
+                                          int cchData, void* /*pvData*/)
 {
+    //KonfytLscp* k = static_cast<KonfytLscp*>(pvData);
+
     lscp_status_t ret = LSCP_FAILED;
 
     char *pszData = (char *) malloc(cchData + 1);
     if (pszData) {
         memcpy(pszData, pchData, cchData);
         pszData[cchData] = (char) 0;
-        printf("client_callback: event=%s (0x%04x) [%s]\n", lscp_event_to_text(event), (int) event, pszData);
+        printf("client_callback: event=%s (0x%04x) [%s]\n",
+               lscp_event_to_text(event), (int) event, pszData);
         free(pszData);
         ret = LSCP_OK;
     }
@@ -44,21 +49,21 @@ lscp_status_t KonfytLscp::client_callback(lscp_client_t* /*pClient*/, lscp_event
 
 void KonfytLscp::init()
 {
-    print("Initialising client.");
-    client = lscp_client_create("localhost", SERVER_PORT, client_callback, NULL);
-    if (client == NULL) {
+    createClient();
+    if (client) { return; }
 
-        print("Could not initialise client. Attempting to run Linuxsampler...");
-        QProcess* p = new QProcess();
-        connect(p, &QProcess::started, [this, p](){
+    print("Could not initialise client. Attempting to run Linuxsampler...");
+    if (!process) {
+        process = new QProcess(this);
+        connect(process, &QProcess::started, this, [=](){
 
             print("Linuxsampler started. Attempting to initialise client after delay.");
             QTimer* t = new QTimer(this);
             t->setSingleShot(true);
-            connect(t, &QTimer::timeout, [this, t](){
-
+            connect(t, &QTimer::timeout, this, [=]()
+            {
                 print("Initialising client.");
-                client = lscp_client_create("localhost", SERVER_PORT, client_callback, NULL);
+                createClient();
                 if (client == NULL) {
                     print("Could not initialise client. Retrying after delay...");
                     t->start(1000);
@@ -71,23 +76,21 @@ void KonfytLscp::init()
 
             t->start(1000);
         });
-        connect(p, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-              [=](int exitCode, QProcess::ExitStatus /*exitStatus*/){
+        connect(process, static_cast<void(QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
+                this, [=](int exitCode, QProcess::ExitStatus /*exitStatus*/)
+        {
             print(QString("Linuxsampler process finished with exit code %1.").arg(exitCode));
         });
-#if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
-        connect(p, &QProcess::errorOccurred,
-                [=](QProcess::ProcessError /*error*/){
-            print("Error occurred running Linuxsampler process: " + p->errorString());
+    #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
+        connect(process, &QProcess::errorOccurred,
+                this, [=](QProcess::ProcessError /*error*/)
+        {
+            print("Error occurred running Linuxsampler process: " + process->errorString());
         });
-#endif
-
-        p->start("linuxsampler");
-
-    } else {
-        print("Client initialised.");
-        emit initialised(false, "");
+    #endif
     }
+
+    process->start("linuxsampler");
 }
 
 void KonfytLscp::setupDevices(QString clientName)
@@ -123,8 +126,27 @@ void KonfytLscp::setupDevices(QString clientName)
 
 void KonfytLscp::deinit()
 {
+    print("Shutting down engine.");
+
+    connectionCheckTimer.stop();
+
     removeAllRelatedToClient(mClientName);
-    lscp_client_destroy(client);
+
+    // If we started the Linuxsampler process, stop it now.
+    if (process) {
+        if (process->state() == QProcess::Running) {
+            print("Stopping Linuxsampler process.");
+            process->blockSignals(true);
+            process->terminate();
+            process->waitForFinished(5000);
+        } else {
+            print("Linuxsampler process not running anymore.");
+        }
+    } else {
+        print("Linuxsampler process (if any) was never started by us.");
+    }
+
+    destroyClient();
 }
 
 void KonfytLscp::printEngines()
@@ -445,7 +467,23 @@ void KonfytLscp::removeSfzChannel(int id)
         freeAudioChannel(chan.audioRightChanIndex);
         freeAudioChannel(chan.audioLeftChanIndex);
         freeMidiPort(chan.midiPortIndex);
-        lscp_remove_channel(client, id);
+
+        // Note: Removing a channel while notes are playing sometimes causes
+        // Linuxsampler to crash. Resetting the channel before removing it
+        // seems to alleviate the issue.
+        // We go one step further here by only removing the channel after some
+        // delay.
+
+        lscp_set_channel_mute(client, id, 1);
+
+        QTimer* t = new QTimer();
+        t->setSingleShot(true);
+        connect(t, &QTimer::timeout, this, [=](){
+            lscp_reset_channel(client, id);
+            lscp_remove_channel(client, id);
+            t->deleteLater();
+        });
+        t->start(1000);
     }
 }
 
@@ -481,6 +519,40 @@ QString KonfytLscp::indentString(QString s, QString indent)
 bool KonfytLscp::indexValid(int index, int listCount)
 {
     return ( (index >= 0) && (index < listCount) );
+}
+
+void KonfytLscp::createClient()
+{
+    print("Initialising client.");
+    client = lscp_client_create("localhost", SERVER_PORT, client_callback, this);
+    if (client) {
+        emit initialised(false, "");
+    }
+}
+
+void KonfytLscp::destroyClient()
+{
+    lscp_client_destroy(client);
+    client = NULL;
+}
+
+void KonfytLscp::setupConnectionCheckTimer()
+{
+    // Timer that periodically checks for LSCP connection to Linuxsampler
+    // and reinitialises when connection is lost.
+    connect(&connectionCheckTimer, &QTimer::timeout, this, [=]()
+    {
+        if (!client) { return; }
+
+        lscp_server_info_t* info = lscp_get_server_info(client);
+        if (!info) {
+            print("LSCP server connection error. Re-initialising...");
+            destroyClient();
+            init();
+        }
+
+    });
+    connectionCheckTimer.start(1000);
 }
 
 int KonfytLscp::addAudioChannel()

@@ -25,6 +25,7 @@
 void LayerIndicatorHandler::layerWidgetAdded(KonfytLayerWidget *w, KfJackMidiRoute *route)
 {
     MidiState& state = midiRouteStateMap[route]; // Created if it does not exist
+
     state.widget = w;
     w->indicateSustain(state.sustain);
     w->indicatePitchbend(state.pitchbend);
@@ -78,8 +79,12 @@ void LayerIndicatorHandler::jackEventReceived(KfJackAudioRxEvent ev)
 void LayerIndicatorHandler::layerWidgetRemoved(KonfytLayerWidget *w)
 {
     KfJackMidiRoute* route = midiWidgetRouteMap.take(w);
+
     if (route) {
-        midiRouteStateMap[route].widget = nullptr;
+        MidiState& state = midiRouteStateMap[route];
+        if (state.widget == w) {
+            state.widget = nullptr;
+        }
     }
 
     foreach (KfJackAudioRoute* route, audioRouteMap.keys()) {

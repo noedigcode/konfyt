@@ -41,7 +41,9 @@ void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient,
     this->jack = newJackClient;
 
     // Fluidsynth Engine
-    connect(&fluidsynthEngine, &KonfytFluidsynthEngine::print, [=](QString msg){
+    connect(&fluidsynthEngine, &KonfytFluidsynthEngine::print,
+            this, [=](QString msg)
+    {
         print("Fluidsynth: " + msg);
     });
     fluidsynthEngine.initFluidsynth(jack->getSampleRate());
@@ -66,7 +68,8 @@ void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient,
         sfzEngine = new KonfytLscpEngine();
     }
 
-    connect(sfzEngine, &KonfytBaseSoundEngine::print, [=](QString msg){
+    connect(sfzEngine, &KonfytBaseSoundEngine::print, this, [=](QString msg)
+    {
         print(sfzEngine->engineName() + ": " + msg);
     });
     connect(sfzEngine, &KonfytBaseSoundEngine::statusInfo,
@@ -99,7 +102,7 @@ void KonfytPatchEngine::setProject(ProjectPtr project)
 /* Reload current patch (e.g. if patch changed). */
 void KonfytPatchEngine::reloadPatch()
 {
-    loadPatch(mCurrentPatch);
+    loadPatchAndSetCurrent(mCurrentPatch);
 }
 
 /* Ensure patch and all layers are unloaded from their respective engines. */
@@ -116,14 +119,12 @@ void KonfytPatchEngine::unloadPatch(KonfytPatch *patch)
 }
 
 /* Load patch, replacing the current patch. */
-bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
+void KonfytPatchEngine::loadPatchAndSetCurrent(KonfytPatch *patch)
 {
-    if (newPatch == nullptr) { return false; }
-
-    bool ret = true; // return value. Set to false when an error occured somewhere.
+    if (patch == nullptr) { return; }
 
     // Deactivate routes for current patch
-    if (newPatch != mCurrentPatch) {
+    if (patch != mCurrentPatch) {
         if (mCurrentPatch != nullptr) {
             if (!mCurrentPatch->alwaysActive) {
 
@@ -135,154 +136,51 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
         }
     }
 
+    mCurrentPatch = patch;
+    loadPatch(patch);
+}
+
+void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
+{
     bool patchIsNew = false;
-    if ( !patches.contains(newPatch) ) {
+    if ( !patches.contains(patch) ) {
         patchIsNew = true;
-        patches.append(newPatch);
+        patches.append(patch);
     }
-    mCurrentPatch = newPatch;
 
-    // ---------------------------------------------------
-    // SFZ layers:
-    // ---------------------------------------------------
-
-    // For each SFZ layer in the patch...
-    foreach (KfPatchLayerSharedPtr layer, mCurrentPatch->getPluginLayerList()) {
+    // SFZ layers
+    foreach (KfPatchLayerSharedPtr layer, patch->getPluginLayerList()) {
         // If layer indexInEngine is -1, the layer hasn't been loaded yet.
         if (patchIsNew) { layer->sfzData.indexInEngine = -1; }
         if (layer->sfzData.indexInEngine == -1) {
-
-            // Load in SFZ engine
-            int ID = sfzEngine->addSfz( layer->sfzData.path );
-
-            if (ID < 0) {
-                layer->setErrorMessage("Failed to load SFZ: " + layer->sfzData.path);
-                ret = false;
-            } else {
-                layer->setErrorMessage("");
-
-                layer->sfzData.indexInEngine = ID;
-                layer->setName(sfzEngine->pluginName(ID));
-                // Add to JACK engine
-
-                // Find the plugin midi input port
-                layer->sfzData.midiInPort = sfzEngine->midiInJackPortName(ID);
-
-                // Find the plugin audio output ports
-                QStringList audioLR = sfzEngine->audioOutJackPortNames(ID);
-                layer->sfzData.audioOutPortLeft = audioLR[0];
-                layer->sfzData.audioOutPortRight = audioLR[1];
-
-                // The plugin object now contains the midi input port and
-                // audio left and right output ports. Give this to JACK, which will:
-                // - create a midi output port and connect it to the plugin midi input port,
-                // - create audio input ports and connect it to the plugin audio output ports.
-                // - assigns the midi filter
-                KonfytJackPortsSpec spec;
-                spec.name = layer->name();
-                spec.midiOutConnectTo = layer->sfzData.midiInPort;
-                spec.midiFilter = layer->midiFilter();
-                spec.audioInLeftConnectTo = layer->sfzData.audioOutPortLeft;
-                spec.audioInRightConnectTo = layer->sfzData.audioOutPortRight;
-                KfJackPluginPorts* jackPorts = jack->addPluginPortsAndConnect( spec );
-                layer->sfzData.portsInJackEngine = jackPorts;
-
-                emit patchLayerLoaded(layer);
-
-                // Gain, solo, mute and bus are set later in refershAllGainsAndRouting()
-            }
+            loadSfzLayer(layer);
+            // Gain, solo, mute and bus are set later
         }
     }
 
-    // ---------------------------------------------------
-    // Fluidsynth layers:
-    // ---------------------------------------------------
-
-    // For each soundfont program in the patch...
-    foreach (KfPatchLayerSharedPtr layer, mCurrentPatch->getSfLayerList()) {
+    // Fluidsynth layers
+    foreach (KfPatchLayerSharedPtr layer, patch->getSfLayerList()) {
         if (patchIsNew) { layer->soundfontData.synthInEngine = nullptr; }
         if ( layer->soundfontData.synthInEngine == nullptr ) {
-            // Load in Fluidsynth engine
-            layer->soundfontData.synthInEngine =
-                    fluidsynthEngine.addSoundfontProgram(
-                        layer->soundfontData.parentSoundfont,
-                        layer->soundfontData.program);
-            if (layer->soundfontData.synthInEngine) {
-                // Add to Jack engine (this also assigns the midi filter)
-                KfJackPluginPorts* jackPorts = jack->addSoundfont(
-                            layer->soundfontData.synthInEngine);
-                layer->soundfontData.portsInJackEngine = jackPorts;
-                jack->setSoundfontMidiFilter(jackPorts, layer->midiFilter());
-                // Gain, solo, mute, bus and routing is done later
-            } else {
-                layer->setErrorMessage("Failed to load soundfont.");
-                ret = false;
-            }
+            loadSoundfontLayer(layer);
+            // Gain, solo, mute, bus and routing is done later
         }
     }
 
-    // ---------------------------------------------------
-    // Audio input ports:
-    // ---------------------------------------------------
-
-    foreach (KfPatchLayerSharedPtr layer, mCurrentPatch->getAudioInLayerList()) {
+    // Audio input ports
+    foreach (KfPatchLayerSharedPtr layer, patch->getAudioInLayerList()) {
         if (layer->audioInPortData.jackRouteLeft == nullptr) {
             // Routes haven't been created yet
-
-            // Get source ports
-            int portId = layer->audioInPortData.portIdInProject;
-            if (!mCurrentProject->audioInPort_exists(portId)) {
-                layer->setErrorMessage("No audio-in port in project: " + n2s(portId));
-                print("loadPatch: " + layer->errorMessage());
-                continue;
-            }
-            PrjAudioInPort srcPorts = mCurrentProject->audioInPort_getPort(portId);
-
-            // Get destination ports (bus)
-            if (!mCurrentProject->audioBus_exists(layer->busIdInProject())) {
-                layer->setErrorMessage("No bus in project: " + n2s(portId));
-                print("loadPatch: " + layer->errorMessage());
-                continue;
-            }
-            PrjAudioBus destPorts = mCurrentProject->audioBus_getBus(layer->busIdInProject());
-
-            // Route for left port
-            layer->audioInPortData.jackRouteLeft = jack->addAudioRoute(
-                        srcPorts.leftJackPort, destPorts.leftJackPort);
-            // Route for right port
-            layer->audioInPortData.jackRouteRight = jack->addAudioRoute(
-                        srcPorts.rightJackPort, destPorts.rightJackPort);
+            loadAudioInputPort(layer);
         }
     }
 
 
-    // ---------------------------------------------------
-    // Midi output ports:
-    // ---------------------------------------------------
-
-    foreach (KfPatchLayerSharedPtr layer, mCurrentPatch->getMidiOutputLayerList()) {
+    // Midi output ports
+    foreach (KfPatchLayerSharedPtr layer, patch->getMidiOutputLayerList()) {
         if (layer->midiOutputPortData.jackRoute == nullptr) {
             // Route hasn't been created yet
-
-            // Get source port
-            if (!mCurrentProject->midiInPort_exists(layer->midiInPortIdInProject())) {
-                layer->setErrorMessage("No MIDI-in port in project: " + n2s(layer->midiInPortIdInProject()));
-                print("loadPatch: " + layer->errorMessage());
-                continue;
-            }
-            PrjMidiPort srcPort = mCurrentProject->midiInPort_getPort(layer->midiInPortIdInProject());
-
-            // Get destination port
-            if (!mCurrentProject->midiOutPort_exists(layer->midiOutputPortData.portIdInProject)) {
-                layer->setErrorMessage("No MIDI-out port in project: " + n2s(layer->midiOutputPortData.portIdInProject));
-                print("loadPatch: " + layer->errorMessage());
-                continue;
-            }
-            PrjMidiPort destPort = mCurrentProject->midiOutPort_getPort(layer->midiOutputPortData.portIdInProject);
-
-            // Create route
-            layer->midiOutputPortData.jackRoute = jack->addMidiRoute(
-                        srcPort.jackPort, destPort.jackPort);
+            loadMidiOutputPort(layer);
         }
 
         // Set MIDI Filter
@@ -290,19 +188,16 @@ bool KonfytPatchEngine::loadPatch(KonfytPatch *newPatch)
                                  layer->midiFilter());
     }
 
-    // ---------------------------------------------------
-    // The rest
-    // ---------------------------------------------------
-
     // All layers are now loaded. Now set gains, activate routes, etc.
-    foreach (KfPatchLayerSharedPtr layer, mCurrentPatch->layers()) {
+    foreach (KfPatchLayerSharedPtr layer, patch->layers()) {
         updateLayerRouting(layer);
         updateLayerGain(layer);
     }
 
-    updatePatchLayersSoloMute(mCurrentPatch);
-
-    return ret;
+    // Set layers active based on solo and mute
+    if (patch->alwaysActive || (patch == mCurrentPatch)) {
+        updatePatchLayersSoloMute(patch);
+    }
 }
 
 KfPatchLayerWeakPtr KonfytPatchEngine::addSfProgramLayer(
@@ -341,7 +236,7 @@ void KonfytPatchEngine::removeLayer(KonfytPatch *patch, KfPatchLayerWeakPtr laye
 
     patch->removeLayer(layer);
 
-    if (patch == mCurrentPatch) { reloadPatch(); }
+    loadPatch(patch); // To refresh solo and mute
 }
 
 void KonfytPatchEngine::moveLayer(KfPatchLayerWeakPtr layer, int newIndex)
@@ -358,6 +253,7 @@ void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
         if (l->soundfontData.synthInEngine) {
             // First remove from JACK engine
             jack->removeSoundfont(l->soundfontData.portsInJackEngine);
+            l->soundfontData.portsInJackEngine = nullptr;
             // Then from fluidsynthEngine
             fluidsynthEngine.removeSoundfontProgram(l->soundfontData.synthInEngine);
             // Set unloaded in patch
@@ -366,7 +262,10 @@ void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
     } else if (l->layerType() == KonfytPatchLayer::TypeSfz) {
         if (l->sfzData.indexInEngine >= 0) {
             // First remove from JACK
-            jack->removePlugin(l->sfzData.portsInJackEngine);
+            if (l->sfzData.portsInJackEngine) {
+                jack->removePlugin(l->sfzData.portsInJackEngine);
+                l->sfzData.portsInJackEngine = nullptr;
+            }
             // Then from SFZ engine
             sfzEngine->removeSfz(l->sfzData.indexInEngine);
             // Set unloaded in patch
@@ -572,7 +471,7 @@ void KonfytPatchEngine::updatePatchLayersSoloMute(KonfytPatch *patch)
 {
     if (patch == nullptr) { return; }
 
-    QList<KfPatchLayerWeakPtr> layerList = mCurrentPatch->layers();
+    QList<KfPatchLayerWeakPtr> layerList = patch->layers();
 
     // Determine solo
     bool solo = false;
@@ -828,11 +727,134 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addAudioInPortToPatch(int port)
     return layer.toWeakRef();
 }
 
+void KonfytPatchEngine::loadSfzLayer(KfPatchLayerSharedPtr layer)
+{
+    // Load in SFZ engine
+    int ID = sfzEngine->addSfz( layer->sfzData.path );
+
+    if (ID < 0) {
+        layer->setErrorMessage("Failed to load SFZ: " + layer->sfzData.path);
+        return;
+    }
+
+    layer->setErrorMessage("");
+
+    layer->sfzData.indexInEngine = ID;
+    layer->setName(sfzEngine->pluginName(ID));
+    // Add to JACK engine
+
+    // Find the plugin midi input port
+    layer->sfzData.midiInPort = sfzEngine->midiInJackPortName(ID);
+
+    // Find the plugin audio output ports
+    QStringList audioLR = sfzEngine->audioOutJackPortNames(ID);
+    layer->sfzData.audioOutPortLeft = audioLR[0];
+    layer->sfzData.audioOutPortRight = audioLR[1];
+
+    // The plugin object now contains the midi input port and
+    // audio left and right output ports. Give this to JACK, which will:
+    // - create a midi output port and connect it to the plugin midi input port,
+    // - create audio input ports and connect it to the plugin audio output ports.
+    // - assigns the midi filter
+    KonfytJackPortsSpec spec;
+    spec.name = layer->name();
+    spec.midiOutConnectTo = layer->sfzData.midiInPort;
+    spec.midiFilter = layer->midiFilter();
+    spec.audioInLeftConnectTo = layer->sfzData.audioOutPortLeft;
+    spec.audioInRightConnectTo = layer->sfzData.audioOutPortRight;
+    KfJackPluginPorts* jackPorts = jack->addPluginPortsAndConnect( spec );
+    layer->sfzData.portsInJackEngine = jackPorts;
+
+    emit patchLayerLoaded(layer);
+}
+
+void KonfytPatchEngine::loadSoundfontLayer(KfPatchLayerSharedPtr layer)
+{
+    // Load in Fluidsynth engine
+    layer->soundfontData.synthInEngine =
+            fluidsynthEngine.addSoundfontProgram(
+                layer->soundfontData.parentSoundfont,
+                layer->soundfontData.program);
+    if (!layer->soundfontData.synthInEngine) {
+        layer->setErrorMessage("Failed to load soundfont.");
+        return;
+    }
+
+    // Add to Jack engine (this also assigns the midi filter)
+    KfJackPluginPorts* jackPorts = jack->addSoundfont(
+                layer->soundfontData.synthInEngine);
+    layer->soundfontData.portsInJackEngine = jackPorts;
+    jack->setSoundfontMidiFilter(jackPorts, layer->midiFilter());
+}
+
+void KonfytPatchEngine::loadAudioInputPort(KfPatchLayerSharedPtr layer)
+{
+    // Get source ports
+    int portId = layer->audioInPortData.portIdInProject;
+    if (!mCurrentProject->audioInPort_exists(portId)) {
+        layer->setErrorMessage("No audio-in port in project: " + n2s(portId));
+        print("loadPatch: " + layer->errorMessage());
+        return;
+    }
+    PrjAudioInPort srcPorts = mCurrentProject->audioInPort_getPort(portId);
+
+    // Get destination ports (bus)
+    if (!mCurrentProject->audioBus_exists(layer->busIdInProject())) {
+        layer->setErrorMessage("No bus in project: " + n2s(portId));
+        print("loadPatch: " + layer->errorMessage());
+        return;
+    }
+    PrjAudioBus destPorts = mCurrentProject->audioBus_getBus(layer->busIdInProject());
+
+    // Route for left port
+    layer->audioInPortData.jackRouteLeft = jack->addAudioRoute(
+                srcPorts.leftJackPort, destPorts.leftJackPort);
+    // Route for right port
+    layer->audioInPortData.jackRouteRight = jack->addAudioRoute(
+                srcPorts.rightJackPort, destPorts.rightJackPort);
+}
+
+void KonfytPatchEngine::loadMidiOutputPort(KfPatchLayerSharedPtr layer)
+{
+    // Get source port
+    if (!mCurrentProject->midiInPort_exists(layer->midiInPortIdInProject())) {
+        layer->setErrorMessage("No MIDI-in port in project: " + n2s(layer->midiInPortIdInProject()));
+        print("loadPatch: " + layer->errorMessage());
+        return;
+    }
+    PrjMidiPort srcPort = mCurrentProject->midiInPort_getPort(layer->midiInPortIdInProject());
+
+    // Get destination port
+    if (!mCurrentProject->midiOutPort_exists(layer->midiOutputPortData.portIdInProject)) {
+        layer->setErrorMessage("No MIDI-out port in project: " + n2s(layer->midiOutputPortData.portIdInProject));
+        print("loadPatch: " + layer->errorMessage());
+        return;
+    }
+    PrjMidiPort destPort = mCurrentProject->midiOutPort_getPort(layer->midiOutputPortData.portIdInProject);
+
+    // Create route
+    layer->midiOutputPortData.jackRoute = jack->addMidiRoute(
+                srcPort.jackPort, destPort.jackPort);
+}
+
 void KonfytPatchEngine::onSfzEngineInitDone(QString error)
 {
     if (error.isEmpty()) {
         print("SFZ engine initialised successfully.");
-        reloadPatch();
+
+        // Set all patches SFZ layers as not loaded yet, and load all patches.
+        foreach (KonfytPatch* patch, patches) {
+            foreach (KfPatchLayerSharedPtr layer, patch->getPluginLayerList()) {
+                // Unload layer but do not try to remove from sfz engine
+                if (layer->sfzData.portsInJackEngine) {
+                    jack->removePlugin(layer->sfzData.portsInJackEngine);
+                    layer->sfzData.portsInJackEngine = nullptr;
+                }
+                layer->sfzData.indexInEngine = -1;
+            }
+            loadPatch(patch);
+        }
+
     } else {
         print("SFZ engine initialisation error: " + error);
     }

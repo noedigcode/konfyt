@@ -213,14 +213,15 @@ KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPo
     KfJackAudioPort* arPort = new KfJackAudioPort();
 
     // Add a new midi output port which will be connected to the plugin midi input
-    midiPort->jackPointer = registerJackMidiPort(spec.name, false);
+    QString midiName = spec.name;
+    midiPort->jackPointer = registerJackMidiPort(midiName, false);
     if (midiPort->jackPointer == nullptr) {
-        print("Failed to create JACK MIDI output port '" + spec.name + "' for plugin.");
+        print("Failed to create JACK MIDI output port '" + midiName + "' for plugin.");
     }
     midiPort->connectionList.append( spec.midiOutConnectTo );
 
     // Add left audio input port where we will receive plugin audio
-    QString nameL = spec.name + "_in_L";
+    QString nameL = QString("%1_in_L").arg(spec.name);
     alPort->jackPointer = registerJackAudioPort(nameL, true);
     if (alPort->jackPointer == nullptr) {
         print("Failed to create left audio input port '" + nameL + "' for plugin.");
@@ -228,7 +229,7 @@ KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPo
     alPort->connectionList.append( spec.audioInLeftConnectTo );
 
     // Add right audio input port
-    QString nameR = spec.name + "_in_R";
+    QString nameR = QString("%1_in_R").arg(spec.name);
     arPort->jackPointer = registerJackAudioPort(nameR, true);
     if (arPort->jackPointer == nullptr) {
         print("Failed to create right audio input port '" + nameR + "' for plugin.");
@@ -267,6 +268,8 @@ KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPo
 
 void KonfytJackEngine::removePlugin(KfJackPluginPorts *p)
 {
+    KONFYT_ASSERT_RETURN(p);
+
     pauseJackProcessing(true);
 
     // Remove everything created in addPluginPortsAndConnect()
@@ -278,13 +281,19 @@ void KonfytJackEngine::removePlugin(KfJackPluginPorts *p)
 
     pluginPorts.removeAll(p);
 
-    jack_port_unregister(mJackClient, p->midi->jackPointer);
+    if (jack_port_unregister(mJackClient, p->midi->jackPointer)) {
+        print("Failed to unregister JACK MIDI out port for plugin.");
+    }
     delete p->midi;
 
-    jack_port_unregister(mJackClient, p->audioInLeft->jackPointer);
+    if (jack_port_unregister(mJackClient, p->audioInLeft->jackPointer)) {
+        print("Failed to unregister JACK left audio in port for plugin.");
+    }
     delete p->audioInLeft;
 
-    jack_port_unregister(mJackClient, p->audioInRight->jackPointer);
+    if (jack_port_unregister(mJackClient, p->audioInRight->jackPointer)) {
+        print("Failed to unregister JACK left audio in port for plugin.");
+    }
     delete p->audioInRight;
 
     delete p;
@@ -591,6 +600,8 @@ void KonfytJackEngine::setAudioRoute(KfJackAudioRoute *route, KfJackAudioPort *s
 
 void KonfytJackEngine::removeAudioRoute(KfJackAudioRoute* route)
 {
+    KONFYT_ASSERT_RETURN(route);
+
     if (!clientIsActive()) { return; }
 
     pauseJackProcessing(true);
@@ -657,6 +668,8 @@ void KonfytJackEngine::setMidiRoute(KfJackMidiRoute *route, KfJackMidiPort *sour
 
 void KonfytJackEngine::removeMidiRoute(KfJackMidiRoute *route)
 {
+    KONFYT_ASSERT_RETURN(route);
+
     if (!clientIsActive()) { return; }
 
     pauseJackProcessing(true);
@@ -794,15 +807,17 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     // Get all audio out ports (bus) buffers
     for (int prt = 0; prt < audioOutPorts.count(); prt++) {
         KfJackAudioPort* port = audioOutPorts.at(prt);
-        port->buffer = jack_port_get_buffer( port->jackPointer, nframes); // Bus output buffer
-        // Reset buffer
-        memset(port->buffer, 0, sizeof(jack_default_audio_sample_t)*nframes);
+        port->buffer = getJackPortBuffer(port->jackPointer, nframes);
+        if (port->buffer) {
+            // Reset buffer
+            memset(port->buffer, 0, sizeof(jack_default_audio_sample_t)*nframes);
+        }
     }
 
     // Get all audio in ports buffers
     for (int prt = 0; prt < audioInPorts.count(); prt++) {
         KfJackAudioPort* port = audioInPorts.at(prt);
-        port->buffer = jack_port_get_buffer( port->jackPointer, nframes );
+        port->buffer = getJackPortBuffer(port->jackPointer, nframes );
     }
 
     // Get all Fluidsynth audio in port buffers
@@ -828,10 +843,10 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
         KfJackPluginPorts* pluginPort = pluginPorts.at(prt);
         // Left
         KfJackAudioPort* port1 = pluginPort->audioInLeft;
-        port1->buffer = jack_port_get_buffer( port1->jackPointer, nframes );
+        port1->buffer = getJackPortBuffer( port1->jackPointer, nframes );
         // Right
         KfJackAudioPort* port2 = pluginPort->audioInRight;
-        port2->buffer = jack_port_get_buffer( port2->jackPointer, nframes );
+        port2->buffer = getJackPortBuffer( port2->jackPointer, nframes );
     }
 
     if (panicState > 0) {
@@ -860,6 +875,7 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
         // Finally, apply the gain of each active bus
         for (int prt = 0; prt < audioOutPorts.count(); prt++) {
             KfJackAudioPort* port = audioOutPorts.at(prt);
+            if (!port->buffer) { continue; }
             // Do for each frame
             for (jack_nframes_t i = 0;  i < nframes; i++) {
                 ( (jack_default_audio_sample_t*)( port->buffer ) )[i] *= port->gain;
@@ -873,14 +889,18 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     // Get buffers for midi output ports to external apps
     for (int p = 0; p < midiOutPorts.count(); p++) {
         KfJackMidiPort* port = midiOutPorts.at(p);
-        port->buffer = jack_port_get_buffer( port->jackPointer, nframes);
-        jack_midi_clear_buffer( port->buffer );
+        port->buffer = getJackPortBuffer(port->jackPointer, nframes);
+        if (port->buffer) {
+            jack_midi_clear_buffer(port->buffer);
+        }
     }
     // Get buffers for midi output ports to plugins
     for (int p = 0; p < pluginPorts.count(); p++) {
         KfJackMidiPort* port = pluginPorts[p]->midi;
-        port->buffer = jack_port_get_buffer( port->jackPointer, nframes );
-        jack_midi_clear_buffer( port->buffer );
+        port->buffer = getJackPortBuffer(port->jackPointer, nframes);
+        if (port->buffer) {
+            jack_midi_clear_buffer(port->buffer);
+        }
     }
 
 
@@ -918,8 +938,11 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     for (int p = 0; p < midiInPorts.count(); p++) {
 
         KfJackMidiPort* sourcePort = midiInPorts[p];
-        sourcePort->buffer = jack_port_get_buffer(sourcePort->jackPointer, nframes);
-        jack_nframes_t nevents = jack_midi_get_event_count(sourcePort->buffer);
+        sourcePort->buffer = getJackPortBuffer(sourcePort->jackPointer, nframes);
+        jack_nframes_t nevents = 0;
+        if (sourcePort->buffer) {
+            nevents = jack_midi_get_event_count(sourcePort->buffer);
+        }
 
         // For each midi input event...
         for (jack_nframes_t i = 0; i < nevents; i++) {
@@ -1063,18 +1086,16 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 
                 // If bank MSB/LSB not -1, send them before the event
                 if (event.bankMSB >= 0) {
-                    outBuffer = jack_midi_event_reserve(
-                                route->destPort->buffer, 0, 3);
+                    outBuffer = reserveJackMidiEvent(route->destPort->buffer, 0, 3);
                     if (outBuffer) { event.msbToBuffer(outBuffer); }
                 }
                 if (event.bankLSB >= 0) {
-                    outBuffer = jack_midi_event_reserve(
-                                route->destPort->buffer, 0, 3);
+                    outBuffer = reserveJackMidiEvent(route->destPort->buffer, 0, 3);
                     if (outBuffer) { event.lsbToBuffer(outBuffer); }
                 }
                 // Send event
-                outBuffer = jack_midi_event_reserve( route->destPort->buffer,
-                                                     0, event.bufferSizeRequired());
+                outBuffer = reserveJackMidiEvent(route->destPort->buffer, 0,
+                                                 event.bufferSizeRequired());
                 if (outBuffer) { event.toBuffer(outBuffer); }
 
             } else {
@@ -1168,8 +1189,13 @@ void KonfytJackEngine::mixBufferToDestinationPort(KfJackAudioRoute *route,
 
     // For each frame: destination_buffer[frame] += source_buffer[frame]
     for (jack_nframes_t i = 0;  i < nframes; i++) {
-        float frame = ((jack_default_audio_sample_t*)(route->source->buffer))[i]
-                * gain * fadeOutValues[route->fadeoutCounter];
+
+        float frame = 0;
+        if (route->source->buffer) {
+            frame = ((jack_default_audio_sample_t*)(route->source->buffer))[i];
+        }
+        frame = frame  * gain * fadeOutValues[route->fadeoutCounter];
+
         route->rxBufferSum += qAbs(frame);
         ( (jack_default_audio_sample_t*)(route->dest->buffer) )[i] += frame;
 
@@ -1212,19 +1238,19 @@ void KonfytJackEngine::sendMidiClosureEvents(KfJackMidiPort *port, int channel)
     unsigned char* out_buffer;
 
     // All notes off
-    out_buffer = jack_midi_event_reserve( port->buffer, 0, 3);
+    out_buffer = reserveJackMidiEvent(port->buffer, 0, 3);
     if (out_buffer) {
         evAllNotesOff.channel = channel;
         evAllNotesOff.toBuffer(out_buffer);
     }
     // Also send sustain off message
-    out_buffer = jack_midi_event_reserve( port->buffer, 0, 3 );
+    out_buffer = reserveJackMidiEvent(port->buffer, 0, 3);
     if (out_buffer) {
         evSustainZero.channel = channel;
         evSustainZero.toBuffer(out_buffer);
     }
     // And also pitchbend zero
-    out_buffer = jack_midi_event_reserve( port->buffer, 0, 3 );
+    out_buffer = reserveJackMidiEvent(port->buffer, 0, 3);
     if (out_buffer) {
         evPitchbendZero.channel = channel;
         evPitchbendZero.toBuffer(out_buffer);
@@ -1285,6 +1311,26 @@ void KonfytJackEngine::handleBankSelect(int bankMSB[], int bankLSB[], KonfytMidi
         // Cancel bank select
         bankMSB[ev->channel] = -1;
         bankLSB[ev->channel] = -1;
+    }
+}
+
+void *KonfytJackEngine::getJackPortBuffer(jack_port_t *port, jack_nframes_t nframes) const
+{
+    if (port) {
+        return jack_port_get_buffer(port, nframes);
+    } else {
+        return NULL;
+    }
+}
+
+jack_midi_data_t *KonfytJackEngine::reserveJackMidiEvent(void *portBuffer,
+                                                         jack_nframes_t time,
+                                                         size_t size) const
+{
+    if (portBuffer) {
+        return jack_midi_event_reserve(portBuffer, time, size);
+    } else {
+        return NULL;
     }
 }
 
@@ -1391,10 +1437,10 @@ void KonfytJackEngine::writeRouteMidi(KfJackMidiRoute *route,
 {
     if (route->destIsJackPort) {
         // Destination is JACK port
-        unsigned char* outBuffer = jack_midi_event_reserve(
+        unsigned char* outBuffer = reserveJackMidiEvent(
                     route->destPort->buffer, time, ev.bufferSizeRequired());
 
-        if (outBuffer == 0) { return; } // JACK error
+        if (outBuffer == 0) { return; }
 
         // Copy event to output buffer
         ev.toBuffer(outBuffer);
@@ -1596,7 +1642,7 @@ jack_port_t *KonfytJackEngine::registerJackAudioPort(QString name, bool input)
                                     input ? JackPortIsInput : JackPortIsOutput,
                                             0);
     if (!port) {
-        print(QString("Failed to register JACK MIDI %1 port: %2")
+        print(QString("Failed to register JACK Audio %1 port: %2")
                 .arg(input ? "input" : "output")
                 .arg(name));
     }

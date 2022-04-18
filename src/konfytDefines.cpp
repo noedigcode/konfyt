@@ -25,6 +25,7 @@
     #include <carla/CarlaHost.h>
 #endif
 #include <fluidsynth.h>
+#include <lscp/version.h>
 
 #include <iostream>
 
@@ -56,6 +57,8 @@ QString getCompileVersionText()
     txt.append( "Compiled with Qt " + QString(QT_VERSION_STR));
     txt.append("\n");
     txt.append( "Compiled with Fluidsynth " + QString(fluid_version_str()));
+    txt.append("\n");
+    txt.append( "Compiled with liblscp " + QString(LSCP_VERSION));
     txt.append("\n");
 #ifdef KONFYT_USE_CARLA
     txt.append( "Compiled with Carla " + QString(CARLA_VERSION_STRING));

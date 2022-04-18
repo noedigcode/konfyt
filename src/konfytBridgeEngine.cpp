@@ -68,14 +68,14 @@ int KonfytBridgeEngine::addSfz(QString soundfilePath)
     item.cmd = exePath + " -q -c -j " + item.jackname + " \"" + soundfilePath + "\"";
 
     item.process = new QProcess();
-    connect(item.process, &QProcess::started, [this, id](){
+    connect(item.process, &QProcess::started, this, [=](){
         KonfytBridgeItem &item = items[id];
         item.state = "Started";
         sendAllStatusInfo();
         print("Bridge client " + n2s(id) + " started.");
     });
     connect(item.process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-            [this, id](int returnCode, QProcess::ExitStatus /*exitStatus*/){
+            this, [=](int returnCode, QProcess::ExitStatus /*exitStatus*/){
         // Process has finished. Restart.
         print("Bridge client " + n2s(id) + " stopped: " + n2s(returnCode) + ". Restarting...");
         startProcess(id);

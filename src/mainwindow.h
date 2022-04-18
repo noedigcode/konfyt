@@ -382,6 +382,8 @@ private slots:
 private:
     QList<KonfytLayerWidget*> layerWidgetList;
     void addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer, int index = -1);
+    void addPatchLayerToIndicatorHandler(KonfytLayerWidget* layerWidget,
+                                         KfPatchLayerWeakPtr patchLayer);
     void removePatchLayer(KonfytLayerWidget *layerWidget);
     void removePatchLayerFromGuiOnly(KonfytLayerWidget *layerWidget);
     void clearPatchLayersFromGuiOnly();
@@ -888,7 +890,7 @@ private slots:
 
     // ========================================================================
 
-    void on_horizontalSlider_MasterGain_sliderMoved(int position);
+    void on_horizontalSlider_MasterGain_valueChanged(int value);
 
     void on_pushButton_LiveMode_clicked();
 
@@ -902,6 +904,7 @@ private slots:
 
     void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
     void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
+
 };
 
 #endif // MAINWINDOW_H

@@ -849,12 +849,18 @@ void MainWindow::addClientPortToTree(QString jackport)
     QCheckBox* cbl = new QCheckBox();
     QCheckBox* cbr = new QCheckBox();
     ui->tree_Connections->setItemWidget(portItem, TREECON_COL_L, cbl);
-    connect(cbl, &QCheckBox::clicked, [this, cbl](){ checkboxes_clicked_slot(cbl); });
+    connect(cbl, &QCheckBox::clicked, this, [=]()
+    {
+        checkboxes_clicked_slot(cbl);
+    });
     conChecksMap1.insert(cbl, portItem); // Map the checkbox to the tree item
     if ( ui->tree_portsBusses->currentItem()->parent() != midiOutParent ) { // Midi ports only have one checkbox
         if (ui->tree_portsBusses->currentItem()->parent() != midiInParent) {
             ui->tree_Connections->setItemWidget(portItem, TREECON_COL_R, cbr);
-            connect(cbr, &QCheckBox::clicked, [this, cbr](){ checkboxes_clicked_slot(cbr); });
+            connect(cbr, &QCheckBox::clicked, this, [=]()
+            {
+                checkboxes_clicked_slot(cbr);
+            });
             conChecksMap2.insert(cbr, portItem); // Map the checkbox to the tree item
         }
     }
@@ -1712,8 +1718,10 @@ void MainWindow::updateMasterGainCommon(float gain)
         masterGain = gain;
     }
 
+    ui->horizontalSlider_MasterGain->blockSignals(true);
     ui->horizontalSlider_MasterGain->setValue(
                 gain * ui->horizontalSlider_MasterGain->maximum());
+    ui->horizontalSlider_MasterGain->blockSignals(false);
 
     // Update all bus gains
     if (mCurrentProject) {
@@ -1759,7 +1767,7 @@ int MainWindow::currentPatchIndex()
 /* Load mCurrentPatch and update the GUI accordingly. */
 void MainWindow::loadPatchAndUpdateGui()
 {
-    pengine.loadPatch(mCurrentPatch);
+    pengine.loadPatchAndSetCurrent(mCurrentPatch);
     patchListAdapter.setCurrentPatch(mCurrentPatch);
     patchListAdapter.setPatchLoaded(mCurrentPatch, true);
 
@@ -1776,7 +1784,7 @@ void MainWindow::loadPreviewPatchAndUpdateGui()
     // Clear preview patch
     mPreviewPatch.clearLayers();
     // Load empty preview patch
-    pengine.loadPatch(&mPreviewPatch);
+    pengine.loadPatchAndSetCurrent(&mPreviewPatch);
 
     // Add selected library/filesystem item as a layer to the patch
 
@@ -1871,7 +1879,8 @@ void MainWindow::setupPatchListAdapter()
     connect(&patchListAdapter, &PatchListWidgetAdapter::patchSelected,
             this, &MainWindow::onPatchSelected);
     connect(&patchListAdapter, &PatchListWidgetAdapter::patchMoved,
-            [=](int indexFrom, int indexTo) {
+            this, [=](int indexFrom, int indexTo)
+    {
         ProjectPtr prj = mCurrentProject;
         if (!prj) { return; }
         prj->movePatch(indexFrom, indexTo);
@@ -1887,6 +1896,10 @@ void MainWindow::onPatchLayerLoaded(KfPatchLayerWeakPtr patchLayer)
 {
     foreach (KonfytLayerWidget* w, layerWidgetList) {
         if (w->getPatchLayer() == patchLayer) {
+            // Refresh in indicator handler, as JACK routes may have changed
+            layerIndicatorHandler.layerWidgetRemoved(w);
+            addPatchLayerToIndicatorHandler(w, patchLayer);
+            // Refresh widget itself
             w->refresh();
         }
     }
@@ -2041,7 +2054,11 @@ void MainWindow::setupFilesystemView()
 /* Log a message in the GUI console. */
 void MainWindow::print(QString message)
 {
-    if (mBlockPrint) { return; }
+    if (mBlockPrint) {
+        // Print directly to stdout
+        std::cout << message.toStdString() << "\n";
+        return;
+    }
 
     ui->textBrowser->append(message);
 
@@ -2137,7 +2154,8 @@ void MainWindow::openFileManager(QString path)
         QProcess* process = new QProcess();
 
         connect(process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
-                [this, process](int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/){
+                this, [=](int /*exitCode*/, QProcess::ExitStatus /*exitStatus*/)
+        {
             process->deleteLater();
         });
 
@@ -2445,10 +2463,10 @@ void MainWindow::setPreviewMode(bool previewModeOn)
     }
 }
 
-/* Master gain slider moved. */
-void MainWindow::on_horizontalSlider_MasterGain_sliderMoved(int position)
+void MainWindow::on_horizontalSlider_MasterGain_valueChanged(int value)
 {
-    setMasterGainFloat( (float)position / (float)ui->horizontalSlider_MasterGain->maximum() );
+    setMasterGainFloat( (float)value /
+                        (float)ui->horizontalSlider_MasterGain->maximum() );
 }
 
 void MainWindow::on_lineEdit_PatchName_returnPressed()
@@ -3654,33 +3672,7 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer, int index)
     QListWidgetItem* item = new QListWidgetItem();
     layerWidget->initLayer(patchLayer, item);
 
-    // Register with MIDI indicator handler, provide corresponding JackEngine route
-    KfPatchLayerSharedPtr pl(patchLayer);
-    KfJackMidiRoute* midiRoute = nullptr;
-    KfJackAudioRoute* audioRoute1 = nullptr;
-    KfJackAudioRoute* audioRoute2 = nullptr;
-    if (pl->layerType() == KonfytPatchLayer::TypeMidiOut) {
-        midiRoute = pl->midiOutputPortData.jackRoute;
-    } else if (pl->layerType() == KonfytPatchLayer::TypeSfz) {
-        midiRoute = jack.getPluginMidiRoute(pl->sfzData.portsInJackEngine);
-        QList<KfJackAudioRoute*> a = jack.getPluginAudioRoutes(pl->sfzData.portsInJackEngine);
-        audioRoute1 = a.value(0);
-        audioRoute2 = a.value(1);
-    } else if (pl->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
-        midiRoute = jack.getPluginMidiRoute(pl->soundfontData.portsInJackEngine);
-        QList<KfJackAudioRoute*> a = jack.getPluginAudioRoutes(pl->soundfontData.portsInJackEngine);
-        audioRoute1 = a.value(0);
-        audioRoute2 = a.value(1);
-    } else if (pl->layerType() == KonfytPatchLayer::TypeAudioIn) {
-        audioRoute1 = pl->audioInPortData.jackRouteLeft;
-        audioRoute2 = pl->audioInPortData.jackRouteRight;
-    }
-    if (midiRoute) {
-        layerIndicatorHandler.layerWidgetAdded(layerWidget, midiRoute);
-    }
-    if (audioRoute1) {
-        layerIndicatorHandler.layerWidgetAdded(layerWidget, audioRoute1, audioRoute2);
-    }
+    addPatchLayerToIndicatorHandler(layerWidget, patchLayer);
 
     // Add to our internal list
     if (index < 0) { index = layerWidgetList.count(); }
@@ -3712,6 +3704,36 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer, int index)
 
     connect(layerWidget, &KonfytLayerWidget::sendMidiEvents_clicked_signal,
             this, &MainWindow::onLayer_midiSend_clicked);
+}
+
+void MainWindow::addPatchLayerToIndicatorHandler(KonfytLayerWidget *layerWidget, KfPatchLayerWeakPtr patchLayer)
+{
+    KfPatchLayerSharedPtr pl(patchLayer);
+    KfJackMidiRoute* midiRoute = nullptr;
+    KfJackAudioRoute* audioRoute1 = nullptr;
+    KfJackAudioRoute* audioRoute2 = nullptr;
+    if (pl->layerType() == KonfytPatchLayer::TypeMidiOut) {
+        midiRoute = pl->midiOutputPortData.jackRoute;
+    } else if (pl->layerType() == KonfytPatchLayer::TypeSfz) {
+        midiRoute = jack.getPluginMidiRoute(pl->sfzData.portsInJackEngine);
+        QList<KfJackAudioRoute*> a = jack.getPluginAudioRoutes(pl->sfzData.portsInJackEngine);
+        audioRoute1 = a.value(0);
+        audioRoute2 = a.value(1);
+    } else if (pl->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+        midiRoute = jack.getPluginMidiRoute(pl->soundfontData.portsInJackEngine);
+        QList<KfJackAudioRoute*> a = jack.getPluginAudioRoutes(pl->soundfontData.portsInJackEngine);
+        audioRoute1 = a.value(0);
+        audioRoute2 = a.value(1);
+    } else if (pl->layerType() == KonfytPatchLayer::TypeAudioIn) {
+        audioRoute1 = pl->audioInPortData.jackRouteLeft;
+        audioRoute2 = pl->audioInPortData.jackRouteRight;
+    }
+    if (midiRoute) {
+        layerIndicatorHandler.layerWidgetAdded(layerWidget, midiRoute);
+    }
+    if (audioRoute1) {
+        layerIndicatorHandler.layerWidgetAdded(layerWidget, audioRoute1, audioRoute2);
+    }
 }
 
 /* Remove a patch layer from the engine, GUI and the internal list. */
@@ -3864,7 +3886,8 @@ void MainWindow::updateLayerToolMenu()
     // Menu items for Audio input port layers
     if (type == KonfytPatchLayer::TypeAudioIn) {
         QAction* a = layerToolMenu.addAction("Input Port Connections...");
-        connect(a, &QAction::triggered, [=](){
+        connect(a, &QAction::triggered, this, [=]()
+        {
             // Show port in connections page
             showConnectionsPage();
             connectionsTreeSelectAudioInPort(patchLayer->audioInPortData.portIdInProject);
@@ -5338,7 +5361,8 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
 void MainWindow::setupPatchEngine()
 {
     connect(&pengine, &KonfytPatchEngine::print, this, &MainWindow::print);
-    connect(&pengine, &KonfytPatchEngine::statusInfo, [this](QString msg){
+    connect(&pengine, &KonfytPatchEngine::statusInfo, this, [=](QString msg)
+    {
         ui->textBrowser_Testing->setText(msg);
     });
     connect(&pengine, &KonfytPatchEngine::patchLayerLoaded,
@@ -5791,7 +5815,8 @@ void MainWindow::on_actionPanic_triggered()
     triggerPanic(true);
 
     QTimer* t = new QTimer(this);
-    connect(t, &QTimer::timeout, [this, t](){
+    connect(t, &QTimer::timeout, this, [=]()
+    {
         triggerPanic(false);
         t->deleteLater();
     });
@@ -6731,3 +6756,5 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
     // Update in JACK engine
     updateBusGainInJackEngine(busId);
 }
+
+

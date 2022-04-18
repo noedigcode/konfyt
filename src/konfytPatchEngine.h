@@ -59,7 +59,8 @@ public:
     // ----------------------------------------------------
     // Loading patches and programs
     // ----------------------------------------------------
-    bool loadPatch(KonfytPatch* newPatch);  // Load new patch, replacing current patch.
+    void loadPatchAndSetCurrent(KonfytPatch* patch);
+    void loadPatch(KonfytPatch* patch);
     void reloadPatch();                     // Reload the current patch (e.g. use if patch changed)
     void unloadPatch(KonfytPatch* patch);
     void unloadLayer(KfPatchLayerWeakPtr layer);
@@ -124,6 +125,10 @@ private:
 
     QList<KonfytPatch*> patches;
 
+    void loadSfzLayer(KfPatchLayerSharedPtr layer);
+    void loadSoundfontLayer(KfPatchLayerSharedPtr layer);
+    void loadAudioInputPort(KfPatchLayerSharedPtr layer);
+    void loadMidiOutputPort(KfPatchLayerSharedPtr layer);
     void updateLayerRouting(KfPatchLayerSharedPtr layer);
     void updateLayerGain(KfPatchLayerSharedPtr layer);
     void updatePatchLayersSoloMute(KonfytPatch* patch);
