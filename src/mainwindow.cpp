@@ -80,7 +80,7 @@ void MainWindow::setupGuiStyle()
     QString stylename = "Fusion";
     QStyle* style = QStyleFactory::create(stylename);
     if (style) {
-        appInfo.a->setStyle(style);
+        qApp->setStyle(style);
     } else {
         print("Unable to create style " + stylename);
     }
@@ -2682,7 +2682,7 @@ void MainWindow::startWaiter(QString msg)
 {
     // Disable all input (install event filter)
     eventFilterMode = EVENT_FILTER_MODE_WAITER;
-    appInfo.a->installEventFilter(this);
+    qApp->installEventFilter(this);
     // Start waiterTimer
     waiterMessage = msg;
     waiterState = 0;
@@ -2698,7 +2698,7 @@ void MainWindow::stopWaiter()
     ui->statusBar->showMessage("Done.", 3000);
 
     // Re-enable all input (remove event filter)
-    appInfo.a->removeEventFilter(this);
+    qApp->removeEventFilter(this);
 }
 
 void MainWindow::timerEvent(QTimerEvent *ev)
@@ -2807,15 +2807,15 @@ void MainWindow::onDatabaseScanFinished()
 
 void MainWindow::setupDatabase()
 {
-    connect(&db, &konfytDatabase::print, this, &MainWindow::print);
+    connect(&db, &KonfytDatabase::print, this, &MainWindow::print);
 
-    connect(&db, &konfytDatabase::scanFinished,
+    connect(&db, &KonfytDatabase::scanFinished,
             this, &MainWindow::onDatabaseScanFinished);
 
-    connect(&db, &konfytDatabase::scanStatus,
+    connect(&db, &KonfytDatabase::scanStatus,
             this, &MainWindow::onDatabaseScanStatus);
 
-    connect(&db, &konfytDatabase::sfontInfoLoadedFromFile,
+    connect(&db, &KonfytDatabase::sfontInfoLoadedFromFile,
             this, &MainWindow::onDatabaseSfontInfoLoaded);
 
     // Check if database file exists.
@@ -4291,12 +4291,12 @@ void MainWindow::on_pushButton_LiveMode_clicked()
         ui->stackedWidget_left->setCurrentWidget(ui->page_Live);
         // Install event filter to catch all global key presses
         eventFilterMode = EVENT_FILTER_MODE_LIVE;
-        appInfo.a->installEventFilter(this);
+        qApp->installEventFilter(this);
     } else {
         // Switch out of live mode to normal
         ui->stackedWidget_left->setCurrentWidget(ui->pageLibrary);
         // Remove event filter
-        appInfo.a->removeEventFilter(this);
+        qApp->removeEventFilter(this);
     }
 }
 
@@ -5681,7 +5681,7 @@ void MainWindow::on_pushButton_RestartApp_clicked()
 {
     if (requestCurrentProjectClose()) {
         // Restart the app (see code in main.cpp)
-        QCoreApplication::exit(APP_RESTART_CODE);
+        qApp->exit(APP_RESTART_CODE);
     }
 }
 

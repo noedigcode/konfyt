@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2022 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -69,12 +69,18 @@ public:
     float getGain(KfFluidSynth *synth);
     void setGain(KfFluidSynth *synth, float newGain);
 
+    KfSoundPtr soundfontFromFile(QString filename);
+
 signals:
     void print(QString msg);
 
 private:
     QList<KfFluidSynth*> synths;
     double mSampleRate = 44100;
+
+    KfFluidSynth* newSynth();
+
+    QScopedPointer<KfFluidSynth> infoSynth;
 };
 
 #endif // KONFYT_FLUIDSYNTH_ENGINE_H

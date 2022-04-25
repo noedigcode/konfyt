@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2022 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -20,6 +20,8 @@
  *****************************************************************************/
 
 #include "konfytFluidsynthEngine.h"
+
+#include <QFileInfo>
 
 #include <iostream>
 
@@ -93,26 +95,8 @@ int KonfytFluidsynthEngine::fluidsynthWriteFloat(KfFluidSynth *synth, void *left
 /* Adds a new soundfont engine and returns a pointer to the synth. Returns nullptr on error. */
 KfFluidSynth* KonfytFluidsynthEngine::addSoundfontProgram(QString soundfontFilename, KonfytSoundPreset p)
 {
-    KfFluidSynth* s = new KfFluidSynth();
-
-    // Create settings object
-    s->settings = new_fluid_settings();
-    if (s->settings == NULL) {
-        emit print("Failed to create Fluidsynth settings.");
-        delete s;
-        return nullptr;
-    }
-
-    // Set settings
-    fluid_settings_setnum(s->settings, "synth.sample-rate", mSampleRate);
-
-    // Create the synthesizer
-    s->synth = new_fluid_synth(s->settings);
-    if (s->synth == NULL) {
-        emit print("Failed to create Fluidsynth synthesizer.");
-        delete s;
-        return nullptr;
-    }
+    KfFluidSynth* s = newSynth();
+    if (!s) { return nullptr; }
 
     // Load soundfont file
     int sfID = fluid_synth_sfload(s->synth, soundfontFilename.toLocal8Bit().data(), 0);
@@ -158,5 +142,96 @@ float KonfytFluidsynthEngine::getGain(KfFluidSynth *synth)
 void KonfytFluidsynthEngine::setGain(KfFluidSynth *synth, float newGain)
 {
     fluid_synth_set_gain( synth->synth, newGain );
+}
+
+KfSoundPtr KonfytFluidsynthEngine::soundfontFromFile(QString filename)
+{
+    KfSoundPtr ret;
+
+    if (!infoSynth) {
+        KfFluidSynth* s = newSynth();
+        if (!s) { return ret; }
+
+        infoSynth.reset(s);
+    }
+
+    fluid_synth_t* synth = infoSynth->synth; // Shorthand
+
+    // Load soundfont file
+    int sfID = fluid_synth_sfload(synth, filename.toLocal8Bit().data(), 1);
+    if (sfID == -1) {
+        return ret;
+    }
+
+    ret.reset(new KonfytSound(KfSoundTypeSoundfont));
+    ret->filename = filename;
+    ret->name = QFileInfo(filename).fileName();
+
+    // Get fluidsynth soundfont object
+    fluid_sfont_t* sf = fluid_synth_get_sfont_by_id(synth, sfID);
+
+    // Iterate through all the presets within the soundfont
+#if FLUIDSYNTH_VERSION_MAJOR == 1
+    fluid_preset_t* preset = new fluid_preset_t();
+    sf->iteration_start(sf);
+    int more = sf->iteration_next(sf, preset);
+    while (more) {
+        KonfytSoundPreset p;
+
+        p.name = QString(QByteArray( preset->get_name(preset) ));
+        p.bank = preset->get_banknum(preset);
+        p.program = preset->get_num(preset);
+
+        ret->presets.append(p);
+        more = sf->iteration_next(sf, preset);
+    }
+#else
+    fluid_sfont_iteration_start(sf);
+    fluid_preset_t* preset = fluid_sfont_iteration_next(sf);
+    while (preset) {
+        KonfytSoundPreset p;
+
+        p.name = QString(QByteArray( fluid_preset_get_name(preset) ));
+        p.bank = fluid_preset_get_banknum(preset);
+        p.program = fluid_preset_get_num(preset);
+
+        ret->presets.append(p);
+        preset = fluid_sfont_iteration_next(sf);
+    }
+#endif
+
+    // Unload soundfont to save memory
+    fluid_synth_sfunload(synth, sfID, 1);
+#if FLUIDSYNTH_VERSION_MAJOR == 1
+    delete preset;
+#endif
+
+    return ret;
+}
+
+KfFluidSynth *KonfytFluidsynthEngine::newSynth()
+{
+    KfFluidSynth* s = new KfFluidSynth();
+
+    // Create settings object
+    s->settings = new_fluid_settings();
+    if (s->settings == NULL) {
+        emit print("Failed to create Fluidsynth settings.");
+        delete s;
+        return nullptr;
+    }
+
+    // Set settings
+    fluid_settings_setnum(s->settings, "synth.sample-rate", mSampleRate);
+
+    // Create the synthesizer
+    s->synth = new_fluid_synth(s->settings);
+    if (s->synth == NULL) {
+        emit print("Failed to create Fluidsynth synthesizer.");
+        delete s;
+        return nullptr;
+    }
+
+    return s;
 }
 

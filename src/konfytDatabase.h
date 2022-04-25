@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2022 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -19,18 +19,19 @@
  *
  *****************************************************************************/
 
-#ifndef SFDATABASE_H
-#define SFDATABASE_H
+#ifndef KONFYT_DATABASE_H
+#define KONFYT_DATABASE_H
 
+#include "remotescanner.h"
 #include "konfytDbTree.h"
+#include "konfytFluidsynthEngine.h"
 #include "konfytPatch.h"
-
-#include <fluidsynth.h>
 
 #include <QDir>
 #include <QList>
 #include <QMap>
 #include <QObject>
+#include <QProcess>
 #include <QStringList>
 #include <QThread>
 #include <QXmlStreamReader>
@@ -40,7 +41,7 @@
 
 
 // ============================================================================
-// konfytDatabaseWorker
+// KonfytDatabaseWorker
 // ============================================================================
 
 class KonfytDatabaseWorker : public QObject
@@ -49,12 +50,13 @@ class KonfytDatabaseWorker : public QObject
 public:
     explicit KonfytDatabaseWorker();
 
-    fluid_synth_t* synth = NULL;
+    KonfytFluidsynthEngine fluidsynth;
 
     QString sfontDir;
-    QList<KfSoundPtr> sfontIgnoreList;
     QString sfzDir;
     QString patchDir;
+
+    void setSfontIgnoreList(QList<KfSoundPtr> sfonts);
 
     QList<KfSoundPtr> sfontResults;
     QList<KfSoundPtr> sfzResults;
@@ -62,37 +64,42 @@ public:
 
     KfSoundPtr patchFromFile(QString filename);
 
-public slots:
-    void scan();
-    void requestSfontFromFile(QString filename);
-
 signals:
+    // Signals emitted by this class
     void print(QString msg);
     void scanFinished();
     void scanStatus(QString msg);
     void sfontFromFileFinished(KfSoundPtr sfont);
+    // Signals to trigger work in this class/thread
+    void scan();
+    void requestSfontFromFile(QString filename);
+
+private slots:
+    void doScan();
+    void doRequestSfontFromFile(QString filename);
 
 private:
+    QStringList sfontsToLoad;
+    QStringList sfontIgnoreList;
+
     void scanDirForFiles(QString dirname, QStringList suffixes, QStringList &list);
     void scanSfonts();
     void scanSfzs();
     void scanPatches();
-
-    KfSoundPtr sfontFromFile(QString filename);
 };
 
 // ============================================================================
-// konfytDatabase
+// KonfytDatabase
 // ============================================================================
 
-class konfytDatabase : public QObject
+class KonfytDatabase : public QObject
 {
     Q_OBJECT
 
 public:
-    konfytDatabase();
-    ~konfytDatabase();
-
+    KonfytDatabase();
+    ~KonfytDatabase();
+class
     QList<KfSoundPtr> allSoundfonts();
     int soundfontCount();
     QList<KfSoundPtr> allPatches();
@@ -119,6 +126,9 @@ public:
     bool saveDatabaseToFile(QString filename);
     bool loadDatabaseFromFile(QString filename);
 
+    static void soundfontToXml(KfSoundPtr sf, QXmlStreamWriter* stream);
+    static KfSoundPtr soundfontFromXml(QXmlStreamReader* r);
+
     // Search functionality
     void search(QString str);
     int getNumSfontsResults();
@@ -137,9 +147,6 @@ signals:
     void scanStatus(QString msg);
     void scanFinished();
     void sfontInfoLoadedFromFile(KfSoundPtr sf);
-    // Signals intended for worker thread
-    void start_scanDirs();
-    void start_sfontFromFile(QString filename);
 
 private slots:
     void onScanFinished();
@@ -155,10 +162,6 @@ private:
     QList<KfSoundPtr> sfontResults;
     QList<KfSoundPtr> patchResults;
     QList<KfSoundPtr> sfzResults;
-
-    fluid_settings_t* mFluidsynthSettings = NULL;
-    fluid_synth_t* mFluidSynth = NULL;
-    int initFluidsynth();
 
     QThread workerThread;
     KonfytDatabaseWorker worker;
@@ -180,4 +183,4 @@ private:
     void compactTree(KfDbTreeItemPtr item);
 };
 
-#endif // SFDATABASE_H
+#endif // KONFYT_DATABASE_H

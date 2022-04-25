@@ -60,7 +60,6 @@ struct KonfytAppInfo
     bool carla = false;
     QStringList filesToLoad;
     QString jackClientName;
-    QApplication *a = nullptr;
 };
 
 

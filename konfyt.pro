@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 CONFIG += qt
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -41,7 +41,8 @@ SOURCES += src/main.cpp\
     src/konfytBaseSoundEngine.cpp \
     src/konfytLscpEngine.cpp \
     src/midiEventListWidgetAdapter.cpp \
-    src/patchListWidgetAdapter.cpp
+    src/patchListWidgetAdapter.cpp \
+    src/remotescanner.cpp
 
 HEADERS  += src/mainwindow.h \
     src/consoledialog.h \
@@ -70,6 +71,7 @@ HEADERS  += src/mainwindow.h \
     src/konfytLscpEngine.h \
     src/midiEventListWidgetAdapter.h \
     src/patchListWidgetAdapter.h \
+    src/remotescanner.h \
     src/ringbufferqmutex.h
 
 FORMS    += src/mainwindow.ui \

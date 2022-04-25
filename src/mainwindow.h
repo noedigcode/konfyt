@@ -284,7 +284,7 @@ private slots:
 
     // Database
 private:
-    konfytDatabase db;
+    KonfytDatabase db;
     void setupDatabase();
     bool saveDatabase();
 private slots:
