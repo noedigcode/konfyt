@@ -1453,12 +1453,12 @@ LibraryTreeItemType MainWindow::libraryTreeItemType(QTreeWidgetItem *item)
 {
     if (item == libraryPatchTree.rootTreeItem) { return libTreePatchesRoot; }
     else if (libraryPatchTree.soundsMap.contains(item)) { return libTreePatch; }
-    else if (item == librarySfTree.rootTreeItem) { return libTreeSFZRoot; }
+    else if (item == librarySfzTree.rootTreeItem) { return libTreeSFZRoot; }
     else if (librarySfzTree.foldersMap.contains(item)) { return libTreeSFZFolder; }
     else if (librarySfzTree.soundsMap.contains(item)) { return libTreeSFZ; }
-    else if (item == librarySfTree.rootTreeItem) { return libTreeSoundfontRoot; }
-    else if (librarySfTree.foldersMap.contains(item)) { return libTreeSoundfontFolder; }
-    else if (librarySfTree.soundsMap.contains(item)) { return libTreeSoundfont; }
+    else if (item == librarySfontTree.rootTreeItem) { return libTreeSoundfontRoot; }
+    else if (librarySfontTree.foldersMap.contains(item)) { return libTreeSoundfontFolder; }
+    else if (librarySfontTree.soundsMap.contains(item)) { return libTreeSoundfont; }
     else { return libTreeInvalid; }
 }
 
@@ -1484,7 +1484,7 @@ KfSoundPtr MainWindow::librarySelectedSfont()
 {
     KfSoundPtr ret;
     if ( librarySelectedTreeItemType() == libTreeSoundfont ) {
-        ret = librarySfTree.soundsMap.value(ui->treeWidget_Library->currentItem());
+        ret = librarySfontTree.soundsMap.value(ui->treeWidget_Library->currentItem());
     }
     return ret;
 }
@@ -1646,7 +1646,7 @@ void MainWindow::buildSfzTree(KfDbTreeItemPtr dbTreeItem)
 
 void MainWindow::buildSfTree(KfDbTreeItemPtr dbTreeItem)
 {
-    buildLibraryTree(librarySfTree.rootTreeItem, dbTreeItem, &librarySfTree);
+    buildLibraryTree(librarySfontTree.rootTreeItem, dbTreeItem, &librarySfontTree);
 }
 
 void MainWindow::buildPatchTree(KfDbTreeItemPtr dbTreeItem)
@@ -1912,7 +1912,7 @@ void MainWindow::fillLibraryTreeWithAll()
     ui->treeWidget_Library->clear();
 
     // Create parent soundfonts tree item, with soundfont children
-    resetLibraryTree(librarySfTree, QString("%1 [%2]")
+    resetLibraryTree(librarySfontTree, QString("%1 [%2]")
                      .arg(TREE_ITEM_SOUNDFONTS).arg(db.soundfontCount()));
     buildSfTree(db.sfontTree.root);
 
@@ -1927,7 +1927,7 @@ void MainWindow::fillLibraryTreeWithAll()
     buildSfzTree(db.sfzTree.root);
 
     // Add items to tree
-    ui->treeWidget_Library->insertTopLevelItem(0, librarySfTree.rootTreeItem);
+    ui->treeWidget_Library->insertTopLevelItem(0, librarySfontTree.rootTreeItem);
     ui->treeWidget_Library->insertTopLevelItem(0, librarySfzTree.rootTreeItem);
     ui->treeWidget_Library->insertTopLevelItem(0, libraryPatchTree.rootTreeItem);
 }
@@ -2017,7 +2017,7 @@ void MainWindow::fillLibraryTreeWithSearch(QString search)
     twiResults->setText(0, TREE_ITEM_SEARCH_RESULTS);
 
     // Soundfonts
-    resetLibraryTree(librarySfTree, QString("%1 [%2 (%3 programs)]")
+    resetLibraryTree(librarySfontTree, QString("%1 [%2 (%3 programs)]")
                      .arg(TREE_ITEM_SOUNDFONTS).arg(db.getNumSfontsResults())
                      .arg(db.getNumSfontProgramResults()));
     buildSfTree(db.sfontTree_results.root);
@@ -2035,13 +2035,13 @@ void MainWindow::fillLibraryTreeWithSearch(QString search)
     // Add items to tree
     twiResults->addChild(libraryPatchTree.rootTreeItem);
     twiResults->addChild(librarySfzTree.rootTreeItem);
-    twiResults->addChild(librarySfTree.rootTreeItem);
+    twiResults->addChild(librarySfontTree.rootTreeItem);
 
     ui->treeWidget_Library->insertTopLevelItem(0, twiResults);
     ui->treeWidget_Library->expandItem(twiResults);
     ui->treeWidget_Library->expandItem(libraryPatchTree.rootTreeItem);
     ui->treeWidget_Library->expandItem(librarySfzTree.rootTreeItem);
-    ui->treeWidget_Library->expandItem(librarySfTree.rootTreeItem);
+    ui->treeWidget_Library->expandItem(librarySfontTree.rootTreeItem);
 }
 
 void MainWindow::setupFilesystemView()
@@ -5442,10 +5442,10 @@ void MainWindow::on_actionOpen_In_File_Manager_library_triggered()
     else if ( itemType == libTreePatchesRoot ) { path = this->mPatchesDir; }
     else if ( itemType == libTreeSFZRoot) { path = this->mSfzDir; }
     else if ( itemType == libTreeSoundfontFolder ) {
-        path = librarySfTree.foldersMap.value( libraryMenuItem );
+        path = librarySfontTree.foldersMap.value( libraryMenuItem );
     }
     else if ( itemType == libTreeSoundfont ) {
-        path = librarySfTree.soundsMap.value(libraryMenuItem)->filename;
+        path = librarySfontTree.soundsMap.value(libraryMenuItem)->filename;
     }
     else if ( itemType == libTreeSFZFolder ) {
         path = librarySfzTree.foldersMap.value( libraryMenuItem );

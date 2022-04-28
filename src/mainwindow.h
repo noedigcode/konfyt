@@ -248,7 +248,7 @@ private:
         QMap<QTreeWidgetItem*, QString> foldersMap; // Intermediate (non-root, non-bottom) items
         QMap<QTreeWidgetItem*, KfSoundPtr> soundsMap; // Bottom-most items in tree
     };
-    LibraryTree librarySfTree;
+    LibraryTree librarySfontTree;
     LibraryTree librarySfzTree;
     LibraryTree libraryPatchTree;
     void resetLibraryTree(LibraryTree &libTree, QString name);
