@@ -308,6 +308,28 @@ void MainWindow::updateMidiFilterEditorLastRx(KonfytMidiEvent ev)
     ui->lineEdit_MidiFilter_Last->setText(ev.toString());
 }
 
+QList<int> MainWindow::textToIntList(QString text)
+{
+    QList<int> ret;
+    QStringList words = text.split(" ");
+    foreach (QString w, words) {
+        ret.append(w.toInt());
+    }
+    return ret;
+}
+
+QString MainWindow::intListToText(QList<int> lst)
+{
+    QString ret;
+    foreach (int i, lst) {
+        if (!ret.isEmpty()) {
+            ret += " ";
+        }
+        ret += QString::number(i);
+    }
+    return ret;
+}
+
 void MainWindow::showMidiFilterEditor()
 {
     // Switch to midi filter view
@@ -329,6 +351,12 @@ void MainWindow::showMidiFilterEditor()
     ui->spinBox_midiFilter_VelLimitMin->setValue(z.velLimitMin);
     ui->spinBox_midiFilter_VelLimitMax->setValue(z.velLimitMax);
 
+    ui->spinBox_midiFilter_pitchDownRange->setValue(z.pitchDownMax);
+    on_spinBox_midiFilter_pitchDownRange_valueChanged(z.pitchDownMax);
+
+    ui->spinBox_midiFilter_pitchUpRange->setValue(z.pitchUpMax);
+    on_spinBox_midiFilter_pitchUpRange_valueChanged(z.pitchUpMax);
+
     ui->checkBox_midiFilter_ignoreGlobalTranspose->setChecked(f.ignoreGlobalTranspose);
 
     // Midi in channel combo box
@@ -341,10 +369,9 @@ void MainWindow::showMidiFilterEditor()
     ui->checkBox_midiFilter_AllCCs->setChecked(f.passAllCC);
     ui->checkBox_midiFilter_Prog->setChecked(f.passProg);
     ui->checkBox_midiFilter_pitchbend->setChecked(f.passPitchbend);
-    ui->listWidget_midiFilter_CC->clear();
-    for (int i=0; i<f.passCC.count(); i++) {
-        ui->listWidget_midiFilter_CC->addItem( n2s( f.passCC.at(i) ) );
-    }
+
+    ui->lineEdit_MidiFilter_ccAllowed->setText(intListToText(f.passCC));
+    ui->lineEdit_MidiFilter_ccBlocked->setText(intListToText(f.blockCC));
 
     // Switch to midi filter page
     ui->stackedWidget->setCurrentWidget(ui->FilterPage);
@@ -4212,13 +4239,15 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     }
 
     // Update the filter from the GUI
-    f.setZone( ui->spinBox_midiFilter_LowNote->value(),
-               ui->spinBox_midiFilter_HighNote->value(),
-               ui->spinBox_midiFilter_Add->value(),
-               ui->spinBox_midiFilter_LowVel->value(),
-               ui->spinBox_midiFilter_HighVel->value(),
-               ui->spinBox_midiFilter_VelLimitMin->value(),
-               ui->spinBox_midiFilter_VelLimitMax->value());
+    f.zone.lowNote = ui->spinBox_midiFilter_LowNote->value();
+    f.zone.highNote = ui->spinBox_midiFilter_HighNote->value();
+    f.zone.add = ui->spinBox_midiFilter_Add->value();
+    f.zone.lowVel = ui->spinBox_midiFilter_LowVel->value();
+    f.zone.highVel = ui->spinBox_midiFilter_HighVel->value();
+    f.zone.velLimitMin = ui->spinBox_midiFilter_VelLimitMin->value();
+    f.zone.velLimitMax = ui->spinBox_midiFilter_VelLimitMax->value();
+    f.zone.pitchDownMax = ui->spinBox_midiFilter_pitchDownRange->value();
+    f.zone.pitchUpMax = ui->spinBox_midiFilter_pitchUpRange->value();
     f.ignoreGlobalTranspose = ui->checkBox_midiFilter_ignoreGlobalTranspose->isChecked();
     if (ui->comboBox_midiFilter_inChannel->currentIndex() == 0) {
         // Index zero is all channels
@@ -4229,10 +4258,9 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     f.passAllCC = ui->checkBox_midiFilter_AllCCs->isChecked();
     f.passPitchbend = ui->checkBox_midiFilter_pitchbend->isChecked();
     f.passProg = ui->checkBox_midiFilter_Prog->isChecked();
-    f.passCC.clear();
-    for (int i=0; i<ui->listWidget_midiFilter_CC->count(); i++) {
-        f.passCC.append( ui->listWidget_midiFilter_CC->item(i)->text().toInt() );
-    }
+
+    f.passCC = textToIntList(ui->lineEdit_MidiFilter_ccAllowed->text());
+    f.blockCC = textToIntList(ui->lineEdit_MidiFilter_ccBlocked->text());
 
     if (midiFilterEditType == MidiFilterEditPort) {
         // Update filter in project
@@ -4380,37 +4408,6 @@ void MainWindow::on_toolButton_MidiFilter_lowVel_clicked()
 void MainWindow::on_toolButton_MidiFilter_HighVel_clicked()
 {
     ui->spinBox_midiFilter_HighVel->setValue( midiFilterLastEvent.data2() );
-}
-
-void MainWindow::on_toolButton_MidiFilter_lastCC_clicked()
-{
-    ui->lineEdit_MidiFilter_CC->setText( n2s(midiFilterLastEvent.data1()) );
-}
-
-void MainWindow::on_toolButton_MidiFilter_Add_CC_clicked()
-{
-    // Midi Filter: Add CC in lineEdit to CC list
-    int cc = ui->lineEdit_MidiFilter_CC->text().toInt();
-    // First, check if it isn't already in list
-    bool is_in_list = false;
-    for ( int i=0; i<ui->listWidget_midiFilter_CC->count(); i++ ) {
-        if ( ui->listWidget_midiFilter_CC->item(i)->text().toInt() == cc) {
-            is_in_list = true;
-            break;
-        }
-    }
-    if (is_in_list == false) {
-        // Not already in list. Add to list.
-        ui->listWidget_midiFilter_CC->addItem( n2s(cc) );
-    }
-}
-
-void MainWindow::on_toolButton_MidiFilter_removeCC_clicked()
-{
-    // Midi Filter: remove selected CC from list
-    if (ui->listWidget_midiFilter_CC->currentRow() != -1) {
-        delete ui->listWidget_midiFilter_CC->currentItem();
-    }
 }
 
 /* Change library/filesystem view tab. */
@@ -6757,4 +6754,64 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
     updateBusGainInJackEngine(busId);
 }
 
+void MainWindow::on_toolButton_MidiFilter_pitchDownFull_clicked()
+{
+    ui->spinBox_midiFilter_pitchDownRange->setValue(MIDI_PITCHBEND_SIGNED_MIN);
+}
 
+void MainWindow::on_toolButton_MidiFilter_pitchDownHalf_clicked()
+{
+    ui->spinBox_midiFilter_pitchDownRange->setValue(MIDI_PITCHBEND_SIGNED_MIN/2);
+}
+
+void MainWindow::on_toolButton_MidiFilter_pitchDownLast_clicked()
+{
+    ui->spinBox_midiFilter_pitchDownRange->setValue(
+                midiFilterLastEvent.pitchbendValueSigned());
+}
+
+void MainWindow::on_spinBox_midiFilter_pitchDownRange_valueChanged(int value)
+{
+    ui->toolButton_MidiFilter_pitchDownFull->setChecked(
+                value == MIDI_PITCHBEND_SIGNED_MIN);
+    ui->toolButton_MidiFilter_pitchDownHalf->setChecked(
+                value == MIDI_PITCHBEND_SIGNED_MIN / 2);
+}
+
+void MainWindow::on_spinBox_midiFilter_pitchUpRange_valueChanged(int value)
+{
+    ui->toolButton_MidiFilter_pitchUpFull->setChecked(
+                value == MIDI_PITCHBEND_SIGNED_MAX);
+    ui->toolButton_MidiFilter_pitchUpHalf->setChecked(
+                value == MIDI_PITCHBEND_SIGNED_MAX / 2);
+}
+
+void MainWindow::on_toolButton_MidiFilter_pitchUpFull_clicked()
+{
+    ui->spinBox_midiFilter_pitchUpRange->setValue(MIDI_PITCHBEND_SIGNED_MAX);
+}
+
+void MainWindow::on_toolButton_MidiFilter_pitchUpHalf_clicked()
+{
+    ui->spinBox_midiFilter_pitchUpRange->setValue(MIDI_PITCHBEND_SIGNED_MAX/2);
+}
+
+void MainWindow::on_toolButton_MidiFilter_pitchUpLast_clicked()
+{
+    ui->spinBox_midiFilter_pitchUpRange->setValue(
+                midiFilterLastEvent.pitchbendValueSigned());
+}
+
+void MainWindow::on_toolButton_MidiFilter_ccAllowedLast_clicked()
+{
+    QList<int> lst = textToIntList(ui->lineEdit_MidiFilter_ccAllowed->text());
+    lst.append(midiFilterLastEvent.data1());
+    ui->lineEdit_MidiFilter_ccAllowed->setText(intListToText(lst));
+}
+
+void MainWindow::on_toolButton_MidiFilter_ccBlockedLast_clicked()
+{
+    QList<int> lst = textToIntList(ui->lineEdit_MidiFilter_ccBlocked->text());
+    lst.append(midiFilterLastEvent.data1());
+    ui->lineEdit_MidiFilter_ccBlocked->setText(intListToText(lst));
+}

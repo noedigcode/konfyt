@@ -593,6 +593,8 @@ private:
     void showMidiFilterEditor();
     KonfytMidiEvent midiFilterLastEvent;
     void updateMidiFilterEditorLastRx(KonfytMidiEvent ev);
+    QList<int> textToIntList(QString text);
+    QString intListToText(QList<int> lst);
 private slots:
     void on_pushButton_midiFilter_Cancel_clicked();
     void on_pushButton_midiFilter_Apply_clicked();
@@ -603,9 +605,6 @@ private slots:
     void on_toolButton_MidiFilter_Add_Minus12_clicked();
     void on_toolButton_MidiFilter_lowVel_clicked();
     void on_toolButton_MidiFilter_HighVel_clicked();
-    void on_toolButton_MidiFilter_lastCC_clicked();
-    void on_toolButton_MidiFilter_Add_CC_clicked();
-    void on_toolButton_MidiFilter_removeCC_clicked();
     void on_toolButton_MidiFilter_inChan_last_clicked();
     void on_toolButton_MidiFilter_VelLimitMin_last_clicked();
     void on_toolButton_MidiFilter_VelLimitMax_last_clicked();
@@ -905,6 +904,16 @@ private slots:
     void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
     void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
 
+    void on_toolButton_MidiFilter_pitchDownFull_clicked();
+    void on_toolButton_MidiFilter_pitchDownHalf_clicked();
+    void on_toolButton_MidiFilter_pitchDownLast_clicked();
+    void on_spinBox_midiFilter_pitchDownRange_valueChanged(int value);
+    void on_spinBox_midiFilter_pitchUpRange_valueChanged(int value);
+    void on_toolButton_MidiFilter_pitchUpFull_clicked();
+    void on_toolButton_MidiFilter_pitchUpHalf_clicked();
+    void on_toolButton_MidiFilter_pitchUpLast_clicked();
+    void on_toolButton_MidiFilter_ccAllowedLast_clicked();
+    void on_toolButton_MidiFilter_ccBlockedLast_clicked();
 };
 
 #endif // MAINWINDOW_H

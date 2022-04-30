@@ -65,11 +65,13 @@ bool KonfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
 
     if (ev->type() == MIDI_EVENT_TYPE_CC) {
 
-        if (this->passAllCC) {
-            pass = true;
-        } else {
-            if (this->passCC.contains(ev->data1())) {
+        if (!this->blockCC.contains(ev->data1())) {
+            if (this->passAllCC) {
                 pass = true;
+            } else {
+                if (this->passCC.contains(ev->data1())) {
+                    pass = true;
+                }
             }
         }
 
@@ -132,6 +134,12 @@ KonfytMidiEvent KonfytMidiFilter::modify(const KonfytMidiEvent* ev)
                 r.setVelocity( zone.velLimitMax );
             }
         }
+    } else if (r.type() == MIDI_EVENT_TYPE_PITCHBEND) {
+        float in = r.pitchbendValueSigned();
+        float range = in < 0 ? zone.pitchDownMax : zone.pitchUpMax;
+        float max = in < 0 ? MIDI_PITCHBEND_SIGNED_MIN : MIDI_PITCHBEND_SIGNED_MAX;
+        int out = (in / max) * range;
+        r.setPitchbend(out);
     }
     return r;
 }
@@ -150,6 +158,8 @@ void KonfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
     stream->writeTextElement(XML_MIDIFILTER_ZONE_HIVEL, n2s(z.highVel));
     stream->writeTextElement(XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN, n2s(z.velLimitMin));
     stream->writeTextElement(XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX, n2s(z.velLimitMax));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_PITCH_DOWN_MAX, n2s(z.pitchDownMax));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_PITCH_UP_MAX, n2s(z.pitchUpMax));
     stream->writeEndElement();
 
     // passAllCC
@@ -169,9 +179,13 @@ void KonfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
     stream->writeTextElement(XML_MIDIFILTER_IGNORE_GLOBAL_TRANSPOSE,
                              bool2str(this->ignoreGlobalTranspose));
 
-    // CC list
+    // List of allowed CCs
     for (int i=0; i<this->passCC.count(); i++) {
         stream->writeTextElement(XML_MIDIFILTER_CC, n2s(this->passCC.at(i)));
+    }
+    // List of blocked CCs
+    foreach (int cc, blockCC) {
+        stream->writeTextElement(XML_MIDIFILTER_BLOCK_CC, n2s(cc));
     }
 
     // Input/output channels
@@ -184,6 +198,7 @@ void KonfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
 void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
 {
     this->passCC.clear();
+    this->blockCC.clear();
 
     while (r->readNextStartElement()) { // Filter properties
         if (r->name() == XML_MIDIFILTER_ZONE) {
@@ -203,6 +218,10 @@ void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
                     z.velLimitMin = r->readElementText().toInt();
                 } else if (r->name() == XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX) {
                     z.velLimitMax = r->readElementText().toInt();
+                } else if (r->name() == XML_MIDIFILTER_ZONE_PITCH_DOWN_MAX) {
+                    z.pitchDownMax = r->readElementText().toInt();
+                } else if (r->name() == XML_MIDIFILTER_ZONE_PITCH_UP_MAX) {
+                    z.pitchUpMax = r->readElementText().toInt();
                 } else {
                     r->skipCurrentElement();
                 }
@@ -218,6 +237,8 @@ void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
             this->ignoreGlobalTranspose = (r->readElementText() == "1");
         } else if (r->name() == XML_MIDIFILTER_CC) {
             this->passCC.append(r->readElementText().toInt());
+        } else if (r->name() == XML_MIDIFILTER_BLOCK_CC) {
+            this->blockCC.append(r->readElementText().toInt());
         } else if (r->name() == XML_MIDIFILTER_INCHAN) {
             this->inChan = r->readElementText().toInt();
         } else if (r->name() == XML_MIDIFILTER_OUTCHAN) {

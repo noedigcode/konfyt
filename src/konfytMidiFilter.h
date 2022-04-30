@@ -39,11 +39,14 @@
 #define XML_MIDIFILTER_ZONE_HIVEL "highVel"
 #define XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN "velLimitMin"
 #define XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX "velLimitMax"
+#define XML_MIDIFILTER_ZONE_PITCH_DOWN_MAX "pitchDownMax"
+#define XML_MIDIFILTER_ZONE_PITCH_UP_MAX "pitchUpMax"
 #define XML_MIDIFILTER_PASSALLCC "passAllCC"
 #define XML_MIDIFILTER_PASSPB "passPitchbend"
 #define XML_MIDIFILTER_PASSPROG "passProg"
 #define XML_MIDIFILTER_IGNORE_GLOBAL_TRANSPOSE "ignoreGlobalTranspose"
 #define XML_MIDIFILTER_CC "cc"
+#define XML_MIDIFILTER_BLOCK_CC "blockcc"
 #define XML_MIDIFILTER_INCHAN "inChan"
 #define XML_MIDIFILTER_OUTCHAN "outChan"
 
@@ -56,6 +59,8 @@ struct KonfytMidiFilterZone {
     int highVel = 127;
     int velLimitMin = 0;
     int velLimitMax = 127;
+    int pitchDownMax = MIDI_PITCHBEND_SIGNED_MIN;
+    int pitchUpMax = MIDI_PITCHBEND_SIGNED_MAX;
 };
 
 class KonfytMidiFilter
@@ -72,6 +77,7 @@ public:
     KonfytMidiEvent modify(const KonfytMidiEvent* ev);
 
     QList<int> passCC{64};
+    QList<int> blockCC;
     bool passAllCC = false;
     bool passProg = false;
     bool passPitchbend = true;
