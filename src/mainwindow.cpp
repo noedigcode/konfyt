@@ -359,6 +359,8 @@ void MainWindow::showMidiFilterEditor()
 
     ui->checkBox_midiFilter_ignoreGlobalTranspose->setChecked(f.ignoreGlobalTranspose);
 
+    ui->lineEdit_MidiFilter_velocityMap->setText(z.velocityMap.toString());
+
     // Midi in channel combo box
     if (f.inChan<0) {
         // <0 means all channels
@@ -4248,6 +4250,7 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     f.zone.velLimitMax = ui->spinBox_midiFilter_VelLimitMax->value();
     f.zone.pitchDownMax = ui->spinBox_midiFilter_pitchDownRange->value();
     f.zone.pitchUpMax = ui->spinBox_midiFilter_pitchUpRange->value();
+    f.zone.velocityMap.fromString(ui->lineEdit_MidiFilter_velocityMap->text());
     f.ignoreGlobalTranspose = ui->checkBox_midiFilter_ignoreGlobalTranspose->isChecked();
     if (ui->comboBox_midiFilter_inChannel->currentIndex() == 0) {
         // Index zero is all channels
@@ -6814,4 +6817,11 @@ void MainWindow::on_toolButton_MidiFilter_ccBlockedLast_clicked()
     QList<int> lst = textToIntList(ui->lineEdit_MidiFilter_ccBlocked->text());
     lst.append(midiFilterLastEvent.data1());
     ui->lineEdit_MidiFilter_ccBlocked->setText(intListToText(lst));
+}
+
+void MainWindow::on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &text)
+{
+    KonfytMidiMapping m;
+    m.fromString(text);
+    ui->midiFilter_velocityMapGraph->setMapping(m);
 }

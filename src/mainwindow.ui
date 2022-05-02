@@ -3858,7 +3858,7 @@ QSpinBox {
                         <x>0</x>
                         <y>0</y>
                         <width>360</width>
-                        <height>395</height>
+                        <height>453</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -4428,6 +4428,111 @@ border-bottom-left-radius: 0;</string>
                           <widget class="QLabel" name="label_19">
                            <property name="text">
                             <string>To</string>
+                           </property>
+                          </widget>
+                         </item>
+                        </layout>
+                       </item>
+                       <item>
+                        <layout class="QGridLayout" name="gridLayout_22">
+                         <item row="1" column="0">
+                          <widget class="QFrame" name="frame_57">
+                           <property name="minimumSize">
+                            <size>
+                             <width>0</width>
+                             <height>26</height>
+                            </size>
+                           </property>
+                           <property name="maximumSize">
+                            <size>
+                             <width>16777215</width>
+                             <height>26</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true"/>
+                           </property>
+                           <property name="frameShape">
+                            <enum>QFrame::StyledPanel</enum>
+                           </property>
+                           <property name="frameShadow">
+                            <enum>QFrame::Raised</enum>
+                           </property>
+                           <property name="buttonFrame" stdset="0">
+                            <bool>true</bool>
+                           </property>
+                           <layout class="QHBoxLayout" name="horizontalLayout_35">
+                            <property name="spacing">
+                             <number>1</number>
+                            </property>
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
+                            <item>
+                             <widget class="QLineEdit" name="lineEdit_MidiFilter_velocityMap">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>0</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>16777215</width>
+                                <height>16777215</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                              </property>
+                              <property name="text">
+                               <string/>
+                              </property>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                         </item>
+                         <item row="0" column="0">
+                          <widget class="QLabel" name="label_45">
+                           <property name="text">
+                            <string>Velocity Map</string>
+                           </property>
+                          </widget>
+                         </item>
+                         <item row="0" column="1" rowspan="2">
+                          <widget class="MidiMapGraphWidget" name="midiFilter_velocityMapGraph" native="true">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="minimumSize">
+                            <size>
+                             <width>50</width>
+                             <height>50</height>
+                            </size>
+                           </property>
+                           <property name="styleSheet">
+                            <string notr="true">background: rgb(40,40,40);
+border: 1px solid white;</string>
                            </property>
                           </widget>
                          </item>
@@ -10035,6 +10140,14 @@ border-bottom-left-radius: 0;
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>MidiMapGraphWidget</class>
+   <extends>QWidget</extends>
+   <header>midiMapGraphWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../images.qrc"/>
  </resources>

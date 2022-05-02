@@ -41,6 +41,7 @@
 #define XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX "velLimitMax"
 #define XML_MIDIFILTER_ZONE_PITCH_DOWN_MAX "pitchDownMax"
 #define XML_MIDIFILTER_ZONE_PITCH_UP_MAX "pitchUpMax"
+#define XML_MIDIFILTER_ZONE_VELOCITY_MAP "velocityMap"
 #define XML_MIDIFILTER_PASSALLCC "passAllCC"
 #define XML_MIDIFILTER_PASSPB "passPitchbend"
 #define XML_MIDIFILTER_PASSPROG "passProg"
@@ -50,6 +51,18 @@
 #define XML_MIDIFILTER_INCHAN "inChan"
 #define XML_MIDIFILTER_OUTCHAN "outChan"
 
+struct KonfytMidiMapping {
+    QList<int> inNodes;
+    QList<int> outNodes;
+    int map(int inValue);
+    KonfytMidiMapping();
+    void update();
+    int clamp(int value, int min, int max);
+    void fromString(QString s);
+    QString toString();
+private:
+    int mMap[128];
+};
 
 struct KonfytMidiFilterZone {
     int lowNote = 0;
@@ -61,6 +74,7 @@ struct KonfytMidiFilterZone {
     int velLimitMax = 127;
     int pitchDownMax = MIDI_PITCHBEND_SIGNED_MIN;
     int pitchUpMax = MIDI_PITCHBEND_SIGNED_MAX;
+    KonfytMidiMapping velocityMap;
 };
 
 class KonfytMidiFilter
@@ -87,6 +101,8 @@ public:
 
     void writeToXMLStream(QXmlStreamWriter* stream);
     void readFromXMLStream(QXmlStreamReader *r);
+
+    void deprecatedVelocityToMap();
 };
 
 #endif // KONFYT_MIDI_FILTER_H

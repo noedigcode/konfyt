@@ -21,6 +21,8 @@
 
 #include "konfytMidiFilter.h"
 
+#include <QRegularExpression>
+
 void KonfytMidiFilter::setPassAll()
 {
     this->passAllCC = true;
@@ -89,7 +91,7 @@ bool KonfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
         if ( (ev->note() >= zone.lowNote) && (ev->note() <= zone.highNote) ) {
             // If NoteOn, check velocity
             if (ev->type() == MIDI_EVENT_TYPE_NOTEON) {
-                if ( (ev->velocity() >= zone.lowVel) && (ev->velocity() <= zone.highVel) ) {
+                if (zone.velocityMap.map(ev->velocity()) > 0) {
                     // Check if note will still be valid after addition
                     int note = ev->note() + zone.add;
                     if ( (note <= 127) && (note >= 0) ) {
@@ -125,14 +127,9 @@ KonfytMidiEvent KonfytMidiFilter::modify(const KonfytMidiEvent* ev)
     if ( (r.type() == MIDI_EVENT_TYPE_NOTEON) || (r.type() == MIDI_EVENT_TYPE_NOTEOFF) ) {
         // Modify based on addition
         r.setNote( r.note() + zone.add );
-        // Limit velocity
+        // Velocity map
         if (r.type() == MIDI_EVENT_TYPE_NOTEON) {
-            if (r.velocity() < zone.velLimitMin) {
-                r.setVelocity( zone.velLimitMin );
-            }
-            if (r.velocity() > zone.velLimitMax) {
-                r.setVelocity( zone.velLimitMax );
-            }
+            r.setVelocity(zone.velocityMap.map(r.velocity()));
         }
     } else if (r.type() == MIDI_EVENT_TYPE_PITCHBEND) {
         float in = r.pitchbendValueSigned();
@@ -160,6 +157,7 @@ void KonfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
     stream->writeTextElement(XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX, n2s(z.velLimitMax));
     stream->writeTextElement(XML_MIDIFILTER_ZONE_PITCH_DOWN_MAX, n2s(z.pitchDownMax));
     stream->writeTextElement(XML_MIDIFILTER_ZONE_PITCH_UP_MAX, n2s(z.pitchUpMax));
+    stream->writeTextElement(XML_MIDIFILTER_ZONE_VELOCITY_MAP, z.velocityMap.toString());
     stream->writeEndElement();
 
     // passAllCC
@@ -203,6 +201,7 @@ void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
     while (r->readNextStartElement()) { // Filter properties
         if (r->name() == XML_MIDIFILTER_ZONE) {
             KonfytMidiFilterZone z;
+            bool gotMap = false;
             while (r->readNextStartElement()) { // zone properties
                 if (r->name() == XML_MIDIFILTER_ZONE_LOWNOTE) {
                     z.lowNote = r->readElementText().toInt();
@@ -222,11 +221,19 @@ void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
                     z.pitchDownMax = r->readElementText().toInt();
                 } else if (r->name() == XML_MIDIFILTER_ZONE_PITCH_UP_MAX) {
                     z.pitchUpMax = r->readElementText().toInt();
+                } else if (r->name() == XML_MIDIFILTER_ZONE_VELOCITY_MAP) {
+                    gotMap = true;
+                    z.velocityMap.fromString(r->readElementText());
                 } else {
                     r->skipCurrentElement();
                 }
             } // end zone while
             this->setZone(z);
+            if (!gotMap) {
+                // No velocity map loaded. This is probably an old project file.
+                // Convert the old velocity min/max and limits to a map.
+                deprecatedVelocityToMap();
+            }
         } else if (r->name() == XML_MIDIFILTER_PASSALLCC) {
             this->passAllCC = (r->readElementText() == "1");
         } else if (r->name() == XML_MIDIFILTER_PASSPB) {
@@ -248,3 +255,135 @@ void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
         }
     } // end filter while
 }
+
+/* Translate the old deprecated velocity min/max and limits to a velocity map. */
+void KonfytMidiFilter::deprecatedVelocityToMap()
+{
+    zone.velocityMap.inNodes.clear();
+    zone.velocityMap.outNodes.clear();
+
+    if (zone.lowVel > 0) {
+        zone.velocityMap.inNodes.append(zone.lowVel - 1);
+        zone.velocityMap.outNodes.append(0);
+    }
+    zone.velocityMap.inNodes.append(zone.lowVel);
+    zone.velocityMap.outNodes.append(zone.lowVel);
+
+    zone.velocityMap.inNodes.append(zone.highVel);
+    zone.velocityMap.outNodes.append(zone.highVel);
+    if (zone.highVel < 127) {
+        zone.velocityMap.inNodes.append(zone.highVel + 1);
+        zone.velocityMap.outNodes.append(0);
+    }
+
+    if (zone.velLimitMin > zone.lowVel) {
+        for (int i=0; i < zone.velocityMap.inNodes.count(); i++) {
+            if (zone.velocityMap.inNodes[i] == zone.lowVel) {
+                zone.velocityMap.outNodes[i] = zone.velLimitMin;
+                zone.velocityMap.inNodes.insert(i+1, zone.velLimitMin);
+                zone.velocityMap.outNodes.insert(i+1, zone.velLimitMin);
+                break;
+            }
+        }
+    }
+
+    if (zone.velLimitMax < zone.highVel) {
+        for (int i=0; i < zone.velocityMap.inNodes.count(); i++) {
+            if (zone.velocityMap.inNodes[i] == zone.highVel) {
+                zone.velocityMap.outNodes[i] = zone.velLimitMax;
+                zone.velocityMap.inNodes.insert(i, zone.velLimitMax);
+                zone.velocityMap.outNodes.insert(i, zone.velLimitMax);
+                break;
+            }
+        }
+    }
+}
+
+int KonfytMidiMapping::map(int inValue)
+{
+    if ((inValue < 0) || (inValue > 127)) {
+        return 0;
+    }
+    return mMap[inValue];
+}
+
+KonfytMidiMapping::KonfytMidiMapping()
+{
+    inNodes << 0 << 127;
+    outNodes << 0 << 127;
+    update();
+}
+
+void KonfytMidiMapping::update()
+{
+    int lastin = 0;
+    int lastout = outNodes.value(0);
+    int mapi = 0;
+    for (int i = 0; i < inNodes.count(); i++) {
+
+        int in = clamp(inNodes.value(i), 0, 127);
+        int out = clamp(outNodes.value(i), 0, 127);
+
+        float inrange = clamp(in - lastin, 1, 127);
+
+        for (; mapi <= in; mapi++) {
+
+            mMap[mapi] = (mapi - lastin)/inrange * (out - lastout) + lastout;
+        }
+
+        lastin = in;
+        lastout = out;
+    }
+    for (; mapi < 128; mapi++) {
+        mMap[mapi] = lastout;
+    }
+}
+
+int KonfytMidiMapping::clamp(int value, int min, int max)
+{
+    return qMax(min, qMin(max, value));
+}
+
+void KonfytMidiMapping::fromString(QString s)
+{
+    // Decode string in the form [i1, i2, ... in; o1, o2, ... on]
+    // Where i1 to in and o1 to on are integers,
+    // "[" and "]" are optional,
+    // Commas and spaces are optional in that either commas, spaces, or both
+    // may be used. Only the ";" is required.
+
+    // Remove everything before and including "["
+    s.remove(QRegularExpression(".*\\["));
+    // Remove everything after and including "]"
+    s.remove(QRegularExpression("\\].*"));
+    // Input and output terms are separated with ";"
+    QStringList terms = s.split(";");    // Replace commas with spaces and simplify
+    QStringList in = terms.value(0).replace(",", " ").simplified().split(" ");
+    QStringList out = terms.value(1).replace(",", " ").simplified().split(" ");
+    inNodes.clear();
+    foreach (QString t, in) {
+        inNodes.append(t.toInt());
+    }
+    outNodes.clear();
+    foreach (QString t, out) {
+        outNodes.append(t.toInt());
+    }
+    update();
+}
+
+QString KonfytMidiMapping::toString()
+{
+    QString s1;
+    foreach (int i, inNodes) {
+        if (!s1.isEmpty()) { s1 += " "; }
+        s1.append(QString::number(i));
+    }
+    QString s2;
+    foreach (int i, outNodes) {
+        if (!s2.isEmpty()) { s2 += " "; }
+        s2.append(QString::number(i));
+    }
+
+    return QString("%1; %2\n").arg(s1).arg(s2);
+}
+

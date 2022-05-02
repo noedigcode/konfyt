@@ -41,6 +41,7 @@ SOURCES += src/main.cpp\
     src/konfytBaseSoundEngine.cpp \
     src/konfytLscpEngine.cpp \
     src/midiEventListWidgetAdapter.cpp \
+    src/midiMapGraphWidget.cpp \
     src/patchListWidgetAdapter.cpp \
     src/remotescanner.cpp
 
@@ -70,6 +71,7 @@ HEADERS  += src/mainwindow.h \
     src/konfytBaseSoundEngine.h \
     src/konfytLscpEngine.h \
     src/midiEventListWidgetAdapter.h \
+    src/midiMapGraphWidget.h \
     src/patchListWidgetAdapter.h \
     src/remotescanner.h \
     src/ringbufferqmutex.h

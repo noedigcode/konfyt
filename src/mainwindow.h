@@ -914,6 +914,7 @@ private slots:
     void on_toolButton_MidiFilter_pitchUpLast_clicked();
     void on_toolButton_MidiFilter_ccAllowedLast_clicked();
     void on_toolButton_MidiFilter_ccBlockedLast_clicked();
+    void on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &text);
 };
 
 #endif // MAINWINDOW_H
