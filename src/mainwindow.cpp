@@ -54,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupConnectionsPage();
     setupTriggersPage();
     setupMidiSendListEditor();
+    setupMidiMapPresetMenu();
     setupKeyboardShortcuts();
     setupGuiDefaults();
     setupExternalAppsMenu();
@@ -328,6 +329,46 @@ QString MainWindow::intListToText(QList<int> lst)
         ret += QString::number(i);
     }
     return ret;
+}
+
+void MainWindow::setupMidiMapPresetMenu()
+{
+    connect(&midiMapPresetMenu, &QMenu::triggered,
+            this, &MainWindow::onMidiMapPresetMenuTrigger);
+
+    addMidiMapPresetMenuAction("Normal", "0 127; 0 127");
+    addMidiMapPresetMenuAction("Slow",
+        "0 5 15 30 49 72 98 127; 0 24 44 62 79 95 111 127");
+    addMidiMapPresetMenuAction("Medium Slow",
+        "0 5 15 30 49 72 98 127; 0 13 29 46 65 85 106 127");
+    addMidiMapPresetMenuAction("Medium Fast",
+        "0 5 15 30 49 72 98 127; 0 1 5 15 30 54 86 127");
+    addMidiMapPresetMenuAction("Fast",
+        "0 5 15 30 49 72 98 127; 0 0 2 7 19 40 75 127");
+}
+
+QAction *MainWindow::addMidiMapPresetMenuAction(QString text, QString data)
+{
+    QAction* a = midiMapPresetMenu.addAction(text);
+    a->setData(data);
+    return a;
+}
+
+void MainWindow::popupMidiMapPresetMenu(QWidget *requester)
+{
+    QMenu* menu = &midiMapPresetMenu; // Shorthand
+    midiMapPresetMenuRequester = requester;
+
+    // TODO build load saved mappings from file and add to menu
+
+    menu->popup(QCursor::pos());
+}
+
+void MainWindow::onMidiMapPresetMenuTrigger(QAction *action)
+{
+    if (midiMapPresetMenuRequester == ui->toolButton_MidiFilter_velocityMap_presets) {
+        ui->lineEdit_MidiFilter_velocityMap->setText(action->data().toString());
+    }
 }
 
 void MainWindow::showMidiFilterEditor()
@@ -6791,4 +6832,9 @@ void MainWindow::on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &t
     KonfytMidiMapping m;
     m.fromString(text);
     ui->midiFilter_velocityMapGraph->setMapping(m);
+}
+
+void MainWindow::on_toolButton_MidiFilter_velocityMap_presets_clicked()
+{
+    popupMidiMapPresetMenu(ui->toolButton_MidiFilter_velocityMap_presets);
 }

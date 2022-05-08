@@ -595,7 +595,15 @@ private:
     void updateMidiFilterEditorLastRx(KonfytMidiEvent ev);
     QList<int> textToIntList(QString text);
     QString intListToText(QList<int> lst);
+
+    QMenu midiMapPresetMenu;
+    QWidget* midiMapPresetMenuRequester = nullptr;
+    void setupMidiMapPresetMenu();
+    QAction* addMidiMapPresetMenuAction(QString text, QString data);
+    void popupMidiMapPresetMenu(QWidget* requester);
+
 private slots:
+    void onMidiMapPresetMenuTrigger(QAction* action);
     void on_pushButton_midiFilter_Cancel_clicked();
     void on_pushButton_midiFilter_Apply_clicked();
     void on_toolButton_MidiFilter_lowNote_clicked();
@@ -910,6 +918,7 @@ private slots:
     void on_toolButton_MidiFilter_ccAllowedLast_clicked();
     void on_toolButton_MidiFilter_ccBlockedLast_clicked();
     void on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &text);
+    void on_toolButton_MidiFilter_velocityMap_presets_clicked();
 };
 
 #endif // MAINWINDOW_H
