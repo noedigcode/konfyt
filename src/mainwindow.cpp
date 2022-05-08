@@ -346,10 +346,6 @@ void MainWindow::showMidiFilterEditor()
     ui->spinBox_midiFilter_LowNote->setValue(z.lowNote);
     ui->spinBox_midiFilter_HighNote->setValue(z.highNote);
     ui->spinBox_midiFilter_Add->setValue(z.add);
-    ui->spinBox_midiFilter_LowVel->setValue(z.lowVel);
-    ui->spinBox_midiFilter_HighVel->setValue(z.highVel);
-    ui->spinBox_midiFilter_VelLimitMin->setValue(z.velLimitMin);
-    ui->spinBox_midiFilter_VelLimitMax->setValue(z.velLimitMax);
 
     ui->spinBox_midiFilter_pitchDownRange->setValue(z.pitchDownMax);
     on_spinBox_midiFilter_pitchDownRange_valueChanged(z.pitchDownMax);
@@ -4244,10 +4240,6 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     f.zone.lowNote = ui->spinBox_midiFilter_LowNote->value();
     f.zone.highNote = ui->spinBox_midiFilter_HighNote->value();
     f.zone.add = ui->spinBox_midiFilter_Add->value();
-    f.zone.lowVel = ui->spinBox_midiFilter_LowVel->value();
-    f.zone.highVel = ui->spinBox_midiFilter_HighVel->value();
-    f.zone.velLimitMin = ui->spinBox_midiFilter_VelLimitMin->value();
-    f.zone.velLimitMax = ui->spinBox_midiFilter_VelLimitMax->value();
     f.zone.pitchDownMax = ui->spinBox_midiFilter_pitchDownRange->value();
     f.zone.pitchUpMax = ui->spinBox_midiFilter_pitchUpRange->value();
     f.zone.velocityMap.fromString(ui->lineEdit_MidiFilter_velocityMap->text());
@@ -4291,11 +4283,6 @@ void MainWindow::on_toolButton_MidiFilter_lowNote_clicked()
 void MainWindow::on_toolButton_MidiFilter_HighNote_clicked()
 {
     ui->spinBox_midiFilter_HighNote->setValue(midiFilterLastEvent.data1());
-}
-
-void MainWindow::on_toolButton_MidiFilter_Add_clicked()
-{
-    ui->spinBox_midiFilter_Add->setValue(midiFilterLastEvent.data1());
 }
 
 void MainWindow::on_toolButton_MidiFilter_Add_Plus12_clicked()
@@ -4401,16 +4388,6 @@ void MainWindow::on_treeWidget_Library_itemDoubleClicked(
         addSfzToCurrentPatch( librarySelectedSfz()->filename );
 
     }
-}
-
-void MainWindow::on_toolButton_MidiFilter_lowVel_clicked()
-{
-    ui->spinBox_midiFilter_LowVel->setValue( midiFilterLastEvent.data2() );
-}
-
-void MainWindow::on_toolButton_MidiFilter_HighVel_clicked()
-{
-    ui->spinBox_midiFilter_HighVel->setValue( midiFilterLastEvent.data2() );
 }
 
 /* Change library/filesystem view tab. */
@@ -6170,21 +6147,11 @@ void MainWindow::setupSettings()
     }
 }
 
-void MainWindow::on_toolButton_MidiFilter_VelLimitMin_last_clicked()
-{
-    ui->spinBox_midiFilter_VelLimitMin->setValue( midiFilterLastEvent.data2() );
-}
-
 /* User right-clicked on panic button. */
 void MainWindow::on_pushButton_Panic_customContextMenuRequested(const QPoint& /*pos*/)
 {
     // Momentary panic
     on_actionPanic_triggered();
-}
-
-void MainWindow::on_toolButton_MidiFilter_VelLimitMax_last_clicked()
-{
-    ui->spinBox_midiFilter_VelLimitMax->setValue( midiFilterLastEvent.data2() );
 }
 
 void MainWindow::setupMidiSendListEditor()

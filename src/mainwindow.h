@@ -600,14 +600,9 @@ private slots:
     void on_pushButton_midiFilter_Apply_clicked();
     void on_toolButton_MidiFilter_lowNote_clicked();
     void on_toolButton_MidiFilter_HighNote_clicked();
-    void on_toolButton_MidiFilter_Add_clicked();
     void on_toolButton_MidiFilter_Add_Plus12_clicked();
     void on_toolButton_MidiFilter_Add_Minus12_clicked();
-    void on_toolButton_MidiFilter_lowVel_clicked();
-    void on_toolButton_MidiFilter_HighVel_clicked();
     void on_toolButton_MidiFilter_inChan_last_clicked();
-    void on_toolButton_MidiFilter_VelLimitMin_last_clicked();
-    void on_toolButton_MidiFilter_VelLimitMax_last_clicked();
 
     // ========================================================================
     // MIDI send list
