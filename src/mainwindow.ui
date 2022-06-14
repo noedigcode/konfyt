@@ -1089,7 +1089,7 @@ border-bottom-left-radius: 0;</string>
         </size>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="pageLibrary">
         <layout class="QGridLayout" name="gridLayout_6">
@@ -2183,7 +2183,7 @@ border-color: rgb(40, 40, 40);
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>7</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <property name="konfytGradient" stdset="0">

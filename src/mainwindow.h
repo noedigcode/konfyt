@@ -593,7 +593,7 @@ private:
     void showMidiFilterEditor();
     KonfytMidiEvent midiFilterLastEvent;
     void updateMidiFilterEditorLastRx(KonfytMidiEvent ev);
-    QList<int> textToIntList(QString text);
+    QList<int> textToUint7List(QString text);
     QString intListToText(QList<int> lst);
 
     QMenu midiMapPresetMenu;

@@ -309,12 +309,22 @@ void MainWindow::updateMidiFilterEditorLastRx(KonfytMidiEvent ev)
     ui->lineEdit_MidiFilter_Last->setText(ev.toString());
 }
 
-QList<int> MainWindow::textToIntList(QString text)
+QList<int> MainWindow::textToUint7List(QString text)
 {
     QList<int> ret;
+    // Values may be separated by space, comma or semicolon
+    text.replace(",", " ");
+    text.replace(";", " ");
+    // Simplify to remove leading, trailing and double spaces to prevent empty values
+    text = text.simplified();
     QStringList words = text.split(" ");
     foreach (QString w, words) {
-        ret.append(w.toInt());
+        bool ok = false;
+        int val = w.toInt(&ok);
+        if (!ok) { continue; }
+        if ((val < 0) || (val > 127)) { continue; }
+        if (ret.contains(val)) { continue; }
+        ret.append(val);
     }
     return ret;
 }
@@ -336,15 +346,16 @@ void MainWindow::setupMidiMapPresetMenu()
     connect(&midiMapPresetMenu, &QMenu::triggered,
             this, &MainWindow::onMidiMapPresetMenuTrigger);
 
-    addMidiMapPresetMenuAction("Normal", "0 127; 0 127");
     addMidiMapPresetMenuAction("Slow",
         "0 5 15 30 49 72 98 127; 0 24 44 62 79 95 111 127");
     addMidiMapPresetMenuAction("Medium Slow",
         "0 5 15 30 49 72 98 127; 0 13 29 46 65 85 106 127");
+    addMidiMapPresetMenuAction("Normal", "0 127; 0 127");
     addMidiMapPresetMenuAction("Medium Fast",
         "0 5 15 30 49 72 98 127; 0 1 5 15 30 54 86 127");
     addMidiMapPresetMenuAction("Fast",
         "0 5 15 30 49 72 98 127; 0 0 2 7 19 40 75 127");
+    midiMapPresetMenu.addSeparator();
 }
 
 QAction *MainWindow::addMidiMapPresetMenuAction(QString text, QString data)
@@ -4295,8 +4306,8 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     f.passPitchbend = ui->checkBox_midiFilter_pitchbend->isChecked();
     f.passProg = ui->checkBox_midiFilter_Prog->isChecked();
 
-    f.passCC = textToIntList(ui->lineEdit_MidiFilter_ccAllowed->text());
-    f.blockCC = textToIntList(ui->lineEdit_MidiFilter_ccBlocked->text());
+    f.passCC = textToUint7List(ui->lineEdit_MidiFilter_ccAllowed->text());
+    f.blockCC = textToUint7List(ui->lineEdit_MidiFilter_ccBlocked->text());
 
     if (midiFilterEditType == MidiFilterEditPort) {
         // Update filter in project
@@ -6815,14 +6826,14 @@ void MainWindow::on_toolButton_MidiFilter_pitchUpLast_clicked()
 
 void MainWindow::on_toolButton_MidiFilter_ccAllowedLast_clicked()
 {
-    QList<int> lst = textToIntList(ui->lineEdit_MidiFilter_ccAllowed->text());
+    QList<int> lst = textToUint7List(ui->lineEdit_MidiFilter_ccAllowed->text());
     lst.append(midiFilterLastEvent.data1());
     ui->lineEdit_MidiFilter_ccAllowed->setText(intListToText(lst));
 }
 
 void MainWindow::on_toolButton_MidiFilter_ccBlockedLast_clicked()
 {
-    QList<int> lst = textToIntList(ui->lineEdit_MidiFilter_ccBlocked->text());
+    QList<int> lst = textToUint7List(ui->lineEdit_MidiFilter_ccBlocked->text());
     lst.append(midiFilterLastEvent.data1());
     ui->lineEdit_MidiFilter_ccBlocked->setText(intListToText(lst));
 }
