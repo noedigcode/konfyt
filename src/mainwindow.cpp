@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupConnectionsPage();
     setupTriggersPage();
     setupMidiSendListEditor();
-    setupMidiMapPresetMenu();
+    setupMidiMapPresets();
     setupKeyboardShortcuts();
     setupGuiDefaults();
     setupExternalAppsMenu();
@@ -309,7 +309,7 @@ void MainWindow::updateMidiFilterEditorLastRx(KonfytMidiEvent ev)
     ui->lineEdit_MidiFilter_Last->setText(ev.toString());
 }
 
-QList<int> MainWindow::textToUint7List(QString text)
+QList<int> MainWindow::textToNonRepeatedUint7List(QString text)
 {
     QList<int> ret;
     // Values may be separated by space, comma or semicolon
@@ -341,28 +341,69 @@ QString MainWindow::intListToText(QList<int> lst)
     return ret;
 }
 
-void MainWindow::setupMidiMapPresetMenu()
+void MainWindow::setupMidiMapPresets()
 {
+    KONFYT_ASSERT(!settingsDir.isEmpty());
+
+    midiMapPresetsFilename = QString("%1/%2").arg(settingsDir)
+            .arg(MIDI_MAP_PRESETS_FILE);
+
+    // Setup MIDI map presets menu
+
     connect(&midiMapPresetMenu, &QMenu::triggered,
             this, &MainWindow::onMidiMapPresetMenuTrigger);
 
-    addMidiMapPresetMenuAction("Slow",
+    // Add factory presets to menu
+
+    addMidiMapFactoryPresetMenuAction("Slow",
         "0 5 15 30 49 72 98 127; 0 24 44 62 79 95 111 127");
-    addMidiMapPresetMenuAction("Medium Slow",
+    addMidiMapFactoryPresetMenuAction("Medium Slow",
         "0 5 15 30 49 72 98 127; 0 13 29 46 65 85 106 127");
-    addMidiMapPresetMenuAction("Normal", "0 127; 0 127");
-    addMidiMapPresetMenuAction("Medium Fast",
+    addMidiMapFactoryPresetMenuAction("Normal", "0 127; 0 127");
+    addMidiMapFactoryPresetMenuAction("Medium Fast",
         "0 5 15 30 49 72 98 127; 0 1 5 15 30 54 86 127");
-    addMidiMapPresetMenuAction("Fast",
+    addMidiMapFactoryPresetMenuAction("Fast",
         "0 5 15 30 49 72 98 127; 0 0 2 7 19 40 75 127");
-    midiMapPresetMenu.addSeparator();
+
+    // Load user presets from file and add to menu
+
+    loadMidiMapPresets();
+    foreach (MidiMapPreset* preset, midiMapUserPresets) {
+        addMidiMapUserPresetMenuAction(preset);
+    }
 }
 
-QAction *MainWindow::addMidiMapPresetMenuAction(QString text, QString data)
+void MainWindow::addMidiMapFactoryPresetMenuAction(QString text, QString data)
 {
-    QAction* a = midiMapPresetMenu.addAction(text);
-    a->setData(data);
-    return a;
+    QWidgetAction* action = new QWidgetAction(this);
+    MenuEntryWidget* item = new MenuEntryWidget(text);
+    action->setDefaultWidget(item);
+    action->setData(data);
+    midiMapPresetMenu.addAction(action);
+}
+
+void MainWindow::addMidiMapUserPresetMenuAction(MidiMapPreset *preset)
+{
+    QWidgetAction* action = new QWidgetAction(this);
+    MenuEntryWidget* item = new MenuEntryWidget(preset->name, true);
+    action->setDefaultWidget(item);
+    action->setData(preset->data);
+    connect(item, &MenuEntryWidget::removeButtonClicked, this, [=]()
+    {
+        QMessageBox msgbox;
+        msgbox.setText("Are you sure you want to delete the MIDI map preset?");
+        msgbox.setInformativeText(preset->name);
+        msgbox.setIcon(QMessageBox::Question);
+        msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        int ret = msgbox.exec();
+        if (ret == QMessageBox::Yes) {
+            // Remove preset
+            midiMapPresetMenu.removeAction(action);
+            midiMapUserPresets.removeAll(preset);
+            saveMidiMapPresets();
+        }
+    });
+    midiMapPresetMenu.addAction(action);
 }
 
 void MainWindow::popupMidiMapPresetMenu(QWidget *requester)
@@ -370,9 +411,82 @@ void MainWindow::popupMidiMapPresetMenu(QWidget *requester)
     QMenu* menu = &midiMapPresetMenu; // Shorthand
     midiMapPresetMenuRequester = requester;
 
-    // TODO build load saved mappings from file and add to menu
-
     menu->popup(QCursor::pos());
+}
+
+void MainWindow::saveMidiMapPresets()
+{
+    QString filename = midiMapPresetsFilename;
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        print("Failed to open MIDI map presets file for writing: " + filename);
+        return;
+    }
+
+    QXmlStreamWriter stream(&file);
+    stream.setAutoFormatting(true);
+    stream.writeStartDocument();
+
+    stream.writeComment("This is a Konfyt MIDI map presets file.");
+
+    stream.writeStartElement(XML_MIDI_MAP_PRESETS);
+
+    foreach (MidiMapPreset* preset, midiMapUserPresets) {
+        stream.writeStartElement(XML_MIDI_MAP_PRESET);
+        stream.writeTextElement(XML_MIDI_MAP_PRESET_NAME, preset->name);
+        stream.writeTextElement(XML_MIDI_MAP_PRESET_DATA, preset->data);
+        stream.writeEndElement();
+    }
+
+    stream.writeEndElement(); // midiMapPresets
+
+    stream.writeEndDocument();
+    file.close();
+
+    print("Saved MIDI map presets.");
+}
+
+void MainWindow::loadMidiMapPresets()
+{
+    QString filename = midiMapPresetsFilename;
+    QFile file(filename);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        print("Failed to open MIDI map presets file for reading: " + filename);
+        return;
+    }
+
+    QXmlStreamReader r(&file);
+    r.setNamespaceProcessing(false);
+
+    midiMapUserPresets.clear();
+
+    while (r.readNextStartElement()) {
+        if (r.name() == XML_MIDI_MAP_PRESETS) { // list of presets
+
+            while (r.readNextStartElement()) {
+                if (r.name() == XML_MIDI_MAP_PRESET) { // preset
+                    MidiMapPreset* preset = new MidiMapPreset();
+                    while (r.readNextStartElement()) {
+                        if (r.name() == XML_MIDI_MAP_PRESET_NAME) {
+                            preset->name = r.readElementText();
+                        } else if (r.name() == XML_MIDI_MAP_PRESET_DATA) {
+                            preset->data = r.readElementText();
+                        }
+                    }
+                    midiMapUserPresets.append(preset);
+                } else {
+                    r.skipCurrentElement();
+                }
+            }
+
+        } else {
+            r.skipCurrentElement();
+        }
+    }
+
+    file.close();
+
+    print(QString("Loaded %1 MIDI map presets.").arg(midiMapUserPresets.count()));
 }
 
 void MainWindow::onMidiMapPresetMenuTrigger(QAction *action)
@@ -489,8 +603,6 @@ bool MainWindow::loadSettingsFile(QString dir)
             r.skipCurrentElement();
         }
     }
-
-
 
     file.close();
     return true;
@@ -4306,8 +4418,8 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     f.passPitchbend = ui->checkBox_midiFilter_pitchbend->isChecked();
     f.passProg = ui->checkBox_midiFilter_Prog->isChecked();
 
-    f.passCC = textToUint7List(ui->lineEdit_MidiFilter_ccAllowed->text());
-    f.blockCC = textToUint7List(ui->lineEdit_MidiFilter_ccBlocked->text());
+    f.passCC = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccAllowed->text());
+    f.blockCC = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccBlocked->text());
 
     if (midiFilterEditType == MidiFilterEditPort) {
         // Update filter in project
@@ -6485,13 +6597,13 @@ void MainWindow::addSavedMidiSendItem(MidiSendItem item)
 
 void MainWindow::loadSavedMidiSendItems(QString dirname)
 {
-    print("Scanning for saved MIDI Send Items...");
+    print("Scanning for MIDI Send Message presets...");
     QStringList files = scanDirForFiles(dirname);
 
     foreach (QString filename, files) {
         QFile file(filename);
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            print("Failed to open MIDI Send Item file: " + filename);
+            print("Failed to open MIDI Send preset file: " + filename);
             continue;
         }
         QXmlStreamReader r(&file);
@@ -6499,14 +6611,14 @@ void MainWindow::loadSavedMidiSendItems(QString dirname)
         MidiSendItem item;
         QString error = item.readFromXmlStream(&r);
         if (!error.isEmpty()) {
-            print("Errors for MIDI Send Item File " + filename + ":");
+            print("Errors for MIDI Send preset file " + filename + ":");
             print(error);
         }
         item.filename = filename;
         addSavedMidiSendItem(item);
     }
 
-    print(QString("Saved MIDI send items loaded: %1 items.")
+    print(QString("MIDI Send Message presets loaded: %1 presets.")
           .arg(savedMidiSendItems.count()));
 }
 
@@ -6514,7 +6626,7 @@ bool MainWindow::saveMidiSendItemToFile(QString filename, MidiSendItem item)
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        print("Failed to open MIDI Send Item file for writing: " + filename);
+        print("Failed to open MIDI Send Message preset file for writing: " + filename);
         return false;
     }
 
@@ -6545,10 +6657,10 @@ void MainWindow::on_pushButton_savedMidiMsgs_save_clicked()
 
     // Save
     if (saveMidiSendItemToFile(filename, item)) {
-        print("Saved MIDI Send Event to file: " + filename);
+        print("Saved MIDI Send Message preset to file: " + filename);
         item.filename = filename;
     } else {
-        print("Failed to save MIDI Send event to file.");
+        print("Failed to save MIDI Send Message preset to file.");
     }
 
     // Add to GUI
@@ -6564,13 +6676,13 @@ void MainWindow::on_pushButton_savedMidiMsgs_remove_clicked()
     MidiSendItem item = savedMidiSendItems[index];
 
     if (item.filename.isEmpty()) {
-        print("Error removing saved MIDI send item: No filename associated with item.");
+        print("Error removing MIDI Send Message preset: No filename associated with item.");
         return;
     }
 
     // Ask whether user is sure
     QMessageBox msgbox;
-    msgbox.setText("Are you sure you want to delete the MIDI Send Event '" + item.toString() + "'?");
+    msgbox.setText("Are you sure you want to delete the MIDI Send Message preset '" + item.toString() + "'?");
     msgbox.setInformativeText(item.filename);
     msgbox.setIcon(QMessageBox::Question);
     msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
@@ -6579,12 +6691,12 @@ void MainWindow::on_pushButton_savedMidiMsgs_remove_clicked()
         QFile f(item.filename);
         bool removed = f.remove();
         if (removed) {
-            print("Removed MIDI Send Event file " + f.fileName());
+            print("Removed MIDI Send Message preset file " + f.fileName());
             // Remove from list and GUI
             delete selected;
             savedMidiSendItems.removeAt(index);
         } else {
-            print("Failed to remove MIDI Send Event file " + f.fileName());
+            print("Failed to remove MIDI Send Message preset file " + f.fileName());
         }
     }
 }
@@ -6826,14 +6938,14 @@ void MainWindow::on_toolButton_MidiFilter_pitchUpLast_clicked()
 
 void MainWindow::on_toolButton_MidiFilter_ccAllowedLast_clicked()
 {
-    QList<int> lst = textToUint7List(ui->lineEdit_MidiFilter_ccAllowed->text());
+    QList<int> lst = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccAllowed->text());
     lst.append(midiFilterLastEvent.data1());
     ui->lineEdit_MidiFilter_ccAllowed->setText(intListToText(lst));
 }
 
 void MainWindow::on_toolButton_MidiFilter_ccBlockedLast_clicked()
 {
-    QList<int> lst = textToUint7List(ui->lineEdit_MidiFilter_ccBlocked->text());
+    QList<int> lst = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccBlocked->text());
     lst.append(midiFilterLastEvent.data1());
     ui->lineEdit_MidiFilter_ccBlocked->setText(intListToText(lst));
 }
@@ -6849,3 +6961,20 @@ void MainWindow::on_toolButton_MidiFilter_velocityMap_presets_clicked()
 {
     popupMidiMapPresetMenu(ui->toolButton_MidiFilter_velocityMap_presets);
 }
+
+void MainWindow::on_toolButton_MidiFilter_velocityMap_save_clicked()
+{
+    QString name = QInputDialog::getText(this, "MIDI Map Preset",
+                                         "Preset Name");
+    if (name.isEmpty()) { return; }
+
+    MidiMapPreset* preset = new MidiMapPreset();
+    preset->name = name;
+    preset->data = ui->lineEdit_MidiFilter_velocityMap->text();
+
+    midiMapUserPresets.append(preset);
+    saveMidiMapPresets();
+    addMidiMapUserPresetMenuAction(preset);
+}
+
+

@@ -1903,7 +1903,7 @@ border-bottom-left-radius: 0;</string>
               <item>
                <widget class="QLabel" name="label_33">
                 <property name="text">
-                 <string>Saved MIDI Messages</string>
+                 <string>MIDI Message Presets</string>
                 </property>
                </widget>
               </item>
@@ -2183,7 +2183,7 @@ border-color: rgb(40, 40, 40);
          </size>
         </property>
         <property name="currentIndex">
-         <number>7</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <property name="konfytGradient" stdset="0">
@@ -6799,7 +6799,7 @@ border-bottom-right-radius: 0;</string>
 border-bottom-right-radius: 0;</string>
                            </property>
                            <property name="text">
-                            <string>Save to List</string>
+                            <string>Save Preset</string>
                            </property>
                            <property name="icon">
                             <iconset resource="../images.qrc">

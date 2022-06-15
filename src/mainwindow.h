@@ -25,7 +25,6 @@
 #include "aboutdialog.h"
 #include "consoledialog.h"
 #include "indicatorHandlers.h"
-#include "midiEventListWidgetAdapter.h"
 #include "konfytAudio.h"
 #include "konfytDatabase.h"
 #include "konfytDefines.h"
@@ -37,6 +36,8 @@
 #include "konfytPatchLayer.h"
 #include "konfytProcess.h"
 #include "konfytProject.h"
+#include "menuEntryWidget.h"
+#include "midiEventListWidgetAdapter.h"
 #include "patchListWidgetAdapter.h"
 
 #include <QAction>
@@ -58,15 +59,16 @@
 #include <QStyleFactory>
 #include <QTimer>
 #include <QTreeWidgetItem>
+#include <QWidgetAction>
 
 #include <iostream>
 
 
 #define APP_RESTART_CODE 1000
 
-#define SETTINGS_DIR ".konfyt"
 #define SETTINGS_FILE "konfyt.settings"
 #define DATABASE_FILE "konfyt.database"
+#define MIDI_MAP_PRESETS_FILE "konfytMidiMapPresets"
 
 #define SAVED_MIDI_SEND_ITEMS_DIR "savedMidiSendItems"
 
@@ -88,6 +90,11 @@
 #define XML_SETTINGS_PATCHESDIR "patchesDir"
 #define XML_SETTINGS_SFZDIR "sfzDir"
 #define XML_SETTINGS_FILEMAN "filemanager"
+
+#define XML_MIDI_MAP_PRESETS "midiMapPresets"
+#define XML_MIDI_MAP_PRESET "midiMapPreset"
+#define XML_MIDI_MAP_PRESET_NAME "name"
+#define XML_MIDI_MAP_PRESET_DATA "data"
 
 #define PTY_MIDI_CHANNEL "midiChannel"
 #define PTY_MIDI_IN_PORT "midiInPort"
@@ -593,14 +600,24 @@ private:
     void showMidiFilterEditor();
     KonfytMidiEvent midiFilterLastEvent;
     void updateMidiFilterEditorLastRx(KonfytMidiEvent ev);
-    QList<int> textToUint7List(QString text);
+    QList<int> textToNonRepeatedUint7List(QString text);
     QString intListToText(QList<int> lst);
 
+    // MIDI map presets
+    struct MidiMapPreset {
+        QString name = "Preset";
+        QString data;
+    };
+    QList<MidiMapPreset*> midiMapUserPresets;
     QMenu midiMapPresetMenu;
     QWidget* midiMapPresetMenuRequester = nullptr;
-    void setupMidiMapPresetMenu();
-    QAction* addMidiMapPresetMenuAction(QString text, QString data);
+    QString midiMapPresetsFilename;
+    void setupMidiMapPresets();
+    void addMidiMapFactoryPresetMenuAction(QString text, QString data);
+    void addMidiMapUserPresetMenuAction(MidiMapPreset* preset);
     void popupMidiMapPresetMenu(QWidget* requester);
+    void saveMidiMapPresets();
+    void loadMidiMapPresets();
 
 private slots:
     void onMidiMapPresetMenuTrigger(QAction* action);
@@ -655,7 +672,7 @@ private slots:
     void on_pushButton_midiSendList_sendSelected_clicked();
     void on_pushButton_midiSendList_sendAll_clicked();
 
-    // Saved MIDI send items
+    // Saved MIDI send items (presets)
 private:
     QString savedMidiListDir;
     QList<MidiSendItem> savedMidiSendItems;
@@ -919,6 +936,7 @@ private slots:
     void on_toolButton_MidiFilter_ccBlockedLast_clicked();
     void on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &text);
     void on_toolButton_MidiFilter_velocityMap_presets_clicked();
+    void on_toolButton_MidiFilter_velocityMap_save_clicked();
 };
 
 #endif // MAINWINDOW_H

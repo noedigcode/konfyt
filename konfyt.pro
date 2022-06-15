@@ -40,6 +40,7 @@ SOURCES += src/main.cpp\
     src/konfytBridgeEngine.cpp \
     src/konfytBaseSoundEngine.cpp \
     src/konfytLscpEngine.cpp \
+    src/menuEntryWidget.cpp \
     src/midiEventListWidgetAdapter.cpp \
     src/midiMapGraphWidget.cpp \
     src/patchListWidgetAdapter.cpp \
@@ -70,6 +71,7 @@ HEADERS  += src/mainwindow.h \
     src/konfytBridgeEngine.h \
     src/konfytBaseSoundEngine.h \
     src/konfytLscpEngine.h \
+    src/menuEntryWidget.h \
     src/midiEventListWidgetAdapter.h \
     src/midiMapGraphWidget.h \
     src/patchListWidgetAdapter.h \
