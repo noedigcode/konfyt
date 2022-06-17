@@ -390,13 +390,10 @@ void MainWindow::addMidiMapUserPresetMenuAction(MidiMapPreset *preset)
     action->setData(preset->data);
     connect(item, &MenuEntryWidget::removeButtonClicked, this, [=]()
     {
-        QMessageBox msgbox;
-        msgbox.setText("Are you sure you want to delete the MIDI map preset?");
-        msgbox.setInformativeText(preset->name);
-        msgbox.setIcon(QMessageBox::Question);
-        msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-        int ret = msgbox.exec();
-        if (ret == QMessageBox::Yes) {
+        int choice = msgBoxYesNo(
+                    "Are you sure you want to delete the MIDI map preset?",
+                    preset->name);
+        if (choice == QMessageBox::Yes) {
             // Remove preset
             midiMapPresetMenu.removeAction(action);
             midiMapUserPresets.removeAll(preset);
@@ -665,7 +662,7 @@ bool MainWindow::loadProjectFromFile(QString filename)
         return true;
     } else {
         print("Failed to load project from file: " + filename);
-        messageBox("Error loading project " + filename);
+        msgBox("Error loading project.", filename);
         return false;
     }
 }
@@ -1690,19 +1687,19 @@ KfSoundPtr MainWindow::librarySelectedSfz()
 bool MainWindow::isSfzSelectedInFilesystem()
 {
     QFileInfo info = fsMap.value(ui->treeWidget_filesystem->currentItem());
-    return fileIsSfzOrGig(info.filePath());
+    return fileExtensionIsSfzOrGig(info.filePath());
 }
 
 bool MainWindow::isPatchSelectedInFilesystem()
 {
     QFileInfo info = fsMap.value(ui->treeWidget_filesystem->currentItem());
-    return fileIsPatch(info.filePath());
+    return fileExtensionIsPatch(info.filePath());
 }
 
 bool MainWindow::isSoundfontSelectedInFilesystem()
 {
     QFileInfo info = fsMap.value(ui->treeWidget_filesystem->currentItem());
-    return fileIsSoundfont(info.filePath());
+    return fileExtensionIsSoundfont(info.filePath());
 }
 
 KfSoundPtr MainWindow::selectedSoundInLibOrFs()
@@ -1841,103 +1838,6 @@ void MainWindow::buildSfTree(KfDbTreeItemPtr dbTreeItem)
 void MainWindow::buildPatchTree(KfDbTreeItemPtr dbTreeItem)
 {
     buildLibraryTree(libraryPatchTree.rootTreeItem, dbTreeItem, &libraryPatchTree);
-}
-
-/* Determine if file suffix is as specified. The specified suffix should not
- * contain a leading dot. The suffix is checked by adding a dot.
- * E.g. pass wav as suffix, then example.wav will match but not example.awav. */
-bool MainWindow::fileSuffixIs(QString file, QString suffix)
-{
-    suffix.prepend('.');
-    suffix = suffix.toLower();
-    QString right = file.right(suffix.length()).toLower();
-    return  right == suffix;
-}
-
-/* Determine if specified file is a Konfyt patch file. */
-bool MainWindow::fileIsPatch(QString file)
-{
-    return fileSuffixIs(file, KONFYT_PATCH_SUFFIX);
-}
-
-bool MainWindow::fileIsSfzOrGig(QString file)
-{
-    return fileSuffixIs(file, "sfz") || fileSuffixIs(file, "gig");
-}
-
-bool MainWindow::fileIsSoundfont(QString file)
-{
-    return ( fileSuffixIs(file, "sf2") || fileSuffixIs(file, "sf3") );
-}
-
-/* Sets gain from a float value of 0 to 1.0.
- * Master gain is set if in normal mode, or preview gain if in preview mode.
- * Also updates the GUI slider and the appropriate sound engine. */
-void MainWindow::setMasterGainFloat(float gain)
-{
-    if (gain > 1.0) { gain = 1.0; }
-    if (gain < 0) { gain = 0; }
-
-    masterGainMidiCtrlr.setValue(gain * 127.0);
-
-    updateMasterGainCommon(gain);
-}
-
-/* Sets gain from a MIDI integer value of 0 to 127.
- * Master gain is set if in normal mode, or preview gain if in preview mode.
- * Also updates the GUI slider and the appropriate sound engine. */
-void MainWindow::setMasterGainMidi(int value)
-{
-    if (value > 127) { value = 127; }
-    if (value < 0) { value = 0; }
-
-    masterGainMidiCtrlr.setValue(value);
-
-    updateMasterGainCommon((float)value / 127.0);
-}
-
-/* Helper function called by setMasterGain* functions.
- * Master gain is set if in normal mode, or preview gain if in preview mode.
- * Also updates the GUI slider and the appropriate sound engine. */
-void MainWindow::updateMasterGainCommon(float gain)
-{
-    if (mPreviewMode) {
-        previewGain = gain;
-    } else {
-        masterGain = gain;
-    }
-
-    ui->horizontalSlider_MasterGain->blockSignals(true);
-    ui->horizontalSlider_MasterGain->setValue(
-                gain * ui->horizontalSlider_MasterGain->maximum());
-    ui->horizontalSlider_MasterGain->blockSignals(false);
-
-    // Update all bus gains
-    if (mCurrentProject) {
-        foreach (int busId, mCurrentProject->audioBus_getAllBusIds()) {
-            updateBusGainInJackEngine(busId);
-        }
-    }
-}
-
-void MainWindow::updateBusGainInJackEngine(int busId)
-{
-    KONFYT_ASSERT_RETURN(!mCurrentProject.isNull());
-    KONFYT_ASSERT_RETURN(mCurrentProject->audioBus_exists(busId));
-
-    PrjAudioBus bus = mCurrentProject->audioBus_getBus(busId);
-    float gain = 1;
-    if (!bus.ignoreMasterGain) {
-        if (mPreviewMode) {
-            gain *= previewGain;
-        } else {
-            gain *= masterGain;
-        }
-    }
-    gain = konfytConvertGain(gain);
-
-    jack.setPortGain(bus.leftJackPort, gain);
-    jack.setPortGain(bus.rightJackPort, gain);
 }
 
 /* Returns index of current patch, or -1 if none. */
@@ -2269,23 +2169,47 @@ void MainWindow::print(QString message)
 
 void MainWindow::setupKeyboardShortcuts()
 {
-    shortcut_save = new QShortcut(QKeySequence("Ctrl+S"), this);
-    connect(shortcut_save, &QShortcut::activated,
+    QShortcut* sSave = new QShortcut(QKeySequence("Ctrl+S"), this);
+    connect(sSave, &QShortcut::activated,
             this, &MainWindow::shortcut_save_activated);
 
-    shortcut_panic = new QShortcut(QKeySequence("Ctrl+P"), this);
-    connect(shortcut_panic, &QShortcut::activated,
+    QShortcut* sPanic = new QShortcut(QKeySequence("Ctrl+P"), this);
+    connect(sPanic, &QShortcut::activated,
             this, &MainWindow::shortcut_panic_activated);
 
-    ui->pushButton_Panic->setToolTip( ui->pushButton_Panic->toolTip() +
-            " [" + shortcut_panic->key().toString() + "]");
+    ui->pushButton_Panic->setToolTip(QString("%1 [%2]")
+                                     .arg(ui->pushButton_Panic->toolTip())
+                                     .arg(sPanic->key().toString()));
 }
 
-void MainWindow::messageBox(QString msg)
+void MainWindow::msgBox(QString msg, QString infoText)
 {
     QMessageBox msgbox;
     msgbox.setText(msg);
+    msgbox.setInformativeText(infoText);
     msgbox.exec();
+}
+
+int MainWindow::msgBoxYesNo(QString text, QString infoText)
+{
+    QMessageBox msgbox;
+    msgbox.setText(text);
+    msgbox.setInformativeText(infoText);
+    msgbox.setIcon(QMessageBox::Question);
+    msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    msgbox.setDefaultButton(QMessageBox::No);
+    return msgbox.exec();
+}
+
+int MainWindow::msgBoxYesNoCancel(QString text, QString infoText)
+{
+    QMessageBox msgbox;
+    msgbox.setText(text);
+    msgbox.setInformativeText(infoText);
+    msgbox.setIcon(QMessageBox::Question);
+    msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    msgbox.setDefaultButton(QMessageBox::Cancel);
+    return msgbox.exec();
 }
 
 bool MainWindow::dirExists(QString dirname)
@@ -2362,7 +2286,7 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
 
     // Find the first project file specified in cmdline arguments, if any
     foreach (QString f, appInfo.filesToLoad) {
-        if ( !fileIsPatch(f) && !fileIsSfzOrGig(f) && !fileIsSoundfont(f) ) {
+        if ( !fileExtensionIsPatch(f) && !fileExtensionIsSfzOrGig(f) && !fileExtensionIsSoundfont(f) ) {
             if (mCurrentProject) {
                 print("Project already loaded, skipping cmdline arg: " + f);
                 continue;
@@ -2388,7 +2312,7 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
 
     // Load non-project files specified in cmdline arguments, if any
     foreach (QString f, appInfo.filesToLoad) {
-        if (fileIsPatch(f)) {
+        if (fileExtensionIsPatch(f)) {
             // Load patch into current project and switch to patch
 
             addPatchToProjectFromFile(f);
@@ -2398,14 +2322,14 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
             cdFilesystemView(QFileInfo(f).absoluteFilePath());
             selectItemInFilesystemView(f);
 
-        } else if (fileIsSfzOrGig(f)) {
+        } else if (fileExtensionIsSfzOrGig(f)) {
             // Create new patch and load sfz into patch
             newPatchToProject(); // Create a new patch and add to current project.
             setCurrentPatchByIndex(-1);
 
             addSfzToCurrentPatch(f);
             // Rename patch
-            ui->lineEdit_PatchName->setText( getBaseNameWithoutExtension(f) );
+            ui->lineEdit_PatchName->setText( baseFilenameWithoutExtension(f) );
             on_lineEdit_PatchName_editingFinished();
 
             // Locate in filesystem view
@@ -2413,7 +2337,7 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
             cdFilesystemView(QFileInfo(f).absoluteFilePath());
             selectItemInFilesystemView(f);
 
-        } else if (fileIsSoundfont(f)) {
+        } else if (fileExtensionIsSoundfont(f)) {
 
             // Locate soundfont in filebrowser, select it and show its programs
             ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
@@ -2434,10 +2358,37 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
     }
 }
 
-QString MainWindow::getBaseNameWithoutExtension(QString filepath)
+QString MainWindow::baseFilenameWithoutExtension(QString filepath)
 {
     QFileInfo fi(filepath);
     return fi.baseName();
+}
+
+/* Determine if file extension is as specified. The specified extension may
+ * start with a leading dot or not. */
+bool MainWindow::fileExtensionIs(QString filepath, QString extension)
+{
+    // Remove starting '.' if any.
+    if (extension.startsWith(".")) { extension.remove(0, 1); }
+
+    QFileInfo fi(filepath);
+    return (fi.suffix().toLower() == extension.toLower());
+}
+
+/* Determine if specified file is a Konfyt patch file. */
+bool MainWindow::fileExtensionIsPatch(QString filepath)
+{
+    return fileExtensionIs(filepath, KONFYT_PATCH_SUFFIX);
+}
+
+bool MainWindow::fileExtensionIsSfzOrGig(QString filepath)
+{
+    return fileExtensionIs(filepath, "sfz") || fileExtensionIs(filepath, "gig");
+}
+
+bool MainWindow::fileExtensionIsSoundfont(QString filepath)
+{
+    return ( fileExtensionIs(filepath, "sf2") || fileExtensionIs(filepath, "sf3") );
 }
 
 void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*column*/)
@@ -3184,34 +3135,36 @@ bool MainWindow::saveProject(ProjectPtr prj)
             print("Projects directory is not set.");
             // Inform the user about project directory that is not set
             if (informedUserAboutProjectsDir == false) {
-                messageBox("No default projects directory has been set. You can set this in Settings.");
+                msgBox("No default projects directory has been set."
+                       " You can set this in Settings.");
                 informedUserAboutProjectsDir = true; // So we only show it once
             }
             // We need to bring up a save dialog.
         } else {
             // Find a unique directory name within our default projects dir
-            QString dir = getUniqueFilename(this->projectsDir,sanitiseFilename( prj->getProjectName() ),"");
+            QString dir = getUniqueFilename(projectsDir,
+                                    sanitiseFilename(prj->getProjectName()),
+                                    "");
             if (dir == "") {
                 print("Failed to obtain a unique directory name.");
             } else {
-                dir = this->projectsDir + "/" + dir;
+                dir = projectsDir + "/" + dir;
                 // We now have a unique directory filename.
-                QMessageBox msgbox;
-                msgbox.setText("Do you want to save project \"" + prj->getProjectName() + "\" to the following path? Selecting No will bring up a dialog box to select a location.");
-                msgbox.setInformativeText(dir);
-                msgbox.setIcon(QMessageBox::Question);
-                msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
-                int ret = msgbox.exec();
-                if (ret == QMessageBox::Yes) {
+                QString text = QString(
+                    "Do you want to save project \"%1\" to the following path?"
+                    " Select No to choose a different location.")
+                        .arg(prj->getProjectName());
+                int choice = msgBoxYesNoCancel(text, dir);
+                if (choice == QMessageBox::Yes) {
                     QDir d;
                     if (d.mkdir(dir)) {
                         print("Created project directory: " + dir);
                         saveDir = dir;
                     } else {
                         print("Failed to create project directory: " + dir);
-                        messageBox("Failed to create project directory " + dir);
+                        msgBox("Failed to create project directory.", dir);
                     }
-                } else if (ret == QMessageBox::Cancel) {
+                } else if (choice == QMessageBox::Cancel) {
                     return false;
                 }
             }
@@ -3233,7 +3186,7 @@ bool MainWindow::saveProject(ProjectPtr prj)
             return true;
         } else {
             print("Failed to save project.");
-            messageBox("Failed to save project to " + saveDir);
+            msgBox("Failed to save project.", saveDir);
             return false;
         }
 
@@ -3246,19 +3199,13 @@ bool MainWindow::requestCurrentProjectClose()
     if (!mCurrentProject) { return true; }
     if (!mCurrentProject->isModified()) { return true; }
 
-    QMessageBox msgbox;
-    msgbox.setText("Do you want to save the changes to project " +
-                   mCurrentProject->getProjectName() + "?");
-    msgbox.setIcon(QMessageBox::Question);
-    msgbox.setStandardButtons(QMessageBox::Cancel
-                              | QMessageBox::Yes
-                              | QMessageBox::No);
-    msgbox.setDefaultButton(QMessageBox::Cancel);
-    int ret = msgbox.exec();
-    if (ret == QMessageBox::Yes) {
+    int choice = msgBoxYesNoCancel(
+        "Do you want to save the changes to the project?",
+        mCurrentProject->getProjectName());
+    if (choice == QMessageBox::Yes) {
         bool saved = saveProject(mCurrentProject);
         if (!saved) { return false; }
-    } else if (ret == QMessageBox::Cancel) {
+    } else if (choice == QMessageBox::Cancel) {
         return false;
     }
 
@@ -3449,6 +3396,10 @@ void MainWindow::triggerPanic(bool panic)
 
     // Indicate panic state in GUI
     ui->pushButton_Panic->setChecked(panicState);
+    QWidget* toolbar = ui->frame_MainToolbar;
+    toolbar->setProperty("panic", panic);
+    toolbar->style()->unpolish(toolbar);
+    toolbar->style()->polish(toolbar);
 
     // Clear sustain and pitchbend indicators for all layers
     foreach (KonfytLayerWidget* w, layerWidgetList) {
@@ -4369,6 +4320,15 @@ bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
     return false; // event not handled
 }
 
+/* MainWindow keyPressEvent. Keys reach here after all widgets have ignored them. */
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key() == Qt::Key_Escape) {
+        // Go back to main patch page
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+    }
+}
+
 void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
 {
     // Switch back to previous view
@@ -4602,9 +4562,9 @@ void MainWindow::refreshFilesystemView()
             if (ui->checkBox_filesystem_ShowOnlySounds->isChecked() == false) {
                 show = true;
             } else {
-                show = fileIsSfzOrGig(info.filePath())       // sfz or gig
-                       || fileIsSoundfont(info.filePath())   // sf2
-                       || fileIsPatch(info.filePath());      // patch
+                show = fileExtensionIsSfzOrGig(info.filePath())       // sfz or gig
+                       || fileExtensionIsSoundfont(info.filePath())   // sf2
+                       || fileExtensionIsPatch(info.filePath());      // patch
             }
             if ( show ) {
 
@@ -4659,16 +4619,16 @@ void MainWindow::on_treeWidget_filesystem_currentItemChanged(
     } else {
 
         QFileInfo info = fsMap.value(current);
-        if ( fileIsPatch(info.filePath())) {
+        if ( fileExtensionIsPatch(info.filePath())) {
 
             showPatchInLibFsInfoArea();
 
-        } else if ( fileIsSoundfont(info.filePath()) ) {
+        } else if ( fileExtensionIsSoundfont(info.filePath()) ) {
 
             selectedSfont.clear();
             showSfontInfoInLibFsInfoArea(info.filePath());
 
-        } else if ( fileIsSfzOrGig(info.filePath()) ) {
+        } else if ( fileExtensionIsSfzOrGig(info.filePath()) ) {
 
             showSfzContentInLibFsInfoArea(info.filePath());
 
@@ -4690,13 +4650,13 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
         // If directory, cd to directory.
         cdFilesystemView(info.filePath());
 
-    } else if ( fileIsPatch(info.filePath()) ) {
+    } else if ( fileExtensionIsPatch(info.filePath()) ) {
 
         // File is a patch
         if (mPreviewMode) { setPreviewMode(false); }
         addPatchToProjectFromFile(info.filePath());
 
-    } else if ( fileIsSoundfont(info.filePath()) ) {
+    } else if ( fileExtensionIsSoundfont(info.filePath()) ) {
         // If soundfont, read soundfont and fill program list.
 
         // Initiate mainwindow waiter (this disables the GUI and indicates to the user
@@ -4708,7 +4668,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
         // This might take a while. The result will be sent by signal to the
         // onDatabaseSfontInfoLoaded() slot where we will continue.
 
-    } else if ( fileIsSfzOrGig(info.filePath()) ) {
+    } else if ( fileExtensionIsSfzOrGig(info.filePath()) ) {
 
         // If sfz or gig, load file.
         if (mPreviewMode) { setPreviewMode(false); }
@@ -5279,25 +5239,25 @@ void MainWindow::on_actionRemove_BusPort_triggered()
 
     if (usingPatches.count()) {
         // Some patches have layers that use the selected bus/port. Confirm with the user.
-        QMessageBox msgbox;
         QString detailedText;
         for (int i=0; i<usingPatches.count(); i++) {
-            detailedText.append("Patch " + n2s(usingPatches[i]+1) + " layer " + n2s(usingLayers[i]+1) + "\n");
+            detailedText.append(QString("Patch %1 layer %2\n")
+                                .arg(usingPatches[i] + 1)
+                                .arg(usingLayers[i] + 1));
         }
-        QString selectedText = "(" + n2s(id) + " - " + name + ")";
-        msgbox.setDetailedText( detailedText );
-        msgbox.setIcon(QMessageBox::Question);
-        msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+        QString selectedText = QString("(%1 - %2").arg(id).arg(name);
         // ------------------------------------------------------------------------------
         if (busSelected) {
             int busToChangeTo = prj->audioBus_getFirstBusId(id);
-            msgbox.setText("The selected bus " + selectedText + " is used by some patches."
-                           + " Are you sure you want to delete the bus?"
-                           + " All layers using this bus will be assigned to bus "
-                           + n2s(busToChangeTo) + " - "
-                           + prj->audioBus_getBus(busToChangeTo).busName + ".");
-            int ret = msgbox.exec();
-            if (ret == QMessageBox::Yes) {
+            QString text = QString(
+                "The selected bus %1 is used by some patches."
+                " Are you sure you want to delete the bus?"
+                " All layers using this bus will be assigned to bus %2 - %3.")
+                    .arg(selectedText)
+                    .arg(busToChangeTo)
+                    .arg(prj->audioBus_getBus(busToChangeTo).busName);
+            int choice = msgBoxYesNo(text, detailedText);
+            if (choice == QMessageBox::Yes) {
                 // User chose to remove bus
                 // Change the bus for all layers still using this one
                 for (int i=0; i<usingPatches.count(); i++) {
@@ -5310,11 +5270,13 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             } else { return; } // Do not remove bus
         // ------------------------------------------------------------------------------
         } else if (audioInSelected) {
-            msgbox.setText("The selected port " + selectedText + "is used by some patches."
-                           + " Are you sure you want to delete the port?"
-                           + " The port layer will be removed from the patches.");
-            int ret = msgbox.exec();
-            if (ret == QMessageBox::Yes) {
+            QString text = QString(
+                "The selected port %1 is used by some patches."
+                " Are you sure you want to delete the port?"
+                " The port layer will be removed from the patches.")
+                    .arg(selectedText);
+            int choice = msgBoxYesNo(text, detailedText);
+            if (choice == QMessageBox::Yes) {
                 // User chose to remove port.
                 // Remove it from all patches where it was in use
                 for (int i=0; i<usingPatches.count(); i++) {
@@ -5327,11 +5289,13 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             } else { return; } // Do not remove port
         // ------------------------------------------------------------------------------
         } else if (midiOutSelected) {
-            msgbox.setText("The selected port " + selectedText + " is used by some patches."
-                           + " Are you sure you want to delete the port?"
-                           + " The port layer will be removed from the patches.");
-            int ret = msgbox.exec();
-            if (ret == QMessageBox::Yes) {
+            QString text = QString(
+                "The selected port %1 is used by some patches."
+                " Are you sure you want to delete the port?"
+                " The port layer will be removed from the patches.")
+                    .arg(selectedText);
+            int choice = msgBoxYesNo(text, detailedText);
+            if (choice == QMessageBox::Yes) {
                 // User chose to remove port.
                 // Remove it from all patches where it was in use
                 for (int i=0; i<usingPatches.count(); i++) {
@@ -5344,15 +5308,16 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             } else { return; } // Do not remove port
         // ------------------------------------------------------------------------------
         } else if (midiInSelected) {
-
             int portToChangeTo = prj->midiInPort_getFirstPortId(id);
-            msgbox.setText("The selected MIDI input port " + selectedText + " is used by some patches."
-                           + " Are you sure you want to delete the port?"
-                           + " All layers using this port will be assigned to port "
-                           + n2s(portToChangeTo) + " - "
-                           + prj->midiInPort_getPort(portToChangeTo).portName + ".");
-            int ret = msgbox.exec();
-            if (ret == QMessageBox::Yes) {
+            QString text = QString(
+                "The selected MIDI input port %1 is used by some patches."
+                " Are you sure you want to delete the port?"
+                " All layers using this port will be assigned to port %2 - %3.")
+                    .arg(selectedText)
+                    .arg(portToChangeTo)
+                    .arg(prj->midiInPort_getPort(portToChangeTo).portName);
+            int choice = msgBoxYesNo(text, detailedText);
+            if (choice == QMessageBox::Yes) {
                 // User chose to remove port
                 // Change the port for all layers still using this one
                 for (int i=0; i<usingPatches.count(); i++) {
@@ -5540,15 +5505,17 @@ void MainWindow::updatePreviewPatchLayer()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    // Only accept event if user allows
-    if (!appInfo.headless) {
-        if (!requestCurrentProjectClose()) {
-            event->ignore();
-            return;
-        }
+    if (appInfo.headless) {
+        event->accept();
+        return;
     }
 
-    event->accept();
+    // Only accept event if user allows
+    if (requestCurrentProjectClose()) {
+        event->accept();
+    } else {
+        event->ignore();
+    }
 }
 
 /* Context menu requested for a library tree item. */
@@ -5934,8 +5901,8 @@ void MainWindow::on_actionProject_SaveAs_triggered()
     if (saved) {
         print("Saved project as new project.");
     } else {
-        print("Project not saved as new project.");
-        messageBox("Project was not saved as a new project.");
+        print("Project could not be saved as new project.");
+        msgBox("Project could not be saved as a new project.");
         // Restore original project state
         setProjectName(oldName);
         prj->setDirname(oldDirname);
@@ -6021,6 +5988,95 @@ void MainWindow::on_toolButton_MidiFilter_inChan_last_clicked()
     ui->comboBox_midiFilter_inChannel->setCurrentIndex(midiFilterLastEvent.channel+1);
 }
 
+void MainWindow::on_toolButton_MidiFilter_pitchDownFull_clicked()
+{
+    ui->spinBox_midiFilter_pitchDownRange->setValue(MIDI_PITCHBEND_SIGNED_MIN);
+}
+
+void MainWindow::on_toolButton_MidiFilter_pitchDownHalf_clicked()
+{
+    ui->spinBox_midiFilter_pitchDownRange->setValue(MIDI_PITCHBEND_SIGNED_MIN/2);
+}
+
+void MainWindow::on_toolButton_MidiFilter_pitchDownLast_clicked()
+{
+    ui->spinBox_midiFilter_pitchDownRange->setValue(
+                midiFilterLastEvent.pitchbendValueSigned());
+}
+
+void MainWindow::on_spinBox_midiFilter_pitchDownRange_valueChanged(int value)
+{
+    ui->toolButton_MidiFilter_pitchDownFull->setChecked(
+                value == MIDI_PITCHBEND_SIGNED_MIN);
+    ui->toolButton_MidiFilter_pitchDownHalf->setChecked(
+                value == MIDI_PITCHBEND_SIGNED_MIN / 2);
+}
+
+void MainWindow::on_spinBox_midiFilter_pitchUpRange_valueChanged(int value)
+{
+    ui->toolButton_MidiFilter_pitchUpFull->setChecked(
+                value == MIDI_PITCHBEND_SIGNED_MAX);
+    ui->toolButton_MidiFilter_pitchUpHalf->setChecked(
+                value == MIDI_PITCHBEND_SIGNED_MAX / 2);
+}
+
+void MainWindow::on_toolButton_MidiFilter_pitchUpFull_clicked()
+{
+    ui->spinBox_midiFilter_pitchUpRange->setValue(MIDI_PITCHBEND_SIGNED_MAX);
+}
+
+void MainWindow::on_toolButton_MidiFilter_pitchUpHalf_clicked()
+{
+    ui->spinBox_midiFilter_pitchUpRange->setValue(MIDI_PITCHBEND_SIGNED_MAX/2);
+}
+
+void MainWindow::on_toolButton_MidiFilter_pitchUpLast_clicked()
+{
+    ui->spinBox_midiFilter_pitchUpRange->setValue(
+                midiFilterLastEvent.pitchbendValueSigned());
+}
+
+void MainWindow::on_toolButton_MidiFilter_ccAllowedLast_clicked()
+{
+    QList<int> lst = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccAllowed->text());
+    lst.append(midiFilterLastEvent.data1());
+    ui->lineEdit_MidiFilter_ccAllowed->setText(intListToText(lst));
+}
+
+void MainWindow::on_toolButton_MidiFilter_ccBlockedLast_clicked()
+{
+    QList<int> lst = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccBlocked->text());
+    lst.append(midiFilterLastEvent.data1());
+    ui->lineEdit_MidiFilter_ccBlocked->setText(intListToText(lst));
+}
+
+void MainWindow::on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &text)
+{
+    KonfytMidiMapping m;
+    m.fromString(text);
+    ui->midiFilter_velocityMapGraph->setMapping(m);
+}
+
+void MainWindow::on_toolButton_MidiFilter_velocityMap_presets_clicked()
+{
+    popupMidiMapPresetMenu(ui->toolButton_MidiFilter_velocityMap_presets);
+}
+
+void MainWindow::on_toolButton_MidiFilter_velocityMap_save_clicked()
+{
+    QString name = QInputDialog::getText(this, "MIDI Map Preset",
+                                         "Preset Name");
+    if (name.isEmpty()) { return; }
+
+    MidiMapPreset* preset = new MidiMapPreset();
+    preset->name = name;
+    preset->data = ui->lineEdit_MidiFilter_velocityMap->text();
+
+    midiMapUserPresets.append(preset);
+    saveMidiMapPresets();
+    addMidiMapUserPresetMenuAction(preset);
+}
+
 void MainWindow::setMasterInTranspose(int transpose, bool relative)
 {
     if (relative) {
@@ -6048,6 +6104,76 @@ void MainWindow::on_pushButton_MasterIn_TransposeAdd12_clicked()
 void MainWindow::on_pushButton_MasterIn_TransposeZero_clicked()
 {
     setMasterInTranspose(0,false);
+}
+
+/* Sets gain from a float value of 0 to 1.0.
+ * Master gain is set if in normal mode, or preview gain if in preview mode.
+ * Also updates the GUI slider and the appropriate sound engine. */
+void MainWindow::setMasterGainFloat(float gain)
+{
+    if (gain > 1.0) { gain = 1.0; }
+    if (gain < 0) { gain = 0; }
+
+    masterGainMidiCtrlr.setValue(gain * 127.0);
+
+    updateMasterGainCommon(gain);
+}
+
+/* Sets gain from a MIDI integer value of 0 to 127.
+ * Master gain is set if in normal mode, or preview gain if in preview mode.
+ * Also updates the GUI slider and the appropriate sound engine. */
+void MainWindow::setMasterGainMidi(int value)
+{
+    if (value > 127) { value = 127; }
+    if (value < 0) { value = 0; }
+
+    masterGainMidiCtrlr.setValue(value);
+
+    updateMasterGainCommon((float)value / 127.0);
+}
+
+/* Helper function called by setMasterGain* functions.
+ * Master gain is set if in normal mode, or preview gain if in preview mode.
+ * Also updates the GUI slider and the appropriate sound engine. */
+void MainWindow::updateMasterGainCommon(float gain)
+{
+    if (mPreviewMode) {
+        previewGain = gain;
+    } else {
+        masterGain = gain;
+    }
+
+    ui->horizontalSlider_MasterGain->blockSignals(true);
+    ui->horizontalSlider_MasterGain->setValue(
+                gain * ui->horizontalSlider_MasterGain->maximum());
+    ui->horizontalSlider_MasterGain->blockSignals(false);
+
+    // Update all bus gains
+    if (mCurrentProject) {
+        foreach (int busId, mCurrentProject->audioBus_getAllBusIds()) {
+            updateBusGainInJackEngine(busId);
+        }
+    }
+}
+
+void MainWindow::updateBusGainInJackEngine(int busId)
+{
+    KONFYT_ASSERT_RETURN(!mCurrentProject.isNull());
+    KONFYT_ASSERT_RETURN(mCurrentProject->audioBus_exists(busId));
+
+    PrjAudioBus bus = mCurrentProject->audioBus_getBus(busId);
+    float gain = 1;
+    if (!bus.ignoreMasterGain) {
+        if (mPreviewMode) {
+            gain *= previewGain;
+        } else {
+            gain *= masterGain;
+        }
+    }
+    gain = konfytConvertGain(gain);
+
+    jack.setPortGain(bus.leftJackPort, gain);
+    jack.setPortGain(bus.rightJackPort, gain);
 }
 
 void MainWindow::on_pushButton_ShowJackPage_clicked()
@@ -6681,22 +6807,21 @@ void MainWindow::on_pushButton_savedMidiMsgs_remove_clicked()
     }
 
     // Ask whether user is sure
-    QMessageBox msgbox;
-    msgbox.setText("Are you sure you want to delete the MIDI Send Message preset '" + item.toString() + "'?");
-    msgbox.setInformativeText(item.filename);
-    msgbox.setIcon(QMessageBox::Question);
-    msgbox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
-    int ret = msgbox.exec();
-    if (ret == QMessageBox::Yes) {
+    int choice = msgBoxYesNo(
+            "Are you sure you want to delete the MIDI Send Message preset?",
+            item.toString());
+    if (choice == QMessageBox::Yes) {
         QFile f(item.filename);
         bool removed = f.remove();
         if (removed) {
-            print("Removed MIDI Send Message preset file " + f.fileName());
+            print("Removed MIDI Send Message preset file: " + f.fileName());
             // Remove from list and GUI
             delete selected;
             savedMidiSendItems.removeAt(index);
         } else {
-            print("Failed to remove MIDI Send Message preset file " + f.fileName());
+            print("Failed to remove MIDI Send Message preset file: " + f.fileName());
+            msgBox("Failed to remove the MIDI Send Message preset file.",
+                   f.fileName());
         }
     }
 }
@@ -6888,93 +7013,8 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
     updateBusGainInJackEngine(busId);
 }
 
-void MainWindow::on_toolButton_MidiFilter_pitchDownFull_clicked()
-{
-    ui->spinBox_midiFilter_pitchDownRange->setValue(MIDI_PITCHBEND_SIGNED_MIN);
-}
 
-void MainWindow::on_toolButton_MidiFilter_pitchDownHalf_clicked()
-{
-    ui->spinBox_midiFilter_pitchDownRange->setValue(MIDI_PITCHBEND_SIGNED_MIN/2);
-}
 
-void MainWindow::on_toolButton_MidiFilter_pitchDownLast_clicked()
-{
-    ui->spinBox_midiFilter_pitchDownRange->setValue(
-                midiFilterLastEvent.pitchbendValueSigned());
-}
 
-void MainWindow::on_spinBox_midiFilter_pitchDownRange_valueChanged(int value)
-{
-    ui->toolButton_MidiFilter_pitchDownFull->setChecked(
-                value == MIDI_PITCHBEND_SIGNED_MIN);
-    ui->toolButton_MidiFilter_pitchDownHalf->setChecked(
-                value == MIDI_PITCHBEND_SIGNED_MIN / 2);
-}
-
-void MainWindow::on_spinBox_midiFilter_pitchUpRange_valueChanged(int value)
-{
-    ui->toolButton_MidiFilter_pitchUpFull->setChecked(
-                value == MIDI_PITCHBEND_SIGNED_MAX);
-    ui->toolButton_MidiFilter_pitchUpHalf->setChecked(
-                value == MIDI_PITCHBEND_SIGNED_MAX / 2);
-}
-
-void MainWindow::on_toolButton_MidiFilter_pitchUpFull_clicked()
-{
-    ui->spinBox_midiFilter_pitchUpRange->setValue(MIDI_PITCHBEND_SIGNED_MAX);
-}
-
-void MainWindow::on_toolButton_MidiFilter_pitchUpHalf_clicked()
-{
-    ui->spinBox_midiFilter_pitchUpRange->setValue(MIDI_PITCHBEND_SIGNED_MAX/2);
-}
-
-void MainWindow::on_toolButton_MidiFilter_pitchUpLast_clicked()
-{
-    ui->spinBox_midiFilter_pitchUpRange->setValue(
-                midiFilterLastEvent.pitchbendValueSigned());
-}
-
-void MainWindow::on_toolButton_MidiFilter_ccAllowedLast_clicked()
-{
-    QList<int> lst = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccAllowed->text());
-    lst.append(midiFilterLastEvent.data1());
-    ui->lineEdit_MidiFilter_ccAllowed->setText(intListToText(lst));
-}
-
-void MainWindow::on_toolButton_MidiFilter_ccBlockedLast_clicked()
-{
-    QList<int> lst = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccBlocked->text());
-    lst.append(midiFilterLastEvent.data1());
-    ui->lineEdit_MidiFilter_ccBlocked->setText(intListToText(lst));
-}
-
-void MainWindow::on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &text)
-{
-    KonfytMidiMapping m;
-    m.fromString(text);
-    ui->midiFilter_velocityMapGraph->setMapping(m);
-}
-
-void MainWindow::on_toolButton_MidiFilter_velocityMap_presets_clicked()
-{
-    popupMidiMapPresetMenu(ui->toolButton_MidiFilter_velocityMap_presets);
-}
-
-void MainWindow::on_toolButton_MidiFilter_velocityMap_save_clicked()
-{
-    QString name = QInputDialog::getText(this, "MIDI Map Preset",
-                                         "Preset Name");
-    if (name.isEmpty()) { return; }
-
-    MidiMapPreset* preset = new MidiMapPreset();
-    preset->name = name;
-    preset->data = ui->lineEdit_MidiFilter_velocityMap->text();
-
-    midiMapUserPresets.append(preset);
-    saveMidiMapPresets();
-    addMidiMapUserPresetMenuAction(preset);
-}
 
 

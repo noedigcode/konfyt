@@ -120,6 +120,10 @@ QFrame#frame_MainToolbar{
 	background-color: rgb(80, 80, 80);
 }
 
+QFrame#frame_MainToolbar[panic=true]{
+	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:1, stop:0 rgba(80,80,80, 255), stop:1 rgba(191, 0, 0, 255));
+}
+
 /* ---------------------------------------------------------------------- */
 /* Layer list &quot;toolbar&quot; frame*/
 QFrame#frame_layerListToolbar{
@@ -663,6 +667,9 @@ QStatusBar {
       </property>
       <property name="styleSheet">
        <string notr="true"/>
+      </property>
+      <property name="panic" stdset="0">
+       <bool>false</bool>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout_26">
        <property name="leftMargin">

@@ -152,13 +152,12 @@ private:
 private slots:
     void closeEvent(QCloseEvent *);
     bool eventFilter(QObject *object, QEvent *event);
+    void keyPressEvent(QKeyEvent *event) override;
 
     void print(QString message);
 
     // Keyboard shortcuts
 private:
-    QShortcut* shortcut_save;
-    QShortcut* shortcut_panic;
     void setupKeyboardShortcuts();
 private slots:
     void shortcut_save_activated();
@@ -166,8 +165,15 @@ private slots:
 
     // General helper functions
 private:
-    QString getBaseNameWithoutExtension(QString filepath);
-    void messageBox(QString msg);
+    QString baseFilenameWithoutExtension(QString filepath);
+    bool fileExtensionIs(QString filepath, QString extension);
+    bool fileExtensionIsPatch(QString filepath);
+    bool fileExtensionIsSoundfont(QString filepath);
+    bool fileExtensionIsSfzOrGig(QString filepath);
+
+    void msgBox(QString msg, QString infoText = "");
+    int msgBoxYesNo(QString text, QString infoText = "");
+    int msgBoxYesNoCancel(QString text, QString infoText = "");
     bool dirExists(QString dirname);
     QStringList scanDirForFiles(QString dirname, QString filenameExtension = "");
     void openFileManager(QString path);
@@ -339,25 +345,14 @@ private:
     KonfytPatchEngine pengine;
     void setupPatchEngine();
     KonfytPatch* mCurrentPatch = nullptr; // Current patch being played
-    float masterGain = 1.0;     // Master gain when not in preview mode
-    MidiValueController masterGainMidiCtrlr;
 
+    // Patch preview
     KonfytPatch mPreviewPatch;  // Patch played when in preview mode
     float previewGain = 1.0;    // Gain when in preview mode
     int previewPatchMidiInPort = 0;
     int previewPatchMidiInChannel = -1;
     int previewPatchBus = 0;
     void updatePreviewPatchLayer();
-
-    bool fileSuffixIs(QString file, QString suffix);
-    bool fileIsPatch(QString file);
-    bool fileIsSoundfont(QString file);
-    bool fileIsSfzOrGig(QString file);
-
-    void setMasterGainFloat(float gain);
-    void setMasterGainMidi(int value);
-    void updateMasterGainCommon(float gain);
-    void updateBusGainInJackEngine(int busId);
 
     // Current patch functions
     int currentPatchIndex();
@@ -403,7 +398,7 @@ private slots:
     void onLayer_midiSend_clicked(KonfytLayerWidget* layerWidget);
     void onLayer_rightToolbutton_clicked(KonfytLayerWidget* layerWidget);
 
-    // patchMidiOutPortsMenu: Context menu when user clicks button to add a new MIDI output layer.
+    // Menu to add MIDI out port layer
 private:
     void updateMidiOutPortsMenu(QMenu* menu);
     QMenu patchMidiOutPortsMenu;
@@ -411,7 +406,7 @@ private slots:
     void onPatchMidiOutPortsMenu_aboutToShow();
     void onPatchMidiOutPortsMenu_ActionTrigger(QAction* action);
 
-    // patchAudioInPortsMenu: Context menu when user clicks button to add new audio input port layer.
+    // Menu to add audio input port layer
 private:
     void updateAudioInPortsMenu(QMenu* menu);
     QMenu patchAudioInPortsMenu;
@@ -441,14 +436,14 @@ private:
 private slots:
     void onLayerMidiInChannelMenu_ActionTrigger(QAction* action);
 
-    // layerBusMenu: Opened when user clicks on bus button of a layer which has audio output.
+    // Layer bus menu
 private:
     void updateBusMenu(QMenu* menu, int currentBusId = -1);
     QMenu layerBusMenu;
 private slots:
     void onLayerBusMenu_ActionTrigger(QAction* action);
 
-    // Layer MIDI out channel menu: Opened when user clicks on bus button of a layer which as MIDI output.
+    // Layer MIDI out channel menu
 private:
     void updateLayerMidiOutChannelMenu(QMenu* menu, int currentMidiPort = -2);
     QMenu layerMidiOutChannelMenu;
@@ -628,6 +623,19 @@ private slots:
     void on_toolButton_MidiFilter_Add_Plus12_clicked();
     void on_toolButton_MidiFilter_Add_Minus12_clicked();
     void on_toolButton_MidiFilter_inChan_last_clicked();
+    void on_toolButton_MidiFilter_pitchDownFull_clicked();
+    void on_toolButton_MidiFilter_pitchDownHalf_clicked();
+    void on_toolButton_MidiFilter_pitchDownLast_clicked();
+    void on_spinBox_midiFilter_pitchDownRange_valueChanged(int value);
+    void on_spinBox_midiFilter_pitchUpRange_valueChanged(int value);
+    void on_toolButton_MidiFilter_pitchUpFull_clicked();
+    void on_toolButton_MidiFilter_pitchUpHalf_clicked();
+    void on_toolButton_MidiFilter_pitchUpLast_clicked();
+    void on_toolButton_MidiFilter_ccAllowedLast_clicked();
+    void on_toolButton_MidiFilter_ccBlockedLast_clicked();
+    void on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &text);
+    void on_toolButton_MidiFilter_velocityMap_presets_clicked();
+    void on_toolButton_MidiFilter_velocityMap_save_clicked();
 
     // ========================================================================
     // MIDI send list
@@ -864,6 +872,15 @@ private slots:
     void on_pushButton_MasterIn_TransposeSub12_clicked();
     void on_pushButton_MasterIn_TransposeAdd12_clicked();
     void on_pushButton_MasterIn_TransposeZero_clicked();
+
+    // Global volume
+private:
+    float masterGain = 1.0; // Master gain when not in preview mode
+    MidiValueController masterGainMidiCtrlr;
+    void setMasterGainFloat(float gain);
+    void setMasterGainMidi(int value);
+    void updateMasterGainCommon(float gain);
+    void updateBusGainInJackEngine(int busId);
     
     // ========================================================================
     // Actions
@@ -924,19 +941,7 @@ private slots:
     void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
     void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
 
-    void on_toolButton_MidiFilter_pitchDownFull_clicked();
-    void on_toolButton_MidiFilter_pitchDownHalf_clicked();
-    void on_toolButton_MidiFilter_pitchDownLast_clicked();
-    void on_spinBox_midiFilter_pitchDownRange_valueChanged(int value);
-    void on_spinBox_midiFilter_pitchUpRange_valueChanged(int value);
-    void on_toolButton_MidiFilter_pitchUpFull_clicked();
-    void on_toolButton_MidiFilter_pitchUpHalf_clicked();
-    void on_toolButton_MidiFilter_pitchUpLast_clicked();
-    void on_toolButton_MidiFilter_ccAllowedLast_clicked();
-    void on_toolButton_MidiFilter_ccBlockedLast_clicked();
-    void on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &text);
-    void on_toolButton_MidiFilter_velocityMap_presets_clicked();
-    void on_toolButton_MidiFilter_velocityMap_save_clicked();
+
 };
 
 #endif // MAINWINDOW_H
