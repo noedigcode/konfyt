@@ -2648,22 +2648,24 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
         return false;
     }
 
-    QString patchName = getUniqueFilename(dir.path(), patch->name(), "." + QString(KONFYT_PATCH_SUFFIX) );
-    if (patchName == "") {
+    QString filename = getUniqueFilename(dir.path(),
+                                          sanitiseFilename(patch->name()),
+                                          KONFYT_PATCH_SUFFIX);
+    if (filename == "") {
         print("Could not find a suitable filename.");
         return false;
     }
 
-    if (patchName != patch->name() + "." + KONFYT_PATCH_SUFFIX) {
+    if (filename != patch->name() + "." + KONFYT_PATCH_SUFFIX) {
         print("Duplicate name exists. Saving patch as:");
-        print(patchName);
+        print(filename);
     }
 
     // Add directory, and save.
-    patchName = mPatchesDir + "/" + patchName;
-    if (patch->savePatchToFile(patchName)) {
-        print("Patch saved as " + patchName);
-        db.addPatch(patchName);
+    filename = mPatchesDir + "/" + filename;
+    if (patch->savePatchToFile(filename)) {
+        print("Patch saved as: " + filename);
+        db.addPatch(filename);
         // Refresh tree view if not in searchmode
         if (!mLibrarySearchModeActive) {
             fillLibraryTreeWithAll();
@@ -2673,15 +2675,16 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
 
         return true;
     } else {
-        print("Failed saving patch to file " + patchName);
+        print("Failed saving patch to file: " + filename);
         return false;
     }
 }
 
-/* Scans a directory and determine if filename with extension (dot included) exists.
+/* Scans a directory and determine if filename with extension exists.
  * Adds a number to the filename until it is unique.
  * Returns filename only, without path.
- * If the directory does not exist, empty string is returned. */
+ * If the directory does not exist, empty string is returned.
+ * Specified extension may be with or without a leading dot. */
 QString MainWindow::getUniqueFilename(QString dirname, QString name, QString extension)
 {
     QDir dir(dirname);
@@ -2689,6 +2692,9 @@ QString MainWindow::getUniqueFilename(QString dirname, QString name, QString ext
         emit print("getUniqueFilename: Directory does not exist.");
         return "";
     }
+
+    // Add dot if extension doesn't start with one
+    if (!extension.startsWith(".")) { extension.prepend("."); }
 
     // Scan the directory and get a unique name.
     QString extra = "";
@@ -4132,26 +4138,30 @@ void MainWindow::on_actionAdd_Patch_To_Library_triggered()
         print("Saved to library.");
     } else {
         print("Could not save patch to library.");
+        msgBox("Could not save patch to library.");
     }
 }
 
 /* Action to save the current patch to file. */
 void MainWindow::on_actionSave_Patch_To_File_triggered()
 {
-    // Save patch to user selected file
+    QString ext = QString(".%1").arg(KONFYT_PATCH_SUFFIX);
 
     KonfytPatch* pt = pengine.currentPatch(); // Get current patch
     QFileDialog d;
-    QString filename = d.getSaveFileName(this,"Save patch as file", mPatchesDir, "*." + QString(KONFYT_PATCH_SUFFIX));
-    if (filename=="") {return;} // Dialog was cancelled.
+    QString filename = d.getSaveFileName(this,
+                                         "Save patch as file", mPatchesDir,
+                                         QString("*%1").arg(ext));
+    if (filename == "") { return; } // Dialog was cancelled.
 
-    // Add suffix if not already added (this is not foolproof, but what the hell.)
-    if (!filename.contains("." + QString(KONFYT_PATCH_SUFFIX))) { filename = filename + "." + QString(KONFYT_PATCH_SUFFIX); }
+    // Add suffix if not already added
+    if (!filename.endsWith(ext)) { filename = filename + ext; }
 
     if (pt->savePatchToFile(filename)) {
-        print("Patch saved.");
+        print("Patch saved to file: " + filename);
     } else {
-        print("Failed saving patch to file.");
+        print("Failed saving patch to file: " + filename);
+        msgBox("Could not save patch to file.", filename);
     }
 }
 
@@ -6778,6 +6788,7 @@ void MainWindow::on_pushButton_savedMidiMsgs_save_clicked()
     if (!item.description.isEmpty()) {
         filename = item.description;
     }
+    filename = sanitiseFilename(filename);
     filename = getUniqueFilename(savedMidiListDir, filename, ".midiSendEvent");
     filename = savedMidiListDir + "/" + filename;
 
