@@ -387,6 +387,7 @@ void KonfytDatabase::buildTree(KonfytDbTree *tree, const QList<KfSoundPtr> &list
             }
         }
         // Last item is the leaf
+        item->name = sound->name;
         item->path = sound->filename;
         item->data = sound;
     }
