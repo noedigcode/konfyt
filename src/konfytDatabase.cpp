@@ -342,6 +342,12 @@ void KonfytDatabase::addPatch(QString filename)
     }
 }
 
+void KonfytDatabase::removePatch(KfSoundPtr patch)
+{
+    mAllPatches.removeAll(patch);
+    buildPatchTree();
+}
+
 void KonfytDatabase::addSfont(KfSoundPtr sf)
 {
     mAllSoundfonts.append(sf);
@@ -449,7 +455,7 @@ void KonfytDatabase::loadSfontInfoFromFile(QString filename)
     // The worker thread will now load the soundfont and emit a signal when done
 }
 
-/* Save the database to an xml file. Returns 0 if success, 1 if not. */
+/* Save the database to an xml file. Returns true if success, false if not. */
 bool KonfytDatabase::saveDatabaseToFile(QString filename)
 {
     QFile file(filename);
@@ -499,7 +505,7 @@ bool KonfytDatabase::saveDatabaseToFile(QString filename)
 
     }
 
-    stream.writeEndElement(); // sfdatabase
+    stream.writeEndElement(); // database
 
     stream.writeEndDocument();
 

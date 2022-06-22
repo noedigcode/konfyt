@@ -60,6 +60,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupExternalAppsMenu();
     setMasterInTranspose(0, false);
     setMasterGainFloat(1);
+    setupLibraryContextMenu();
 
     // Show welcome message in statusbar
     QString app_name(APP_NAME);
@@ -2133,6 +2134,45 @@ void MainWindow::fillLibraryTreeWithSearch(QString search)
     ui->treeWidget_Library->expandItem(librarySfontTree.rootTreeItem);
 }
 
+void MainWindow::setupLibraryContextMenu()
+{
+    actionRemoveLibraryPatch = new QAction(this);
+    actionRemoveLibraryPatch->setText("Remove Patch");
+    connect(actionRemoveLibraryPatch, &QAction::triggered,
+            this, &MainWindow::onActionRemoveLibraryPatchTriggered);
+}
+
+void MainWindow::onActionRemoveLibraryPatchTriggered()
+{
+    KfSoundPtr patch = librarySelectedPatch();
+    KONFYT_ASSERT_RETURN(patch);
+
+    int choice = msgBoxYesNo(
+            "Are you sure you want to remove the patch from the library?",
+            patch->name);
+    if (choice == QMessageBox::No) { return; }
+
+    // Remove from database
+    db.removePatch(patch);
+    saveDatabase();
+
+    // Delete file
+    QFile f(patch->filename);
+    bool removed = f.remove();
+    if (removed) {
+        print("Removed patch file: " + f.fileName());
+    } else {
+        print("Failed to remove patch file: " + f.fileName());
+        msgBox("Failed to remove patch file.", f.fileName());
+    }
+
+    // Remove from library tree
+    QTreeWidgetItem* item = libraryPatchTree.soundsMap.key(patch);
+    if (item) {
+        delete item;
+    }
+}
+
 void MainWindow::setupFilesystemView()
 {
     this->fsview_currentPath = QDir::homePath();
@@ -2664,13 +2704,15 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
     // Add directory, and save.
     filename = mPatchesDir + "/" + filename;
     if (patch->savePatchToFile(filename)) {
+
         print("Patch saved as: " + filename);
         db.addPatch(filename);
+
         // Refresh tree view if not in searchmode
         if (!mLibrarySearchModeActive) {
             fillLibraryTreeWithAll();
         }
-        // Now save database
+
         saveDatabase();
 
         return true;
@@ -5541,6 +5583,10 @@ void MainWindow::on_treeWidget_Library_customContextMenuRequested(const QPoint &
     actions.append( ui->actionOpen_In_File_Manager_library );
     // Disable menu item if no applicable tree widget item is selected
     ui->actionOpen_In_File_Manager_library->setEnabled( itemType != libTreeInvalid );
+
+    if (itemType == libTreePatch) {
+        actions.append(actionRemoveLibraryPatch);
+    }
 
     libraryContextMenu.addActions(actions);
 

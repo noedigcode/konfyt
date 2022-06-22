@@ -140,6 +140,7 @@ class
     QList<KfSoundPtr> getResultsSfz();
 
     void addPatch(QString filename);
+    void removePatch(KfSoundPtr patch);
 
 signals:
     // Signals intended for outside world

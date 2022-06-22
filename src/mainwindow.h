@@ -284,9 +284,12 @@ private:
     void fillLibraryTreeWithSearch(QString search);
 
     QMenu libraryContextMenu;
-    QTreeWidgetItem* libraryMenuItem;
+    QTreeWidgetItem* libraryMenuItem = nullptr;
+    QAction* actionRemoveLibraryPatch = nullptr;
+    void setupLibraryContextMenu();
 
 private slots:
+    void onActionRemoveLibraryPatchTriggered();
     void on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int column);
     void on_treeWidget_Library_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
     void on_treeWidget_Library_itemDoubleClicked(QTreeWidgetItem *item, int column);
