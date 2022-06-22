@@ -1778,6 +1778,16 @@ void MainWindow::showPatchInLibFsInfoArea()
     if (mPreviewMode) {
         text.prepend("Patches cannot be previewed.\n");
     }
+    KfSoundPtr p = selectedSoundInLibOrFs();
+    if (p) {
+        text += "\n";
+        text += p->filename;
+        text += "\n";
+        text += "Layers:\n";
+        foreach (KonfytSoundPreset preset, p->presets) {
+            text += "  " + preset.name + "\n";
+        }
+    }
     ui->textBrowser_LibraryBottom->setPlainText(text);
 }
 
@@ -5249,12 +5259,19 @@ void MainWindow::on_actionRemove_BusPort_triggered()
     }
 
     // Check if any patch layers are using this bus/port
-    QList<int> usingPatches;
-    QList<int> usingLayers;
+    struct PatchUse {
+        KonfytPatch* patch = nullptr;
+        int patchIndex = 0;
+        QList<int> iLayers;
+        QList<KfPatchLayerWeakPtr> layers;
+    };
+    QList<PatchUse> used;
     QList<KonfytPatch*> patchList = prj->getPatchList();
     for (int iPatch=0; iPatch < patchList.count(); iPatch++) {
-        KonfytPatch* patch = patchList[iPatch];
-        QList<KfPatchLayerWeakPtr> layers = patch->layers();
+        PatchUse use;
+        use.patchIndex = iPatch;
+        use.patch = patchList[iPatch];
+        QList<KfPatchLayerWeakPtr> layers = use.patch->layers();
         for (int iLayer=0; iLayer < layers.count(); iLayer++) {
             KfPatchLayerSharedPtr layer = layers[iLayer];
             bool append = false;
@@ -5283,21 +5300,30 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 }
             }
             if (append) {
-                usingPatches.append(iPatch);
-                usingLayers.append(iLayer);
+                use.iLayers.append(iLayer);
+                use.layers.append(layer);
             }
+        }
+        if (use.iLayers.count()) {
+            used.append(use);
         }
     }
 
-    if (usingPatches.count()) {
+    if (used.count()) {
         // Some patches have layers that use the selected bus/port. Confirm with the user.
         QString detailedText;
-        for (int i=0; i<usingPatches.count(); i++) {
-            detailedText.append(QString("Patch %1 layer %2\n")
-                                .arg(usingPatches[i] + 1)
-                                .arg(usingLayers[i] + 1));
+        foreach (const PatchUse& use, used) {
+            QString layers;
+            foreach (int layer, use.iLayers) {
+                if (!layers.isEmpty()) { layers += ", "; }
+                layers += QString::number(layer);
+            }
+            detailedText.append(QString("Patch %1 \"%2\" layer %3\n")
+                                .arg(use.patchIndex)
+                                .arg(use.patch->name())
+                                .arg(layers));
         }
-        QString selectedText = QString("(%1 - %2").arg(id).arg(name);
+        QString selectedText = QString("%1 - %2").arg(id).arg(name);
         // ------------------------------------------------------------------------------
         if (busSelected) {
             int busToChangeTo = prj->audioBus_getFirstBusId(id);
@@ -5312,10 +5338,10 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             if (choice == QMessageBox::Yes) {
                 // User chose to remove bus
                 // Change the bus for all layers still using this one
-                for (int i=0; i<usingPatches.count(); i++) {
-                    KonfytPatch* patch = prj->getPatch(usingPatches[i]);
-                    KfPatchLayerWeakPtr layer = patch->layers()[usingLayers[i]];
-                    pengine.setLayerBus( layer, busToChangeTo );
+                foreach (const PatchUse& use, used) {
+                    foreach (KfPatchLayerWeakPtr layer, use.layers) {
+                        pengine.setLayerBus(layer, busToChangeTo);
+                    }
                 }
                 // Removal will be done below.
 
@@ -5331,10 +5357,10 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             if (choice == QMessageBox::Yes) {
                 // User chose to remove port.
                 // Remove it from all patches where it was in use
-                for (int i=0; i<usingPatches.count(); i++) {
-                    KonfytPatch* patch = prj->getPatch(usingPatches[i]);
-                    KfPatchLayerWeakPtr layer = patch->layers()[usingLayers[i]];
-                    pengine.removeLayer( patch, layer );
+                foreach (const PatchUse& use, used) {
+                    foreach (KfPatchLayerWeakPtr layer, use.layers) {
+                        pengine.removeLayer(use.patch, layer);
+                    }
                 }
                 // Removal will be done below
 
@@ -5350,10 +5376,10 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             if (choice == QMessageBox::Yes) {
                 // User chose to remove port.
                 // Remove it from all patches where it was in use
-                for (int i=0; i<usingPatches.count(); i++) {
-                    KonfytPatch* patch = prj->getPatch(usingPatches[i]);
-                    KfPatchLayerWeakPtr layer = patch->layers()[usingLayers[i]];
-                    pengine.removeLayer( patch, layer );
+                foreach (const PatchUse& use, used) {
+                    foreach (KfPatchLayerWeakPtr layer, use.layers) {
+                        pengine.removeLayer(use.patch, layer);
+                    }
                 }
                 // Removal will be done below
 
@@ -5372,10 +5398,10 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             if (choice == QMessageBox::Yes) {
                 // User chose to remove port
                 // Change the port for all layers still using this one
-                for (int i=0; i<usingPatches.count(); i++) {
-                    KonfytPatch* patch = prj->getPatch(usingPatches[i]);
-                    KfPatchLayerWeakPtr layer = patch->layers()[usingLayers[i]];
-                    pengine.setLayerMidiInPort( layer, portToChangeTo );
+                foreach (const PatchUse& use, used) {
+                    foreach (KfPatchLayerWeakPtr layer, use.layers) {
+                        pengine.setLayerMidiInPort(layer, portToChangeTo);
+                    }
                 }
                 // Removal will be done below.
 

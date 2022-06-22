@@ -182,10 +182,6 @@ void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
             // Route hasn't been created yet
             loadMidiOutputPort(layer);
         }
-
-        // Set MIDI Filter
-        jack->setRouteMidiFilter(layer->midiOutputPortData.jackRoute,
-                                 layer->midiFilter());
     }
 
     // All layers are now loaded. Now set gains, activate routes, etc.
@@ -252,8 +248,10 @@ void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
     if (l->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
         if (l->soundfontData.synthInEngine) {
             // First remove from JACK engine
-            jack->removeSoundfont(l->soundfontData.portsInJackEngine);
-            l->soundfontData.portsInJackEngine = nullptr;
+            if (l->soundfontData.portsInJackEngine) {
+                jack->removeSoundfont(l->soundfontData.portsInJackEngine);
+                l->soundfontData.portsInJackEngine = nullptr;
+            }
             // Then from fluidsynthEngine
             fluidsynthEngine.removeSoundfontProgram(l->soundfontData.synthInEngine);
             // Set unloaded in patch
@@ -272,10 +270,19 @@ void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
             l->sfzData.indexInEngine = -1;
         }
     } else if (l->layerType() == KonfytPatchLayer::TypeMidiOut) {
-        jack->removeMidiRoute(l->midiOutputPortData.jackRoute);
+        if (l->midiOutputPortData.jackRoute) {
+            jack->removeMidiRoute(l->midiOutputPortData.jackRoute);
+            l->midiOutputPortData.jackRoute = nullptr;
+        }
     } else if (l->layerType() == KonfytPatchLayer::TypeAudioIn) {
-        jack->removeAudioRoute(l->audioInPortData.jackRouteLeft);
-        jack->removeAudioRoute(l->audioInPortData.jackRouteRight);
+        if (l->audioInPortData.jackRouteLeft) {
+            jack->removeAudioRoute(l->audioInPortData.jackRouteLeft);
+            l->audioInPortData.jackRouteLeft = nullptr;
+        }
+        if (l->audioInPortData.jackRouteRight) {
+            jack->removeAudioRoute(l->audioInPortData.jackRouteRight);
+            l->audioInPortData.jackRouteRight = nullptr;
+        }
     }
 }
 
@@ -835,6 +842,12 @@ void KonfytPatchEngine::loadMidiOutputPort(KfPatchLayerSharedPtr layer)
     // Create route
     layer->midiOutputPortData.jackRoute = jack->addMidiRoute(
                 srcPort.jackPort, destPort.jackPort);
+
+    // Set MIDI Filter
+    if (layer->midiOutputPortData.jackRoute) {
+        jack->setRouteMidiFilter(layer->midiOutputPortData.jackRoute,
+                                 layer->midiFilter());
+    }
 }
 
 void KonfytPatchEngine::onSfzEngineInitDone(QString error)
