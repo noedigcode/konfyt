@@ -40,7 +40,7 @@
 #include <QTimerEvent>
 
 
-#define KONFYT_JACK_DEFAULT_CLIENT_NAME "Konfyt"   // Default client name. Actual name is set in the Jack client.
+#define KONFYT_JACK_DEFAULT_CLIENT_NAME "Konfyt" // Default client name. Actual name is set in the JACK client.
 #define KONFYT_JACK_SYSTEM_OUT_LEFT "system:playback_1"
 #define KONFYT_JACK_SYSTEM_OUT_RIGHT "system:playback_2"
 
@@ -158,7 +158,7 @@ signals:
 private:
     jack_client_t* mJackClient;
     jack_nframes_t mJackBufferSize; // TODO THIS MIGHT CHANGE, REGISTER BUFSIZE CALLBACK TO UPDATE
-    bool mClientActive = false;      // Flag to indicate if the client has been successfully activated
+    bool mClientActive = false; // Flag to indicate if the client has been successfully activated
     uint32_t mJackSampleRate;
     bool mConnectCallback = false;
     bool mRegisterCallback = false;
@@ -175,7 +175,8 @@ private:
     KonfytFluidsynthEngine* fluidsynthEngine = nullptr;
 
     bool panicCmd = false;  // Panic command from outside
-    int panicState = 0; // Internal panic state
+    enum PanicState { NoPanic, EnterPanicState, InPanicState };
+    PanicState panicState = NoPanic;
 
     QString mJackClientName; // Actual client name as assigned by JACK
     QString mJackClientBaseName; // Requested JACK client name before change for uniqueness
@@ -240,6 +241,12 @@ private:
     jack_midi_data_t* reserveJackMidiEvent(void *portBuffer,
                                            jack_nframes_t time,
                                            size_t size) const;
+    void jackProcess_prepareAudioPortBuffers(jack_nframes_t nframes);
+    void jackProcess_processAudioRoutes(jack_nframes_t nframes);
+    void jackProcess_prepareMidiOutBuffers(jack_nframes_t nframes);
+    void jackProcess_midiPanicOutput();
+    void jackProcess_processMidiInPorts(jack_nframes_t nframes);
+    void jackProcess_sendMidiRouteTxEvents(jack_nframes_t nframes);
 };
 
 

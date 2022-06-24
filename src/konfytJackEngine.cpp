@@ -783,344 +783,52 @@ int KonfytJackEngine::jackXrunCallback(void *arg)
 /* Non-static class instance-specific JACK process callback. */
 int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 {
-    // Lock jack_process ----------------------
     if (!jackProcessMutex.tryLock()) { return 0; }
-    // ----------------------------------------
 
     // panicCmd is the panic command received from the outside.
-    // panicState is our internal panic state where zero=no panic.
     if (panicCmd) {
-        if (panicState == 0) {
+        if (panicState == NoPanic) {
             // If the panic command is true and we are not in a panic state yet, go into one.
-            panicState = 1;
+            panicState = EnterPanicState;
         }
     } else {
         // If the panic command is false, ensure we are not in a panic state.
-        panicState = 0;
+        panicState = NoPanic;
     }
 
-    // ------------------------------------- Start of bus processing
+    // Audio processing
 
-    // An output port is a bus destination with its gain.
-    // Other audio input ports are routed to the bus output.
+    jackProcess_prepareAudioPortBuffers(nframes);
 
-    // Get all audio out ports (bus) buffers
-    for (int prt = 0; prt < audioOutPorts.count(); prt++) {
-        KfJackAudioPort* port = audioOutPorts.at(prt);
-        port->buffer = getJackPortBuffer(port->jackPointer, nframes);
-        if (port->buffer) {
-            // Reset buffer
-            memset(port->buffer, 0, sizeof(jack_default_audio_sample_t)*nframes);
-        }
+    // Process (mix and gain) audio routes if not in panic state.
+    // (If in panic state, no audio is mixed and output buses stay zeroed.)
+    if (panicState == NoPanic) {
+        jackProcess_processAudioRoutes(nframes);
     }
 
-    // Get all audio in ports buffers
-    for (int prt = 0; prt < audioInPorts.count(); prt++) {
-        KfJackAudioPort* port = audioInPorts.at(prt);
-        port->buffer = getJackPortBuffer(port->jackPointer, nframes );
-    }
+    // MIDI processing
 
-    // Get all Fluidsynth audio in port buffers
-    if (fluidsynthEngine != nullptr) {
-        for (int prt = 0; prt < fluidsynthPorts.count(); prt++) {
-            KfJackPluginPorts* fluidsynthPort = fluidsynthPorts.at(prt);
-            KfJackAudioPort* port1 = fluidsynthPort->audioInLeft; // Left
-            KfJackAudioPort* port2 = fluidsynthPort->audioInRight; // Right
+    jackProcess_prepareMidiOutBuffers(nframes);
 
-            // We are not getting our audio from Jack audio ports, but from Fluidsynth.
-            // The buffers have already been allocated when we added the soundfont layer to the engine.
-            // Get data from Fluidsynth
-            fluidsynthEngine->fluidsynthWriteFloat(
-                        fluidsynthPort->fluidSynthInEngine,
-                        ((jack_default_audio_sample_t*)port1->buffer),
-                        ((jack_default_audio_sample_t*)port2->buffer),
-                        nframes );
-        }
-    }
-
-    // Get all plugin audio in port buffers
-    for (int prt = 0; prt < pluginPorts.count(); prt++) {
-        KfJackPluginPorts* pluginPort = pluginPorts.at(prt);
-        // Left
-        KfJackAudioPort* port1 = pluginPort->audioInLeft;
-        port1->buffer = getJackPortBuffer( port1->jackPointer, nframes );
-        // Right
-        KfJackAudioPort* port2 = pluginPort->audioInRight;
-        port2->buffer = getJackPortBuffer( port2->jackPointer, nframes );
-    }
-
-    if (panicState > 0) {
-        // We are in a panic state. Write zero to all buses.
-        // (Buses already zeroed above)
-    } else {
-
-        // For each audio route, if active, mix source buffer to destination buffer
-        for (int r = 0; r < audioRoutes.count(); r++) {
-            KfJackAudioRoute* route = audioRoutes[r];
-            bool outputFlag = false;
-            if (route->active) {
-                route->fadingOut = false;
-                outputFlag = true;
-            } else {
-                if (route->fadeoutCounter < (fadeOutValuesCount-1)) {
-                    route->fadingOut = true;
-                    outputFlag = true;
-                }
-            }
-            if (outputFlag) {
-                mixBufferToDestinationPort(route, nframes, true);
-            }
-        }
-
-        // Finally, apply the gain of each active bus
-        for (int prt = 0; prt < audioOutPorts.count(); prt++) {
-            KfJackAudioPort* port = audioOutPorts.at(prt);
-            if (!port->buffer) { continue; }
-            // Do for each frame
-            for (jack_nframes_t i = 0;  i < nframes; i++) {
-                ( (jack_default_audio_sample_t*)( port->buffer ) )[i] *= port->gain;
-            }
-        }
-
-    } // end of panicState else
-
-    // ------------------------------------- End of bus processing
-
-    // Get buffers for midi output ports to external apps
-    for (int p = 0; p < midiOutPorts.count(); p++) {
-        KfJackMidiPort* port = midiOutPorts.at(p);
-        port->buffer = getJackPortBuffer(port->jackPointer, nframes);
-        if (port->buffer) {
-            jack_midi_clear_buffer(port->buffer);
-        }
-    }
-    // Get buffers for midi output ports to plugins
-    for (int p = 0; p < pluginPorts.count(); p++) {
-        KfJackMidiPort* port = pluginPorts[p]->midi;
-        port->buffer = getJackPortBuffer(port->jackPointer, nframes);
-        if (port->buffer) {
-            jack_midi_clear_buffer(port->buffer);
-        }
-    }
-
-
-    if (panicState == 1) {
+    if (panicState == EnterPanicState) {
         // We just entered panic state. Send note off messages etc,
-        // and proceed to state 2 where we just wait.
-
-        // Send to fluidsynth
-        for (int p = 0; p < fluidsynthPorts.count(); p++) {
-            KfFluidSynth* synth = fluidsynthPorts.at(p)->fluidSynthInEngine;
-            // Fluidsynthengine will force event channel to zero
-            fluidsynthEngine->processJackMidi( synth, &(evAllNotesOff) );
-            fluidsynthEngine->processJackMidi( synth, &(evSustainZero) );
-            fluidsynthEngine->processJackMidi( synth, &(evPitchbendZero) );
-        }
-
-        // Give to all output ports to external apps
-        for (int p = 0; p < midiOutPorts.count(); p++) {
-            KfJackMidiPort* port = midiOutPorts.at(p);
-            sendMidiClosureEvents_allChannels( port ); // Send to all MIDI channels
-        }
-
-        // Also give to all plugin ports
-        for (int p = 0; p < pluginPorts.count(); p++) {
-            KfJackMidiPort* port = pluginPorts[p]->midi;
-            sendMidiClosureEvents_chanZeroOnly( port ); // Only on channel zero
-        }
-
-        panicState = 2; // Proceed to panicState 2 where we will just wait for panic to subside.
-
+        // then proceed to panic state where we just wait.
+        jackProcess_midiPanicOutput();
+        panicState = InPanicState; // Now we wait for panic to subside.
     }
 
+    // Process MIDI input ports
+    jackProcess_processMidiInPorts(nframes);
 
-    // For each midi input port...
-    for (int p = 0; p < midiInPorts.count(); p++) {
-
-        KfJackMidiPort* sourcePort = midiInPorts[p];
-        sourcePort->buffer = getJackPortBuffer(sourcePort->jackPointer, nframes);
-        jack_nframes_t nevents = 0;
-        if (sourcePort->buffer) {
-            nevents = jack_midi_get_event_count(sourcePort->buffer);
-        }
-
-        // For each midi input event...
-        for (jack_nframes_t i = 0; i < nevents; i++) {
-
-            // Get input event
-            jack_midi_event_t inEvent_jack;
-            jack_midi_event_get(&inEvent_jack, sourcePort->buffer, i);
-            KonfytMidiEvent ev( inEvent_jack.buffer, inEvent_jack.size );
-
-            // Apply input MIDI port filter
-            if (sourcePort->filter.passFilter(&ev)) {
-                ev = sourcePort->filter.modify(&ev);
-            } else {
-                // Event doesn't pass filter. Skip.
-                continue;
-            }
-
-            // Handle bank select: modify event and store bank select
-            handleBankSelect(sourcePort->bankMSB, sourcePort->bankLSB, &ev);
-
-            // Send to GUI
-            midiRxBuffer.stash({.sourcePort = sourcePort,
-                                  .midiRoute = nullptr,
-                                  .midiEvent = ev});
-
-            if (panicState != 0) { continue; }
-
-            // For each MIDI route...
-            for (int iRoute = 0; iRoute < midiRoutes.count(); iRoute++) {
-
-                KfJackMidiRoute* route = midiRoutes[iRoute];
-
-                if (route->source != sourcePort) { continue; }
-                if (route->destIsJackPort && route->destPort == nullptr) { continue; }
-                if (!route->filter.passFilter(&ev)) { continue; }
-
-                KonfytMidiEvent evToSend = route->filter.modify(&ev);
-
-                // Handle bank select: modify event and store bank select
-                handleBankSelect(route->bankMSB, route->bankLSB, &evToSend);
-
-                bool passEvent = route->active;
-                bool guiOnly = false;
-                bool recordNoteon = false;
-                bool recordSustain = false;
-                bool recordPitchbend = false;
-
-                if (evToSend.type() == MIDI_EVENT_TYPE_NOTEOFF) {
-                    passEvent = true; // Pass even if route inactive
-                    guiOnly = true;
-                    handleNoteoffEvent(evToSend, route, inEvent_jack.time);
-                } else if ( (evToSend.type() == MIDI_EVENT_TYPE_CC) && (evToSend.data1() == 64) ) {
-                    if (evToSend.data2() <= KONFYT_JACK_SUSTAIN_THRESH) {
-                        // Sustain zero
-                        if ((route->sustain >> evToSend.channel) & 0x1) {
-                            passEvent = true; // Pass even if route inactive
-                            route->sustain ^= (1 << evToSend.channel);
-                        }
-                    } else {
-                        recordSustain = true;
-                    }
-                } else if ( (evToSend.type() == MIDI_EVENT_TYPE_PITCHBEND) ) {
-                    if (evToSend.pitchbendValueSigned() == 0) {
-                        // Pitchbend zero
-                        if ((route->pitchbend >> evToSend.channel) & 0x1) {
-                            passEvent = true; // Pass even if route inactive
-                            route->pitchbend ^= (1 << evToSend.channel);
-                        }
-                    } else {
-                        recordPitchbend = true;
-                    }
-                } else if ( evToSend.type() == MIDI_EVENT_TYPE_NOTEON ) {
-                    int note = evToSend.note();
-                    if (!route->filter.ignoreGlobalTranspose) {
-                        note += mGlobalTranspose;
-                    }
-                    evToSend.setNote(note);
-                    if ( (note < 0) || (note > 127) ) {
-                        passEvent = false;
-                    }
-                    recordNoteon = true;
-                }
-
-                if (!passEvent) { continue; }
-
-                // Give to GUI
-                midiRxBuffer.stash({.sourcePort = nullptr,
-                                      .midiRoute = route,
-                                      .midiEvent = evToSend});
-
-                if (guiOnly) { continue; }
-
-                // Write MIDI output
-                writeRouteMidi(route, evToSend, inEvent_jack.time);
-
-                // Record noteon, sustain or pitchbend for off events later.
-                if (recordNoteon) {
-                    KonfytJackNoteOnRecord rec;
-                    if (route->filter.ignoreGlobalTranspose) {
-                        rec.globalTranspose = 0;
-                    } else {
-                        rec.globalTranspose = mGlobalTranspose;
-                    }
-                    rec.note = evToSend.note();
-                    rec.channel = evToSend.channel;
-                    route->noteOnList.add(rec);
-                } else if (recordPitchbend) {
-                    route->pitchbend |= 1 << evToSend.channel;
-                } else if (recordSustain) {
-                    route->sustain |= 1 << evToSend.channel;
-                }
-
-            } // end of for midi route
-
-        } // end for each midi input event
-
-    } // end for each midi input port
-
-
-    // Send route MIDI tx events
-    // For each MIDI route...
-    for (int r = 0; r < midiRoutes.count(); r++) {
-
-        KfJackMidiRoute* route = midiRoutes[r];
-        if (!route->active) { continue; }
-        if (route->destIsJackPort && route->destPort == NULL) { continue; }
-
-        route->eventsTxBuffer.startRead();
-        while (route->eventsTxBuffer.hasNext()) {
-            KonfytMidiEvent event = route->eventsTxBuffer.readNext();
-
-            // Apply only the route MIDI filter output channel (if any)
-            if (route->filter.outChan >= 0) {
-                event.channel = route->filter.outChan;
-            }
-
-            if (route->destIsJackPort) {
-                // Destination is JACK port
-
-                unsigned char* outBuffer = 0;
-
-                // If bank MSB/LSB not -1, send them before the event
-                if (event.bankMSB >= 0) {
-                    outBuffer = reserveJackMidiEvent(route->destPort->buffer, 0, 3);
-                    if (outBuffer) { event.msbToBuffer(outBuffer); }
-                }
-                if (event.bankLSB >= 0) {
-                    outBuffer = reserveJackMidiEvent(route->destPort->buffer, 0, 3);
-                    if (outBuffer) { event.lsbToBuffer(outBuffer); }
-                }
-                // Send event
-                outBuffer = reserveJackMidiEvent(route->destPort->buffer, 0,
-                                                 event.bufferSizeRequired());
-                if (outBuffer) { event.toBuffer(outBuffer); }
-
-            } else {
-                // Destination is Fluidsynth port
-                fluidsynthEngine->processJackMidi(route->destFluidsynthID,
-                                                  &event);
-            }
-
-        }
-        route->eventsTxBuffer.endRead();
-    }
-
+    // Route MIDI tx events
+    jackProcess_sendMidiRouteTxEvents(nframes);
 
     // Commit received events to buffer so they can be read in the GUI thread.
     audioRxBuffer.commit();
     midiRxBuffer.commit();
 
-
-    // Unlock jack_process --------------------
     jackProcessMutex.unlock();
-    // ----------------------------------------
-
     return 0;
-
-    // end of jackProcessCallback
 }
 
 void KonfytJackEngine::jackPortConnectCallback()
@@ -1331,6 +1039,305 @@ jack_midi_data_t *KonfytJackEngine::reserveJackMidiEvent(void *portBuffer,
         return jack_midi_event_reserve(portBuffer, time, size);
     } else {
         return NULL;
+    }
+}
+
+void KonfytJackEngine::jackProcess_prepareAudioPortBuffers(jack_nframes_t nframes)
+{
+    // Get all audio out ports (bus) buffers
+    for (int prt = 0; prt < audioOutPorts.count(); prt++) {
+        KfJackAudioPort* port = audioOutPorts.at(prt);
+        port->buffer = getJackPortBuffer(port->jackPointer, nframes);
+        if (port->buffer) {
+            // Reset buffer
+            memset(port->buffer, 0, sizeof(jack_default_audio_sample_t)*nframes);
+        }
+    }
+
+    // Get all audio in ports buffers
+    for (int prt = 0; prt < audioInPorts.count(); prt++) {
+        KfJackAudioPort* port = audioInPorts.at(prt);
+        port->buffer = getJackPortBuffer(port->jackPointer, nframes );
+    }
+
+    // Get all Fluidsynth audio in port buffers
+    if (fluidsynthEngine != nullptr) {
+        for (int prt = 0; prt < fluidsynthPorts.count(); prt++) {
+            KfJackPluginPorts* fluidsynthPort = fluidsynthPorts.at(prt);
+            KfJackAudioPort* port1 = fluidsynthPort->audioInLeft; // Left
+            KfJackAudioPort* port2 = fluidsynthPort->audioInRight; // Right
+
+            // We are not getting our audio from Jack audio ports, but from Fluidsynth.
+            // The buffers have already been allocated when we added the soundfont layer to the engine.
+            // Get data from Fluidsynth
+            fluidsynthEngine->fluidsynthWriteFloat(
+                        fluidsynthPort->fluidSynthInEngine,
+                        ((jack_default_audio_sample_t*)port1->buffer),
+                        ((jack_default_audio_sample_t*)port2->buffer),
+                        nframes );
+        }
+    }
+
+    // Get all plugin audio in port buffers
+    for (int prt = 0; prt < pluginPorts.count(); prt++) {
+        KfJackPluginPorts* pluginPort = pluginPorts.at(prt);
+        // Left
+        KfJackAudioPort* port1 = pluginPort->audioInLeft;
+        port1->buffer = getJackPortBuffer( port1->jackPointer, nframes );
+        // Right
+        KfJackAudioPort* port2 = pluginPort->audioInRight;
+        port2->buffer = getJackPortBuffer( port2->jackPointer, nframes );
+    }
+}
+
+void KonfytJackEngine::jackProcess_processAudioRoutes(jack_nframes_t nframes)
+{
+    // For each audio route, if active, mix source buffer to destination buffer
+    for (int r = 0; r < audioRoutes.count(); r++) {
+        KfJackAudioRoute* route = audioRoutes[r];
+        bool outputFlag = false;
+        if (route->active) {
+            route->fadingOut = false;
+            outputFlag = true;
+        } else {
+            if (route->fadeoutCounter < (fadeOutValuesCount-1)) {
+                route->fadingOut = true;
+                outputFlag = true;
+            }
+        }
+        if (outputFlag) {
+            mixBufferToDestinationPort(route, nframes, true);
+        }
+    }
+
+    // Finally, apply the gain of each active bus
+    for (int prt = 0; prt < audioOutPorts.count(); prt++) {
+        KfJackAudioPort* port = audioOutPorts.at(prt);
+        if (!port->buffer) { continue; }
+        // Do for each frame
+        for (jack_nframes_t i = 0;  i < nframes; i++) {
+            ( (jack_default_audio_sample_t*)( port->buffer ) )[i] *= port->gain;
+        }
+    }
+}
+
+void KonfytJackEngine::jackProcess_prepareMidiOutBuffers(jack_nframes_t nframes)
+{
+    // Get buffers for midi output ports to external apps
+    for (int p = 0; p < midiOutPorts.count(); p++) {
+        KfJackMidiPort* port = midiOutPorts.at(p);
+        port->buffer = getJackPortBuffer(port->jackPointer, nframes);
+        if (port->buffer) {
+            jack_midi_clear_buffer(port->buffer);
+        }
+    }
+    // Get buffers for midi output ports to plugins
+    for (int p = 0; p < pluginPorts.count(); p++) {
+        KfJackMidiPort* port = pluginPorts[p]->midi;
+        port->buffer = getJackPortBuffer(port->jackPointer, nframes);
+        if (port->buffer) {
+            jack_midi_clear_buffer(port->buffer);
+        }
+    }
+}
+
+void KonfytJackEngine::jackProcess_midiPanicOutput()
+{
+    // Send to fluidsynth
+    for (int p = 0; p < fluidsynthPorts.count(); p++) {
+        KfFluidSynth* synth = fluidsynthPorts.at(p)->fluidSynthInEngine;
+        // Fluidsynthengine will force event channel to zero
+        fluidsynthEngine->processJackMidi( synth, &(evAllNotesOff) );
+        fluidsynthEngine->processJackMidi( synth, &(evSustainZero) );
+        fluidsynthEngine->processJackMidi( synth, &(evPitchbendZero) );
+    }
+
+    // Give to all output ports to external apps
+    for (int p = 0; p < midiOutPorts.count(); p++) {
+        KfJackMidiPort* port = midiOutPorts.at(p);
+        sendMidiClosureEvents_allChannels( port ); // Send to all MIDI channels
+    }
+
+    // Also give to all plugin ports
+    for (int p = 0; p < pluginPorts.count(); p++) {
+        KfJackMidiPort* port = pluginPorts[p]->midi;
+        sendMidiClosureEvents_chanZeroOnly( port ); // Only on channel zero
+    }
+}
+
+void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
+{
+    for (int p = 0; p < midiInPorts.count(); p++) {
+
+        KfJackMidiPort* sourcePort = midiInPorts[p];
+        sourcePort->buffer = getJackPortBuffer(sourcePort->jackPointer, nframes);
+        jack_nframes_t nevents = 0;
+        if (sourcePort->buffer) {
+            nevents = jack_midi_get_event_count(sourcePort->buffer);
+        }
+
+        // For each midi input event...
+        for (jack_nframes_t i = 0; i < nevents; i++) {
+
+            // Get input event
+            jack_midi_event_t inEvent_jack;
+            jack_midi_event_get(&inEvent_jack, sourcePort->buffer, i);
+            KonfytMidiEvent ev( inEvent_jack.buffer, inEvent_jack.size );
+
+            // Apply input MIDI port filter
+            if (sourcePort->filter.passFilter(&ev)) {
+                ev = sourcePort->filter.modify(&ev);
+            } else {
+                // Event doesn't pass filter. Skip.
+                continue;
+            }
+
+            // Handle bank select: modify event and store bank select
+            handleBankSelect(sourcePort->bankMSB, sourcePort->bankLSB, &ev);
+
+            // Send to GUI
+            midiRxBuffer.stash({.sourcePort = sourcePort,
+                                  .midiRoute = nullptr,
+                                  .midiEvent = ev});
+
+            if (panicState != NoPanic) { continue; }
+
+            // For each MIDI route...
+            for (int iRoute = 0; iRoute < midiRoutes.count(); iRoute++) {
+
+                KfJackMidiRoute* route = midiRoutes[iRoute];
+
+                if (route->source != sourcePort) { continue; }
+                if (route->destIsJackPort && route->destPort == nullptr) { continue; }
+                if (!route->filter.passFilter(&ev)) { continue; }
+
+                KonfytMidiEvent evToSend = route->filter.modify(&ev);
+
+                // Handle bank select: modify event and store bank select
+                handleBankSelect(route->bankMSB, route->bankLSB, &evToSend);
+
+                bool passEvent = route->active;
+                bool guiOnly = false;
+                bool recordNoteon = false;
+                bool recordSustain = false;
+                bool recordPitchbend = false;
+
+                if (evToSend.type() == MIDI_EVENT_TYPE_NOTEOFF) {
+                    passEvent = true; // Pass even if route inactive
+                    guiOnly = true;
+                    handleNoteoffEvent(evToSend, route, inEvent_jack.time);
+                } else if ( (evToSend.type() == MIDI_EVENT_TYPE_CC) && (evToSend.data1() == 64) ) {
+                    if (evToSend.data2() <= KONFYT_JACK_SUSTAIN_THRESH) {
+                        // Sustain zero
+                        if ((route->sustain >> evToSend.channel) & 0x1) {
+                            passEvent = true; // Pass even if route inactive
+                            route->sustain ^= (1 << evToSend.channel);
+                        }
+                    } else {
+                        recordSustain = true;
+                    }
+                } else if ( (evToSend.type() == MIDI_EVENT_TYPE_PITCHBEND) ) {
+                    if (evToSend.pitchbendValueSigned() == 0) {
+                        // Pitchbend zero
+                        if ((route->pitchbend >> evToSend.channel) & 0x1) {
+                            passEvent = true; // Pass even if route inactive
+                            route->pitchbend ^= (1 << evToSend.channel);
+                        }
+                    } else {
+                        recordPitchbend = true;
+                    }
+                } else if ( evToSend.type() == MIDI_EVENT_TYPE_NOTEON ) {
+                    int note = evToSend.note();
+                    if (!route->filter.ignoreGlobalTranspose) {
+                        note += mGlobalTranspose;
+                    }
+                    evToSend.setNote(note);
+                    if ( (note < 0) || (note > 127) ) {
+                        passEvent = false;
+                    }
+                    recordNoteon = true;
+                }
+
+                if (!passEvent) { continue; }
+
+                // Give to GUI
+                midiRxBuffer.stash({.sourcePort = nullptr,
+                                      .midiRoute = route,
+                                      .midiEvent = evToSend});
+
+                if (guiOnly) { continue; }
+
+                // Write MIDI output
+                writeRouteMidi(route, evToSend, inEvent_jack.time);
+
+                // Record noteon, sustain or pitchbend for off events later.
+                if (recordNoteon) {
+                    KonfytJackNoteOnRecord rec;
+                    if (route->filter.ignoreGlobalTranspose) {
+                        rec.globalTranspose = 0;
+                    } else {
+                        rec.globalTranspose = mGlobalTranspose;
+                    }
+                    rec.note = evToSend.note();
+                    rec.channel = evToSend.channel;
+                    route->noteOnList.add(rec);
+                } else if (recordPitchbend) {
+                    route->pitchbend |= 1 << evToSend.channel;
+                } else if (recordSustain) {
+                    route->sustain |= 1 << evToSend.channel;
+                }
+
+            } // end of for midi route
+
+        } // end for each midi input event
+
+    } // end for each midi input port
+}
+
+void KonfytJackEngine::jackProcess_sendMidiRouteTxEvents(jack_nframes_t /*nframes*/)
+{
+    for (int r = 0; r < midiRoutes.count(); r++) {
+
+        KfJackMidiRoute* route = midiRoutes[r];
+        if (!route->active) { continue; }
+        if (route->destIsJackPort && route->destPort == NULL) { continue; }
+
+        route->eventsTxBuffer.startRead();
+        while (route->eventsTxBuffer.hasNext()) {
+            KonfytMidiEvent event = route->eventsTxBuffer.readNext();
+
+            // Apply only the route MIDI filter output channel (if any)
+            if (route->filter.outChan >= 0) {
+                event.channel = route->filter.outChan;
+            }
+
+            if (route->destIsJackPort) {
+                // Destination is JACK port
+
+                unsigned char* outBuffer = 0;
+
+                // If bank MSB/LSB not -1, send them before the event
+                if (event.bankMSB >= 0) {
+                    outBuffer = reserveJackMidiEvent(route->destPort->buffer, 0, 3);
+                    if (outBuffer) { event.msbToBuffer(outBuffer); }
+                }
+                if (event.bankLSB >= 0) {
+                    outBuffer = reserveJackMidiEvent(route->destPort->buffer, 0, 3);
+                    if (outBuffer) { event.lsbToBuffer(outBuffer); }
+                }
+                // Send event
+                outBuffer = reserveJackMidiEvent(route->destPort->buffer, 0,
+                                                 event.bufferSizeRequired());
+                if (outBuffer) { event.toBuffer(outBuffer); }
+
+            } else {
+                // Destination is Fluidsynth port
+                fluidsynthEngine->processJackMidi(route->destFluidsynthID,
+                                                  &event);
+            }
+
+        }
+        route->eventsTxBuffer.endRead();
     }
 }
 
