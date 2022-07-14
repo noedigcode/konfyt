@@ -4994,7 +4994,9 @@ void MainWindow::handleRouteMidiEvent(KfJackMidiRxEvent rxEvent)
 
     // List of received MIDI events on MIDI send list editor page
     if (ui->stackedWidget->currentWidget() == ui->midiSendListPage) {
-        midiSendListEditorMidiRxList.addMidiEvent(rxEvent.midiEvent);
+        if (midiSendListEditRoute == rxEvent.midiRoute) {
+            midiSendListEditorMidiRxList.addMidiEvent(rxEvent.midiEvent);
+        }
     }
 }
 
