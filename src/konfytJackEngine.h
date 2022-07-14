@@ -231,7 +231,7 @@ private:
 
     // JACK process callback helper functions
     void writeRouteMidi(KfJackMidiRoute* route, KonfytMidiEvent &ev, jack_nframes_t time);
-    void handleNoteoffEvent(const KonfytMidiEvent& ev, KfJackMidiRoute* route, jack_nframes_t time);
+    bool handleNoteoffEvent(const KonfytMidiEvent& ev, KfJackMidiRoute* route, jack_nframes_t time);
     void mixBufferToDestinationPort(KfJackAudioRoute* route, jack_nframes_t nframes, bool applyGain);
     void sendMidiClosureEvents(KfJackMidiPort* port, int channel);
     void sendMidiClosureEvents_chanZeroOnly(KfJackMidiPort* port);

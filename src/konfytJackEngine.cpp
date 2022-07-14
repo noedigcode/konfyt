@@ -862,16 +862,20 @@ QList<KfJackAudioRxEvent> KonfytJackEngine::getAudioRxEvents()
 }
 
 /* Helper function for Jack process callback.
- * Send noteoffs to all corresponding recorded noteon events. */
-void KonfytJackEngine::handleNoteoffEvent(const KonfytMidiEvent &ev,
+ * Send noteoffs to all corresponding recorded noteon events.
+ * Return true if at least one noteoff was sent, or false if nothing was sent. */
+bool KonfytJackEngine::handleNoteoffEvent(const KonfytMidiEvent &ev,
                                           KfJackMidiRoute *route,
                                           jack_nframes_t time)
 {
+    bool noteoffSent = false;
+
     for (int i=0; i < route->noteOnList.count(); i++) {
         KonfytJackNoteOnRecord* rec = route->noteOnList.at_ptr(i);
         if ( (rec->note == ev.note() + rec->globalTranspose)
              && (rec->channel == ev.channel) ) {
             // Match! Send noteoff
+            noteoffSent = true;
             KonfytMidiEvent toSend = ev;
             toSend.setNote(rec->note);
             writeRouteMidi(route, toSend, time);
@@ -880,6 +884,8 @@ void KonfytJackEngine::handleNoteoffEvent(const KonfytMidiEvent &ev,
             i--; // Due to removal, have to stay at same index after for loop i++
         }
     }
+
+    return noteoffSent;
 }
 
 /* Helper function for JACK process callback */
@@ -1223,9 +1229,8 @@ void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
                 bool recordPitchbend = false;
 
                 if (evToSend.type() == MIDI_EVENT_TYPE_NOTEOFF) {
-                    passEvent = true; // Pass even if route inactive
-                    guiOnly = true;
-                    handleNoteoffEvent(evToSend, route, inEvent_jack.time);
+                    passEvent = false; // Event is handled in handleNoteoffEvent().
+                    guiOnly = handleNoteoffEvent(evToSend, route, inEvent_jack.time);
                 } else if ( (evToSend.type() == MIDI_EVENT_TYPE_CC) && (evToSend.data1() == 64) ) {
                     if (evToSend.data2() <= KONFYT_JACK_SUSTAIN_THRESH) {
                         // Sustain zero
@@ -1258,14 +1263,14 @@ void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
                     recordNoteon = true;
                 }
 
+                if (passEvent || guiOnly) {
+                    // Give to GUI
+                    midiRxBuffer.stash({ .sourcePort = nullptr,
+                                         .midiRoute = route,
+                                         .midiEvent = evToSend });
+                }
+
                 if (!passEvent) { continue; }
-
-                // Give to GUI
-                midiRxBuffer.stash({.sourcePort = nullptr,
-                                      .midiRoute = route,
-                                      .midiEvent = evToSend});
-
-                if (guiOnly) { continue; }
 
                 // Write MIDI output
                 writeRouteMidi(route, evToSend, inEvent_jack.time);
