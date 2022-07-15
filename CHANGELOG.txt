@@ -1,6 +1,46 @@
 Changelog
 =========
 
+[1.2.0] - July 2022
+-------------------
+
+Added
+
+- Patch list drag and drop for re-ordering patches.
+- Detect Linuxsampler process crash and automatically restart.
+- Add liblscp version to about text.
+- Soundfont scanning for library is now done in a separate process so Fluidsynth
+  crashes due to malformed soundfonts don't affect Konfyt.
+- Pitchbend up and down ranges in MIDI filter.
+- Add CC block-list to MIDI filter.
+- Note velocity mapping with graph and presets in MIDI filter.
+- Escape key returns to main patch view.
+- Library context menu to remove patch from library.
+- When a patch is selected in the library, show info and layers below library.
+
+Fixes
+
+- Apply patch list number/note show/hide setting when loading a project.
+- Change volume when master volume slider is moved without using the mouse.
+- Only relay noteoff messages to GUI (e.g. in console or received MIDI events lists)
+  if it actually resulted in a noteoff message being sent.
+- MIDI send list editor now only shows received MIDI events for the corresponding
+  layer.
+
+Changes
+
+- When console/main window not available any more (e.g. during program exit),
+  send print output to stdout.
+- CC allow-list in MIDI filter is now space-separated text.
+- Entire top toolbar area becomes red to emphasise when Panic is activated.
+- Patches in library view don't show file extension any more.
+- Some code housekeeping and refactoring.
+
+Removed
+
+- MIDI filter note velocity limits - replaced by velocity mapping.
+
+
 [1.1.7] - January 2022
 ----------------------
 
