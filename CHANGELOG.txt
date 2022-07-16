@@ -8,7 +8,6 @@ Added
 
 - Patch list drag and drop for re-ordering patches.
 - Detect Linuxsampler process crash and automatically restart.
-- Add liblscp version to about text.
 - Soundfont scanning for library is now done in a separate process so Fluidsynth
   crashes due to malformed soundfonts don't affect Konfyt.
 - Pitchbend up and down ranges in MIDI filter.
@@ -17,6 +16,7 @@ Added
 - Escape key returns to main patch view.
 - Library context menu to remove patch from library.
 - When a patch is selected in the library, show info and layers below library.
+- Add liblscp version to about text.
 
 Fixes
 

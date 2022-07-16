@@ -29,11 +29,11 @@ More information is available at www.noedig.co.za/konfyt/
 
 Requirements:
 -------------
-Konfyt was mainly developed on Linux Mint 20.2 (based on Ubuntu 20.04).
+Konfyt was mainly developed on Linux Mint 20.3 (based on Ubuntu 20.04).
 * Qt 5.12.8
 * Fluidsynth 2.1.1
 * liblscp 0.6.0 and thus Linuxsampler
-* Carla 2.4.1
+* Carla 2.4.3
 
 Carla is available in the KXStudio repositories (http://kxstudio.linuxaudio.org/Repositories)
 for Ubuntu based systems.
