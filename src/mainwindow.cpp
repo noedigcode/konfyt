@@ -2745,8 +2745,10 @@ QString MainWindow::getUniqueFilename(QString dirname, QString name, QString ext
         return "";
     }
 
-    // Add dot if extension doesn't start with one
-    if (!extension.startsWith(".")) { extension.prepend("."); }
+    // If extension isn't empty, add dot if extension doesn't start with one
+    if (!extension.isEmpty()) {
+        if (!extension.startsWith(".")) { extension.prepend("."); }
+    }
 
     // Scan the directory and get a unique name.
     QString extra = "";
