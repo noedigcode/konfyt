@@ -2283,14 +2283,14 @@ QStringList MainWindow::scanDirForFiles(QString dirname, QString filenameExtensi
     QDir dir(dirname);
 
     // Get list of all subfiles and directories. Then for each:
-    // If a file, add it if it is a project.
+    // If a file, add it if its extension matches filenameExtension.
     // If a directory, run this function on it.
     QFileInfoList fil = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
     for (int i = 0; i < fil.count(); i++) {
         QFileInfo fi = fil.at(i);
 
         if (fi.isFile()) {
-            // Check extension and add if project.
+            // Check extension and add if it matches.
             bool pass = false;
             if (filenameExtension.isEmpty()) { pass = true; }
             else {
@@ -4604,14 +4604,19 @@ void MainWindow::refreshFilesystemView()
     }
 
     QDir d(fsview_currentPath);
-    QFileInfoList l = d.entryInfoList(QDir::NoFilter,QDir::DirsFirst | QDir::Name | QDir::IgnoreCase);
 
+    QDir::Filters filter = QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot;
+    if (ui->checkBox_filesystem_hiddenFiles->isChecked()) {
+        filter |= QDir::Hidden;
+    }
+    QFileInfoList l = d.entryInfoList(filter,
+                            QDir::DirsFirst | QDir::Name | QDir::IgnoreCase);
 
     ui->treeWidget_filesystem->clear();
     fsMap.clear();
 
-    for (int i=0; i<l.count(); i++) {
-        QFileInfo info = l[i];
+    foreach (QFileInfo info, l) {
+
         if (info.fileName() == ".") { continue; }
         if (info.fileName() == "..") { continue; }
 
@@ -6388,6 +6393,11 @@ void MainWindow::on_checkBox_filesystem_ShowOnlySounds_toggled(bool /*checked*/)
     refreshFilesystemView();
 }
 
+void MainWindow::on_checkBox_filesystem_hiddenFiles_toggled(bool /*checked*/)
+{
+    refreshFilesystemView();
+}
+
 void MainWindow::on_pushButton_LavaMonster_clicked()
 {
     showAboutDialog();
@@ -7099,9 +7109,5 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
     // Update in JACK engine
     updateBusGainInJackEngine(busId);
 }
-
-
-
-
 
 

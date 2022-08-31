@@ -336,6 +336,7 @@ private slots:
     void on_lineEdit_filesystem_path_returnPressed();
     void on_toolButton_filesystem_projectDir_clicked();
     void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
+    void on_checkBox_filesystem_hiddenFiles_toggled(bool checked);
 
     void on_actionOpen_In_File_Manager_fsview_triggered();
     void on_actionAdd_Path_To_External_App_Box_triggered();
@@ -943,7 +944,6 @@ private slots:
 
     void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
     void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
-
 
 };
 
