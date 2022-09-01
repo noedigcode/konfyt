@@ -445,18 +445,17 @@ bool KonfytProject::loadProject(QString filename)
             } else if (r.name() == XML_PRJ_PROCESSLIST) {
 
                 while (r.readNextStartElement()) { // process
-                    KonfytProcess* gp = new KonfytProcess();
+                    QString command;
                     while (r.readNextStartElement()) {
                         if (r.name() == XML_PRJ_PROCESS_APPNAME) {
-                            gp->appname = r.readElementText();
+                            command = r.readElementText();
                         } else {
                             print("loadProject: "
                                         "Unrecognized process element: " + r.name().toString() );
                             r.skipCurrentElement();
                         }
                     }
-                    gp->projectDir = this->getDirname();
-                    this->addProcess(gp);
+                    addProcess(command);
                 }
 
 
@@ -1148,15 +1147,19 @@ QStringList KonfytProject::midiOutPort_getClients(int portId)
 }
 
 /* Add process (External program) to GUI and current project. */
-void KonfytProject::addProcess(KonfytProcess* process)
+KonfytProcess *KonfytProject::addProcess(QString command)
 {
+    KonfytProcess* process = new KonfytProcess();
+    process->appname = command;
+
     // Add to internal list
-    process->projectDir = this->getDirname();
     processList.append(process);
     // Connect signals
     connect(process, &KonfytProcess::started, this, &KonfytProject::processStartedSlot);
     connect(process, &KonfytProcess::finished, this, &KonfytProject::processFinishedSlot);
     setModified(true);
+
+    return process;
 }
 
 bool KonfytProject::isProcessRunning(int index)
@@ -1173,10 +1176,14 @@ void KonfytProject::runProcess(int index)
     if ( (index>=0) && (index < processList.count()) ) {
         // Start process
         KonfytProcess* p = processList.at(index);
+        p->projectDir = getDirname();
         print("Starting process: " + p->appname);
         QString expandedAppname = p->expandedAppName();
         if (expandedAppname != p->appname) {
             print("Process command expands to: " + expandedAppname);
+            if (getDirname().isEmpty()) {
+                print("WARNING: Current project directory is empty as project has not been saved yet.");
+            }
         }
         processList.at(index)->start();
     } else {

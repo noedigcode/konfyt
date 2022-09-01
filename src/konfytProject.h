@@ -175,7 +175,7 @@ public:
     void audioBus_removeClient(int busId, portLeftRight leftRight, QString client);
 
     // External Programs
-    void addProcess(KonfytProcess *process);
+    KonfytProcess* addProcess(QString command);
     bool isProcessRunning(int index);
     void runProcess(int index);
     void stopProcess(int index);

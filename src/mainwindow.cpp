@@ -2842,14 +2842,14 @@ QString MainWindow::getUniqueFilename(QString dirname, QString name, QString ext
 }
 
 /* Add process (external application) to GUI and current project. */
-void MainWindow::addProcess(KonfytProcess* process)
+void MainWindow::addProcess(QString command)
 {
     if (!mCurrentProject) {
         print("No active project.");
         return;
     }
     // Add to project list
-    mCurrentProject->addProcess(process);
+    KonfytProcess* process = mCurrentProject->addProcess(command);
     // Add to GUI list
     ui->listWidget_ExtApps->addItem(process->toString());
 }
@@ -3752,12 +3752,7 @@ void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
 
 void MainWindow::on_pushButton_ExtApp_add_clicked()
 {
-    // Create a new process and call addProcess function
-    KonfytProcess* p = new KonfytProcess();
-
-    p->appname = ui->lineEdit_ExtApp->text();
-
-    addProcess(p);
+    addProcess( ui->lineEdit_ExtApp->text() );
 }
 
 void MainWindow::on_lineEdit_ExtApp_returnPressed()

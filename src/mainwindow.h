@@ -728,7 +728,7 @@ private:
     QHash<QAction*, QString> extAppsMenuActions_Set;
     QMenu extAppsMenu;
     void setupExternalAppsMenu();
-    void addProcess(KonfytProcess *process);
+    void addProcess(QString command);
     void runProcess(int index);
     void stopProcess(int index);
     void removeProcess(int index);
