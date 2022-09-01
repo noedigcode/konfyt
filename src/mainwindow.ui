@@ -1474,84 +1474,6 @@ border-bottom-right-radius: 0;
                      </widget>
                     </item>
                     <item>
-                     <widget class="QToolButton" name="toolButton_filesystem_projectDir">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="toolTip">
-                       <string>Project Directory</string>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;
-border-top-left-radius: 0;
-border-bottom-left-radius: 0;
-</string>
-                      </property>
-                      <property name="text">
-                       <string>P</string>
-                      </property>
-                      <property name="icon">
-                       <iconset resource="../images.qrc">
-                        <normaloff>:/icons/place.png</normaloff>:/icons/place.png</iconset>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QToolButton" name="toolButton_filesystem_home">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>0</width>
-                        <height>0</height>
-                       </size>
-                      </property>
-                      <property name="maximumSize">
-                       <size>
-                        <width>16777215</width>
-                        <height>16777215</height>
-                       </size>
-                      </property>
-                      <property name="toolTip">
-                       <string>Home</string>
-                      </property>
-                      <property name="styleSheet">
-                       <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;
-border-top-left-radius: 0;
-border-bottom-left-radius: 0;
-</string>
-                      </property>
-                      <property name="text">
-                       <string>H</string>
-                      </property>
-                      <property name="icon">
-                       <iconset resource="../images.qrc">
-                        <normaloff>:/icons/person.png</normaloff>:/icons/person.png</iconset>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
                      <widget class="QToolButton" name="toolButton_filesystem_back">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
@@ -1654,7 +1576,33 @@ border-bottom-left-radius: 0;
                       </property>
                       <property name="styleSheet">
                        <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;
+border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item>
+                     <widget class="QToolButton" name="toolButton_filesystemPathDropdown">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>Choose from a list of common paths</string>
+                      </property>
+                      <property name="styleSheet">
+                       <string notr="true">border-top-left-radius: 0;
 border-bottom-left-radius: 0;</string>
+                      </property>
+                      <property name="text">
+                       <string>...</string>
+                      </property>
+                      <property name="icon">
+                       <iconset resource="../images.qrc">
+                        <normaloff>:/icons/down.png</normaloff>:/icons/down.png</iconset>
                       </property>
                      </widget>
                     </item>
@@ -2204,7 +2152,7 @@ border-color: rgb(40, 40, 40);
          </size>
         </property>
         <property name="currentIndex">
-         <number>2</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <property name="konfytGradient" stdset="0">
@@ -3065,7 +3013,7 @@ border-bottom: 1px solid rgb(40,40,40);</string>
                 <string notr="true"/>
                </property>
                <property name="title">
-                <string>Settings</string>
+                <string>Global Settings</string>
                </property>
                <layout class="QVBoxLayout" name="verticalLayout_17">
                 <item>
@@ -3942,8 +3890,8 @@ QSpinBox {
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>368</width>
-                        <height>356</height>
+                        <width>369</width>
+                        <height>358</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -8767,7 +8715,7 @@ border-top-right-radius: 0;
         <enum>QTabWidget::South</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_15">
         <attribute name="title">
@@ -9657,7 +9605,7 @@ border-bottom-left-radius: 0;
      <x>0</x>
      <y>0</y>
      <width>1148</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>

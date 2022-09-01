@@ -2196,6 +2196,58 @@ void MainWindow::setupFilesystemView()
     this->fsview_currentPath = QDir::homePath();
     refreshFilesystemView();
     ui->tabWidget_library->setCurrentWidget(ui->tab_library);
+
+    // Path dropdown menu
+    QAction* a = fsPathMenu.addAction("Current project directory");
+    connect(a, &QAction::triggered, this, [=]()
+    {
+        ProjectPtr prj = mCurrentProject;
+        if (!prj) { return; }
+        if (prj->getDirname().length() == 0) { return; }
+
+        cdFilesystemView( prj->getDirname() );
+    });
+
+    a = fsPathMenu.addAction("Home directory");
+    connect(a, &QAction::triggered, this, [=]()
+    {
+        cdFilesystemView( QDir::homePath() );
+    });
+
+    a = fsPathMenu.addAction("Default projects directory");
+    connect(a, &QAction::triggered, this, [=]()
+    {
+        if (projectsDir.isEmpty()) { return; }
+        cdFilesystemView( projectsDir );
+    });
+
+    a = fsPathMenu.addAction("Soundfonts directory");
+    connect(a, &QAction::triggered, this, [=]()
+    {
+        if (mSoundfontsDir.isEmpty()) { return; }
+        cdFilesystemView( mSoundfontsDir );
+    });
+
+    a = fsPathMenu.addAction("SFZ directory");
+    connect(a, &QAction::triggered, this, [=]()
+    {
+        if (mSfzDir.isEmpty()) { return; }
+        cdFilesystemView( mSfzDir );
+    });
+
+    a = fsPathMenu.addAction("Patches directory");
+    connect(a, &QAction::triggered, this, [=]()
+    {
+        if (mPatchesDir.isEmpty()) { return; }
+        cdFilesystemView( mPatchesDir );
+    });
+
+    a = fsPathMenu.addAction("Settings directory");
+    connect(a, &QAction::triggered, this, [=]()
+    {
+        cdFilesystemView( settingsDir );
+    });
+
 }
 
 /* Log a message in the GUI console. */
@@ -4769,12 +4821,6 @@ void MainWindow::on_toolButton_filesystem_refresh_clicked()
     refreshFilesystemView();
 }
 
-/* Filesystem view: Home button clicked. */
-void MainWindow::on_toolButton_filesystem_home_clicked()
-{
-    cdFilesystemView( QDir::homePath() );
-}
-
 /* Filesystem view: back button clicked. */
 void MainWindow::on_toolButton_filesystem_back_clicked()
 {
@@ -4789,6 +4835,11 @@ void MainWindow::on_toolButton_filesystem_back_clicked()
 void MainWindow::on_lineEdit_filesystem_path_returnPressed()
 {
     cdFilesystemView( ui->lineEdit_filesystem_path->text() );
+}
+
+void MainWindow::on_toolButton_filesystemPathDropdown_clicked()
+{
+    fsPathMenu.popup(QCursor::pos());
 }
 
 /* Add left and right audio output ports to JACK client for a bus, named
@@ -5497,15 +5548,6 @@ void MainWindow::on_actionAdd_Path_To_External_App_Box_triggered()
     ui->lineEdit_ExtApp->setText( ui->lineEdit_ExtApp->text()
                                   + path);
     ui->lineEdit_ExtApp->setFocus();
-}
-
-void MainWindow::on_toolButton_filesystem_projectDir_clicked()
-{
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) { return; }
-    if (prj->getDirname().length() == 0) { return; }
-
-    cdFilesystemView( prj->getDirname() );
 }
 
 /* Action triggered from filesystem tree view to open item in file manager. */
@@ -7117,5 +7159,6 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
     // Update in JACK engine
     updateBusGainInJackEngine(busId);
 }
+
 
 

@@ -323,6 +323,7 @@ private:
 
     QMenu fsViewContextMenu;
     QTreeWidgetItem* fsViewMenuItem;
+    QMenu fsPathMenu;
 
 private slots:
     void on_treeWidget_filesystem_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
@@ -331,10 +332,9 @@ private slots:
 
     void on_toolButton_filesystem_up_clicked();
     void on_toolButton_filesystem_refresh_clicked();
-    void on_toolButton_filesystem_home_clicked();
     void on_toolButton_filesystem_back_clicked();
     void on_lineEdit_filesystem_path_returnPressed();
-    void on_toolButton_filesystem_projectDir_clicked();
+    void on_toolButton_filesystemPathDropdown_clicked();
     void on_checkBox_filesystem_ShowOnlySounds_toggled(bool checked);
     void on_checkBox_filesystem_hiddenFiles_toggled(bool checked);
 
@@ -944,7 +944,6 @@ private slots:
 
     void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
     void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
-
 };
 
 #endif // MAINWINDOW_H
