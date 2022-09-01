@@ -42,6 +42,8 @@ public:
     QString appname;
     QString projectDir;
 
+    QString expandedAppName();
+
     void start();
     void stop();
     State state();

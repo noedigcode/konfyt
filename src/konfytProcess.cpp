@@ -28,6 +28,14 @@ KonfytProcess::KonfytProcess()
             this, &KonfytProcess::processFinished);
 }
 
+/* Returns the app name with tags (e.g. $PROJ_DIR$) replaced with actual values. */
+QString KonfytProcess::expandedAppName()
+{
+    QString ret = appname;
+    ret.replace(STRING_PROJECT_DIR, projectDir);
+    return ret;
+}
+
 /* Slot for signal from process when it is started. */
 void KonfytProcess::processStarted()
 {
@@ -46,11 +54,7 @@ void KonfytProcess::processFinished(int /*exitCode*/, QProcess::ExitStatus /*exi
 
 void KonfytProcess::start()
 {
-    // Replace variables in strings
-    QString runAppname = appname;
-    runAppname.replace(STRING_PROJECT_DIR, projectDir);
-
-    process.start(runAppname);
+    process.start(expandedAppName());
 }
 
 void KonfytProcess::stop()

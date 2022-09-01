@@ -1172,8 +1172,13 @@ void KonfytProject::runProcess(int index)
 {
     if ( (index>=0) && (index < processList.count()) ) {
         // Start process
+        KonfytProcess* p = processList.at(index);
+        print("Starting process: " + p->appname);
+        QString expandedAppname = p->expandedAppName();
+        if (expandedAppname != p->appname) {
+            print("Process command expands to: " + expandedAppname);
+        }
         processList.at(index)->start();
-        print("Starting process " + processList.at(index)->appname);
     } else {
         print("ERROR: runProcess: INVALID PROCESS INDEX " + n2s(index));
     }
@@ -1183,8 +1188,8 @@ void KonfytProject::stopProcess(int index)
 {
     if ( (index>=0) && (index < processList.count()) ) {
         // Stop process
+        print("Stopping process: " + processList.at(index)->appname);
         processList.at(index)->stop();
-        print("Stopping process " + processList.at(index)->appname);
     } else {
         print("ERROR: stopProcess: INVALID PROCESS INDEX " + n2s(index));
     }
@@ -1209,6 +1214,7 @@ void KonfytProject::processStartedSlot(KonfytProcess *process)
 
 void KonfytProject::processFinishedSlot(KonfytProcess *process)
 {
+    print("Process stopped: " + process->appname);
     int index = processList.indexOf(process);
     processFinishedSignal(index, process);
 }
