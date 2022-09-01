@@ -45,7 +45,6 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupFilesystemView();
     setupPatchListAdapter();
     setupDatabase();
-    setupSavedMidiSendItems();
     // ----------------------------------------------------
     setupInitialProjectFromCmdLineArgs();
 
@@ -53,6 +52,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupGuiMenuButtons();
     setupConnectionsPage();
     setupTriggersPage();
+    setupSavedMidiSendItems();
     setupMidiSendListEditor();
     setupMidiMapPresets();
     setupKeyboardShortcuts();
@@ -448,6 +448,10 @@ void MainWindow::loadMidiMapPresets()
 {
     QString filename = midiMapPresetsFilename;
     QFile file(filename);
+    if (!file.exists()) {
+        print("No MIDI map presets file found.");
+        return;
+    }
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         print("Failed to open MIDI map presets file for reading: " + filename);
         return;
@@ -569,6 +573,10 @@ bool MainWindow::loadSettingsFile(QString dir)
 {
     QString filename = dir + "/" + SETTINGS_FILE;
     QFile file(filename);
+    if (!file.exists()) {
+        print("Settings file does not exist: " + filename);
+        return false;
+    }
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         print("Failed to open settings file: " + filename);
         return false;
