@@ -37,13 +37,18 @@ void PatchListWidgetAdapter::init(QListWidget *listWidget)
 
 void PatchListWidgetAdapter::addPatch(KonfytPatch *patch)
 {
+    insertPatch(patch, w->count());
+}
+
+void PatchListWidgetAdapter::insertPatch(KonfytPatch *patch, int index)
+{
     KONFYT_ASSERT(!patchDataMap.contains(patch));
 
     PatchData data;
     data.item = new QListWidgetItem();
     patchDataMap.insert(patch, data);
     itemPatchMap.insert(data.item, patch);
-    w->addItem(data.item);
+    w->insertItem(index, data.item);
     updatePatchItem(patch);
 }
 

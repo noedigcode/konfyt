@@ -459,6 +459,7 @@ private:
     QMenu patchListMenu;
     QAction* patchListMenu_NumbersAction;
     QAction* patchListMenu_NotesAction;
+    QScopedPointer<QMenu> patchRemoveMenu;
 
 private slots:
     // Patch view area

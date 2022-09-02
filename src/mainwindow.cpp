@@ -1590,7 +1590,8 @@ void MainWindow::removePatchFromProject(int i)
     }
 }
 
-/* Add a patch to the current project, and update the GUI. */
+/* Add a patch to the current project, after the current patch (or at end if
+ * none) and update the GUI. */
 void MainWindow::addPatchToProject(KonfytPatch* patch)
 {
     if (!mCurrentProject) {
@@ -1598,9 +1599,17 @@ void MainWindow::addPatchToProject(KonfytPatch* patch)
         return;
     }
 
-    mCurrentProject->addPatch(patch);
+    int index = currentPatchIndex();
+    if (index < 0) {
+        // No current patch, add at end.
+        index = mCurrentProject->getNumPatches();
+    } else {
+        // Add after current patch.
+        index += 1;
+    }
+    mCurrentProject->insertPatch(patch, index);
     // Add to list in gui
-    patchListAdapter.addPatch(patch);
+    patchListAdapter.insertPatch(patch, index);
 }
 
 KonfytPatch *MainWindow::addPatchToProjectFromFile(QString filename)
@@ -3152,8 +3161,18 @@ void MainWindow::scanThreadFihishedSlot()
 
 void MainWindow::on_toolButton_RemovePatch_clicked()
 {
-    // Remove patch
-    removePatchFromProject(ui->listWidget_Patches->currentRow());
+    // Set up the patch remove menu if it hasn't been initialised yet
+    if (!patchRemoveMenu) {
+        patchRemoveMenu.reset(new QMenu());
+        QAction* a = patchRemoveMenu->addAction("Remove selected patch");
+        connect(a, &QAction::triggered, this, [=]()
+        {
+            removePatchFromProject(ui->listWidget_Patches->currentRow());
+        });
+    }
+
+    // Show patch remove menu as a confirmation
+    patchRemoveMenu->popup(QCursor::pos());
 }
 
 void MainWindow::on_toolButton_PatchUp_clicked()

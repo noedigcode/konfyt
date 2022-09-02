@@ -632,6 +632,12 @@ void KonfytProject::addPatch(KonfytPatch *newPatch)
     setModified(true);
 }
 
+void KonfytProject::insertPatch(KonfytPatch *newPatch, int index)
+{
+    patchList.insert(index, newPatch);
+    setModified(true);
+}
+
 /* Removes the patch from project and returns the pointer.
  * Note that the pointer has not been freed.
  * Returns nullptr if index out of bounds. */

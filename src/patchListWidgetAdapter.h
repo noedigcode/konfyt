@@ -38,6 +38,7 @@ public:
 
     void init(QListWidget* listWidget);
     void addPatch(KonfytPatch* patch);
+    void insertPatch(KonfytPatch* patch, int index);
     void addPatches(QList<KonfytPatch*> patches);
     void removePatch(KonfytPatch* patch);
     void patchModified(KonfytPatch* patch);

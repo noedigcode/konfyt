@@ -1158,7 +1158,7 @@ border-bottom-left-radius: 0;</string>
               </property>
               <widget class="QTabWidget" name="tabWidget_library">
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="tab_library">
                 <attribute name="title">
@@ -2152,7 +2152,7 @@ border-color: rgb(40, 40, 40);
          </size>
         </property>
         <property name="currentIndex">
-         <number>1</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="PatchPage">
          <property name="konfytGradient" stdset="0">
@@ -2314,7 +2314,7 @@ border-color: rgb(40, 40, 40);
 border-bottom-right-radius: 0;</string>
                     </property>
                     <property name="text">
-                     <string>Ld All</string>
+                     <string>Load All</string>
                     </property>
                    </widget>
                   </item>
@@ -2356,8 +2356,8 @@ border-bottom-left-radius: 0;</string>
                     </property>
                     <property name="iconSize">
                      <size>
-                      <width>24</width>
-                      <height>24</height>
+                      <width>22</width>
+                      <height>22</height>
                      </size>
                     </property>
                     <property name="popupMode">
@@ -2387,7 +2387,7 @@ border-bottom-left-radius: 0;</string>
                   <item row="0" column="3">
                    <widget class="QToolButton" name="toolButton_PatchDown">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
@@ -2422,8 +2422,8 @@ border-bottom-right-radius: 0;</string>
                     </property>
                     <property name="iconSize">
                      <size>
-                      <width>22</width>
-                      <height>22</height>
+                      <width>16</width>
+                      <height>16</height>
                      </size>
                     </property>
                    </widget>
@@ -2431,7 +2431,7 @@ border-bottom-right-radius: 0;</string>
                   <item row="0" column="4">
                    <widget class="QToolButton" name="toolButton_PatchUp">
                     <property name="sizePolicy">
-                     <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                     <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
@@ -2466,8 +2466,8 @@ border-bottom-right-radius: 0;</string>
                     </property>
                     <property name="iconSize">
                      <size>
-                      <width>22</width>
-                      <height>22</height>
+                      <width>16</width>
+                      <height>16</height>
                      </size>
                     </property>
                    </widget>
@@ -3890,8 +3890,8 @@ QSpinBox {
                        <rect>
                         <x>0</x>
                         <y>0</y>
-                        <width>369</width>
-                        <height>358</height>
+                        <width>368</width>
+                        <height>356</height>
                        </rect>
                       </property>
                       <layout class="QVBoxLayout" name="verticalLayout_14">
@@ -9605,7 +9605,7 @@ border-bottom-left-radius: 0;
      <x>0</x>
      <y>0</y>
      <width>1148</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

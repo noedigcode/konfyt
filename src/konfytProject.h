@@ -102,6 +102,7 @@ public:
     bool saveProjectAs(QString dirname);
 
     void addPatch(KonfytPatch* newPatch);
+    void insertPatch(KonfytPatch* newPatch, int index);
     KonfytPatch* removePatch(int i);
     void movePatch(int indexFrom, int indexTo);
     KonfytPatch* getPatch(int i);
