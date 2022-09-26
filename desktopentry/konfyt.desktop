@@ -2,7 +2,7 @@
 Version=1.0
 Type=Application
 Name=Konfyt
-Icon=konfyt.png
+Icon=konfyt
 Exec=/usr/bin/konfyt
 NoDisplay=false
 Categories=AudioVideo
