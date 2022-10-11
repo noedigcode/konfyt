@@ -30,13 +30,18 @@ More information is available at www.noedig.co.za/konfyt/
 Requirements:
 -------------
 Konfyt was mainly developed on Linux Mint 20.3 (based on Ubuntu 20.04).
+
+The following are required to run Konfyt:
+
 * Qt 5.12.8
 * Fluidsynth 2.1.1
 * liblscp 0.6.0 and thus Linuxsampler
 * Carla 2.4.3
 
-Carla is available in the KXStudio repositories (http://kxstudio.linuxaudio.org/Repositories)
+Linuxsampler is available in the KXStudio repositories (http://kxstudio.linuxaudio.org/Repositories)
 for Ubuntu based systems.
+
+If you try to run a Konfyt binary on Ubuntu 21+ that was built on Ubuntu 20, you may need to create a symlink for `libfluidsynth.so.2` in `/usr/lib/x86_64-linux-gnu` pointing to `libfluidsynth.so.3...`.
 
 
 Building:
@@ -44,11 +49,21 @@ Building:
 See the testing branch for the latest features. Although it's still technically
 under testing, it should be quite stable.
 
-The following are required to build:
+The following are required to build Konfyt:
 
 * Qt5: Ensure that the Qt5 development packages are installed.
 
-  Check the Qt version that qmake uses with:
+  On Ubuntu 20.04, this should install the Qt development packages:
+  ```
+  qt5-default
+  ```
+
+  On Ubuntu 21+, this should do it:
+  ```
+  qtbase5-dev
+  ```
+
+  Ensure that Qt5 is used to build. Check the Qt version that qmake uses with:
   ```
   qmake -v
   ```
@@ -65,9 +80,17 @@ The following are required to build:
 
 * pkg-config
 
+* JACK development files
+
+  Ubuntu: libjack-dev or libjack-jackd2-dev
+
+  Fedora: jack-audio-connection-kit-devel
+
 * Fluidsynth development files
   
   Ubuntu: libfluidsynth-dev
+
+  Note: On Ubuntu 21 and 22, ensure libjack-jackd2-dev is installed before installing libfluidsynth-dev (or install them together) if you use JACK 2. If libjack-jackd2-dev is not installed at the time of installing libfluidsynth-dev, the package manager may default to libjack-dev (JACK 1) and possibly trigger removal of JACK 2 and several other packages. Read the apt messages!
   
   Fedora: fluidsynth-devel
 
@@ -87,11 +110,7 @@ The following are required to build:
   
   Fedora: liblscp-devel, available from the Planet CCRMA third-party repository
 
-* JACK development files
 
-  Ubuntu: libjack-dev or libjack-jackd2-dev
-  
-  Fedora: jack-audio-connection-kit-devel
 
 
 To build from the command line, run the following from the source code directory:
