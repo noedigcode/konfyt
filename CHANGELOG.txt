@@ -1,6 +1,34 @@
 Changelog
 =========
 
+[1.2.1] - October 2022
+----------------------
+
+Added
+
+- Checkbox in filesystem view to show hidden files.
+- Add dropdown menu to filesystem view path text box with common paths and remove
+  home and current project buttons.
+- Warn when running an external app with a project directory replacement tag in
+  the command if the project has not been saved yet.
+
+Fixes
+
+- Remove dot at end of project folder names when saved to default project location.
+- Use the correct project directory when running an external app that was added
+  before the project was saved.
+
+Changes
+
+- Insert new patches after currently selected patch when adding new or copying a
+  patch.
+- Show a menu when the remove patch button is clicked to serve as a confirmation.
+- Print slightly less alarming message in console when MIDI map presets file or
+  settings file does not exist.
+- When running an app from the external app list, print the expanded name if it
+  contains a $PROJ_DIR$ and print a message when an external app stops.
+
+
 [1.2.0] - July 2022
 -------------------
 

@@ -53,15 +53,9 @@ The following are required to build Konfyt:
 
 * Qt5: Ensure that the Qt5 development packages are installed.
 
-  On Ubuntu 20.04, this should install the Qt development packages:
-  ```
-  qt5-default
-  ```
+  On Ubuntu 20.04, installing this package should install the required packages: qt5-default
 
-  On Ubuntu 21+, this should do it:
-  ```
-  qtbase5-dev
-  ```
+  On Ubuntu 21+, this package should do it: qtbase5-dev
 
   Ensure that Qt5 is used to build. Check the Qt version that qmake uses with:
   ```
