@@ -2513,7 +2513,11 @@ bool MainWindow::fileExtensionIsSoundfont(QString filepath)
 void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*column*/)
 {
     // Expand / unexpand item due to click (makes things a lot easier)
-    item->setExpanded(!item->isExpanded());
+    // Note (2022-10-27, Ubuntu Studio 22.04, KDE Plasma 5.24.6) calling setExpaned
+    // for leaf items interferes with the itemDoubleClicked signal.
+    if (item->childCount()) {
+        item->setExpanded(!item->isExpanded());
+    }
 }
 
 /* Set the current patch, and update the GUI accordingly. */

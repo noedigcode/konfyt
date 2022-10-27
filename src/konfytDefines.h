@@ -26,7 +26,7 @@
 
 
 #define APP_NAME "Konfyt"
-#define APP_VERSION "1.2.1"
+#define APP_VERSION "1.2.2-dev"
 #define APP_YEAR "2022"
 
 #define n2s(x) QString::number(x)
