@@ -36,7 +36,6 @@ SOURCES += src/main.cpp\
     src/konfytDefines.cpp \
     src/konfytMidi.cpp \
     src/konfytArrayList.cpp \
-    src/aboutdialog.cpp \
     src/konfytBridgeEngine.cpp \
     src/konfytBaseSoundEngine.cpp \
     src/konfytLscpEngine.cpp \
@@ -67,7 +66,6 @@ HEADERS  += src/mainwindow.h \
     src/konfytJackStructs.h \
     src/konfytMidi.h \
     src/konfytArrayList.h \
-    src/aboutdialog.h \
     src/konfytBridgeEngine.h \
     src/konfytBaseSoundEngine.h \
     src/konfytLscpEngine.h \
@@ -80,8 +78,7 @@ HEADERS  += src/mainwindow.h \
 
 FORMS    += src/mainwindow.ui \
     src/consoledialog.ui \
-    src/konfytLayerWidget.ui \
-    src/aboutdialog.ui
+    src/konfytLayerWidget.ui
 
 # For pkgconfig
 CONFIG += link_pkgconfig

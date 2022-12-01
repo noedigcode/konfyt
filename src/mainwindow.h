@@ -22,7 +22,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "aboutdialog.h"
 #include "consoledialog.h"
 #include "indicatorHandlers.h"
 #include "konfytAudio.h"
@@ -101,6 +100,10 @@
 #define PTY_AUDIO_OUT_BUS "audioOutBus"
 #define PTY_AUDIO_IN_PORT "audioInPort"
 #define PTY_MIDI_OUT_PORT "midiOutPort"
+
+#define REPLACE_TXT_APP_VERSION "%APP_VERSION%"
+#define REPLACE_TXT_APP_YEAR "%APP_YEAR%"
+#define REPLACE_TXT_MORE_VERSION "%MORE_VERSION_TEXT%"
 
 namespace Ui {
 class MainWindow;
@@ -836,11 +839,10 @@ private slots:
 
     // About Dialog
 private:
-    AboutDialog aboutDialog;
     void initAboutDialog();
     void showAboutDialog();
-    void resizeAboutDialog();
-    void resizeEvent(QResizeEvent *ev);
+private slots:
+    void on_pushButton_about_ok_clicked();
 
     // Console
 public:
@@ -944,7 +946,9 @@ private slots:
     void on_stackedWidget_currentChanged(int arg1);
 
     void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
+
     void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
+
 };
 
 #endif // MAINWINDOW_H

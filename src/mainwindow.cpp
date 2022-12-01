@@ -178,12 +178,16 @@ void MainWindow::setupGuiDefaults()
     // Show library view (not live mode)
     ui->stackedWidget_left->setCurrentWidget(ui->pageLibrary);
 
-    // Show default view
+    // Show default views
     if (mSettingsFirstRun) {
-        // Show settings on first run
+        // On window level, show about dialog
+        showAboutDialog();
+        // In main area, show settings
         showSettingsDialog();
     } else {
-        // Show normal patch view
+        // On window level, show main area
+        ui->stackedWidget_window->setCurrentWidget(ui->page_window_main);
+        // In main area, show normal patch view
         ui->stackedWidget->setCurrentWidget(ui->PatchPage);
     }
 }
@@ -2993,29 +2997,23 @@ void MainWindow::timerEvent(QTimerEvent *ev)
 
 void MainWindow::initAboutDialog()
 {
-    // Add additional version text to about dialog
-    QString txt = getCompileVersionText();
-    aboutDialog.setExtraVersionText(txt);
-
-    aboutDialog.setParent(this);
-    aboutDialog.hide();
-    resizeAboutDialog();
+    QString txt = ui->textBrowser_about->toHtml();
+    txt.replace(REPLACE_TXT_APP_VERSION, APP_VERSION);
+    txt.replace(REPLACE_TXT_APP_YEAR, APP_YEAR);
+    QString cvtext = getCompileVersionText();
+    cvtext.replace("\n", "<br>\n");
+    txt.replace(REPLACE_TXT_MORE_VERSION, cvtext);
+    ui->textBrowser_about->setHtml(txt);
 }
 
 void MainWindow::showAboutDialog()
 {
-    aboutDialog.show();
+    ui->stackedWidget_window->setCurrentWidget(ui->page_window_about);
 }
 
-void MainWindow::resizeAboutDialog()
+void MainWindow::on_pushButton_about_ok_clicked()
 {
-    aboutDialog.move(0,0);
-    aboutDialog.resize(this->width(),this->height());
-}
-
-void MainWindow::resizeEvent(QResizeEvent* /*ev*/)
-{
-    resizeAboutDialog();
+    ui->stackedWidget_window->setCurrentWidget(ui->page_window_main);
 }
 
 /* Helper function for scanning things into database. */
@@ -6557,10 +6555,10 @@ void MainWindow::setupSettings()
             }
         } else {
             // If settings file does not exist, it's probably the first run.
-            // Show about dialog and settings.
-            createSettingsDir();
+            // Set flag so the about dialog and settings will be shown.
             mSettingsFirstRun = true;
-            showAboutDialog();
+            // Create settings dir, so we have it.
+            createSettingsDir();
         }
     }
 
