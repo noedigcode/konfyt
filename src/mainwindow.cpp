@@ -346,6 +346,51 @@ QString MainWindow::intListToText(QList<int> lst)
     return ret;
 }
 
+KonfytMidiFilter MainWindow::midiFilterFromGuiEditor()
+{
+    KonfytMidiFilter f = midiFilterUnderEdit;
+
+    // Update the filter from the GUI
+    f.zone.lowNote = ui->spinBox_midiFilter_LowNote->value();
+    f.zone.highNote = ui->spinBox_midiFilter_HighNote->value();
+    f.zone.add = ui->spinBox_midiFilter_Add->value();
+    f.zone.pitchDownMax = ui->spinBox_midiFilter_pitchDownRange->value();
+    f.zone.pitchUpMax = ui->spinBox_midiFilter_pitchUpRange->value();
+    f.zone.velocityMap.fromString(ui->lineEdit_MidiFilter_velocityMap->text());
+    f.ignoreGlobalTranspose = ui->checkBox_midiFilter_ignoreGlobalTranspose->isChecked();
+    if (ui->comboBox_midiFilter_inChannel->currentIndex() == 0) {
+        // Index zero is all channels
+        f.inChan = -1;
+    } else {
+        f.inChan = ui->comboBox_midiFilter_inChannel->currentIndex()-1;
+    }
+    f.passAllCC = ui->checkBox_midiFilter_AllCCs->isChecked();
+    f.passPitchbend = ui->checkBox_midiFilter_pitchbend->isChecked();
+    f.passProg = ui->checkBox_midiFilter_Prog->isChecked();
+
+    f.passCC = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccAllowed->text());
+    f.blockCC = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccBlocked->text());
+
+    return f;
+}
+
+void MainWindow::updateMidiFilterBeingEdited(KonfytMidiFilter newFilter)
+{
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) {
+        print("ERROR: No current project.");
+        return;
+    }
+
+    if (midiFilterEditType == MidiFilterEditPort) {
+        prj->midiInPort_setPortFilter(midiFilterEditPort, newFilter);
+        jack.setPortFilter(prj->midiInPort_getPort(midiFilterEditPort).jackPort, newFilter);
+    } else {
+        pengine.setLayerFilter(midiFilterEditItem->getPatchLayer(), newFilter);
+        midiFilterEditItem->refresh();
+    }
+}
+
 void MainWindow::setupMidiMapPresets()
 {
     KONFYT_ASSERT(!settingsDir.isEmpty());
@@ -495,6 +540,14 @@ void MainWindow::loadMidiMapPresets()
     print(QString("Loaded %1 MIDI map presets.").arg(midiMapUserPresets.count()));
 }
 
+void MainWindow::onMidiFilterEditorModified()
+{
+    if (blockMidiFilterEditorModified) { return; }
+
+    midiFilterUnderEdit = midiFilterFromGuiEditor();
+    updateMidiFilterBeingEdited(midiFilterUnderEdit);
+}
+
 void MainWindow::onMidiMapPresetMenuTrigger(QAction *action)
 {
     if (midiMapPresetMenuRequester == ui->toolButton_MidiFilter_velocityMap_presets) {
@@ -513,6 +566,13 @@ void MainWindow::showMidiFilterEditor()
     } else {
         f = midiFilterEditItem->getPatchLayer().toStrongRef()->midiFilter();
     }
+
+    midiFilterEditorOriginalFilter = f;
+    midiFilterUnderEdit = f;
+
+    // Fill MIDI editor GUI with filter parameters
+
+    blockMidiFilterEditorModified = true;
 
     KonfytMidiFilterZone z = f.zone;
     ui->spinBox_midiFilter_LowNote->setValue(z.lowNote);
@@ -542,6 +602,8 @@ void MainWindow::showMidiFilterEditor()
 
     ui->lineEdit_MidiFilter_ccAllowed->setText(intListToText(f.passCC));
     ui->lineEdit_MidiFilter_ccBlocked->setText(intListToText(f.blockCC));
+
+    blockMidiFilterEditorModified = false;
 
     // Switch to midi filter page
     ui->stackedWidget->setCurrentWidget(ui->FilterPage);
@@ -4471,6 +4533,9 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
 {
+    // Restore original MIDI filter
+    updateMidiFilterBeingEdited(midiFilterEditorOriginalFilter);
+
     // Switch back to previous view
     if (midiFilterEditType == MidiFilterEditPort) {
         ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
@@ -4482,55 +4547,8 @@ void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
 /* Apply clicked on the MIDI filter editor dialog. */
 void MainWindow::on_pushButton_midiFilter_Apply_clicked()
 {
-    KonfytMidiFilter f;
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) {
-        print("ERROR: No current project.");
-        return;
-    }
-
-    if (midiFilterEditType == MidiFilterEditPort) {
-        if (prj->midiInPort_exists(midiFilterEditPort)) {
-            f = prj->midiInPort_getPort(midiFilterEditPort).filter;
-        } else {
-            print("ERROR: Port does not exist in project.");
-            return;
-        }
-    } else {
-        f = midiFilterEditItem->getPatchLayer().toStrongRef()->midiFilter();
-    }
-
-    // Update the filter from the GUI
-    f.zone.lowNote = ui->spinBox_midiFilter_LowNote->value();
-    f.zone.highNote = ui->spinBox_midiFilter_HighNote->value();
-    f.zone.add = ui->spinBox_midiFilter_Add->value();
-    f.zone.pitchDownMax = ui->spinBox_midiFilter_pitchDownRange->value();
-    f.zone.pitchUpMax = ui->spinBox_midiFilter_pitchUpRange->value();
-    f.zone.velocityMap.fromString(ui->lineEdit_MidiFilter_velocityMap->text());
-    f.ignoreGlobalTranspose = ui->checkBox_midiFilter_ignoreGlobalTranspose->isChecked();
-    if (ui->comboBox_midiFilter_inChannel->currentIndex() == 0) {
-        // Index zero is all channels
-        f.inChan = -1;
-    } else {
-        f.inChan = ui->comboBox_midiFilter_inChannel->currentIndex()-1;
-    }
-    f.passAllCC = ui->checkBox_midiFilter_AllCCs->isChecked();
-    f.passPitchbend = ui->checkBox_midiFilter_pitchbend->isChecked();
-    f.passProg = ui->checkBox_midiFilter_Prog->isChecked();
-
-    f.passCC = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccAllowed->text());
-    f.blockCC = textToNonRepeatedUint7List(ui->lineEdit_MidiFilter_ccBlocked->text());
-
-    if (midiFilterEditType == MidiFilterEditPort) {
-        // Update filter in project
-        prj->midiInPort_setPortFilter(midiFilterEditPort, f);
-        // And also in Jack.
-        jack.setPortFilter(prj->midiInPort_getPort(midiFilterEditPort).jackPort, f);
-    } else {
-        // Update filter in gui layer item
-        pengine.setLayerFilter(midiFilterEditItem->getPatchLayer(), f);
-        midiFilterEditItem->refresh();
-    }
+    midiFilterUnderEdit = midiFilterFromGuiEditor();
+    updateMidiFilterBeingEdited(midiFilterUnderEdit);
 
     // Indicate project needs to be saved
     setProjectModified();
@@ -6147,11 +6165,13 @@ void MainWindow::on_toolButton_MidiFilter_inChan_last_clicked()
 
 void MainWindow::on_toolButton_MidiFilter_pitchDownFull_clicked()
 {
+    ui->toolButton_MidiFilter_pitchDownFull->setChecked(true); // Must not be able to uncheck
     ui->spinBox_midiFilter_pitchDownRange->setValue(MIDI_PITCHBEND_SIGNED_MIN);
 }
 
 void MainWindow::on_toolButton_MidiFilter_pitchDownHalf_clicked()
 {
+    ui->toolButton_MidiFilter_pitchDownHalf->setChecked(true); // Must not be able to uncheck
     ui->spinBox_midiFilter_pitchDownRange->setValue(MIDI_PITCHBEND_SIGNED_MIN/2);
 }
 
@@ -6167,6 +6187,8 @@ void MainWindow::on_spinBox_midiFilter_pitchDownRange_valueChanged(int value)
                 value == MIDI_PITCHBEND_SIGNED_MIN);
     ui->toolButton_MidiFilter_pitchDownHalf->setChecked(
                 value == MIDI_PITCHBEND_SIGNED_MIN / 2);
+
+    onMidiFilterEditorModified();
 }
 
 void MainWindow::on_spinBox_midiFilter_pitchUpRange_valueChanged(int value)
@@ -6175,15 +6197,19 @@ void MainWindow::on_spinBox_midiFilter_pitchUpRange_valueChanged(int value)
                 value == MIDI_PITCHBEND_SIGNED_MAX);
     ui->toolButton_MidiFilter_pitchUpHalf->setChecked(
                 value == MIDI_PITCHBEND_SIGNED_MAX / 2);
+
+    onMidiFilterEditorModified();
 }
 
 void MainWindow::on_toolButton_MidiFilter_pitchUpFull_clicked()
 {
+    ui->toolButton_MidiFilter_pitchUpFull->setChecked(true); // Must not be able to uncheck
     ui->spinBox_midiFilter_pitchUpRange->setValue(MIDI_PITCHBEND_SIGNED_MAX);
 }
 
 void MainWindow::on_toolButton_MidiFilter_pitchUpHalf_clicked()
 {
+    ui->toolButton_MidiFilter_pitchUpHalf->setChecked(true); // Must not be able to uncheck
     ui->spinBox_midiFilter_pitchUpRange->setValue(MIDI_PITCHBEND_SIGNED_MAX/2);
 }
 
@@ -6212,6 +6238,8 @@ void MainWindow::on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &t
     KonfytMidiMapping m;
     m.fromString(text);
     ui->midiFilter_velocityMapGraph->setMapping(m);
+
+    onMidiFilterEditorModified();
 }
 
 void MainWindow::on_toolButton_MidiFilter_velocityMap_presets_clicked()
@@ -7177,4 +7205,64 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
 }
 
 
+
+
+void MainWindow::on_comboBox_midiFilter_inChannel_currentIndexChanged(int /*index*/)
+{
+    onMidiFilterEditorModified();
+}
+
+
+void MainWindow::on_spinBox_midiFilter_LowNote_valueChanged(int /*arg1*/)
+{
+    onMidiFilterEditorModified();
+}
+
+
+void MainWindow::on_spinBox_midiFilter_HighNote_valueChanged(int /*arg1*/)
+{
+    onMidiFilterEditorModified();
+}
+
+
+void MainWindow::on_spinBox_midiFilter_Add_valueChanged(int /*arg1*/)
+{
+    onMidiFilterEditorModified();
+}
+
+
+void MainWindow::on_checkBox_midiFilter_ignoreGlobalTranspose_toggled(bool /*checked*/)
+{
+    onMidiFilterEditorModified();
+}
+
+
+void MainWindow::on_checkBox_midiFilter_AllCCs_toggled(bool /*checked*/)
+{
+    onMidiFilterEditorModified();
+}
+
+
+void MainWindow::on_lineEdit_MidiFilter_ccAllowed_textChanged(const QString& /*arg1*/)
+{
+    onMidiFilterEditorModified();
+}
+
+
+void MainWindow::on_lineEdit_MidiFilter_ccBlocked_textChanged(const QString& /*arg1*/)
+{
+    onMidiFilterEditorModified();
+}
+
+
+void MainWindow::on_checkBox_midiFilter_pitchbend_toggled(bool /*checked*/)
+{
+    onMidiFilterEditorModified();
+}
+
+
+void MainWindow::on_checkBox_midiFilter_Prog_toggled(bool /*checked*/)
+{
+    onMidiFilterEditorModified();
+}
 

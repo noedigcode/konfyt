@@ -605,6 +605,12 @@ private:
     void updateMidiFilterEditorLastRx(KonfytMidiEvent ev);
     QList<int> textToNonRepeatedUint7List(QString text);
     QString intListToText(QList<int> lst);
+    KonfytMidiFilter midiFilterFromGuiEditor();
+    void updateMidiFilterBeingEdited(KonfytMidiFilter newFilter);
+    bool blockMidiFilterEditorModified = false;
+
+    KonfytMidiFilter midiFilterUnderEdit;
+    KonfytMidiFilter midiFilterEditorOriginalFilter;
 
     // MIDI map presets
     struct MidiMapPreset {
@@ -623,6 +629,7 @@ private:
     void loadMidiMapPresets();
 
 private slots:
+    void onMidiFilterEditorModified();
     void onMidiMapPresetMenuTrigger(QAction* action);
     void on_pushButton_midiFilter_Cancel_clicked();
     void on_pushButton_midiFilter_Apply_clicked();
@@ -949,6 +956,16 @@ private slots:
 
     void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
 
+    void on_comboBox_midiFilter_inChannel_currentIndexChanged(int index);
+    void on_spinBox_midiFilter_LowNote_valueChanged(int arg1);
+    void on_spinBox_midiFilter_HighNote_valueChanged(int arg1);
+    void on_spinBox_midiFilter_Add_valueChanged(int arg1);
+    void on_checkBox_midiFilter_ignoreGlobalTranspose_toggled(bool checked);
+    void on_checkBox_midiFilter_AllCCs_toggled(bool checked);
+    void on_lineEdit_MidiFilter_ccAllowed_textChanged(const QString &arg1);
+    void on_lineEdit_MidiFilter_ccBlocked_textChanged(const QString &arg1);
+    void on_checkBox_midiFilter_pitchbend_toggled(bool checked);
+    void on_checkBox_midiFilter_Prog_toggled(bool checked);
 };
 
 #endif // MAINWINDOW_H
