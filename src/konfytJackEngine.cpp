@@ -153,6 +153,7 @@ KfJackPluginPorts* KonfytJackEngine::addSoundfont(KfFluidSynth *fluidSynth)
     // the buffers now so fluidsynth can write to them in the jack process callback.
     p->audioInLeft->buffer = malloc(sizeof(jack_default_audio_sample_t)*mJackBufferSize);
     p->audioInRight->buffer = malloc(sizeof(jack_default_audio_sample_t)*mJackBufferSize);
+    // TODO Give some sort of error indication to user when buffer is null.
 
     p->midi = new KfJackMidiPort(); // Dummy port for note records, etc.
     p->fluidSynthInEngine = fluidSynth;
@@ -911,7 +912,10 @@ void KonfytJackEngine::mixBufferToDestinationPort(KfJackAudioRoute *route,
         frame = frame  * gain * fadeOutValues[route->fadeoutCounter];
 
         route->rxBufferSum += qAbs(frame);
-        ( (jack_default_audio_sample_t*)(route->dest->buffer) )[i] += frame;
+        if (route->dest->buffer) {
+            ( (jack_default_audio_sample_t*)(route->dest->buffer) )[i] += frame;
+        }
+        // TODO Give some sort of error indication to user when buffer is null.
 
         if (route->fadingOut) {
             if (route->fadeoutCounter < (fadeOutValuesCount-1) ) {
@@ -1034,6 +1038,7 @@ void *KonfytJackEngine::getJackPortBuffer(jack_port_t *port, jack_nframes_t nfra
         return jack_port_get_buffer(port, nframes);
     } else {
         return NULL;
+        // TODO Give some sort of error indication to user when buffer is null.
     }
 }
 
