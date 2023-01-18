@@ -4,7 +4,7 @@ Konfyt
 Digital Keyboard Workstation for Linux
 --------------------------------------
 
-2014-2022 Gideon van der Kolf, noedigcode@gmail.com
+2014-2023 Gideon van der Kolf, noedigcode@gmail.com
 
 Welkom by Konfyt.
 
@@ -29,14 +29,16 @@ More information is available at www.noedig.co.za/konfyt/
 
 Requirements:
 -------------
-Konfyt was mainly developed on Linux Mint 20.3 (based on Ubuntu 20.04).
+Konfyt is mainly developed on Linux Mint 21.1 (based on Ubuntu 22.04).
 
 The following are required to run Konfyt:
 
-* Qt 5.12.8
-* Fluidsynth 2.1.1
+* Qt 5.15.3
+* Fluidsynth 2.2.5
 * liblscp 0.6.0 and thus Linuxsampler
-* Carla 2.4.3
+* Carla 2.5.3
+
+The versions listed above are known to work, but different versions should work too.
 
 Linuxsampler is available in the KXStudio repositories (http://kxstudio.linuxaudio.org/Repositories)
 for Ubuntu based systems.

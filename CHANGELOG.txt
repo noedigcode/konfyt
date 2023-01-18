@@ -1,12 +1,26 @@
 Changelog
 =========
 
-[1.2.2] - In development
-------------------------
+[1.2.2] - January 2023
+----------------------
+
+Added
+
+- Update MIDI filter immediately while editing it in the GUI editor.
 
 Fixes
 
 - Fix library item double-click working intermittently on some systems.
+- Destination audio port null check to prevent crash when JACK/system is not
+  configured correctly. (When JACK can't allocate memory due to user not
+  belonging to audio group or ulimits not being set up correctly. Note that
+  in this case the audio system is not functioning correctly in any case.)
+
+Changes
+
+- About dialog is now integrated into the main window.
+- MIDI filter editor size constraints and scrollability removed for hopefully
+  better layout across different systems.
 
 
 [1.2.1] - October 2022
