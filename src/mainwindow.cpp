@@ -4554,7 +4554,11 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     setProjectModified();
 
     // Switch back to previous view
-    on_pushButton_midiFilter_Cancel_clicked();
+    if (midiFilterEditType == MidiFilterEditPort) {
+        ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
+    } else {
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+    }
 }
 
 void MainWindow::on_toolButton_MidiFilter_lowNote_clicked()
