@@ -1,6 +1,15 @@
 Changelog
 =========
 
+[1.2.3] - January 2023
+----------------------
+
+Fixes
+
+- Fix MIDI filter editor reverting changes when Apply is clicked.
+
+
+
 [1.2.2] - January 2023
 ----------------------
 
