@@ -1,6 +1,6 @@
 ﻿/******************************************************************************
  *
- * Copyright 2022 Gideon van der Kolf
+ * Copyright 2023 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -1551,6 +1551,8 @@ void MainWindow::loadProject(ProjectPtr prj)
     patchListAdapter.setPatchNumbersVisible(prj->getShowPatchListNumbers());
     patchListAdapter.setPatchNotesVisible(prj->getShowPatchListNotes());
 
+    loadAllPatches();
+    setCurrentPatchByIndex(0);
 
     print("Project loaded.");
 }
@@ -1676,6 +1678,9 @@ void MainWindow::addPatchToProject(KonfytPatch* patch)
     mCurrentProject->insertPatch(patch, index);
     // Add to list in gui
     patchListAdapter.insertPatch(patch, index);
+
+    // Switch to newly added patch
+    setCurrentPatchByIndex(index);
 }
 
 KonfytPatch *MainWindow::addPatchToProjectFromFile(QString filename)
@@ -1948,7 +1953,7 @@ int MainWindow::currentPatchIndex()
 }
 
 /* Load mCurrentPatch and update the GUI accordingly. */
-void MainWindow::loadPatchAndUpdateGui()
+void MainWindow::loadCurrentPatchAndUpdateGui()
 {
     pengine.loadPatchAndSetCurrent(mCurrentPatch);
     patchListAdapter.setCurrentPatch(mCurrentPatch);
@@ -1993,6 +1998,17 @@ void MainWindow::loadPreviewPatchAndUpdateGui()
     updatePreviewPatchLayer();
 
     updateWindowTitle();
+}
+
+void MainWindow::loadAllPatches()
+{
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
+
+    foreach (KonfytPatch* patch, prj->getPatchList()) {
+        pengine.loadPatch(patch);
+        patchListAdapter.setPatchLoaded(patch, true);
+    }
 }
 
 void MainWindow::updatePatchView()
@@ -2590,7 +2606,7 @@ void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*
 void MainWindow::setCurrentPatch(KonfytPatch* patch)
 {
     mCurrentPatch = patch;
-    loadPatchAndUpdateGui();
+    loadCurrentPatchAndUpdateGui();
 
     if (patch) {
         // Send MIDI events associated with patch layers
@@ -2788,7 +2804,7 @@ void MainWindow::setPreviewMode(bool previewModeOn)
     } else {
         setMasterGainFloat(masterGain); // To update GUI slider
         pengine.unloadPatch(&mPreviewPatch);
-        loadPatchAndUpdateGui();
+        loadCurrentPatchAndUpdateGui();
     }
 }
 
@@ -6118,16 +6134,7 @@ void MainWindow::on_actionPanicToggle_triggered()
 
 void MainWindow::on_pushButton_LoadAll_clicked()
 {
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) { return; }
-
-    int startPatch = currentPatchIndex();
-
-    for (int i=0; i<prj->getNumPatches(); i++) {
-        setCurrentPatchByIndex(i);
-    }
-
-    setCurrentPatchByIndex(startPatch);
+    loadAllPatches();
 }
 
 void MainWindow::on_pushButton_ExtApp_Replace_clicked()
@@ -7065,7 +7072,6 @@ void MainWindow::setupJack()
     } else {
         // not.
         print("Could not initialise JACK client.");
-
         // Remove all widgets in centralWidget, add the warning message, and put them back
         // (Workaround to insert warning message at the top :/ )
         QList<QLayoutItem*> l;

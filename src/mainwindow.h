@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2022 Gideon van der Kolf
+ * Copyright 2023 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -372,8 +372,9 @@ private:
     void addMidiPortToCurrentPatch(int port);
     void addAudioInPortToCurrentPatch(int port);
 
-    void loadPatchAndUpdateGui();
+    void loadCurrentPatchAndUpdateGui();
     void loadPreviewPatchAndUpdateGui();
+    void loadAllPatches();
 
     // GUI patch functions
     bool mPreviewMode = false;               // Set by setPreviewMode()
