@@ -24,8 +24,7 @@
 
 #include <QList>
 #include <QMutex>
-
-#include <stdlib.h>
+#include <QVector>
 
 template <class T>
 class RingbufferQMutex
@@ -34,15 +33,10 @@ public:
     RingbufferQMutex (int bufferSize)
     {
         size = bufferSize;
-        buffer = (T*)malloc(sizeof(T)*size);
+        buffer.resize(size);
 
         lockedData.readEnd = 0;
         lockedData.writeEnd = 0;
-    }
-
-    ~RingbufferQMutex ()
-    {
-        free(buffer);
     }
 
     bool stash(T val)
@@ -121,7 +115,7 @@ public:
 
 private:
     int size;
-    T* buffer;
+    QVector<T> buffer;
 
     int iread = 0;
     int ireadEnd = 0;
