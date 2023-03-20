@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2023 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -190,15 +190,8 @@ bool KonfytProject::saveProjectAs(QString dirname)
     }
     stream.writeEndElement(); // end of audioInputPortList
 
-    // Write process list (external applications)
-    stream.writeStartElement(XML_PRJ_PROCESSLIST);
-    for (int i=0; i<processList.count(); i++) {
-        stream.writeStartElement(XML_PRJ_PROCESS);
-        KonfytProcess* gp = processList.at(i);
-        stream.writeTextElement(XML_PRJ_PROCESS_APPNAME, gp->appname);
-        stream.writeEndElement(); // end of process
-    }
-    stream.writeEndElement(); // end of processList
+    // External applications
+    writeExternalApps(&stream);
 
     // Write trigger list
     stream.writeStartElement(XML_PRJ_TRIGGERLIST);
@@ -272,7 +265,8 @@ bool KonfytProject::loadProject(QString filename)
     patchList.clear();
     midiInPortMap.clear();
     midiOutPortMap.clear();
-    processList.clear();
+    clearExternalApps();
+    preExternalAppsRead(); // Used for backwards compatibility.
     audioBusMap.clear();
     audioInPortMap.clear();
 
@@ -444,19 +438,12 @@ bool KonfytProject::loadProject(QString filename)
 
             } else if (r.name() == XML_PRJ_PROCESSLIST) {
 
-                while (r.readNextStartElement()) { // process
-                    QString command;
-                    while (r.readNextStartElement()) {
-                        if (r.name() == XML_PRJ_PROCESS_APPNAME) {
-                            command = r.readElementText();
-                        } else {
-                            print("loadProject: "
-                                        "Unrecognized process element: " + r.name().toString() );
-                            r.skipCurrentElement();
-                        }
-                    }
-                    addProcess(command);
-                }
+                // TODO DEPRECATED
+                readExternalApps(&r);
+
+            } else if (r.name() == XML_PRJ_EXT_APP_LIST) {
+
+                readExternalApps(&r);
 
 
             } else if (r.name() == XML_PRJ_TRIGGERLIST) {
@@ -562,6 +549,8 @@ bool KonfytProject::loadProject(QString filename)
 
 
     file.close();
+
+    postExternalAppsRead(); // Commit loaded list. Used for backwards compatibility.
 
     // Check if we have at least one audio output bus. If not, create a default one.
     if (audioBus_count() == 0) {
@@ -881,6 +870,116 @@ int KonfytProject::getUniqueIdHelper(QList<int> ids)
     return id+1;
 }
 
+int KonfytProject::getUniqueExternalAppId()
+{
+    return getUniqueIdHelper( externalApps.keys() );
+}
+
+void KonfytProject::clearExternalApps()
+{
+    foreach (int id, externalApps.keys()) {
+        removeExternalApp(id);
+    }
+}
+
+void KonfytProject::writeExternalApps(QXmlStreamWriter *w)
+{
+    // Write old list for backwards compatibility
+    // TODO DEPRECATED
+    w->writeStartElement(XML_PRJ_PROCESSLIST);
+    foreach (const ExternalApp& app, externalApps.values()) {
+        w->writeStartElement(XML_PRJ_PROCESS);
+        w->writeTextElement(XML_PRJ_PROCESS_APPNAME, app.command);
+        w->writeEndElement(); // end of process
+    }
+    w->writeEndElement(); // end of processList
+
+    // Write new-style list
+    w->writeStartElement(XML_PRJ_EXT_APP_LIST);
+    foreach (const ExternalApp& app, externalApps.values()) {
+        w->writeStartElement(XML_PRJ_EXT_APP);
+        w->writeTextElement(XML_PRJ_EXT_APP_NAME, app.friendlyName);
+        w->writeTextElement(XML_PRJ_EXT_APP_CMD, app.command);
+        w->writeTextElement(XML_PRJ_EXT_APP_RUNATSTARTUP, bool2str(app.runAtStartup));
+        w->writeTextElement(XML_PRJ_EXT_APP_RESTART, bool2str(app.autoRestart));
+        w->writeEndElement();
+    }
+    w->writeEndElement(); // end of external apps
+}
+
+void KonfytProject::preExternalAppsRead()
+{
+    // TODO DEPRECATED
+    tempExternalAppList.clear();
+}
+
+void KonfytProject::readExternalApps(QXmlStreamReader *r)
+{
+    if (r->name() == XML_PRJ_PROCESSLIST) {
+        // Old deprecated list for backwards compatability
+        // Only load if other list not loaded yet
+        // TODO DEPRECATED
+        if (!tempExternalAppList.isEmpty()) {
+            print("loadProject: Skipping deprecated external apps as new-style list already loaded.");
+            r->skipCurrentElement();
+            return;
+        }
+
+        while (r->readNextStartElement()) { // process
+            ExternalApp app;
+            while (r->readNextStartElement()) {
+                if (r->name() == XML_PRJ_PROCESS_APPNAME) {
+                    app.command = r->readElementText();
+                } else {
+                    print("loadProject: Unrecognized process element: " +r->name().toString());
+                    r->skipCurrentElement();
+                }
+            }
+            tempExternalAppList.append(app);
+        }
+
+    } else if (r->name() == XML_PRJ_EXT_APP_LIST) {
+
+        if (!tempExternalAppList.isEmpty()) {
+            // Clear (overwrite) temp list which could contain old deprecated list.
+            print("loadProject: Ignoring deprecated old external apps list in favor new-style list found in project.");
+            tempExternalAppList.clear();
+        }
+
+        while (r->readNextStartElement()) { // External App
+            if (r->name() == XML_PRJ_EXT_APP) {
+                ExternalApp app;
+                while (r->readNextStartElement()) {
+                    if (r->name() == XML_PRJ_EXT_APP_NAME) {
+                        app.friendlyName = r->readElementText();
+                    } else if (r->name() == XML_PRJ_EXT_APP_CMD) {
+                        app.command = r->readElementText();
+                    } else if (r->name() == XML_PRJ_EXT_APP_RUNATSTARTUP) {
+                        app.runAtStartup = Qstr2bool(r->readElementText());
+                    } else if (r->name() == XML_PRJ_EXT_APP_RESTART) {
+                        app.autoRestart = Qstr2bool(r->readElementText());
+                    } else {
+                        print("loadProject: Unrecognized externalApp element: " + r->name().toString());
+                        r->skipCurrentElement();
+                    }
+                }
+                tempExternalAppList.append(app);
+            } else {
+                print("loadProject: Unrecognized externalAppList element: " + r->name().toString());
+                r->skipCurrentElement();
+            }
+        }
+    }
+}
+
+void KonfytProject::postExternalAppsRead()
+{
+    // TODO DEPRECATED
+    foreach (const ExternalApp& app, tempExternalAppList) {
+        addExternalApp(app);
+    }
+}
+
 /* Adds bus and returns unique bus id. */
 int KonfytProject::audioBus_add(QString busName)
 {
@@ -987,6 +1086,17 @@ void KonfytProject::audioBus_removeClient(int busId, portLeftRight leftRight, QS
     }
     audioBusMap.insert(busId, b);
     setModified(true);
+}
+
+int KonfytProject::addExternalApp(ExternalApp app)
+{
+    int id = getUniqueExternalAppId();
+    externalApps.insert(id, app);
+
+    setModified(true);
+
+    emit externalAppAdded(id);
+    return id;
 }
 
 QList<int> KonfytProject::audioInPort_getAllPortIds()
@@ -1152,89 +1262,39 @@ QStringList KonfytProject::midiOutPort_getClients(int portId)
     return midiOutPortMap.value(portId).clients;
 }
 
-/* Add process (External program) to GUI and current project. */
-KonfytProcess *KonfytProject::addProcess(QString command)
+void KonfytProject::removeExternalApp(int id)
 {
-    KonfytProcess* process = new KonfytProcess();
-    process->appname = command;
-
-    // Add to internal list
-    processList.append(process);
-    // Connect signals
-    connect(process, &KonfytProcess::started, this, &KonfytProject::processStartedSlot);
-    connect(process, &KonfytProcess::finished, this, &KonfytProject::processFinishedSlot);
-    setModified(true);
-
-    return process;
-}
-
-bool KonfytProject::isProcessRunning(int index)
-{
-    if ( (index < 0) || (index >= processList.count()) ) {
-        print("ERROR: isProcessRunning: INVALID PROCESS INDEX " + n2s(index));
-    }
-
-    return processList.at(index)->isRunning();
-}
-
-void KonfytProject::runProcess(int index)
-{
-    if ( (index>=0) && (index < processList.count()) ) {
-        // Start process
-        KonfytProcess* p = processList.at(index);
-        p->projectDir = getDirname();
-        print("Starting process: " + p->appname);
-        QString expandedAppname = p->expandedAppName();
-        if (expandedAppname != p->appname) {
-            print("Process command expands to: " + expandedAppname);
-            if (getDirname().isEmpty()) {
-                print("WARNING: Current project directory is empty as project has not been saved yet.");
-            }
-        }
-        processList.at(index)->start();
-    } else {
-        print("ERROR: runProcess: INVALID PROCESS INDEX " + n2s(index));
-    }
-}
-
-void KonfytProject::stopProcess(int index)
-{
-    if ( (index>=0) && (index < processList.count()) ) {
-        // Stop process
-        print("Stopping process: " + processList.at(index)->appname);
-        processList.at(index)->stop();
-    } else {
-        print("ERROR: stopProcess: INVALID PROCESS INDEX " + n2s(index));
-    }
-}
-
-void KonfytProject::removeProcess(int index)
-{
-    if ( (index>=0) && (index < processList.count()) ) {
-        processList.removeAt(index);
+    if (externalApps.contains(id)) {
+        externalApps.remove(id);
         setModified(true);
+        emit externalAppRemoved(id);
     } else {
-        print("ERROR: removeProcess: INVALID PROCESS INDEX " + n2s(index));
+        print("ERROR: removeExternalApp: INVALID ID " + n2s(id));
     }
 }
 
-/* Slot for signal from Process object, when the process was started. */
-void KonfytProject::processStartedSlot(KonfytProcess *process)
+ExternalApp KonfytProject::getExternalApp(int id)
 {
-    int index = processList.indexOf(process);
-    processStartedSignal(index, process);
+    return externalApps.value(id);
 }
 
-void KonfytProject::processFinishedSlot(KonfytProcess *process)
+QList<int> KonfytProject::getExternalAppIds()
 {
-    print("Process stopped: " + process->appname);
-    int index = processList.indexOf(process);
-    processFinishedSignal(index, process);
+    return externalApps.keys();
 }
 
-QList<KonfytProcess*> KonfytProject::getProcessList()
+bool KonfytProject::hasExternalAppWithId(int id)
 {
-    return processList;
+    return externalApps.keys().contains(id);
+}
+
+void KonfytProject::modifyExternalApp(int id, ExternalApp app)
+{
+    KONFYT_ASSERT_RETURN(externalApps.contains(id));
+
+    externalApps.insert(id, app);
+    setModified(true);
+    emit externalAppModified(id);
 }
 
 void KonfytProject::addAndReplaceTrigger(KonfytTrigger newTrigger)

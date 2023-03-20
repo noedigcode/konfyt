@@ -45,6 +45,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupFilesystemView();
     setupPatchListAdapter();
     setupDatabase();
+    setupExternalApps();
     // ----------------------------------------------------
     setupInitialProjectFromCmdLineArgs();
 
@@ -57,7 +58,6 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupMidiMapPresets();
     setupKeyboardShortcuts();
     setupGuiDefaults();
-    setupExternalAppsMenu();
     setMasterInTranspose(0, false);
     setMasterGainFloat(1);
     setupLibraryContextMenu();
@@ -287,6 +287,13 @@ void MainWindow::scanDirForProjects(QString dirname)
     } else {
         projectDirList = scanDirForFiles(dirname, PROJECT_FILENAME_EXTENSION);
     }
+}
+
+ProjectPtr MainWindow::newProjectPtr()
+{
+    ProjectPtr prj(new KonfytProject());
+    connect(prj.data(), &KonfytProject::print, this, &MainWindow::print);
+    return prj;
 }
 
 void MainWindow::showSettingsDialog()
@@ -720,7 +727,7 @@ bool MainWindow::saveSettingsFile()
 /* Create a new project and load it. */
 void MainWindow::loadNewProject()
 {
-    ProjectPtr prj(new KonfytProject());
+    ProjectPtr prj = newProjectPtr();
     prj->setProjectName("New Project");
     loadProject(prj);
 }
@@ -728,7 +735,7 @@ void MainWindow::loadNewProject()
 /* Open a project from the specified filename and load it. */
 bool MainWindow::loadProjectFromFile(QString filename)
 {
-    ProjectPtr prj(new KonfytProject());
+    ProjectPtr prj = newProjectPtr();
 
     if (prj->loadProject(filename)) {
         print("Project loaded from file.");
@@ -1238,7 +1245,7 @@ void MainWindow::tree_portsBusses_Menu(const QPoint &pos)
 
     m->clear();
 
-    QTreeWidgetItem* item = ui->tree_portsBusses->itemAt(pos);
+    QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
     portsBussesTreeMenuItem = item;
 
     if (item) {
@@ -1253,7 +1260,7 @@ void MainWindow::tree_portsBusses_Menu(const QPoint &pos)
     m->addAction(ui->actionAdd_MIDI_Out_Port);
     m->addAction(ui->actionAdd_MIDI_In_Port);
 
-    portsBussesTreeMenu.popup(QCursor::pos());
+    portsBussesTreeMenu.popup(pos);
 }
 
 void MainWindow::initTriggers()
@@ -1377,11 +1384,17 @@ void MainWindow::loadProject(ProjectPtr prj)
     mCurrentProject = prj;
     pengine.setProject(mCurrentProject);
 
+    // Connect project signals
+    connect(prj.data(), &KonfytProject::projectModifiedChanged,
+            this, &MainWindow::onProjectModifiedStateChanged);
+    connect(prj.data(), &KonfytProject::midiPickupRangeChanged,
+            this, &MainWindow::onProjectMidiPickupRangeChanged);
+
     updateProjectNameInGui();
+
     // Populate patch list for current project
     patchListAdapter.clear();
     patchListAdapter.addPatches(mCurrentProject->getPatchList());
-
 
     // Process MIDI in ports
 
@@ -1476,27 +1489,8 @@ void MainWindow::loadProject(ProjectPtr prj)
 
     }
 
-    // Update external applications list
-    ui->listWidget_ExtApps->clear();
-    QList<KonfytProcess*> prl = prj->getProcessList();
-    for (int j=0; j<prl.count(); j++) {
-        KonfytProcess* gp = prl.at(j);
-        QString temp = gp->toString();
-        if (gp->isRunning()) {
-            temp = "[running] " + temp;
-        }
-        ui->listWidget_ExtApps->addItem(temp);
-    }
-    // Connect signals
-    connect(prj.data(), &KonfytProject::print, this, &MainWindow::print);
-    connect(prj.data(), &KonfytProject::processStartedSignal,
-            this, &MainWindow::processStartedSlot);
-    connect(prj.data(), &KonfytProject::processFinishedSignal,
-            this, &MainWindow::processFinishedSlot);
-    connect(prj.data(), &KonfytProject::projectModifiedChanged,
-            this, &MainWindow::onProjectModifiedStateChanged);
-    connect(prj.data(), &KonfytProject::midiPickupRangeChanged,
-            this, &MainWindow::onProjectMidiPickupRangeChanged);
+    // External applications
+    setupExternalAppsForCurrentProject();
 
     // Get triggers from project and add to quick lookup hash
     QList<KonfytTrigger> trigs = prj->getTriggerList();
@@ -1724,7 +1718,7 @@ KonfytSoundPreset MainWindow::selectedSoundfontProgramInLibOrFs()
 }
 
 /* Returns the type of item in the library tree. */
-LibraryTreeItemType MainWindow::libraryTreeItemType(QTreeWidgetItem *item)
+MainWindow::LibraryTreeItemType MainWindow::libraryTreeItemType(QTreeWidgetItem *item)
 {
     if (item == libraryPatchTree.rootTreeItem) { return libTreePatchesRoot; }
     else if (libraryPatchTree.soundsMap.contains(item)) { return libTreePatch; }
@@ -1737,7 +1731,7 @@ LibraryTreeItemType MainWindow::libraryTreeItemType(QTreeWidgetItem *item)
     else { return libTreeInvalid; }
 }
 
-LibraryTreeItemType MainWindow::librarySelectedTreeItemType()
+MainWindow::LibraryTreeItemType MainWindow::librarySelectedTreeItemType()
 {
     return libraryTreeItemType( ui->treeWidget_Library->currentItem() );
 }
@@ -2936,95 +2930,9 @@ QString MainWindow::getUniqueFilename(QString dirname, QString name, QString ext
     return name + extra + extension;
 }
 
-/* Add process (external application) to GUI and current project. */
-void MainWindow::addProcess(QString command)
+void MainWindow::onExternalAppItemDoubleClicked(int /*id*/)
 {
-    if (!mCurrentProject) {
-        print("No active project.");
-        return;
-    }
-    // Add to project list
-    KonfytProcess* process = mCurrentProject->addProcess(command);
-    // Add to GUI list
-    ui->listWidget_ExtApps->addItem(process->toString());
-}
-
-void MainWindow::runProcess(int index)
-{
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) { return; }
-
-    // Abort if process is already running
-    if (prj->isProcessRunning(index)) {
-        print("Process is already running. Stop it before running it again.");
-        return;
-    }
-    // Start process
-    prj->runProcess(index);
-    // Indicate in list widget
-    if ( (index >=0) && (index < ui->listWidget_ExtApps->count()) ) {
-        // Indicate in list widget
-        QListWidgetItem* item = ui->listWidget_ExtApps->item(index);
-        item->setText("[starting] " + item->text());
-    } else {
-        print("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
-    }
-}
-
-void MainWindow::stopProcess(int index)
-{
-    if (!mCurrentProject) { return; }
-    // Stop process
-    mCurrentProject->stopProcess(index);
-}
-
-void MainWindow::removeProcess(int index)
-{
-    if (!mCurrentProject) { return; }
-
-    // Remove process from project
-    mCurrentProject->removeProcess(index);
-    // Remove from GUI list
-    QListWidgetItem* item = ui->listWidget_ExtApps->item(index);
-    delete item;
-}
-
-void MainWindow::processStartedSlot(int index, KonfytProcess *process)
-{
-    if ( (index >=0) && (index < ui->listWidget_ExtApps->count()) ) {
-        // Indicate in list widget
-        QListWidgetItem* item = ui->listWidget_ExtApps->item(index);
-        item->setText("[running] " + process->toString());
-    } else {
-        print("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
-    }
-}
-
-void MainWindow::processFinishedSlot(int index, KonfytProcess *process)
-{
-    if ( (index >=0) && (index < ui->listWidget_ExtApps->count()) ) {
-        // Indicate in list widget
-        QListWidgetItem* item = ui->listWidget_ExtApps->item(index);
-        item->setText("[stopped] " + process->toString());
-    } else {
-        print("ERROR: PROCESS INDEX NOT IN GUI LIST: " + n2s(index));
-    }
-}
-
-void MainWindow::extAppsMenuTriggered(QAction *action)
-{
-    if (extAppsMenuActions_Append.contains(action)) {
-        // Append to external apps text box
-        ui->lineEdit_ExtApp->setText( ui->lineEdit_ExtApp->text() + extAppsMenuActions_Append.value(action, ""));
-    } else {
-        // Replace text of external apps text box
-        ui->lineEdit_ExtApp->setText( extAppsMenuActions_Set.value(action, "") );
-    }
-}
-
-void MainWindow::on_toolButton_ExtAppsMenu_clicked()
-{
-    extAppsMenu.popup(QCursor::pos());
+    on_pushButton_ExtApp_RunSelected_clicked();
 }
 
 void MainWindow::showWaitingPage(QString title)
@@ -3849,60 +3757,88 @@ void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
     }
 }
 
-void MainWindow::on_pushButton_ExtApp_add_clicked()
-{
-    addProcess( ui->lineEdit_ExtApp->text() );
-}
-
-void MainWindow::on_lineEdit_ExtApp_returnPressed()
-{
-    on_pushButton_ExtApp_add_clicked();
-}
-
 void MainWindow::on_pushButton_ExtApp_RunSelected_clicked()
 {
-    int row = ui->listWidget_ExtApps->currentRow();
-    if (row < 0) {
-        print("Select an application.");
-        return;
-    }
-    runProcess(row);
+    int id = externalAppListAdapter->selectedAppId();
+    if (id < 0) { return; }
+    externalAppRunner.runApp(id);
 }
 
 void MainWindow::on_pushButton_ExtApp_Stop_clicked()
 {
-    int row = ui->listWidget_ExtApps->currentRow();
-    if (row < 0) {
-        print("Select an application.");
-        return;
-    }
-    stopProcess(row);
+    int id = externalAppListAdapter->selectedAppId();
+    if (id < 0) { return; }
+    externalAppRunner.stopApp(id);
 }
 
 void MainWindow::on_pushButton_ExtApp_RunAll_clicked()
 {
-    // Start all the processes in the list
-    for (int i=0; i<ui->listWidget_ExtApps->count(); i++) {
-        runProcess(i);
+    if (!mCurrentProject) { return; }
+
+    foreach (int id, mCurrentProject->getExternalAppIds()) {
+        externalAppRunner.runApp(id);
     }
 }
 
 void MainWindow::on_pushButton_ExtApp_StopAll_clicked()
 {
-    // Stop all the processes in the list
-    for (int i=0; i<ui->listWidget_ExtApps->count(); i++) {
-        stopProcess(i);
+    if (!mCurrentProject) { return; }
+
+    foreach (int id, mCurrentProject->getExternalAppIds()) {
+        externalAppRunner.stopApp(id);
     }
 }
 
-void MainWindow::on_pushButton_ExtApp_remove_clicked()
+void MainWindow::on_pushButton_extAppEditor_apply_clicked()
 {
-    int row = ui->listWidget_ExtApps->currentRow();
-    if (row < 0) {
-        print("Select an application.");
-        return;
+    if (mCurrentProject) {
+        mCurrentProject->modifyExternalApp(externalAppEditorCurrentId,
+                                           externalAppFromEditor());
     }
-    removeProcess(row);
+
+    // Switch back to patch view
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+}
+
+void MainWindow::on_pushButton_extAppEditor_Cancel_clicked()
+{
+    hideExternalAppEditor();
+}
+
+void MainWindow::on_pushButton_extApp_add_clicked()
+{
+    if (!mCurrentProject) { return; }
+
+    int id = mCurrentProject->addExternalApp(ExternalApp());
+    showExternalAppEditor(id);
+
+    // Select newly added app in the list widget, but invoke it on the event
+    // loop so it happens after the project externalAppAdded signals.
+    QMetaObject::invokeMethod(this, [=]()
+    {
+        externalAppListAdapter->selectAppInList(id);
+    }, Qt::QueuedConnection);
+}
+
+void MainWindow::on_pushButton_extApp_edit_clicked()
+{
+    int id = externalAppListAdapter->selectedAppId();
+    if (id < 0) { return; }
+
+    showExternalAppEditor(id);
+}
+
+void MainWindow::on_pushButton_extApp_remove_clicked()
+{
+    if (!mCurrentProject) { return; }
+
+    int id = externalAppListAdapter->selectedAppId();
+    if (id < 0) { return; }
+
+    int choice = msgBoxYesNo("Are you sure you want to remove the external app?");
+    if (choice == QMessageBox::Yes) {
+        mCurrentProject->removeExternalApp(id);
+    }
 }
 
 /* Slot: on layer item slider move. */
@@ -4632,29 +4568,6 @@ void MainWindow::on_actionMaster_Volume_Down_triggered()
     setMasterGainMidi(value);
 }
 
-/* External apps list: item double clicked. */
-void MainWindow::on_listWidget_ExtApps_doubleClicked(const QModelIndex& /*index*/)
-{
-    // Run the currently selected process.
-    on_pushButton_ExtApp_RunSelected_clicked();
-}
-
-void MainWindow::on_listWidget_ExtApps_clicked(const QModelIndex &index)
-{
-    // Put the contents of the selected item in the External Apps text box
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) { return; }
-
-    KonfytProcess* p = prj->getProcessList()[index.row()];
-    ui->lineEdit_ExtApp->setText(p->appname);
-}
-
-void MainWindow::on_toolButton_layer_AddMidiPort_clicked()
-{
-    // Button is configured to popup a menu upon click.
-    // See patchMidiOutPortsMenu and on_patchMidiOutPortsMenu_ActionTrigger().
-}
-
 /* Library/filesystem soundfont program list: item double clicked. */
 void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem* item)
 {
@@ -5266,36 +5179,145 @@ void MainWindow::onJackPrint(QString msg)
     print("JACK Engine: " + msg);
 }
 
+void MainWindow::setupExternalApps()
+{
+    // External apps runner
+    connect(&externalAppRunner, &ExternalAppRunner::print, this, [=](QString msg)
+    {
+        print("ExternalAppRunner: " + msg);
+    });
+
+    // External apps list adapter
+    externalAppListAdapter.reset(
+                new ExternalAppsListAdapter(ui->listWidget_ExtApps,
+                                            &externalAppRunner));
+    connect(externalAppListAdapter.data(),
+            &ExternalAppsListAdapter::listItemDoubleClicked,
+            this, &MainWindow::onExternalAppItemDoubleClicked);
+
+    // External apps preset menu
+    setupExternalAppsMenu();
+}
+
+void MainWindow::setupExternalAppsForCurrentProject()
+{
+    externalAppRunner.setProject(mCurrentProject);
+    externalAppListAdapter->setProject(mCurrentProject);
+
+    connect(mCurrentProject.data(), &KonfytProject::externalAppRemoved,
+            this, &MainWindow::externalAppEditor_onExternalAppRemoved);
+}
+
+void MainWindow::externalAppToEditor(ExternalApp app)
+{
+    ui->lineEdit_extApp_name->setText(app.friendlyName);
+    ui->lineEdit_extAppEditor_command->setText(app.command);
+    ui->checkBox_extApp_runAtStartup->setChecked(app.runAtStartup);
+    ui->checkBox_extApp_restart->setChecked(app.autoRestart);
+}
+
+ExternalApp MainWindow::externalAppFromEditor()
+{
+    ExternalApp app;
+    app.friendlyName = ui->lineEdit_extApp_name->text();
+    app.command = ui->lineEdit_extAppEditor_command->text();
+    app.runAtStartup = ui->checkBox_extApp_runAtStartup->isChecked();
+    app.autoRestart = ui->checkBox_extApp_restart->isChecked();
+    return app;
+}
+
+void MainWindow::showExternalAppEditor(int id)
+{
+    if (!mCurrentProject) { return; }
+
+    externalAppToEditor( mCurrentProject->getExternalApp(id) );
+    externalAppEditorCurrentId = id;
+
+    // Switch to external apps page
+    ui->stackedWidget->setCurrentWidget(ui->externalAppsPage);
+}
+
+void MainWindow::hideExternalAppEditor()
+{
+    // Switch back to patch view
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+}
+
+void MainWindow::appendToExternalAppEditorCommandBox(QString text)
+{
+    ui->lineEdit_extAppEditor_command->setText(
+                ui->lineEdit_extAppEditor_command->text() + text);
+}
+
+void MainWindow::externalAppEditor_onExternalAppRemoved(int id)
+{
+    // If the removed id matches the one currently being edited, close the
+    // editor page.
+
+    if (id == externalAppEditorCurrentId) {
+        externalAppEditorCurrentId = -1;
+        hideExternalAppEditor();
+    }
+}
+
 void MainWindow::setupExternalAppsMenu()
 {
-    extAppsMenuActions_Append.insert(
-                extAppsMenu.addAction(
-                    "Project Directory Reference: " + QString(STRING_PROJECT_DIR)),
-                STRING_PROJECT_DIR );
+    extAppsMenu.addAction(
+                "Project Directory Reference: " + QString(STRING_PROJECT_DIR),
+                this, [=]()
+    {
+        appendToExternalAppEditorCommandBox(STRING_PROJECT_DIR);
+    });
 
     extAppsMenu.addSeparator();
 
-    extAppsMenuActions_Set.insert(
-                extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)"),
-                "a2jmidid -ue" );
-    extAppsMenuActions_Set.insert(
-                extAppsMenu.addAction("zynaddsubfx -l (Load .xmz state file)"),
-                "zynaddsubfx -l " );
-    extAppsMenuActions_Set.insert(
-                extAppsMenu.addAction("zynaddsubfx -L (Load .xiz instrument file)"),
-                "zynaddsubfx -L " );
-    extAppsMenuActions_Set.insert(
-                extAppsMenu.addAction("jack-keyboard"),
-                "jack-keyboard" );
-    extAppsMenuActions_Set.insert(
-                extAppsMenu.addAction("VMPK (Virtual Keyboard)"),
-                "vmpk" );
-    extAppsMenuActions_Set.insert( extAppsMenu.addAction("Ardour"), "ardour " );
-    extAppsMenuActions_Set.insert( extAppsMenu.addAction("Carla"), "carla " );
+    extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)",
+                          this, [=]()
+    {
+        externalAppToEditor(ExternalApp("a2jmidid -ue", "a2jmidid -ue"));
+    });
 
-    connect(&extAppsMenu, &QMenu::triggered, this, &MainWindow::extAppsMenuTriggered);
+    extAppsMenu.addAction("zynaddsubfx -l (Load .xmz state file)",
+                          this, [=]()
+    {
+        externalAppToEditor(ExternalApp("ZynAddSubFx", "zynaddsubfx -l "));
+    });
+
+    extAppsMenu.addAction("zynaddsubfx -L (Load .xiz instrument file)",
+                          this, [=]()
+    {
+        externalAppToEditor(ExternalApp("ZynAddSubFx", "zynaddsubfx -L "));
+    });
+
+    extAppsMenu.addAction("jack-keyboard",
+                          this, [=]()
+    {
+        externalAppToEditor(ExternalApp("jack-keyboard", "jack-keyboard"));
+    });
+
+    extAppsMenu.addAction("VMPK (Virtual Keyboard)",
+                          this, [=]()
+    {
+        externalAppToEditor(ExternalApp("VMPK Virtual Keyboard", "vmpk"));
+    });
+
+    extAppsMenu.addAction("Ardour",
+                          this, [=]()
+    {
+        externalAppToEditor(ExternalApp("Ardour", "ardour "));
+    });
+
+    extAppsMenu.addAction("Carla",
+                          this, [=]()
+    {
+        externalAppToEditor(ExternalApp("Carla", "carla "));
+    });
 }
 
+void MainWindow::on_toolButton_ExtAppsMenu_clicked()
+{
+    extAppsMenu.popup(QCursor::pos());
+}
 
 void MainWindow::on_pushButton_connectionsPage_OK_clicked()
 {
@@ -5599,9 +5621,8 @@ void MainWindow::on_actionAdd_Path_To_External_App_Box_triggered()
     // Add quotes
     path = "\"" + path + "\"";
 
-    ui->lineEdit_ExtApp->setText( ui->lineEdit_ExtApp->text()
-                                  + path);
-    ui->lineEdit_ExtApp->setFocus();
+    appendToExternalAppEditorCommandBox(path);
+    ui->lineEdit_extAppEditor_command->setFocus();
 }
 
 /* Action triggered from filesystem tree view to open item in file manager. */
@@ -5649,9 +5670,8 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
     // Add quotes
     path = "\"" + path + "\"";
 
-    ui->lineEdit_ExtApp->setText( ui->lineEdit_ExtApp->text()
-                                  + path);
-    ui->lineEdit_ExtApp->setFocus();
+    appendToExternalAppEditorCommandBox(path);
+    ui->lineEdit_extAppEditor_command->setFocus();
 }
 
 /* Initialises patch engine. Must be called after JACK engine has been set up. */
@@ -6135,23 +6155,6 @@ void MainWindow::on_actionPanicToggle_triggered()
 void MainWindow::on_pushButton_LoadAll_clicked()
 {
     loadAllPatches();
-}
-
-void MainWindow::on_pushButton_ExtApp_Replace_clicked()
-{
-    int row = ui->listWidget_ExtApps->currentRow();
-    if (row < 0) { return; }
-
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) { return; }
-
-    KonfytProcess* process = prj->getProcessList()[row];
-    process->appname = ui->lineEdit_ExtApp->text();
-
-    QListWidgetItem* item = ui->listWidget_ExtApps->item(row);
-    item->setText(ui->lineEdit_ExtApp->text());
-
-    setProjectModified();
 }
 
 void MainWindow::on_MIDI_indicator_clicked()
@@ -6871,6 +6874,9 @@ void MainWindow::on_listWidget_midiSendList_currentRowChanged(int currentRow)
 
 void MainWindow::on_listWidget_midiSendList_itemClicked(QListWidgetItem *item)
 {
+    // This function accounts for the case when the user clicks on an already
+    // selected item which doesn't trigger the currentRowChanged slot.
+
     on_listWidget_midiSendList_currentRowChanged(
                 ui->listWidget_midiSendList->row(item) );
 }
@@ -7214,65 +7220,58 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
     updateBusGainInJackEngine(busId);
 }
 
-
-
-
 void MainWindow::on_comboBox_midiFilter_inChannel_currentIndexChanged(int /*index*/)
 {
     onMidiFilterEditorModified();
 }
-
 
 void MainWindow::on_spinBox_midiFilter_LowNote_valueChanged(int /*arg1*/)
 {
     onMidiFilterEditorModified();
 }
 
-
 void MainWindow::on_spinBox_midiFilter_HighNote_valueChanged(int /*arg1*/)
 {
     onMidiFilterEditorModified();
 }
-
 
 void MainWindow::on_spinBox_midiFilter_Add_valueChanged(int /*arg1*/)
 {
     onMidiFilterEditorModified();
 }
 
-
 void MainWindow::on_checkBox_midiFilter_ignoreGlobalTranspose_toggled(bool /*checked*/)
 {
     onMidiFilterEditorModified();
 }
-
 
 void MainWindow::on_checkBox_midiFilter_AllCCs_toggled(bool /*checked*/)
 {
     onMidiFilterEditorModified();
 }
 
-
 void MainWindow::on_lineEdit_MidiFilter_ccAllowed_textChanged(const QString& /*arg1*/)
 {
     onMidiFilterEditorModified();
 }
-
 
 void MainWindow::on_lineEdit_MidiFilter_ccBlocked_textChanged(const QString& /*arg1*/)
 {
     onMidiFilterEditorModified();
 }
 
-
 void MainWindow::on_checkBox_midiFilter_pitchbend_toggled(bool /*checked*/)
 {
     onMidiFilterEditorModified();
 }
 
-
 void MainWindow::on_checkBox_midiFilter_Prog_toggled(bool /*checked*/)
 {
     onMidiFilterEditorModified();
+}
+
+void MainWindow::on_toolButton_connectionsPage_portsBussesListOptions_clicked()
+{
+    tree_portsBusses_Menu(QCursor::pos());
 }
 

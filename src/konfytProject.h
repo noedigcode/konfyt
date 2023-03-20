@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2023 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -25,12 +25,12 @@
 #include "konfytDefines.h"
 #include "konfytJackStructs.h"
 #include "konfytPatch.h"
-#include "konfytProcess.h"
 #include "konfytStructs.h"
 
 #include <QDir>
 #include <QFile>
 #include <QObject>
+#include <QSharedPointer>
 #include <QStringList>
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
@@ -38,6 +38,11 @@
 
 #define PROJECT_FILENAME_EXTENSION ".konfytproject"
 #define PROJECT_PATCH_DIR "patches"
+
+
+class KonfytProject;
+typedef QSharedPointer<KonfytProject> ProjectPtr;
+
 
 struct PrjAudioBus
 {
@@ -87,6 +92,17 @@ struct KonfytTrigger
     {
         return midiEventToString(type, channel, data1, bankMSB, bankLSB);
     }
+};
+
+struct ExternalApp
+{
+    ExternalApp() {}
+    ExternalApp(QString name, QString cmd) : friendlyName(name), command(cmd) {}
+
+    QString friendlyName;
+    QString command;
+    bool runAtStartup = false;
+    bool autoRestart = false;
 };
 
 enum portLeftRight { leftPort, rightPort };
@@ -175,13 +191,13 @@ public:
     void audioBus_addClient(int busId, portLeftRight leftRight, QString client);
     void audioBus_removeClient(int busId, portLeftRight leftRight, QString client);
 
-    // External Programs
-    KonfytProcess* addProcess(QString command);
-    bool isProcessRunning(int index);
-    void runProcess(int index);
-    void stopProcess(int index);
-    void removeProcess(int index);
-    QList<KonfytProcess*> getProcessList();
+    // External Apps
+    int addExternalApp(ExternalApp app);
+    void removeExternalApp(int id);
+    ExternalApp getExternalApp(int id);
+    QList<int> getExternalAppIds();
+    bool hasExternalAppWithId(int id);
+    void modifyExternalApp(int id, ExternalApp app);
 
     // Triggers
     void addAndReplaceTrigger(KonfytTrigger newTrigger);
@@ -210,9 +226,9 @@ signals:
     void audioInPortNameChanged(int portId);
     void midiPickupRangeChanged(int range);
 
-    // Signals emitted when signals are recieved from Process objects.
-    void processStartedSignal(int index, KonfytProcess* process);
-    void processFinishedSignal(int index, KonfytProcess* process);
+    void externalAppAdded(int id);
+    void externalAppRemoved(int id);
+    void externalAppModified(int id);
     
 private:
     QList<KonfytPatch*> patchList;
@@ -233,7 +249,16 @@ private:
 
     int getUniqueIdHelper(QList<int> ids);
 
-    QList<KonfytProcess*> processList;
+    QMap<int, ExternalApp> externalApps;
+    int getUniqueExternalAppId();
+    void clearExternalApps();
+    void writeExternalApps(QXmlStreamWriter* w);
+
+    void preExternalAppsRead();
+    QList<ExternalApp> tempExternalAppList;
+    void readExternalApps(QXmlStreamReader* r);
+    void postExternalAppsRead();
+
     QHash<QString, KonfytTrigger> triggerHash;
     bool programChangeSwitchPatches = true;
     bool patchListNumbers = true;
@@ -244,12 +269,6 @@ private:
     QList<KonfytJackConPair> jackAudioConList;
 
     bool modified = false; // Whether project has been modified since last load/save.
-
-private slots:
-    // Slots for signals from Process objects.
-    // Will then emit the processStarted/Finished signals.
-    void processStartedSlot(KonfytProcess* process);
-    void processFinishedSlot(KonfytProcess* process);
 
 private:
     const char* XML_PRJ = "konfytProject";
@@ -286,9 +305,19 @@ private:
     const char* XML_PRJ_AUDIOIN_PORT_RGAIN = "rightGain";
     const char* XML_PRJ_AUDIOIN_PORT_LCLIENT = "leftClient";
     const char* XML_PRJ_AUDIOIN_PORT_RCLIENT = "rightClient";
+
+    // TODO DEPRECATED - replaced by EXT_APP below
     const char* XML_PRJ_PROCESSLIST = "processList";
     const char* XML_PRJ_PROCESS = "process";
     const char* XML_PRJ_PROCESS_APPNAME = "appname";
+
+    const char* XML_PRJ_EXT_APP_LIST = "externalAppList";
+    const char* XML_PRJ_EXT_APP = "externalApp";
+    const char* XML_PRJ_EXT_APP_NAME = "friendlyName";
+    const char* XML_PRJ_EXT_APP_CMD = "command";
+    const char* XML_PRJ_EXT_APP_RUNATSTARTUP = "runAtStartup";
+    const char* XML_PRJ_EXT_APP_RESTART = "autoRestart";
+
     const char* XML_PRJ_TRIGGERLIST = "triggerList";
     const char* XML_PRJ_TRIGGER = "trigger";
     const char* XML_PRJ_TRIGGER_ACTIONTEXT = "actionText";

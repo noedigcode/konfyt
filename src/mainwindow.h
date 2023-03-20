@@ -109,30 +109,10 @@ namespace Ui {
 class MainWindow;
 }
 
-
-enum LibraryTreeItemType {
-    libTreeInvalid,
-   libTreePatchesRoot,
-   libTreePatch,
-   libTreeSFZRoot,
-   libTreeSFZFolder,
-   libTreeSFZ,
-   libTreeSoundfontRoot,
-   libTreeSoundfontFolder,
-   libTreeSoundfont
-};
-
-enum MidiFilterEditType {
-    MidiFilterEditPort,
-    MidiFilterEditLayer
-};
-
-
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-    
+
     // ========================================================================
     // MainWindow
     // ========================================================================
@@ -185,12 +165,11 @@ private:
     // Project related
     // ========================================================================
 private:
-    typedef QSharedPointer<KonfytProject> ProjectPtr;
-
     QStringList projectDirList;
     ProjectPtr mCurrentProject;
     void setupInitialProjectFromCmdLineArgs();
     void scanDirForProjects(QString dirname);
+    ProjectPtr newProjectPtr();
     void loadNewProject();
     bool loadProjectFromFile(QString filename);
     void loadProject(ProjectPtr prj);
@@ -276,6 +255,17 @@ private:
     void buildSfTree(KfDbTreeItemPtr dbTreeItem);
     void buildPatchTree(KfDbTreeItemPtr dbTreeItem);
 
+    enum LibraryTreeItemType {
+        libTreeInvalid,
+        libTreePatchesRoot,
+        libTreePatch,
+        libTreeSFZRoot,
+        libTreeSFZFolder,
+        libTreeSFZ,
+        libTreeSoundfontRoot,
+        libTreeSoundfontFolder,
+        libTreeSoundfont
+    };
     LibraryTreeItemType libraryTreeItemType(QTreeWidgetItem* item);
     LibraryTreeItemType librarySelectedTreeItemType();
     KfSoundPtr librarySelectedPatch();
@@ -597,6 +587,10 @@ private slots:
     // MIDI filter editor
     // ========================================================================
 private:
+    enum MidiFilterEditType {
+        MidiFilterEditPort,
+        MidiFilterEditLayer
+    };
     MidiFilterEditType midiFilterEditType;
     KonfytLayerWidget* midiFilterEditItem = nullptr;
     KfJackMidiRoute* midiFilterEditRoute = nullptr;
@@ -733,38 +727,46 @@ private slots:
     void onJackPortRegisteredOrConnected();
 
     // ========================================================================
-    // Processes (External apps)
+    // External apps
     // ========================================================================
 private:
-    QHash<QAction*, QString> extAppsMenuActions_Append;
-    QHash<QAction*, QString> extAppsMenuActions_Set;
+    void setupExternalApps();
+    void setupExternalAppsForCurrentProject();
+
+    ExternalAppRunner externalAppRunner;
+    QScopedPointer<ExternalAppsListAdapter> externalAppListAdapter;
+
+    // External apps editor
+private:
+    int externalAppEditorCurrentId = -1;
+    void externalAppToEditor(ExternalApp app);
+    ExternalApp externalAppFromEditor();
+
+    void showExternalAppEditor(int id);
+    void hideExternalAppEditor();
+
+    void appendToExternalAppEditorCommandBox(QString text);
+private slots:
+    void externalAppEditor_onExternalAppRemoved(int id);
+
+    // External apps presets menu
+private:
     QMenu extAppsMenu;
     void setupExternalAppsMenu();
-    void addProcess(QString command);
-    void runProcess(int index);
-    void stopProcess(int index);
-    void removeProcess(int index);
 private slots:
-    // Processes (external apps)
-    void processStartedSlot(int index, KonfytProcess* process);
-    void processFinishedSlot(int index, KonfytProcess* process);
-
-    // External apps menu
-    void extAppsMenuTriggered(QAction* action);
     void on_toolButton_ExtAppsMenu_clicked();
 
     // External Apps widgets
-    void on_listWidget_ExtApps_doubleClicked(const QModelIndex &index);
-    void on_listWidget_ExtApps_clicked(const QModelIndex &index);
-    void on_toolButton_layer_AddMidiPort_clicked();
-    void on_pushButton_ExtApp_add_clicked();
-    void on_lineEdit_ExtApp_returnPressed();
+    void onExternalAppItemDoubleClicked(int id);
     void on_pushButton_ExtApp_RunSelected_clicked();
     void on_pushButton_ExtApp_Stop_clicked();
     void on_pushButton_ExtApp_RunAll_clicked();
     void on_pushButton_ExtApp_StopAll_clicked();
-    void on_pushButton_ExtApp_remove_clicked();
-    void on_pushButton_ExtApp_Replace_clicked();
+    void on_pushButton_extAppEditor_apply_clicked();
+    void on_pushButton_extAppEditor_Cancel_clicked();
+    void on_pushButton_extApp_add_clicked();
+    void on_pushButton_extApp_edit_clicked();
+    void on_pushButton_extApp_remove_clicked();
 
     // ========================================================================
     // Buses, audio and MIDI ports
@@ -967,6 +969,8 @@ private slots:
     void on_lineEdit_MidiFilter_ccBlocked_textChanged(const QString &arg1);
     void on_checkBox_midiFilter_pitchbend_toggled(bool checked);
     void on_checkBox_midiFilter_Prog_toggled(bool checked);
+    void on_toolButton_connectionsPage_portsBussesListOptions_clicked();
+
 };
 
 #endif // MAINWINDOW_H
