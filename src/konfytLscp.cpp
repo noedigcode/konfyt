@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2023 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -546,9 +546,20 @@ void KonfytLscp::setupConnectionCheckTimer()
 
         lscp_server_info_t* info = lscp_get_server_info(client);
         if (!info) {
+
+            // "Exponential" back-off
+            int interval = connectionCheckTimer.interval();
+            if (interval < 20000) {
+                connectionCheckTimer.setInterval(interval + 5000);
+            }
+
             print("LSCP server connection error. Re-initialising...");
             destroyClient();
             init();
+
+        } else {
+            // Reset exponential back-off
+            connectionCheckTimer.setInterval(1000);
         }
 
     });

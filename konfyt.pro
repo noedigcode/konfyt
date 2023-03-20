@@ -49,6 +49,7 @@ HEADERS  += src/mainwindow.h \
     src/consoledialog.h \
     src/indicatorHandlers.h \
     src/konfytAudio.h \
+    src/konfytDebug.h \
     src/konfytLscp.h \
     src/konfytPatchEngine.h \
     src/konfytPatch.h \
