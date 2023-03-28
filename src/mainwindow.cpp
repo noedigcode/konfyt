@@ -1275,14 +1275,6 @@ void MainWindow::initTriggers()
       << ui->actionMaster_Volume_Up
       << ui->actionMaster_Volume_Down
       << ui->actionProject_save
-      << ui->actionPatch_1
-      << ui->actionPatch_2
-      << ui->actionPatch_3
-      << ui->actionPatch_4
-      << ui->actionPatch_5
-      << ui->actionPatch_6
-      << ui->actionPatch_7
-      << ui->actionPatch_8
       << ui->actionLayer_1_Gain << ui->actionLayer_1_Mute << ui->actionLayer_1_Solo
       << ui->actionLayer_2_Gain << ui->actionLayer_2_Mute << ui->actionLayer_2_Solo
       << ui->actionLayer_3_Gain << ui->actionLayer_3_Mute << ui->actionLayer_3_Solo
@@ -1297,6 +1289,14 @@ void MainWindow::initTriggers()
       << ui->actionGlobal_Transpose_1_Up
       << ui->actionGlobal_Transpose_Zero;
 
+    // Add patch actions
+    for (int i=0; i < 16; i++) {
+        QAction* action = new QAction(this);
+        action->setText(QString("Patch %1").arg(i+1));
+        l.append(action);
+        patchActions.append(action); // List for later use when action triggered
+    }
+
     channelGainActions << ui->actionLayer_1_Gain << ui->actionLayer_2_Gain
                        << ui->actionLayer_3_Gain << ui->actionLayer_4_Gain
                        << ui->actionLayer_5_Gain << ui->actionLayer_6_Gain
@@ -1309,24 +1309,16 @@ void MainWindow::initTriggers()
                        << ui->actionLayer_3_Mute << ui->actionLayer_4_Mute
                        << ui->actionLayer_5_Mute << ui->actionLayer_6_Mute
                        << ui->actionLayer_7_Mute << ui->actionLayer_8_Mute;
-    patchActions << ui->actionPatch_1
-                 << ui->actionPatch_2
-                 << ui->actionPatch_3
-                 << ui->actionPatch_4
-                 << ui->actionPatch_5
-                 << ui->actionPatch_6
-                 << ui->actionPatch_7
-                 << ui->actionPatch_8;
 
 
     triggersItemActionHash.clear();
     ui->tree_Triggers->clear();
 
-    for (int i=0; i<l.count(); i++) {
+    foreach (QAction* action, l) {
         QTreeWidgetItem* item = new QTreeWidgetItem();
-        item->setText(0, l[i]->text());
+        item->setText(0, action->text());
         ui->tree_Triggers->addTopLevelItem(item);
-        triggersItemActionHash.insert(item, l[i]);
+        triggersItemActionHash.insert(item, action);
     }
 }
 
