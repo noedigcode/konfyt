@@ -578,12 +578,6 @@ KfPatchLayerWeakPtr KonfytPatch::addAudioInPort(LayerAudioInData newPort, QStrin
 {
     KfPatchLayerSharedPtr layer;
 
-    // Check if port not already in patch
-    QList<int> audioInPortList = this->getAudioInPortListProjectIds();
-
-    // Duplicate ports are not handled yet.
-    KONFYT_ASSERT_RETURN_VAL(!audioInPortList.contains(newPort.portIdInProject), layer);
-
     // Set up layer item
     layer.reset(new KonfytPatchLayer());
     layer->setName(name);
@@ -605,11 +599,6 @@ KfPatchLayerWeakPtr KonfytPatch::addMidiOutputPort(int newPort)
 KfPatchLayerWeakPtr KonfytPatch::addMidiOutputPort(LayerMidiOutData newPort)
 {
     KfPatchLayerSharedPtr layer;
-
-    QList<int> midiOutputPortList = this->getMidiOutputPortListProjectIds();
-
-    // Duplicate ports are not handled yet.
-    KONFYT_ASSERT_RETURN_VAL(!midiOutputPortList.contains(newPort.portIdInProject), layer);
 
     layer.reset(new KonfytPatchLayer());
     layer->initLayer(newPort);

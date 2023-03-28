@@ -2744,10 +2744,6 @@ void MainWindow::addMidiPortToCurrentPatch(int port)
 {
     newPatchIfCurrentNull();
 
-    // Check if the port isn't already in the patch
-    QList<int> l = pengine.currentPatch()->getMidiOutputPortListProjectIds();
-    if (l.contains(port)) { return; }
-
     // Add port to current patch in engine
     KfPatchLayerWeakPtr layer = pengine.addMidiOutPortToPatch(port);
 
@@ -2761,10 +2757,6 @@ void MainWindow::addMidiPortToCurrentPatch(int port)
 void MainWindow::addAudioInPortToCurrentPatch(int port)
 {
     newPatchIfCurrentNull();
-
-    // Check if the port isn't already in the patch
-    QList<int> l = pengine.currentPatch()->getAudioInPortListProjectIds();
-    if (l.contains(port)) { return; }
 
     // Add port to current patch in engine
     KfPatchLayerWeakPtr layer = pengine.addAudioInPortToPatch(port);
