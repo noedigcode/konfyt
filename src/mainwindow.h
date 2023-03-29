@@ -516,7 +516,7 @@ private:
 
 private slots:
     void checkboxes_clicked_slot(QCheckBox* c);
-    void tree_portsBusses_Menu(const QPoint &pos);
+    void tree_portsBusses_Menu();
     void on_pushButton_connectionsPage_OK_clicked();
     void on_pushButton_ShowConnections_clicked();
     void on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);

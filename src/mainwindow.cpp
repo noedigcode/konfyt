@@ -1239,7 +1239,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
 /* Slot that gets called when the custom context menu of tree_portsBusses is requested.
  * This adds the appropriate actions to the menu based on the item selected, and shows
  * the menu. When an action is clicked, the slot of the corresponding action is called. */
-void MainWindow::tree_portsBusses_Menu(const QPoint &pos)
+void MainWindow::tree_portsBusses_Menu()
 {
     QMenu* m = &portsBussesTreeMenu;
 
@@ -1260,7 +1260,7 @@ void MainWindow::tree_portsBusses_Menu(const QPoint &pos)
     m->addAction(ui->actionAdd_MIDI_Out_Port);
     m->addAction(ui->actionAdd_MIDI_In_Port);
 
-    portsBussesTreeMenu.popup(pos);
+    portsBussesTreeMenu.popup(QCursor::pos());
 }
 
 void MainWindow::initTriggers()
@@ -7256,6 +7256,6 @@ void MainWindow::on_checkBox_midiFilter_Prog_toggled(bool /*checked*/)
 
 void MainWindow::on_toolButton_connectionsPage_portsBussesListOptions_clicked()
 {
-    tree_portsBusses_Menu(QCursor::pos());
+    tree_portsBusses_Menu();
 }
 
