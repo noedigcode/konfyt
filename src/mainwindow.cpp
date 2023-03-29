@@ -5412,12 +5412,12 @@ void MainWindow::on_actionRemove_BusPort_triggered()
             }
             if (audioInSelected) {
                 if ( layer->layerType() == KonfytPatchLayer::TypeAudioIn ) {
-                append = layer->audioInPortData.portIdInProject == id;
+                    append = layer->audioInPortData.portIdInProject == id;
                 }
             }
             if (midiOutSelected) {
                 if ( layer->layerType() == KonfytPatchLayer::TypeMidiOut ) {
-                append = layer->midiOutputPortData.portIdInProject == id;
+                    append = layer->midiOutputPortData.portIdInProject == id;
                 }
             }
             if (midiInSelected) {
@@ -5446,21 +5446,21 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 if (!layers.isEmpty()) { layers += ", "; }
                 layers += QString::number(layer);
             }
-            detailedText.append(QString("Patch %1 \"%2\" layer %3\n")
+            detailedText.append(QString("Patch %1 \"%2\" layer%3 %4\n")
                                 .arg(use.patchIndex)
                                 .arg(use.patch->name())
+                                .arg(layers.count() > 1 ? "s" : "")
                                 .arg(layers));
         }
-        QString selectedText = QString("%1 - %2").arg(id).arg(name);
+        QString selectedText = QString("%1").arg(name);
         // ------------------------------------------------------------------------------
         if (busSelected) {
             int busToChangeTo = prj->audioBus_getFirstBusId(id);
             QString text = QString(
-                "The selected bus %1 is used by some patches."
+                "The selected bus \"%1\" is used by some patches."
                 " Are you sure you want to delete the bus?"
-                " All layers using this bus will be assigned to bus %2 - %3.")
+                " All layers using this bus will be assigned to bus \"%2\".")
                     .arg(selectedText)
-                    .arg(busToChangeTo)
                     .arg(prj->audioBus_getBus(busToChangeTo).busName);
             int choice = msgBoxYesNo(text, detailedText);
             if (choice == QMessageBox::Yes) {
@@ -5477,7 +5477,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         // ------------------------------------------------------------------------------
         } else if (audioInSelected) {
             QString text = QString(
-                "The selected port %1 is used by some patches."
+                "The selected port \"%1\" is used by some patches."
                 " Are you sure you want to delete the port?"
                 " The port layer will be removed from the patches.")
                     .arg(selectedText);
@@ -5496,7 +5496,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         // ------------------------------------------------------------------------------
         } else if (midiOutSelected) {
             QString text = QString(
-                "The selected port %1 is used by some patches."
+                "The selected port \"%1\" is used by some patches."
                 " Are you sure you want to delete the port?"
                 " The port layer will be removed from the patches.")
                     .arg(selectedText);
@@ -5516,11 +5516,10 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         } else if (midiInSelected) {
             int portToChangeTo = prj->midiInPort_getFirstPortId(id);
             QString text = QString(
-                "The selected MIDI input port %1 is used by some patches."
+                "The selected MIDI input port \"%1\" is used by some patches."
                 " Are you sure you want to delete the port?"
-                " All layers using this port will be assigned to port %2 - %3.")
+                " All layers using this port will be assigned to port \"%2\".")
                     .arg(selectedText)
-                    .arg(portToChangeTo)
                     .arg(prj->midiInPort_getPort(portToChangeTo).portName);
             int choice = msgBoxYesNo(text, detailedText);
             if (choice == QMessageBox::Yes) {
