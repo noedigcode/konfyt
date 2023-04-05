@@ -5704,7 +5704,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
         return;
     }
 
-    // Only accept event if user allows
+    // Safety check - confirm that user really wants to quit
+    if (msgBoxYesNo("Are you sure you want to quit Konfyt?") != QMessageBox::Yes) {
+        event->ignore();
+        return;
+    }
+
+    // Go through save checks (allow user to cancel quitting)
     if (requestCurrentProjectClose()) {
         event->accept();
     } else {
