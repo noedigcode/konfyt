@@ -624,6 +624,7 @@ void MainWindow::applySettings()
     setSoundfontsDir(ui->comboBox_settings_soundfontDirs->currentText());
     setSfzDir(ui->comboBox_settings_sfzDirs->currentText());
     mFilemanager = ui->comboBox_Settings_filemanager->currentText();
+    promptOnQuit = ui->checkBox_settings_promptOnQuit->isChecked();
 
     print("Settings applied.");
 
@@ -674,6 +675,10 @@ bool MainWindow::loadSettingsFile(QString dir)
                     setSfzDir(r.readElementText());
                 } else if (r.name() == XML_SETTINGS_FILEMAN) {
                     mFilemanager = r.readElementText();
+                } else if (r.name() == XML_SETTINGS_PROMPT_ON_QUIT) {
+                    promptOnQuit = Qstr2bool(r.readElementText());
+                } else {
+                    r.skipCurrentElement();
                 }
 
             }
@@ -715,6 +720,7 @@ bool MainWindow::saveSettingsFile()
     stream.writeTextElement(XML_SETTINGS_PATCHESDIR, mPatchesDir);
     stream.writeTextElement(XML_SETTINGS_SFZDIR, mSfzDir);
     stream.writeTextElement(XML_SETTINGS_FILEMAN, mFilemanager);
+    stream.writeTextElement(XML_SETTINGS_PROMPT_ON_QUIT, bool2str(promptOnQuit));
 
     stream.writeEndElement(); // Settings
 
@@ -5705,9 +5711,11 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 
     // Safety check - confirm that user really wants to quit
-    if (msgBoxYesNo("Are you sure you want to quit Konfyt?") != QMessageBox::Yes) {
-        event->ignore();
-        return;
+    if (promptOnQuit) {
+        if (msgBoxYesNo("Are you sure you want to quit Konfyt?") != QMessageBox::Yes) {
+            event->ignore();
+            return;
+        }
     }
 
     // Go through save checks (allow user to cancel quitting)
@@ -6614,6 +6622,8 @@ void MainWindow::setupSettings()
 
     ui->comboBox_settings_sfzDirs->addItem(docsPath + "/sfz");
     ui->comboBox_settings_sfzDirs->addItem(appDataPath + "/sfz");
+
+    ui->checkBox_settings_promptOnQuit->setChecked(promptOnQuit);
 
     // Initialise default settings
     if (projectsDir.isEmpty()) {

@@ -89,6 +89,7 @@
 #define XML_SETTINGS_PATCHESDIR "patchesDir"
 #define XML_SETTINGS_SFZDIR "sfzDir"
 #define XML_SETTINGS_FILEMAN "filemanager"
+#define XML_SETTINGS_PROMPT_ON_QUIT "promptOnQuit"
 
 #define XML_MIDI_MAP_PRESETS "midiMapPresets"
 #define XML_MIDI_MAP_PRESET "midiMapPreset"
@@ -541,6 +542,7 @@ private:
     QString settingsDir;
     QString projectsDir;
     QString mSoundfontsDir;
+    bool promptOnQuit = true;
     void setSoundfontsDir(QString path);
     QString mPatchesDir;
     void setPatchesDir(QString path);
