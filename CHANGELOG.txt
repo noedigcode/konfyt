@@ -1,13 +1,38 @@
 Changelog
 =========
 
+[1.3.0] - April 2023
+--------------------
+
+Added
+
+- External apps editor and autostart and auto-restart options per external app.
+  Status display of external apps is also improved.
+- Confirmation prompt when quitting Konfyt.
+
+Changes
+
+- Automatically load all patches and activate the first patch when loading a
+  project.
+- Allow multiple of the same MIDI-out and audio-in port layers per patch.
+- When adding a new patch, switch to the newly added patch.
+- Increase number of patch triggers from 8 to 16.
+- Improve loading of all patches by simply loading patches in engine and not
+  switching to each patch in order to trigger a load.
+
+Fixes
+
+- Add "exponential" back-off to LSCP (Linuxsampler) connection check timer to
+  reduce GUI freezes when running Konfyt when the JACK server is not available.
+- Improve internal ringbuffer class.
+
+
 [1.2.3] - January 2023
 ----------------------
 
 Fixes
 
 - Fix MIDI filter editor reverting changes when Apply is clicked.
-
 
 
 [1.2.2] - January 2023

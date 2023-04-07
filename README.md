@@ -94,7 +94,11 @@ The following are required to build Konfyt:
 
   Optional - to build without Carla support, either add the line `CONFIG+=KONFYT_NO_CARLA` to the `konfyt.pro` file (see the comments in the file for the correct location) or pass it as an option to qmake, as described below.
   
-  Ubuntu: Get it from the KXStudio repositories.
+  For the lastest version, use the KXStudio repositories. Otherwise, the packages are also available in the standard Ubuntu repositories.
+
+  Ubuntu 20.04: carla
+
+  Ubuntu 21+: carla-dev
   
   Fedora: Carla-devel
 
