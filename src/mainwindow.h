@@ -471,7 +471,6 @@ private slots:
     void on_toolButton_PatchUp_clicked();
     void on_toolButton_PatchDown_clicked();
     void on_toolButton_AddPatch_clicked();
-    void on_pushButton_LoadAll_clicked();
     void on_toolButton_PatchListMenu_clicked();
     void toggleShowPatchListNumbers();
     void toggleShowPatchListNotes();

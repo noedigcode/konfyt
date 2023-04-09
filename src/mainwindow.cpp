@@ -6149,11 +6149,6 @@ void MainWindow::on_actionPanicToggle_triggered()
     triggerPanic( !panicState );
 }
 
-void MainWindow::on_pushButton_LoadAll_clicked()
-{
-    loadAllPatches();
-}
-
 void MainWindow::on_MIDI_indicator_clicked()
 {
     ui->MIDI_indicator->setChecked(false);
