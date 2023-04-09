@@ -19,12 +19,18 @@ Changes
 - Increase number of patch triggers from 8 to 16.
 - Improve loading of all patches by simply loading patches in engine and not
   switching to each patch in order to trigger a load.
+- Patch list is now resizable.
 
 Fixes
 
 - Add "exponential" back-off to LSCP (Linuxsampler) connection check timer to
   reduce GUI freezes when running Konfyt when the JACK server is not available.
 - Improve internal ringbuffer class.
+
+Removed
+
+- Load all patches button (as patches are now all automatically loaded when the
+  project is loaded).
 
 
 [1.2.3] - January 2023

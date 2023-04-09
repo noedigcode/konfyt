@@ -2241,6 +2241,9 @@ border-color: rgb(40, 40, 40);
                        <property name="orientation">
                         <enum>Qt::Horizontal</enum>
                        </property>
+                       <property name="childrenCollapsible">
+                        <bool>false</bool>
+                       </property>
                        <widget class="QWidget" name="">
                         <layout class="QVBoxLayout" name="verticalLayout_2">
                          <property name="spacing">
