@@ -15,8 +15,8 @@ for live keyboard playing. Patches may consist of multiple layers of soundfonts
 which scans the filesystem for and allows quick access to soundfont programs and
 SFZs.
 
-While I have used Konfyt successfully in various "live" environments, and do try
-to test it thoroughly, use it at your own risk. I am not responsible for any trauma
+While I use Konfyt on a daily basis and I'm confident using it for a live performance,
+do your own testing and use it at your own risk. I am not responsible for any trauma
 due to failures during live performances.
 
 Konfyt is open source under the GPL license and makes use of Qt, JACK, Carla,
@@ -27,8 +27,9 @@ is licensed under GPL with a commercial exception).
 More information is available at www.noedig.co.za/konfyt/
 
 
-Requirements:
--------------
+Requirements for running:
+-------------------------
+
 Konfyt is mainly developed on Linux Mint 21.1 (based on Ubuntu 22.04).
 
 The following are required to run Konfyt:
@@ -36,7 +37,7 @@ The following are required to run Konfyt:
 * Qt 5.15.3
 * Fluidsynth 2.2.5
 * liblscp 0.6.0 and thus Linuxsampler
-* Carla 2.5.3
+* Carla 2.5.4
 
 The versions listed above are known to work, but different versions should work too.
 
@@ -46,8 +47,9 @@ for Ubuntu based systems.
 If you try to run a Konfyt binary on Ubuntu 21+ that was built on Ubuntu 20, you may need to create a symlink for `libfluidsynth.so.2` in `/usr/lib/x86_64-linux-gnu` pointing to `libfluidsynth.so.3...`.
 
 
-Building:
----------
+Requirements for building:
+--------------------------
+
 See the testing branch for the latest features. Although it's still technically
 under testing, it should be quite stable.
 
@@ -55,9 +57,9 @@ The following are required to build Konfyt:
 
 * Qt5: Ensure that the Qt5 development packages are installed.
 
-  On Ubuntu 20.04, installing this package should install the required packages: qt5-default
+  On Ubuntu 20.04: `qt5-default`
 
-  On Ubuntu 21+, this package should do it: qtbase5-dev
+  On Ubuntu 21+: `qtbase5-dev`
 
   Ensure that Qt5 is used to build. Check the Qt version that qmake uses with:
   ```
@@ -74,21 +76,24 @@ The following are required to build Konfyt:
   qmake-qt5
   ```
 
-* pkg-config
+* `pkg-config`
 
 * JACK development files
 
-  Ubuntu: libjack-dev or libjack-jackd2-dev
+  Ubuntu: `libjack-dev` (JACK 1) or `libjack-jackd2-dev` (JACK 2)
 
-  Fedora: jack-audio-connection-kit-devel
+  Fedora: `jack-audio-connection-kit-devel`
 
 * Fluidsynth development files
   
-  Ubuntu: libfluidsynth-dev
+  Ubuntu: `libfluidsynth-dev`
 
-  Note: On Ubuntu 21 and 22, ensure libjack-jackd2-dev is installed before installing libfluidsynth-dev (or install them together) if you use JACK 2. If libjack-jackd2-dev is not installed at the time of installing libfluidsynth-dev, the package manager may default to libjack-dev (JACK 1) and possibly trigger removal of JACK 2 and several other packages. Read the apt messages!
+  **Note**: On Ubuntu 21 and 22, if you use JACK 2, ensure `libjack-jackd2-dev` is installed prior to or at the same time as installing `libfluidsynth-dev`. If `libjack-jackd2-dev` is not installed at the time of installing `libfluidsynth-dev`, the package manager may default to `libjack-dev` (JACK 1) and possibly trigger removal of JACK 2 and several other packages. **Read the apt messages!** If apt wants to remove JACK 2, try specifying both JACK and the Fluidsynth dev package in the same install command:
+  ```
+  sudo apt install libfluidsynth-dev libjack-jackd2-dev
+  ```
   
-  Fedora: fluidsynth-devel
+  Fedora: `fluidsynth-devel`
 
 * Carla
 
@@ -96,22 +101,23 @@ The following are required to build Konfyt:
   
   For the lastest version, use the KXStudio repositories. Otherwise, the packages are also available in the standard Ubuntu repositories.
 
-  Ubuntu 20.04: carla
+  Ubuntu 20.04: `carla`
 
-  Ubuntu 21+: carla-dev
+  Ubuntu 21+: `carla-dev`
   
-  Fedora: Carla-devel
+  Fedora: `Carla-devel`
 
-* g++
+* `g++`
 
 * liblscp development files
   
-  Ubuntu: liblscp-dev
+  Ubuntu: `liblscp-dev`
   
-  Fedora: liblscp-devel, available from the Planet CCRMA third-party repository
+  Fedora: `liblscp-devel`, available from the Planet CCRMA third-party repository
 
 
-
+Building:
+---------
 
 To build from the command line, run the following from the source code directory:
 ```
