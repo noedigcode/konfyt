@@ -3625,12 +3625,10 @@ void MainWindow::onPatchAudioInPortsMenu_ActionTrigger(QAction *action)
     if (portId < 0) {
         // Add new port
         portId = addAudioInPort();
-        if (portId >= 0) {
-            addAudioInPortToCurrentPatch( portId );
-            // Show the newly created port in the connections tree
-            showConnectionsPage();
-            connectionsTreeSelectAudioInPort(portId);
-        }
+        if (portId < 0) { return; }
+        // Show the newly created port in the connections tree
+        showConnectionsPage();
+        connectionsTreeSelectAudioInPort(portId);
     }
 
     addAudioInPortToCurrentPatch( portId );
