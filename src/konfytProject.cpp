@@ -697,9 +697,6 @@ int KonfytProject::midiInPort_addPort(QString portName)
     PrjMidiPort p;
     p.portName = portName;
 
-    // Default filter for MIDI in port should allow all
-    p.filter.setPassAll();
-
     int portId = midiInPort_getUniqueId();
     midiInPortMap.insert(portId, p);
 

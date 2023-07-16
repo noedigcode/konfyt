@@ -77,6 +77,7 @@ struct KfJackMidiRoute
 protected:
     bool active = false;
     bool prevActive = false;
+    KonfytMidiFilter preFilter;
     KonfytMidiFilter filter;
     KfJackMidiPort* source = nullptr;
     KfJackMidiPort* destPort = nullptr;

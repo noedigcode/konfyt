@@ -72,7 +72,7 @@ struct PrjMidiPort
     QString portName;
     QStringList clients;
     KfJackMidiPort* jackPort = nullptr; // TODO THIS MUST NOT BE IN PROJECT
-    KonfytMidiFilter filter;
+    KonfytMidiFilter filter = KonfytMidiFilter::allPassFilter();
 };
 
 struct KonfytTrigger

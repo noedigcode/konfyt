@@ -188,6 +188,7 @@ void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
     foreach (KfPatchLayerSharedPtr layer, patch->layers()) {
         updateLayerRouting(layer);
         updateLayerGain(layer);
+        updateLayerPatchMidiFilterInJackEngine(patch, layer);
     }
 
     // Set layers active based on solo and mute
@@ -212,6 +213,8 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addSfProgramLayer(
     // The MIDI in port defaults to 0, but the project may not have a port 0.
     // Find the first port in the project.
     layer->setMidiInPortIdInProject(mCurrentProject->midiInPort_getFirstPortId(-1));
+
+    // reloadPatch() will also take care of applying patch-wide MIDI filter to layer
 
     reloadPatch();
 
@@ -314,6 +317,8 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addSfzLayer(QString path)
     // The MIDI in port defaults to 0, but the project may not have a port 0.
     // Find the first port in the project.
     layer->setMidiInPortIdInProject(mCurrentProject->midiInPort_getFirstPortId(-1));
+
+    // reloadPatch() will also take care of applying patch-wide MIDI filter to layer
 
     reloadPatch();
 
@@ -538,10 +543,47 @@ void KonfytPatchEngine::setLayerActive(KfPatchLayerSharedPtr layer, bool active)
     }
 }
 
+void KonfytPatchEngine::updateLayerPatchMidiFilterInJackEngine(
+        KonfytPatch *patch, KfPatchLayerSharedPtr layer)
+{
+    KONFYT_ASSERT_RETURN(patch != nullptr);
+    KONFYT_ASSERT_RETURN(!layer.isNull());
+
+    if (layer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+
+        jack->setSoundfontMidiPreFilter(layer->soundfontData.portsInJackEngine,
+                                        patch->patchMidiFilter);
+
+    } else if (layer->layerType() == KonfytPatchLayer::TypeSfz) {
+
+        jack->setPluginMidiPreFilter(layer->sfzData.portsInJackEngine,
+                                     patch->patchMidiFilter);
+
+    } else if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+
+        jack->setRouteMidiPreFilter(layer->midiOutputPortData.jackRoute,
+                                    patch->patchMidiFilter);
+
+    } else {
+        // Ignore for other layers, but do not throw error.
+    }
+}
+
 /* Return the current patch. */
 KonfytPatch *KonfytPatchEngine::currentPatch()
 {
     return mCurrentPatch;
+}
+
+void KonfytPatchEngine::setPatchFilter(KonfytPatch *patch, KonfytMidiFilter filter)
+{
+    KONFYT_ASSERT_RETURN(patch != nullptr);
+    KONFYT_ASSERT_RETURN(patches.contains(patch));
+
+    patch->patchMidiFilter = filter;
+    foreach (KfPatchLayerSharedPtr layer, patch->layers()) {
+        updateLayerPatchMidiFilterInJackEngine(patch, layer);
+    }
 }
 
 void KonfytPatchEngine::setMidiPickupRange(int range)
@@ -669,41 +711,6 @@ void KonfytPatchEngine::setLayerFilter(KfPatchLayerWeakPtr patchLayer, KonfytMid
     }
 }
 
-void KonfytPatchEngine::setPatchName(QString newName)
-{
-    KONFYT_ASSERT_RETURN(mCurrentPatch);
-
-    mCurrentPatch->setName(newName);
-}
-
-QString KonfytPatchEngine::getPatchName()
-{
-    KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, "");
-
-    return mCurrentPatch->name();
-}
-
-void KonfytPatchEngine::setPatchNote(QString newNote)
-{
-    KONFYT_ASSERT_RETURN(mCurrentPatch);
-
-    mCurrentPatch->setNote(newNote);
-}
-
-QString KonfytPatchEngine::getPatchNote()
-{
-    KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, "");
-
-    return mCurrentPatch->note();
-}
-
-void KonfytPatchEngine::setPatchAlwaysActive(bool alwaysActive)
-{
-    KONFYT_ASSERT_RETURN(mCurrentPatch);
-
-    mCurrentPatch->alwaysActive = alwaysActive;
-}
-
 KfPatchLayerWeakPtr KonfytPatchEngine::addMidiOutPortToPatch(int port)
 {
     KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, KfPatchLayerWeakPtr());
@@ -713,6 +720,8 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addMidiOutPortToPatch(int port)
     // The MIDI in port defaults to 0, but the project may not have a port 0.
     // Find the first port in the project.
     layer->setMidiInPortIdInProject(mCurrentProject->midiInPort_getFirstPortId(-1));
+
+    // reloadPatch() will also take care of applying patch-wide MIDI filter to layer
 
     reloadPatch();
 
@@ -762,7 +771,7 @@ void KonfytPatchEngine::loadSfzLayer(KfPatchLayerSharedPtr layer)
     // audio left and right output ports. Give this to JACK, which will:
     // - create a midi output port and connect it to the plugin midi input port,
     // - create audio input ports and connect it to the plugin audio output ports.
-    // - assigns the midi filter
+    // - assign the midi filter
     KonfytJackPortsSpec spec;
     spec.name = layer->name();
     spec.midiOutConnectTo = layer->sfzData.midiInPort;

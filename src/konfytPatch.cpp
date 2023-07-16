@@ -101,6 +101,8 @@ void KonfytPatch::writeToXmlStream(QXmlStreamWriter *stream) const
     stream->writeTextElement(XML_PATCH_NOTE, this->note());
     stream->writeTextElement(XML_PATCH_ALWAYSACTIVE, QVariant(alwaysActive).toString());
 
+    patchMidiFilter.writeToXMLStream(stream);
+
     // Step through all the layers. It's important to save them in the correct order.
     foreach (KfPatchLayerSharedPtr layer, layerList) {
 
@@ -151,6 +153,10 @@ void KonfytPatch::readFromXmlStream(QXmlStreamReader *r, QString *errors)
             } else if (r->name() == XML_PATCH_ALWAYSACTIVE) {
 
                 this->alwaysActive = QVariant(r->readElementText()).toBool();
+
+            } else if (r->name() == XML_MIDIFILTER) {
+
+                this->patchMidiFilter.readFromXMLStream(r);
 
             } else if (r->name() == XML_PATCH_SFLAYER) {
 

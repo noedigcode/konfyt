@@ -23,17 +23,22 @@
 
 #include <QRegularExpression>
 
-void KonfytMidiFilter::setPassAll()
+
+KonfytMidiFilter KonfytMidiFilter::allPassFilter()
 {
-    this->passAllCC = true;
-    this->passProg = true;
-    this->passPitchbend = true;
-    this->inChan = -1;
-    this->outChan = -1;
-    this->zone.lowNote = 0;
-    this->zone.highNote = 127;
-    this->zone.lowVel = 0;
-    this->zone.highVel = 127;
+    KonfytMidiFilter f;
+    f.passCC.clear();
+    f.blockCC.clear();
+    f.passAllCC = true;
+    f.passProg = true;
+    f.passPitchbend = true;
+    f.inChan = -1;
+    f.outChan = -1;
+    f.zone.lowNote = 0;
+    f.zone.highNote = 127;
+    f.zone.lowVel = 0;
+    f.zone.highVel = 127;
+    return f;
 }
 
 void KonfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, int highVel, int velLimitMin, int velLimitMax)
@@ -384,6 +389,6 @@ QString KonfytMidiMapping::toString()
         s2.append(QString::number(i));
     }
 
-    return QString("%1; %2\n").arg(s1).arg(s2);
+    return QString("%1; %2").arg(s1).arg(s2);
 }
 

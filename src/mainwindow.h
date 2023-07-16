@@ -590,12 +590,14 @@ private slots:
 private:
     enum MidiFilterEditType {
         MidiFilterEditPort,
-        MidiFilterEditLayer
+        MidiFilterEditLayer,
+        MidiFilterEditPatch
     };
     MidiFilterEditType midiFilterEditType;
     KonfytLayerWidget* midiFilterEditItem = nullptr;
     KfJackMidiRoute* midiFilterEditRoute = nullptr;
     int midiFilterEditPort;
+    KonfytPatch* midiFilterEditPatch = nullptr;
     void showMidiFilterEditor();
     KonfytMidiEvent midiFilterLastEvent;
     void updateMidiFilterEditorLastRx(KonfytMidiEvent ev);
@@ -972,6 +974,7 @@ private slots:
     void on_checkBox_midiFilter_Prog_toggled(bool checked);
     void on_toolButton_connectionsPage_portsBussesListOptions_clicked();
 
+    void on_actionPatch_MIDI_Filter_triggered();
 };
 
 #endif // MAINWINDOW_H

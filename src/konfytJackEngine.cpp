@@ -306,7 +306,18 @@ void KonfytJackEngine::setSoundfontMidiFilter(KfJackPluginPorts *p, KonfytMidiFi
 {
     KONFYT_ASSERT_RETURN(p);
 
+    pauseJackProcessing(true);
     p->midiRoute->filter = filter;
+    pauseJackProcessing(false);
+}
+
+void KonfytJackEngine::setSoundfontMidiPreFilter(KfJackPluginPorts *p, KonfytMidiFilter filter)
+{
+    KONFYT_ASSERT_RETURN(p);
+
+    pauseJackProcessing(true);
+    p->midiRoute->preFilter = filter;
+    pauseJackProcessing(false);
 }
 
 void KonfytJackEngine::setSoundfontActive(KfJackPluginPorts *p, bool active)
@@ -320,7 +331,18 @@ void KonfytJackEngine::setPluginMidiFilter(KfJackPluginPorts *p, KonfytMidiFilte
 {
     KONFYT_ASSERT_RETURN(p);
 
+    pauseJackProcessing(true);
     p->midiRoute->filter = filter;
+    pauseJackProcessing(false);
+}
+
+void KonfytJackEngine::setPluginMidiPreFilter(KfJackPluginPorts *p, KonfytMidiFilter filter)
+{
+    KONFYT_ASSERT_RETURN(p);
+
+    pauseJackProcessing(true);
+    p->midiRoute->preFilter = filter;
+    pauseJackProcessing(false);
 }
 
 void KonfytJackEngine::setPluginActive(KfJackPluginPorts *p, bool active)
@@ -694,7 +716,18 @@ void KonfytJackEngine::setRouteMidiFilter(KfJackMidiRoute *route, KonfytMidiFilt
 {
     KONFYT_ASSERT_RETURN(route);
 
+    pauseJackProcessing(true);
     route->filter = filter;
+    pauseJackProcessing(false);
+}
+
+void KonfytJackEngine::setRouteMidiPreFilter(KfJackMidiRoute *route, KonfytMidiFilter filter)
+{
+    KONFYT_ASSERT_RETURN(route);
+
+    pauseJackProcessing(true);
+    route->preFilter = filter;
+    pauseJackProcessing(false);
 }
 
 bool KonfytJackEngine::sendMidiEventsOnRoute(KfJackMidiRoute *route, QList<KonfytMidiEvent> events)
@@ -1220,9 +1253,12 @@ void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
 
                 if (route->source != sourcePort) { continue; }
                 if (route->destIsJackPort && route->destPort == nullptr) { continue; }
-                if (!route->filter.passFilter(&ev)) { continue; }
 
-                KonfytMidiEvent evToSend = route->filter.modify(&ev);
+                if (!route->preFilter.passFilter(&ev)) { continue; }
+                KonfytMidiEvent preEvent = route->preFilter.modify(&ev);
+
+                if (!route->filter.passFilter(&preEvent)) { continue; }
+                KonfytMidiEvent evToSend = route->filter.modify(&preEvent);
 
                 // Handle bank select: modify event and store bank select
                 handleBankSelect(route->bankMSB, route->bankLSB, &evToSend);

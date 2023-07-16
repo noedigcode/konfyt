@@ -57,7 +57,7 @@ public:
     void setProject(ProjectPtr project);
 
     // ----------------------------------------------------
-    // Loading patches and programs
+    // Patches
     // ----------------------------------------------------
     void loadPatchAndSetCurrent(KonfytPatch* patch);
     void loadPatch(KonfytPatch* patch);
@@ -67,15 +67,8 @@ public:
     void reloadLayer(KfPatchLayerWeakPtr layer);
     bool isPatchLoaded(KonfytPatch* patch);
 
-    // ----------------------------------------------------
-    // Modify current patch
-    // ----------------------------------------------------
     KonfytPatch* currentPatch();
-    void setPatchName(QString newName);
-    QString getPatchName();
-    void setPatchNote(QString newNote);
-    QString getPatchNote();
-    void setPatchAlwaysActive(bool alwaysActive);
+    void setPatchFilter(KonfytPatch* patch, KonfytMidiFilter filter);
 
     // ----------------------------------------------------
     // Modify layers
@@ -133,6 +126,7 @@ private:
     void updateLayerGain(KfPatchLayerSharedPtr layer);
     void updatePatchLayersSoloMute(KonfytPatch* patch);
     void setLayerActive(KfPatchLayerSharedPtr layer, bool active);
+    void updateLayerPatchMidiFilterInJackEngine(KonfytPatch* patch, KfPatchLayerSharedPtr layer);
 
     KonfytFluidsynthEngine fluidsynthEngine;
 

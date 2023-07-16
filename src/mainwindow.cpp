@@ -96,13 +96,14 @@ void MainWindow::setupGuiMenuButtons()
     addPatchMenu->addAction(ui->actionAdd_Patch_From_File);
     ui->toolButton_AddPatch->setMenu(addPatchMenu);
 
-    // Save-patch button menu
-    QMenu* savePatchMenu = new QMenu();
-    savePatchMenu->addAction(ui->actionAlways_Active);
-    savePatchMenu->addAction(ui->actionSave_Patch_As_Copy);
-    savePatchMenu->addAction(ui->actionAdd_Patch_To_Library);
-    savePatchMenu->addAction(ui->actionSave_Patch_To_File);
-    ui->toolButton_SavePatch->setMenu(savePatchMenu);
+    // Patch menu button
+    QMenu* patchMenu = new QMenu();
+    patchMenu->addAction(ui->actionPatch_MIDI_Filter);
+    patchMenu->addAction(ui->actionAlways_Active);
+    patchMenu->addAction(ui->actionSave_Patch_As_Copy);
+    patchMenu->addAction(ui->actionAdd_Patch_To_Library);
+    patchMenu->addAction(ui->actionSave_Patch_To_File);
+    ui->toolButton_patchMenu->setMenu(patchMenu);
 
     // Project button menu
     QMenu* projectButtonMenu = new QMenu();
@@ -389,12 +390,18 @@ void MainWindow::updateMidiFilterBeingEdited(KonfytMidiFilter newFilter)
         return;
     }
 
-    if (midiFilterEditType == MidiFilterEditPort) {
+    switch (midiFilterEditType) {
+    case MainWindow::MidiFilterEditPort:
         prj->midiInPort_setPortFilter(midiFilterEditPort, newFilter);
         jack.setPortFilter(prj->midiInPort_getPort(midiFilterEditPort).jackPort, newFilter);
-    } else {
+        break;
+    case MainWindow::MidiFilterEditLayer:
         pengine.setLayerFilter(midiFilterEditItem->getPatchLayer(), newFilter);
         midiFilterEditItem->refresh();
+        break;
+    case MainWindow::MidiFilterEditPatch:
+        pengine.setPatchFilter(midiFilterEditPatch, newFilter);
+        break;
     }
 }
 
@@ -567,11 +574,19 @@ void MainWindow::showMidiFilterEditor()
     // Switch to midi filter view
 
     KonfytMidiFilter f;
-    if (midiFilterEditType == MidiFilterEditPort) {
+    switch (midiFilterEditType) {
+    case MainWindow::MidiFilterEditPort:
         if (!mCurrentProject) { return; }
         f = mCurrentProject->midiInPort_getPort(midiFilterEditPort).filter;
-    } else {
+        break;
+    case MainWindow::MidiFilterEditLayer:
         f = midiFilterEditItem->getPatchLayer().toStrongRef()->midiFilter();
+        break;
+    case MainWindow::MidiFilterEditPatch:
+        if (!midiFilterEditPatch) { return; }
+        f = midiFilterEditPatch->patchMidiFilter;
+        break;
+
     }
 
     midiFilterEditorOriginalFilter = f;
@@ -2808,13 +2823,16 @@ void MainWindow::on_lineEdit_PatchName_returnPressed()
 
 void MainWindow::on_lineEdit_PatchName_editingFinished()
 {
+    KonfytPatch* patch = pengine.currentPatch();
+    if (!patch) { return; }
+
     // Rename patch
-    pengine.setPatchName(ui->lineEdit_PatchName->text());
+    patch->setName(ui->lineEdit_PatchName->text());
 
     // Indicate to the user that the patch has been modified.
     patchModified();
 
-    patchListAdapter.patchModified(pengine.currentPatch());
+    patchListAdapter.patchModified(patch);
     updateWindowTitle();
 }
 
@@ -4477,10 +4495,16 @@ void MainWindow::on_pushButton_midiFilter_Cancel_clicked()
     updateMidiFilterBeingEdited(midiFilterEditorOriginalFilter);
 
     // Switch back to previous view
-    if (midiFilterEditType == MidiFilterEditPort) {
+    switch (midiFilterEditType) {
+    case MainWindow::MidiFilterEditPort:
         ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
-    } else {
+        break;
+    case MainWindow::MidiFilterEditLayer:
         ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+        break;
+    case MainWindow::MidiFilterEditPatch:
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+        break;
     }
 }
 
@@ -4494,10 +4518,16 @@ void MainWindow::on_pushButton_midiFilter_Apply_clicked()
     setProjectModified();
 
     // Switch back to previous view
-    if (midiFilterEditType == MidiFilterEditPort) {
+    switch (midiFilterEditType) {
+    case MainWindow::MidiFilterEditPort:
         ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
-    } else {
+        break;
+    case MainWindow::MidiFilterEditLayer:
         ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+        break;
+    case MainWindow::MidiFilterEditPatch:
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+        break;
     }
 }
 
@@ -5058,6 +5088,8 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
         if (portIdInPrj == midiFilterEditPort) {
             updateMidiFilterEditorLastRx(ev);
         }
+    } else if (midiFilterEditType == MidiFilterEditPatch) {
+        updateMidiFilterEditorLastRx(ev);
     }
 
     // List of received MIDI events in Triggers page
@@ -6048,7 +6080,9 @@ void MainWindow::on_textBrowser_patchNote_textChanged()
         patchNote_ignoreChange = false;
     } else {
         // Change is due to user typing in box
-        pengine.setPatchNote(ui->textBrowser_patchNote->toPlainText());
+        KonfytPatch* patch = pengine.currentPatch();
+        if (!patch) { return; }
+        patch->setNote(ui->textBrowser_patchNote->toPlainText());
         patchModified();
     }
 }
@@ -7265,5 +7299,16 @@ void MainWindow::on_checkBox_midiFilter_Prog_toggled(bool /*checked*/)
 void MainWindow::on_toolButton_connectionsPage_portsBussesListOptions_clicked()
 {
     tree_portsBusses_Menu();
+}
+
+void MainWindow::on_actionPatch_MIDI_Filter_triggered()
+{
+    KonfytPatch* patch = pengine.currentPatch();
+    if (!patch) { return; }
+
+    midiFilterEditPatch = patch;
+
+    midiFilterEditType = MidiFilterEditPatch;
+    showMidiFilterEditor();
 }
 

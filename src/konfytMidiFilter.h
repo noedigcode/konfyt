@@ -80,7 +80,8 @@ struct KonfytMidiFilterZone {
 class KonfytMidiFilter
 {
 public:
-    void setPassAll();
+
+    static KonfytMidiFilter allPassFilter();
 
     KonfytMidiFilterZone zone;
     void setZone(int lowNote, int highNote, int add, int lowVel, int highVel,

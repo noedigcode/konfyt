@@ -88,6 +88,7 @@ public:
     QString note() const;
     void setNote(QString newNote);
     bool alwaysActive = false;
+    KonfytMidiFilter patchMidiFilter = KonfytMidiFilter::allPassFilter(); // Patch-wide MIDI filter
 
     // ----------------------------------------------------
     // General layer related functions
