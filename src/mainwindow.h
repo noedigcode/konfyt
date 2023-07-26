@@ -479,18 +479,22 @@ private slots:
     // Connections page (Ports and buses)
     // ========================================================================
 private:
-    // portsBussesTreeMenu: Context menu when item in the tree is right-clicked on
-    //   Opened when user right-clicks on tree_portsBusses, see tree_portsBusses_Menu()
+    // portsBusesTreeMenu: Context menu when item in the tree is right-clicked on
+    //   Opened when user right-clicks on tree_portsBusses, see onPortsBusesTreeMenuRequested()
     //   When an item is clicked: slot corresponding to action is called.
-    QMenu portsBussesTreeMenu;
-    QTreeWidgetItem* portsBussesTreeMenuItem; // The item that was right-clicked on
+    QMenu portsBusesTreeMenu;
+    QTreeWidgetItem* portsBusesTreeMenuItem; // The item that was right-clicked on
 
     void setupConnectionsPage();
     void showConnectionsPage();
     void connectionsTreeSelectBus(int busId);
+    void connectionsTreeSelectAndEditBus(int busId);
     void connectionsTreeSelectAudioInPort(int portId);
+    void connectionsTreeSelectAndEditAudioInPort(int portId);
     void connectionsTreeSelectMidiInPort(int portId);
+    void connectionsTreeSelectAndEditMidiInPort(int portId);
     void connectionsTreeSelectMidiOutPort(int portId);
+    void connectionsTreeSelectAndEditMidiOutPort(int portId);
     void updatePortsBussesTree();
     void updateConnectionsTree();
     void clearPortsBussesConnectionsData();
@@ -516,7 +520,7 @@ private:
 
 private slots:
     void checkboxes_clicked_slot(QCheckBox* c);
-    void tree_portsBusses_Menu();
+    void onPortsBusesTreeMenuRequested();
     void on_pushButton_connectionsPage_OK_clicked();
     void on_pushButton_ShowConnections_clicked();
     void on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);

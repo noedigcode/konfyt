@@ -783,7 +783,7 @@ void MainWindow::setupConnectionsPage()
     // Set up portsBuses tree context menu
     ui->tree_portsBusses->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tree_portsBusses, &QTreeWidget::customContextMenuRequested,
-            this, &MainWindow::tree_portsBusses_Menu);
+            this, &MainWindow::onPortsBusesTreeMenuRequested);
 }
 
 void MainWindow::showConnectionsPage()
@@ -801,9 +801,21 @@ void MainWindow::connectionsTreeSelectBus(int busId)
     ui->tree_portsBusses->setCurrentItem( tree_busMap.key(busId) );
 }
 
+void MainWindow::connectionsTreeSelectAndEditBus(int busId)
+{
+    connectionsTreeSelectBus(busId);
+    ui->tree_portsBusses->editItem( tree_busMap.key(busId) );
+}
+
 void MainWindow::connectionsTreeSelectAudioInPort(int portId)
 {
     ui->tree_portsBusses->setCurrentItem( tree_audioInMap.key(portId) );
+}
+
+void MainWindow::connectionsTreeSelectAndEditAudioInPort(int portId)
+{
+    connectionsTreeSelectAudioInPort(portId);
+    ui->tree_portsBusses->editItem( tree_audioInMap.key(portId) );
 }
 
 void MainWindow::connectionsTreeSelectMidiInPort(int portId)
@@ -811,9 +823,21 @@ void MainWindow::connectionsTreeSelectMidiInPort(int portId)
     ui->tree_portsBusses->setCurrentItem( tree_midiInMap.key(portId) );
 }
 
+void MainWindow::connectionsTreeSelectAndEditMidiInPort(int portId)
+{
+    connectionsTreeSelectMidiInPort(portId);
+    ui->tree_portsBusses->editItem( tree_midiInMap.key(portId) );
+}
+
 void MainWindow::connectionsTreeSelectMidiOutPort(int portId)
 {
     ui->tree_portsBusses->setCurrentItem( tree_midiOutMap.key(portId) );
+}
+
+void MainWindow::connectionsTreeSelectAndEditMidiOutPort(int portId)
+{
+    connectionsTreeSelectMidiOutPort(portId);
+    ui->tree_portsBusses->editItem( tree_midiOutMap.key(portId) );
 }
 
 void MainWindow::updatePortsBussesTree()
@@ -1260,14 +1284,14 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
 /* Slot that gets called when the custom context menu of tree_portsBusses is requested.
  * This adds the appropriate actions to the menu based on the item selected, and shows
  * the menu. When an action is clicked, the slot of the corresponding action is called. */
-void MainWindow::tree_portsBusses_Menu()
+void MainWindow::onPortsBusesTreeMenuRequested()
 {
-    QMenu* m = &portsBussesTreeMenu;
+    QMenu* m = &portsBusesTreeMenu;
 
     m->clear();
 
     QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
-    portsBussesTreeMenuItem = item;
+    portsBusesTreeMenuItem = item;
 
     if (item) {
         if (item->parent()) {
@@ -1281,7 +1305,7 @@ void MainWindow::tree_portsBusses_Menu()
     m->addAction(ui->actionAdd_MIDI_Out_Port);
     m->addAction(ui->actionAdd_MIDI_In_Port);
 
-    portsBussesTreeMenu.popup(QCursor::pos());
+    portsBusesTreeMenu.popup(QCursor::pos());
 }
 
 void MainWindow::initTriggers()
@@ -2171,9 +2195,9 @@ void MainWindow::previewButtonMidiInPortMenuTrigger(QAction *action)
             // Add new MIDI in port
             portId = addMidiInPort();
             if (portId < 0) { return; }
-            // Open the connections page and show port
+            // Show port on connections page and edit its name
             showConnectionsPage();
-            connectionsTreeSelectMidiInPort(portId);
+            connectionsTreeSelectAndEditMidiInPort(portId);
         }
 
         previewPatchMidiInPort = portId;
@@ -2202,9 +2226,9 @@ void MainWindow::previewButtonBusMenuTrigger(QAction *action)
             // Add new audio output bus
             busId = addBus();
             if (busId < 0) { return; }
-            // Open the connections page and show bus
+            // Show bus on connections page and edit its name
             showConnectionsPage();
-            connectionsTreeSelectBus(busId);
+            connectionsTreeSelectAndEditBus(busId);
         }
 
         previewPatchBus = busId;
@@ -3625,7 +3649,7 @@ void MainWindow::onPatchMidiOutPortsMenu_ActionTrigger(QAction *action)
         if (portId < 0) { return; }
         // Show the newly created port in the connections tree
         showConnectionsPage();
-        connectionsTreeSelectMidiOutPort(portId);
+        connectionsTreeSelectAndEditMidiOutPort(portId);
     }
 
     addMidiPortToCurrentPatch(portId);
@@ -3644,9 +3668,9 @@ void MainWindow::onPatchAudioInPortsMenu_ActionTrigger(QAction *action)
         // Add new port
         portId = addAudioInPort();
         if (portId < 0) { return; }
-        // Show the newly created port in the connections tree
+        // Show port on connections page and edit its name
         showConnectionsPage();
-        connectionsTreeSelectAudioInPort(portId);
+        connectionsTreeSelectAndEditAudioInPort(portId);
     }
 
     addAudioInPortToCurrentPatch( portId );
@@ -3692,10 +3716,10 @@ void MainWindow::onLayerMidiInPortsMenu_ActionTrigger(QAction *action)
             // Add new MIDI in port
             portId = addMidiInPort();
             if (portId < 0) { return; }
-            // Open the connections page and show port.
+            // Show port on connections page and edit its name
             showConnectionsPage();
-            connectionsTreeSelectMidiInPort(portId);
-            }
+            connectionsTreeSelectAndEditMidiInPort(portId);
+        }
 
         // Set the MIDI Input port in the GUI layer item
         layer->setMidiInPortIdInProject(portId);
@@ -3746,9 +3770,9 @@ void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
             // Add new bus
             busId = addBus();
             if (busId < 0) { return; }
-            // Open the connections page and show bus.
+            // Show bus on connections page and edit its name
             showConnectionsPage();
-            connectionsTreeSelectBus(busId);
+            connectionsTreeSelectAndEditBus(busId);
         }
 
         // Set the destination bus in gui layer item
@@ -4872,9 +4896,9 @@ void MainWindow::on_actionAdd_Bus_triggered()
 {
     int busId = addBus();
     if (busId >= 0) {
+        // Show bus on connections page and edit its name
         showConnectionsPage();
-        // Select newly added bus
-        connectionsTreeSelectBus(busId);
+        connectionsTreeSelectAndEditBus(busId);
     }
 }
 
@@ -4939,8 +4963,9 @@ void MainWindow::on_actionAdd_Audio_In_Port_triggered()
 {
     int portId = addAudioInPort();
     if (portId >= 0) {
+        // Show port on connections page and edit its name
         showConnectionsPage();
-        connectionsTreeSelectAudioInPort(portId);
+        connectionsTreeSelectAndEditAudioInPort(portId);
     }
 }
 
@@ -4948,8 +4973,9 @@ void MainWindow::on_actionAdd_MIDI_In_Port_triggered()
 {
     int portId = addMidiInPort();
     if (portId >= 0) {
+        // Show port on connections page and edit its name
         showConnectionsPage();
-        connectionsTreeSelectMidiInPort(portId);
+        connectionsTreeSelectAndEditMidiInPort(portId);
     }
 }
 
@@ -4982,7 +5008,7 @@ void MainWindow::on_actionAdd_MIDI_Out_Port_triggered()
     int portId = addMidiOutPort();
     if (portId >= 0) {
         showConnectionsPage();
-        connectionsTreeSelectMidiOutPort(portId);
+        connectionsTreeSelectAndEditMidiOutPort(portId);
     }
 }
 
@@ -5255,6 +5281,7 @@ void MainWindow::showExternalAppEditor(int id)
 
     // Switch to external apps page
     ui->stackedWidget->setCurrentWidget(ui->externalAppsPage);
+    ui->lineEdit_extApp_name->setFocus();
 }
 
 void MainWindow::hideExternalAppEditor()
@@ -5388,7 +5415,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    QTreeWidgetItem* item = portsBussesTreeMenuItem;
+    QTreeWidgetItem* item = portsBusesTreeMenuItem;
 
     bool busSelected = item->parent() == busParent;
     bool audioInSelected = item->parent() == audioInParent;
@@ -5859,7 +5886,7 @@ void MainWindow::on_actionRename_BusPort_triggered()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    QTreeWidgetItem* item = portsBussesTreeMenuItem;
+    QTreeWidgetItem* item = portsBusesTreeMenuItem;
 
     // See on_tree_portsBusses_itemChanged for the renaming.
 
@@ -7298,7 +7325,7 @@ void MainWindow::on_checkBox_midiFilter_Prog_toggled(bool /*checked*/)
 
 void MainWindow::on_toolButton_connectionsPage_portsBussesListOptions_clicked()
 {
-    tree_portsBusses_Menu();
+    onPortsBusesTreeMenuRequested();
 }
 
 void MainWindow::on_actionPatch_MIDI_Filter_triggered()

@@ -2196,7 +2196,7 @@ border-color: rgb(40, 40, 40);
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>4</number>
+                 <number>0</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -2527,7 +2527,8 @@ border-bottom-right-radius: 0;</string>
                                <string>Patch List Menu</string>
                               </property>
                               <property name="styleSheet">
-                               <string notr="true">border-radius: 0;</string>
+                               <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
                               </property>
                               <property name="text">
                                <string>...</string>
