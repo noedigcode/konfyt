@@ -100,7 +100,7 @@ public:
     int outChan = -1; // -1 = original
     bool ignoreGlobalTranspose = false;
 
-    void writeToXMLStream(QXmlStreamWriter* stream);
+    void writeToXMLStream(QXmlStreamWriter* stream) const;
     void readFromXMLStream(QXmlStreamReader *r);
 
     void deprecatedVelocityToMap();

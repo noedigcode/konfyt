@@ -2244,7 +2244,7 @@ border-color: rgb(40, 40, 40);
                        <property name="childrenCollapsible">
                         <bool>false</bool>
                        </property>
-                       <widget class="QWidget" name="layoutWidget">
+                       <widget class="QWidget" name="layoutWidget_1">
                         <layout class="QVBoxLayout" name="verticalLayout_2">
                          <property name="spacing">
                           <number>4</number>
@@ -2540,7 +2540,7 @@ border-bottom-right-radius: 0;</string>
                          </item>
                         </layout>
                        </widget>
-                       <widget class="QWidget" name="layoutWidget">
+                       <widget class="QWidget" name="layoutWidget_2">
                         <layout class="QVBoxLayout" name="verticalLayout_4">
                          <property name="spacing">
                           <number>0</number>

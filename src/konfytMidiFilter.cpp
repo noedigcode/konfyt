@@ -146,7 +146,7 @@ KonfytMidiEvent KonfytMidiFilter::modify(const KonfytMidiEvent* ev)
     return r;
 }
 
-void KonfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream)
+void KonfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream) const
 {
     stream->writeStartElement(XML_MIDIFILTER);
 
