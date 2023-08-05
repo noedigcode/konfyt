@@ -37,7 +37,7 @@ The following are required to run Konfyt:
 * Qt 5.15.3
 * Fluidsynth 2.2.5
 * liblscp 0.6.0 and thus Linuxsampler
-* Carla 2.5.4
+* Carla 2.5.6
 
 The versions listed above are known to work, but different versions should work too.
 
