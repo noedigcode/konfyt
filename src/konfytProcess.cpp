@@ -37,6 +37,12 @@ KonfytProcess::KonfytProcess()
             this, &KonfytProcess::onErrorOccurred);
 }
 
+KonfytProcess::~KonfytProcess()
+{
+    // Prevent crashes at shutdown
+    this->blockSignals(true);
+}
+
 /* Returns the app name with tags (e.g. $PROJ_DIR$) replaced with actual values. */
 QString KonfytProcess::expandedAppName()
 {

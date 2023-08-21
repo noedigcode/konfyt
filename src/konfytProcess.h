@@ -39,6 +39,7 @@ class KonfytProcess : public QObject
 
 public:
     KonfytProcess();
+    ~KonfytProcess();
 
     enum State { NOT_STARTED, STARTING, RUNNING, FINISHED, STOPPING, STOPPED, CRASHED, ERROR };
 
