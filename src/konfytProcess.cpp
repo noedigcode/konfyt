@@ -315,6 +315,7 @@ void ExternalAppsListAdapter::setProject(ProjectPtr project)
     // Clear items and refill from project
     itemIdMap.clear();
     mListWidget->clear();
+    emit listItemCountChanged(0);
     foreach (int id, mProject->getExternalAppIds()) {
         onAppAdded(id);
     }
@@ -389,6 +390,7 @@ void ExternalAppsListAdapter::onAppAdded(int id)
     updateItem(item, app, mRunner->getAppState(id));
     itemIdMap.insert(id, item);
     mListWidget->addItem(item);
+    emit listItemCountChanged(itemIdMap.count());
 }
 
 void ExternalAppsListAdapter::onAppRemoved(int id)
@@ -396,6 +398,7 @@ void ExternalAppsListAdapter::onAppRemoved(int id)
     QListWidgetItem* item = itemIdMap.value(id);
     itemIdMap.remove(id);
     if (item) { delete item; }
+    emit listItemCountChanged(itemIdMap.count());
 }
 
 void ExternalAppsListAdapter::onAppModified(int id)

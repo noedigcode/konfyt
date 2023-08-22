@@ -118,6 +118,7 @@ signals:
     void listSelectionChanged(int id);
     void listItemClicked(int id);
     void listItemDoubleClicked(int id);
+    void listItemCountChanged(int count);
 
 private:
     QListWidget* mListWidget = nullptr;

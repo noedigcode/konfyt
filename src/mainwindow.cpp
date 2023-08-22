@@ -191,6 +191,9 @@ void MainWindow::setupGuiDefaults()
         // In main area, show normal patch view
         ui->stackedWidget->setCurrentWidget(ui->PatchPage);
     }
+
+    // Initialise external apps widgets
+    onExternalAppItemSelectionChanged(-1); // -1 = no app selected
 }
 
 void MainWindow::printArgumentsInfo()
@@ -2967,6 +2970,24 @@ void MainWindow::onExternalAppItemDoubleClicked(int /*id*/)
     on_pushButton_ExtApp_RunSelected_clicked();
 }
 
+void MainWindow::onExternalAppItemSelectionChanged(int id)
+{
+    bool enabled = (id >= 0);
+
+    ui->pushButton_extApp_edit->setEnabled(enabled);
+    ui->pushButton_extApp_remove->setEnabled(enabled);
+    ui->pushButton_ExtApp_RunSelected->setEnabled(enabled);
+    ui->pushButton_ExtApp_Stop->setEnabled(enabled);
+}
+
+void MainWindow::onExternalAppItemCountChanged(int count)
+{
+    bool enabled = count > 0;
+
+    ui->pushButton_ExtApp_RunAll->setEnabled(enabled);
+    ui->pushButton_ExtApp_StopAll->setEnabled(enabled);
+}
+
 void MainWindow::showWaitingPage(QString title)
 {
     ui->label_WaitingTitle->setText(title);
@@ -5240,6 +5261,12 @@ void MainWindow::setupExternalApps()
     connect(externalAppListAdapter.data(),
             &ExternalAppsListAdapter::listItemDoubleClicked,
             this, &MainWindow::onExternalAppItemDoubleClicked);
+    connect(externalAppListAdapter.data(),
+            &ExternalAppsListAdapter::listSelectionChanged,
+            this, &MainWindow::onExternalAppItemSelectionChanged);
+    connect(externalAppListAdapter.data(),
+            &ExternalAppsListAdapter::listItemCountChanged,
+            this, &MainWindow::onExternalAppItemCountChanged);
 
     // External apps preset menu
     setupExternalAppsMenu();

@@ -278,7 +278,10 @@ QPushButton {
 	padding: 4px;
 }
 
-
+QPushButton:disabled {
+	border: 1px solid rgb(80,80,80);
+	color: rgb(30,30,30);
+}
 
 QPushButton[KonfytWideButton=true] {
 	min-width: 4em;

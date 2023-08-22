@@ -765,6 +765,8 @@ private slots:
 
     // External Apps widgets
     void onExternalAppItemDoubleClicked(int id);
+    void onExternalAppItemSelectionChanged(int id);
+    void onExternalAppItemCountChanged(int count);
     void on_pushButton_ExtApp_RunSelected_clicked();
     void on_pushButton_ExtApp_Stop_clicked();
     void on_pushButton_ExtApp_RunAll_clicked();
