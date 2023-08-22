@@ -824,8 +824,10 @@ private slots:
     // ========================================================================
 private:
     bool jackPage_audio = true; // True to display audio ports, false for MIDI
+    void setupJackPage();
     void showJackPage();
     void updateJackPage();
+    void updateJackPageButtonStates();
 private slots:
     void on_pushButton_ShowJackPage_clicked();
     void on_pushButton_jackConAdd_clicked();
@@ -833,6 +835,12 @@ private slots:
     void on_pushButton_JackAudioPorts_clicked();
     void on_pushButton_JackMidiPorts_clicked();
     void on_pushButton_jackCon_OK_clicked();
+    void on_treeWidget_jackPortsOut_currentItemChanged(
+            QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void on_treeWidget_jackportsIn_currentItemChanged(
+            QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void on_listWidget_jackConnections_currentItemChanged(
+            QListWidgetItem *current, QListWidgetItem *previous);
 
     // ========================================================================
     // Other
@@ -981,6 +989,7 @@ private slots:
     void on_toolButton_connectionsPage_portsBussesListOptions_clicked();
 
     void on_actionPatch_MIDI_Filter_triggered();
+
 };
 
 #endif // MAINWINDOW_H

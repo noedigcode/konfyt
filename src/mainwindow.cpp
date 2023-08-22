@@ -53,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupGuiMenuButtons();
     setupConnectionsPage();
     setupTriggersPage();
+    setupJackPage();
     setupSavedMidiSendItems();
     setupMidiSendListEditor();
     setupMidiMapPresets();
@@ -6054,6 +6055,11 @@ void MainWindow::on_checkBox_Triggers_ProgSwitchPatches_clicked()
     prj->setProgramChangeSwitchPatches( ui->checkBox_Triggers_ProgSwitchPatches->isChecked() );
 }
 
+void MainWindow::setupJackPage()
+{
+    updateJackPageButtonStates();
+}
+
 void MainWindow::on_checkBox_ConsoleShowMidiMessages_clicked()
 {
     setConsoleShowMidiMessages( ui->checkBox_ConsoleShowMidiMessages->isChecked() );
@@ -6524,6 +6530,18 @@ void MainWindow::updateJackPage()
     }
 }
 
+void MainWindow::updateJackPageButtonStates()
+{
+    // Enable add-connection button if both an output and input port are selected
+    ui->pushButton_jackConAdd->setEnabled(
+                (ui->treeWidget_jackPortsOut->currentItem() != nullptr)
+                && (ui->treeWidget_jackportsIn->currentItem() != nullptr));
+
+    // Enable remove-connection button if a connection is selected
+    ui->pushButton_jackConRemove->setEnabled(
+                ui->listWidget_jackConnections->currentItem() != nullptr);
+}
+
 void MainWindow::on_pushButton_jackConAdd_clicked()
 {
     QTreeWidgetItem* itemOut = ui->treeWidget_jackPortsOut->currentItem();
@@ -6832,6 +6850,24 @@ MidiSendItem MainWindow::midiEventFromMidiSendEditor()
 void MainWindow::on_pushButton_jackCon_OK_clicked()
 {
     ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+}
+
+void MainWindow::on_treeWidget_jackPortsOut_currentItemChanged(
+        QTreeWidgetItem* /*current*/, QTreeWidgetItem* /*previous*/)
+{
+    updateJackPageButtonStates();
+}
+
+void MainWindow::on_treeWidget_jackportsIn_currentItemChanged(
+        QTreeWidgetItem* /*current*/, QTreeWidgetItem* /*previous*/)
+{
+    updateJackPageButtonStates();
+}
+
+void MainWindow::on_listWidget_jackConnections_currentItemChanged(
+        QListWidgetItem* /*current*/, QListWidgetItem* /*previous*/)
+{
+    updateJackPageButtonStates();
 }
 
 /* Action to toggle always-active for current patch. */
@@ -7365,4 +7401,3 @@ void MainWindow::on_actionPatch_MIDI_Filter_triggered()
     midiFilterEditType = MidiFilterEditPatch;
     showMidiFilterEditor();
 }
-

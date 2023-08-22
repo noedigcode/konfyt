@@ -551,6 +551,11 @@ QToolButton {
 
 }
 
+QToolButton:disabled {
+	border: 1px solid rgb(80,80,80);
+	color: rgb(30,30,30);
+}
+
 QToolButton:hover {
 	border-top: 1px solid rgb(100,100,100);
     border-left: 1px solid rgb(100,100,100);
