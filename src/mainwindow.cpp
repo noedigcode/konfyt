@@ -1380,6 +1380,10 @@ void MainWindow::setupTriggersPage()
     connect(&triggersPageMidiEventList, &MidiEventListWidgetAdapter::itemDoubleClicked,
             this, &MainWindow::onTriggersMidiEventListDoubleClicked);
     triggersPageMidiEventList.init(ui->listWidget_triggers_eventList);
+
+    // Default buttons enabled
+    on_listWidget_triggers_eventList_currentItemChanged();
+    on_tree_Triggers_currentItemChanged();
 }
 
 void MainWindow::showTriggersPage()
@@ -6053,6 +6057,22 @@ void MainWindow::on_checkBox_Triggers_ProgSwitchPatches_clicked()
     if (!prj) { return; }
 
     prj->setProgramChangeSwitchPatches( ui->checkBox_Triggers_ProgSwitchPatches->isChecked() );
+}
+
+void MainWindow::on_listWidget_triggers_eventList_currentItemChanged(
+        QListWidgetItem* /*current*/, QListWidgetItem* /*previous*/)
+{
+    // Button enabled if a MIDI event is selected in the event list
+    bool enabled = (ui->listWidget_triggers_eventList->currentItem() != nullptr);
+    ui->pushButton_triggersPage_assign->setEnabled(enabled);
+}
+
+void MainWindow::on_tree_Triggers_currentItemChanged(
+        QTreeWidgetItem* /*current*/, QTreeWidgetItem* /*previous*/)
+{
+    // Button enabled if a trigger is selected in the triggers tree
+    bool enabled = (ui->tree_Triggers->currentItem() != nullptr);
+    ui->pushButton_triggersPage_clear->setEnabled(enabled);
 }
 
 void MainWindow::setupJackPage()

@@ -818,6 +818,10 @@ private slots:
     void on_tree_Triggers_itemDoubleClicked(QTreeWidgetItem *item, int column);
     void onTriggersMidiEventListDoubleClicked();
     void on_checkBox_Triggers_ProgSwitchPatches_clicked();
+    void on_listWidget_triggers_eventList_currentItemChanged(
+            QListWidgetItem *current=nullptr, QListWidgetItem *previous=nullptr);
+    void on_tree_Triggers_currentItemChanged(
+            QTreeWidgetItem *current=nullptr, QTreeWidgetItem *previous=nullptr);
 
     // ========================================================================
     // Other JACK connections
@@ -989,7 +993,6 @@ private slots:
     void on_toolButton_connectionsPage_portsBussesListOptions_clicked();
 
     void on_actionPatch_MIDI_Filter_triggered();
-
 };
 
 #endif // MAINWINDOW_H
