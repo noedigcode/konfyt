@@ -549,6 +549,8 @@ void KonfytPatchEngine::updateLayerPatchMidiFilterInJackEngine(
     KONFYT_ASSERT_RETURN(patch != nullptr);
     KONFYT_ASSERT_RETURN(!layer.isNull());
 
+    if (layer->hasError()) { return; }
+
     if (layer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
 
         jack->setSoundfontMidiPreFilter(layer->soundfontData.portsInJackEngine,
