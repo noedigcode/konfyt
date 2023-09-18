@@ -5324,8 +5324,15 @@ void MainWindow::hideExternalAppEditor()
 
 void MainWindow::appendToExternalAppEditorCommandBox(QString text)
 {
-    ui->lineEdit_extAppEditor_command->setText(
-                ui->lineEdit_extAppEditor_command->text() + text);
+    // If command already has text, ensure there is a space between it and the
+    // newly added text
+    QString cmd = ui->lineEdit_extAppEditor_command->text();
+    if (!cmd.isEmpty() && !cmd.endsWith(" ")) {
+        cmd += " ";
+    }
+    cmd += text;
+
+    ui->lineEdit_extAppEditor_command->setText(cmd);
 }
 
 void MainWindow::externalAppEditor_onExternalAppRemoved(int id)
@@ -5670,14 +5677,22 @@ void MainWindow::on_actionRemove_BusPort_triggered()
 /* Prepare and show the filesystem tree view context menu. */
 void MainWindow::on_treeWidget_filesystem_customContextMenuRequested(const QPoint &pos)
 {
-    fsViewContextMenu.clear();
+    // Only enable add-path-to-external-app-box actions when the external app
+    // editor is visible
+    bool enabled = ui->stackedWidget->currentWidget() == ui->externalAppsPage;
+    ui->actionAdd_Path_To_External_App_Box->setEnabled(enabled);
+    ui->actionAdd_Path_to_External_App_Box_Relative_to_Project->setEnabled(enabled);
 
-    QList<QAction*> actions;
-    actions.append( ui->actionAdd_Path_To_External_App_Box );
-    actions.append( ui->actionAdd_Path_to_External_App_Box_Relative_to_Project );
-    actions.append( ui->actionOpen_In_File_Manager_fsview );
-    fsViewContextMenu.addActions(actions);
+    // Construct menu (only the first time)
+    if (fsViewContextMenu.isEmpty()) {
+        QList<QAction*> actions;
+        actions.append( ui->actionAdd_Path_To_External_App_Box );
+        actions.append( ui->actionAdd_Path_to_External_App_Box_Relative_to_Project );
+        actions.append( ui->actionOpen_In_File_Manager_fsview );
+        fsViewContextMenu.addActions(actions);
+    }
 
+    // Store item that was right-clicked on for later use
     fsViewMenuItem = ui->treeWidget_filesystem->itemAt(pos);
 
     fsViewContextMenu.popup(QCursor::pos());

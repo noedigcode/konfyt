@@ -10243,7 +10243,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionAdd_Path_To_External_App_Box">
    <property name="text">
-    <string>Add Path To External App Box (Absolute)</string>
+    <string>Add Path To External App Command (Absolute)</string>
    </property>
   </action>
   <action name="actionOpen_In_File_Manager_fsview">
@@ -10504,7 +10504,10 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionAdd_Path_to_External_App_Box_Relative_to_Project">
    <property name="text">
-    <string>Add Path to External App Box (Relative to Project)</string>
+    <string>Add Path to External App Command (Relative to Project)</string>
+   </property>
+   <property name="toolTip">
+    <string>Add Path to External App Command (Relative to Project)</string>
    </property>
   </action>
   <action name="actionAlways_Active">
