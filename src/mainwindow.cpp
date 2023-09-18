@@ -2383,6 +2383,10 @@ void MainWindow::setupFilesystemView()
 /* Log a message in the GUI console. */
 void MainWindow::print(QString message)
 {
+    message = QString("%1:  %2")
+            .arg(QTime::currentTime().toString("HH:mm:ss"))
+            .arg(message);
+
     if (mBlockPrint) {
         // Print directly to stdout
         std::cout << message.toStdString() << "\n";
