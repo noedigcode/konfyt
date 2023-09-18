@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2023 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -20,35 +20,38 @@
  *****************************************************************************/
 
 
-#ifndef CONSOLEDIALOG_H
-#define CONSOLEDIALOG_H
+#ifndef CONSOLEWINDOW_H
+#define CONSOLEWINDOW_H
 
-#include <QDialog>
+#include <QMainWindow>
 
 namespace Ui {
-class ConsoleDialog;
+class ConsoleWindow;
 }
 
-class ConsoleDialog : public QDialog
+class ConsoleWindow : public QMainWindow
 {
     Q_OBJECT
-    
+
 public:
-    explicit ConsoleDialog(QWidget *parent = 0);
-    ~ConsoleDialog();
+    explicit ConsoleWindow(QWidget *parent = nullptr);
+    ~ConsoleWindow();
 
     void setShowMidiEvents(bool show);
 
+signals:
+    void showMidiEventsChanged(bool show);
+
 public slots:
     void print(QString message);
-    
+
 private slots:
     void on_pushButton_Clear_clicked();
     void on_checkBox_ShowMidiEvents_clicked();
 
 private:
-    Ui::ConsoleDialog *ui;
+    Ui::ConsoleWindow *ui;
     bool mFirstPrint = true;
 };
 
-#endif // CONSOLEDIALOG_H
+#endif // CONSOLEWINDOW_H

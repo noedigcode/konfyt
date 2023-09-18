@@ -22,7 +22,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "consoledialog.h"
+#include "consolewindow.h"
 #include "indicatorHandlers.h"
 #include "konfytAudio.h"
 #include "konfytDatabase.h"
@@ -876,12 +876,11 @@ private slots:
     void on_pushButton_about_ok_clicked();
 
     // Console
-public:
-    void setConsoleShowMidiMessages(bool show);
 private:
-    ConsoleDialog consoleDialog {this}; // Separate console window
+    ConsoleWindow consoleWindow {this};
     void setupConsoleDialog();
-    bool console_showMidiMessages = false;
+    void setConsoleShowMidiMessages(bool show);
+    bool mConsoleShowMidiMessages = false;
 private slots:
     void on_pushButton_ClearConsole_clicked();
     void on_pushButton_ShowConsole_clicked();

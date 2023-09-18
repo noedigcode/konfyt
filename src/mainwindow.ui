@@ -9095,7 +9095,7 @@ p, li { white-space: pre-wrap; }
                           </sizepolicy>
                          </property>
                          <property name="toolTip">
-                          <string>Show pop-out console</string>
+                          <string>Show pop-out console window</string>
                          </property>
                          <property name="styleSheet">
                           <string notr="true">border-bottom-left-radius: 0;

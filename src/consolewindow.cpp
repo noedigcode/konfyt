@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2021 Gideon van der Kolf
+ * Copyright 2023 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -19,31 +19,36 @@
  *
  *****************************************************************************/
 
-#include "consoledialog.h"
-#include "ui_consoledialog.h"
 
-#include "mainwindow.h"
+#include "consolewindow.h"
+#include "ui_consolewindow.h"
 
-ConsoleDialog::ConsoleDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::ConsoleDialog)
+#include <QScrollBar>
+
+
+ConsoleWindow::ConsoleWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::ConsoleWindow)
 {
     ui->setupUi(this);
 }
 
-ConsoleDialog::~ConsoleDialog()
+ConsoleWindow::~ConsoleWindow()
 {
     delete ui;
 }
 
-void ConsoleDialog::print(QString message)
+void ConsoleWindow::setShowMidiEvents(bool show)
+{
+    ui->checkBox_ShowMidiEvents->setChecked(show);
+}
+
+void ConsoleWindow::print(QString message)
 {
     ui->textBrowser->append(message);
 
-    /* Ensure textBrowser scrolls to maximum when it is filled with text. Usually
-     * this is only done when the user explicitely scrolls to the end. We want it to
-     * happen from the start. Once it's there, we set 'start=false' as the
-     * user / textBrowser can then handle it themselves. */
+    /* Ensure textBrowser scrolls to maximum when it is filled with text the
+     * first time. Thereafter, it should keep doing this by itself. */
     QScrollBar* v = ui->textBrowser->verticalScrollBar();
     if (mFirstPrint) {
         if (v->value() != v->maximum()) {
@@ -53,18 +58,13 @@ void ConsoleDialog::print(QString message)
     }
 }
 
-void ConsoleDialog::on_pushButton_Clear_clicked()
+void ConsoleWindow::on_pushButton_Clear_clicked()
 {
     ui->textBrowser->clear();
 }
 
-
-void ConsoleDialog::on_checkBox_ShowMidiEvents_clicked()
+void ConsoleWindow::on_checkBox_ShowMidiEvents_clicked()
 {
-    ((MainWindow*)(this->parent()))->setConsoleShowMidiMessages( ui->checkBox_ShowMidiEvents->isChecked() );
+    emit showMidiEventsChanged(ui->checkBox_ShowMidiEvents->isChecked());
 }
 
-void ConsoleDialog::setShowMidiEvents(bool show)
-{
-    ui->checkBox_ShowMidiEvents->setChecked( show );
-}

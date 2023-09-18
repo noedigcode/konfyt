@@ -73,7 +73,7 @@ MainWindow::~MainWindow()
     mBlockPrint = true;
 
     jack.stopJackClient();
-    consoleDialog.close();
+    consoleWindow.close();
 
     delete ui;
 }
@@ -2383,22 +2383,21 @@ void MainWindow::setupFilesystemView()
 /* Log a message in the GUI console. */
 void MainWindow::print(QString message)
 {
+    // Add current time to start of message
     message = QString("%1:  %2")
             .arg(QTime::currentTime().toString("HH:mm:ss"))
             .arg(message);
 
+    // During shutdown GUI printing is blocked. Print directly to stdout.
     if (mBlockPrint) {
-        // Print directly to stdout
         std::cout << message.toStdString() << "\n";
         return;
     }
 
     ui->textBrowser->append(message);
 
-    /* Ensure textBrowser scrolls to maximum when it is filled with text. Usually
-     * this is only done when the user explicitely scrolls to the end. We want it to
-     * happen from the start. Once it's there, we set 'start=false' as the
-     * user / textBrowser can then handle it themselves. */
+    /* Ensure textBrowser scrolls to maximum when it is filled with text the
+     * first time. Thereafter, it should keep doing this by itself. */
     QScrollBar* v = ui->textBrowser->verticalScrollBar();
     if (mPrintStart) {
         if (v->value() != v->maximum()) {
@@ -2407,7 +2406,7 @@ void MainWindow::print(QString message)
         }
     }
 
-    // Separate console dialog
+    // Send print message to separate console window
     emit printSignal(message);
 }
 
@@ -4405,7 +4404,7 @@ void MainWindow::on_toolButton_AddPatch_clicked()
 
 void MainWindow::on_pushButton_ShowConsole_clicked()
 {
-    consoleDialog.show();
+    consoleWindow.show();
 }
 
 bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
@@ -5126,7 +5125,7 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
     if (portIdInPrj < 0) {
         print("ERROR: NO PORT IN PROJECT MATCHING JACK PORT.");
     }
-    if (console_showMidiMessages) {
+    if (mConsoleShowMidiMessages) {
         QString portName = "UNKNOWN";
         if (portIdInPrj >= 0) {
             PrjMidiPort prt = prj->midiInPort_getPort(portIdInPrj);
@@ -6114,16 +6113,23 @@ void MainWindow::updateGlobalPitchbendIndicator()
     ui->MIDI_indicator_pitchbend->setChecked(portIndicatorHandler.isPitchbendNonzero());
 }
 
-void MainWindow::setConsoleShowMidiMessages(bool show)
-{
-    ui->checkBox_ConsoleShowMidiMessages->setChecked( show );
-    consoleDialog.setShowMidiEvents( show );
-    console_showMidiMessages = show;
-}
-
 void MainWindow::setupConsoleDialog()
 {
-    connect(this, &MainWindow::printSignal, &consoleDialog, &ConsoleDialog::print);
+    connect(this, &MainWindow::printSignal,
+            &consoleWindow, &ConsoleWindow::print);
+
+    connect(&consoleWindow, &ConsoleWindow::showMidiEventsChanged,
+            this, [=](bool show)
+    {
+        setConsoleShowMidiMessages(show);
+    });
+}
+
+void MainWindow::setConsoleShowMidiMessages(bool show)
+{
+    ui->checkBox_ConsoleShowMidiMessages->setChecked(show);
+    consoleWindow.setShowMidiEvents(show);
+    mConsoleShowMidiMessages = show;
 }
 
 void MainWindow::on_pushButton_RestartApp_clicked()

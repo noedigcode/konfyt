@@ -17,11 +17,11 @@ TEMPLATE = app
 INCLUDEPATH += src
 
 SOURCES += src/main.cpp\
+    src/consolewindow.cpp \
     src/indicatorHandlers.cpp \
     src/konfytAudio.cpp \
     src/konfytLscp.cpp \
         src/mainwindow.cpp \
-    src/consoledialog.cpp \
     src/konfytPatchEngine.cpp \
     src/konfytPatch.cpp \
     src/konfytPatchLayer.cpp \
@@ -46,7 +46,7 @@ SOURCES += src/main.cpp\
     src/remotescanner.cpp
 
 HEADERS  += src/mainwindow.h \
-    src/consoledialog.h \
+    src/consolewindow.h \
     src/indicatorHandlers.h \
     src/konfytAudio.h \
     src/konfytDebug.h \
@@ -78,7 +78,7 @@ HEADERS  += src/mainwindow.h \
     src/ringbufferqmutex.h
 
 FORMS    += src/mainwindow.ui \
-    src/consoledialog.ui \
+    src/consolewindow.ui \
     src/konfytLayerWidget.ui
 
 # For pkgconfig
