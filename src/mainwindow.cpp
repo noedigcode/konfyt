@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupSettings();
     setupJack();
     setupPatchEngine();
+    setupScripting();
 
     // ----------------------------------------------------
     // The following need to happen before loading project or cmdline arguments
@@ -282,6 +283,25 @@ void MainWindow::onJackPortRegisteredOrConnected()
 
     // Update warnings section
     updateGUIWarnings();
+}
+
+void MainWindow::setupScripting()
+{
+    scripting.moveToThread(&scriptingThread);
+    scriptingThread.start();
+
+    // TOOD: Stop thread when exiting
+
+    connect(&scripting, &KonfytJs::print, this, [=](QString msg)
+    {
+        print("js: " + msg);
+    });
+    connect(&scripting, &KonfytJs::exceptionOccurred, this, [=]()
+    {
+        // TODO
+    });
+
+    scripting.setJackEngine(&jack);
 }
 
 /* Scan given directory recursively and add project files to list. */
@@ -7446,3 +7466,25 @@ void MainWindow::on_actionPatch_MIDI_Filter_triggered()
     midiFilterEditType = MidiFilterEditPatch;
     showMidiFilterEditor();
 }
+
+void MainWindow::on_pushButton_showScripting_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
+}
+
+
+void MainWindow::on_pushButton_script_run_clicked()
+{
+    print("Enabling script.");
+    scripting.disableScript();
+    scripting.initScript(ui->plainTextEdit_script->toPlainText());
+    scripting.enableScript();
+}
+
+
+void MainWindow::on_pushButton_script_stop_clicked()
+{
+    scripting.disableScript();
+    print("Script disabled.");
+}
+

@@ -29,6 +29,7 @@
 #include "konfytProject.h"
 #include "konfytStructs.h"
 #include "ringbufferqmutex.h"
+#include "sleepyRingBuffer.h"
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
@@ -151,12 +152,16 @@ public:
 
     void setGlobalTranspose(int transpose);
 
+    QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent>> getMidiRxBufferForJs();
+
 signals:
     void print(QString msg);
     void jackPortRegisteredOrConnected();
     void midiEventsReceived();
     void audioEventsReceived();
     void xrunOccurred();
+
+    void newMidiEventsAvailable();
 
 private:
     jack_client_t* mJackClient;
@@ -169,6 +174,10 @@ private:
     // MIDI data received from JACK thread
     RingbufferQMutex<KfJackMidiRxEvent> midiRxBuffer{1000};
     QList<KfJackMidiRxEvent> extractedMidiRx;
+
+    QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent>> midiRxBufferForJs {
+        new SleepyRingBuffer<KfJackMidiRxEvent>(1000) };
+    bool midiForJsWritten = false;
 
     // Audio data received from JACK thread
     int mAudioBufferSumCycleCount = 100;

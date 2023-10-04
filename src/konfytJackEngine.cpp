@@ -861,6 +861,11 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     audioRxBuffer.commit();
     midiRxBuffer.commit();
 
+    if (midiForJsWritten) {
+        emit newMidiEventsAvailable();
+        midiForJsWritten = false;
+    }
+
     jackProcessMutex.unlock();
     return 0;
 }
@@ -1240,9 +1245,10 @@ void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
             handleBankSelect(sourcePort->bankMSB, sourcePort->bankLSB, &ev);
 
             // Send to GUI
-            midiRxBuffer.stash({.sourcePort = sourcePort,
-                                  .midiRoute = nullptr,
-                                  .midiEvent = ev});
+            KfJackMidiRxEvent rxEv = {.sourcePort = sourcePort,
+                                      .midiRoute = nullptr,
+                                      .midiEvent = ev};
+            midiRxBuffer.stash(rxEv);
 
             if (panicState != NoPanic) { continue; }
 
@@ -1306,9 +1312,14 @@ void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
 
                 if (passEvent || guiOnly) {
                     // Give to GUI
-                    midiRxBuffer.stash({ .sourcePort = nullptr,
-                                         .midiRoute = route,
-                                         .midiEvent = evToSend });
+                    KfJackMidiRxEvent rxEv = { .sourcePort = nullptr,
+                                               .midiRoute = route,
+                                               .midiEvent = evToSend };
+                    midiRxBuffer.stash(rxEv);
+                    // Send to Scripting
+                    if (midiRxBufferForJs->tryWrite(rxEv)) {
+                        midiForJsWritten = true;
+                    }
                 }
 
                 if (!passEvent) { continue; }
@@ -1670,6 +1681,11 @@ void KonfytJackEngine::clearOtherJackConPair()
 void KonfytJackEngine::setGlobalTranspose(int transpose)
 {
     this->mGlobalTranspose = transpose;
+}
+
+QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent> > KonfytJackEngine::getMidiRxBufferForJs()
+{
+    return midiRxBufferForJs;
 }
 
 jack_port_t *KonfytJackEngine::registerJackMidiPort(QString name, bool input)

@@ -150,7 +150,6 @@ public:
     void writeToXMLStream(QXmlStreamWriter* w) const;
     /* Reads from XML stream and returns error messages. */
     QString readFromXmlStream(QXmlStreamReader* r);
-
 };
 
 

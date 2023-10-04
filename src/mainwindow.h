@@ -29,6 +29,7 @@
 #include "konfytDefines.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackEngine.h"
+#include "konfytJs.h"
 #include "konfytLayerWidget.h"
 #include "konfytMidiFilter.h"
 #include "konfytPatchEngine.h"
@@ -734,6 +735,15 @@ private slots:
     void onJackPortRegisteredOrConnected();
 
     // ========================================================================
+    // Scripting
+    // ========================================================================
+private:
+    KonfytJs scripting;
+    QThread scriptingThread;
+    void setupScripting();
+
+
+    // ========================================================================
     // External apps
     // ========================================================================
 private:
@@ -992,6 +1002,9 @@ private slots:
     void on_toolButton_connectionsPage_portsBussesListOptions_clicked();
 
     void on_actionPatch_MIDI_Filter_triggered();
+    void on_pushButton_showScripting_clicked();
+    void on_pushButton_script_run_clicked();
+    void on_pushButton_script_stop_clicked();
 };
 
 #endif // MAINWINDOW_H
