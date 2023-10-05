@@ -43,6 +43,7 @@ class TempParent : public QObject
 {
     Q_OBJECT
 public:
+    TempParent(QObject* parent = nullptr) : QObject(parent) {}
     ~TempParent();
     void makeTemporaryChildIfParentless(QObject* obj);
 private:
@@ -77,7 +78,7 @@ public slots:
     void sendEvent(QJSValue j);
 
 private:
-    TempParent tempParent;
+    TempParent tempParent {this};
     KonfytJackEngine* jack;
 
     QScopedPointer<QJSEngine> js;
