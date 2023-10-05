@@ -12,11 +12,15 @@ void KonfytJs::setJackEngine(KonfytJackEngine *jackEngine)
     mRxBuffer = jack->getMidiRxBufferForJs();
 
     connect(jack, &KonfytJackEngine::newMidiEventsAvailable,
-            this, &KonfytJs::onNewMidiEventsAvailable);
+            this, &KonfytJs::onNewMidiEventsAvailable,
+            Qt::QueuedConnection);
 }
 
 void KonfytJs::resetEnvironment()
 {
+    // This function must only be run from the KonfytJS thread as it creates the
+    // QJSEngine which must be created in the KonfytJS thread.
+
     // NB: Destroying QJSEngine destroys all children. Ensure all objects passed
     // to it using newQObject had parents already so QJSEngine doesn't destroy them.
 
@@ -32,26 +36,36 @@ void KonfytJs::resetEnvironment()
 
 void KonfytJs::initScript(QString script)
 {
-    if (!js) { resetEnvironment(); }
+    // Use invoke method to ensure code runs in KonfytJS thread.
+    // QJSEngine must be created in KonfytJS thread.
+    QMetaObject::invokeMethod(this, [=]()
+    {
+        if (!js) { resetEnvironment(); }
 
-    mScript = script;
+        mScript = script;
 
-    evaluate(script);
-    evaluate("init()");
+        evaluate(script);
+        evaluate("init()");
+    }, Qt::QueuedConnection);
 }
 
 void KonfytJs::enableScript()
 {
-    if (!js) { resetEnvironment(); }
+    // Use invoke method to ensure code runs in KonfytJS thread.
+    // QJSEngine must be created in KonfytJS thread.
+    QMetaObject::invokeMethod(this, [=]()
+    {
+        if (!js) { resetEnvironment(); }
 
-    // Clear buffer before starting
-    int n = mRxBuffer->availableToRead();
-    for (int i=0; i < n; i++) {
-        mRxBuffer->read();
-    }
+        // Clear buffer before starting
+        int n = mRxBuffer->availableToRead();
+        for (int i=0; i < n; i++) {
+            mRxBuffer->read();
+        }
 
-    // Set enabled so script will run in onNewMidiEventsAvailable()
-    mEnabled = true;
+        // Set enabled so script will run in onNewMidiEventsAvailable()
+        mEnabled = true;
+    }, Qt::QueuedConnection);
 }
 
 void KonfytJs::disableScript()
@@ -79,7 +93,6 @@ void KonfytJs::onNewMidiEventsAvailable()
     if (!mEnabled) { return; }
 
     int n = mRxBuffer->availableToRead();
-    print(QString("DEBUG available to read: %1").arg(n));
 
     jsMidiRxArray = js->newArray(n);
 

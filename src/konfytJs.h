@@ -10,10 +10,24 @@
 #include <QScopedPointer>
 #include <QSharedPointer>
 
-/* TODO:
+/* TODO NOTES:
  *
  * Needs "QT += qml" in project file
  * Needs QML/Qt Declarative development packages, "qtdeclarative5-dev" on Ubuntu.
+ *
+ *
+ * QJSEngine must be created in the same thread it is used in. Otherwise crashes
+ * happen as the engine's internal cleanup functionality running in the thread
+ * that created the engine conflicts with the use of the engine in the other
+ * thread.
+ *
+ * Related links:
+ *
+ * https://bugreports.qt.io/browse/QTBUG-83410
+ *
+ * https://stackoverflow.com/questions/74120887/qjsengine-crashes-when-used-in-multithreading-program
+ *
+ * https://github.com/nst1911/thread-safe-qjsengine
  *
  */
 
