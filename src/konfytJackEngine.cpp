@@ -819,6 +819,8 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 {
     if (!jackProcessMutex.tryLock()) { return 0; }
 
+    mLastSentMidiEventTime = 0;
+
     // panicCmd is the panic command received from the outside.
     if (panicCmd) {
         if (panicState == NoPanic) {
@@ -1082,8 +1084,29 @@ void *KonfytJackEngine::getJackPortBuffer(jack_port_t *port, jack_nframes_t nfra
 
 jack_midi_data_t *KonfytJackEngine::reserveJackMidiEvent(void *portBuffer,
                                                          jack_nframes_t time,
-                                                         size_t size) const
+                                                         size_t size)
 {
+    /* Ensure event time is not less than previous event.
+     *
+     * According to jack_midi_event_reserve() documentation, events need to be
+     * sorted by the user, i.e. the time argument may not be less than previous
+     * calls within this process cycle. If this happens, events will go lost.
+     * Some MIDI events which are generated in Konfyt are sent without exact
+     * regard for time. For these events, 0 is typically used for time.
+     * Below, the last MIDI event time is kept track of and when an event is
+     * encountered with an earlier time, the time is rectified to be the same
+     * as the last event.
+     * This should have no effect on events received from outside Konfyt and
+     * passed through, as those events already have appropriate times and are
+     * sorted when coming into Konfyt. */
+
+    if (time < mLastSentMidiEventTime) {
+        time = mLastSentMidiEventTime;
+    } else {
+        mLastSentMidiEventTime = time;
+    }
+
+
     if (portBuffer) {
         return jack_midi_event_reserve(portBuffer, time, size);
     } else {

@@ -170,6 +170,7 @@ private:
     uint32_t mJackSampleRate;
     bool mConnectCallback = false;
     bool mRegisterCallback = false;
+    uint32_t mLastSentMidiEventTime = 0;
 
     // MIDI data received from JACK thread
     RingbufferQMutex<KfJackMidiRxEvent> midiRxBuffer{1000};
@@ -252,7 +253,7 @@ private:
     void* getJackPortBuffer(jack_port_t *port, jack_nframes_t nframes) const;
     jack_midi_data_t* reserveJackMidiEvent(void *portBuffer,
                                            jack_nframes_t time,
-                                           size_t size) const;
+                                           size_t size);
     void jackProcess_prepareAudioPortBuffers(jack_nframes_t nframes);
     void jackProcess_processAudioRoutes(jack_nframes_t nframes);
     void jackProcess_prepareMidiOutBuffers(jack_nframes_t nframes);
