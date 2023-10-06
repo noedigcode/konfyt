@@ -41,7 +41,8 @@
 #include <QTimerEvent>
 
 
-#define KONFYT_JACK_DEFAULT_CLIENT_NAME "Konfyt" // Default client name. Actual name is set in the JACK client.
+// Default client name. Actual name is set in the JACK client.
+#define KONFYT_JACK_DEFAULT_CLIENT_NAME "Konfyt"
 #define KONFYT_JACK_SYSTEM_OUT_LEFT "system:playback_1"
 #define KONFYT_JACK_SYSTEM_OUT_RIGHT "system:playback_2"
 
@@ -166,7 +167,7 @@ signals:
 private:
     jack_client_t* mJackClient;
     jack_nframes_t mJackBufferSize; // TODO THIS MIGHT CHANGE, REGISTER BUFSIZE CALLBACK TO UPDATE
-    bool mClientActive = false; // Flag to indicate if the client has been successfully activated
+    bool mClientActive = false; // True when the Jack client has been successfully activated
     uint32_t mJackSampleRate;
     bool mConnectCallback = false;
     bool mRegisterCallback = false;

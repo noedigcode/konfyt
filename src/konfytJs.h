@@ -10,25 +10,40 @@
 #include <QScopedPointer>
 #include <QSharedPointer>
 
-/* TODO NOTES:
+/* QJSEngine notes
  *
- * Needs "QT += qml" in project file
- * Needs QML/Qt Declarative development packages, "qtdeclarative5-dev" on Ubuntu.
+ * - To use QJSEngine:
  *
+ *   Add to project (.pro) file:  QT += qml
  *
- * QJSEngine must be created in the same thread it is used in. Otherwise crashes
- * happen as the engine's internal cleanup functionality running in the thread
- * that created the engine conflicts with the use of the engine in the other
- * thread.
+ *   Install QML/Qt Declarative development packages.
+ *   For Ubuntu: qtdeclarative5-dev
  *
- * Related links:
+ * - QJSEngine must be created in the same thread it is used in.
  *
- * https://bugreports.qt.io/browse/QTBUG-83410
+ *   Otherwise crashes happen as the engine's internal cleanup functionality
+ *   running in the thread that created the engine conflicts with the use of the
+ *   engine in the other thread.
  *
- * https://stackoverflow.com/questions/74120887/qjsengine-crashes-when-used-in-multithreading-program
+ *   Related links:
  *
- * https://github.com/nst1911/thread-safe-qjsengine
+ *   https://bugreports.qt.io/browse/QTBUG-83410
  *
+ *   https://stackoverflow.com/questions/74120887/qjsengine-crashes-when-used-in-multithreading-program
+ *
+ *   https://github.com/nst1911/thread-safe-qjsengine
+ *
+ * - Objects given to QJSEngine should not be the parent of its parent.
+ *
+ *   If an object given to QJSEngine (i.e. with newQObject()) has a parent of
+ *   which the object is also a parent (i.e. two objects are each other's
+ *   parents), QJSEngine hangs during garbage collection.
+ *
+ * - Destroying a QJSEngine destroys all children.
+ *
+ *   If an object passed to QJSEngine with newQObject() should outlive QJSEngine,
+ *   the object has to already have a parent to prevent QJSEngine from taking
+ *   ownership and destroying the object when it is destroyed.
  */
 
 // =============================================================================
@@ -53,51 +68,88 @@ private:
 
 // =============================================================================
 
-class KonfytJs : public QObject
+class KonfytJSEnv : public QObject
 {
     Q_OBJECT
 public:
-    explicit KonfytJs(QObject *parent = nullptr);
+    explicit KonfytJSEnv(QObject *parent = nullptr);
 
-    void setJackEngine(KonfytJackEngine* jackEngine);
-
-    void resetEnvironment();
     void initScript(QString script);
     void enableScript();
+    bool isEnabled();
     void disableScript();
-    void evaluate(QString script);
+    void runProcess();
+
+    void addEvent(KonfytMidiEvent ev);
+    int eventCount();
 
 signals:
     void print(QString msg);
     void exceptionOccurred();
+    void sendMidiEvent(KonfytMidiEvent ev);
 
 public slots:
-    void onNewMidiEventsAvailable();
-
     // For use from script
-    void sendEvent(QJSValue j);
+    void send(QJSValue j);
 
 private:
     TempParent tempParent; // TODO DEBUG: JS garbage collector doesn't like it if
                            // tempParent's parent is his class, and this class is
                            // tempParent's parent (i.e. circular reference).
-    KonfytJackEngine* jack;
+
 
     QScopedPointer<QJSEngine> js;
     QJSValue mThisClass; // "Sys" object in script environment
     bool mEnabled = false;
 
-    QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent>> mRxBuffer;
-    KfJackMidiRoute* mLastRoute = nullptr;
+    void resetEnvironment();
+    void evaluate(QString script);
 
     QString mScript;
     void runScriptProcessFunction();
+
+    QList<KonfytMidiEvent> midiEvents;
     QJSValue jsMidiRxArray;
 
-    QJSValue midiEventToJSObject(KonfytMidiEvent& ev);
+    QJSValue midiEventToJSObject(const KonfytMidiEvent& ev);
     KonfytMidiEvent jsObjectToMidiEvent(QJSValue j);
 
     QVariant value(const QJSValue& j, QString key, QVariant defaultValue);
+};
+
+// =============================================================================
+
+class KonfytJSEngine : public QObject
+{
+    Q_OBJECT
+public:
+    void setJackEngine(KonfytJackEngine* jackEngine);
+
+    void addLayerScript(KfPatchLayerSharedPtr patchLayer);
+    void removeLayerScript(KfPatchLayerSharedPtr patchLayer)
+    {
+        print("TODO removeLayerScript");
+    }
+
+signals:
+    void print(QString msg);
+
+private:
+    KonfytJackEngine* jack = nullptr;
+    QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent>> mRxBuffer;
+
+    struct ScriptEnv {
+        KonfytJSEnv env;
+    };
+    typedef QSharedPointer<ScriptEnv> ScriptEnvPtr;
+
+    QMap<KfJackMidiRoute*, ScriptEnvPtr> routeEnvMap;
+    QMap<KfPatchLayerSharedPtr, ScriptEnvPtr> layerEnvMap;
+
+    KfJackMidiRoute* jackMidiRouteFromLayer(KfPatchLayerSharedPtr layer);
+
+private slots:
+    void onNewMidiEventsAvailable();
 };
 
 #endif // KONFYTJS_H

@@ -292,21 +292,28 @@ void MainWindow::onJackPortRegisteredOrConnected()
 
 void MainWindow::setupScripting()
 {
-    scripting.moveToThread(&scriptingThread);
+    scriptEngine.moveToThread(&scriptingThread);
     scriptingThread.start();
 
-    // TOOD: Stop thread when exiting
-
-    connect(&scripting, &KonfytJs::print, this, [=](QString msg)
+    connect(&scriptEngine, &KonfytJSEngine::print, this, [=](QString msg)
     {
         print("js: " + msg);
     });
-    connect(&scripting, &KonfytJs::exceptionOccurred, this, [=]()
-    {
-        // TODO
-    });
 
-    scripting.setJackEngine(&jack);
+    scriptEngine.setJackEngine(&jack);
+}
+
+void MainWindow::on_action_Edit_Script_triggered()
+{
+    scriptEditLayer = layerToolMenuSourceitem->getPatchLayer().toStrongRef();
+    if (!scriptEditLayer) {
+        print("Error: edit script: null layer");
+        return;
+    }
+
+    ui->plainTextEdit_script->setPlainText(scriptEditLayer->script());
+
+    ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
 }
 
 /* Scan given directory recursively and add project files to list. */
@@ -5806,7 +5813,7 @@ void MainWindow::setupPatchEngine()
     connect(&pengine, &KonfytPatchEngine::patchLayerLoaded,
             this, &MainWindow::onPatchLayerLoaded);
 
-    pengine.initPatchEngine(&jack, appInfo);
+    pengine.initPatchEngine(&jack, &scriptEngine,appInfo);
 }
 
 /* Update the input and output port settings for the preview patch layer. */
@@ -7480,16 +7487,26 @@ void MainWindow::on_pushButton_showScripting_clicked()
 
 void MainWindow::on_pushButton_script_run_clicked()
 {
-    print("Enabling script.");
-    scripting.disableScript();
-    scripting.initScript(ui->plainTextEdit_script->toPlainText());
-    scripting.enableScript();
+//    print("Enabling script.");
+//    scriptEngine.disableScript();
+//    scriptEngine.initScript(ui->plainTextEdit_script->toPlainText());
+//    scriptEngine.enableScript();
+
+    if (!scriptEditLayer) {
+        print("Error: no script edit layer set");
+        return;
+    }
+
+    pengine.setLayerScript(scriptEditLayer, ui->plainTextEdit_script->toPlainText());
 }
 
 
 void MainWindow::on_pushButton_script_stop_clicked()
 {
-    scripting.disableScript();
-    print("Script disabled.");
+//    scriptEngine.disableScript();
+//    print("Script disabled.");
 }
+
+
+
 

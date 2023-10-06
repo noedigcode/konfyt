@@ -111,6 +111,8 @@ public:
     void setBusIdInProject(int bus);
     int midiInPortIdInProject() const;
     void setMidiInPortIdInProject(int port);
+    QString script() const;
+    void setScript(QString script);
 
     KonfytMidiFilter midiFilter() const;
     void setMidiFilter(KonfytMidiFilter midiFilter);
@@ -139,6 +141,7 @@ private:
     QString mName = "UNINITIALIZED LAYER";
     int mBusIdInProject = 0;
     int mMidiInPortIdInProject = 0;
+    QString mScript;
 
     MidiValueController gainMidiCtrl;
 };

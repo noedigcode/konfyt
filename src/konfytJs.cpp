@@ -1,22 +1,86 @@
 #include "konfytJs.h"
 
-KonfytJs::KonfytJs(QObject *parent)
+KonfytJSEnv::KonfytJSEnv(QObject *parent)
     : QObject{parent}
 {
 
 }
 
-void KonfytJs::setJackEngine(KonfytJackEngine *jackEngine)
+void KonfytJSEnv::initScript(QString script)
 {
-    jack = jackEngine;
-    mRxBuffer = jack->getMidiRxBufferForJs();
+    // Use invoke method to ensure code runs in KonfytJS thread.
+    // QJSEngine must be created in KonfytJS thread.
+    QMetaObject::invokeMethod(this, [=]()
+    {
+        if (!js) { resetEnvironment(); }
 
-    connect(jack, &KonfytJackEngine::newMidiEventsAvailable,
-            this, &KonfytJs::onNewMidiEventsAvailable,
-            Qt::QueuedConnection);
+        mScript = script;
+
+        evaluate(script);
+        evaluate("init()");
+    }, Qt::QueuedConnection);
 }
 
-void KonfytJs::resetEnvironment()
+void KonfytJSEnv::enableScript()
+{
+    // Use invoke method to ensure code runs in KonfytJS thread.
+    // QJSEngine must be created in KonfytJS thread.
+    QMetaObject::invokeMethod(this, [=]()
+    {
+        if (!js) { resetEnvironment(); }
+
+        // Set enabled so script will run in onNewMidiEventsAvailable()
+        mEnabled = true;
+    }, Qt::QueuedConnection);
+}
+
+bool KonfytJSEnv::isEnabled()
+{
+    return mEnabled;
+}
+
+void KonfytJSEnv::disableScript()
+{
+    // Set disabled so script will not run in onNewMidiEventsAvailable()
+    mEnabled = false;
+}
+
+void KonfytJSEnv::runProcess()
+{
+    if (!mEnabled) { return; }
+
+    // Prepare array of events
+    jsMidiRxArray = js->newArray(midiEvents.count());
+    int i = 0;
+    foreach (const KonfytMidiEvent& ev, midiEvents) {
+        QJSValue j = midiEventToJSObject(ev);
+        jsMidiRxArray.setProperty(i, j);
+        i++;
+    }
+    midiEvents.clear();
+
+    mThisClass.setProperty("events", jsMidiRxArray);
+
+    runScriptProcessFunction();
+}
+
+void KonfytJSEnv::addEvent(KonfytMidiEvent ev)
+{
+    midiEvents.append(ev);
+}
+
+int KonfytJSEnv::eventCount()
+{
+    return midiEvents.count();
+}
+
+void KonfytJSEnv::send(QJSValue j)
+{
+    KonfytMidiEvent ev = jsObjectToMidiEvent(j);
+    emit sendMidiEvent(ev);
+}
+
+void KonfytJSEnv::resetEnvironment()
 {
     // This function must only be run from the KonfytJS thread as it creates the
     // QJSEngine which must be created in the KonfytJS thread.
@@ -34,47 +98,7 @@ void KonfytJs::resetEnvironment()
     js->globalObject().setProperty("Sys", mThisClass);
 }
 
-void KonfytJs::initScript(QString script)
-{
-    // Use invoke method to ensure code runs in KonfytJS thread.
-    // QJSEngine must be created in KonfytJS thread.
-    QMetaObject::invokeMethod(this, [=]()
-    {
-        if (!js) { resetEnvironment(); }
-
-        mScript = script;
-
-        evaluate(script);
-        evaluate("init()");
-    }, Qt::QueuedConnection);
-}
-
-void KonfytJs::enableScript()
-{
-    // Use invoke method to ensure code runs in KonfytJS thread.
-    // QJSEngine must be created in KonfytJS thread.
-    QMetaObject::invokeMethod(this, [=]()
-    {
-        if (!js) { resetEnvironment(); }
-
-        // Clear buffer before starting
-        int n = mRxBuffer->availableToRead();
-        for (int i=0; i < n; i++) {
-            mRxBuffer->read();
-        }
-
-        // Set enabled so script will run in onNewMidiEventsAvailable()
-        mEnabled = true;
-    }, Qt::QueuedConnection);
-}
-
-void KonfytJs::disableScript()
-{
-    // Set disabled so script will not run in onNewMidiEventsAvailable()
-    mEnabled = false;
-}
-
-void KonfytJs::evaluate(QString script)
+void KonfytJSEnv::evaluate(QString script)
 {
     QJSValue result = js->evaluate(script);
     if (result.isError()) {
@@ -88,38 +112,12 @@ void KonfytJs::evaluate(QString script)
     }
 }
 
-void KonfytJs::onNewMidiEventsAvailable()
-{
-    if (!mEnabled) { return; }
-
-    int n = mRxBuffer->availableToRead();
-
-    jsMidiRxArray = js->newArray(n);
-
-    for (int i=0; i < n; i++) {
-        KfJackMidiRxEvent rxev = mRxBuffer->read();
-        mLastRoute = rxev.midiRoute;
-        QJSValue j = midiEventToJSObject(rxev.midiEvent);
-        jsMidiRxArray.setProperty(i, j);
-    }
-
-    mThisClass.setProperty("events", jsMidiRxArray);
-
-    runScriptProcessFunction();
-}
-
-void KonfytJs::sendEvent(QJSValue j)
-{
-    KonfytMidiEvent ev = jsObjectToMidiEvent(j);
-    jack->sendMidiEventsOnRoute(mLastRoute, {ev});
-}
-
-void KonfytJs::runScriptProcessFunction()
+void KonfytJSEnv::runScriptProcessFunction()
 {
     evaluate("process()");
 }
 
-QJSValue KonfytJs::midiEventToJSObject(KonfytMidiEvent &ev)
+QJSValue KonfytJSEnv::midiEventToJSObject(const KonfytMidiEvent &ev)
 {
     QJSValue j = js->newObject();
 
@@ -161,7 +159,7 @@ QJSValue KonfytJs::midiEventToJSObject(KonfytMidiEvent &ev)
     return j;
 }
 
-KonfytMidiEvent KonfytJs::jsObjectToMidiEvent(QJSValue j)
+KonfytMidiEvent KonfytJSEnv::jsObjectToMidiEvent(QJSValue j)
 {
     KonfytMidiEvent ev;
 
@@ -190,7 +188,7 @@ KonfytMidiEvent KonfytJs::jsObjectToMidiEvent(QJSValue j)
     return ev;
 }
 
-QVariant KonfytJs::value(const QJSValue &j, QString key, QVariant defaultValue)
+QVariant KonfytJSEnv::value(const QJSValue &j, QString key, QVariant defaultValue)
 {
     QJSValue jv = j.property(key);
     if (jv.isUndefined()) { return defaultValue; }
@@ -223,5 +221,80 @@ void TempParent::removeTemporaryChildren()
         if (this->children().contains(obj)) {
             obj->setParent(nullptr);
         }
+    }
+}
+
+void KonfytJSEngine::setJackEngine(KonfytJackEngine *jackEngine)
+{
+    jack = jackEngine;
+    mRxBuffer = jack->getMidiRxBufferForJs();
+
+    connect(jack, &KonfytJackEngine::newMidiEventsAvailable,
+            this, &KonfytJSEngine::onNewMidiEventsAvailable,
+            Qt::QueuedConnection);
+}
+
+void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
+{
+    if (!patchLayer) {
+        print("Error: addLayerScript: null patchLayer");
+        return;
+    }
+    KfJackMidiRoute* route = jackMidiRouteFromLayer(patchLayer);
+    if (!route) {
+        print("Error: addLayerScript: null Jack MIDI route");
+        return;
+    }
+
+    ScriptEnvPtr s(new ScriptEnv());
+    connect(&(s->env), &KonfytJSEnv::sendMidiEvent, this, [=](KonfytMidiEvent ev)
+    {
+        jack->sendMidiEventsOnRoute(route, {ev});
+    });
+    connect(&(s->env), &KonfytJSEnv::print, this, [=](QString msg)
+    {
+        emit print(QString("script: %1").arg(msg));
+    });
+
+    s->env.initScript(patchLayer->script());
+
+    routeEnvMap.insert(route, s);
+    layerEnvMap.insert(patchLayer, s);
+
+    s->env.enableScript();
+}
+
+KfJackMidiRoute *KonfytJSEngine::jackMidiRouteFromLayer(KfPatchLayerSharedPtr layer)
+{
+    KfJackMidiRoute* ret = nullptr;
+    if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+        ret = layer->midiOutputPortData.jackRoute;
+    } else if (layer->layerType() == KonfytPatchLayer::TypeSfz) {
+        ret = jack->getPluginMidiRoute(layer->sfzData.portsInJackEngine);
+    } else if (layer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+        ret = jack->getPluginMidiRoute(layer->soundfontData.portsInJackEngine);
+    }
+    return ret;
+}
+
+void KonfytJSEngine::onNewMidiEventsAvailable()
+{
+    // Read MIDI rx events from inter-thread buffer, and distribute to script
+    // environments based on the route.
+    int n = mRxBuffer->availableToRead();
+    for (int i=0; i < n; i++) {
+        KfJackMidiRxEvent rxev = mRxBuffer->read();
+        ScriptEnvPtr s = routeEnvMap.value(rxev.midiRoute);
+        if (!s) { continue; }
+        if (!s->env.isEnabled()) { continue; }
+        s->env.addEvent(rxev.midiEvent);
+    }
+
+    // Run all script environment process functions if enabled and they have
+    // MIDI events to process.
+    foreach (ScriptEnvPtr s, routeEnvMap.values()) {
+        if (!s->env.isEnabled()) { continue; }
+        if (s->env.eventCount() == 0) { continue; }
+        s->env.runProcess();
     }
 }

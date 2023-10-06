@@ -156,6 +156,16 @@ void KonfytPatchLayer::setMidiInPortIdInProject(int port)
     mMidiInPortIdInProject = port;
 }
 
+QString KonfytPatchLayer::script() const
+{
+    return mScript;
+}
+
+void KonfytPatchLayer::setScript(QString script)
+{
+    mScript = script;
+}
+
 KonfytMidiFilter KonfytPatchLayer::midiFilter() const
 {
     return mMidiFilter;

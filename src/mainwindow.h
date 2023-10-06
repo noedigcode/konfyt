@@ -738,10 +738,12 @@ private slots:
     // Scripting
     // ========================================================================
 private:
-    KonfytJs scripting;
+    KonfytJSEngine scriptEngine;
     QThread scriptingThread;
     void setupScripting();
-
+    KfPatchLayerSharedPtr scriptEditLayer;
+private slots:
+    void on_action_Edit_Script_triggered();
 
     // ========================================================================
     // External apps
@@ -1005,6 +1007,7 @@ private slots:
     void on_pushButton_showScripting_clicked();
     void on_pushButton_script_run_clicked();
     void on_pushButton_script_stop_clicked();
+
 };
 
 #endif // MAINWINDOW_H
