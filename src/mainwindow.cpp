@@ -76,6 +76,11 @@ MainWindow::~MainWindow()
     jack.stopJackClient();
     consoleWindow.close();
 
+    if (scriptingThread.isRunning()) {
+        scriptingThread.quit();
+        scriptingThread.wait(5000);
+    }
+
     delete ui;
 }
 

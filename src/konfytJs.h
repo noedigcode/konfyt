@@ -78,7 +78,9 @@ public slots:
     void sendEvent(QJSValue j);
 
 private:
-    TempParent tempParent {this};
+    TempParent tempParent; // TODO DEBUG: JS garbage collector doesn't like it if
+                           // tempParent's parent is his class, and this class is
+                           // tempParent's parent (i.e. circular reference).
     KonfytJackEngine* jack;
 
     QScopedPointer<QJSEngine> js;
