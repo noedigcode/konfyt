@@ -12,37 +12,40 @@ void KonfytJSEnv::initScript(QString script)
     // QJSEngine must be created in KonfytJS thread.
     QMetaObject::invokeMethod(this, [=]()
     {
-        if (!js) { resetEnvironment(); }
-
+        scriptInitialisationDone = false;
+        resetEnvironment();
         mScript = script;
 
-        evaluate(script);
-        evaluate("init()");
+        if (mEnabled) {
+            runScriptInitialisation();
+            scriptInitialisationDone = true;
+        }
+
     }, Qt::QueuedConnection);
 }
 
-void KonfytJSEnv::enableScript()
+void KonfytJSEnv::setEnabled(bool enable)
 {
     // Use invoke method to ensure code runs in KonfytJS thread.
     // QJSEngine must be created in KonfytJS thread.
     QMetaObject::invokeMethod(this, [=]()
     {
-        if (!js) { resetEnvironment(); }
+        if (enable) {
+            if (js && !scriptInitialisationDone) {
+                runScriptInitialisation();
+                scriptInitialisationDone = true;
+            }
+        }
 
-        // Set enabled so script will run in onNewMidiEventsAvailable()
-        mEnabled = true;
+        // Enabled state will be taken into account in in onNewMidiEventsAvailable()
+        mEnabled = enable;
+
     }, Qt::QueuedConnection);
 }
 
 bool KonfytJSEnv::isEnabled()
 {
     return mEnabled;
-}
-
-void KonfytJSEnv::disableScript()
-{
-    // Set disabled so script will not run in onNewMidiEventsAvailable()
-    mEnabled = false;
 }
 
 void KonfytJSEnv::runProcess()
@@ -107,9 +110,15 @@ void KonfytJSEnv::evaluate(QString script)
                   result.property("lineNumber").toInt()));
         print(result.toString());
         print("-----------------------------");
-        disableScript();
+        setEnabled(false);
         emit exceptionOccurred();
     }
+}
+
+void KonfytJSEnv::runScriptInitialisation()
+{
+    evaluate(mScript);
+    evaluate("init()");
 }
 
 void KonfytJSEnv::runScriptProcessFunction()
@@ -125,36 +134,45 @@ QJSValue KonfytJSEnv::midiEventToJSObject(const KonfytMidiEvent &ev)
     switch (ev.type()) {
     case MIDI_EVENT_TYPE_NOTEON:
         type = "noteon";
+        j.setProperty("note", ev.data1());
+        j.setProperty("velocity", ev.data2());
         break;
     case MIDI_EVENT_TYPE_NOTEOFF:
         type = "noteoff";
+        j.setProperty("note", ev.data1());
+        j.setProperty("velocity", ev.data2());
         break;
     case MIDI_EVENT_TYPE_POLY_AFTERTOUCH:
         type = "polyaftertouch";
+        j.setProperty("note", ev.data1());
+        j.setProperty("pressure", ev.data2());
         break;
     case MIDI_EVENT_TYPE_CC:
         type = "cc";
+        j.setProperty("cc", ev.data1());
+        j.setProperty("value", ev.data2());
         break;
     case MIDI_EVENT_TYPE_PROGRAM:
         type = "program";
+        j.setProperty("program", ev.data1());
+        j.setProperty("bankmsb", ev.bankMSB);
+        j.setProperty("banklsb", ev.bankLSB);
         break;
     case MIDI_EVENT_TYPE_AFTERTOUCH:
         type = "aftertouch";
+        j.setProperty("pressure", ev.data1());
         break;
     case MIDI_EVENT_TYPE_PITCHBEND:
         type = "pitchbend";
+        j.setProperty("value", ev.pitchbendValueSigned());;
         break;
     case MIDI_EVENT_TYPE_SYSTEM:
         type = "sysex";
+        j.setProperty("data", ev.dataToHexString());
         break;
     }
     j.setProperty("type", type);
-
     j.setProperty("channel", ev.channel);
-    j.setProperty("bankmsb", ev.bankMSB);
-    j.setProperty("banklsb", ev.bankLSB);
-    j.setProperty("data1", ev.data1());
-    j.setProperty("data2", ev.data2());
 
     return j;
 }
@@ -163,26 +181,39 @@ KonfytMidiEvent KonfytJSEnv::jsObjectToMidiEvent(QJSValue j)
 {
     KonfytMidiEvent ev;
 
-    int channel = value(j, "channel", 0).toInt();
-    int bankLSB = value(j, "banklsb", -1).toInt();
-    int bankMSB = value(j, "bankmsb", -1).toInt();
-    int data1 = value(j, "data1", 0).toInt();
-    int data2 = value(j, "data2", 0).toInt();
+    ev.channel = value(j, "channel", 0).toInt();
     QString type = value(j, "type", "noteon").toString();
-
-    ev.channel = channel;
     if (type == "noteon") {
-        ev.setNoteOn(data1, data2);
+        int note = value(j, "note", 0).toInt();
+        int velocity = value(j, "velocity", 0).toInt();
+        ev.setNoteOn(note, velocity);
     } else if (type == "noteoff") {
-        ev.setNoteOff(data1, data2);
+        int note = value(j, "note", 0).toInt();
+        int velocity = value(j, "velocity", 0).toInt();
+        ev.setNoteOff(note, velocity);
     } else if (type == "cc") {
-        ev.setCC(data1, data2);
+        int cc = value(j, "cc", 0).toInt();
+        int val = value(j, "value", 0).toInt();
+        ev.setCC(cc, val);
     } else if (type == "program") {
-        ev.setProgram(data1);
-        ev.bankLSB = bankLSB;
-        ev.bankMSB = bankMSB;
+        int program = value(j, "program", 0).toInt();
+        ev.setProgram(program);
+        ev.bankLSB = value(j, "banklsb", -1).toInt();
+        ev.bankMSB = value(j, "bankmsb", -1).toInt();
     } else if (type == "pitchbend") {
-        ev.setPitchbend(data1);
+        int pb = value(j, "value", MIDI_PITCHBEND_ZERO).toInt();
+        ev.setPitchbend(pb);
+    } else if (type == "polyaftertouch") {
+        int note = value(j, "note", 0).toInt();
+        int pres = value(j, "pressure", 0).toInt();
+        ev.setPolyAftertouch(note, pres);
+    } else if (type == "aftertouch") {
+        int pres = value(j, "pressure", 0).toInt();
+        ev.setAftertouch(pres);
+    } else if (type == "sysex") {
+        QString data = value(j, "data", "").toString();
+        ev.setDataFromHexString(data);
+        ev.setType(MIDI_EVENT_TYPE_SYSTEM);
     }
 
     return ev;
@@ -246,22 +277,35 @@ void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
         return;
     }
 
-    ScriptEnvPtr s(new ScriptEnv());
-    connect(&(s->env), &KonfytJSEnv::sendMidiEvent, this, [=](KonfytMidiEvent ev)
+    QMetaObject::invokeMethod(this, [=]()
     {
-        jack->sendMidiEventsOnRoute(route, {ev});
-    });
-    connect(&(s->env), &KonfytJSEnv::print, this, [=](QString msg)
-    {
-        emit print(QString("script: %1").arg(msg));
-    });
+        ScriptEnvPtr s(new ScriptEnv());
+        connect(&(s->env), &KonfytJSEnv::sendMidiEvent, this, [=](KonfytMidiEvent ev)
+        {
+            jack->sendMidiEventsOnRoute(route, {ev});
+        });
+        connect(&(s->env), &KonfytJSEnv::print, this, [=](QString msg)
+        {
+            emit print(QString("script: %1").arg(msg));
+        });
 
-    s->env.initScript(patchLayer->script());
+        s->env.setEnabled(patchLayer->isScriptEnabled());
+        s->env.initScript(patchLayer->script());
 
-    routeEnvMap.insert(route, s);
-    layerEnvMap.insert(patchLayer, s);
+        routeEnvMap.insert(route, s);
+        layerEnvMap.insert(patchLayer, s);
+    }, Qt::QueuedConnection);
+}
 
-    s->env.enableScript();
+void KonfytJSEngine::setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable)
+{
+    ScriptEnvPtr s = layerEnvMap.value(patchLayer);
+    if (!s) {
+        print("Error: setScriptEnabled: null patch layer");
+        return;
+    }
+
+    s->env.setEnabled(enable);
 }
 
 KfJackMidiRoute *KonfytJSEngine::jackMidiRouteFromLayer(KfPatchLayerSharedPtr layer)

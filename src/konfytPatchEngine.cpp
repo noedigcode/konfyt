@@ -534,6 +534,28 @@ void KonfytPatchEngine::updateLayerPatchMidiFilterInJackEngine(
     }
 }
 
+void KonfytPatchEngine::updateLayerBlockMidiDirectThroughInJack(KfPatchLayerSharedPtr patchLayer)
+{
+    bool block = !patchLayer->isPassMidiThrough();
+
+    if (patchLayer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+
+        jack->setSoundfontBlockMidiDirectThrough(
+                    patchLayer->soundfontData.portsInJackEngine, block);
+
+    } else if (patchLayer->layerType() == KonfytPatchLayer::TypeSfz) {
+
+        jack->setPluginBlockMidiDirectThrough(
+                    patchLayer->sfzData.portsInJackEngine, block);
+
+    } else if (patchLayer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+
+        jack->setRouteBlockMidiDirectThrough(
+                    patchLayer->midiOutputPortData.jackRoute, block);
+
+    }
+}
+
 void KonfytPatchEngine::setupAndInitFluidsynthEngine()
 {
     connect(&fluidsynthEngine, &KonfytFluidsynthEngine::print,
@@ -667,16 +689,22 @@ void KonfytPatchEngine::setLayerMidiInPort(KfPatchLayerWeakPtr patchLayer, int p
     updateLayerRouting(patchLayer);
 }
 
-void KonfytPatchEngine::setLayerScript(KfPatchLayerWeakPtr patchLayer, QString script)
+void KonfytPatchEngine::setLayerScript(KfPatchLayerSharedPtr patchLayer, QString script)
 {
-    KfPatchLayerSharedPtr l = patchLayer.toStrongRef();
-    if (!l) {
-        print("Error: setLayerScript null layer");
-        return;
-    }
-
-    l->setScript(script);
+    patchLayer->setScript(script);
     scriptEngine->addLayerScript(patchLayer);
+}
+
+void KonfytPatchEngine::setLayerScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable)
+{
+    patchLayer->setScriptEnabled(enable);
+    scriptEngine->setScriptEnabled(patchLayer, enable);
+}
+
+void KonfytPatchEngine::setLayerPassMidiThrough(KfPatchLayerSharedPtr patchLayer, bool pass)
+{
+    patchLayer->setPassMidiThrough(pass);
+    updateLayerBlockMidiDirectThroughInJack(patchLayer);
 }
 
 void KonfytPatchEngine::sendCurrentPatchMidi()
@@ -802,6 +830,7 @@ void KonfytPatchEngine::loadSfzLayer(KfPatchLayerSharedPtr layer)
 
     // Add to script engine
     scriptEngine->addLayerScript(layer);
+    updateLayerBlockMidiDirectThroughInJack(layer);
 
     emit patchLayerLoaded(layer); // TODO 2023-10-06 Why only for SFZ layers?
 }
@@ -826,6 +855,7 @@ void KonfytPatchEngine::loadSoundfontLayer(KfPatchLayerSharedPtr layer)
 
     // Add to script engine
     scriptEngine->addLayerScript(layer);
+    updateLayerBlockMidiDirectThroughInJack(layer);
 }
 
 void KonfytPatchEngine::loadAudioInputPort(KfPatchLayerSharedPtr layer)
@@ -885,6 +915,7 @@ void KonfytPatchEngine::loadMidiOutputPort(KfPatchLayerSharedPtr layer)
 
     // Add to script engine
     scriptEngine->addLayerScript(layer);
+    updateLayerBlockMidiDirectThroughInJack(layer);
 }
 
 void KonfytPatchEngine::onSfzEngineInitDone(QString error)

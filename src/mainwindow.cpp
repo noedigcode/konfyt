@@ -311,7 +311,21 @@ void MainWindow::on_action_Edit_Script_triggered()
         return;
     }
 
-    ui->plainTextEdit_script->setPlainText(scriptEditLayer->script());
+    QString script = scriptEditLayer->script();
+    if (script.trimmed().isEmpty()) {
+        // Insert template
+        QFile file("://blank.js");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            print("Error loading blank template script.");
+        } else {
+            script = file.readAll();
+            file.close();
+        }
+    }
+
+    ui->plainTextEdit_script->setPlainText(script);
+    ui->checkBox_script_enable->setChecked(scriptEditLayer->isScriptEnabled());
+    ui->checkBox_script_passMidiThrough->setChecked(scriptEditLayer->isPassMidiThrough());
 
     ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
 }
@@ -4262,7 +4276,8 @@ void MainWindow::updateLayerToolMenu()
         layerToolMenu.addMenu(&layerMidiInPortsMenu);
         updateMidiInChannelMenu(&layerMidiInChannelMenu, patchLayer->midiFilter().inChan);
         layerToolMenu.addMenu(&layerMidiInChannelMenu);
-        layerToolMenu.addAction( ui->actionEdit_MIDI_Filter );
+        layerToolMenu.addAction(ui->actionEdit_MIDI_Filter);
+        layerToolMenu.addAction(ui->action_Edit_Script);
     }
     // Menu items for Audio input port layers
     if (type == KonfytPatchLayer::TypeAudioIn) {
@@ -7487,26 +7502,35 @@ void MainWindow::on_pushButton_showScripting_clicked()
 
 void MainWindow::on_pushButton_script_run_clicked()
 {
-//    print("Enabling script.");
-//    scriptEngine.disableScript();
-//    scriptEngine.initScript(ui->plainTextEdit_script->toPlainText());
-//    scriptEngine.enableScript();
-
     if (!scriptEditLayer) {
         print("Error: no script edit layer set");
         return;
     }
 
     pengine.setLayerScript(scriptEditLayer, ui->plainTextEdit_script->toPlainText());
+    setProjectModified();
 }
 
-
-void MainWindow::on_pushButton_script_stop_clicked()
+void MainWindow::on_checkBox_script_enable_toggled(bool checked)
 {
-//    scriptEngine.disableScript();
-//    print("Script disabled.");
+    if (!scriptEditLayer) {
+        print("Error: no script edit layer set");
+        return;
+    }
+
+    pengine.setLayerScriptEnabled(scriptEditLayer, checked);
+    setProjectModified();
 }
 
 
+void MainWindow::on_checkBox_script_passMidiThrough_toggled(bool checked)
+{
+    if (!scriptEditLayer) {
+        print("Error: no script edit layer set");
+        return;
+    }
 
+    pengine.setLayerPassMidiThrough(scriptEditLayer, checked);
+    setProjectModified();
+}
 

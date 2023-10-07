@@ -114,7 +114,8 @@ QMAKE_CXXFLAGS += -fpermissive
 QMAKE_LFLAGS += -fpermissive
 
 RESOURCES += \
-    images.qrc
+    images.qrc \
+    scriptTemplates/scriptTemplates.qrc
 
 
 

@@ -166,6 +166,26 @@ void KonfytPatchLayer::setScript(QString script)
     mScript = script;
 }
 
+bool KonfytPatchLayer::isScriptEnabled() const
+{
+    return mScriptEnabled;
+}
+
+void KonfytPatchLayer::setScriptEnabled(bool enable)
+{
+    mScriptEnabled = enable;
+}
+
+bool KonfytPatchLayer::isPassMidiThrough() const
+{
+    return mPassMidiThrough;
+}
+
+void KonfytPatchLayer::setPassMidiThrough(bool enable)
+{
+    mPassMidiThrough = enable;
+}
+
 KonfytMidiFilter KonfytPatchLayer::midiFilter() const
 {
     return mMidiFilter;

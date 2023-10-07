@@ -77,6 +77,9 @@ struct KfJackMidiRoute
 protected:
     bool active = false;
     bool prevActive = false;
+    // True to block events from being sent through, for when events need to be
+    // diverted solely to scripting.
+    bool blockDirectThrough = false;
     KonfytMidiFilter preFilter;
     KonfytMidiFilter filter;
     KfJackMidiPort* source = nullptr;

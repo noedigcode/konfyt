@@ -1006,8 +1006,9 @@ private slots:
     void on_actionPatch_MIDI_Filter_triggered();
     void on_pushButton_showScripting_clicked();
     void on_pushButton_script_run_clicked();
-    void on_pushButton_script_stop_clicked();
 
+    void on_checkBox_script_enable_toggled(bool checked);
+    void on_checkBox_script_passMidiThrough_toggled(bool checked);
 };
 
 #endif // MAINWINDOW_H

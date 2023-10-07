@@ -265,6 +265,21 @@ void KonfytMidiEvent::setSysEx(const unsigned char *bytes, int size)
     mDatasize = size;
 }
 
+void KonfytMidiEvent::setPolyAftertouch(uint8_t note, uint8_t pressure)
+{
+    mType = MIDI_EVENT_TYPE_POLY_AFTERTOUCH;
+    mData[0] = note;
+    mData[1] = pressure;
+    mDatasize = 2;
+}
+
+void KonfytMidiEvent::setAftertouch(uint8_t pressure)
+{
+    mType = MIDI_EVENT_TYPE_AFTERTOUCH;
+    mData[0] = pressure;
+    mDatasize = 1;
+}
+
 int KonfytMidiEvent::note() const { return mData[0]; }
 
 int KonfytMidiEvent::velocity() const { return mData[1]; }

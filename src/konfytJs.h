@@ -10,6 +10,9 @@
 #include <QScopedPointer>
 #include <QSharedPointer>
 
+
+// =============================================================================
+
 /* QJSEngine notes
  *
  * - To use QJSEngine:
@@ -46,6 +49,7 @@
  *   ownership and destroying the object when it is destroyed.
  */
 
+
 // =============================================================================
 
 /* This class can act as a temporary parent of QObjects to prevent other objects
@@ -68,6 +72,7 @@ private:
 
 // =============================================================================
 
+/* Javascript environment for a script. */
 class KonfytJSEnv : public QObject
 {
     Q_OBJECT
@@ -75,9 +80,8 @@ public:
     explicit KonfytJSEnv(QObject *parent = nullptr);
 
     void initScript(QString script);
-    void enableScript();
+    void setEnabled(bool enable);
     bool isEnabled();
-    void disableScript();
     void runProcess();
 
     void addEvent(KonfytMidiEvent ev);
@@ -106,6 +110,8 @@ private:
     void evaluate(QString script);
 
     QString mScript;
+    bool scriptInitialisationDone = false;
+    void runScriptInitialisation();
     void runScriptProcessFunction();
 
     QList<KonfytMidiEvent> midiEvents;
@@ -119,6 +125,8 @@ private:
 
 // =============================================================================
 
+/* Engine that manages all the scripts and routes MIDI events between scripts
+ * and Jack. */
 class KonfytJSEngine : public QObject
 {
     Q_OBJECT
@@ -130,6 +138,8 @@ public:
     {
         print("TODO removeLayerScript");
     }
+
+    void setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
 
 signals:
     void print(QString msg);

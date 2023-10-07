@@ -8990,17 +8990,30 @@ function copy(ev)
                    <string>Update</string>
                   </property>
                  </widget>
-                 <widget class="QPushButton" name="pushButton_script_stop">
+                 <widget class="QCheckBox" name="checkBox_script_enable">
                   <property name="geometry">
                    <rect>
-                    <x>220</x>
+                    <x>120</x>
                     <y>20</y>
-                    <width>84</width>
-                    <height>25</height>
+                    <width>201</width>
+                    <height>23</height>
                    </rect>
                   </property>
                   <property name="text">
-                   <string>Stop</string>
+                   <string>Enable Script</string>
+                  </property>
+                 </widget>
+                 <widget class="QCheckBox" name="checkBox_script_passMidiThrough">
+                  <property name="geometry">
+                   <rect>
+                    <x>340</x>
+                    <y>20</y>
+                    <width>211</width>
+                    <height>23</height>
+                   </rect>
+                  </property>
+                  <property name="text">
+                   <string>Pass Original MIDI Through</string>
                   </property>
                  </widget>
                 </widget>

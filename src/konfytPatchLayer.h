@@ -28,9 +28,8 @@
 #include "konfytMidiFilter.h"
 #include "konfytStructs.h"
 
-// ----------------------------------------------------
-// Structure for soundfont program layer
-// ----------------------------------------------------
+// ============================================================================
+
 struct LayerSoundfontData
 {
     QString parentSoundfont;
@@ -39,9 +38,8 @@ struct LayerSoundfontData
     KfJackPluginPorts* portsInJackEngine = nullptr;
 };
 
-// ----------------------------------------------------
-// Structure for SFZ layer
-// ----------------------------------------------------
+// ============================================================================
+
 struct LayerSfzData
 {
     QString path;
@@ -52,18 +50,16 @@ struct LayerSfzData
     int indexInEngine = -1;
 };
 
-// ----------------------------------------------------
-// Structure for midi output port layer
-// ----------------------------------------------------
+// ============================================================================
+
 struct LayerMidiOutData
 {
     int portIdInProject;
     KfJackMidiRoute* jackRoute = nullptr;
 };
 
-// ----------------------------------------------------
-// Structure for audio input port layer
-// ----------------------------------------------------
+// ============================================================================
+
 struct LayerAudioInData
 {
     int portIdInProject;
@@ -71,10 +67,8 @@ struct LayerAudioInData
     KfJackAudioRoute* jackRouteRight = nullptr;
 };
 
+// ============================================================================
 
-// ----------------------------------------------------
-// Class
-// ----------------------------------------------------
 class KonfytPatchLayer
 {
 public:
@@ -111,8 +105,13 @@ public:
     void setBusIdInProject(int bus);
     int midiInPortIdInProject() const;
     void setMidiInPortIdInProject(int port);
+
     QString script() const;
     void setScript(QString script);
+    bool isScriptEnabled() const;
+    void setScriptEnabled(bool enable);
+    bool isPassMidiThrough() const;
+    void setPassMidiThrough(bool enable);
 
     KonfytMidiFilter midiFilter() const;
     void setMidiFilter(KonfytMidiFilter midiFilter);
@@ -141,7 +140,12 @@ private:
     QString mName = "UNINITIALIZED LAYER";
     int mBusIdInProject = 0;
     int mMidiInPortIdInProject = 0;
+
     QString mScript;
+    bool mScriptEnabled = false;
+    // True to pass original events through to output in addition to script
+    // processing.
+    bool mPassMidiThrough = true;
 
     MidiValueController gainMidiCtrl;
 };

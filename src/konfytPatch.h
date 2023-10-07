@@ -71,6 +71,11 @@
 #define XML_PATCH_AUDIOIN_SOLO "solo"
 #define XML_PATCH_AUDIOIN_MUTE "mute"
 
+#define XML_PATCH_LAYER_SCRIPT "script"
+#define XML_PATCH_LAYER_SCRIPT_CONTENT "content"
+#define XML_PATCH_LAYER_SCRIPT_ENABLED "enabled"
+#define XML_PATCH_LAYER_SCRIPT_PASS_MIDI_THROUGH "passMidiThrough"
+
 #define XML_PATCH_MIDISENDLIST "midiSendList"
 
 typedef QWeakPointer<KonfytPatchLayer> KfPatchLayerWeakPtr;
@@ -163,6 +168,14 @@ private:
     void xmlReadMidiOutLayer(QXmlStreamReader* r, QString* errors = nullptr);
     void xmlWriteAudioInLayer(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
     void xmlReadAudioInLayer(QXmlStreamReader* r, QString* errors = nullptr);
+
+    struct LayerScriptData {
+        QString content;
+        bool enabled = false;
+        bool passMidiThrough = true;
+    };
+    void xmlWriteLayerScript(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
+    LayerScriptData xmlReadLayerScript(QXmlStreamReader* r);
 
     void appendError(QString *errorString, QString msg);
 };

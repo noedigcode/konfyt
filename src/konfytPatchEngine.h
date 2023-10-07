@@ -86,7 +86,10 @@ public:
     void setLayerMute(int layerIndex, bool mute);
     void setLayerBus(KfPatchLayerWeakPtr patchLayer, int bus);
     void setLayerMidiInPort(KfPatchLayerWeakPtr patchLayer, int portId);
-    void setLayerScript(KfPatchLayerWeakPtr patchLayer, QString script);
+
+    void setLayerScript(KfPatchLayerSharedPtr patchLayer, QString script);
+    void setLayerScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
+    void setLayerPassMidiThrough(KfPatchLayerSharedPtr patchLayer, bool pass);
 
     void sendCurrentPatchMidi();
     void sendLayerMidi(KfPatchLayerWeakPtr patchLayer);
@@ -131,6 +134,8 @@ private:
     void setLayerActive(KfPatchLayerSharedPtr layer, bool active);
     void updateLayerPatchMidiFilterInJackEngine(KonfytPatch* patch,
                                                 KfPatchLayerSharedPtr layer);
+
+    void updateLayerBlockMidiDirectThroughInJack(KfPatchLayerSharedPtr patchLayer);
 
     KonfytFluidsynthEngine fluidsynthEngine;
     void setupAndInitFluidsynthEngine();
