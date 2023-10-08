@@ -7494,12 +7494,6 @@ void MainWindow::on_actionPatch_MIDI_Filter_triggered()
     showMidiFilterEditor();
 }
 
-void MainWindow::on_pushButton_showScripting_clicked()
-{
-    ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
-}
-
-
 void MainWindow::on_pushButton_script_run_clicked()
 {
     if (!scriptEditLayer) {
@@ -7518,8 +7512,10 @@ void MainWindow::on_checkBox_script_enable_toggled(bool checked)
         return;
     }
 
+    if (scriptEditLayer->isScriptEnabled() != checked) {
+        setProjectModified();
+    }
     pengine.setLayerScriptEnabled(scriptEditLayer, checked);
-    setProjectModified();
 }
 
 
@@ -7530,7 +7526,9 @@ void MainWindow::on_checkBox_script_passMidiThrough_toggled(bool checked)
         return;
     }
 
+    if (scriptEditLayer->isPassMidiThrough() != checked) {
+        setProjectModified();
+    }
     pengine.setLayerPassMidiThrough(scriptEditLayer, checked);
-    setProjectModified();
 }
 

@@ -17,6 +17,7 @@ TEMPLATE = app
 INCLUDEPATH += src
 
 SOURCES += src/main.cpp\
+    scriptEditWidget.cpp \
     src/consolewindow.cpp \
     src/indicatorHandlers.cpp \
     src/konfytAudio.cpp \
@@ -47,6 +48,7 @@ SOURCES += src/main.cpp\
     src/remotescanner.cpp
 
 HEADERS  += src/mainwindow.h \
+    scriptEditWidget.h \
     src/consolewindow.h \
     src/indicatorHandlers.h \
     src/konfytAudio.h \

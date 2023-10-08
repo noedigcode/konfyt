@@ -1004,9 +1004,8 @@ private slots:
     void on_toolButton_connectionsPage_portsBussesListOptions_clicked();
 
     void on_actionPatch_MIDI_Filter_triggered();
-    void on_pushButton_showScripting_clicked();
-    void on_pushButton_script_run_clicked();
 
+    void on_pushButton_script_run_clicked();
     void on_checkBox_script_enable_toggled(bool checked);
     void on_checkBox_script_passMidiThrough_toggled(bool checked);
 };
