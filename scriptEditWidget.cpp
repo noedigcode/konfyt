@@ -87,7 +87,7 @@ void ScriptEditWidget::deIndent()
         int pos = c.positionInBlock();
         int deleted = 0;
         for (int i = pos-1; i >= 0; i--) {
-            if (block.at(i) == ' ') {
+            if (block.at(i) == ' ') { // TODO 2023-10-09: Use safer function e.g. .mid() everywhere to quietly fail and not crash on string errors.
                 c.deletePreviousChar();
                 deleted++;
                 if (deleted >= 4) { break; }
