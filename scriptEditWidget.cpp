@@ -15,19 +15,51 @@ void ScriptEditWidget::keyPressEvent(QKeyEvent *event)
 
     if (event->key() == Qt::Key_Tab) {
 
-        if (shiftOnly) {
+        // Insert spaces instead of tab
+        insertPlainText("    ");
 
-            // TODO Shift+Tab decrease indentation
+    } else if (event->key() == Qt::Key_Backtab) {
 
-        } else {
-            // Insert spaces instead of tab
-            insertPlainText("    ");
+        // Shift+Tab removes tab before cursor
+        QTextCursor c = textCursor();
+        QString block = c.block().text();
+        int pos = c.positionInBlock();
+        int deleted = 0;
+        for (int i = pos-1; i >= 0; i--) {
+            if (block.at(i) == ' ') {
+                c.deletePreviousChar();
+                deleted++;
+                if (deleted >= 4) { break; }
+            } else if (block.at(i) == '\t') {
+                c.deletePreviousChar();
+                break;
+            } else {
+                break;
+            }
         }
 
     } else if (event->key() == Qt::Key_Slash) {
 
         if (ctrlOnly) {
-            // TODO Ctrl+/ toggles line comment
+            // Ctrl+/ toggles line comment. Only toggle at start of line.
+
+            // TODO: do for multiple lines
+
+            QTextCursor c = textCursor();
+            QString block = c.block().text();
+            bool commented = block.startsWith("//");
+            if (commented) {
+                c.setPosition(c.block().position());
+                c.deleteChar();
+                c.deleteChar();
+            } else {
+                c.setPosition(c.block().position());
+                c.insertText("//");
+            }
+
+        } else {
+            // Otherwise use default implementation
+            QPlainTextEdit::keyPressEvent(event);
         }
 
     } else if ( (event->key() == Qt::Key_Return)
