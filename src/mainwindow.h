@@ -163,6 +163,10 @@ private:
     QStringList scanDirForFiles(QString dirname, QString filenameExtension = "");
     void openFileManager(QString path);
 
+    // Widget helper functions
+private:
+    void highlightButton(QAbstractButton* button, bool highlight);
+
     // ========================================================================
     // Project related
     // ========================================================================
@@ -742,6 +746,7 @@ private:
     QThread scriptingThread;
     void setupScripting();
     KfPatchLayerSharedPtr scriptEditLayer;
+    bool scriptEditorIgnoreChanged = false;
 private slots:
     void on_action_Edit_Script_triggered();
 
@@ -1005,9 +1010,11 @@ private slots:
 
     void on_actionPatch_MIDI_Filter_triggered();
 
-    void on_pushButton_script_run_clicked();
+    void on_pushButton_script_update_clicked();
     void on_checkBox_script_enable_toggled(bool checked);
     void on_checkBox_script_passMidiThrough_toggled(bool checked);
+    void on_pushButton_scriptEditor_OK_clicked();
+    void on_plainTextEdit_script_textChanged();
 };
 
 #endif // MAINWINDOW_H

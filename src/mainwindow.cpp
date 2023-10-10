@@ -323,6 +323,7 @@ void MainWindow::on_action_Edit_Script_triggered()
         }
     }
 
+    scriptEditorIgnoreChanged = true;
     ui->plainTextEdit_script->setPlainText(script);
     ui->checkBox_script_enable->setChecked(scriptEditLayer->isScriptEnabled());
     ui->checkBox_script_passMidiThrough->setChecked(scriptEditLayer->isPassMidiThrough());
@@ -2568,6 +2569,24 @@ void MainWindow::openFileManager(QString path)
     }
 }
 
+void MainWindow::highlightButton(QAbstractButton *button, bool highlight)
+{
+    QVariant baseStylesheet = button->property("KonfytBaseStylesheet");
+    if (!baseStylesheet.isValid()) {
+        // The property does not exist so this must be the first time this
+        // function is called with this button. Store its original stylesheet.
+        baseStylesheet = button->styleSheet();
+        button->setProperty("KonfytBaseStylesheet", baseStylesheet);
+    }
+
+    QString ss = baseStylesheet.toString();
+    if (highlight) {
+        // Append base stylesheet with the prototype highlight button's
+        ss += ui->pushButton_dev_highlighted->styleSheet();
+    }
+    button->setStyleSheet(ss);
+}
+
 /* Setup the initial project based on command-line arguments. */
 void MainWindow::setupInitialProjectFromCmdLineArgs()
 {
@@ -3314,19 +3333,7 @@ void MainWindow::updateProjectNameInGui()
 
 void MainWindow::onProjectModifiedStateChanged(bool modified)
 {
-    QString stylesheet_base = "border-top-left-radius: 0;"
-            "border-bottom-left-radius: 0;"
-            "border-top-right-radius: 0;"
-            "border-bottom-right-radius: 0;";
-
-    QString stylesheet_normal = stylesheet_base + "border-top-right-radius: 0; border-bottom-right-radius: 0;";
-    QString stylesheet_orange = stylesheet_base + "background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(95, 59, 28, 255), stop:1 rgba(199, 117, 18, 255));border-top-right-radius: 0; border-bottom-right-radius: 0;";
-
-    if (modified) {
-        ui->toolButton_Project->setStyleSheet(stylesheet_orange);
-    } else {
-        ui->toolButton_Project->setStyleSheet(stylesheet_normal);
-    }
+    highlightButton(ui->toolButton_Project, modified);
 }
 
 void MainWindow::onProjectMidiPickupRangeChanged(int range)
@@ -7494,7 +7501,7 @@ void MainWindow::on_actionPatch_MIDI_Filter_triggered()
     showMidiFilterEditor();
 }
 
-void MainWindow::on_pushButton_script_run_clicked()
+void MainWindow::on_pushButton_script_update_clicked()
 {
     if (!scriptEditLayer) {
         print("Error: no script edit layer set");
@@ -7502,6 +7509,7 @@ void MainWindow::on_pushButton_script_run_clicked()
     }
 
     pengine.setLayerScript(scriptEditLayer, ui->plainTextEdit_script->toPlainText());
+    highlightButton(ui->pushButton_script_update, false);
     setProjectModified();
 }
 
@@ -7514,8 +7522,12 @@ void MainWindow::on_checkBox_script_enable_toggled(bool checked)
 
     if (scriptEditLayer->isScriptEnabled() != checked) {
         setProjectModified();
+        if (checked) {
+            // If enabling, also update the script
+            on_pushButton_script_update_clicked();
+        }
+        pengine.setLayerScriptEnabled(scriptEditLayer, checked);
     }
-    pengine.setLayerScriptEnabled(scriptEditLayer, checked);
 }
 
 
@@ -7528,7 +7540,26 @@ void MainWindow::on_checkBox_script_passMidiThrough_toggled(bool checked)
 
     if (scriptEditLayer->isPassMidiThrough() != checked) {
         setProjectModified();
+        pengine.setLayerPassMidiThrough(scriptEditLayer, checked);
     }
-    pengine.setLayerPassMidiThrough(scriptEditLayer, checked);
+}
+
+
+void MainWindow::on_pushButton_scriptEditor_OK_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+}
+
+
+void MainWindow::on_plainTextEdit_script_textChanged()
+{
+    if (scriptEditorIgnoreChanged) {
+        // Text changed by internals
+        scriptEditorIgnoreChanged = false;
+        highlightButton(ui->pushButton_script_update, false);
+    } else {
+        // Text changed by user. Highlight update button to indicate.
+        highlightButton(ui->pushButton_script_update, true);
+    }
 }
 
