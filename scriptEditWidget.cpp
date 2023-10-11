@@ -182,10 +182,31 @@ void ScriptEditWidget::insertEnterKeepIndentation()
         }
     }
 
-    // Determine if at end of line preceded by a {
+    // Determine if at end of line preceded by a { and whether a } needs to be added.
+    bool addClosingBrace = false;
     bool braceOpen = false;
     if (textCursor().atBlockEnd() && block.endsWith("{")) {
         braceOpen = true;
+
+        // Count braces from start of text, + for { and - for }
+        QString text = this->toPlainText();
+        int braceCount = 0;
+
+        for (int i=0; i < text.count(); i++) {
+            QChar c = text.at(i);
+            if (c == '{') {
+                braceCount++;
+            } else if (c == '}') {
+                braceCount--;
+            }
+            if ((braceCount == 0) && (i > textCursor().position())) {
+                break;
+            }
+        }
+
+        // braceCount > 0 means there are more opening braces than matching
+        // closing braces.
+        addClosingBrace = (braceCount > 0);
     }
 
     // Create indentation text
@@ -195,16 +216,18 @@ void ScriptEditWidget::insertEnterKeepIndentation()
     }
 
     // Insert newline and indentation
-    QTextCursor c = this->textCursor();
-    c.insertText("\n" + indentText);
+    QTextCursor cur = textCursor();
+    cur.insertText("\n" + indentText);
     // If braceOpen, insert additional indent, newline and brace close
     if (braceOpen) {
-        c.insertText(INDENT);
-        int pos = c.position(); // Position where cursor should end up
-        c.insertText("\n" + indentText + "}");
-        // Return cursor to in-between braces
-        c.setPosition(pos);
-        this->setTextCursor(c);
+        cur.insertText(INDENT);
+        if (addClosingBrace) {
+            int pos = cur.position(); // Position where cursor should end up
+            cur.insertText("\n" + indentText + "}");
+            // Return cursor to in-between braces
+            cur.setPosition(pos);
+            setTextCursor(cur);
+        }
     }
 }
 
