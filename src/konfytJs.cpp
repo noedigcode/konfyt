@@ -99,6 +99,16 @@ void KonfytJSEnv::resetEnvironment()
     tempParent.makeTemporaryChildIfParentless(this);
     mThisClass = js->newQObject(this);
     js->globalObject().setProperty("Sys", mThisClass);
+
+    // Add MIDI event type constants as global objects
+    js->globalObject().setProperty("NOTEON", TYPE_NOTEON);
+    js->globalObject().setProperty("NOTEOFF", TYPE_NOTEOFF);
+    js->globalObject().setProperty("POLYAFTERTOUCH", TYPE_POLY_AFTERTOUCH);
+    js->globalObject().setProperty("CC", TYPE_CC);
+    js->globalObject().setProperty("PROGRAM", TYPE_PROGRAM);
+    js->globalObject().setProperty("AFTERTOUCH", TYPE_AFTERTOUCH);
+    js->globalObject().setProperty("PITCHBEND", TYPE_PITCHBEND);
+    js->globalObject().setProperty("SYSEX", TYPE_SYSEX);
 }
 
 void KonfytJSEnv::evaluate(QString script)

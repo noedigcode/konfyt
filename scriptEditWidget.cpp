@@ -182,13 +182,30 @@ void ScriptEditWidget::insertEnterKeepIndentation()
         }
     }
 
-    // Insert newline and indentation
-    QString text = "\n";
-    for (int i=0; i < indent; i++) {
-        text += " ";
+    // Determine if at end of line preceded by a {
+    bool braceOpen = false;
+    if (textCursor().atBlockEnd() && block.endsWith("{")) {
+        braceOpen = true;
     }
 
-    textCursor().insertText(text);
+    // Create indentation text
+    QString indentText = "";
+    for (int i=0; i < indent; i++) {
+        indentText += " ";
+    }
+
+    // Insert newline and indentation
+    QTextCursor c = this->textCursor();
+    c.insertText("\n" + indentText);
+    // If braceOpen, insert additional indent, newline and brace close
+    if (braceOpen) {
+        c.insertText(INDENT);
+        int pos = c.position(); // Position where cursor should end up
+        c.insertText("\n" + indentText + "}");
+        // Return cursor to in-between braces
+        c.setPosition(pos);
+        this->setTextCursor(c);
+    }
 }
 
 void ScriptEditWidget::gotoLineStartBeforeOrAfterIndent(bool shift)

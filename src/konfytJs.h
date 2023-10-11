@@ -121,6 +121,16 @@ private:
     KonfytMidiEvent jsObjectToMidiEvent(QJSValue j);
 
     QVariant value(const QJSValue& j, QString key, QVariant defaultValue);
+
+    // Constants
+    const QString TYPE_NOTEON = "noteon";
+    const QString TYPE_NOTEOFF = "noteoff";
+    const QString TYPE_POLY_AFTERTOUCH = "polyaftertouch";
+    const QString TYPE_CC = "cc";
+    const QString TYPE_PROGRAM = "program";
+    const QString TYPE_AFTERTOUCH = "aftertouch";
+    const QString TYPE_PITCHBEND = "pitchbend";
+    const QString TYPE_SYSEX = "sysex";
 };
 
 // =============================================================================
