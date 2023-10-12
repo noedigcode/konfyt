@@ -64,7 +64,7 @@ void ScriptEditWidget::insertIndent()
     } else {
         // Indent each line
         QList<QTextCursor> cursors = getLineStartsOfSelection();
-        foreach (const QTextCursor& c, cursors) {
+        foreach (QTextCursor c, cursors) {
             c.insertText(INDENT);
         }
         // Select all the affected lines
@@ -104,7 +104,7 @@ void ScriptEditWidget::deIndent()
         // Dedent each line
 
         QList<QTextCursor> cursors = getLineStartsOfSelection();
-        foreach (const QTextCursor& c, cursors) {
+        foreach (QTextCursor c, cursors) {
 
             int todelete = 0;
             int n = 0;
@@ -153,7 +153,7 @@ void ScriptEditWidget::toggleBlockComment()
     }
 
     // For each cursor (line start), add or remove comment characters
-    foreach (const QTextCursor& c, cursors) {
+    foreach (QTextCursor c, cursors) {
         if (commented) {
             c.deleteChar();
             c.deleteChar();
