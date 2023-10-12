@@ -56,17 +56,22 @@ void ScriptEditWidget::keyPressEvent(QKeyEvent *event)
 
 void ScriptEditWidget::insertIndent()
 {
-    QTextCursor c = this->textCursor();
+    QTextCursor cur = this->textCursor();
 
-    if (c.position() == c.anchor()) {
+    if (cur.position() == cur.anchor()) {
         // No text selected. Simply insert indent.
         insertPlainText(INDENT);
     } else {
         // Indent each line
         QList<QTextCursor> cursors = getLineStartsOfSelection();
+        cur.beginEditBlock();
         foreach (QTextCursor c, cursors) {
-            c.insertText(INDENT);
+            // Use single cursor for all so begin/endEditBlock takes effect,
+            // allowing the entire operation to be undo-able in one go.
+            cur.setPosition(c.position());
+            cur.insertText(INDENT);
         }
+        cur.endEditBlock();
         // Select all the affected lines
         // i.e. from 1st cursor's line start to last cursor's line end
         select(lineStartPos(cursors.first()), lineEndPos(cursors.last()));
@@ -75,35 +80,39 @@ void ScriptEditWidget::insertIndent()
 
 void ScriptEditWidget::deIndent()
 {
-    QTextCursor c = this->textCursor();
+    QTextCursor cur = this->textCursor();
 
-    if (c.position() == c.anchor()) {
+    if (cur.position() == cur.anchor()) {
 
         // No text selected.
-        // Remove indent before cursor - at most 4 spaces or single tab character
+        // Remove indent before cursor - at most INDENT length of spaces or
+        // single tab character
 
-        QTextCursor c = textCursor();
-        QString block = c.block().text();
-        int pos = c.positionInBlock();
+        QString block = cur.block().text();
+        int pos = cur.positionInBlock();
         int deleted = 0;
+        cur.beginEditBlock();
         for (int i = pos-1; i >= 0; i--) {
-            if (block.at(i) == ' ') { // TODO 2023-10-09: Use safer function e.g. .mid() everywhere to quietly fail and not crash on string errors.
-                c.deletePreviousChar();
+            QChar c = block.at(i);
+            if (c == ' ') {
+                cur.deletePreviousChar();
                 deleted++;
-                if (deleted >= 4) { break; }
-            } else if (block.at(i) == '\t') {
-                c.deletePreviousChar();
+                if (deleted >= INDENT.length()) { break; }
+            } else if (c == '\t') {
+                cur.deletePreviousChar();
                 break;
             } else {
                 break;
             }
         }
+        cur.endEditBlock();
 
     } else {
 
         // Dedent each line
 
         QList<QTextCursor> cursors = getLineStartsOfSelection();
+        cur.beginEditBlock();
         foreach (QTextCursor c, cursors) {
 
             int todelete = 0;
@@ -118,16 +127,20 @@ void ScriptEditWidget::deIndent()
                     n++;
                 } else if (ch == '\t') {
                     todelete += 1;
-                    n += 4;
+                    n += INDENT.length();
                 } else {
                     break;
                 }
-                if (n >= 4) { break; }
+                if (n >= INDENT.length()) { break; }
             }
             for (int i=0; i < todelete; i++) {
-                c.deleteChar();
+                // Use single cursor for all so begin/endEditBlock takes effect,
+                // allowing the entire operation to be undo-able in one go.
+                cur.setPosition(c.position());
+                cur.deleteChar();
             }
         }
+        cur.endEditBlock();
 
         // Select all the affected lines
         // i.e. from 1st cursor's line start to last cursor's line end
@@ -140,7 +153,6 @@ void ScriptEditWidget::toggleBlockComment()
     // Toggle block (multi-line) comments by adding or removing // at start of lines
 
     QList<QTextCursor> cursors = getLineStartsOfSelection();
-
     QString text = toPlainText();
 
     // Determine commented state. False if at least one line is uncommented.
@@ -153,14 +165,21 @@ void ScriptEditWidget::toggleBlockComment()
     }
 
     // For each cursor (line start), add or remove comment characters
+
+    // Use single cursor for all so begin/endEditBlock takes effect,
+    // allowing the entire operation to be undo-able in one go.
+    QTextCursor cur = textCursor();
+    cur.beginEditBlock();
     foreach (QTextCursor c, cursors) {
+        cur.setPosition(c.position());
         if (commented) {
-            c.deleteChar();
-            c.deleteChar();
+            cur.deleteChar();
+            cur.deleteChar();
         } else {
-            c.insertText("//");
+            cur.insertText("//");
         }
     }
+    cur.endEditBlock();
 
     // Select all the affected lines
     // i.e. from 1st cursor's line start to last cursor's line end
@@ -176,7 +195,7 @@ void ScriptEditWidget::insertEnterKeepIndentation()
         if (block.at(i) == ' ') {
             indent += 1;
         } else if (block.at(i) == '\t') {
-            indent += 4;
+            indent += INDENT.length();
         } else {
             break;
         }
@@ -217,6 +236,7 @@ void ScriptEditWidget::insertEnterKeepIndentation()
 
     // Insert newline and indentation
     QTextCursor cur = textCursor();
+    cur.beginEditBlock();
     cur.insertText("\n" + indentText);
     // If braceOpen, insert additional indent, newline and brace close
     if (braceOpen) {
@@ -229,6 +249,7 @@ void ScriptEditWidget::insertEnterKeepIndentation()
             setTextCursor(cur);
         }
     }
+    cur.endEditBlock();
 }
 
 void ScriptEditWidget::gotoLineStartBeforeOrAfterIndent(bool shift)
