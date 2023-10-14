@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/">
         <file>blank.js</file>
-        <file>noteAdd4.js</file>
+        <file>scriptingApi.md</file>
     </qresource>
 </RCC>

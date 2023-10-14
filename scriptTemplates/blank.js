@@ -1,9 +1,0 @@
-function init()
-{
-
-}
-
-function process()
-{
-
-}

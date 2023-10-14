@@ -72,12 +72,41 @@ private:
 
 // =============================================================================
 
+class KonfytJSEnv; // Forward declaration for use in KonfytJSMidi
+
+class KonfytJSMidi : public QObject
+{
+    Q_OBJECT
+public:
+    KonfytJSMidi(KonfytJSEnv* parent = nullptr);
+
+    QJSValue midiEventToJSObject(const KonfytMidiEvent& ev);
+    KonfytMidiEvent jsObjectToMidiEvent(QJSValue j);
+
+signals:
+    void send(QJSValue event);
+
+public slots:
+    QJSValue noteon(int channel, int note, int velocity);
+    QJSValue noteoff(int channel, int note, int velocity = 0);
+    QJSValue cc(int channel, int cc, int value);
+    QJSValue program(int channel, int program, int bankmsb = -1, int banklsb = -1);
+    QJSValue pitchbend(int channel, int value);
+
+private:
+    KonfytJSEnv* jsEnv;
+
+    /* Convenience function to get a property of a QJSValue or a default value
+     * if the property does not exist (or is undefined). */
+    QVariant value(const QJSValue& j, QString key, QVariant defaultValue);
+};
+
 /* Javascript environment for a script. */
 class KonfytJSEnv : public QObject
 {
     Q_OBJECT
 public:
-    explicit KonfytJSEnv(QObject *parent = nullptr);
+    explicit KonfytJSEnv(QObject* parent = nullptr);
 
     void initScript(QString script);
     void setEnabled(bool enable);
@@ -88,6 +117,9 @@ public:
     void addEvent(KonfytMidiEvent ev);
     int eventCount();
 
+    QJSEngine* jsEngine();
+    float getAverageProcessTimeMs();
+
 signals:
     void print(QString msg);
     void exceptionOccurred();
@@ -95,7 +127,7 @@ signals:
 
 public slots:
     // For use from script
-    void send(QJSValue j);
+    void sendMidi(QJSValue j);
 
 private:
     TempParent tempParent; // TODO DEBUG: JS garbage collector doesn't like it if
@@ -103,12 +135,22 @@ private:
                            // tempParent's parent (i.e. circular reference).
 
 
+    KonfytJSMidi midi {this};
     QScopedPointer<QJSEngine> js;
-    QJSValue mThisClass; // "Sys" object in script environment
+    QJSValue jsSys; // "Sys" object in script environment
+    QJSValue jsMidi; // "Midi" object in script environment
+    QJSValue jsMidiEventFunction;
+
     bool mEnabled = false;
+
+    qint64 processTimesNs[10] = {0};
+    int iProcessTimes = 0;
+    qint64 sumProcessTimesNs = 0;
+    void addProcessTime(qint64 timeNs);
 
     void resetEnvironment();
     void evaluate(QString script);
+    bool handleJsResult(QJSValue result);
 
     QString mScript;
     bool scriptInitialisationDone = false;
@@ -117,11 +159,6 @@ private:
 
     QList<KonfytMidiEvent> midiEvents;
     QJSValue jsMidiRxArray;
-
-    QJSValue midiEventToJSObject(const KonfytMidiEvent& ev);
-    KonfytMidiEvent jsObjectToMidiEvent(QJSValue j);
-
-    QVariant value(const QJSValue& j, QString key, QVariant defaultValue);
 
     // Constants
     const QString TYPE_NOTEON = "noteon";
@@ -151,6 +188,7 @@ public:
     }
     QString script(KfPatchLayerSharedPtr patchLayer);
     void setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
+    float scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer);
 
 signals:
     void print(QString msg);

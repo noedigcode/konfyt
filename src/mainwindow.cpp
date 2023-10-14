@@ -301,6 +301,30 @@ void MainWindow::setupScripting()
     });
 
     scriptEngine.setJackEngine(&jack);
+
+    // Setup timer that periodically gets script info from the engine
+    connect(&scriptInfoTimer, &QTimer::timeout, this, &MainWindow::onScriptInfoTimer);
+    scriptInfoTimer.start(100);
+
+    // Setup script api
+    QFile file("://scriptingApi.md");
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        print("Error loading scripting API documentation.");
+    } else {
+        QString api = file.readAll();
+        file.close();
+        ui->textBrowser_scripting_api->setMarkdown(api);
+    }
+}
+
+void MainWindow::onScriptInfoTimer()
+{
+    if (ui->stackedWidget->currentWidget() != ui->scriptingPage) { return; }
+    if (!scriptEditLayer) { return; }
+
+    double ms = scriptEngine.scriptAverageProcessTimeMs(scriptEditLayer);
+    QString sms = QString::number(ms, 'f', 2);
+    ui->label_script_processTime->setText(QString("%1 ms").arg(sms));
 }
 
 void MainWindow::on_action_Edit_Script_triggered()
@@ -7405,6 +7429,9 @@ void MainWindow::on_stackedWidget_currentChanged(int /*arg1*/)
         // Save current sidebar widget and change to saved MIDI send list
         lastSidebarWidget = ui->stackedWidget_left->currentWidget();
         ui->stackedWidget_left->setCurrentWidget(ui->page_savedMidiMsges);
+    } else if (currentWidget == ui->scriptingPage) {
+        lastSidebarWidget = ui->stackedWidget_left->currentWidget();
+        ui->stackedWidget_left->setCurrentWidget(ui->page_left_scripting);
     }
     lastCenterWidget = currentWidget;
 }

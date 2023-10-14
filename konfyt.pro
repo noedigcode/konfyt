@@ -17,7 +17,6 @@ TEMPLATE = app
 INCLUDEPATH += src
 
 SOURCES += src/main.cpp\
-    scriptEditWidget.cpp \
     src/consolewindow.cpp \
     src/indicatorHandlers.cpp \
     src/konfytAudio.cpp \
@@ -45,10 +44,10 @@ SOURCES += src/main.cpp\
     src/midiEventListWidgetAdapter.cpp \
     src/midiMapGraphWidget.cpp \
     src/patchListWidgetAdapter.cpp \
-    src/remotescanner.cpp
+    src/remotescanner.cpp \
+    src/scriptEditWidget.cpp
 
 HEADERS  += src/mainwindow.h \
-    scriptEditWidget.h \
     src/consolewindow.h \
     src/indicatorHandlers.h \
     src/konfytAudio.h \
@@ -80,6 +79,7 @@ HEADERS  += src/mainwindow.h \
     src/patchListWidgetAdapter.h \
     src/remotescanner.h \
     src/ringbufferqmutex.h \
+    src/scriptEditWidget.h \
     src/sleepyRingBuffer.h
 
 FORMS    += src/mainwindow.ui \
@@ -117,7 +117,4 @@ QMAKE_LFLAGS += -fpermissive
 
 RESOURCES += \
     images.qrc \
-    scriptTemplates/scriptTemplates.qrc
-
-
-
+    scripting/scripting.qrc

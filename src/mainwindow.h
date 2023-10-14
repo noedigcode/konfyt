@@ -747,7 +747,9 @@ private:
     void setupScripting();
     KfPatchLayerSharedPtr scriptEditLayer;
     bool scriptEditorIgnoreChanged = false;
+    QTimer scriptInfoTimer;
 private slots:
+    void onScriptInfoTimer();
     void on_action_Edit_Script_triggered();
 
     // ========================================================================
