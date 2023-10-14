@@ -380,6 +380,13 @@ void KonfytJackEngine::setSoundfontRouting(KfJackPluginPorts *p, KfJackMidiPort 
     pauseJackProcessing(false);
 }
 
+void KonfytJackEngine::setSoundfontBlockMidiDirectThrough(KfJackPluginPorts *p, bool block)
+{
+    KONFYT_ASSERT_RETURN(p);
+
+    p->midiRoute->blockDirectThrough = block;
+}
+
 void KonfytJackEngine::setPluginRouting(KfJackPluginPorts *p, KfJackMidiPort *midiInPort, KfJackAudioPort *leftPort, KfJackAudioPort *rightPort)
 {
     KONFYT_ASSERT_RETURN(p);
@@ -410,6 +417,13 @@ QList<KfJackAudioRoute *> KonfytJackEngine::getPluginAudioRoutes(KfJackPluginPor
         ret.append(p->audioRightRoute);
     }
     return ret;
+}
+
+void KonfytJackEngine::setPluginBlockMidiDirectThrough(KfJackPluginPorts *p, bool block)
+{
+    KONFYT_ASSERT_RETURN(p);
+
+    p->midiRoute->blockDirectThrough = block;
 }
 
 void KonfytJackEngine::removeAllAudioInAndOutPorts()
@@ -746,6 +760,13 @@ bool KonfytJackEngine::sendMidiEventsOnRoute(KfJackMidiRoute *route, QList<Konfy
     return success;
 }
 
+void KonfytJackEngine::setRouteBlockMidiDirectThrough(KfJackMidiRoute *route, bool block)
+{
+    KONFYT_ASSERT_RETURN(route);
+
+    route->blockDirectThrough = block;
+}
+
 /* This indicates whether we are connected to JACK or failed to create/activate
  * a client. */
 bool KonfytJackEngine::clientIsActive()
@@ -819,6 +840,8 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 {
     if (!jackProcessMutex.tryLock()) { return 0; }
 
+    mLastSentMidiEventTime = 0;
+
     // panicCmd is the panic command received from the outside.
     if (panicCmd) {
         if (panicState == NoPanic) {
@@ -854,12 +877,20 @@ int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
     // Process MIDI input ports
     jackProcess_processMidiInPorts(nframes);
 
+    // TODO 2023-10-07: Midi events from scripts may have to be subject to processing in
+    // processMidiInPorts, e.g. noteon recording, sustain and pitchbend.
+
     // Route MIDI tx events
     jackProcess_sendMidiRouteTxEvents(nframes);
 
     // Commit received events to buffer so they can be read in the GUI thread.
     audioRxBuffer.commit();
     midiRxBuffer.commit();
+
+    if (midiForJsWritten) {
+        emit newMidiEventsAvailable();
+        midiForJsWritten = false;
+    }
 
     jackProcessMutex.unlock();
     return 0;
@@ -1077,8 +1108,29 @@ void *KonfytJackEngine::getJackPortBuffer(jack_port_t *port, jack_nframes_t nfra
 
 jack_midi_data_t *KonfytJackEngine::reserveJackMidiEvent(void *portBuffer,
                                                          jack_nframes_t time,
-                                                         size_t size) const
+                                                         size_t size)
 {
+    /* Ensure event time is not less than previous event.
+     *
+     * According to jack_midi_event_reserve() documentation, events need to be
+     * sorted by the user, i.e. the time argument may not be less than previous
+     * calls within this process cycle. If this happens, events will go lost.
+     * Some MIDI events which are generated in Konfyt are sent without exact
+     * regard for time. For these events, 0 is typically used for time.
+     * Below, the last MIDI event time is kept track of and when an event is
+     * encountered with an earlier time, the time is rectified to be the same
+     * as the last event.
+     * This should have no effect on events received from outside Konfyt and
+     * passed through, as those events already have appropriate times and are
+     * sorted when coming into Konfyt. */
+
+    if (time < mLastSentMidiEventTime) {
+        time = mLastSentMidiEventTime;
+    } else {
+        mLastSentMidiEventTime = time;
+    }
+
+
     if (portBuffer) {
         return jack_midi_event_reserve(portBuffer, time, size);
     } else {
@@ -1240,9 +1292,10 @@ void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
             handleBankSelect(sourcePort->bankMSB, sourcePort->bankLSB, &ev);
 
             // Send to GUI
-            midiRxBuffer.stash({.sourcePort = sourcePort,
-                                  .midiRoute = nullptr,
-                                  .midiEvent = ev});
+            KfJackMidiRxEvent portRxEv = { .sourcePort = sourcePort,
+                                           .midiRoute = nullptr,
+                                           .midiEvent = ev};
+            midiRxBuffer.stash(portRxEv);
 
             if (panicState != NoPanic) { continue; }
 
@@ -1270,13 +1323,18 @@ void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
                 bool recordPitchbend = false;
 
                 if (evToSend.type() == MIDI_EVENT_TYPE_NOTEOFF) {
-                    passEvent = false; // Event is handled in handleNoteoffEvent().
+                    // Note-offs are handled here and not passed.
+                    passEvent = false;
                     guiOnly = handleNoteoffEvent(evToSend, route, inEvent_jack.time);
                 } else if ( (evToSend.type() == MIDI_EVENT_TYPE_CC) && (evToSend.data1() == 64) ) {
+                    // CC 64 = Sustain. Sustain on/off action based on threshold.
                     if (evToSend.data2() <= KONFYT_JACK_SUSTAIN_THRESH) {
-                        // Sustain zero
+                        // Sustain zero. Pass and clear sustain if previously recorded.
                         if ((route->sustain >> evToSend.channel) & 0x1) {
-                            passEvent = true; // Pass even if route inactive
+                            // Sustain was previously recorded for this channel.
+                            // Pass this sustain-zero event (even if route inactive)
+                            passEvent = true;
+                            // Clear sustain flag for this channel
                             route->sustain ^= (1 << evToSend.channel);
                         }
                     } else {
@@ -1304,13 +1362,24 @@ void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
                     recordNoteon = true;
                 }
 
+                KfJackMidiRxEvent routeRxEv = { .sourcePort = nullptr,
+                                                .midiRoute = route,
+                                                .midiEvent = evToSend };
                 if (passEvent || guiOnly) {
                     // Give to GUI
-                    midiRxBuffer.stash({ .sourcePort = nullptr,
-                                         .midiRoute = route,
-                                         .midiEvent = evToSend });
+                    midiRxBuffer.stash(routeRxEv);
                 }
 
+                // Send to Scripting. Send all events as long as route is active.
+                if (route->active) {
+                    if (midiRxBufferForJs->tryWrite(routeRxEv)) {
+                        midiForJsWritten = true;
+                    }
+                }
+
+                // blockDirectThrough blocks events from going through so they
+                // are only processed by scripts.
+                if (route->blockDirectThrough) { continue; }
                 if (!passEvent) { continue; }
 
                 // Write MIDI output
@@ -1670,6 +1739,11 @@ void KonfytJackEngine::clearOtherJackConPair()
 void KonfytJackEngine::setGlobalTranspose(int transpose)
 {
     this->mGlobalTranspose = transpose;
+}
+
+QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent> > KonfytJackEngine::getMidiRxBufferForJs()
+{
+    return midiRxBufferForJs;
 }
 
 jack_port_t *KonfytJackEngine::registerJackMidiPort(QString name, bool input)

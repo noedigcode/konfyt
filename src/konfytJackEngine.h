@@ -29,6 +29,7 @@
 #include "konfytProject.h"
 #include "konfytStructs.h"
 #include "ringbufferqmutex.h"
+#include "sleepyRingBuffer.h"
 
 #include <jack/jack.h>
 #include <jack/midiport.h>
@@ -40,7 +41,8 @@
 #include <QTimerEvent>
 
 
-#define KONFYT_JACK_DEFAULT_CLIENT_NAME "Konfyt" // Default client name. Actual name is set in the JACK client.
+// Default client name. Actual name is set in the JACK client.
+#define KONFYT_JACK_DEFAULT_CLIENT_NAME "Konfyt"
 #define KONFYT_JACK_SYSTEM_OUT_LEFT "system:playback_1"
 #define KONFYT_JACK_SYSTEM_OUT_RIGHT "system:playback_2"
 
@@ -120,6 +122,7 @@ public:
     void setRouteMidiFilter(KfJackMidiRoute *route, KonfytMidiFilter filter);
     void setRouteMidiPreFilter(KfJackMidiRoute *route, KonfytMidiFilter filter);
     bool sendMidiEventsOnRoute(KfJackMidiRoute *route, QList<KonfytMidiEvent> events);
+    void setRouteBlockMidiDirectThrough(KfJackMidiRoute* route, bool block);
 
     // SFZ plugins
     KfJackPluginPorts* addPluginPortsAndConnect(const KonfytJackPortsSpec &spec);
@@ -133,6 +136,7 @@ public:
                                   KfJackAudioPort *rightPort);
     KfJackMidiRoute* getPluginMidiRoute(KfJackPluginPorts* p);
     QList<KfJackAudioRoute*> getPluginAudioRoutes(KfJackPluginPorts* p);
+    void setPluginBlockMidiDirectThrough(KfJackPluginPorts* p, bool block);
 
     // Fluidsynth
     KfJackPluginPorts* addSoundfont(KfFluidSynth* fluidSynth);
@@ -143,6 +147,7 @@ public:
     void setSoundfontRouting(KfJackPluginPorts *p, KfJackMidiPort *midiInPort,
                                      KfJackAudioPort *leftPort,
                                      KfJackAudioPort *rightPort);
+    void setSoundfontBlockMidiDirectThrough(KfJackPluginPorts* p, bool block);
 
     // Other JACK connections
     void addOtherJackConPair(KonfytJackConPair p);
@@ -151,6 +156,8 @@ public:
 
     void setGlobalTranspose(int transpose);
 
+    QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent>> getMidiRxBufferForJs();
+
 signals:
     void print(QString msg);
     void jackPortRegisteredOrConnected();
@@ -158,17 +165,24 @@ signals:
     void audioEventsReceived();
     void xrunOccurred();
 
+    void newMidiEventsAvailable();
+
 private:
     jack_client_t* mJackClient;
     jack_nframes_t mJackBufferSize; // TODO THIS MIGHT CHANGE, REGISTER BUFSIZE CALLBACK TO UPDATE
-    bool mClientActive = false; // Flag to indicate if the client has been successfully activated
+    bool mClientActive = false; // True when the Jack client has been successfully activated
     uint32_t mJackSampleRate;
     bool mConnectCallback = false;
     bool mRegisterCallback = false;
+    uint32_t mLastSentMidiEventTime = 0;
 
     // MIDI data received from JACK thread
     RingbufferQMutex<KfJackMidiRxEvent> midiRxBuffer{1000};
     QList<KfJackMidiRxEvent> extractedMidiRx;
+
+    QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent>> midiRxBufferForJs {
+        new SleepyRingBuffer<KfJackMidiRxEvent>(1000) };
+    bool midiForJsWritten = false;
 
     // Audio data received from JACK thread
     int mAudioBufferSumCycleCount = 100;
@@ -243,7 +257,7 @@ private:
     void* getJackPortBuffer(jack_port_t *port, jack_nframes_t nframes) const;
     jack_midi_data_t* reserveJackMidiEvent(void *portBuffer,
                                            jack_nframes_t time,
-                                           size_t size) const;
+                                           size_t size);
     void jackProcess_prepareAudioPortBuffers(jack_nframes_t nframes);
     void jackProcess_processAudioRoutes(jack_nframes_t nframes);
     void jackProcess_prepareMidiOutBuffers(jack_nframes_t nframes);

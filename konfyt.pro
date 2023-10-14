@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 CONFIG += qt
-QT       += core gui network
+QT       += core gui network qml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -20,6 +20,7 @@ SOURCES += src/main.cpp\
     src/consolewindow.cpp \
     src/indicatorHandlers.cpp \
     src/konfytAudio.cpp \
+    src/konfytJs.cpp \
     src/konfytLscp.cpp \
         src/mainwindow.cpp \
     src/konfytPatchEngine.cpp \
@@ -43,13 +44,15 @@ SOURCES += src/main.cpp\
     src/midiEventListWidgetAdapter.cpp \
     src/midiMapGraphWidget.cpp \
     src/patchListWidgetAdapter.cpp \
-    src/remotescanner.cpp
+    src/remotescanner.cpp \
+    src/scriptEditWidget.cpp
 
 HEADERS  += src/mainwindow.h \
     src/consolewindow.h \
     src/indicatorHandlers.h \
     src/konfytAudio.h \
     src/konfytDebug.h \
+    src/konfytJs.h \
     src/konfytLscp.h \
     src/konfytPatchEngine.h \
     src/konfytPatch.h \
@@ -75,7 +78,9 @@ HEADERS  += src/mainwindow.h \
     src/midiMapGraphWidget.h \
     src/patchListWidgetAdapter.h \
     src/remotescanner.h \
-    src/ringbufferqmutex.h
+    src/ringbufferqmutex.h \
+    src/scriptEditWidget.h \
+    src/sleepyRingBuffer.h
 
 FORMS    += src/mainwindow.ui \
     src/consolewindow.ui \
@@ -111,7 +116,5 @@ QMAKE_CXXFLAGS += -fpermissive
 QMAKE_LFLAGS += -fpermissive
 
 RESOURCES += \
-    images.qrc
-
-
-
+    images.qrc \
+    scripting/scripting.qrc

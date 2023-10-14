@@ -26,14 +26,13 @@
 #include "konfytBridgeEngine.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackEngine.h"
+#include "konfytJs.h"
 #include "konfytLscpEngine.h"
 #include "konfytPatch.h"
 #include "konfytProject.h"
 #ifdef KONFYT_USE_CARLA
     #include "konfytCarlaEngine.h"
 #endif
-
-#include <jack/jack.h>
 
 #include <QObject>
 
@@ -49,7 +48,9 @@ public:
     // ----------------------------------------------------
     // Engine related functions
     // ----------------------------------------------------
-    void initPatchEngine(KonfytJackEngine* newJackClient, KonfytAppInfo appInfo);
+    void initPatchEngine(KonfytJackEngine* jackEngine,
+                         KonfytJSEngine* scriptEngine,
+                         KonfytAppInfo appInfo);
     QStringList ourJackClientNames();
     void panic(bool p);
     void setMidiPickupRange(int range);
@@ -61,7 +62,7 @@ public:
     // ----------------------------------------------------
     void loadPatchAndSetCurrent(KonfytPatch* patch);
     void loadPatch(KonfytPatch* patch);
-    void reloadPatch();                     // Reload the current patch (e.g. use if patch changed)
+    void reloadPatch();
     void unloadPatch(KonfytPatch* patch);
     void unloadLayer(KfPatchLayerWeakPtr layer);
     void reloadLayer(KfPatchLayerWeakPtr layer);
@@ -86,6 +87,10 @@ public:
     void setLayerBus(KfPatchLayerWeakPtr patchLayer, int bus);
     void setLayerMidiInPort(KfPatchLayerWeakPtr patchLayer, int portId);
 
+    void setLayerScript(KfPatchLayerSharedPtr patchLayer, QString script);
+    void setLayerScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
+    void setLayerPassMidiThrough(KfPatchLayerSharedPtr patchLayer, bool pass);
+
     void sendCurrentPatchMidi();
     void sendLayerMidi(KfPatchLayerWeakPtr patchLayer);
 
@@ -95,7 +100,8 @@ public:
     void moveLayer(KfPatchLayerWeakPtr layer, int newIndex);
 
     // Soundfont / Fluidsynth layers
-    KfPatchLayerWeakPtr addSfProgramLayer(QString soundfontPath, KonfytSoundPreset newProgram);
+    KfPatchLayerWeakPtr addSfProgramLayer(QString soundfontPath,
+                                          KonfytSoundPreset newProgram);
 
     // SFZ layers
     KfPatchLayerWeakPtr addSfzLayer(QString path);
@@ -126,14 +132,20 @@ private:
     void updateLayerGain(KfPatchLayerSharedPtr layer);
     void updatePatchLayersSoloMute(KonfytPatch* patch);
     void setLayerActive(KfPatchLayerSharedPtr layer, bool active);
-    void updateLayerPatchMidiFilterInJackEngine(KonfytPatch* patch, KfPatchLayerSharedPtr layer);
+    void updateLayerPatchMidiFilterInJackEngine(KonfytPatch* patch,
+                                                KfPatchLayerSharedPtr layer);
+
+    void updateLayerBlockMidiDirectThroughInJack(KfPatchLayerSharedPtr patchLayer);
 
     KonfytFluidsynthEngine fluidsynthEngine;
+    void setupAndInitFluidsynthEngine();
 
     KonfytBaseSoundEngine* sfzEngine;
-    bool bridge = false;
+    void setupAndInitSfzEngine(KonfytAppInfo appInfo);
 
-    KonfytJackEngine* jack;
+    KonfytJSEngine* scriptEngine = nullptr;
+
+    KonfytJackEngine* jack = nullptr;
 
 private slots:
     void onSfzEngineInitDone(QString error);

@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>blank.js</file>
+        <file>scriptingApi.md</file>
+    </qresource>
+</RCC>

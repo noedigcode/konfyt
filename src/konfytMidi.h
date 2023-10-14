@@ -127,6 +127,8 @@ public:
     void setCC(uint8_t cc, uint8_t value);
     void setProgram(uint8_t program);
     void setSysEx(const unsigned char* bytes, int size);
+    void setPolyAftertouch(uint8_t note, uint8_t pressure);
+    void setAftertouch(uint8_t pressure);
 
     int note() const;
     int velocity() const;
@@ -150,7 +152,6 @@ public:
     void writeToXMLStream(QXmlStreamWriter* w) const;
     /* Reads from XML stream and returns error messages. */
     QString readFromXmlStream(QXmlStreamReader* r);
-
 };
 
 

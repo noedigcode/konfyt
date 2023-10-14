@@ -38,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupSettings();
     setupJack();
     setupPatchEngine();
+    setupScripting();
 
     // ----------------------------------------------------
     // The following need to happen before loading project or cmdline arguments
@@ -74,6 +75,11 @@ MainWindow::~MainWindow()
 
     jack.stopJackClient();
     consoleWindow.close();
+
+    if (scriptingThread.isRunning()) {
+        scriptingThread.quit();
+        scriptingThread.wait(5000);
+    }
 
     delete ui;
 }
@@ -282,6 +288,75 @@ void MainWindow::onJackPortRegisteredOrConnected()
 
     // Update warnings section
     updateGUIWarnings();
+}
+
+void MainWindow::setupScripting()
+{
+    scriptEngine.moveToThread(&scriptingThread);
+    scriptingThread.start();
+
+    connect(&scriptEngine, &KonfytJSEngine::print, this, [=](QString msg)
+    {
+        print("js: " + msg);
+    });
+
+    scriptEngine.setJackEngine(&jack);
+
+    // Setup timer that periodically gets script info from the engine
+    connect(&scriptInfoTimer, &QTimer::timeout, this, &MainWindow::onScriptInfoTimer);
+    scriptInfoTimer.start(100);
+
+    // Setup script api
+    QFile file("://scriptingApi.md");
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        print("Error loading scripting API documentation.");
+    } else {
+        QString api = file.readAll();
+        file.close();
+        ui->textBrowser_scripting_api->setMarkdown(api);
+    }
+}
+
+void MainWindow::onScriptInfoTimer()
+{
+    if (ui->stackedWidget->currentWidget() != ui->scriptingPage) { return; }
+    if (!scriptEditLayer) { return; }
+
+    double ms = scriptEngine.scriptAverageProcessTimeMs(scriptEditLayer);
+    QString sms = QString::number(ms, 'f', 2);
+    ui->label_script_processTime->setText(QString("%1 ms").arg(sms));
+}
+
+void MainWindow::on_action_Edit_Script_triggered()
+{
+    scriptEditLayer = layerToolMenuSourceitem->getPatchLayer().toStrongRef();
+    if (!scriptEditLayer) {
+        print("Error: edit script: null layer");
+        return;
+    }
+
+    QString script = scriptEditLayer->script();
+    if (script.trimmed().isEmpty()) {
+        // Insert template
+        QFile file("://blank.js");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            print("Error loading blank template script.");
+        } else {
+            script = file.readAll();
+            file.close();
+        }
+    }
+
+    scriptEditorIgnoreChanged = true;
+    ui->plainTextEdit_script->setPlainText(script);
+    ui->checkBox_script_enable->setChecked(scriptEditLayer->isScriptEnabled());
+    ui->checkBox_script_passMidiThrough->setChecked(scriptEditLayer->isPassMidiThrough());
+
+    ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
+
+    // Highlight update button if layer script and loaded script in engine differ
+    bool loadedScriptDiffers = scriptEngine.script(scriptEditLayer) != script;
+    highlightButton(ui->pushButton_script_update, loadedScriptDiffers);
 }
 
 /* Scan given directory recursively and add project files to list. */
@@ -2522,6 +2597,24 @@ void MainWindow::openFileManager(QString path)
     }
 }
 
+void MainWindow::highlightButton(QAbstractButton *button, bool highlight)
+{
+    QVariant baseStylesheet = button->property("KonfytBaseStylesheet");
+    if (!baseStylesheet.isValid()) {
+        // The property does not exist so this must be the first time this
+        // function is called with this button. Store its original stylesheet.
+        baseStylesheet = button->styleSheet();
+        button->setProperty("KonfytBaseStylesheet", baseStylesheet);
+    }
+
+    QString ss = baseStylesheet.toString();
+    if (highlight) {
+        // Append base stylesheet with the prototype highlight button's
+        ss += ui->pushButton_dev_highlighted->styleSheet();
+    }
+    button->setStyleSheet(ss);
+}
+
 /* Setup the initial project based on command-line arguments. */
 void MainWindow::setupInitialProjectFromCmdLineArgs()
 {
@@ -3268,19 +3361,7 @@ void MainWindow::updateProjectNameInGui()
 
 void MainWindow::onProjectModifiedStateChanged(bool modified)
 {
-    QString stylesheet_base = "border-top-left-radius: 0;"
-            "border-bottom-left-radius: 0;"
-            "border-top-right-radius: 0;"
-            "border-bottom-right-radius: 0;";
-
-    QString stylesheet_normal = stylesheet_base + "border-top-right-radius: 0; border-bottom-right-radius: 0;";
-    QString stylesheet_orange = stylesheet_base + "background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:1, y2:0, stop:0 rgba(95, 59, 28, 255), stop:1 rgba(199, 117, 18, 255));border-top-right-radius: 0; border-bottom-right-radius: 0;";
-
-    if (modified) {
-        ui->toolButton_Project->setStyleSheet(stylesheet_orange);
-    } else {
-        ui->toolButton_Project->setStyleSheet(stylesheet_normal);
-    }
+    highlightButton(ui->toolButton_Project, modified);
 }
 
 void MainWindow::onProjectMidiPickupRangeChanged(int range)
@@ -4230,7 +4311,8 @@ void MainWindow::updateLayerToolMenu()
         layerToolMenu.addMenu(&layerMidiInPortsMenu);
         updateMidiInChannelMenu(&layerMidiInChannelMenu, patchLayer->midiFilter().inChan);
         layerToolMenu.addMenu(&layerMidiInChannelMenu);
-        layerToolMenu.addAction( ui->actionEdit_MIDI_Filter );
+        layerToolMenu.addAction(ui->actionEdit_MIDI_Filter);
+        layerToolMenu.addAction(ui->action_Edit_Script);
     }
     // Menu items for Audio input port layers
     if (type == KonfytPatchLayer::TypeAudioIn) {
@@ -5781,7 +5863,7 @@ void MainWindow::setupPatchEngine()
     connect(&pengine, &KonfytPatchEngine::patchLayerLoaded,
             this, &MainWindow::onPatchLayerLoaded);
 
-    pengine.initPatchEngine(&jack, appInfo);
+    pengine.initPatchEngine(&jack, &scriptEngine,appInfo);
 }
 
 /* Update the input and output port settings for the preview patch layer. */
@@ -7343,10 +7425,18 @@ void MainWindow::on_stackedWidget_currentChanged(int /*arg1*/)
     if (lastCenterWidget == ui->midiSendListPage) {
         // Changed away from MIDI Send List page
         ui->stackedWidget_left->setCurrentWidget(lastSidebarWidget);
+    } else if (lastCenterWidget == ui->scriptingPage) {
+        // Changed away from scripting
+        ui->stackedWidget_left->setCurrentWidget(lastSidebarWidget);
     } else if (currentWidget == ui->midiSendListPage) {
+        // Changed to MIDI Send List Page
         // Save current sidebar widget and change to saved MIDI send list
         lastSidebarWidget = ui->stackedWidget_left->currentWidget();
         ui->stackedWidget_left->setCurrentWidget(ui->page_savedMidiMsges);
+    } else if (currentWidget == ui->scriptingPage) {
+        // Changed to scripting
+        lastSidebarWidget = ui->stackedWidget_left->currentWidget();
+        ui->stackedWidget_left->setCurrentWidget(ui->page_left_scripting);
     }
     lastCenterWidget = currentWidget;
 }
@@ -7445,4 +7535,66 @@ void MainWindow::on_actionPatch_MIDI_Filter_triggered()
 
     midiFilterEditType = MidiFilterEditPatch;
     showMidiFilterEditor();
+}
+
+void MainWindow::on_pushButton_script_update_clicked()
+{
+    if (!scriptEditLayer) {
+        print("Error: no script edit layer set");
+        return;
+    }
+
+    pengine.setLayerScript(scriptEditLayer, ui->plainTextEdit_script->toPlainText());
+    highlightButton(ui->pushButton_script_update, false);
+}
+
+void MainWindow::on_checkBox_script_enable_toggled(bool checked)
+{
+    if (!scriptEditLayer) {
+        print("Error: no script edit layer set");
+        return;
+    }
+
+    if (scriptEditLayer->isScriptEnabled() != checked) {
+        setProjectModified();
+        if (checked) {
+            // If enabling, also update the script
+            on_pushButton_script_update_clicked();
+        }
+        pengine.setLayerScriptEnabled(scriptEditLayer, checked);
+    }
+}
+
+
+void MainWindow::on_checkBox_script_passMidiThrough_toggled(bool checked)
+{
+    if (!scriptEditLayer) {
+        print("Error: no script edit layer set");
+        return;
+    }
+
+    if (scriptEditLayer->isPassMidiThrough() != checked) {
+        setProjectModified();
+        pengine.setLayerPassMidiThrough(scriptEditLayer, checked);
+    }
+}
+
+
+void MainWindow::on_pushButton_scriptEditor_OK_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+}
+
+
+void MainWindow::on_plainTextEdit_script_textChanged()
+{
+    if (scriptEditorIgnoreChanged) {
+        // Text changed by internals
+        scriptEditorIgnoreChanged = false;
+    } else {
+        // Text changed by user. Highlight update button to indicate.
+        highlightButton(ui->pushButton_script_update, true);
+        scriptEditLayer->setScript(ui->plainTextEdit_script->toPlainText());
+        setProjectModified();
+    }
 }

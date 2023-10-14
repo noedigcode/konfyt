@@ -21,8 +21,6 @@
 
 #include "konfytPatchEngine.h"
 
-#include <iostream>
-
 
 KonfytPatchEngine::KonfytPatchEngine(QObject *parent) :
     QObject(parent)
@@ -34,50 +32,15 @@ KonfytPatchEngine::~KonfytPatchEngine()
     delete sfzEngine;
 }
 
-void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* newJackClient,
+void KonfytPatchEngine::initPatchEngine(KonfytJackEngine* jackEngine,
+                                        KonfytJSEngine *scriptEngine,
                                         KonfytAppInfo appInfo)
 {
-    // Jack client (probably received from MainWindow) so we can directly create ports
-    this->jack = newJackClient;
+    this->jack = jackEngine;
+    this->scriptEngine = scriptEngine;
 
-    // Fluidsynth Engine
-    connect(&fluidsynthEngine, &KonfytFluidsynthEngine::print,
-            this, [=](QString msg)
-    {
-        print("Fluidsynth: " + msg);
-    });
-    fluidsynthEngine.initFluidsynth(jack->getSampleRate());
-    jack->setFluidsynthEngine(&fluidsynthEngine);
-
-    // Initialise SFZ Backend
-
-    bridge = appInfo.bridge;
-    if (bridge) {
-        // Create bridge engine (each plugin is hosted in new Konfyt process)
-        sfzEngine = new KonfytBridgeEngine();
-        static_cast<KonfytBridgeEngine*>(sfzEngine)->setKonfytExePath(appInfo.exePath);
-    }
-#ifdef KONFYT_USE_CARLA
-    else if (appInfo.carla) {
-        // Use local Carla engine
-        sfzEngine = new KonfytCarlaEngine();
-    }
-#endif
-    else {
-        // Use Linuxsampler via LSCP
-        sfzEngine = new KonfytLscpEngine();
-    }
-
-    connect(sfzEngine, &KonfytBaseSoundEngine::print, this, [=](QString msg)
-    {
-        print(sfzEngine->engineName() + ": " + msg);
-    });
-    connect(sfzEngine, &KonfytBaseSoundEngine::statusInfo,
-            this, &KonfytPatchEngine::statusInfo);
-    connect(sfzEngine, &KonfytBaseSoundEngine::initDone,
-            this, &KonfytPatchEngine::onSfzEngineInitDone);
-
-    sfzEngine->initEngine(jack);
+    setupAndInitFluidsynthEngine();
+    setupAndInitSfzEngine(appInfo);
 }
 
 /* Returns names of JACK clients that refer to engines in use by us. */
@@ -257,6 +220,7 @@ void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
             }
             // Then from fluidsynthEngine
             fluidsynthEngine.removeSoundfontProgram(l->soundfontData.synthInEngine);
+            scriptEngine->removeLayerScript(l);
             // Set unloaded in patch
             l->soundfontData.synthInEngine = nullptr;
         }
@@ -269,12 +233,14 @@ void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
             }
             // Then from SFZ engine
             sfzEngine->removeSfz(l->sfzData.indexInEngine);
+            scriptEngine->removeLayerScript(l);
             // Set unloaded in patch
             l->sfzData.indexInEngine = -1;
         }
     } else if (l->layerType() == KonfytPatchLayer::TypeMidiOut) {
         if (l->midiOutputPortData.jackRoute) {
             jack->removeMidiRoute(l->midiOutputPortData.jackRoute);
+            scriptEngine->removeLayerScript(l);
             l->midiOutputPortData.jackRoute = nullptr;
         }
     } else if (l->layerType() == KonfytPatchLayer::TypeAudioIn) {
@@ -571,6 +537,70 @@ void KonfytPatchEngine::updateLayerPatchMidiFilterInJackEngine(
     }
 }
 
+void KonfytPatchEngine::updateLayerBlockMidiDirectThroughInJack(KfPatchLayerSharedPtr patchLayer)
+{
+    bool block = !patchLayer->isPassMidiThrough();
+
+    if (patchLayer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+
+        jack->setSoundfontBlockMidiDirectThrough(
+                    patchLayer->soundfontData.portsInJackEngine, block);
+
+    } else if (patchLayer->layerType() == KonfytPatchLayer::TypeSfz) {
+
+        jack->setPluginBlockMidiDirectThrough(
+                    patchLayer->sfzData.portsInJackEngine, block);
+
+    } else if (patchLayer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+
+        jack->setRouteBlockMidiDirectThrough(
+                    patchLayer->midiOutputPortData.jackRoute, block);
+
+    }
+}
+
+void KonfytPatchEngine::setupAndInitFluidsynthEngine()
+{
+    connect(&fluidsynthEngine, &KonfytFluidsynthEngine::print,
+            this, [=](QString msg)
+    {
+        print("Fluidsynth: " + msg);
+    });
+    fluidsynthEngine.initFluidsynth(jack->getSampleRate());
+    jack->setFluidsynthEngine(&fluidsynthEngine);
+}
+
+void KonfytPatchEngine::setupAndInitSfzEngine(KonfytAppInfo appInfo)
+{
+    if (appInfo.bridge) {
+        // Create bridge engine (each plugin is hosted in new Konfyt process)
+        sfzEngine = new KonfytBridgeEngine();
+        static_cast<KonfytBridgeEngine*>(sfzEngine)->setKonfytExePath(
+                    appInfo.exePath);
+    }
+#ifdef KONFYT_USE_CARLA
+    else if (appInfo.carla) {
+        // Use local Carla engine
+        sfzEngine = new KonfytCarlaEngine();
+    }
+#endif
+    else {
+        // Use Linuxsampler via LSCP
+        sfzEngine = new KonfytLscpEngine();
+    }
+
+    connect(sfzEngine, &KonfytBaseSoundEngine::print, this, [=](QString msg)
+    {
+        print(sfzEngine->engineName() + ": " + msg);
+    });
+    connect(sfzEngine, &KonfytBaseSoundEngine::statusInfo,
+            this, &KonfytPatchEngine::statusInfo);
+    connect(sfzEngine, &KonfytBaseSoundEngine::initDone,
+            this, &KonfytPatchEngine::onSfzEngineInitDone);
+
+    sfzEngine->initEngine(jack);
+}
+
 /* Return the current patch. */
 KonfytPatch *KonfytPatchEngine::currentPatch()
 {
@@ -660,6 +690,24 @@ void KonfytPatchEngine::setLayerMidiInPort(KfPatchLayerWeakPtr patchLayer, int p
 {
     patchLayer.toStrongRef()->setMidiInPortIdInProject(portId);
     updateLayerRouting(patchLayer);
+}
+
+void KonfytPatchEngine::setLayerScript(KfPatchLayerSharedPtr patchLayer, QString script)
+{
+    patchLayer->setScript(script);
+    scriptEngine->addLayerScript(patchLayer);
+}
+
+void KonfytPatchEngine::setLayerScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable)
+{
+    patchLayer->setScriptEnabled(enable);
+    scriptEngine->setScriptEnabled(patchLayer, enable);
+}
+
+void KonfytPatchEngine::setLayerPassMidiThrough(KfPatchLayerSharedPtr patchLayer, bool pass)
+{
+    patchLayer->setPassMidiThrough(pass);
+    updateLayerBlockMidiDirectThroughInJack(patchLayer);
 }
 
 void KonfytPatchEngine::sendCurrentPatchMidi()
@@ -783,7 +831,11 @@ void KonfytPatchEngine::loadSfzLayer(KfPatchLayerSharedPtr layer)
     KfJackPluginPorts* jackPorts = jack->addPluginPortsAndConnect( spec );
     layer->sfzData.portsInJackEngine = jackPorts;
 
-    emit patchLayerLoaded(layer);
+    // Add to script engine
+    scriptEngine->addLayerScript(layer);
+    updateLayerBlockMidiDirectThroughInJack(layer);
+
+    emit patchLayerLoaded(layer); // TODO 2023-10-06 Why only for SFZ layers?
 }
 
 void KonfytPatchEngine::loadSoundfontLayer(KfPatchLayerSharedPtr layer)
@@ -803,6 +855,10 @@ void KonfytPatchEngine::loadSoundfontLayer(KfPatchLayerSharedPtr layer)
                 layer->soundfontData.synthInEngine);
     layer->soundfontData.portsInJackEngine = jackPorts;
     jack->setSoundfontMidiFilter(jackPorts, layer->midiFilter());
+
+    // Add to script engine
+    scriptEngine->addLayerScript(layer);
+    updateLayerBlockMidiDirectThroughInJack(layer);
 }
 
 void KonfytPatchEngine::loadAudioInputPort(KfPatchLayerSharedPtr layer)
@@ -859,6 +915,10 @@ void KonfytPatchEngine::loadMidiOutputPort(KfPatchLayerSharedPtr layer)
         jack->setRouteMidiFilter(layer->midiOutputPortData.jackRoute,
                                  layer->midiFilter());
     }
+
+    // Add to script engine
+    scriptEngine->addLayerScript(layer);
+    updateLayerBlockMidiDirectThroughInJack(layer);
 }
 
 void KonfytPatchEngine::onSfzEngineInitDone(QString error)
