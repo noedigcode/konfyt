@@ -60,6 +60,8 @@ The following are required to build Konfyt:
   On Ubuntu 20.04: `qt5-default`
 
   On Ubuntu 21+: `qtbase5-dev`
+  
+  Qt Declarative/QML for scripting, on Ubuntu: `qtdeclarative5-dev`
 
   Ensure that Qt5 is used to build. Check the Qt version that qmake uses with:
   ```

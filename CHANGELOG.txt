@@ -1,6 +1,28 @@
 Changelog
 =========
 
+Unreleased - October 2023
+-------------------------
+
+Added
+
+- MIDI scripting for patch layers.
+- Time for each console print message.
+
+Changes
+
+- Disable GUI buttons when they are not applicable: external apps, Other JACK
+  Connections page, Triggers page
+- Improve layout of Ports and Buses, Triggers and Other JACK Connections pages.
+  Widgets are more elegantly aligned now.
+- Console popout dialog changed to window, allowing it to be maximized and treated
+  like other normal windows.
+
+Fixes
+
+- Fix crash when exiting while an external app is still running.
+
+
 [1.4.0] - August 2023
 ---------------------
 
