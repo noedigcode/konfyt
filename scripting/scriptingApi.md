@@ -4,7 +4,7 @@
 
 `midiEvent(ev)` is called for every incoming MIDI event.
 
-Argument `ev` is the MIDI event.
+Argument `ev` is the MIDI event. See the "MIDI event objects" section below.
 
 
 ## Global functions and objects:

@@ -396,13 +396,33 @@ void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
     }, Qt::QueuedConnection);
 }
 
+void KonfytJSEngine::removeLayerScript(KfPatchLayerSharedPtr patchLayer)
+{
+    // Capture weak pointer so lambda doesn't hog shared pointer
+    KfPatchLayerWeakPtr wp(patchLayer);
+
+    QMetaObject::invokeMethod(this, [=]()
+    {
+        KfPatchLayerSharedPtr layer(wp);
+        ScriptEnvPtr s = layerEnvMap.value(layer);
+        if (!s) {
+            print("Error: removeLayerScript: invalid patch layer");
+            return;
+        }
+
+        routeEnvMap.remove(routeEnvMap.key(s));
+        layerEnvMap.remove(layer);
+
+    }, Qt::QueuedConnection);
+}
+
 QString KonfytJSEngine::script(KfPatchLayerSharedPtr patchLayer)
 {
     QString ret;
 
     ScriptEnvPtr s = layerEnvMap.value(patchLayer);
     if (!s) {
-        print("Error: script: null patch layer");
+        print("Error: script: invalid patch layer");
     } else {
         ret = s->env.script();
     }
@@ -414,7 +434,7 @@ void KonfytJSEngine::setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool ena
 {
     ScriptEnvPtr s = layerEnvMap.value(patchLayer);
     if (!s) {
-        print("Error: setScriptEnabled: null patch layer");
+        print("Error: setScriptEnabled: invalid patch layer");
         return;
     }
 
@@ -425,7 +445,7 @@ float KonfytJSEngine::scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLaye
 {
     ScriptEnvPtr s = layerEnvMap.value(patchLayer);
     if (!s) {
-        print("Error: scriptAverageProcessTimeMs: null patch layer");
+        print("Error: scriptAverageProcessTimeMs: invalid patch layer");
         return 0;
     }
 

@@ -220,6 +220,7 @@ void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
             }
             // Then from fluidsynthEngine
             fluidsynthEngine.removeSoundfontProgram(l->soundfontData.synthInEngine);
+            scriptEngine->removeLayerScript(l);
             // Set unloaded in patch
             l->soundfontData.synthInEngine = nullptr;
         }
@@ -232,12 +233,14 @@ void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
             }
             // Then from SFZ engine
             sfzEngine->removeSfz(l->sfzData.indexInEngine);
+            scriptEngine->removeLayerScript(l);
             // Set unloaded in patch
             l->sfzData.indexInEngine = -1;
         }
     } else if (l->layerType() == KonfytPatchLayer::TypeMidiOut) {
         if (l->midiOutputPortData.jackRoute) {
             jack->removeMidiRoute(l->midiOutputPortData.jackRoute);
+            scriptEngine->removeLayerScript(l);
             l->midiOutputPortData.jackRoute = nullptr;
         }
     } else if (l->layerType() == KonfytPatchLayer::TypeAudioIn) {

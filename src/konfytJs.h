@@ -182,10 +182,7 @@ public:
     void setJackEngine(KonfytJackEngine* jackEngine);
 
     void addLayerScript(KfPatchLayerSharedPtr patchLayer);
-    void removeLayerScript(KfPatchLayerSharedPtr patchLayer)
-    {
-        print("TODO removeLayerScript");
-    }
+    void removeLayerScript(KfPatchLayerSharedPtr patchLayer);
     QString script(KfPatchLayerSharedPtr patchLayer);
     void setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
     float scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer);

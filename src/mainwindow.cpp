@@ -7425,11 +7425,16 @@ void MainWindow::on_stackedWidget_currentChanged(int /*arg1*/)
     if (lastCenterWidget == ui->midiSendListPage) {
         // Changed away from MIDI Send List page
         ui->stackedWidget_left->setCurrentWidget(lastSidebarWidget);
+    } else if (lastCenterWidget == ui->scriptingPage) {
+        // Changed away from scripting
+        ui->stackedWidget_left->setCurrentWidget(lastSidebarWidget);
     } else if (currentWidget == ui->midiSendListPage) {
+        // Changed to MIDI Send List Page
         // Save current sidebar widget and change to saved MIDI send list
         lastSidebarWidget = ui->stackedWidget_left->currentWidget();
         ui->stackedWidget_left->setCurrentWidget(ui->page_savedMidiMsges);
     } else if (currentWidget == ui->scriptingPage) {
+        // Changed to scripting
         lastSidebarWidget = ui->stackedWidget_left->currentWidget();
         ui->stackedWidget_left->setCurrentWidget(ui->page_left_scripting);
     }
