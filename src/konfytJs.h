@@ -83,6 +83,7 @@ public:
     void setEnabled(bool enable);
     bool isEnabled();
     void runProcess();
+    QString script();
 
     void addEvent(KonfytMidiEvent ev);
     int eventCount();
@@ -148,7 +149,7 @@ public:
     {
         print("TODO removeLayerScript");
     }
-
+    QString script(KfPatchLayerSharedPtr patchLayer);
     void setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
 
 signals:

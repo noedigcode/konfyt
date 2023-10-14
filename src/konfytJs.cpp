@@ -67,6 +67,11 @@ void KonfytJSEnv::runProcess()
     runScriptProcessFunction();
 }
 
+QString KonfytJSEnv::script()
+{
+    return mScript;
+}
+
 void KonfytJSEnv::addEvent(KonfytMidiEvent ev)
 {
     midiEvents.append(ev);
@@ -305,6 +310,20 @@ void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
         routeEnvMap.insert(route, s);
         layerEnvMap.insert(patchLayer, s);
     }, Qt::QueuedConnection);
+}
+
+QString KonfytJSEngine::script(KfPatchLayerSharedPtr patchLayer)
+{
+    QString ret;
+
+    ScriptEnvPtr s = layerEnvMap.value(patchLayer);
+    if (!s) {
+        print("Error: script: null patch layer");
+    } else {
+        ret = s->env.script();
+    }
+
+    return ret;
 }
 
 void KonfytJSEngine::setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable)

@@ -329,6 +329,10 @@ void MainWindow::on_action_Edit_Script_triggered()
     ui->checkBox_script_passMidiThrough->setChecked(scriptEditLayer->isPassMidiThrough());
 
     ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
+
+    // Highlight update button if layer script and loaded script in engine differ
+    bool loadedScriptDiffers = scriptEngine.script(scriptEditLayer) != script;
+    highlightButton(ui->pushButton_script_update, loadedScriptDiffers);
 }
 
 /* Scan given directory recursively and add project files to list. */
@@ -7510,7 +7514,6 @@ void MainWindow::on_pushButton_script_update_clicked()
 
     pengine.setLayerScript(scriptEditLayer, ui->plainTextEdit_script->toPlainText());
     highlightButton(ui->pushButton_script_update, false);
-    setProjectModified();
 }
 
 void MainWindow::on_checkBox_script_enable_toggled(bool checked)
@@ -7556,10 +7559,10 @@ void MainWindow::on_plainTextEdit_script_textChanged()
     if (scriptEditorIgnoreChanged) {
         // Text changed by internals
         scriptEditorIgnoreChanged = false;
-        highlightButton(ui->pushButton_script_update, false);
     } else {
         // Text changed by user. Highlight update button to indicate.
         highlightButton(ui->pushButton_script_update, true);
+        scriptEditLayer->setScript(ui->plainTextEdit_script->toPlainText());
+        setProjectModified();
     }
 }
-
