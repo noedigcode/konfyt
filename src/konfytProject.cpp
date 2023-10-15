@@ -63,7 +63,8 @@ bool KonfytProject::saveProjectAs(QString dirname)
         return false;
     }
 
-    backupProject(dirname);
+    // Create a backup of the original files before saving
+    backupProject(dirname, "a_presave");
 
     QString patchesPath = dirname + "/" + PROJECT_PATCH_DIR;
     QDir patchesDir(patchesPath);
@@ -255,6 +256,12 @@ bool KonfytProject::saveProjectAs(QString dirname)
     file.close();
 
     setModified(false);
+
+    // Create another backup of the saved files. This will ensure that if this
+    // project is now opened with an earlier version of Konfyt which does not
+    // create backups and does not retain data related to newer features, that
+    // this version will still be backed up.
+    backupProject(dirname, "b_postsave");
 
     return true;
 }
@@ -1416,7 +1423,7 @@ QString KonfytProject::projectFilename()
 }
 
 /* Copy current project files to a new subdirectory in the backups directory. */
-void KonfytProject::backupProject(QString projectDirPath)
+void KonfytProject::backupProject(QString projectDirPath, QString tag)
 {
     // Check if project file exists in specified dir
     QFileInfo fi(QString("%1/%2").arg(projectDirPath, projectFilename()));
@@ -1440,9 +1447,10 @@ void KonfytProject::backupProject(QString projectDirPath)
     }
 
     // Create unique backup dir
-    QString backupDirName = QString("%1_%2")
+    QString backupDirName = QString("%1_backup_%2_%3")
             .arg(QDir(projectDirPath).dirName())
-            .arg(QDateTime::currentDateTime().toString("yyyy-mm-dd_hh-mm-ss"));
+            .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss"))
+            .arg(tag);
     QString backupDirPath = getUniquePath(baseBackupPath, backupDirName, "");
 
     if (QDir().mkdir(backupDirPath)) {

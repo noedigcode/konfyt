@@ -247,7 +247,7 @@ private:
     QString projectName = "New Project";
 
     QString projectFilename();
-    void backupProject(QString projectDirPath);
+    void backupProject(QString projectDirPath, QString tag);
 
     QMap<int, PrjMidiPort> midiInPortMap;
     int midiInPort_getUniqueId();
