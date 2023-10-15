@@ -21,7 +21,7 @@
 
 #include "konfytPatch.h"
 
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 
 
 QList<KfPatchLayerWeakPtr> KonfytPatch::getSfLayerList() const

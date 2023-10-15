@@ -21,7 +21,7 @@
 
 #include <QApplication>
 
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 #include "konfytStructs.h"
 #include "mainwindow.h"
 #include "remotescanner.h"

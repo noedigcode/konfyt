@@ -22,7 +22,7 @@
 #ifndef KONFYT_PROCESS_H
 #define KONFYT_PROCESS_H
 
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 #include "konfytProject.h"
 
 #include <QProcess>
@@ -38,10 +38,11 @@ class KonfytProcess : public QObject
     Q_OBJECT
 
 public:
+    enum State { NOT_STARTED, STARTING, RUNNING, FINISHED, STOPPING, STOPPED,
+                 CRASHED, ERROR };
+
     KonfytProcess();
     ~KonfytProcess();
-
-    enum State { NOT_STARTED, STARTING, RUNNING, FINISHED, STOPPING, STOPPED, CRASHED, ERROR };
 
     QProcess process;
     ExternalApp appInfo;

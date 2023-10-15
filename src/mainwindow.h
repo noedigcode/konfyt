@@ -26,7 +26,7 @@
 #include "indicatorHandlers.h"
 #include "konfytAudio.h"
 #include "konfytDatabase.h"
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackEngine.h"
 #include "konfytJs.h"
@@ -194,9 +194,6 @@ private:
     QMenu projectsMenu;
     QMap<QAction*, QFileInfo> projectsMenuMap;
     void updateProjectsMenu();
-
-    // Misc helper functions
-    QString getUniqueFilename(QString dirname, QString name, QString extension);
 
     void patchModified();
     void setProjectModified();

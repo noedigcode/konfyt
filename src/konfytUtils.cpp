@@ -19,13 +19,15 @@
  *
  *****************************************************************************/
 
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 
 #ifdef KONFYT_USE_CARLA
     #include <carla/CarlaHost.h>
 #endif
 #include <fluidsynth.h>
 #include <lscp/version.h>
+
+#include <QDir>
 
 #include <iostream>
 
@@ -47,6 +49,30 @@ QString sanitiseFilename(QString filename)
         ret.remove(invalid.at(i));
     }
     ret = ret.simplified();
+
+    return ret;
+}
+
+/* Returns a unique file path in the format "dirname/uniquename.extension"
+ * uniquename is equal to name if it doesn't conflict with an existing file,
+ * otherwise _n is appended, where n is the first number starting at 2 which
+ * results in a unique name.
+ * If extension is empty, ".extension" is not appended.
+ * If extension is specified without a leading dot, one will be inserted. */
+QString getUniquePath(QString dirname, QString name, QString extension)
+{
+    QString extra = "";
+    int count = 1;
+    QString ret;
+
+    while (1) {
+        ret = QString("%1/%2%3%4").arg(dirname).arg(name).arg(extra).arg(extension);
+        if (QFileInfo(ret).exists()) {
+            extra = QString("_%1").arg(++count);
+        } else {
+            break;
+        }
+    }
 
     return ret;
 }

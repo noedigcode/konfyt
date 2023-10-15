@@ -26,6 +26,8 @@
 #include <QSharedPointer>
 #include <QString>
 
+// =============================================================================
+
 enum KonfytSoundType
 {
     KfSoundTypeUndefined,
@@ -34,12 +36,16 @@ enum KonfytSoundType
     KfSoundTypePatch
 };
 
+// =============================================================================
+
 struct KonfytSoundPreset
 {
     QString name;
     int bank = -1;       // Bank number
     int program = -1;    // Program/preset number
 };
+
+// =============================================================================
 
 struct KonfytSound
 {
@@ -51,6 +57,8 @@ struct KonfytSound
 };
 
 typedef QSharedPointer<KonfytSound> KfSoundPtr;
+
+// =============================================================================
 
 struct KonfytAppInfo
 {

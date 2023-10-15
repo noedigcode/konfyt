@@ -31,6 +31,8 @@
 class KonfytDbTreeItem;
 typedef QSharedPointer<KonfytDbTreeItem> KfDbTreeItemPtr;
 
+// ============================================================================
+
 class KonfytDbTreeItem
 {
 public:
@@ -46,6 +48,8 @@ public:
     QString path;
     KfSoundPtr data;
 };
+
+// ============================================================================
 
 class KonfytDbTree
 {

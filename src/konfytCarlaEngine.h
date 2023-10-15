@@ -23,7 +23,7 @@
 #define KONFYT_CARLA_ENGINE_H
 
 #include "konfytBaseSoundEngine.h"
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 
 #include <carla/CarlaHost.h>
 
@@ -75,7 +75,9 @@ private:
     QString mJackClientName;
     KonfytJackEngine* jack = nullptr;
     QMap<int, KonfytCarlaPluginData> pluginDataMap;
-    QList<int> pluginList; // List with indexes matching id's in Carla engine, i.e. maps this class' unique IDs to pluginIds in Carla engine.
+    // List with indexes matching id's in Carla engine, i.e. maps this class'
+    // unique IDs to pluginIds in Carla engine.
+    QList<int> pluginList;
 
     const QString CARLA_CLIENT_POSTFIX = "_plugins";
     const QString CARLA_MIDI_IN_PORT_POSTFIX = "events-in";

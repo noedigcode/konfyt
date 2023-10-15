@@ -22,7 +22,7 @@
 #ifndef KONFYT_PROJECT_H
 #define KONFYT_PROJECT_H
 
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 #include "konfytJackStructs.h"
 #include "konfytPatch.h"
 #include "konfytStructs.h"
@@ -36,13 +36,10 @@
 #include <QXmlStreamWriter>
 
 
-#define PROJECT_FILENAME_EXTENSION ".konfytproject"
-#define PROJECT_PATCH_DIR "patches"
-
-
 class KonfytProject;
 typedef QSharedPointer<KonfytProject> ProjectPtr;
 
+// ============================================================================
 
 struct PrjAudioBus
 {
@@ -56,6 +53,8 @@ struct PrjAudioBus
     bool ignoreMasterGain = false;
 };
 
+// ============================================================================
+
 struct PrjAudioInPort
 {
     QString portName;
@@ -67,6 +66,8 @@ struct PrjAudioInPort
     QStringList rightInClients;
 };
 
+// ============================================================================
+
 struct PrjMidiPort
 {
     QString portName;
@@ -74,6 +75,8 @@ struct PrjMidiPort
     KfJackMidiPort* jackPort = nullptr; // TODO THIS MUST NOT BE IN PROJECT
     KonfytMidiFilter filter = KonfytMidiFilter::allPassFilter();
 };
+
+// ============================================================================
 
 struct KonfytTrigger
 {
@@ -94,6 +97,8 @@ struct KonfytTrigger
     }
 };
 
+// ============================================================================
+
 struct ExternalApp
 {
     ExternalApp() {}
@@ -105,12 +110,18 @@ struct ExternalApp
     bool autoRestart = false;
 };
 
-enum portLeftRight { leftPort, rightPort };
+// ============================================================================
 
 class KonfytProject : public QObject
 {
     Q_OBJECT
 public:
+    enum PortLeftRight { LeftPort, RightPort };
+
+    static const QString PROJECT_FILENAME_EXTENSION;
+    static const QString PROJECT_PATCH_DIR;
+    static const QString PROJECT_BACKUP_DIR;
+
     explicit KonfytProject(QObject *parent = 0);
 
     bool loadProject(QString filename);
@@ -175,8 +186,8 @@ public:
     int audioInPort_count();
     void audioInPort_setName(int portId, QString name);
     void audioInPort_setJackPorts(int portId, KfJackAudioPort* left, KfJackAudioPort* right);
-    void audioInPort_addClient(int portId, portLeftRight leftRight, QString client);
-    void audioInPort_removeClient(int portId, portLeftRight leftRight, QString client);
+    void audioInPort_addClient(int portId, PortLeftRight leftRight, QString client);
+    void audioInPort_removeClient(int portId, PortLeftRight leftRight, QString client);
 
     // Audio buses
     int audioBus_add(QString busName);
@@ -188,8 +199,8 @@ public:
     QList<int> audioBus_getAllBusIds();
     void audioBus_replace(int busId, PrjAudioBus newBus);
     void audioBus_replace_noModify(int busId, PrjAudioBus newBus);
-    void audioBus_addClient(int busId, portLeftRight leftRight, QString client);
-    void audioBus_removeClient(int busId, portLeftRight leftRight, QString client);
+    void audioBus_addClient(int busId, PortLeftRight leftRight, QString client);
+    void audioBus_removeClient(int busId, PortLeftRight leftRight, QString client);
 
     // External Apps
     int addExternalApp(ExternalApp app);
@@ -235,6 +246,9 @@ private:
     QString projectDirname;
     QString projectName = "New Project";
 
+    QString projectFilename();
+    void backupProject(QString projectDirPath);
+
     QMap<int, PrjMidiPort> midiInPortMap;
     int midiInPort_getUniqueId();
 
@@ -273,6 +287,7 @@ private:
 private:
     const char* XML_PRJ = "konfytProject";
     const char* XML_PRJ_NAME = "name";
+    const char* XML_PRJ_KONFYT_VERSION = "KonfytVersion";
     const char* XML_PRJ_PATCH = "patch";
     const char* XML_PRJ_PATCH_FILENAME = "filename";
     const char* XML_PRJ_PATCH_LIST_NUMBERS = "patchListNumbers";

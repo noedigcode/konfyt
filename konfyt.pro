@@ -22,6 +22,7 @@ SOURCES += src/main.cpp\
     src/konfytAudio.cpp \
     src/konfytJs.cpp \
     src/konfytLscp.cpp \
+    src/konfytUtils.cpp \
         src/mainwindow.cpp \
     src/konfytPatchEngine.cpp \
     src/konfytPatch.cpp \
@@ -34,7 +35,6 @@ SOURCES += src/main.cpp\
     src/konfytDbTree.cpp \
     src/konfytMidiFilter.cpp \
     src/konfytProcess.cpp \
-    src/konfytDefines.cpp \
     src/konfytMidi.cpp \
     src/konfytArrayList.cpp \
     src/konfytBridgeEngine.cpp \
@@ -66,13 +66,13 @@ HEADERS  += src/mainwindow.h \
     src/konfytDbTree.h \
     src/konfytMidiFilter.h \
     src/konfytProcess.h \
-    src/konfytDefines.h \
     src/konfytJackStructs.h \
     src/konfytMidi.h \
     src/konfytArrayList.h \
     src/konfytBridgeEngine.h \
     src/konfytBaseSoundEngine.h \
     src/konfytLscpEngine.h \
+    src/konfytUtils.h \
     src/menuEntryWidget.h \
     src/midiEventListWidgetAdapter.h \
     src/midiMapGraphWidget.h \

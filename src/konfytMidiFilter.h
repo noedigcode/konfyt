@@ -22,7 +22,7 @@
 #ifndef KONFYT_MIDI_FILTER_H
 #define KONFYT_MIDI_FILTER_H
 
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 #include "konfytStructs.h"
 #include "konfytMidi.h"
 
@@ -51,6 +51,8 @@
 #define XML_MIDIFILTER_INCHAN "inChan"
 #define XML_MIDIFILTER_OUTCHAN "outChan"
 
+// ============================================================================
+
 struct KonfytMidiMapping {
     QList<int> inNodes;
     QList<int> outNodes;
@@ -63,6 +65,8 @@ struct KonfytMidiMapping {
 private:
     int mMap[128];
 };
+
+// ============================================================================
 
 struct KonfytMidiFilterZone {
     int lowNote = 0;
@@ -77,10 +81,11 @@ struct KonfytMidiFilterZone {
     KonfytMidiMapping velocityMap;
 };
 
+// ============================================================================
+
 class KonfytMidiFilter
 {
 public:
-
     static KonfytMidiFilter allPassFilter();
 
     KonfytMidiFilterZone zone;

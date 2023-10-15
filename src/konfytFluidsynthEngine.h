@@ -22,7 +22,7 @@
 #ifndef KONFYT_FLUIDSYNTH_ENGINE_H
 #define KONFYT_FLUIDSYNTH_ENGINE_H
 
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 #include "konfytMidi.h"
 #include "konfytStructs.h"
 
@@ -31,6 +31,7 @@
 #include <QObject>
 #include <QMutex>
 
+// ============================================================================
 
 struct KfFluidSynth
 {
@@ -49,6 +50,7 @@ protected:
     int soundfontIDinSynth;
 };
 
+// ============================================================================
 
 class KonfytFluidsynthEngine : public QObject
 {

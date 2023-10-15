@@ -248,7 +248,8 @@ void MainWindow::updateProjectsMenu()
     } else {
         for (int i=0; i<projectDirList.count(); i++) {
             QFileInfo fi = projectDirList[i];
-            QAction* newAction = projectsMenu.addAction( fi.fileName().remove(PROJECT_FILENAME_EXTENSION) );
+            QAction* newAction = projectsMenu.addAction(
+                        fi.fileName().remove(KonfytProject::PROJECT_FILENAME_EXTENSION) );
             newAction->setToolTip(fi.filePath());
             projectsMenuMap.insert(newAction, fi);
         }
@@ -365,7 +366,8 @@ void MainWindow::scanDirForProjects(QString dirname)
     if (!dirExists(dirname)) {
         print("Projects directory does not exist: " + dirname);
     } else {
-        projectDirList = scanDirForFiles(dirname, PROJECT_FILENAME_EXTENSION);
+        projectDirList = scanDirForFiles(dirname,
+                                    KonfytProject::PROJECT_FILENAME_EXTENSION);
     }
 }
 
@@ -1265,15 +1267,15 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     if (!prj) { return; }
 
     QTreeWidgetItem* t;
-    portLeftRight leftRight;
+    KonfytProject::PortLeftRight leftRight;
     if (conChecksMap1.contains(c)) {
         // Checkbox is in the left column
         t = conChecksMap1[c];
-        leftRight = leftPort;
+        leftRight = KonfytProject::LeftPort;
     } else {
         // Checkbox is in the right column
         t = conChecksMap2[c];
-        leftRight = rightPort;
+        leftRight = KonfytProject::RightPort;
     }
 
     // Now we get the JACK port string:
@@ -1285,7 +1287,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
         PrjAudioBus bus = prj->audioBus_getBus(busId);
 
         KfJackAudioPort* jackPort;
-        if (leftRight == leftPort) { jackPort = bus.leftJackPort; }
+        if (leftRight == KonfytProject::LeftPort) { jackPort = bus.leftJackPort; }
         else { jackPort = bus.rightJackPort; }
 
         if (c->isChecked()) {
@@ -1307,7 +1309,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
         PrjAudioInPort p = prj->audioInPort_getPort(portId);
 
         KfJackAudioPort* jackPort;
-        if (leftRight == leftPort) { jackPort = p.leftJackPort; }
+        if (leftRight == KonfytProject::LeftPort) { jackPort = p.leftJackPort; }
         else { jackPort = p.rightJackPort; }
 
         if (c->isChecked()) {
@@ -1360,9 +1362,10 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     updateGUIWarnings();
 }
 
-/* Slot that gets called when the custom context menu of tree_portsBusses is requested.
- * This adds the appropriate actions to the menu based on the item selected, and shows
- * the menu. When an action is clicked, the slot of the corresponding action is called. */
+/* Slot that gets called when the custom context menu of tree_portsBusses is
+ * requested. This adds the appropriate actions to the menu based on the item
+ * selected, and shows the menu. When an action is clicked, the slot of the
+ * corresponding action is called. */
 void MainWindow::onPortsBusesTreeMenuRequested()
 {
     QMenu* m = &portsBusesTreeMenu;
@@ -2983,25 +2986,19 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
         return false;
     }
 
-    QString filename = getUniqueFilename(dir.path(),
-                                          sanitiseFilename(patch->name()),
-                                          KONFYT_PATCH_SUFFIX);
-    if (filename == "") {
-        print("Could not find a suitable filename.");
+    // Create unique name
+    QString filepath = getUniquePath(dir.path(), sanitiseFilename(patch->name()),
+                                     KONFYT_PATCH_SUFFIX);
+    if (filepath.isEmpty()) {
+        print("Could not find a unique filename.");
         return false;
     }
 
-    if (filename != patch->name() + "." + KONFYT_PATCH_SUFFIX) {
-        print("Duplicate name exists. Saving patch as:");
-        print(filename);
-    }
+    // Save patch
+    if (patch->savePatchToFile(filepath)) {
 
-    // Add directory, and save.
-    filename = mPatchesDir + "/" + filename;
-    if (patch->savePatchToFile(filename)) {
-
-        print("Patch saved as: " + filename);
-        db.addPatch(filename);
+        print("Patch saved as: " + filepath);
+        db.addPatch(filepath);
 
         // Refresh tree view if not in searchmode
         if (!mLibrarySearchModeActive) {
@@ -3012,58 +3009,9 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
 
         return true;
     } else {
-        print("Failed saving patch to file: " + filename);
+        print("Failed saving patch to file: " + filepath);
         return false;
     }
-}
-
-/* Scans a directory and determine if filename with extension exists.
- * Adds a number to the filename until it is unique.
- * Returns filename only, without path.
- * If the directory does not exist, empty string is returned.
- * Specified extension may be with or without a leading dot. */
-QString MainWindow::getUniqueFilename(QString dirname, QString name, QString extension)
-{
-    QDir dir(dirname);
-    if (!dir.exists()) {
-        emit print("getUniqueFilename: Directory does not exist.");
-        return "";
-    }
-
-    // If extension isn't empty, add dot if extension doesn't start with one
-    if (!extension.isEmpty()) {
-        if (!extension.startsWith(".")) { extension.prepend("."); }
-    }
-
-    // Scan the directory and get a unique name.
-    QString extra = "";
-    int count = 1;
-    bool duplicate = true;
-
-    while (duplicate) {
-
-        duplicate = false;
-
-        QFileInfoList fil = dir.entryInfoList();
-        for (int i=0; i<fil.count(); i++) {
-            QFileInfo fi = fil.at(i);
-            if (fi.fileName() == ".") { continue; }
-            if (fi.fileName() == "..") { continue; }
-
-            // Check if name is in use.
-            if (fi.fileName() == name + extra + extension) {
-                duplicate = true;
-                break;
-            }
-
-        }
-        if (duplicate) {
-            count++;
-            extra = " " + n2s(count);
-        }
-    }
-    // We finally found a unique filename.
-    return name + extra + extension;
 }
 
 void MainWindow::onExternalAppItemDoubleClicked(int /*id*/)
@@ -3411,13 +3359,12 @@ bool MainWindow::saveProject(ProjectPtr prj)
             // We need to bring up a save dialog.
         } else {
             // Find a unique directory name within our default projects dir
-            QString dir = getUniqueFilename(projectsDir,
+            QString dir = getUniquePath(projectsDir,
                                     sanitiseFilename(prj->getProjectName()),
                                     "");
-            if (dir == "") {
+            if (dir.isEmpty()) {
                 print("Failed to obtain a unique directory name.");
             } else {
-                dir = projectsDir + "/" + dir;
                 // We now have a unique directory filename.
                 QString text = QString(
                     "Do you want to save project \"%1\" to the following path?"
@@ -6246,7 +6193,7 @@ void MainWindow::on_actionProject_Open_triggered()
     QFileDialog* d = new QFileDialog();
     QString filename = d->getOpenFileName(
                 this, "Select project to open", projectsDir,
-                "*" + QString(PROJECT_FILENAME_EXTENSION) );
+                "*" + KonfytProject::PROJECT_FILENAME_EXTENSION);
     if (filename == "") {
         print("Cancelled.");
         return;
@@ -7229,8 +7176,11 @@ void MainWindow::on_pushButton_savedMidiMsgs_save_clicked()
         filename = item.description;
     }
     filename = sanitiseFilename(filename);
-    filename = getUniqueFilename(savedMidiListDir, filename, ".midiSendEvent");
-    filename = savedMidiListDir + "/" + filename;
+    filename = getUniquePath(savedMidiListDir, filename, ".midiSendEvent");
+    if (filename.isEmpty()) {
+        print("Failed to get unique filename for MIDI Send Message preset. Not saving.");
+        return;
+    }
 
     // Save
     if (saveMidiSendItemToFile(filename, item)) {

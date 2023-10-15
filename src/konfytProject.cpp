@@ -21,13 +21,24 @@
 
 #include "konfytProject.h"
 
+#include <QDateTime>
+
 #include <iostream>
+
+// ============================================================================
+
+const QString KonfytProject::PROJECT_FILENAME_EXTENSION = ".konfytproject";
+const QString KonfytProject::PROJECT_PATCH_DIR = "patches";
+const QString KonfytProject::PROJECT_BACKUP_DIR = "backup";
+
+// ============================================================================
 
 KonfytProject::KonfytProject(QObject *parent) :
     QObject(parent)
 {
     // Project has to have a minimum 1 bus
-    this->audioBus_add("Master Bus"); // Ports will be assigned later when loading project
+    // Ports will be assigned later when loading project
+    this->audioBus_add("Master Bus");
     // Add at least 1 MIDI input port also
     this->midiInPort_addPort("MIDI In");
 }
@@ -41,8 +52,8 @@ bool KonfytProject::saveProject()
     }
 }
 
-/* Save project xml file containing a list of all the patches,
- * as well as all the related patch files, in the specified directory. */
+/* Save project xml file containing a list of all the patches, as well as all
+ * the related patch files, in the specified directory. */
 bool KonfytProject::saveProjectAs(QString dirname)
 {
     // Directory in which the project will be saved (from parameter):
@@ -52,11 +63,13 @@ bool KonfytProject::saveProjectAs(QString dirname)
         return false;
     }
 
+    backupProject(dirname);
+
     QString patchesPath = dirname + "/" + PROJECT_PATCH_DIR;
     QDir patchesDir(patchesPath);
     if (!patchesDir.exists()) {
         if (patchesDir.mkdir(patchesPath)) {
-            print("saveProjectAs: Created patches directory " + patchesPath);
+            print("saveProjectAs: Created patches directory: " + patchesPath);
         } else {
             print("ERROR: saveProjectAs: Could not create patches directory.");
             return false;
@@ -64,7 +77,7 @@ bool KonfytProject::saveProjectAs(QString dirname)
     }
 
     // Project file:
-    QString filename = dirname + "/" + sanitiseFilename(projectName) + PROJECT_FILENAME_EXTENSION;
+    QString filename = dirname + "/" + projectFilename();
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         print("saveProjectAs: Could not open file for writing: " + filename);
@@ -82,10 +95,12 @@ bool KonfytProject::saveProjectAs(QString dirname)
     stream.writeStartDocument();
 
     stream.writeComment("This is a Konfyt project.");
-    stream.writeComment("Created with " + QString(APP_NAME) + " version " + APP_VERSION);
+    stream.writeComment(QString("Created with %1 version %2")
+                        .arg(APP_NAME).arg(APP_VERSION));
 
     stream.writeStartElement(XML_PRJ);
-    stream.writeAttribute(XML_PRJ_NAME,this->projectName);
+    stream.writeAttribute(XML_PRJ_NAME, this->projectName);
+    stream.writeAttribute(XML_PRJ_KONFYT_VERSION, APP_VERSION);
 
     // Write misc settings
     stream.writeTextElement(XML_PRJ_PATCH_LIST_NUMBERS, bool2str(patchListNumbers));
@@ -98,7 +113,11 @@ bool KonfytProject::saveProjectAs(QString dirname)
         stream.writeStartElement(XML_PRJ_PATCH);
         // Patch properties
         KonfytPatch* pat = patchList.at(i);
-        QString patchFilename = QString(PROJECT_PATCH_DIR) + "/" + n2s(i) + "_" + sanitiseFilename(pat->name()) + "." + KONFYT_PATCH_SUFFIX;
+        QString patchFilename = QString("%1/%2_%3.%4")
+                                    .arg(PROJECT_PATCH_DIR)
+                                    .arg(i)
+                                    .arg(sanitiseFilename(pat->name()))
+                                    .arg(KONFYT_PATCH_SUFFIX);
         stream.writeTextElement(XML_PRJ_PATCH_FILENAME, patchFilename);
 
         // Save the patch file in the same directory as the project file
@@ -240,8 +259,8 @@ bool KonfytProject::saveProjectAs(QString dirname)
     return true;
 }
 
-/* Load project xml file (containing list of all the patches) and
- * load all the patch files from the same directory. */
+/* Load project xml file (containing list of all the patches) and load all the
+ * patch files from the same directory. */
 bool KonfytProject::loadProject(QString filename)
 {
     QFile file(filename);
@@ -1053,12 +1072,12 @@ void KonfytProject::audioBus_replace_noModify(int busId, PrjAudioBus newBus)
     audioBusMap.insert(busId, newBus);
 }
 
-void KonfytProject::audioBus_addClient(int busId, portLeftRight leftRight, QString client)
+void KonfytProject::audioBus_addClient(int busId, PortLeftRight leftRight, QString client)
 {
     KONFYT_ASSERT_RETURN(audioBusMap.contains(busId));
 
     PrjAudioBus b = audioBusMap.value(busId);
-    if (leftRight == leftPort) {
+    if (leftRight == KonfytProject::LeftPort) {
         if (!b.leftOutClients.contains(client)) {
             b.leftOutClients.append(client);
         }
@@ -1071,12 +1090,12 @@ void KonfytProject::audioBus_addClient(int busId, portLeftRight leftRight, QStri
     setModified(true);
 }
 
-void KonfytProject::audioBus_removeClient(int busId, portLeftRight leftRight, QString client)
+void KonfytProject::audioBus_removeClient(int busId, PortLeftRight leftRight, QString client)
 {
     KONFYT_ASSERT_RETURN(audioBusMap.contains(busId));
 
     PrjAudioBus b = audioBusMap.value(busId);
-    if (leftRight == leftPort) {
+    if (leftRight == KonfytProject::LeftPort) {
         b.leftOutClients.removeAll(client);
     } else {
         b.rightOutClients.removeAll(client);
@@ -1155,12 +1174,12 @@ PrjAudioInPort KonfytProject::audioInPort_getPort(int portId) const
     return audioInPortMap.value(portId);
 }
 
-void KonfytProject::audioInPort_addClient(int portId, portLeftRight leftRight, QString client)
+void KonfytProject::audioInPort_addClient(int portId, PortLeftRight leftRight, QString client)
 {
     KONFYT_ASSERT_RETURN(audioInPortMap.contains(portId));
 
     PrjAudioInPort p = audioInPortMap.value(portId);
-    if (leftRight == leftPort) {
+    if (leftRight == KonfytProject::LeftPort) {
         if (!p.leftInClients.contains(client)) {
             p.leftInClients.append(client);
         }
@@ -1173,12 +1192,12 @@ void KonfytProject::audioInPort_addClient(int portId, portLeftRight leftRight, Q
     setModified(true);
 }
 
-void KonfytProject::audioInPort_removeClient(int portId, portLeftRight leftRight, QString client)
+void KonfytProject::audioInPort_removeClient(int portId, PortLeftRight leftRight, QString client)
 {
     KONFYT_ASSERT_RETURN(audioInPortMap.contains(portId));
 
     PrjAudioInPort p = audioInPortMap.value(portId);
-    if (leftRight == leftPort) {
+    if (leftRight == KonfytProject::LeftPort) {
         p.leftInClients.removeAll(client);
     } else {
         p.rightInClients.removeAll(client);
@@ -1389,6 +1408,80 @@ void KonfytProject::setModified(bool mod)
 {
     this->modified = mod;
     emit projectModifiedChanged(mod);
+}
+
+QString KonfytProject::projectFilename()
+{
+    return sanitiseFilename(projectName) + PROJECT_FILENAME_EXTENSION;
+}
+
+/* Copy current project files to a new subdirectory in the backups directory. */
+void KonfytProject::backupProject(QString projectDirPath)
+{
+    // Check if project file exists in specified dir
+    QFileInfo fi(QString("%1/%2").arg(projectDirPath, projectFilename()));
+    if (!fi.exists()) {
+        print("backupProject: No existing project file found, not doing backup.");
+        return;
+    }
+
+    // Create base backup dir if it doesn't exist
+    QString baseBackupPath = QString("%1/%2").arg(projectDirPath, PROJECT_BACKUP_DIR);
+
+    QDir baseBackupDir(baseBackupPath);
+    if (!baseBackupDir.exists()) {
+        if (baseBackupDir.mkdir(baseBackupPath)) {
+            print("backupProject: Created base backup directory: " + baseBackupPath);
+        } else {
+            print("ERROR: backupProject: Could not create base backup directory: "
+                  + baseBackupPath);
+            return;
+        }
+    }
+
+    // Create unique backup dir
+    QString backupDirName = QString("%1_%2")
+            .arg(QDir(projectDirPath).dirName())
+            .arg(QDateTime::currentDateTime().toString("yyyy-mm-dd_hh-mm-ss"));
+    QString backupDirPath = getUniquePath(baseBackupPath, backupDirName, "");
+
+    if (QDir().mkdir(backupDirPath)) {
+        print("backupProject: Created backup directory: " + backupDirPath);
+    } else {
+        print("ERROR: backupProject: Could not create backup directory: "
+              + backupDirPath);
+        return;
+    }
+
+    // Copy project files to backup location
+    QStringList relPathsToCopy;
+    // Project file
+    relPathsToCopy.append(projectFilename());
+    // Patches
+    QString srcPatchPath = QString("%1/%2").arg(projectDirPath, PROJECT_PATCH_DIR);
+    foreach (QFileInfo fi, QDir(srcPatchPath).entryInfoList()) {
+        if (fi.isFile()) {
+            relPathsToCopy.append(QString("%1/%2").arg(PROJECT_PATCH_DIR, fi.fileName()));
+        }
+    }
+
+    // Copy paths
+
+    // Create patch dir
+    if (!QDir(backupDirPath).mkdir(PROJECT_PATCH_DIR)) {
+        print("ERROR: backupProject: Could not create patches dir.");
+    }
+    // Copy each path
+    foreach (QString relPath, relPathsToCopy) {
+        QString src = QString("%1/%2").arg(projectDirPath, relPath);
+        QString dest = QString("%1/%2").arg(backupDirPath, relPath);
+        if (!QFile(src).copy(dest)) {
+            print(QString("ERROR: backupProject: Could not copy file %1 to %2")
+                    .arg(src, dest));
+        }
+    }
+
+    print("Backed up project to: " + backupDirPath);
 }
 
 bool KonfytProject::isModified()

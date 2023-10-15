@@ -23,7 +23,7 @@
 #define KONFYT_JACK_ENGINE_H
 
 #include "konfytArrayList.h"
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackStructs.h"
 #include "konfytProject.h"

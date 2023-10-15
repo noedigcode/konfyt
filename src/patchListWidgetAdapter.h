@@ -22,7 +22,7 @@
 #ifndef PATCHLISTWIDGETADAPTER_H
 #define PATCHLISTWIDGETADAPTER_H
 
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 #include "konfytPatch.h"
 
 #include <QListWidget>

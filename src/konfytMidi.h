@@ -22,7 +22,7 @@
 #ifndef KONFYTMIDI_H
 #define KONFYTMIDI_H
 
-#include "konfytDefines.h"
+#include "konfytUtils.h"
 
 #include <QString>
 #include <QXmlStreamWriter>
