@@ -7,6 +7,11 @@ Unreleased - October 2023
 Added
 
 - MIDI scripting for patch layers.
+- Create project backups when saving a project.
+  Backups are created in a backup subdirectory in the project directory. Two
+  backups are created - one before saving, and one after saving. This ensures
+  data is backed up in the case the project is opened by a previous version of
+  Konfyt that does not do backups and throws away data related to newer features.
 - Time for each console print message.
 
 Changes
