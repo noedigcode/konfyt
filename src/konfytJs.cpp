@@ -180,39 +180,27 @@ KonfytJSEnv::KonfytJSEnv(QObject* parent) : QObject{parent}
 
 void KonfytJSEnv::initScript(QString script)
 {
-    // Use invoke method to ensure code runs in KonfytJS thread.
-    // QJSEngine must be created in KonfytJS thread.
-    QMetaObject::invokeMethod(this, [=]()
-    {
-        scriptInitialisationDone = false;
-        resetEnvironment();
-        mScript = script;
+    scriptInitialisationDone = false;
+    resetEnvironment();
+    mScript = script;
 
-        if (mEnabled) {
-            runScriptInitialisation();
-            scriptInitialisationDone = true;
-        }
-
-    }, Qt::QueuedConnection);
+    if (mEnabled) {
+        runScriptInitialisation();
+        scriptInitialisationDone = true;
+    }
 }
 
 void KonfytJSEnv::setEnabled(bool enable)
 {
-    // Use invoke method to ensure code runs in KonfytJS thread.
-    // QJSEngine must be created in KonfytJS thread.
-    QMetaObject::invokeMethod(this, [=]()
-    {
-        if (enable) {
-            if (js && !scriptInitialisationDone) {
-                runScriptInitialisation();
-                scriptInitialisationDone = true;
-            }
+    if (enable) {
+        if (js && !scriptInitialisationDone) {
+            runScriptInitialisation();
+            scriptInitialisationDone = true;
         }
+    }
 
-        // Enabled state will be taken into account in in onNewMidiEventsAvailable()
-        mEnabled = enable;
-
-    }, Qt::QueuedConnection);
+    // Enabled state will be taken into account in in onNewMidiEventsAvailable()
+    mEnabled = enable;
 }
 
 bool KonfytJSEnv::isEnabled()
@@ -260,7 +248,11 @@ QJSEngine* KonfytJSEnv::jsEngine()
 
 float KonfytJSEnv::getAverageProcessTimeMs()
 {
-    return sumProcessTimesNs / 10 / 1000000.0;
+    if (processTimesCount) {
+        return sumProcessTimesNs / processTimesCount / 1000000.0;
+    } else {
+        return 0;
+    }
 }
 
 void KonfytJSEnv::sendMidi(QJSValue j)
@@ -275,7 +267,8 @@ void KonfytJSEnv::addProcessTime(qint64 timeNs)
     sum -= processTimesNs[iProcessTimes];
     processTimesNs[iProcessTimes] = timeNs;
     sum += timeNs;
-    iProcessTimes = (iProcessTimes + 1) % 10;
+    iProcessTimes = (iProcessTimes + 1) % processTimesSize;
+    if (processTimesCount < processTimesSize) { processTimesCount++; }
     sumProcessTimesNs = sum;
 }
 
@@ -315,19 +308,23 @@ void KonfytJSEnv::resetEnvironment()
     js->globalObject().setProperty("PITCHBEND_MIN", MIDI_PITCHBEND_SIGNED_MIN);
 }
 
-void KonfytJSEnv::evaluate(QString script)
+bool KonfytJSEnv::evaluate(QString script)
 {
-    handleJsResult( js->evaluate(script) );
+    return handleJsResult( js->evaluate(script) );
 }
 
 bool KonfytJSEnv::handleJsResult(QJSValue result)
 {
     if (result.isError()) {
-        print("-----------------------------");
-        print(QString("Evaluate error at line: %1").arg(
-                  result.property("lineNumber").toInt()));
-        print(result.toString());
-        print("-----------------------------");
+        print("*****************************");
+        if (js->isInterrupted()) {
+            print("Script took too long to execute and has been stopped.");
+        } else {
+            print(QString("Evaluate error at line: %1").arg(
+                      result.property("lineNumber").toInt()));
+            print(result.toString());
+        }
+        print("*****************************");
         setEnabled(false);
         emit exceptionOccurred();
         return false;
@@ -340,12 +337,9 @@ void KonfytJSEnv::runScriptInitialisation()
 {
     evaluate(mScript);
     jsMidiEventFunction = js->globalObject().property("midiEvent");
-    evaluate("init()");
-}
-
-void KonfytJSEnv::runScriptProcessFunction()
-{
-    evaluate("process()");
+    if (evaluate("init()")) {
+        print("Script initialised.");
+    }
 }
 
 TempParent::~TempParent()
@@ -397,7 +391,7 @@ void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
         return;
     }
 
-    QMetaObject::invokeMethod(this, [=]()
+    runInThisThread([=]()
     {
         ScriptEnvPtr s(new ScriptEnv());
         connect(&(s->env), &KonfytJSEnv::sendMidiEvent, this, [=](KonfytMidiEvent ev)
@@ -409,12 +403,14 @@ void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
             emit print(QString("script: %1").arg(msg));
         });
 
+        beforeScriptRun(s);
         s->env.setEnabled(patchLayer->isScriptEnabled());
         s->env.initScript(patchLayer->script());
+        afterScriptRun(s);
 
         routeEnvMap.insert(route, s);
         layerEnvMap.insert(patchLayer, s);
-    }, Qt::QueuedConnection);
+    });
 }
 
 void KonfytJSEngine::removeLayerScript(KfPatchLayerSharedPtr patchLayer)
@@ -422,7 +418,7 @@ void KonfytJSEngine::removeLayerScript(KfPatchLayerSharedPtr patchLayer)
     // Capture weak pointer so lambda doesn't hog shared pointer
     KfPatchLayerWeakPtr wp(patchLayer);
 
-    QMetaObject::invokeMethod(this, [=]()
+    runInThisThread([=]()
     {
         KfPatchLayerSharedPtr layer(wp);
         ScriptEnvPtr s = layerEnvMap.value(layer);
@@ -434,7 +430,7 @@ void KonfytJSEngine::removeLayerScript(KfPatchLayerSharedPtr patchLayer)
         routeEnvMap.remove(routeEnvMap.key(s));
         layerEnvMap.remove(layer);
 
-    }, Qt::QueuedConnection);
+    });
 }
 
 QString KonfytJSEngine::script(KfPatchLayerSharedPtr patchLayer)
@@ -459,7 +455,12 @@ void KonfytJSEngine::setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool ena
         return;
     }
 
-    s->env.setEnabled(enable);
+    runInThisThread([=]()
+    {
+        beforeScriptRun(s);
+        s->env.setEnabled(enable);
+        afterScriptRun(s);
+    });
 }
 
 float KonfytJSEngine::scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer)
@@ -471,6 +472,23 @@ float KonfytJSEngine::scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLaye
     }
 
     return s->env.getAverageProcessTimeMs();
+}
+
+void KonfytJSEngine::runInThisThread(std::function<void ()> func)
+{
+    QMetaObject::invokeMethod(this, func, Qt::QueuedConnection);
+}
+
+void KonfytJSEngine::beforeScriptRun(ScriptEnvPtr s)
+{
+    watchdog = watchdogMax;
+    runningScript = s;
+}
+
+void KonfytJSEngine::afterScriptRun(ScriptEnvPtr /*s*/)
+{
+    runningScript.reset();
+    watchdog = watchdogMax;
 }
 
 KfJackMidiRoute *KonfytJSEngine::jackMidiRouteFromLayer(KfPatchLayerSharedPtr layer)
@@ -504,6 +522,8 @@ void KonfytJSEngine::onNewMidiEventsAvailable()
     foreach (ScriptEnvPtr s, routeEnvMap.values()) {
         if (!s->env.isEnabled()) { continue; }
         if (s->env.eventCount() == 0) { continue; }
+        beforeScriptRun(s);
         s->env.runProcess();
+        afterScriptRun(s);
     }
 }

@@ -30,6 +30,9 @@
 #include <QObject>
 #include <QScopedPointer>
 #include <QSharedPointer>
+#include <QTimer>
+
+#include <functional>
 
 
 // =============================================================================
@@ -95,6 +98,8 @@ private:
 
 class KonfytJSEnv; // Forward declaration for use in KonfytJSMidi
 
+/* This is used as the global Midi object in the scripting environment.
+ * Signals and slots are accessible from the script. */
 class KonfytJSMidi : public QObject
 {
     Q_OBJECT
@@ -121,6 +126,8 @@ private:
      * if the property does not exist (or is undefined). */
     QVariant value(const QJSValue& j, QString key, QVariant defaultValue);
 };
+
+// =============================================================================
 
 /* Javascript environment for a script. */
 class KonfytJSEnv : public QObject
@@ -151,10 +158,9 @@ public slots:
     void sendMidi(QJSValue j);
 
 private:
-    TempParent tempParent; // TODO DEBUG: JS garbage collector doesn't like it if
-                           // tempParent's parent is his class, and this class is
-                           // tempParent's parent (i.e. circular reference).
-
+    // NB: JS garbage collector doesn't like it if tempParent's parent is this
+    // class, and this class is tempParent's parent (i.e. circular reference).
+    TempParent tempParent;
 
     KonfytJSMidi midi {this};
     QScopedPointer<QJSEngine> js;
@@ -164,19 +170,20 @@ private:
 
     bool mEnabled = false;
 
-    qint64 processTimesNs[10] = {0};
+    static const int processTimesSize = 10;
+    qint64 processTimesNs[processTimesSize] = {0};
     int iProcessTimes = 0;
+    int processTimesCount = 0;
     qint64 sumProcessTimesNs = 0;
     void addProcessTime(qint64 timeNs);
 
     void resetEnvironment();
-    void evaluate(QString script);
+    bool evaluate(QString script);
     bool handleJsResult(QJSValue result);
 
     QString mScript;
     bool scriptInitialisationDone = false;
     void runScriptInitialisation();
-    void runScriptProcessFunction();
 
     QList<KonfytMidiEvent> midiEvents;
     QJSValue jsMidiRxArray;
@@ -195,11 +202,32 @@ private:
 // =============================================================================
 
 /* Engine that manages all the scripts and routes MIDI events between scripts
- * and Jack. */
+ * and the JackEngine.
+ * Patch layers (and their scripts) are added from the GUI. The JackEngine
+ * communicates received MIDI events through a shared thread-safe ringbuffer and
+ * wakes this thread up with a signal. The received MIDI events are paired up
+ * with the patch layers using the JackEngine routes. For each received MIDI
+ * event, the appropriate patch layer script is then run. */
 class KonfytJSEngine : public QObject
 {
     Q_OBJECT
 public:
+    KonfytJSEngine(QObject* parent= nullptr) : QObject(parent)
+    {
+        QTimer* t = new QTimer();
+        connect(t, &QTimer::timeout, [=]()
+        {
+            if (runningScript) {
+                watchdog--;
+                print(QString("Watchdog strike %1").arg(watchdogMax - watchdog));
+                if (watchdog <= 0) {
+                    runningScript->env.jsEngine()->setInterrupted(true);
+                    print("Watchdog stopping script");
+                }
+            }
+        });
+        t->start(500);
+    }
     void setJackEngine(KonfytJackEngine* jackEngine);
 
     void addLayerScript(KfPatchLayerSharedPtr patchLayer);
@@ -212,6 +240,8 @@ signals:
     void print(QString msg);
 
 private:
+    void runInThisThread(std::function<void()> func);
+
     KonfytJackEngine* jack = nullptr;
     QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent>> mRxBuffer;
 
@@ -222,6 +252,12 @@ private:
 
     QMap<KfJackMidiRoute*, ScriptEnvPtr> routeEnvMap;
     QMap<KfPatchLayerSharedPtr, ScriptEnvPtr> layerEnvMap;
+
+    ScriptEnvPtr runningScript;
+    const int watchdogMax = 4;
+    int watchdog = watchdogMax;
+    void beforeScriptRun(ScriptEnvPtr s);
+    void afterScriptRun(ScriptEnvPtr s);
 
     KfJackMidiRoute* jackMidiRouteFromLayer(KfPatchLayerSharedPtr layer);
 
