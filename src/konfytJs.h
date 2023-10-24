@@ -136,8 +136,8 @@ class KonfytJSEnv : public QObject
 public:
     explicit KonfytJSEnv(QObject* parent = nullptr);
 
-    void initScript(QString script);
-    void setEnabled(bool enable);
+    void setScriptAndInitIfEnabled(QString script, bool enable);
+    void setEnabledAndInitIfNeeded(bool enable);
     bool isEnabled();
     void runProcess();
     QString script();

@@ -178,19 +178,16 @@ KonfytJSEnv::KonfytJSEnv(QObject* parent) : QObject{parent}
     connect(&midi, &KonfytJSMidi::send, this, &KonfytJSEnv::sendMidi);
 }
 
-void KonfytJSEnv::initScript(QString script)
+void KonfytJSEnv::setScriptAndInitIfEnabled(QString script, bool enable)
 {
     scriptInitialisationDone = false;
     resetEnvironment();
     mScript = script;
 
-    if (mEnabled) {
-        runScriptInitialisation();
-        scriptInitialisationDone = true;
-    }
+    setEnabledAndInitIfNeeded(enable);
 }
 
-void KonfytJSEnv::setEnabled(bool enable)
+void KonfytJSEnv::setEnabledAndInitIfNeeded(bool enable)
 {
     if (enable) {
         if (js && !scriptInitialisationDone) {
@@ -199,7 +196,7 @@ void KonfytJSEnv::setEnabled(bool enable)
         }
     }
 
-    // Enabled state will be taken into account in in onNewMidiEventsAvailable()
+    // Enabled state will be taken into account in runProcess()
     mEnabled = enable;
 }
 
@@ -325,7 +322,7 @@ bool KonfytJSEnv::handleJsResult(QJSValue result)
             print(result.toString());
         }
         print("*****************************");
-        setEnabled(false);
+        setEnabledAndInitIfNeeded(false);
         emit exceptionOccurred();
         return false;
     } else {
@@ -381,31 +378,35 @@ void KonfytJSEngine::setJackEngine(KonfytJackEngine *jackEngine)
 
 void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
 {
-    if (!patchLayer) {
-        print("Error: addLayerScript: null patchLayer");
-        return;
-    }
-    KfJackMidiRoute* route = jackMidiRouteFromLayer(patchLayer);
-    if (!route) {
-        print("Error: addLayerScript: null Jack MIDI route");
-        return;
-    }
-
     runInThisThread([=]()
     {
-        ScriptEnvPtr s(new ScriptEnv());
-        connect(&(s->env), &KonfytJSEnv::sendMidiEvent, this, [=](KonfytMidiEvent ev)
-        {
-            jack->sendMidiEventsOnRoute(route, {ev});
-        });
-        connect(&(s->env), &KonfytJSEnv::print, this, [=](QString msg)
-        {
-            emit print(QString("script: %1").arg(msg));
-        });
+        if (!patchLayer) {
+            print("Error: addLayerScript: null patchLayer");
+            return;
+        }
+        KfJackMidiRoute* route = jackMidiRouteFromLayer(patchLayer);
+        if (!route) {
+            print("Error: addLayerScript: null Jack MIDI route");
+            return;
+        }
+
+        ScriptEnvPtr s = layerEnvMap.value(patchLayer);
+        if (!s) {
+            s.reset(new ScriptEnv());
+            connect(&(s->env), &KonfytJSEnv::sendMidiEvent, this, [=](KonfytMidiEvent ev)
+            {
+                jack->sendMidiEventsOnRoute(route, {ev});
+            });
+            connect(&(s->env), &KonfytJSEnv::print, this, [=](QString msg)
+            {
+                emit print(QString("script: %1").arg(msg));
+            });
+        }
 
         beforeScriptRun(s);
-        s->env.setEnabled(patchLayer->isScriptEnabled());
-        s->env.initScript(patchLayer->script());
+
+        s->env.setScriptAndInitIfEnabled(patchLayer->script(),
+                                         patchLayer->isScriptEnabled());
         afterScriptRun(s);
 
         routeEnvMap.insert(route, s);
@@ -449,16 +450,16 @@ QString KonfytJSEngine::script(KfPatchLayerSharedPtr patchLayer)
 
 void KonfytJSEngine::setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable)
 {
-    ScriptEnvPtr s = layerEnvMap.value(patchLayer);
-    if (!s) {
-        print("Error: setScriptEnabled: invalid patch layer");
-        return;
-    }
-
     runInThisThread([=]()
     {
+        ScriptEnvPtr s = layerEnvMap.value(patchLayer);
+        if (!s) {
+            print("Error: setScriptEnabled: invalid patch layer");
+            return;
+        }
+
         beforeScriptRun(s);
-        s->env.setEnabled(enable);
+        s->env.setEnabledAndInitIfNeeded(enable);
         afterScriptRun(s);
     });
 }
