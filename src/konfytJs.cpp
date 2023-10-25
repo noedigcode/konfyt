@@ -366,6 +366,26 @@ void TempParent::removeTemporaryChildren()
     }
 }
 
+KonfytJSEngine::KonfytJSEngine(QObject *parent) : QObject(parent)
+{
+    // Start script watchdog timer in calling thread (i.e. before this
+    // object has been moved to another thread, so not the scripting thread).
+
+    QTimer* t = new QTimer();
+    connect(t, &QTimer::timeout, [=]()
+    {
+        if (runningScript) {
+            watchdog--;
+            print(QString("Watchdog strike %1").arg(watchdogMax - watchdog));
+            if (watchdog <= 0) {
+                runningScript->env.jsEngine()->setInterrupted(true);
+                print("Watchdog stopping script");
+            }
+        }
+    });
+    t->start(500);
+}
+
 void KonfytJSEngine::setJackEngine(KonfytJackEngine *jackEngine)
 {
     jack = jackEngine;
@@ -399,12 +419,12 @@ void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
             });
             connect(&(s->env), &KonfytJSEnv::print, this, [=](QString msg)
             {
-                emit print(QString("script: %1").arg(msg));
+                emit print(QString("script: [%1] %2").arg(s->env.uri, msg));
             });
+            s->env.uri = patchLayer->uri;
         }
 
         beforeScriptRun(s);
-
         s->env.setScriptAndInitIfEnabled(patchLayer->script(),
                                          patchLayer->isScriptEnabled());
         afterScriptRun(s);
@@ -473,6 +493,17 @@ float KonfytJSEngine::scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLaye
     }
 
     return s->env.getAverageProcessTimeMs();
+}
+
+void KonfytJSEngine::updatePatchLayerURIs()
+{
+    runInThisThread([=]()
+    {
+        foreach (KfPatchLayerSharedPtr layer, layerEnvMap.keys()) {
+            ScriptEnvPtr s = layerEnvMap[layer];
+            s->env.uri = layer->uri;
+        }
+    });
 }
 
 void KonfytJSEngine::runInThisThread(std::function<void ()> func)

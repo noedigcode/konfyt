@@ -1508,7 +1508,7 @@ void MainWindow::loadProject(ProjectPtr prj)
     pengine.setProject(mCurrentProject);
 
     // Connect project signals
-    connect(prj.data(), &KonfytProject::projectModifiedChanged,
+    connect(prj.data(), &KonfytProject::projectModifiedStateChanged,
             this, &MainWindow::onProjectModifiedStateChanged);
     connect(prj.data(), &KonfytProject::midiPickupRangeChanged,
             this, &MainWindow::onProjectMidiPickupRangeChanged);

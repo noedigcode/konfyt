@@ -148,6 +148,8 @@ public:
     QJSEngine* jsEngine();
     float getAverageProcessTimeMs();
 
+    QString uri;
+
 signals:
     void print(QString msg);
     void exceptionOccurred();
@@ -212,22 +214,7 @@ class KonfytJSEngine : public QObject
 {
     Q_OBJECT
 public:
-    KonfytJSEngine(QObject* parent= nullptr) : QObject(parent)
-    {
-        QTimer* t = new QTimer();
-        connect(t, &QTimer::timeout, [=]()
-        {
-            if (runningScript) {
-                watchdog--;
-                print(QString("Watchdog strike %1").arg(watchdogMax - watchdog));
-                if (watchdog <= 0) {
-                    runningScript->env.jsEngine()->setInterrupted(true);
-                    print("Watchdog stopping script");
-                }
-            }
-        });
-        t->start(500);
-    }
+    KonfytJSEngine(QObject* parent= nullptr);
     void setJackEngine(KonfytJackEngine* jackEngine);
 
     void addLayerScript(KfPatchLayerSharedPtr patchLayer);
@@ -235,6 +222,8 @@ public:
     QString script(KfPatchLayerSharedPtr patchLayer);
     void setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
     float scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer);
+
+    void updatePatchLayerURIs();
 
 signals:
     void print(QString msg);

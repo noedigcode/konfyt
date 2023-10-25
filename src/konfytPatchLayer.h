@@ -130,6 +130,8 @@ public:
     QList<MidiSendItem> midiSendList;
     QList<KonfytMidiEvent> getMidiSendListEvents();
 
+    QString uri;
+
 private:
     LayerType mLayerType = TypeUninitialized;
     QString mErrorMessage;

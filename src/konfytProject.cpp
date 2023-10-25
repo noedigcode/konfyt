@@ -645,12 +645,14 @@ void KonfytProject::addPatch(KonfytPatch *newPatch)
 {
     patchList.append(newPatch);
     setModified(true);
+    patchURIsNeedUpdating();
 }
 
 void KonfytProject::insertPatch(KonfytPatch *newPatch, int index)
 {
     patchList.insert(index, newPatch);
     setModified(true);
+    patchURIsNeedUpdating();
 }
 
 /* Removes the patch from project and returns the pointer.
@@ -662,6 +664,7 @@ KonfytPatch *KonfytProject::removePatch(int i)
         KonfytPatch* patch = patchList[i];
         patchList.removeAt(i);
         setModified(true);
+        patchURIsNeedUpdating();
         return patch;
     } else {
         return nullptr;
@@ -675,6 +678,7 @@ void KonfytProject::movePatch(int indexFrom, int indexTo)
 
     patchList.move(indexFrom, indexTo);
     setModified(true);
+    patchURIsNeedUpdating();
 }
 
 KonfytPatch *KonfytProject::getPatch(int i)
@@ -1414,7 +1418,7 @@ KonfytJackConPair KonfytProject::removeJackAudioCon(int i)
 void KonfytProject::setModified(bool mod)
 {
     this->modified = mod;
-    emit projectModifiedChanged(mod);
+    emit projectModifiedStateChanged(mod);
 }
 
 QString KonfytProject::projectFilename()

@@ -226,12 +226,14 @@ public:
     QList<KonfytJackConPair> getJackAudioConList();
     KonfytJackConPair removeJackAudioCon(int i);
 
-    bool isModified(); // Returns whether the project has been modified since last load/save.
+    // Returns whether the project has been modified since last load/save.
+    bool isModified();
     void setModified(bool mod);
 
 signals:
     void print(QString msg);
-    void projectModifiedChanged(bool modified); // Emitted when project modified state changes.
+    void projectModifiedStateChanged(bool modified);
+    void patchURIsNeedUpdating();
     void midiInPortNameChanged(int portId);
     void midiOutPortNameChanged(int portId);
     void audioInPortNameChanged(int portId);

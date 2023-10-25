@@ -60,6 +60,10 @@ void KonfytPatchEngine::panic(bool p)
 void KonfytPatchEngine::setProject(ProjectPtr project)
 {
     mCurrentProject = project;
+    connect(project.data(), &KonfytProject::patchURIsNeedUpdating,
+            this, &KonfytPatchEngine::onProjectPatchURIsNeedUdating);
+
+    onProjectPatchURIsNeedUdating();
 }
 
 /* Reload current patch (e.g. if patch changed). */
@@ -74,7 +78,7 @@ void KonfytPatchEngine::unloadPatch(KonfytPatch *patch)
     if ( !patches.contains(patch) ) { return; }
 
     foreach (KfPatchLayerWeakPtr layer, patch->layers()) {
-        unloadLayer(layer);
+        unloadLayerFromEngines(layer);
     }
 
     patches.removeAll(patch);
@@ -168,6 +172,7 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addSfProgramLayer(
 
     KfPatchLayerSharedPtr layer = mCurrentPatch->addSfLayer(soundfontPath,
                                                             newProgram).toStrongRef();
+    updatePatchLayersURIs(mCurrentPatch);
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
@@ -193,11 +198,9 @@ void KonfytPatchEngine::removeLayer(KfPatchLayerWeakPtr layer)
 
 void KonfytPatchEngine::removeLayer(KonfytPatch *patch, KfPatchLayerWeakPtr layer)
 {
-    // Unload from respective engine
-    unloadLayer(layer);
-
+    unloadLayerFromEngines(layer);
     patch->removeLayer(layer);
-
+    updatePatchLayersURIs(mCurrentPatch);
     loadPatch(patch); // To refresh solo and mute
 }
 
@@ -206,9 +209,10 @@ void KonfytPatchEngine::moveLayer(KfPatchLayerWeakPtr layer, int newIndex)
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
     mCurrentPatch->moveLayer(layer, newIndex);
+    updatePatchLayersURIs(mCurrentPatch);
 }
 
-void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
+void KonfytPatchEngine::unloadLayerFromEngines(KfPatchLayerWeakPtr layer)
 {
     KfPatchLayerSharedPtr l = layer.toStrongRef();
     if (l->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
@@ -257,7 +261,7 @@ void KonfytPatchEngine::unloadLayer(KfPatchLayerWeakPtr layer)
 
 void KonfytPatchEngine::reloadLayer(KfPatchLayerWeakPtr layer)
 {
-    unloadLayer(layer);
+    unloadLayerFromEngines(layer);
     reloadPatch();
 }
 
@@ -275,6 +279,7 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addSfzLayer(QString path)
 
     // Add the plugin to the patch
     KfPatchLayerSharedPtr layer = mCurrentPatch->addPlugin(plugin, "sfz").toStrongRef();
+    updatePatchLayersURIs(mCurrentPatch);
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
@@ -601,6 +606,23 @@ void KonfytPatchEngine::setupAndInitSfzEngine(KonfytAppInfo appInfo)
     sfzEngine->initEngine(jack);
 }
 
+/* Update layer URIs in specified patch and trigger update in scripting engine.
+ * This must be called if some action caused the patch and/or its layers indices
+ * to change, i.e. insert, remove and move of patches or layers. */
+void KonfytPatchEngine::updatePatchLayersURIs(KonfytPatch *patch)
+{
+    KONFYT_ASSERT_RETURN(patch != nullptr);
+    if (!mCurrentProject) { return; }
+
+    int ipatch = mCurrentProject->getPatchIndex(patch);
+    for (int i=0; i < patch->layerCount(); i++) {
+        KfPatchLayerSharedPtr layer = patch->layer(i);
+        layer->uri = QString("P%1L%2").arg(ipatch+1).arg(i+1);
+    }
+
+    scriptEngine->updatePatchLayerURIs();
+}
+
 /* Return the current patch. */
 KonfytPatch *KonfytPatchEngine::currentPatch()
 {
@@ -766,6 +788,7 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addMidiOutPortToPatch(int port)
     KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, KfPatchLayerWeakPtr());
 
     KfPatchLayerSharedPtr layer = mCurrentPatch->addMidiOutputPort(port).toStrongRef();
+    updatePatchLayersURIs(mCurrentPatch);
 
     // The MIDI in port defaults to 0, but the project may not have a port 0.
     // Find the first port in the project.
@@ -783,6 +806,7 @@ KfPatchLayerWeakPtr KonfytPatchEngine::addAudioInPortToPatch(int port)
     KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, KfPatchLayerWeakPtr());
 
     KfPatchLayerSharedPtr layer = mCurrentPatch->addAudioInPort(port).toStrongRef();
+    updatePatchLayersURIs(mCurrentPatch);
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
@@ -941,6 +965,15 @@ void KonfytPatchEngine::onSfzEngineInitDone(QString error)
 
     } else {
         print("SFZ engine initialisation error: " + error);
+    }
+}
+
+void KonfytPatchEngine::onProjectPatchURIsNeedUdating()
+{
+    if (!mCurrentProject) { return; }
+
+    foreach (KonfytPatch* patch, mCurrentProject->getPatchList()) {
+        updatePatchLayersURIs(patch);
     }
 }
 

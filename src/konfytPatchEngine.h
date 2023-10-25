@@ -64,7 +64,7 @@ public:
     void loadPatch(KonfytPatch* patch);
     void reloadPatch();
     void unloadPatch(KonfytPatch* patch);
-    void unloadLayer(KfPatchLayerWeakPtr layer);
+    void unloadLayerFromEngines(KfPatchLayerWeakPtr layer);
     void reloadLayer(KfPatchLayerWeakPtr layer);
     bool isPatchLoaded(KonfytPatch* patch);
 
@@ -147,8 +147,11 @@ private:
 
     KonfytJackEngine* jack = nullptr;
 
+    void updatePatchLayersURIs(KonfytPatch* patch);
+
 private slots:
     void onSfzEngineInitDone(QString error);
+    void onProjectPatchURIsNeedUdating();
 };
 
 #endif // KONFYT_PATCH_ENGINE_H
