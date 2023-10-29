@@ -2555,7 +2555,7 @@ QStringList MainWindow::scanDirForFiles(QString dirname, QString filenameExtensi
 
     // Get list of all subfiles and directories. Then for each:
     // If a file, add it if its extension matches filenameExtension.
-    // If a directory, run this function on it.
+    // If a directory, run this function on it, except if it is a backup dir.
     QFileInfoList fil = dir.entryInfoList(QDir::AllEntries | QDir::NoDotAndDotDot);
     for (int i = 0; i < fil.count(); i++) {
         QFileInfo fi = fil.at(i);
@@ -2574,8 +2574,10 @@ QStringList MainWindow::scanDirForFiles(QString dirname, QString filenameExtensi
                 ret.append(fi.filePath());
             }
         } else if (fi.isDir()) {
-            // Scan the dir
-            ret.append(scanDirForFiles(fi.filePath(), filenameExtension));
+            // Scan the dir if it is not a backup dir
+            if (fi.fileName() != KonfytProject::PROJECT_BACKUP_DIR) {
+                ret.append(scanDirForFiles(fi.filePath(), filenameExtension));
+            }
         }
     }
 
