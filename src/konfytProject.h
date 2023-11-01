@@ -124,9 +124,9 @@ public:
 
     explicit KonfytProject(QObject *parent = 0);
 
-    bool loadProject(QString filename);
+    bool loadProject(QString filepath);
     bool saveProject();
-    bool saveProjectAs(QString dirname);
+    bool saveProjectAs(QString dirpath);
 
     void addPatch(KonfytPatch* newPatch);
     void insertPatch(KonfytPatch* newPatch, int index);
@@ -245,11 +245,14 @@ signals:
     
 private:
     QList<KonfytPatch*> patchList;
-    QString projectDirname;
-    QString projectName = "New Project";
+    QString mProjectDirpath;
+    QString mProjectName = "New Project";
+    QString mProjectFilename;
 
-    QString projectFilename();
-    void backupProject(QString projectDirPath, QString tag);
+    QString filenameFromProjectName();
+    void backupProject(QString dirpath, QString projectFilename, QString tag);
+    void writeToXmlStream(QXmlStreamWriter *stream);
+    void readFromXmlStream(QXmlStreamReader* r);
 
     QMap<int, PrjMidiPort> midiInPortMap;
     int midiInPort_getUniqueId();

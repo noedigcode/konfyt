@@ -62,13 +62,12 @@ QString sanitiseFilename(QString filename)
 QString getUniquePath(QString dirname, QString name, QString extension)
 {
     QString extra = "";
-    int count = 1;
     QString ret;
 
-    while (1) {
+    for (int i = 2; i < INT_MAX; i++) {
         ret = QString("%1/%2%3%4").arg(dirname).arg(name).arg(extra).arg(extension);
         if (QFileInfo(ret).exists()) {
-            extra = QString("_%1").arg(++count);
+            extra = QString("_%1").arg(i);
         } else {
             break;
         }

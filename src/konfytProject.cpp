@@ -45,28 +45,38 @@ KonfytProject::KonfytProject(QObject *parent) :
 
 bool KonfytProject::saveProject()
 {
-    if (projectDirname == "") {
+    if (mProjectDirpath == "") {
         return false;
     } else {
-        return saveProjectAs(projectDirname);
+        return saveProjectAs(mProjectDirpath);
     }
 }
 
 /* Save project xml file containing a list of all the patches, as well as all
  * the related patch files, in the specified directory. */
-bool KonfytProject::saveProjectAs(QString dirname)
+bool KonfytProject::saveProjectAs(QString dirpath)
 {
-    // Directory in which the project will be saved (from parameter):
-    QDir dir(dirname);
+    // Abort if directory does not exist
+    QDir dir(dirpath);
     if (!dir.exists()) {
         print("saveProjectAs: Directory does not exist.");
         return false;
     }
+    mProjectDirpath = dirpath;
+
+    // Make a filename from the project name if one is not yet specified.
+    // Note: once a project has a filename, the name will not be changed when
+    // the project name changes. This makes things simpler and eliminates
+    // side effects where other programs rely on the project filename.
+    if (mProjectFilename.isEmpty()) {
+        mProjectFilename = filenameFromProjectName();
+    }
 
     // Create a backup of the original files before saving
-    backupProject(dirname, "a_presave");
+    backupProject(dirpath, mProjectFilename, "a_presave");
 
-    QString patchesPath = dirname + "/" + PROJECT_PATCH_DIR;
+    // Create patches dir
+    QString patchesPath = dirpath + "/" + PROJECT_PATCH_DIR;
     QDir patchesDir(patchesPath);
     if (!patchesDir.exists()) {
         if (patchesDir.mkdir(patchesPath)) {
@@ -77,182 +87,32 @@ bool KonfytProject::saveProjectAs(QString dirname)
         }
     }
 
-    // Project file:
-    QString filename = dirname + "/" + projectFilename();
-    QFile file(filename);
+    // Project filename from project name.
+    // If different from old filename, first rename the old file.
+    QString newFilename = filenameFromProjectName();
+    if (newFilename != mProjectFilename) {
+        // Rename old file to new name
+        QFile file(mProjectFilename);
+        if (!file.rename(newFilename)) {
+            print(QString("saveProjectAs: Could not rename old project file "
+                          "\"%1\" to \"%2\".")
+                  .arg(mProjectFilename, newFilename));
+        }
+    }
+
+    // Open project file for writing
+    QString filepath = dirpath + "/" + mProjectFilename;
+    QFile file(filepath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        print("saveProjectAs: Could not open file for writing: " + filename);
+        print("saveProjectAs: Could not open file for writing: " + filepath);
         return false;
     }
 
-    this->projectDirname = dirname;
-
-    print("saveProjectAs: Project Directory: " + dirname);
-    print("saveProjectAs: Project filename: " + filename);
-
+    print("saveProjectAs: Project directory: " + mProjectDirpath);
+    print("saveProjectAs: Project filename: " + mProjectFilename);
 
     QXmlStreamWriter stream(&file);
-    stream.setAutoFormatting(true);
-    stream.writeStartDocument();
-
-    stream.writeComment("This is a Konfyt project.");
-    stream.writeComment(QString("Created with %1 version %2")
-                        .arg(APP_NAME).arg(APP_VERSION));
-
-    stream.writeStartElement(XML_PRJ);
-    stream.writeAttribute(XML_PRJ_NAME, this->projectName);
-    stream.writeAttribute(XML_PRJ_KONFYT_VERSION, APP_VERSION);
-
-    // Write misc settings
-    stream.writeTextElement(XML_PRJ_PATCH_LIST_NUMBERS, bool2str(patchListNumbers));
-    stream.writeTextElement(XML_PRJ_PATCH_LIST_NOTES, bool2str(patchListNotes));
-    stream.writeTextElement(XML_PRJ_MIDI_PICKUP_RANGE, n2s(midiPickupRange));
-
-    // Write patches
-    for (int i=0; i<patchList.count(); i++) {
-
-        stream.writeStartElement(XML_PRJ_PATCH);
-        // Patch properties
-        KonfytPatch* pat = patchList.at(i);
-        QString patchFilename = QString("%1/%2_%3.%4")
-                                    .arg(PROJECT_PATCH_DIR)
-                                    .arg(i)
-                                    .arg(sanitiseFilename(pat->name()))
-                                    .arg(KONFYT_PATCH_SUFFIX);
-        stream.writeTextElement(XML_PRJ_PATCH_FILENAME, patchFilename);
-
-        // Save the patch file in the same directory as the project file
-        patchFilename = dirname + "/" + patchFilename;
-        if ( !pat->savePatchToFile(patchFilename) ) {
-            print("ERROR: saveProjectAs: Failed to save patch " + patchFilename);
-        } else {
-            print("saveProjectAs: Saved patch: " + patchFilename);
-        }
-
-        stream.writeEndElement();
-    }
-
-    // Write midiInPortList
-    stream.writeStartElement(XML_PRJ_MIDI_IN_PORTLIST);
-    QList<int> midiInIds = midiInPort_getAllPortIds();
-    for (int i=0; i < midiInIds.count(); i++) {
-        int id = midiInIds[i];
-        PrjMidiPort p = midiInPort_getPort(id);
-        stream.writeStartElement(XML_PRJ_MIDI_IN_PORT);
-        stream.writeTextElement(XML_PRJ_MIDI_IN_PORT_ID, n2s(id));
-        stream.writeTextElement(XML_PRJ_MIDI_IN_PORT_NAME, p.portName);
-        p.filter.writeToXMLStream(&stream);
-        QStringList l = p.clients;
-        for (int j=0; j < l.count(); j++) {
-            stream.writeTextElement(XML_PRJ_MIDI_IN_PORT_CLIENT, l.at(j));
-        }
-        stream.writeEndElement(); // end of port
-    }
-    stream.writeEndElement(); // end of midiInPortList
-
-    // Write midiOutPortList
-    stream.writeStartElement(XML_PRJ_MIDI_OUT_PORTLIST);
-    QList<int> midiOutIds = midiOutPort_getAllPortIds();
-    for (int i=0; i<midiOutIds.count(); i++) {
-        int id = midiOutIds[i];
-        PrjMidiPort p = midiOutPort_getPort(id);
-        stream.writeStartElement(XML_PRJ_MIDI_OUT_PORT);
-        stream.writeTextElement(XML_PRJ_MIDI_OUT_PORT_ID, n2s(id));
-        stream.writeTextElement(XML_PRJ_MIDI_OUT_PORT_NAME, p.portName);
-        QStringList l = p.clients;
-        for (int j=0; j<l.count(); j++) {
-            stream.writeTextElement(XML_PRJ_MIDI_OUT_PORT_CLIENT, l.at(j));
-        }
-        stream.writeEndElement(); // end of port
-    }
-    stream.writeEndElement(); // end of midiOutPortList
-
-    // Write audioBusList
-    stream.writeStartElement(XML_PRJ_BUSLIST);
-    QList<int> busIds = audioBus_getAllBusIds();
-    for (int i=0; i<busIds.count(); i++) {
-        stream.writeStartElement(XML_PRJ_BUS);
-        PrjAudioBus b = audioBusMap.value(busIds[i]);
-        stream.writeTextElement( XML_PRJ_BUS_ID, n2s(busIds[i]) );
-        stream.writeTextElement( XML_PRJ_BUS_NAME, b.busName );
-        stream.writeTextElement( XML_PRJ_BUS_LGAIN, n2s(b.leftGain) );
-        stream.writeTextElement( XML_PRJ_BUS_RGAIN, n2s(b.rightGain) );
-        stream.writeTextElement( XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME,
-                                 bool2str(b.ignoreMasterGain) );
-        for (int j=0; j<b.leftOutClients.count(); j++) {
-            stream.writeTextElement( XML_PRJ_BUS_LCLIENT, b.leftOutClients.at(j) );
-        }
-        for (int j=0; j<b.rightOutClients.count(); j++) {
-            stream.writeTextElement( XML_PRJ_BUS_RCLIENT, b.rightOutClients.at(j) );
-        }
-        stream.writeEndElement(); // end of bus
-    }
-    stream.writeEndElement(); // end of audioBusList
-
-    // Write audio input ports
-    stream.writeStartElement(XML_PRJ_AUDIOINLIST);
-    QList<int> audioInIds = audioInPort_getAllPortIds();
-    for (int i=0; i<audioInIds.count(); i++) {
-        int id = audioInIds[i];
-        PrjAudioInPort p = audioInPort_getPort(id);
-        stream.writeStartElement(XML_PRJ_AUDIOIN_PORT);
-        stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_ID, n2s(id) );
-        stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_NAME, p.portName );
-        stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_LGAIN, n2s(p.leftGain) );
-        stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_RGAIN, n2s(p.rightGain) );
-        for (int j=0; j<p.leftInClients.count(); j++) {
-            stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_LCLIENT, p.leftInClients.at(j) );
-        }
-        for (int j=0; j<p.rightInClients.count(); j++) {
-            stream.writeTextElement( XML_PRJ_AUDIOIN_PORT_RCLIENT, p.rightInClients.at(j) );
-        }
-        stream.writeEndElement(); // end of port
-    }
-    stream.writeEndElement(); // end of audioInputPortList
-
-    // External applications
-    writeExternalApps(&stream);
-
-    // Write trigger list
-    stream.writeStartElement(XML_PRJ_TRIGGERLIST);
-    stream.writeTextElement(XML_PRJ_PROG_CHANGE_SWITCH_PATCHES, bool2str(programChangeSwitchPatches));
-    QList<KonfytTrigger> trigs = triggerHash.values();
-    for (int i=0; i<trigs.count(); i++) {
-        stream.writeStartElement(XML_PRJ_TRIGGER);
-        stream.writeTextElement(XML_PRJ_TRIGGER_ACTIONTEXT, trigs[i].actionText);
-        stream.writeTextElement(XML_PRJ_TRIGGER_TYPE, n2s(trigs[i].type) );
-        stream.writeTextElement(XML_PRJ_TRIGGER_CHAN, n2s(trigs[i].channel) );
-        stream.writeTextElement(XML_PRJ_TRIGGER_DATA1, n2s(trigs[i].data1) );
-        stream.writeTextElement(XML_PRJ_TRIGGER_BANKMSB, n2s(trigs[i].bankMSB) );
-        stream.writeTextElement(XML_PRJ_TRIGGER_BANKLSB, n2s(trigs[i].bankLSB) );
-        stream.writeEndElement(); // end of trigger
-    }
-    stream.writeEndElement(); // end of trigger list
-
-    // Write other JACK MIDI connections list
-    stream.writeStartElement(XML_PRJ_OTHERJACK_MIDI_CON_LIST);
-    for (int i=0; i<jackMidiConList.count(); i++) {
-        stream.writeStartElement(XML_PRJ_OTHERJACKCON);
-        stream.writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackMidiConList[i].srcPort);
-        stream.writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackMidiConList[i].destPort);
-        stream.writeEndElement(); // end JACK connection pair
-    }
-    stream.writeEndElement(); // Other JACK MIDI connections list
-
-    // Write other JACK Audio connections list
-    stream.writeStartElement(XML_PRJ_OTHERJACK_AUDIO_CON_LIST);
-    for (int i=0; i < jackAudioConList.count(); i++) {
-        stream.writeStartElement(XML_PRJ_OTHERJACKCON); // start JACK connection pair
-        stream.writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackAudioConList[i].srcPort);
-        stream.writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackAudioConList[i].destPort);
-        stream.writeEndElement(); // end JACK connection pair
-    }
-    stream.writeEndElement(); // end JACK Audio connections list
-
-    stream.writeEndElement(); // project
-
-    stream.writeEndDocument();
-
+    writeToXmlStream(&stream);
     file.close();
 
     setModified(false);
@@ -261,330 +121,41 @@ bool KonfytProject::saveProjectAs(QString dirname)
     // project is now opened with an earlier version of Konfyt which does not
     // create backups and does not retain data related to newer features, that
     // this version will still be backed up.
-    backupProject(dirname, "b_postsave");
+    backupProject(dirpath, mProjectFilename, "b_postsave");
 
     return true;
 }
 
 /* Load project xml file (containing list of all the patches) and load all the
  * patch files from the same directory. */
-bool KonfytProject::loadProject(QString filename)
+bool KonfytProject::loadProject(QString filepath)
 {
-    QFile file(filename);
+    QFile file(filepath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         print("loadProject: Could not open file for reading.");
         return false;
     }
 
-
-
     QFileInfo fi(file);
-    QDir dir = fi.dir(); // Get file parent directory
-    this->projectDirname = dir.path();
-    print("loadProject: Loading project file " + filename);
-    print("loadProject: in dir " + dir.path());
+    mProjectFilename = fi.fileName();
+    mProjectDirpath = fi.dir().path();
+
+    print("loadProject: Loading project file: " + mProjectFilename);
+    print("loadProject: In directory: " +mProjectDirpath);
 
     QXmlStreamReader r(&file);
-    r.setNamespaceProcessing(false);
-
-    QString patchFilename;
-    patchList.clear();
-    midiInPortMap.clear();
-    midiOutPortMap.clear();
-    clearExternalApps();
-    preExternalAppsRead(); // Used for backwards compatibility.
-    audioBusMap.clear();
-    audioInPortMap.clear();
-
-    while (r.readNextStartElement()) { // project
-
-        // Get the project name attribute
-        QXmlStreamAttributes ats =  r.attributes();
-        if (ats.count()) {
-            this->projectName = ats.at(0).value().toString(); // Project name
-        }
-
-        while (r.readNextStartElement()) {
-
-            if (r.name() == XML_PRJ_PATCH) { // patch
-
-                while (r.readNextStartElement()) { // patch properties
-
-                    if (r.name() == XML_PRJ_PATCH_FILENAME) {
-                        patchFilename = r.readElementText();
-                    } else {
-                        print("loadProject: "
-                                    "Unrecognized patch element: " + r.name().toString() );
-                        r.skipCurrentElement();
-                    }
-
-                }
-
-                // Add new patch
-                KonfytPatch* pt = new KonfytPatch();
-                QString errors;
-                patchFilename = dir.path() + "/" + patchFilename;
-                print("loadProject: Loading patch " + patchFilename);
-                if (pt->loadPatchFromFile(patchFilename, &errors)) {
-                    this->addPatch(pt);
-                } else {
-                    // Error message on loading patch.
-                    print("loadProject: Error loading patch: " + patchFilename);
-                }
-                if (!errors.isEmpty()) {
-                    print("Load errors for patch " + patchFilename + ":\n" + errors);
-                }
-
-            } else if (r.name() == XML_PRJ_PATCH_LIST_NUMBERS) {
-
-                patchListNumbers = Qstr2bool(r.readElementText());
-
-            } else if (r.name() == XML_PRJ_PATCH_LIST_NOTES) {
-
-                patchListNotes = Qstr2bool(r.readElementText());
-
-            } else if (r.name() == XML_PRJ_MIDI_PICKUP_RANGE) {
-
-                setMidiPickupRange(r.readElementText().toInt());
-
-            } else if (r.name() == XML_PRJ_MIDI_IN_PORTLIST) {
-
-                while (r.readNextStartElement()) { // port
-                    PrjMidiPort p;
-                    int id = midiInPort_getUniqueId();
-                    while (r.readNextStartElement()) {
-                        if (r.name() == XML_PRJ_MIDI_IN_PORT_ID) {
-                            id = r.readElementText().toInt();
-                        } else if (r.name() == XML_PRJ_MIDI_IN_PORT_NAME) {
-                            p.portName = r.readElementText();
-                        } else if (r.name() == XML_PRJ_MIDI_IN_PORT_CLIENT) {
-                            p.clients.append( r.readElementText() );
-                        } else if (r.name() == XML_MIDIFILTER) {
-                            p.filter.readFromXMLStream(&r);
-                        } else {
-                            print("loadProject: "
-                                        "Unrecognized midiInPortList port element: " + r.name().toString() );
-                        }
-                    }
-                    if (midiInPortMap.contains(id)) {
-                        print("loadProject: "
-                                    "Duplicate midi in port id detected: " + n2s(id));
-                    }
-                    this->midiInPortMap.insert(id, p);
-                }
-
-            } else if (r.name() == XML_PRJ_MIDI_OUT_PORTLIST) {
-
-                while (r.readNextStartElement()) { // port
-                    PrjMidiPort p;
-                    int id = midiOutPort_getUniqueId();
-                    while (r.readNextStartElement()) {
-                        if (r.name() == XML_PRJ_MIDI_OUT_PORT_ID) {
-                            id = r.readElementText().toInt();
-                        } else if (r.name() == XML_PRJ_MIDI_OUT_PORT_NAME) {
-                            p.portName = r.readElementText();
-                        } else if (r.name() == XML_PRJ_MIDI_OUT_PORT_CLIENT) {
-                            p.clients.append( r.readElementText() );
-                        } else {
-                            print("loadProject: "
-                                        "Unrecognized midiOutPortList port element: " + r.name().toString() );
-                            r.skipCurrentElement();
-                        }
-                    }
-                    if (midiOutPortMap.contains(id)) {
-                        print("loadProject: "
-                                    "Duplicate midi out port id detected: " + n2s(id));
-                    }
-                    this->midiOutPortMap.insert(id, p);
-                }
-
-            } else if (r.name() == XML_PRJ_BUSLIST) {
-
-                while (r.readNextStartElement()) { // bus
-                    PrjAudioBus b;
-                    int id = audioBus_getUniqueId();
-                    while (r.readNextStartElement()) {
-                        if (r.name() == XML_PRJ_BUS_ID) {
-                            id = r.readElementText().toInt();
-                        } else if (r.name() == XML_PRJ_BUS_NAME) {
-                            b.busName = r.readElementText();
-                        } else if (r.name() == XML_PRJ_BUS_LGAIN) {
-                            b.leftGain = r.readElementText().toFloat();
-                        } else if (r.name() == XML_PRJ_BUS_RGAIN) {
-                            b.rightGain = r.readElementText().toFloat();
-                        } else if (r.name() == XML_PRJ_BUS_LCLIENT) {
-                            b.leftOutClients.append( r.readElementText() );
-                        } else if (r.name() == XML_PRJ_BUS_RCLIENT) {
-                            b.rightOutClients.append( r.readElementText() );
-                        } else if (r.name() == XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME) {
-                            b.ignoreMasterGain = Qstr2bool(r.readElementText());
-                        } else {
-                            print("loadProject: "
-                                        "Unrecognized bus element: " + r.name().toString() );
-                            r.skipCurrentElement();
-                        }
-                    }
-                    if (audioBusMap.contains(id)) {
-                        print("loadProject: "
-                                    "Duplicate bus id detected: " + n2s(id));
-                    }
-                    this->audioBusMap.insert(id, b);
-                }
-
-            } else if (r.name() == XML_PRJ_AUDIOINLIST) {
-
-                while (r.readNextStartElement()) { // port
-                    PrjAudioInPort p;
-                    int id = audioInPort_getUniqueId();
-                    while (r.readNextStartElement()) {
-                        if (r.name() == XML_PRJ_AUDIOIN_PORT_ID) {
-                            id = r.readElementText().toInt();
-                        } else if (r.name() == XML_PRJ_AUDIOIN_PORT_NAME) {
-                            p.portName = r.readElementText();
-                        } else if (r.name() == XML_PRJ_AUDIOIN_PORT_LGAIN) {
-                            p.leftGain = r.readElementText().toFloat();
-                        } else if (r.name() == XML_PRJ_AUDIOIN_PORT_RGAIN) {
-                            p.rightGain = r.readElementText().toFloat();
-                        } else if (r.name() == XML_PRJ_AUDIOIN_PORT_LCLIENT) {
-                            p.leftInClients.append( r.readElementText() );
-                        } else if (r.name() == XML_PRJ_AUDIOIN_PORT_RCLIENT) {
-                            p.rightInClients.append( r.readElementText() );
-                        } else {
-                            print("loadProject: "
-                                        "Unrecognized audio input port element: " + r.name().toString() );
-                            r.skipCurrentElement();
-                        }
-                    }
-                    if (audioInPortMap.contains(id)) {
-                        print("loadProject: "
-                                    "Duplicate audio in port id detected: " + n2s(id));
-                    }
-                    this->audioInPortMap.insert(id, p);
-                }
-
-            } else if (r.name() == XML_PRJ_PROCESSLIST) {
-
-                // TODO DEPRECATED
-                readExternalApps(&r);
-
-            } else if (r.name() == XML_PRJ_EXT_APP_LIST) {
-
-                readExternalApps(&r);
-
-
-            } else if (r.name() == XML_PRJ_TRIGGERLIST) {
-
-                while (r.readNextStartElement()) {
-
-                    if (r.name() == XML_PRJ_PROG_CHANGE_SWITCH_PATCHES) {
-                        programChangeSwitchPatches = Qstr2bool(r.readElementText());
-                    } else if (r.name() == XML_PRJ_TRIGGER) {
-
-                        KonfytTrigger trig;
-                        while (r.readNextStartElement()) {
-                            if (r.name() == XML_PRJ_TRIGGER_ACTIONTEXT) {
-                                trig.actionText = r.readElementText();
-                            } else if (r.name() == XML_PRJ_TRIGGER_TYPE) {
-                                trig.type = r.readElementText().toInt();
-                            } else if (r.name() == XML_PRJ_TRIGGER_CHAN) {
-                                trig.channel = r.readElementText().toInt();
-                            } else if (r.name() == XML_PRJ_TRIGGER_DATA1) {
-                                trig.data1 = r.readElementText().toInt();
-                            } else if (r.name() == XML_PRJ_TRIGGER_BANKMSB) {
-                                trig.bankMSB = r.readElementText().toInt();
-                            } else if (r.name() == XML_PRJ_TRIGGER_BANKLSB) {
-                                trig.bankLSB = r.readElementText().toInt();
-                            } else {
-                                print("loadProject: "
-                                            "Unrecognized trigger element: " + r.name().toString() );
-                                r.skipCurrentElement();
-                            }
-                        }
-                        this->addAndReplaceTrigger(trig);
-
-                    } else {
-                        print("loadProject: "
-                                    "Unrecognized triggerList element: " + r.name().toString() );
-                        r.skipCurrentElement();
-                    }
-                }
-
-            } else if (r.name() == XML_PRJ_OTHERJACK_MIDI_CON_LIST) {
-
-                // Other JACK MIDI connections list
-
-                while (r.readNextStartElement()) {
-                    if (r.name() == XML_PRJ_OTHERJACKCON) {
-
-                        QString srcPort, destPort;
-                        while (r.readNextStartElement()) {
-                            if (r.name() == XML_PRJ_OTHERJACKCON_SRC) {
-                                srcPort = r.readElementText();
-                            } else if (r.name() == XML_PRJ_OTHERJACKCON_DEST) {
-                                destPort = r.readElementText();
-                            } else {
-                                print("loadProject: "
-                                            "Unrecognized JACK con element: " + r.name().toString() );
-                                r.skipCurrentElement();
-                            }
-                        }
-                        this->addJackMidiCon(srcPort, destPort);
-
-                    } else {
-                        print("loadProject: "
-                                    "Unrecognized otherJackMidiConList element: " + r.name().toString() );
-                        r.skipCurrentElement();
-                    }
-                }
-
-            } else if (r.name() == XML_PRJ_OTHERJACK_AUDIO_CON_LIST) {
-
-                // Other JACK Audio connections list
-
-                while (r.readNextStartElement()) {
-                    if (r.name() == XML_PRJ_OTHERJACKCON) {
-
-                        QString srcPort, destPort;
-                        while (r.readNextStartElement()) {
-                            if (r.name() == XML_PRJ_OTHERJACKCON_SRC) {
-                                srcPort = r.readElementText();
-                            } else if (r.name() == XML_PRJ_OTHERJACKCON_DEST) {
-                                destPort = r.readElementText();
-                            } else {
-                                print("loadProject: "
-                                            "Unrecognized JACK con element: " + r.name().toString() );
-                                r.skipCurrentElement();
-                            }
-                        }
-                        addJackAudioCon(srcPort, destPort);
-
-                    } else {
-                        print("loadProject: "
-                                    "Unrecognized otherJackAudioConList element: " + r.name().toString() );
-                        r.skipCurrentElement();
-                    }
-                }
-
-            } else {
-                print("loadProject: "
-                            "Unrecognized project element: " + r.name().toString() );
-                r.skipCurrentElement();
-            }
-        }
-    }
-
+    readFromXmlStream(&r);
 
     file.close();
 
     postExternalAppsRead(); // Commit loaded list. Used for backwards compatibility.
 
-    // Check if we have at least one audio output bus. If not, create a default one.
+    // Create an audio output bus if there are none, so there is at least one.
     if (audioBus_count() == 0) {
-        // Project has to have a minimum 1 bus
-        this->audioBus_add("Master Bus"); // Ports will be assigned later when loading project
+        audioBus_add("Master Bus");
     }
 
-    // Check if we have at least one Midi input port. If not, create a default one.
+    // Create a MIDI input port if there are none, so there is at least one.
     if (midiInPort_count() == 0) {
         midiInPort_addPort("MIDI In");
     }
@@ -596,7 +167,7 @@ bool KonfytProject::loadProject(QString filename)
 
 void KonfytProject::setProjectName(QString newName)
 {
-    projectName = newName;
+    mProjectName = newName;
     setModified(true);
 }
 
@@ -638,7 +209,7 @@ int KonfytProject::getMidiPickupRange()
 
 QString KonfytProject::getProjectName()
 {
-    return projectName;
+    return mProjectName;
 }
 
 void KonfytProject::addPatch(KonfytPatch *newPatch)
@@ -708,12 +279,12 @@ int KonfytProject::getNumPatches()
 
 QString KonfytProject::getDirname()
 {
-    return projectDirname;
+    return mProjectDirpath;
 }
 
 void KonfytProject::setDirname(QString newDirname)
 {
-    projectDirname = newDirname;
+    mProjectDirpath = newDirname;
     setModified(true);
 }
 
@@ -1421,23 +992,30 @@ void KonfytProject::setModified(bool mod)
     emit projectModifiedStateChanged(mod);
 }
 
-QString KonfytProject::projectFilename()
+QString KonfytProject::filenameFromProjectName()
 {
-    return sanitiseFilename(projectName) + PROJECT_FILENAME_EXTENSION;
+    QString basename = sanitiseFilename(mProjectName.trimmed());
+    if (basename.isEmpty()) {
+        basename = "project";
+    }
+    return basename + PROJECT_FILENAME_EXTENSION;
 }
 
-/* Copy current project files to a new subdirectory in the backups directory. */
-void KonfytProject::backupProject(QString projectDirPath, QString tag)
+/* Copy project files of the specified project filename and directory to the
+ * backups directory under a new subdirectory, named to end with tag. */
+void KonfytProject::backupProject(QString dirpath, QString projectFilename,
+                                  QString tag)
 {
     // Check if project file exists in specified dir
-    QFileInfo fi(QString("%1/%2").arg(projectDirPath, projectFilename()));
+    QFileInfo fi(QString("%1/%2").arg(dirpath, projectFilename));
     if (!fi.exists()) {
-        print("backupProject: No existing project file found, not doing backup.");
+        print("backupProject: No existing project file found with name "
+              + projectFilename + ", not doing backup.");
         return;
     }
 
     // Create base backup dir if it doesn't exist
-    QString baseBackupPath = QString("%1/%2").arg(projectDirPath, PROJECT_BACKUP_DIR);
+    QString baseBackupPath = QString("%1/%2").arg(dirpath, PROJECT_BACKUP_DIR);
 
     QDir baseBackupDir(baseBackupPath);
     if (!baseBackupDir.exists()) {
@@ -1452,7 +1030,7 @@ void KonfytProject::backupProject(QString projectDirPath, QString tag)
 
     // Create unique backup dir
     QString backupDirName = QString("%1_backup_%2_%3")
-            .arg(QDir(projectDirPath).dirName())
+            .arg(QDir(dirpath).dirName())
             .arg(QDateTime::currentDateTime().toString("yyyy-MM-dd_hh-mm-ss"))
             .arg(tag);
     QString backupDirPath = getUniquePath(baseBackupPath, backupDirName, "");
@@ -1468,9 +1046,9 @@ void KonfytProject::backupProject(QString projectDirPath, QString tag)
     // Copy project files to backup location
     QStringList relPathsToCopy;
     // Project file
-    relPathsToCopy.append(projectFilename());
+    relPathsToCopy.append(projectFilename);
     // Patches
-    QString srcPatchPath = QString("%1/%2").arg(projectDirPath, PROJECT_PATCH_DIR);
+    QString srcPatchPath = QString("%1/%2").arg(dirpath, PROJECT_PATCH_DIR);
     foreach (QFileInfo fi, QDir(srcPatchPath).entryInfoList()) {
         if (fi.isFile()) {
             relPathsToCopy.append(QString("%1/%2").arg(PROJECT_PATCH_DIR, fi.fileName()));
@@ -1485,7 +1063,7 @@ void KonfytProject::backupProject(QString projectDirPath, QString tag)
     }
     // Copy each path
     foreach (QString relPath, relPathsToCopy) {
-        QString src = QString("%1/%2").arg(projectDirPath, relPath);
+        QString src = QString("%1/%2").arg(dirpath, relPath);
         QString dest = QString("%1/%2").arg(backupDirPath, relPath);
         if (!QFile(src).copy(dest)) {
             print(QString("ERROR: backupProject: Could not copy file %1 to %2")
@@ -1494,6 +1072,467 @@ void KonfytProject::backupProject(QString projectDirPath, QString tag)
     }
 
     print("Backed up project to: " + backupDirPath);
+}
+
+void KonfytProject::writeToXmlStream(QXmlStreamWriter* stream)
+{
+    stream->setAutoFormatting(true);
+    stream->writeStartDocument();
+
+    stream->writeComment("This is a Konfyt project.");
+    stream->writeComment(QString("Created with %1 version %2")
+                        .arg(APP_NAME).arg(APP_VERSION));
+
+    stream->writeStartElement(XML_PRJ);
+    stream->writeAttribute(XML_PRJ_NAME, this->mProjectName);
+    stream->writeAttribute(XML_PRJ_KONFYT_VERSION, APP_VERSION);
+
+    // Write misc settings
+    stream->writeTextElement(XML_PRJ_PATCH_LIST_NUMBERS, bool2str(patchListNumbers));
+    stream->writeTextElement(XML_PRJ_PATCH_LIST_NOTES, bool2str(patchListNotes));
+    stream->writeTextElement(XML_PRJ_MIDI_PICKUP_RANGE, n2s(midiPickupRange));
+
+    // Write patches
+    for (int i=0; i<patchList.count(); i++) {
+
+        stream->writeStartElement(XML_PRJ_PATCH);
+        // Patch properties
+        KonfytPatch* pat = patchList.at(i);
+        QString patchPathRel = QString("%1/%2_%3.%4")
+                                    .arg(PROJECT_PATCH_DIR)
+                                    .arg(i)
+                                    .arg(sanitiseFilename(pat->name()))
+                                    .arg(KONFYT_PATCH_SUFFIX);
+        stream->writeTextElement(XML_PRJ_PATCH_FILENAME, patchPathRel);
+
+        // Save the patch file in patches subdirectory
+        QString patchPathAbs = mProjectDirpath + "/" + patchPathRel;
+        if ( !pat->savePatchToFile(patchPathAbs) ) {
+            print("ERROR: saveProjectAs: Failed to save patch " + patchPathAbs);
+            // TODO: BUBBLE ERRORS UP SO A MSGBOX CAN BE SHOWN TO USER THAT ONE OR MORE ERRORS HAVE OCCURRED.
+        } else {
+            print("saveProjectAs: Saved patch: " + patchPathRel);
+        }
+
+        stream->writeEndElement();
+    }
+
+    // Write midiInPortList
+    stream->writeStartElement(XML_PRJ_MIDI_IN_PORTLIST);
+    QList<int> midiInIds = midiInPort_getAllPortIds();
+    for (int i=0; i < midiInIds.count(); i++) {
+        int id = midiInIds[i];
+        PrjMidiPort p = midiInPort_getPort(id);
+        stream->writeStartElement(XML_PRJ_MIDI_IN_PORT);
+        stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_ID, n2s(id));
+        stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_NAME, p.portName);
+        p.filter.writeToXMLStream(stream);
+        QStringList l = p.clients;
+        for (int j=0; j < l.count(); j++) {
+            stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_CLIENT, l.at(j));
+        }
+        stream->writeEndElement(); // end of port
+    }
+    stream->writeEndElement(); // end of midiInPortList
+
+    // Write midiOutPortList
+    stream->writeStartElement(XML_PRJ_MIDI_OUT_PORTLIST);
+    QList<int> midiOutIds = midiOutPort_getAllPortIds();
+    for (int i=0; i<midiOutIds.count(); i++) {
+        int id = midiOutIds[i];
+        PrjMidiPort p = midiOutPort_getPort(id);
+        stream->writeStartElement(XML_PRJ_MIDI_OUT_PORT);
+        stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_ID, n2s(id));
+        stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_NAME, p.portName);
+        QStringList l = p.clients;
+        for (int j=0; j<l.count(); j++) {
+            stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_CLIENT, l.at(j));
+        }
+        stream->writeEndElement(); // end of port
+    }
+    stream->writeEndElement(); // end of midiOutPortList
+
+    // Write audioBusList
+    stream->writeStartElement(XML_PRJ_BUSLIST);
+    QList<int> busIds = audioBus_getAllBusIds();
+    for (int i=0; i<busIds.count(); i++) {
+        stream->writeStartElement(XML_PRJ_BUS);
+        PrjAudioBus b = audioBusMap.value(busIds[i]);
+        stream->writeTextElement( XML_PRJ_BUS_ID, n2s(busIds[i]) );
+        stream->writeTextElement( XML_PRJ_BUS_NAME, b.busName );
+        stream->writeTextElement( XML_PRJ_BUS_LGAIN, n2s(b.leftGain) );
+        stream->writeTextElement( XML_PRJ_BUS_RGAIN, n2s(b.rightGain) );
+        stream->writeTextElement( XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME,
+                                 bool2str(b.ignoreMasterGain) );
+        for (int j=0; j<b.leftOutClients.count(); j++) {
+            stream->writeTextElement( XML_PRJ_BUS_LCLIENT, b.leftOutClients.at(j) );
+        }
+        for (int j=0; j<b.rightOutClients.count(); j++) {
+            stream->writeTextElement( XML_PRJ_BUS_RCLIENT, b.rightOutClients.at(j) );
+        }
+        stream->writeEndElement(); // end of bus
+    }
+    stream->writeEndElement(); // end of audioBusList
+
+    // Write audio input ports
+    stream->writeStartElement(XML_PRJ_AUDIOINLIST);
+    QList<int> audioInIds = audioInPort_getAllPortIds();
+    for (int i=0; i<audioInIds.count(); i++) {
+        int id = audioInIds[i];
+        PrjAudioInPort p = audioInPort_getPort(id);
+        stream->writeStartElement(XML_PRJ_AUDIOIN_PORT);
+        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_ID, n2s(id) );
+        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_NAME, p.portName );
+        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_LGAIN, n2s(p.leftGain) );
+        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_RGAIN, n2s(p.rightGain) );
+        for (int j=0; j<p.leftInClients.count(); j++) {
+            stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_LCLIENT, p.leftInClients.at(j) );
+        }
+        for (int j=0; j<p.rightInClients.count(); j++) {
+            stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_RCLIENT, p.rightInClients.at(j) );
+        }
+        stream->writeEndElement(); // end of port
+    }
+    stream->writeEndElement(); // end of audioInputPortList
+
+    // External applications
+    writeExternalApps(stream);
+
+    // Write trigger list
+    stream->writeStartElement(XML_PRJ_TRIGGERLIST);
+    stream->writeTextElement(XML_PRJ_PROG_CHANGE_SWITCH_PATCHES, bool2str(programChangeSwitchPatches));
+    QList<KonfytTrigger> trigs = triggerHash.values();
+    for (int i=0; i<trigs.count(); i++) {
+        stream->writeStartElement(XML_PRJ_TRIGGER);
+        stream->writeTextElement(XML_PRJ_TRIGGER_ACTIONTEXT, trigs[i].actionText);
+        stream->writeTextElement(XML_PRJ_TRIGGER_TYPE, n2s(trigs[i].type) );
+        stream->writeTextElement(XML_PRJ_TRIGGER_CHAN, n2s(trigs[i].channel) );
+        stream->writeTextElement(XML_PRJ_TRIGGER_DATA1, n2s(trigs[i].data1) );
+        stream->writeTextElement(XML_PRJ_TRIGGER_BANKMSB, n2s(trigs[i].bankMSB) );
+        stream->writeTextElement(XML_PRJ_TRIGGER_BANKLSB, n2s(trigs[i].bankLSB) );
+        stream->writeEndElement(); // end of trigger
+    }
+    stream->writeEndElement(); // end of trigger list
+
+    // Write other JACK MIDI connections list
+    stream->writeStartElement(XML_PRJ_OTHERJACK_MIDI_CON_LIST);
+    for (int i=0; i<jackMidiConList.count(); i++) {
+        stream->writeStartElement(XML_PRJ_OTHERJACKCON);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackMidiConList[i].srcPort);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackMidiConList[i].destPort);
+        stream->writeEndElement(); // end JACK connection pair
+    }
+    stream->writeEndElement(); // Other JACK MIDI connections list
+
+    // Write other JACK Audio connections list
+    stream->writeStartElement(XML_PRJ_OTHERJACK_AUDIO_CON_LIST);
+    for (int i=0; i < jackAudioConList.count(); i++) {
+        stream->writeStartElement(XML_PRJ_OTHERJACKCON); // start JACK connection pair
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackAudioConList[i].srcPort);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackAudioConList[i].destPort);
+        stream->writeEndElement(); // end JACK connection pair
+    }
+    stream->writeEndElement(); // end JACK Audio connections list
+
+    stream->writeEndElement(); // project
+
+    stream->writeEndDocument();
+}
+
+void KonfytProject::readFromXmlStream(QXmlStreamReader* r)
+{
+    r->setNamespaceProcessing(false);
+
+    QString patchPathRel;
+    patchList.clear();
+    midiInPortMap.clear();
+    midiOutPortMap.clear();
+    clearExternalApps();
+    preExternalAppsRead(); // Used for backwards compatibility.
+    audioBusMap.clear();
+    audioInPortMap.clear();
+
+    while (r->readNextStartElement()) { // project
+
+        // Get the project name attribute
+        QXmlStreamAttributes ats =  r->attributes();
+        if (ats.count()) {
+            this->mProjectName = ats.at(0).value().toString(); // Project name
+        }
+
+        while (r->readNextStartElement()) {
+
+            if (r->name() == XML_PRJ_PATCH) { // patch
+
+                while (r->readNextStartElement()) { // patch properties
+
+                    if (r->name() == XML_PRJ_PATCH_FILENAME) {
+                        patchPathRel = r->readElementText();
+                    } else {
+                        print("loadProject: Unrecognized patch element: "
+                              + r->name().toString() );
+                        r->skipCurrentElement();
+                    }
+
+                }
+
+                // Add new patch
+                KonfytPatch* pt = new KonfytPatch();
+                QString errors;
+                QString patchPathAbs = mProjectDirpath + "/" + patchPathRel;
+                print("loadProject: Loading patch " + patchPathRel);
+                if (pt->loadPatchFromFile(patchPathAbs, &errors)) {
+                    this->addPatch(pt);
+                } else {
+                    // Error message on loading patch.
+                    print("loadProject: Error loading patch: " + patchPathAbs);
+                }
+                if (!errors.isEmpty()) {
+                    print("Load errors for patch " + patchPathAbs + ":\n" + errors);
+                }
+
+            } else if (r->name() == XML_PRJ_PATCH_LIST_NUMBERS) {
+
+                patchListNumbers = Qstr2bool(r->readElementText());
+
+            } else if (r->name() == XML_PRJ_PATCH_LIST_NOTES) {
+
+                patchListNotes = Qstr2bool(r->readElementText());
+
+            } else if (r->name() == XML_PRJ_MIDI_PICKUP_RANGE) {
+
+                setMidiPickupRange(r->readElementText().toInt());
+
+            } else if (r->name() == XML_PRJ_MIDI_IN_PORTLIST) {
+
+                while (r->readNextStartElement()) { // port
+                    PrjMidiPort p;
+                    int id = midiInPort_getUniqueId();
+                    while (r->readNextStartElement()) {
+                        if (r->name() == XML_PRJ_MIDI_IN_PORT_ID) {
+                            id = r->readElementText().toInt();
+                        } else if (r->name() == XML_PRJ_MIDI_IN_PORT_NAME) {
+                            p.portName = r->readElementText();
+                        } else if (r->name() == XML_PRJ_MIDI_IN_PORT_CLIENT) {
+                            p.clients.append( r->readElementText() );
+                        } else if (r->name() == XML_MIDIFILTER) {
+                            p.filter.readFromXMLStream(r);
+                        } else {
+                            print("loadProject: "
+                                  "Unrecognized midiInPortList port element: "
+                                  + r->name().toString() );
+                        }
+                    }
+                    if (midiInPortMap.contains(id)) {
+                        print("loadProject: Duplicate midi in port id detected: "
+                              + n2s(id));
+                    }
+                    this->midiInPortMap.insert(id, p);
+                }
+
+            } else if (r->name() == XML_PRJ_MIDI_OUT_PORTLIST) {
+
+                while (r->readNextStartElement()) { // port
+                    PrjMidiPort p;
+                    int id = midiOutPort_getUniqueId();
+                    while (r->readNextStartElement()) {
+                        if (r->name() == XML_PRJ_MIDI_OUT_PORT_ID) {
+                            id = r->readElementText().toInt();
+                        } else if (r->name() == XML_PRJ_MIDI_OUT_PORT_NAME) {
+                            p.portName = r->readElementText();
+                        } else if (r->name() == XML_PRJ_MIDI_OUT_PORT_CLIENT) {
+                            p.clients.append( r->readElementText() );
+                        } else {
+                            print("loadProject: "
+                                  "Unrecognized midiOutPortList port element: "
+                                  + r->name().toString() );
+                            r->skipCurrentElement();
+                        }
+                    }
+                    if (midiOutPortMap.contains(id)) {
+                        print("loadProject: Duplicate midi out port id detected: "
+                              + n2s(id));
+                    }
+                    this->midiOutPortMap.insert(id, p);
+                }
+
+            } else if (r->name() == XML_PRJ_BUSLIST) {
+
+                while (r->readNextStartElement()) { // bus
+                    PrjAudioBus b;
+                    int id = audioBus_getUniqueId();
+                    while (r->readNextStartElement()) {
+                        if (r->name() == XML_PRJ_BUS_ID) {
+                            id = r->readElementText().toInt();
+                        } else if (r->name() == XML_PRJ_BUS_NAME) {
+                            b.busName = r->readElementText();
+                        } else if (r->name() == XML_PRJ_BUS_LGAIN) {
+                            b.leftGain = r->readElementText().toFloat();
+                        } else if (r->name() == XML_PRJ_BUS_RGAIN) {
+                            b.rightGain = r->readElementText().toFloat();
+                        } else if (r->name() == XML_PRJ_BUS_LCLIENT) {
+                            b.leftOutClients.append( r->readElementText() );
+                        } else if (r->name() == XML_PRJ_BUS_RCLIENT) {
+                            b.rightOutClients.append( r->readElementText() );
+                        } else if (r->name() == XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME) {
+                            b.ignoreMasterGain = Qstr2bool(r->readElementText());
+                        } else {
+                            print("loadProject: Unrecognized bus element: "
+                                  + r->name().toString() );
+                            r->skipCurrentElement();
+                        }
+                    }
+                    if (audioBusMap.contains(id)) {
+                        print("loadProject: Duplicate bus id detected: " + n2s(id));
+                    }
+                    this->audioBusMap.insert(id, b);
+                }
+
+            } else if (r->name() == XML_PRJ_AUDIOINLIST) {
+
+                while (r->readNextStartElement()) { // port
+                    PrjAudioInPort p;
+                    int id = audioInPort_getUniqueId();
+                    while (r->readNextStartElement()) {
+                        if (r->name() == XML_PRJ_AUDIOIN_PORT_ID) {
+                            id = r->readElementText().toInt();
+                        } else if (r->name() == XML_PRJ_AUDIOIN_PORT_NAME) {
+                            p.portName = r->readElementText();
+                        } else if (r->name() == XML_PRJ_AUDIOIN_PORT_LGAIN) {
+                            p.leftGain = r->readElementText().toFloat();
+                        } else if (r->name() == XML_PRJ_AUDIOIN_PORT_RGAIN) {
+                            p.rightGain = r->readElementText().toFloat();
+                        } else if (r->name() == XML_PRJ_AUDIOIN_PORT_LCLIENT) {
+                            p.leftInClients.append( r->readElementText() );
+                        } else if (r->name() == XML_PRJ_AUDIOIN_PORT_RCLIENT) {
+                            p.rightInClients.append( r->readElementText() );
+                        } else {
+                            print("loadProject: "
+                                  "Unrecognized audio input port element: "
+                                  + r->name().toString() );
+                            r->skipCurrentElement();
+                        }
+                    }
+                    if (audioInPortMap.contains(id)) {
+                        print("loadProject: Duplicate audio in port id detected: "
+                              + n2s(id));
+                    }
+                    this->audioInPortMap.insert(id, p);
+                }
+
+            } else if (r->name() == XML_PRJ_PROCESSLIST) {
+
+                // TODO DEPRECATED
+                readExternalApps(r);
+
+            } else if (r->name() == XML_PRJ_EXT_APP_LIST) {
+
+                readExternalApps(r);
+
+
+            } else if (r->name() == XML_PRJ_TRIGGERLIST) {
+
+                while (r->readNextStartElement()) {
+
+                    if (r->name() == XML_PRJ_PROG_CHANGE_SWITCH_PATCHES) {
+                        programChangeSwitchPatches = Qstr2bool(r->readElementText());
+                    } else if (r->name() == XML_PRJ_TRIGGER) {
+
+                        KonfytTrigger trig;
+                        while (r->readNextStartElement()) {
+                            if (r->name() == XML_PRJ_TRIGGER_ACTIONTEXT) {
+                                trig.actionText = r->readElementText();
+                            } else if (r->name() == XML_PRJ_TRIGGER_TYPE) {
+                                trig.type = r->readElementText().toInt();
+                            } else if (r->name() == XML_PRJ_TRIGGER_CHAN) {
+                                trig.channel = r->readElementText().toInt();
+                            } else if (r->name() == XML_PRJ_TRIGGER_DATA1) {
+                                trig.data1 = r->readElementText().toInt();
+                            } else if (r->name() == XML_PRJ_TRIGGER_BANKMSB) {
+                                trig.bankMSB = r->readElementText().toInt();
+                            } else if (r->name() == XML_PRJ_TRIGGER_BANKLSB) {
+                                trig.bankLSB = r->readElementText().toInt();
+                            } else {
+                                print("loadProject: Unrecognized trigger element: "
+                                      + r->name().toString() );
+                                r->skipCurrentElement();
+                            }
+                        }
+                        this->addAndReplaceTrigger(trig);
+
+                    } else {
+                        print("loadProject: Unrecognized triggerList element: "
+                              + r->name().toString() );
+                        r->skipCurrentElement();
+                    }
+                }
+
+            } else if (r->name() == XML_PRJ_OTHERJACK_MIDI_CON_LIST) {
+
+                // Other JACK MIDI connections list
+
+                while (r->readNextStartElement()) {
+                    if (r->name() == XML_PRJ_OTHERJACKCON) {
+
+                        QString srcPort, destPort;
+                        while (r->readNextStartElement()) {
+                            if (r->name() == XML_PRJ_OTHERJACKCON_SRC) {
+                                srcPort = r->readElementText();
+                            } else if (r->name() == XML_PRJ_OTHERJACKCON_DEST) {
+                                destPort = r->readElementText();
+                            } else {
+                                print("loadProject: Unrecognized JACK con element: "
+                                      + r->name().toString() );
+                                r->skipCurrentElement();
+                            }
+                        }
+                        this->addJackMidiCon(srcPort, destPort);
+
+                    } else {
+                        print("loadProject: "
+                              "Unrecognized otherJackMidiConList element: "
+                              + r->name().toString() );
+                        r->skipCurrentElement();
+                    }
+                }
+
+            } else if (r->name() == XML_PRJ_OTHERJACK_AUDIO_CON_LIST) {
+
+                // Other JACK Audio connections list
+
+                while (r->readNextStartElement()) {
+                    if (r->name() == XML_PRJ_OTHERJACKCON) {
+
+                        QString srcPort, destPort;
+                        while (r->readNextStartElement()) {
+                            if (r->name() == XML_PRJ_OTHERJACKCON_SRC) {
+                                srcPort = r->readElementText();
+                            } else if (r->name() == XML_PRJ_OTHERJACKCON_DEST) {
+                                destPort = r->readElementText();
+                            } else {
+                                print("loadProject: "
+                                      "Unrecognized JACK con element: "
+                                      + r->name().toString() );
+                                r->skipCurrentElement();
+                            }
+                        }
+                        addJackAudioCon(srcPort, destPort);
+
+                    } else {
+                        print("loadProject: "
+                              "Unrecognized otherJackAudioConList element: "
+                              + r->name().toString() );
+                        r->skipCurrentElement();
+                    }
+                }
+
+            } else {
+                print("loadProject: Unrecognized project element: "
+                      + r->name().toString() );
+                r->skipCurrentElement();
+            }
+        }
+    }
 }
 
 bool KonfytProject::isModified()

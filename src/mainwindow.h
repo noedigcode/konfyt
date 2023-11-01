@@ -182,6 +182,7 @@ private:
     void unloadCurrentProject();
     bool saveCurrentProject();
     bool saveProject(ProjectPtr prj);
+    bool saveProjectInNewDir(ProjectPtr prj);
     bool informedUserAboutProjectsDir = false;
     bool requestCurrentProjectClose();
 

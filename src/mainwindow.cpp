@@ -3346,71 +3346,93 @@ bool MainWindow::saveProject(ProjectPtr prj)
         return true;
     } else {
         // We need to find a directory for the project.
+        return saveProjectInNewDir(prj);
+    }
+}
 
-        QString saveDir;
-
-        // See if a default projects directory is set
-        if (this->projectsDir == "") {
-            print("Projects directory is not set.");
-            // Inform the user about project directory that is not set
-            if (informedUserAboutProjectsDir == false) {
-                msgBox("No default projects directory has been set."
-                       " You can set this in Settings.");
-                informedUserAboutProjectsDir = true; // So we only show it once
-            }
-            // We need to bring up a save dialog.
-        } else {
-            // Find a unique directory name within our default projects dir
-            QString dir = getUniquePath(projectsDir,
-                                    sanitiseFilename(prj->getProjectName()),
-                                    "");
-            if (dir.isEmpty()) {
-                print("Failed to obtain a unique directory name.");
-            } else {
-                // We now have a unique directory filename.
-                QString text = QString(
-                    "Do you want to save project \"%1\" to the following path?"
-                    " Select No to choose a different location.")
-                        .arg(prj->getProjectName());
-                int choice = msgBoxYesNoCancel(text, dir);
-                if (choice == QMessageBox::Yes) {
-                    QDir d;
-                    if (d.mkdir(dir)) {
-                        print("Created project directory: " + dir);
-                        saveDir = dir;
-                    } else {
-                        print("Failed to create project directory: " + dir);
-                        msgBox("Failed to create project directory.", dir);
-                    }
-                } else if (choice == QMessageBox::Cancel) {
-                    return false;
-                }
-            }
-        }
-
-        if (saveDir == "") {
-            // Show dialog so user can select location
-            QFileDialog dialog;
-            dialog.setFileMode(QFileDialog::Directory);
-            if ( dialog.exec() ) {
-                saveDir = dialog.selectedFiles()[0];
-            } else { return false; }
-        }
-
-        // Save the project
-        if (mCurrentProject->saveProjectAs(saveDir)) {
-            print("Project Saved to " + saveDir);
-            ui->statusBar->showMessage("Project saved.", 5000);
-            return true;
-        } else {
-            print("Failed to save project.");
-            msgBox("Failed to save project.", saveDir);
-            return false;
-        }
-
+bool MainWindow::saveProjectInNewDir(ProjectPtr prj)
+{
+    if (!prj) {
+        print("ERROR: saveProjectInNewDir: project null.");
+        return false;
     }
 
-} // end of saveProject()
+    QString saveDir;
+
+    // Propose a directory in the default projects directory if it is set
+    if (this->projectsDir == "") {
+        print("Projects directory is not set.");
+        // Inform the user about project directory that is not set
+        if (informedUserAboutProjectsDir == false) {
+            msgBox("No default projects directory has been set."
+                   " You can set this in Settings.");
+            informedUserAboutProjectsDir = true; // So we only show it once
+        }
+        // We need to bring up a save dialog.
+    } else {
+        // Find a unique directory name within our default projects dir
+        QString dir = getUniquePath(projectsDir,
+                                sanitiseFilename(prj->getProjectName()),
+                                "");
+        if (dir.isEmpty()) {
+            print("Failed to obtain a unique directory name.");
+        } else {
+            // We now have a unique directory filename.
+            QString text = QString(
+                "Do you want to save project \"%1\" to the following path?"
+                " Select No to choose a different location.")
+                    .arg(prj->getProjectName());
+            int choice = msgBoxYesNoCancel(text, dir);
+            if (choice == QMessageBox::Yes) {
+                QDir d;
+                if (d.mkdir(dir)) {
+                    print("Created project directory: " + dir);
+                    saveDir = dir;
+                } else {
+                    print("Failed to create project directory: " + dir);
+                    msgBox("Failed to create project directory.", dir);
+                }
+            } else if (choice == QMessageBox::Cancel) {
+                return false;
+            }
+        }
+    }
+
+    // If saveDir is still empty, let user select location
+    while (saveDir.isEmpty()) {
+        QString path = QFileDialog::getExistingDirectory(this,
+                                            "Directory to save project in");
+        if (path.isEmpty()) {
+            // Cancel clicked
+            return false;
+        }
+        // Warn if directory contains files
+        if (!QDir(path).isEmpty()) {
+            int choice = msgBoxYesNo(
+                    "The chosen directory is not empty. "
+                    "Saving in a non-empty directory may overwrite files. "
+                    "Are you sure you want to use this directory?");
+            if (choice == QMessageBox::No) {
+                // User clicked No. Let user choose again.
+                continue;
+            }
+        }
+        // Directory chosen
+        saveDir = path;
+        break;
+    }
+
+    // Save the project
+    if (mCurrentProject->saveProjectAs(saveDir)) {
+        print("Project Saved to " + saveDir);
+        ui->statusBar->showMessage("Project saved.", 5000);
+        return true;
+    } else {
+        print("Failed to save project.");
+        msgBox("Failed to save project.", saveDir);
+        return false;
+    }
+}
 
 bool MainWindow::requestCurrentProjectClose()
 {
@@ -6267,17 +6289,12 @@ void MainWindow::on_actionProject_SaveAs_triggered()
 
     // Query user for new project name
     QString newName = QInputDialog::getText(this, "Save Project As",
-                                            "New Project Name",
-                                            QLineEdit::Normal,
-                                            prj->getProjectName());
+                "New Project Name", QLineEdit::Normal, prj->getProjectName());
     if (newName.isEmpty()) { return; }
-
-    // Clear the project dir name so it can be saved as new project
+    setProjectName(newName);
     prj->setDirname("");
 
-    setProjectName(newName);
-
-    bool saved = saveProject(prj);
+    bool saved = saveProjectInNewDir(prj);
     if (saved) {
         print("Saved project as new project.");
     } else {
