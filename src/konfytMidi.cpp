@@ -52,18 +52,26 @@ void pitchbendSignedIntToData(int p, unsigned char *data12)
     data12[1] = (p >> 7) & 0x7F;
 }
 
+/* Quick and dirty "hash" of MIDI event without value to an int for easily
+ * checking incoming events against triggers. For most events, data1 is included
+ * except for pitchbend where both data1 and data2 constitute the value. */
 int hashMidiEventToInt(int type, int channel, int data1, int bankMSB, int bankLSB)
 {
     // type chan data1     bankMSB   bankLSB
     // 1111 1111 1111 1111 1111 1111 1111 1111
 
-    return (
-               (
-                    (
-                        ( ( ( (type&0xF0) | (channel&0xF) ) << 8 ) | (data1&0x7F) ) << 8
-                    ) | (bankMSB&0x7F)
-               ) << 8
-            ) | (bankLSB&0x7F);
+    if (type == MIDI_EVENT_TYPE_PITCHBEND) {
+        data1 = 0;
+    }
+
+    int ret = 0;
+    ret |= (type & 0xF0) << 24;
+    ret |= (channel & 0x0F) << 24;
+    ret |= (data1 & 0x7F) << 16;
+    ret |= (bankMSB & 0x7F) << 8;
+    ret |= (bankLSB & 0x7F);
+
+    return ret;
 }
 
 QString midiEventToString(int type, int channel, int data1, int bankMSB, int bankLSB)
