@@ -127,7 +127,7 @@ KonfytMidiEvent KonfytJSMidi::jsObjectToMidiEvent(QJSValue j)
 QJSValue KonfytJSMidi::noteon(int channel, int note, int velocity)
 {
     KonfytMidiEvent ev;
-    ev.channel = channel;
+    ev.channel = channel - 1;
     ev.setNoteOn(note, velocity);
     return midiEventToJSObject(ev);
 }
@@ -135,7 +135,7 @@ QJSValue KonfytJSMidi::noteon(int channel, int note, int velocity)
 QJSValue KonfytJSMidi::noteoff(int channel, int note, int velocity)
 {
     KonfytMidiEvent ev;
-    ev.channel = channel;
+    ev.channel = channel - 1;
     ev.setNoteOff(note, velocity);
     return midiEventToJSObject(ev);
 }
@@ -143,7 +143,7 @@ QJSValue KonfytJSMidi::noteoff(int channel, int note, int velocity)
 QJSValue KonfytJSMidi::cc(int channel, int cc, int value)
 {
     KonfytMidiEvent ev;
-    ev.channel = channel;
+    ev.channel = channel - 1;
     ev.setCC(cc, value);
     return midiEventToJSObject(ev);
 }
@@ -151,7 +151,7 @@ QJSValue KonfytJSMidi::cc(int channel, int cc, int value)
 QJSValue KonfytJSMidi::program(int channel, int program, int bankmsb, int banklsb)
 {
     KonfytMidiEvent ev;
-    ev.channel = channel;
+    ev.channel = channel - 1;
     ev.setProgram(program);
     ev.bankMSB = bankmsb;
     ev.bankLSB = banklsb;
@@ -161,7 +161,7 @@ QJSValue KonfytJSMidi::program(int channel, int program, int bankmsb, int bankls
 QJSValue KonfytJSMidi::pitchbend(int channel, int value)
 {
     KonfytMidiEvent ev;
-    ev.channel = channel;
+    ev.channel = channel - 1;
     ev.setPitchbend(value);
     return midiEventToJSObject(ev);
 }
