@@ -94,6 +94,7 @@ public:
     void setName(QString name);
     float gain() const;
     void setGain(float gain);
+    void addGainRelativeMidiValue(int value);
     void setGainByMidi(int value);
     void setGainMidiPickupRange(int range);
     int gainMidiPickupRange();

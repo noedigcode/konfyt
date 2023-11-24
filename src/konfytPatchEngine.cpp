@@ -670,6 +670,15 @@ void KonfytPatchEngine::setLayerGainByMidi(int layerIndex, int midiValue)
     updateLayerGain(patchLayer);
 }
 
+void KonfytPatchEngine::setLayerGainByMidiRelative(int layerIndex, int midiValue)
+{
+    KONFYT_ASSERT_RETURN(mCurrentPatch);
+
+    KfPatchLayerSharedPtr patchLayer = mCurrentPatch->layer(layerIndex);
+    patchLayer->addGainRelativeMidiValue(midiValue);
+    updateLayerGain(patchLayer);
+}
+
 void KonfytPatchEngine::setLayerSolo(KfPatchLayerWeakPtr patchLayer, bool solo)
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);

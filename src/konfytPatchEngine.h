@@ -80,6 +80,7 @@ public:
     void setLayerGain(KfPatchLayerWeakPtr patchLayer, float newGain);
     void setLayerGain(int layerIndex, float newGain);
     void setLayerGainByMidi(int layerIndex, int midiValue);
+    void setLayerGainByMidiRelative(int layerIndex, int midiValue);
     void setLayerSolo(KfPatchLayerWeakPtr patchLayer, bool solo);
     void setLayerSolo(int layerIndex, bool solo);
     void setLayerMute(KfPatchLayerWeakPtr patchLayer, bool mute);

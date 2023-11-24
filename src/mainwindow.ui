@@ -1148,7 +1148,7 @@ border-bottom-left-radius: 0;</string>
                 </size>
                </property>
                <property name="currentIndex">
-                <number>3</number>
+                <number>2</number>
                </property>
                <widget class="QWidget" name="pageLibrary">
                 <layout class="QGridLayout" name="gridLayout_6">
@@ -2153,6 +2153,22 @@ border-color: rgb(40, 40, 40);
             &lt;/td&gt;
             &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
                &lt;p&gt;Toggle layer mute&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;A, S, D, ... ;&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Increase layer gain&lt;/p&gt;
+            &lt;/td&gt;
+         &lt;/tr&gt;
+         &lt;tr&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Z, X, C, ... /&lt;/p&gt;
+            &lt;/td&gt;
+            &lt;td style=&quot; padding-left:0; padding-right:15; padding-top:5; padding-bottom:0;&quot;&gt;
+               &lt;p&gt;Decrease layer gain&lt;/p&gt;
             &lt;/td&gt;
          &lt;/tr&gt;
          &lt;tr&gt;

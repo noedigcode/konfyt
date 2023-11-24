@@ -99,10 +99,22 @@ void KonfytPatchLayer::setGain(float gain)
     gainMidiCtrl.setValue(gain * 127.0);
 }
 
+/* Change the gain relatively by the specified MIDI value, ignoring MIDI pickup
+ * range. */
+void KonfytPatchLayer::addGainRelativeMidiValue(int value)
+{
+    value += gainMidiCtrl.value();
+    value = qMax(0, qMin(127, value));
+
+    gainMidiCtrl.setValue(value);
+    mGain = gainMidiCtrl.value() / 127.0;
+}
+
+/* Set gain from MIDI, taking MIDI pickup range into account. */
 void KonfytPatchLayer::setGainByMidi(int value)
 {
     if (gainMidiCtrl.midiInput(value)) {
-        setGain((float)gainMidiCtrl.value()/127.0);
+        mGain = gainMidiCtrl.value() / 127.0;
     }
 }
 

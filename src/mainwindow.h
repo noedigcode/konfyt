@@ -823,7 +823,9 @@ private:
     QList<QAction*> channelSoloActions;
     QList<QAction*> channelMuteActions;
     QList<QAction*> patchActions;
-    void midi_setLayerGain(int layerIndex, int midiValue);
+    enum SetGainType {SetGainAbsolute, SetGainRelative};
+    void midi_setLayerGain(int layerIndex, int midiValue,
+                           SetGainType setGainType = SetGainAbsolute);
     void midi_setLayerSolo(int layer, int midiValue);
     void midi_setLayerMute(int layer, int midiValue);
 

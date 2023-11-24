@@ -3661,11 +3661,18 @@ void MainWindow::triggerPanic(bool panic)
     updateGlobalPitchbendIndicator();
 }
 
-void MainWindow::midi_setLayerGain(int layerIndex, int midiValue)
+void MainWindow::midi_setLayerGain(int layerIndex, int midiValue,
+                                   SetGainType setGainType)
 {
     // Set channel gain in engine
-    if ((layerIndex>=0) && (layerIndex < pengine.getNumLayers()) ) {
-        pengine.setLayerGainByMidi(layerIndex, midiValue);
+    if ((layerIndex >= 0) && (layerIndex < pengine.getNumLayers()) ) {
+
+        if (setGainType == SetGainAbsolute) {
+            pengine.setLayerGainByMidi(layerIndex, midiValue);
+        } else {
+            pengine.setLayerGainByMidiRelative(layerIndex, midiValue);
+        }
+
         // Set channel gain in GUI slider
         this->layerWidgetList.at(layerIndex)->setSliderGain(
             pengine.currentPatch()->layer(layerIndex).toStrongRef()->gain());
@@ -4466,6 +4473,48 @@ void MainWindow::on_pushButton_ShowConsole_clicked()
 
 bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
 {
+    QMap<int, int> keysSetPatchIndex = { {Qt::Key_1, 0},
+                                         {Qt::Key_2, 1},
+                                         {Qt::Key_3, 2},
+                                         {Qt::Key_4, 3},
+                                         {Qt::Key_5, 4},
+                                         {Qt::Key_6, 5},
+                                         {Qt::Key_7, 6},
+                                         {Qt::Key_8, 7},
+                                         {Qt::Key_9, 8},
+                                         {Qt::Key_0, 9} };
+    QMap<int, int> keysSetLayerMute = { {Qt::Key_Q, 0},
+                                        {Qt::Key_W, 1},
+                                        {Qt::Key_E, 2},
+                                        {Qt::Key_R, 3},
+                                        {Qt::Key_T, 4},
+                                        {Qt::Key_Y, 5},
+                                        {Qt::Key_U, 6},
+                                        {Qt::Key_I, 7},
+                                        {Qt::Key_O, 8},
+                                        {Qt::Key_P, 9} };
+    QMap<int, int> keysLayerGainUp = { {Qt::Key_A, 0},
+                                       {Qt::Key_S, 1},
+                                       {Qt::Key_D, 2},
+                                       {Qt::Key_F, 3},
+                                       {Qt::Key_G, 4},
+                                       {Qt::Key_H, 5},
+                                       {Qt::Key_J, 6},
+                                       {Qt::Key_K, 7},
+                                       {Qt::Key_L, 8},
+                                       {Qt::Key_Semicolon, 9} };
+    QMap<int, int> keysLayerGainDown = { {Qt::Key_Z, 0},
+                                         {Qt::Key_X, 1},
+                                         {Qt::Key_C, 2},
+                                         {Qt::Key_V, 3},
+                                         {Qt::Key_B, 4},
+                                         {Qt::Key_N, 5},
+                                         {Qt::Key_M, 6},
+                                         {Qt::Key_Comma, 7},
+                                         {Qt::Key_Period, 8},
+                                         {Qt::Key_Slash, 9} };
+
+
     // To find all actions:
     // QList<QAction*> actionList = this->findChildren<QAction*>();
 
@@ -4486,6 +4535,30 @@ bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
 
         if (event->type() == QEvent::KeyPress) {
             QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
+
+            int index = keysSetPatchIndex.value(keyEvent->key(), -1);
+            if (index >= 0) {
+                setCurrentPatchByIndex(index);
+                return true;
+            }
+
+            index = keysSetLayerMute.value(keyEvent->key(), -1);
+            if (index >= 0) {
+                midi_setLayerMute(index, 127);
+                return true;
+            }
+
+            index = keysLayerGainUp.value(keyEvent->key(), -1);
+            if (index >= 0) {
+                midi_setLayerGain(index, 2, SetGainRelative);
+                return true;
+            }
+
+            index = keysLayerGainDown.value(keyEvent->key(), -1);
+            if (index >= 0) {
+                midi_setLayerGain(index, -2, SetGainRelative);
+                return true;
+            }
 
             switch (keyEvent->key()) {
             case Qt::Key_Escape:
@@ -4510,60 +4583,6 @@ bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
             case Qt::Key_Up:
                 // Previous patch
                 setCurrentPatchByIndex(currentPatchIndex() - 1);
-                break;
-            case Qt::Key_1:
-                setCurrentPatchByIndex( 0 );
-                break;
-            case Qt::Key_2:
-                setCurrentPatchByIndex( 1 );
-                break;
-            case Qt::Key_3:
-                setCurrentPatchByIndex( 2 );
-                break;
-            case Qt::Key_4:
-                setCurrentPatchByIndex( 3 );
-                break;
-            case Qt::Key_5:
-                setCurrentPatchByIndex( 4 );
-                break;
-            case Qt::Key_6:
-                setCurrentPatchByIndex( 5 );
-                break;
-            case Qt::Key_7:
-                setCurrentPatchByIndex( 6 );
-                break;
-            case Qt::Key_8:
-                setCurrentPatchByIndex( 7 );
-                break;
-            case Qt::Key_Q:
-                midi_setLayerMute(0, 127);
-                break;
-            case Qt::Key_W:
-                midi_setLayerMute(1, 127);
-                break;
-            case Qt::Key_E:
-                midi_setLayerMute(2, 127);
-                break;
-            case Qt::Key_R:
-                midi_setLayerMute(3, 127);
-                break;
-            case Qt::Key_T:
-                midi_setLayerMute(4, 127);
-                break;
-            case Qt::Key_Y:
-                midi_setLayerMute(5, 127);
-                break;
-            case Qt::Key_U:
-                midi_setLayerMute(6, 127);
-                break;
-            case Qt::Key_I:
-                midi_setLayerMute(7, 127);
-                break;
-            case Qt::Key_O:
-                midi_setLayerMute(8, 127);
-                break;
-            case Qt::Key_P:
-                midi_setLayerMute(9, 127);
                 break;
             case Qt::Key_PageUp:
                 setMasterInTranspose(1, true);
@@ -5222,11 +5241,18 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
     // Hash midi event to a key
     int key = hashMidiEventToInt(ev.type(), ev.channel, ev.data1(), ev.bankMSB, ev.bankLSB);
     // Determine if event passes as button press
-    bool buttonPass = 0;
+    bool buttonPass = false;
     if (ev.type() == MIDI_EVENT_TYPE_PROGRAM) {
         buttonPass = true;
     } else {
         buttonPass = ev.data2() > 0;
+    }
+    int value = ev.data2();
+    if (ev.type() == MIDI_EVENT_TYPE_PITCHBEND) {
+        // Map pitchbend value to 0-127
+        value = (float)(ev.pitchbendValueSigned() - MIDI_PITCHBEND_SIGNED_MIN)
+                / (float)(MIDI_PITCHBEND_SIGNED_MAX - MIDI_PITCHBEND_SIGNED_MIN)
+                * 127.0;
     }
 
     // Get the appropriate action based on the key
@@ -5251,7 +5277,7 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
 
     } else if (action == ui->actionMaster_Volume_Slider) {
 
-        if (masterGainMidiCtrlr.midiInput(ev.data2())) {
+        if (masterGainMidiCtrlr.midiInput(value)) {
             setMasterGainMidi(masterGainMidiCtrlr.value());
         }
 
@@ -5269,15 +5295,15 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
 
     } else if (channelGainActions.contains(action)) {
 
-        midi_setLayerGain( channelGainActions.indexOf(action), ev.data2() );
+        midi_setLayerGain( channelGainActions.indexOf(action), value );
 
     } else if (channelSoloActions.contains(action)) {
 
-        midi_setLayerSolo( channelSoloActions.indexOf(action), ev.data2() );
+        midi_setLayerSolo( channelSoloActions.indexOf(action), value );
 
     } else if (channelMuteActions.contains(action)) {
 
-        midi_setLayerMute( channelMuteActions.indexOf(action), ev.data2() );
+        midi_setLayerMute( channelMuteActions.indexOf(action), value );
 
     } else if (patchActions.contains(action)) {
 
