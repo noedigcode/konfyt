@@ -2508,9 +2508,11 @@ void MainWindow::msgBox(QString msg, QString infoText)
     QMessageBox msgbox;
     msgbox.setText(msg);
     msgbox.setInformativeText(infoText);
+    msgbox.setIcon(QMessageBox::Information);
     msgbox.exec();
 }
 
+/* Shows a yes/no message box and returns QMessageBox::Yes or QMessageBox::No. */
 int MainWindow::msgBoxYesNo(QString text, QString infoText)
 {
     QMessageBox msgbox;
@@ -2522,6 +2524,8 @@ int MainWindow::msgBoxYesNo(QString text, QString infoText)
     return msgbox.exec();
 }
 
+/* Shows a yes/no/cancel message box and returns QMessageBox::Yes,
+ * QMessageBox::No or QMessageBox::Cancel. */
 int MainWindow::msgBoxYesNoCancel(QString text, QString infoText)
 {
     QMessageBox msgbox;
