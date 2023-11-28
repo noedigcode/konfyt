@@ -22,6 +22,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include <QClipboard>
 
 MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     QMainWindow(parent),
@@ -5774,6 +5775,7 @@ void MainWindow::on_treeWidget_filesystem_customContextMenuRequested(const QPoin
         QList<QAction*> actions;
         actions.append( ui->actionAdd_Path_To_External_App_Box );
         actions.append( ui->actionAdd_Path_to_External_App_Box_Relative_to_Project );
+        actions.append( ui->action_CopyFilesystemPath );
         actions.append( ui->actionOpen_In_File_Manager_fsview );
         fsViewContextMenu.addActions(actions);
     }
@@ -5851,6 +5853,22 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
 
     appendToExternalAppEditorCommandBox(path);
     ui->lineEdit_extAppEditor_command->setFocus();
+}
+
+void MainWindow::on_action_CopyFilesystemPath_triggered()
+{
+    QString path;
+
+    if (!fsViewMenuItem) {
+        // No item is selected in the filesystem list. Use current path
+        path = fsview_currentPath;
+    } else {
+        // Get item's path
+        QFileInfo info = fsMap.value(fsViewMenuItem);
+        path = info.filePath();
+    }
+
+    QGuiApplication::clipboard()->setText(path);
 }
 
 /* Initialises patch engine. Must be called after JACK engine has been set up. */

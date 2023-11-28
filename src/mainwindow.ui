@@ -11005,6 +11005,11 @@ p, li { white-space: pre-wrap; }
     <string>Edit Script...</string>
    </property>
   </action>
+  <action name="action_CopyFilesystemPath">
+   <property name="text">
+    <string>Copy Path</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
