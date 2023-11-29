@@ -65,6 +65,7 @@ void printUsage()
     print("  -h, --help             Print usage information");
     print("  -j, --jackname <name>  Set name of JACK client");
     print("  -q, --headless         Hide GUI");
+    print("  --minimized            Start up with main window minimized");
     print("  -b, --bridge           Load sfz's in separate processes (experimental feature,");
     print("                           uses Carla)");
     print("  -c, --carla            Use Carla to load sfz's and not Linuxsampler");
@@ -91,6 +92,7 @@ int main(int argc, char *argv[])
     QStringList argsCarla({"-c", "--carla"});
     QStringList argsNoXcbEv({"-x", "--noxcbev"});
     QStringList argsScan({"--scan"});
+    QStringList argsMinimized({"--minimized"});
 
     // Handle arguments
 
@@ -142,6 +144,10 @@ int main(int argc, char *argv[])
             } else if (argsScan.contains(arg)) {
 
                 scanMode = true;
+
+            } else if (argsMinimized.contains(arg)) {
+
+                appInfo.startMinimized = true;
 
             } else {
                 if (arg[0] == '-') {
@@ -201,7 +207,13 @@ int main(int argc, char *argv[])
             // Create MainWindow
 
             MainWindow w(0, appInfo);
-            if (!appInfo.headless) { w.show(); }
+            if (!appInfo.headless) {
+                if (appInfo.startMinimized) {
+                    w.showMinimized();
+                } else {
+                    w.show();
+                }
+            }
             return_code = a.exec();
 
         } while (return_code == APP_RESTART_CODE);

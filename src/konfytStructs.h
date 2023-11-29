@@ -66,6 +66,7 @@ struct KonfytAppInfo
     bool bridge = false;
     bool headless = false;
     bool carla = false;
+    bool startMinimized = false;
     QStringList filesToLoad;
     QString jackClientName;
 };

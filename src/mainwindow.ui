@@ -2280,7 +2280,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>8</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -8596,7 +8596,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                      <item row="0" column="0">
                       <widget class="QGroupBox" name="groupBox_17">
                        <property name="sizePolicy">
-                        <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                        <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
                          <horstretch>0</horstretch>
                          <verstretch>0</verstretch>
                         </sizepolicy>
@@ -8607,6 +8607,12 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                          <height>0</height>
                         </size>
                        </property>
+                       <property name="maximumSize">
+                        <size>
+                         <width>16777215</width>
+                         <height>16777215</height>
+                        </size>
+                       </property>
                        <property name="styleSheet">
                         <string notr="true">QGroupBox{
 	background-color: rgba(100,100,100, 255);
@@ -8614,8 +8620,6 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
 	border-radius: 4px;
 	margin-top: 0ex;
 	padding-top: 1em;
-
-	max-width: 25em;
 }</string>
                        </property>
                        <property name="title">
@@ -8638,7 +8642,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                           </property>
                           <property name="maximumSize">
                            <size>
-                            <width>406</width>
+                            <width>16777215</width>
                             <height>16777215</height>
                            </size>
                           </property>
@@ -8865,8 +8869,17 @@ border-bottom-left-radius: 0;</string>
                            </item>
                            <item>
                             <layout class="QHBoxLayout" name="horizontalLayout_77">
+                             <property name="spacing">
+                              <number>20</number>
+                             </property>
                              <item>
                               <widget class="QCheckBox" name="checkBox_extApp_runAtStartup">
+                               <property name="sizePolicy">
+                                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+                                 <horstretch>0</horstretch>
+                                 <verstretch>0</verstretch>
+                                </sizepolicy>
+                               </property>
                                <property name="text">
                                 <string>Run when project loaded</string>
                                </property>

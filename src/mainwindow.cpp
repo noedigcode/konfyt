@@ -5442,6 +5442,22 @@ void MainWindow::setupExternalAppsMenu()
         appendToExternalAppEditorCommandBox(STRING_PROJECT_DIR);
     });
 
+    extAppsMenu.addAction("Browse for File...", this, [=]()
+    {
+        QString path = QFileDialog::getOpenFileName(this);
+        if (!path.isEmpty()) {
+            appendToExternalAppEditorCommandBox(path);
+        }
+    });
+
+    extAppsMenu.addAction("Browse for Directory...", this, [=]()
+    {
+        QString path = QFileDialog::getExistingDirectory(this);
+        if (!path.isEmpty()) {
+            appendToExternalAppEditorCommandBox(path);
+        }
+    });
+
     extAppsMenu.addSeparator();
 
     extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)",
@@ -6262,16 +6278,15 @@ void MainWindow::on_actionProject_Open_triggered()
     if (!requestCurrentProjectClose()) { return; }
 
     // Show open dialog box
-    QFileDialog* d = new QFileDialog();
-    QString filename = d->getOpenFileName(
-                this, "Select project to open", projectsDir,
+    QString filename = QFileDialog::getOpenFileName(this,
+                "Select project to open", projectsDir,
                 "*" + KonfytProject::PROJECT_FILENAME_EXTENSION);
-    if (filename == "") {
+    if (filename.isEmpty()) {
         print("Cancelled.");
         return;
     }
 
-    loadProjectFromFile(filename); // Read project from file and load it
+    loadProjectFromFile(filename);
 }
 
 void MainWindow::on_actionProject_OpenDirectory_triggered()
