@@ -51,7 +51,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     // ----------------------------------------------------
     setupInitialProjectFromCmdLineArgs();
 
-    scanDirForProjects(projectsDir);
+    scanDirForProjects(mProjectsDir);
     setupGuiMenuButtons();
     setupConnectionsPage();
     setupTriggersPage();
@@ -171,7 +171,7 @@ void MainWindow::setupGuiDefaults()
     // Set window maximized state from settings.
     // This doesn't automatically show the window, so it respects the minimized
     // state and will only appear maximized once the window is restored.
-    if (startMaximized) {
+    if (mStartMaximized) {
         this->setWindowState(this->windowState() | Qt::WindowMaximized);
     }
 
@@ -388,16 +388,18 @@ ProjectPtr MainWindow::newProjectPtr()
 
 void MainWindow::showSettingsDialog()
 {
-    ui->comboBox_settings_patchDirs->setCurrentText(this->mPatchesDir);
-    ui->comboBox_settings_projectsDir->setCurrentText(this->projectsDir);
-    ui->comboBox_settings_sfzDirs->setCurrentText(this->mSfzDir);
-    ui->comboBox_settings_soundfontDirs->setCurrentText(this->mSoundfontsDir);
+    ui->comboBox_settings_patchDirs->setCurrentText(mPatchesDir);
+    ui->comboBox_settings_projectsDir->setCurrentText(mProjectsDir);
+    ui->comboBox_settings_sfzDirs->setCurrentText(mSfzDir);
+    ui->comboBox_settings_soundfontDirs->setCurrentText(mSoundfontsDir);
+    ui->checkBox_settings_promptOnQuit->setChecked(mPromptOnQuit);
+    ui->checkBox_settings_openLastProjectAtStartup->setChecked(mOpenLastProjectAtStartup);
 
-    int i = ui->comboBox_Settings_filemanager->findText( this->mFilemanager );
+    int i = ui->comboBox_Settings_filemanager->findText(mFilemanager);
     if (i>=0) {
         ui->comboBox_Settings_filemanager->setCurrentIndex(i);
     } else {
-        ui->comboBox_Settings_filemanager->addItem(this->mFilemanager);
+        ui->comboBox_Settings_filemanager->addItem(mFilemanager);
         ui->comboBox_Settings_filemanager->setCurrentIndex( ui->comboBox_Settings_filemanager->count()-1 );
     }
 
@@ -496,9 +498,9 @@ void MainWindow::updateMidiFilterBeingEdited(KonfytMidiFilter newFilter)
 
 void MainWindow::setupMidiMapPresets()
 {
-    KONFYT_ASSERT(!settingsDir.isEmpty());
+    KONFYT_ASSERT(!mSettingsDir.isEmpty());
 
-    midiMapPresetsFilename = QString("%1/%2").arg(settingsDir)
+    midiMapPresetsFilename = QString("%1/%2").arg(mSettingsDir)
             .arg(MIDI_MAP_PRESETS_FILE);
 
     // Setup MIDI map presets menu
@@ -723,12 +725,13 @@ void MainWindow::showMidiFilterEditor()
 void MainWindow::applySettings()
 {
     // Get settings from dialog.
-    projectsDir = ui->comboBox_settings_projectsDir->currentText();
+    mProjectsDir = ui->comboBox_settings_projectsDir->currentText();
     setPatchesDir(ui->comboBox_settings_patchDirs->currentText());
     setSoundfontsDir(ui->comboBox_settings_soundfontDirs->currentText());
     setSfzDir(ui->comboBox_settings_sfzDirs->currentText());
     mFilemanager = ui->comboBox_Settings_filemanager->currentText();
-    promptOnQuit = ui->checkBox_settings_promptOnQuit->isChecked();
+    mPromptOnQuit = ui->checkBox_settings_promptOnQuit->isChecked();
+    mOpenLastProjectAtStartup = ui->checkBox_settings_openLastProjectAtStartup->isChecked();
 
     print("Settings applied.");
 
@@ -741,7 +744,7 @@ void MainWindow::applySettings()
 
     // Create directories if they don't exist
     QDir d;
-    d.mkpath(projectsDir);
+    d.mkpath(mProjectsDir);
     d.mkpath(mPatchesDir);
     d.mkpath(mSoundfontsDir);
     d.mkpath(mSfzDir);
@@ -770,7 +773,7 @@ bool MainWindow::loadSettingsFile(QString dir)
             while (r.readNextStartElement()) {
 
                 if (r.name() == XML_SETTINGS_PRJDIR) {
-                    projectsDir = r.readElementText();
+                    mProjectsDir = r.readElementText();
                 } else if (r.name() == XML_SETTINGS_SFDIR) {
                     setSoundfontsDir(r.readElementText());
                 } else if (r.name() == XML_SETTINGS_PATCHESDIR) {
@@ -780,9 +783,13 @@ bool MainWindow::loadSettingsFile(QString dir)
                 } else if (r.name() == XML_SETTINGS_FILEMAN) {
                     mFilemanager = r.readElementText();
                 } else if (r.name() == XML_SETTINGS_PROMPT_ON_QUIT) {
-                    promptOnQuit = Qstr2bool(r.readElementText());
+                    mPromptOnQuit = Qstr2bool(r.readElementText());
                 } else if (r.name() == XML_SETTINGS_START_MAXIMIZED) {
-                    startMaximized = Qstr2bool(r.readElementText());
+                    mStartMaximized = Qstr2bool(r.readElementText());
+                } else if (r.name() == XML_SETTINGS_OPEN_LAST_PROJECT) {
+                    mOpenLastProjectAtStartup = Qstr2bool(r.readElementText());
+                } else if (r.name() == XML_SETTINGS_LAST_PROJECT_FILEPATH) {
+                    mLastProjectFilePath = r.readElementText();
                 } else {
                     r.skipCurrentElement();
                 }
@@ -804,7 +811,7 @@ bool MainWindow::saveSettingsFile()
     createSettingsDir();
 
     // Open settings file for writing.
-    QString filename = settingsDir + "/" + SETTINGS_FILE;
+    QString filename = mSettingsDir + "/" + SETTINGS_FILE;
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         print("Failed to open settings file for writing: " + filename);
@@ -821,14 +828,16 @@ bool MainWindow::saveSettingsFile()
     stream.writeStartElement(XML_SETTINGS);
 
     // Settings
-    stream.writeTextElement(XML_SETTINGS_PRJDIR, projectsDir);
+    stream.writeTextElement(XML_SETTINGS_PRJDIR, mProjectsDir);
     stream.writeTextElement(XML_SETTINGS_SFDIR, mSoundfontsDir);
     stream.writeTextElement(XML_SETTINGS_PATCHESDIR, mPatchesDir);
     stream.writeTextElement(XML_SETTINGS_SFZDIR, mSfzDir);
     stream.writeTextElement(XML_SETTINGS_FILEMAN, mFilemanager);
-    stream.writeTextElement(XML_SETTINGS_PROMPT_ON_QUIT, bool2str(promptOnQuit));
-    startMaximized = this->isMaximized();
-    stream.writeTextElement(XML_SETTINGS_START_MAXIMIZED, bool2str(startMaximized));
+    stream.writeTextElement(XML_SETTINGS_PROMPT_ON_QUIT, bool2str(mPromptOnQuit));
+    mStartMaximized = this->isMaximized();
+    stream.writeTextElement(XML_SETTINGS_START_MAXIMIZED, bool2str(mStartMaximized));
+    stream.writeTextElement(XML_SETTINGS_OPEN_LAST_PROJECT, bool2str(mOpenLastProjectAtStartup));
+    stream.writeTextElement(XML_SETTINGS_LAST_PROJECT_FILEPATH, mLastProjectFilePath);
 
     stream.writeEndElement(); // Settings
 
@@ -2423,9 +2432,9 @@ void MainWindow::setupFilesystemView()
     {
         ProjectPtr prj = mCurrentProject;
         if (!prj) { return; }
-        if (prj->getDirname().length() == 0) { return; }
+        if (prj->getDirPath().length() == 0) { return; }
 
-        cdFilesystemView( prj->getDirname() );
+        cdFilesystemView( prj->getDirPath() );
     });
 
     a = fsPathMenu.addAction("Home directory");
@@ -2437,8 +2446,8 @@ void MainWindow::setupFilesystemView()
     a = fsPathMenu.addAction("Default projects directory");
     connect(a, &QAction::triggered, this, [=]()
     {
-        if (projectsDir.isEmpty()) { return; }
-        cdFilesystemView( projectsDir );
+        if (mProjectsDir.isEmpty()) { return; }
+        cdFilesystemView( mProjectsDir );
     });
 
     a = fsPathMenu.addAction("Soundfonts directory");
@@ -2465,7 +2474,7 @@ void MainWindow::setupFilesystemView()
     a = fsPathMenu.addAction("Settings directory");
     connect(a, &QAction::triggered, this, [=]()
     {
-        cdFilesystemView( settingsDir );
+        cdFilesystemView( mSettingsDir );
     });
 
 }
@@ -2654,6 +2663,23 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
                 print("Project loaded from cmdline arg.");
             } else {
                 print("Failed to load project from cmdline arg.");
+            }
+        }
+    }
+
+    // If no project was loaded from the command-line, load the last project if
+    // it is set
+    if (!mCurrentProject) {
+        if (mOpenLastProjectAtStartup) {
+            if (mLastProjectFilePath.isEmpty()) {
+                print("Open last project set, but no path saved.");
+            } else {
+                print("Opening last project: " + mLastProjectFilePath);
+                if (loadProjectFromFile(mLastProjectFilePath)) {
+                    print("Last project loaded.");
+                } else {
+                    print("Failed to load last project.");
+                }
             }
         }
     }
@@ -3157,12 +3183,12 @@ void MainWindow::setSfzDir(QString path)
 /* Creates the settings dir if it doesn't exist. */
 void MainWindow::createSettingsDir()
 {
-    QDir dir(settingsDir);
+    QDir dir(mSettingsDir);
     if (!dir.exists()) {
-        if (dir.mkpath(settingsDir)) {
-            print("Created settings directory: " + settingsDir);
+        if (dir.mkpath(mSettingsDir)) {
+            print("Created settings directory: " + mSettingsDir);
         } else {
-            print("Failed to create settings directory: " + settingsDir);
+            print("Failed to create settings directory: " + mSettingsDir);
         }
     }
 }
@@ -3196,7 +3222,7 @@ void MainWindow::setupDatabase()
             this, &MainWindow::onDatabaseSfontInfoLoaded);
 
     // Check if database file exists.
-    if (db.loadDatabaseFromFile(settingsDir + "/" + DATABASE_FILE)) {
+    if (db.loadDatabaseFromFile(mSettingsDir + "/" + DATABASE_FILE)) {
         print("Database loaded from file. Rescan to refresh.");
         print("Database contains:");
         print("   " + n2s(db.soundfontCount()) + " sf2/3 soundfonts.");
@@ -3208,7 +3234,7 @@ void MainWindow::setupDatabase()
         QString oldDir = QDir::homePath() + "/.konfyt/konfyt.database";
         if (db.loadDatabaseFromFile(oldDir)) {
             print("Found database file in old location. Saving to new location.");
-            db.saveDatabaseToFile(settingsDir + "/" + DATABASE_FILE);
+            db.saveDatabaseToFile(mSettingsDir + "/" + DATABASE_FILE);
         } else {
             // Still no database file.
             print("You can scan directories to create a database from Settings.");
@@ -3221,8 +3247,8 @@ void MainWindow::setupDatabase()
 bool MainWindow::saveDatabase()
 {
     // Save to database file
-    if (db.saveDatabaseToFile(settingsDir + "/" + DATABASE_FILE)) {
-        print("Saved database to file " + settingsDir + "/" + DATABASE_FILE);
+    if (db.saveDatabaseToFile(mSettingsDir + "/" + DATABASE_FILE)) {
+        print("Saved database to file " + mSettingsDir + "/" + DATABASE_FILE);
         return true;
     } else {
         print("Failed to save database.");
@@ -3376,7 +3402,7 @@ bool MainWindow::saveProjectInNewDir(ProjectPtr prj)
     QString saveDir;
 
     // Propose a directory in the default projects directory if it is set
-    if (this->projectsDir == "") {
+    if (this->mProjectsDir == "") {
         print("Projects directory is not set.");
         // Inform the user about project directory that is not set
         if (informedUserAboutProjectsDir == false) {
@@ -3387,7 +3413,7 @@ bool MainWindow::saveProjectInNewDir(ProjectPtr prj)
         // We need to bring up a save dialog.
     } else {
         // Find a unique directory name within our default projects dir
-        QString dir = getUniquePath(projectsDir,
+        QString dir = getUniquePath(mProjectsDir,
                                 sanitiseFilename(prj->getProjectName()),
                                 "");
         if (dir.isEmpty()) {
@@ -4786,7 +4812,7 @@ void MainWindow::refreshFilesystemView()
     ProjectPtr prj = mCurrentProject;
     QString project_dir;
     if (prj) {
-        project_dir = prj->getDirname();
+        project_dir = prj->getDirPath();
     }
 
     QDir d(fsview_currentPath);
@@ -5870,7 +5896,7 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
     // Make relative to project directory
     ProjectPtr prj = mCurrentProject;
     if (prj) {
-        QString projPath = prj->getDirname();
+        QString projPath = prj->getDirPath();
         QDir projDir(projPath);
         path = QString(STRING_PROJECT_DIR) + "/" + projDir.relativeFilePath(path);
     }
@@ -5946,7 +5972,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 
     // Safety check - confirm that user really wants to quit
-    if (promptOnQuit) {
+    if (mPromptOnQuit) {
         int choice = msgBoxYesNo("Are you sure you want to quit Konfyt?");
         if (choice != QMessageBox::Yes) {
             event->ignore();
@@ -5956,10 +5982,17 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     // Go through save checks (allow user to cancel quitting)
     if (requestCurrentProjectClose()) {
+
         // We are quitting
         event->accept();
 
-        // Write settings to save window maximized state for next time
+        // Set last project to current one if it has a path
+        QString path = mCurrentProject->getProjectFilePath();
+        if (!path.isEmpty()) {
+            mLastProjectFilePath = path;
+        }
+
+        // Write settings to save window maximized state and last project
         saveSettingsFile();
 
     } else {
@@ -6296,7 +6329,7 @@ void MainWindow::on_actionProject_Open_triggered()
 
     // Show open dialog box
     QString filename = QFileDialog::getOpenFileName(this,
-                "Select project to open", projectsDir,
+                "Select project to open", mProjectsDir,
                 "*" + KonfytProject::PROJECT_FILENAME_EXTENSION);
     if (filename.isEmpty()) {
         print("Cancelled.");
@@ -6308,7 +6341,7 @@ void MainWindow::on_actionProject_Open_triggered()
 
 void MainWindow::on_actionProject_OpenDirectory_triggered()
 {
-    openFileManager( projectsDir );
+    openFileManager( mProjectsDir );
 }
 
 void MainWindow::on_textBrowser_patchNote_textChanged()
@@ -6365,14 +6398,14 @@ void MainWindow::on_actionProject_SaveAs_triggered()
 
     QString oldName = prj->getProjectName();
     bool oldModified = prj->isModified();
-    QString oldDirname = prj->getDirname();
+    QString oldDirname = prj->getDirPath();
 
     // Query user for new project name
     QString newName = QInputDialog::getText(this, "Save Project As",
                 "New Project Name", QLineEdit::Normal, prj->getProjectName());
     if (newName.isEmpty()) { return; }
     setProjectName(newName);
-    prj->setDirname("");
+    prj->setDirPath("");
 
     bool saved = saveProjectInNewDir(prj);
     if (saved) {
@@ -6382,7 +6415,7 @@ void MainWindow::on_actionProject_SaveAs_triggered()
         msgBox("Project could not be saved as a new project.");
         // Restore original project state
         setProjectName(oldName);
-        prj->setDirname(oldDirname);
+        prj->setDirPath(oldDirname);
         prj->setModified(oldModified);
     }
 }
@@ -6847,22 +6880,22 @@ void MainWindow::on_pushButton_connectionsPage_MidiFilter_clicked()
 void MainWindow::setupSettings()
 {
     // Settings dir is standard (XDG) config dir
-    settingsDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
-    print("Settings path: " + settingsDir);
+    mSettingsDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+    print("Settings path: " + mSettingsDir);
     // Check if settings file exists
-    if (loadSettingsFile(settingsDir)) {
+    if (loadSettingsFile(mSettingsDir)) {
         print("Settings loaded.");
     } else {
         print("Could not load settings.");
         // Check if old settings file exists.
         QString oldDir = QDir::homePath() + "/.konfyt";
         if (loadSettingsFile(oldDir)) {
-            print("Loaded settings from old location: " + settingsDir);
+            print("Loaded settings from old location: " + mSettingsDir);
             print("Saving to new settings location.");
             if (saveSettingsFile()) {
-                print("Saved settings file to new location: " + settingsDir);
+                print("Saved settings file to new location: " + mSettingsDir);
             } else {
-                print("Could not save settings to new location: " + settingsDir);
+                print("Could not save settings to new location: " + mSettingsDir);
             }
         } else {
             // If settings file does not exist, it's probably the first run.
@@ -6876,7 +6909,7 @@ void MainWindow::setupSettings()
     // Set up settings dialog
     ui->label_SettingsPath->setText(QString("%1\n%2")
                                     .arg(ui->label_SettingsPath->text())
-                                    .arg(settingsDir));
+                                    .arg(mSettingsDir));
 
     QString docsPath = QString("%1/%2")
             .arg(QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation))
@@ -6895,11 +6928,9 @@ void MainWindow::setupSettings()
     ui->comboBox_settings_sfzDirs->addItem(docsPath + "/sfz");
     ui->comboBox_settings_sfzDirs->addItem(appDataPath + "/sfz");
 
-    ui->checkBox_settings_promptOnQuit->setChecked(promptOnQuit);
-
     // Initialise default settings
-    if (projectsDir.isEmpty()) {
-        projectsDir = ui->comboBox_settings_projectsDir->itemText(0);
+    if (mProjectsDir.isEmpty()) {
+        mProjectsDir = ui->comboBox_settings_projectsDir->itemText(0);
     }
     if (mPatchesDir.isEmpty()) {
         setPatchesDir(ui->comboBox_settings_patchDirs->itemText(0));
@@ -7194,7 +7225,7 @@ void MainWindow::on_actionEdit_MIDI_Send_List_triggered()
 
 void MainWindow::setupSavedMidiSendItems()
 {
-    savedMidiListDir = settingsDir + "/" + SAVED_MIDI_SEND_ITEMS_DIR;
+    savedMidiListDir = mSettingsDir + "/" + SAVED_MIDI_SEND_ITEMS_DIR;
 
     // Create directory if it doesn't exist
     QDir dir(savedMidiListDir);

@@ -92,6 +92,8 @@
 #define XML_SETTINGS_FILEMAN "filemanager"
 #define XML_SETTINGS_PROMPT_ON_QUIT "promptOnQuit"
 #define XML_SETTINGS_START_MAXIMIZED "startMaximized"
+#define XML_SETTINGS_OPEN_LAST_PROJECT "openLastProject"
+#define XML_SETTINGS_LAST_PROJECT_FILEPATH "lastProjectFilePath"
 
 #define XML_MIDI_MAP_PRESETS "midiMapPresets"
 #define XML_MIDI_MAP_PRESET "midiMapPreset"
@@ -547,11 +549,13 @@ private:
     void showSettingsDialog();
     void applySettings();
     void scanForDatabase();
-    QString settingsDir;
-    QString projectsDir;
+    QString mSettingsDir;
+    QString mProjectsDir;
     QString mSoundfontsDir;
-    bool promptOnQuit = true;
-    bool startMaximized = false;
+    bool mPromptOnQuit = true;
+    bool mStartMaximized = false;
+    bool mOpenLastProjectAtStartup = false;
+    QString mLastProjectFilePath;
     void setSoundfontsDir(QString path);
     QString mPatchesDir;
     void setPatchesDir(QString path);

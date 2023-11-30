@@ -200,7 +200,7 @@ ExternalAppRunner::ProcessPtr ExternalAppRunner::addNewProcess(int id)
     ProcessPtr p(new KonfytProcess());
 
     if (mProject) {
-        p->projectDir = mProject->getDirname();
+        p->projectDir = mProject->getDirPath();
         if (mProject->hasExternalAppWithId(id)) {
             p->appInfo = mProject->getExternalApp(id);
         } else {

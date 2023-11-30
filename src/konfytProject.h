@@ -137,9 +137,10 @@ public:
     QList<KonfytPatch*> getPatchList();
     int getNumPatches();
 
-    QString getDirname();
-    void setDirname(QString newDirname);
+    QString getDirPath();
+    void setDirPath(QString path);
     QString getProjectName();
+    QString getProjectFilePath();
     void setProjectName(QString newName);
     bool getShowPatchListNumbers();
     void setShowPatchListNumbers(bool show);

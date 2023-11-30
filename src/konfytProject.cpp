@@ -212,6 +212,14 @@ QString KonfytProject::getProjectName()
     return mProjectName;
 }
 
+QString KonfytProject::getProjectFilePath()
+{
+    QString ret = mProjectDirpath;
+    if (!ret.isEmpty()) { ret += "/"; }
+    ret += mProjectFilename;
+    return ret;
+}
+
 void KonfytProject::addPatch(KonfytPatch *newPatch)
 {
     patchList.append(newPatch);
@@ -277,14 +285,14 @@ int KonfytProject::getNumPatches()
     return patchList.count();
 }
 
-QString KonfytProject::getDirname()
+QString KonfytProject::getDirPath()
 {
     return mProjectDirpath;
 }
 
-void KonfytProject::setDirname(QString newDirname)
+void KonfytProject::setDirPath(QString path)
 {
-    mProjectDirpath = newDirname;
+    mProjectDirpath = path;
     setModified(true);
 }
 
