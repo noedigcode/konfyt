@@ -168,6 +168,13 @@ void MainWindow::setupGuiMenuButtons()
 
 void MainWindow::setupGuiDefaults()
 {
+    // Set window maximized state from settings.
+    // This doesn't automatically show the window, so it respects the minimized
+    // state and will only appear maximized once the window is restored.
+    if (startMaximized) {
+        this->setWindowState(this->windowState() | Qt::WindowMaximized);
+    }
+
     // Bridge testing area visibility
     ui->groupBox_Testing->setVisible(appInfo.bridge);
 
@@ -774,6 +781,8 @@ bool MainWindow::loadSettingsFile(QString dir)
                     mFilemanager = r.readElementText();
                 } else if (r.name() == XML_SETTINGS_PROMPT_ON_QUIT) {
                     promptOnQuit = Qstr2bool(r.readElementText());
+                } else if (r.name() == XML_SETTINGS_START_MAXIMIZED) {
+                    startMaximized = Qstr2bool(r.readElementText());
                 } else {
                     r.skipCurrentElement();
                 }
@@ -818,6 +827,8 @@ bool MainWindow::saveSettingsFile()
     stream.writeTextElement(XML_SETTINGS_SFZDIR, mSfzDir);
     stream.writeTextElement(XML_SETTINGS_FILEMAN, mFilemanager);
     stream.writeTextElement(XML_SETTINGS_PROMPT_ON_QUIT, bool2str(promptOnQuit));
+    startMaximized = this->isMaximized();
+    stream.writeTextElement(XML_SETTINGS_START_MAXIMIZED, bool2str(startMaximized));
 
     stream.writeEndElement(); // Settings
 
@@ -5936,7 +5947,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     // Safety check - confirm that user really wants to quit
     if (promptOnQuit) {
-        if (msgBoxYesNo("Are you sure you want to quit Konfyt?") != QMessageBox::Yes) {
+        int choice = msgBoxYesNo("Are you sure you want to quit Konfyt?");
+        if (choice != QMessageBox::Yes) {
             event->ignore();
             return;
         }
@@ -5944,7 +5956,12 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
     // Go through save checks (allow user to cancel quitting)
     if (requestCurrentProjectClose()) {
+        // We are quitting
         event->accept();
+
+        // Write settings to save window maximized state for next time
+        saveSettingsFile();
+
     } else {
         event->ignore();
     }

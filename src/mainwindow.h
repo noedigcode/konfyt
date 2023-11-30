@@ -91,6 +91,7 @@
 #define XML_SETTINGS_SFZDIR "sfzDir"
 #define XML_SETTINGS_FILEMAN "filemanager"
 #define XML_SETTINGS_PROMPT_ON_QUIT "promptOnQuit"
+#define XML_SETTINGS_START_MAXIMIZED "startMaximized"
 
 #define XML_MIDI_MAP_PRESETS "midiMapPresets"
 #define XML_MIDI_MAP_PRESET "midiMapPreset"
@@ -135,7 +136,7 @@ private:
     bool mBlockPrint = false;
 
 private slots:
-    void closeEvent(QCloseEvent *);
+    void closeEvent(QCloseEvent *event);
     bool eventFilter(QObject *object, QEvent *event);
     void keyPressEvent(QKeyEvent *event) override;
 
@@ -550,6 +551,7 @@ private:
     QString projectsDir;
     QString mSoundfontsDir;
     bool promptOnQuit = true;
+    bool startMaximized = false;
     void setSoundfontsDir(QString path);
     QString mPatchesDir;
     void setPatchesDir(QString path);

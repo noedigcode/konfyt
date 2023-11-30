@@ -31,7 +31,6 @@ class ScriptEditWidget : public QPlainTextEdit
 public:
     ScriptEditWidget(QWidget* parent = nullptr);
 
-    // QWidget interface
 protected:
     const QString INDENT = "    ";
 
