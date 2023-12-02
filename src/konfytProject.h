@@ -140,8 +140,10 @@ public:
     QString getDirPath();
     void setDirPath(QString path);
     QString getProjectName();
-    QString getProjectFilePath();
     void setProjectName(QString newName);
+    QString getProjectFilePath();
+    QString getProjectFileName();
+    void setProjectFileName(QString newName);
     bool getShowPatchListNumbers();
     void setShowPatchListNumbers(bool show);
     bool getShowPatchListNotes();

@@ -3380,15 +3380,19 @@ bool MainWindow::saveProject(ProjectPtr prj)
         return false;
     }
 
-    // Try to save. If this fails, it means the project has not been saved
-    // yet and we need to create a directory for it.
-    if (prj->saveProject()) {
-        // Saved successfully.
-        print("Project saved.");
-        return true;
+    // If the project directory path is empty, it means it hasn't been saved
+    // yet and the user must be prompted for a directory.
+    if (prj->getDirPath().isEmpty()) {
+        // Prompt user for directory
+        saveProjectInNewDir(prj);
     } else {
-        // We need to find a directory for the project.
-        return saveProjectInNewDir(prj);
+        // Save in currently set directory
+        if (prj->saveProject()) {
+            print("Project saved.");
+        } else {
+            print("Failed to save project.");
+            msgBox("Failed to save project.");
+        }
     }
 }
 
@@ -3476,6 +3480,12 @@ bool MainWindow::saveProjectInNewDir(ProjectPtr prj)
     }
 }
 
+/* Checks whether it is safe to close the current project by asking the user
+ * to save if the project has been modified.
+ * Returns true if the project has been successfully saved or hasn't been
+ * modified.
+ * Returns false if the user cancels the save operation or if the project can't
+ * successfully be saved. */
 bool MainWindow::requestCurrentProjectClose()
 {
     if (!mCurrentProject) { return true; }
@@ -6396,26 +6406,28 @@ void MainWindow::on_actionProject_SaveAs_triggered()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    QString oldName = prj->getProjectName();
     bool oldModified = prj->isModified();
-    QString oldDirname = prj->getDirPath();
 
     // Query user for new project name
+    QString oldName = prj->getProjectName();
     QString newName = QInputDialog::getText(this, "Save Project As",
                 "New Project Name", QLineEdit::Normal, prj->getProjectName());
     if (newName.isEmpty()) { return; }
     setProjectName(newName);
+
+    QString oldDirPath = prj->getDirPath();
     prj->setDirPath("");
 
+    // Clear project filename so a new one will be derived from the project name
+    QString oldFilename = prj->getProjectFileName();
+    prj->setProjectFileName("");
+
     bool saved = saveProjectInNewDir(prj);
-    if (saved) {
-        print("Saved project as new project.");
-    } else {
-        print("Project could not be saved as new project.");
-        msgBox("Project could not be saved as a new project.");
+    if (!saved) {
         // Restore original project state
         setProjectName(oldName);
-        prj->setDirPath(oldDirname);
+        prj->setDirPath(oldDirPath);
+        prj->setProjectFileName(oldFilename);
         prj->setModified(oldModified);
     }
 }

@@ -45,15 +45,14 @@ KonfytProject::KonfytProject(QObject *parent) :
 
 bool KonfytProject::saveProject()
 {
-    if (mProjectDirpath == "") {
-        return false;
-    } else {
-        return saveProjectAs(mProjectDirpath);
-    }
+    return saveProjectAs(mProjectDirpath);
 }
 
-/* Save project xml file containing a list of all the patches, as well as all
- * the related patch files, in the specified directory. */
+/* Save project XML file, as well as the accompanying files, to the specified
+ * directory.
+ * If the project already has a filename (i.e. set when loaded) that filename
+ * will be used for the project XML file. If the filename is empty, a new
+ * filename will be derived from the project name. */
 bool KonfytProject::saveProjectAs(QString dirpath)
 {
     // Abort if directory does not exist
@@ -165,12 +164,6 @@ bool KonfytProject::loadProject(QString filepath)
     return true;
 }
 
-void KonfytProject::setProjectName(QString newName)
-{
-    mProjectName = newName;
-    setModified(true);
-}
-
 bool KonfytProject::getShowPatchListNumbers()
 {
     return patchListNumbers;
@@ -205,19 +198,6 @@ void KonfytProject::setMidiPickupRange(int range)
 int KonfytProject::getMidiPickupRange()
 {
     return midiPickupRange;
-}
-
-QString KonfytProject::getProjectName()
-{
-    return mProjectName;
-}
-
-QString KonfytProject::getProjectFilePath()
-{
-    QString ret = mProjectDirpath;
-    if (!ret.isEmpty()) { ret += "/"; }
-    ret += mProjectFilename;
-    return ret;
 }
 
 void KonfytProject::addPatch(KonfytPatch *newPatch)
@@ -294,6 +274,35 @@ void KonfytProject::setDirPath(QString path)
 {
     mProjectDirpath = path;
     setModified(true);
+}
+
+QString KonfytProject::getProjectName()
+{
+    return mProjectName;
+}
+
+void KonfytProject::setProjectName(QString newName)
+{
+    mProjectName = newName;
+    setModified(true);
+}
+
+QString KonfytProject::getProjectFilePath()
+{
+    QString ret = mProjectDirpath;
+    if (!ret.isEmpty()) { ret += "/"; }
+    ret += mProjectFilename;
+    return ret;
+}
+
+QString KonfytProject::getProjectFileName()
+{
+    return mProjectFilename;
+}
+
+void KonfytProject::setProjectFileName(QString newName)
+{
+    mProjectFilename = newName;
 }
 
 QList<int> KonfytProject::midiInPort_getAllPortIds()
