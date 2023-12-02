@@ -1,63 +1,128 @@
-## Scripting
+## Scripting Overview
 
-`init()` is called once when the script is loaded.
+Scripting for Konfyt is done in JavaScript.
 
-`midiEvent(ev)` is called for every incoming MIDI event.
+A basic script skeleton looks like this:
+```
+function init()
+{
+    // This gets called once when the script is loaded
+}
 
-Argument `ev` is the MIDI event. See the "MIDI event objects" section below.
+function midiEvent(ev)
+{
+    // This gets called for every incoming MIDI event.
+}
+```
 
+- `init()` is called once when the script is loaded.
 
-## Global functions and objects:
+- `midiEvent(ev)` is called for every incoming MIDI event.
 
-- `print(message)`: print a string to the console.
+- Argument `ev` is the MIDI event. See the sections for the different types of
+  events below.
 
-Global object `Midi`:
-- `Midi.send(ev)`: Send MIDI event.
+- Use `print("Hello World")` to print a string to the console for debugging.
 
-The following functions create and return a new MIDI event:
-- `Midi.noteon(channel, note, velocity)`
-- `Midi.noteoff(channel, note, velocity)` - velocity argument is optional and 0 if not specified.
-- `Midi.cc(channel, cc, value)`
-- `Midi.program(channel, program, bankmsb, banklsb)` - bankmsb and banklsb are optional and -1 if not specified.
-- `Midi.pitchbend(channel, value)` - value is a signed value, -8192 to 8191.
+## Handling incoming MIDI events
 
+The event properties can be used to decide what to do based on the incoming
+events.
 
-## MIDI event objects:
+For example, the following snippet converts a CC 10 event to a noteon or noteoff,
+and passes all other events.
 
-For all event types:
+```
+function midiEvent(ev)
+{
+    if ((ev.type == CC) && (ev.cc == 10)) {
+        // Convert to noteon or off
+        if (ev.value == 127) {
+            let n = Midi.noteon(1, 60, 100);
+            Midi.send(n);
+        } else {
+            let n = Midi.noteoff(1, 60);
+            Midi.send(n);
+        }
+    } else {
+        // Pass through original event
+        Midi.send(ev);
+    }
+}
+```
 
-- `ev.type`: string corresponding to one of the type constants:
+See the sections below for details on the different types of events.
 
-  NOTEON, NOTEOFF, CC, PROGRAM, PITCHBEND, POLYAFTERTOUCH, AFTERTOUCH, SYSEX
+## Sending MIDI
 
+Use `Midi.send(ev)` to send a MIDI event, where `ev` is the event to send.
+
+`ev` could either be the original or modified version of an incoming event,
+or a newly created event. See the sections for the different types of events
+below for how to create new MIDI events.
+
+## Note events
+
+Assuming `ev` is a noteon or noteoff MIDI event:
+
+- `ev.type`: will be equal to either the `NOTEON` or `NOTEOFF` constants.
 - `ev.channel`: MIDI channel, 1-16
-
-For noteon and noteoff events:
 - `ev.note`: 0-127
 - `ev.velocity`: 0-127
 
-For CC events:
+`Midi.noteon(channel, note, velocity)` creates a new noteon event.
+
+`Midi.noteoff(channel, note, velocity)` creates a new noteoff event.
+The velocity argument is optional and set to 0 if not specified.
+
+## CC events
+
+- `ev.type`: will be equal to the `CC` constant.
+- `ev.channel`: MIDI channel, 1-16
 - `ev.cc`: 0-127
 - `ev.value`: 0-127
 
-For program events:
-- `ev.program`: 0-127
-- bankmsb: 0-127, or -1 if not applicable
-- banklsb: 0-127, or -1 if not applicable
+`Midi.cc(channel, cc, value)` creates a new CC event.
 
-For pitchbend events:
+## Program change events
+
+- `ev.type`: will be equal to the `PROGRAM` constant.
+- `ev.channel`: MIDI channel, 1-16
+- `ev.program`: 0-127
+- `ev.bankmsb`: 0-127, or -1 if not applicable
+- `ev.banklsb`: 0-127, or -1 if not applicable
+
+`Midi.program(channel, program, bankmsb, banklsb)` creates a new program change event.
+The bankmsb and banklsb arguments are optional and are disabled (set to -1)
+if not specified.
+
+When sending a program change message, if `bankmsb` and `banklsb` are set,
+these two messages will be sent right before the program change message is sent.
+If they are set to `-1`, only the program change message will be sent.
+
+## Pitchbend events
+
+- `ev.type` will be equal to the `PITCHBEND` constant.
+- `ev.channel`: MIDI channel, 1-16
 - `ev.value`: signed value, -8192 to 8191
 
-For sysex events:
-- `ev.data`: string of two-character hexadecimal values (e.g. A1, B2, etc.), may be space separated. Excludes opening F0.
+`Midi.pitchbend(channel, value)` creates a new pitchbend event.
 
-For aftertouch and poly aftertouch events:
+A value of `0` corresponds to no pitchbend. The constants `PITCHBEND_MIN` and
+`PITCHBEND_MAX` can be used which correspond to signed pitchbend minimum and
+maximum values, -8192 and 8191, respectively.
+
+## Sysex events
+
+- `ev.type` will be equal to the `SYSEX` constant.
+- `ev.channel`: MIDI channel, 1-16
+- `ev.data`: string of two-character hexadecimal values (e.g. "A1 B2"...).
+  Values may be space separated. Excludes the opening F0.
+
+## Aftertouch MIDI events
+
+- `ev.type` will be equal to either the `POLYAFTERTOUCH` or `AFTERTOUCH` constants.
+- `ev.channel`: MIDI channel, 1-16
 - `ev.note`: 0-127 (only for poly aftertouch)
 - `ev.pressure`: 0-127
-
-
-## Constants
-
-- See type constants above
-- `PITCHBEND_MIN` and `PITCHBEND_MAX` correspond to signed pitchbend minimum and maximum values, -8192 and 8191, respectively.
 
