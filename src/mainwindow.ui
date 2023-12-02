@@ -73,7 +73,7 @@ QCheckBox#MIDI_indicator_pitchbend::indicator:checked {
 /* ComboBox */
 
 QComboBox {
-	background-color: rgb(54, 54, 54);
+	background-color: rgb(38, 38, 38);
 	border: 1px solid grey;
 	border-radius: 2px;
 	color: rgb(245,245,245);
@@ -133,12 +133,13 @@ QFrame#frame_layerListToolbar{
 /* ---------------------------------------------------------------------- */
 /* GroupBox */
 
-QGroupBox{
-	margin-top: 2ex;	
-	background-color:  rgba(107, 107, 107, 255);
-	border: 2px solid rgb(212, 212, 212);
-	border-radius: 1px;
-	padding: 1px;
+/* General group boxes */
+QGroupBox {
+	background-color: rgb(80, 80, 80);
+	border: 0px solid;
+	border-radius: 4px;
+	margin-top: 0ex;
+	padding-top: 2ex;
 }
 
 QGroupBox::title {
@@ -148,15 +149,58 @@ QGroupBox::title {
 	padding-top: 2px;
 }
 
+/* Sub-groupboxes */
+QGroupBox[KonfytSubGroupbox=true] {
+	margin-top: 0;	
+	padding-top: 0;
+	background-color: rgb(90, 90, 90);
+	border: 1px solid rgb(40, 40, 40);
+	border-radius: 3px;
+}
+
+/* Right side bar group boxes */
+QGroupBox[KonfytRightGroupbox=true] {
+	background-color: rgb(90, 90, 90);
+	border-top-right-radius: 0px;
+    border-bottom-right-radius: 0px;
+}
+
+/* Left side bar group boxes */
+QGroupBox[KonfytLeftGroupbox=true] {
+	margin-top: 0;
+	padding-top: 0;
+	background-color: rgb(90, 90, 90);
+	border-top-left-radius: 0px;
+    border-bottom-left-radius: 0px;
+}
+
+/* Live mode group box */
+QGroupBox#groupBox_Live {
+	background-color: rgb(80, 80, 80);
+}
+
+/* Group box for other pages */
+QGroupBox[KonfytOtherPageGroupbox=true] {
+	margin-top: 0ex;
+	border: 2px solid;
+	border-radius: 0px;
+	background-color: rgb(4, 59, 93);
+	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
+	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
+	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
+	border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+	border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
+}
+
+
 /* ---------------------------------------------------------------------- */
 /* Patch page groupbox */
 QGroupBox#groupBox_PatchPage {	
 	margin-top: 0ex;
-
+	border: 2px solid;
+	border-radius: 0px;
 	background-color: rgb(4, 59, 93);
-	
 	background-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0.403, y2:0.0965909, stop:0 rgba(2, 33, 56, 255), stop:1 rgba(0, 0, 0, 255));
-	
 	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
 	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
 	border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
@@ -175,30 +219,6 @@ padding: 0px;
 }
 
 /* ---------------------------------------------------------------------- */
-/* Settings page groupbox */
-QGroupBox#groupBox_SettingsPage {
-	margin-top: 0ex;
-
-	background-color: rgb(4, 59, 93);
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
-	
-	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-    border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-    border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-}
-
-/* Settings groupbox */
-QGroupBox#groupBox_Settings{
-	background-color: rgba(100,100,100, 255);
-	background-color: rgb(80, 80, 80);
-	border: 0px solid;
-	border-radius: 4px;
-	margin-top: 0ex;
-	padding-top: 2ex;
-}
-
-/* ---------------------------------------------------------------------- */
 /* Header of tree widgets */
 QHeaderView::section {
     background-color: rgb(38, 38, 38);
@@ -212,7 +232,7 @@ QLabel{
 
 /* ---------------------------------------------------------------------- */
 QLineEdit {
-	background-color: rgb(54, 54, 54);
+	background-color: rgb(38, 38, 38);
 	border: 1px solid grey;
 	border-radius: 2px;
 }
@@ -233,7 +253,7 @@ QLineEdit#lineEdit_ProjectName {
 
 /* ---------------------------------------------------------------------- */
 QListView{
-	background-color: rgb(50, 50, 50);
+	background-color: rgb(38, 38, 38);
 	border: 1px solid;
 	border-color: rgb(77, 77, 77);
 }
@@ -508,7 +528,7 @@ QTabWidget::pane { /* The tab widget frame */
 
 /* ---------------------------------------------------------------------- */
 QTextBrowser {
-	background-color: rgb(50, 50, 50);
+	background-color: rgb(38, 38, 38);
 	border: 1px solid;
 	border-color: rgb(77, 77, 77);
 }
@@ -524,7 +544,7 @@ QTextBrowser#textBrowser_patchNote {
 
 /* ---------------------------------------------------------------------- */
 QTreeView {
-	background-color: rgb(50, 50, 50);
+	background-color: rgb(38, 38, 38);
 	border: 1px solid;
 	border-color: rgb(77, 77, 77);
 }
@@ -533,6 +553,7 @@ QTreeView::branch {
 	border-image: none;
 	image: none;
 }
+
 
 /* ---------------------------------------------------------------------- */
 /* Tool Buttons */
@@ -1148,7 +1169,7 @@ border-bottom-left-radius: 0;</string>
                 </size>
                </property>
                <property name="currentIndex">
-                <number>2</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="pageLibrary">
                 <layout class="QGridLayout" name="gridLayout_6">
@@ -1167,19 +1188,13 @@ border-bottom-left-radius: 0;</string>
                  <item row="0" column="0">
                   <widget class="QGroupBox" name="groupBox_Library">
                    <property name="styleSheet">
-                    <string notr="true">QGroupBox#groupBox_Library{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-top-left-radius: 0px;
-    border-bottom-left-radius: 0px;
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-	margin-top: 0ex;
-	padding-top: 0ex;
-}</string>
+                    <string notr="true"/>
                    </property>
                    <property name="title">
                     <string/>
+                   </property>
+                   <property name="KonfytLeftGroupbox" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_10">
                     <property name="leftMargin">
@@ -1210,7 +1225,7 @@ border-bottom-left-radius: 0;</string>
                       </property>
                       <widget class="QTabWidget" name="tabWidget_library">
                        <property name="currentIndex">
-                        <number>1</number>
+                        <number>0</number>
                        </property>
                        <widget class="QWidget" name="tab_library">
                         <attribute name="title">
@@ -1357,12 +1372,7 @@ border-bottom-left-radius: 0;</string>
                             <enum>Qt::CustomContextMenu</enum>
                            </property>
                            <property name="styleSheet">
-                            <string notr="true">QTreeWidget {
-	background-color: rgb(38, 38, 38);
-	border-color: rgb(40, 40, 40);
-}
-
-/* No horizontal scrollbar used; Hide ugly line below vertical scrollbar. */
+                            <string notr="true">/* No horizontal scrollbar used; Hide ugly line below vertical scrollbar. */
 QScrollBar:horizontal {
 	height: 0;
 }
@@ -1452,10 +1462,7 @@ QScrollBar:horizontal {
                             <enum>Qt::CustomContextMenu</enum>
                            </property>
                            <property name="styleSheet">
-                            <string notr="true">QTreeWidget {
-background-color: rgb(38, 38, 38);
-border-color: rgb(40, 40, 40);
-}</string>
+                            <string notr="true"/>
                            </property>
                            <property name="verticalScrollBarPolicy">
                             <enum>Qt::ScrollBarAlwaysOn</enum>
@@ -1889,23 +1896,17 @@ border-bottom-left-radius: 0;</string>
                  <item>
                   <widget class="QGroupBox" name="groupBox_Library_2">
                    <property name="styleSheet">
-                    <string notr="true">QGroupBox{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-top-left-radius: 0px;
-    border-bottom-left-radius: 0px;
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-	margin-top: 0ex;
-	padding-top: 0ex;
-}</string>
+                    <string notr="true"/>
                    </property>
                    <property name="title">
                     <string/>
                    </property>
+                   <property name="KonfytLeftGroupbox" stdset="0">
+                    <bool>true</bool>
+                   </property>
                    <layout class="QVBoxLayout" name="verticalLayout_28">
                     <property name="spacing">
-                     <number>0</number>
+                     <number>2</number>
                     </property>
                     <property name="leftMargin">
                      <number>5</number>
@@ -1949,8 +1950,7 @@ border-bottom-left-radius: 0;</string>
                          </size>
                         </property>
                         <property name="styleSheet">
-                         <string notr="true">border-bottom-left-radius: 0;
-border-bottom-right-radius: 0;</string>
+                         <string notr="true"/>
                         </property>
                         <property name="frameShape">
                          <enum>QFrame::StyledPanel</enum>
@@ -1995,8 +1995,7 @@ border-bottom-right-radius: 0;</string>
                             <string>Remove selected item from the Saved MIDI Messages list</string>
                            </property>
                            <property name="styleSheet">
-                            <string notr="true">border-bottom-left-radius: 0;
-border-bottom-right-radius: 0;</string>
+                            <string notr="true"/>
                            </property>
                            <property name="text">
                             <string>Remove</string>
@@ -2075,19 +2074,13 @@ border-color: rgb(40, 40, 40);
                  <item row="0" column="0">
                   <widget class="QGroupBox" name="groupBox_Live">
                    <property name="styleSheet">
-                    <string notr="true">QGroupBox#groupBox_Live{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-top-left-radius: 0px;
-    border-bottom-left-radius: 0px;
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-	margin-top: 0ex;
-	padding-top: 0ex;
-}</string>
+                    <string notr="true"/>
                    </property>
                    <property name="title">
                     <string/>
+                   </property>
+                   <property name="KonfytLeftGroupbox" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_14">
                     <item row="0" column="0">
@@ -2218,19 +2211,13 @@ border-color: rgb(40, 40, 40);
                  <item>
                   <widget class="QGroupBox" name="groupBox_scripting_left">
                    <property name="styleSheet">
-                    <string notr="true">QGroupBox#groupBox_scripting_left{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-top-left-radius: 0px;
-    border-bottom-left-radius: 0px;
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-	margin-top: 0ex;
-	padding-top: 0ex;
-}</string>
+                    <string notr="true"/>
                    </property>
                    <property name="title">
                     <string/>
+                   </property>
+                   <property name="KonfytLeftGroupbox" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_55">
                     <property name="leftMargin">
@@ -2280,7 +2267,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>1</number>
+                 <number>0</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -3078,8 +3065,8 @@ border-bottom: 1px solid rgb(40,40,40);</string>
                     <property name="title">
                      <string/>
                     </property>
-                    <property name="konfytGradient" stdset="0">
-                     <number>0</number>
+                    <property name="KonfytOtherPageGroupbox" stdset="0">
+                     <bool>true</bool>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_21">
                      <item row="2" column="1">
@@ -3132,22 +3119,13 @@ border-bottom: 1px solid rgb(40,40,40);</string>
                         <item>
                          <widget class="QGroupBox" name="groupBox_SubSettings">
                           <property name="styleSheet">
-                           <string notr="true">QGroupBox{
-	margin-top: 2ex;	
-	background-color: rgb(90, 90, 90);
-	border: 1px solid rgb(40, 40, 40);
-	border-radius: 3px;
-	padding: 1px;
-}
-
-QGroupBox::title {
-	subcontrol-position: top left;
-	subcontrol-origin: margin;
-	padding: 0 3px;
-}</string>
+                           <string notr="true"/>
                           </property>
                           <property name="title">
                            <string/>
+                          </property>
+                          <property name="KonfytSubGroupbox" stdset="0">
+                           <bool>true</bool>
                           </property>
                           <layout class="QGridLayout" name="gridLayout_20">
                            <item row="9" column="0">
@@ -3813,26 +3791,13 @@ border-bottom-left-radius: 0;</string>
                   <item row="0" column="0">
                    <widget class="QGroupBox" name="groupBox_FilterPage">
                     <property name="styleSheet">
-                     <string notr="true">
-
-QGroupBox{
-	
-	margin-top: 0ex;
-
-
-	background-color: rgb(4, 59, 93);
-	
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
-	
-	
-	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-}</string>
+                     <string notr="true"/>
                     </property>
                     <property name="title">
                      <string/>
+                    </property>
+                    <property name="KonfytOtherPageGroupbox" stdset="0">
+                     <bool>true</bool>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_28">
                      <item row="0" column="0">
@@ -3850,15 +3815,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QGroupBox{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-radius: 4px;
-	margin-top: 0ex;
-	padding-top: 1em;
-
-	max-width: 25em;
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="title">
                         <string>MIDI Filter</string>
@@ -3945,45 +3902,26 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                         <item>
                          <widget class="QGroupBox" name="groupBox_21">
                           <property name="styleSheet">
-                           <string notr="true">QGroupBox{
-	margin-top: 0;	
-	background-color:  rgba(107, 107, 107, 255);
-	border: 2px solid rgb(212, 212, 212);
-	border-radius: 1px;
-	padding: 1px;
-}
-
-QGroupBox::title {
-	subcontrol-position: top left;
-	subcontrol-origin: margin;
-	padding: 0 3px;
-}
-
-/*
-QComboBox {
-	max-width: 3em;
-}
-
-QSpinBox {
-	max-width: 3em;
-}
-*/</string>
+                           <string notr="true"/>
                           </property>
                           <property name="title">
                            <string/>
                           </property>
+                          <property name="KonfytSubGroupbox" stdset="0">
+                           <bool>true</bool>
+                          </property>
                           <layout class="QVBoxLayout" name="verticalLayout_18">
                            <property name="leftMargin">
-                            <number>4</number>
+                            <number>9</number>
                            </property>
                            <property name="topMargin">
-                            <number>4</number>
+                            <number>9</number>
                            </property>
                            <property name="rightMargin">
-                            <number>4</number>
+                            <number>9</number>
                            </property>
                            <property name="bottomMargin">
-                            <number>4</number>
+                            <number>9</number>
                            </property>
                            <item>
                             <layout class="QHBoxLayout" name="horizontalLayout_17">
@@ -5499,26 +5437,13 @@ border-bottom-left-radius: 0;</string>
                   <item row="0" column="0">
                    <widget class="QGroupBox" name="groupBox_22">
                     <property name="styleSheet">
-                     <string notr="true">
-
-QGroupBox{
-	
-	margin-top: 0ex;
-
-
-	background-color: rgb(4, 59, 93);
-	
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
-	
-	
-	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-}</string>
+                     <string notr="true"/>
                     </property>
                     <property name="title">
                      <string/>
+                    </property>
+                    <property name="KonfytOtherPageGroupbox" stdset="0">
+                     <bool>true</bool>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_12">
                      <item row="0" column="0">
@@ -5536,76 +5461,58 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QGroupBox{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-radius: 4px;
-	margin-top: 0ex;
-	padding-top: 2ex;
+                        <string notr="true">QGroupBox {
+	margin-top: 0;
+	padding-top: 0;
 }</string>
                        </property>
                        <property name="title">
                         <string/>
                        </property>
-                       <widget class="QGroupBox" name="groupBox_24">
-                        <property name="geometry">
-                         <rect>
-                          <x>10</x>
-                          <y>0</y>
-                          <width>421</width>
-                          <height>131</height>
-                         </rect>
-                        </property>
-                        <property name="styleSheet">
-                         <string notr="true">QGroupBox{
-	margin-top: 2ex;	
-	background-color:  rgba(107, 107, 107, 255);
-	border: 2px solid rgb(212, 212, 212);
-	border-radius: 1px;
-	padding: 1px;
-}
-
-
-
-QGroupBox::title {
-	subcontrol-position: top left;
-	subcontrol-origin: margin;
-	padding: 0 3px;
-}</string>
-                        </property>
-                        <property name="title">
-                         <string/>
-                        </property>
-                        <widget class="QLabel" name="label_WaitingTitle">
-                         <property name="geometry">
-                          <rect>
-                           <x>10</x>
-                           <y>20</y>
-                           <width>401</width>
-                           <height>16</height>
-                          </rect>
-                         </property>
-                         <property name="text">
-                          <string>Waiting Page</string>
-                         </property>
-                        </widget>
-                        <widget class="QLabel" name="label_WaitingStatus">
-                         <property name="geometry">
-                          <rect>
-                           <x>10</x>
-                           <y>50</y>
-                           <width>401</width>
-                           <height>71</height>
-                          </rect>
-                         </property>
-                         <property name="text">
-                          <string>Waiting Page</string>
-                         </property>
-                         <property name="wordWrap">
-                          <bool>true</bool>
-                         </property>
-                        </widget>
-                       </widget>
+                       <layout class="QVBoxLayout" name="verticalLayout_37">
+                        <item>
+                         <widget class="QGroupBox" name="groupBox_24">
+                          <property name="styleSheet">
+                           <string notr="true"/>
+                          </property>
+                          <property name="title">
+                           <string/>
+                          </property>
+                          <property name="KonfytSubGroupbox" stdset="0">
+                           <bool>true</bool>
+                          </property>
+                          <widget class="QLabel" name="label_WaitingTitle">
+                           <property name="geometry">
+                            <rect>
+                             <x>10</x>
+                             <y>20</y>
+                             <width>401</width>
+                             <height>16</height>
+                            </rect>
+                           </property>
+                           <property name="text">
+                            <string>Waiting Page</string>
+                           </property>
+                          </widget>
+                          <widget class="QLabel" name="label_WaitingStatus">
+                           <property name="geometry">
+                            <rect>
+                             <x>10</x>
+                             <y>50</y>
+                             <width>401</width>
+                             <height>71</height>
+                            </rect>
+                           </property>
+                           <property name="text">
+                            <string>Waiting Page</string>
+                           </property>
+                           <property name="wordWrap">
+                            <bool>true</bool>
+                           </property>
+                          </widget>
+                         </widget>
+                        </item>
+                       </layout>
                       </widget>
                      </item>
                     </layout>
@@ -5630,21 +5537,13 @@ QGroupBox::title {
                   <item row="0" column="0">
                    <widget class="QGroupBox" name="groupBox_11">
                     <property name="styleSheet">
-                     <string notr="true">QGroupBox {
-
-	margin-top: 0;
-
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
-
-border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-
-}</string>
+                     <string notr="true"/>
                     </property>
                     <property name="title">
                      <string/>
+                    </property>
+                    <property name="KonfytOtherPageGroupbox" stdset="0">
+                     <bool>true</bool>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_6">
                      <item>
@@ -5965,21 +5864,13 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                   <item row="0" column="0">
                    <widget class="QGroupBox" name="groupBox_20">
                     <property name="styleSheet">
-                     <string notr="true">QGroupBox {
-
-margin-top: 0;
-
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
-
-border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-
-}</string>
+                     <string notr="true"/>
                     </property>
                     <property name="title">
                      <string/>
+                    </property>
+                    <property name="KonfytOtherPageGroupbox" stdset="0">
+                     <bool>true</bool>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_11">
                      <item>
@@ -6365,21 +6256,13 @@ QScrollBar:horizontal {
                   <item row="0" column="0">
                    <widget class="QGroupBox" name="groupBox">
                     <property name="styleSheet">
-                     <string notr="true">QGroupBox {
-
-margin-top: 0;
-
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
-
-border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-
-}</string>
+                     <string notr="true"/>
                     </property>
                     <property name="title">
                      <string/>
+                    </property>
+                    <property name="KonfytOtherPageGroupbox" stdset="0">
+                     <bool>true</bool>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_43" rowstretch="0,0,0,0,0,0">
                      <item row="4" column="0">
@@ -6779,26 +6662,13 @@ border-bottom-left-radius: 0;</string>
                   <item>
                    <widget class="QGroupBox" name="groupBox_FilterPage_2">
                     <property name="styleSheet">
-                     <string notr="true">
-
-QGroupBox{
-	
-	margin-top: 0ex;
-
-
-	background-color: rgb(4, 59, 93);
-	
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
-	
-	
-	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-}</string>
+                     <string notr="true"/>
                     </property>
                     <property name="title">
                      <string/>
+                    </property>
+                    <property name="KonfytOtherPageGroupbox" stdset="0">
+                     <bool>true</bool>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_47">
                      <item row="0" column="0">
@@ -6816,15 +6686,10 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QGroupBox{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-radius: 4px;
-	margin-top: 0ex;
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="title">
-                        <string/>
+                        <string>MIDI Send List Editor</string>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_22">
                         <item>
@@ -6860,8 +6725,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                                  </size>
                                 </property>
                                 <property name="styleSheet">
-                                 <string notr="true">border-bottom-left-radius: 0;
-border-bottom-right-radius: 0;</string>
+                                 <string notr="true"/>
                                 </property>
                                 <property name="frameShape">
                                  <enum>QFrame::StyledPanel</enum>
@@ -6906,8 +6770,7 @@ border-bottom-right-radius: 0;</string>
                                     <string>Save the MIDI message currently being edited to the Saved MIDI Messages list</string>
                                    </property>
                                    <property name="styleSheet">
-                                    <string notr="true">border-bottom-left-radius: 0;
-border-bottom-right-radius: 0;</string>
+                                    <string notr="true"/>
                                    </property>
                                    <property name="text">
                                     <string>Save Preset</string>
@@ -6955,8 +6818,7 @@ border-bottom-right-radius: 0;</string>
                                  </size>
                                 </property>
                                 <property name="styleSheet">
-                                 <string notr="true">border-bottom-left-radius: 0;
-border-bottom-right-radius: 0;</string>
+                                 <string notr="true"/>
                                 </property>
                                 <property name="frameShape">
                                  <enum>QFrame::StyledPanel</enum>
@@ -7001,8 +6863,7 @@ border-bottom-right-radius: 0;</string>
                                     <string>Send the MIDI message currently being edited to the layer output</string>
                                    </property>
                                    <property name="styleSheet">
-                                    <string notr="true">border-bottom-left-radius: 0;
-border-bottom-right-radius: 0;</string>
+                                    <string notr="true"/>
                                    </property>
                                    <property name="text">
                                     <string>Send This Message</string>
@@ -7032,48 +6893,29 @@ border-bottom-right-radius: 0;</string>
                                </size>
                               </property>
                               <property name="styleSheet">
-                               <string notr="true">QGroupBox{
-	padding: 1px;
-	margin-top: 0;	
-	background-color:  rgba(107, 107, 107, 255);
-	border: 2px solid rgb(212, 212, 212);
-	border-radius: 1px;
-}
-
-QGroupBox::title {
-	subcontrol-position: top left;
-	subcontrol-origin: margin;
-	padding: 0 3px;
-}
-
-/*
-QComboBox {
-	max-width: 3em;
-}
-
-QSpinBox {
-	max-width: 3em;
-}
-*/</string>
+                               <string notr="true"/>
                               </property>
                               <property name="title">
                                <string/>
+                              </property>
+                              <property name="KonfytSubGroupbox" stdset="0">
+                               <bool>true</bool>
                               </property>
                               <layout class="QVBoxLayout" name="verticalLayout_27">
                                <property name="spacing">
                                 <number>2</number>
                                </property>
                                <property name="leftMargin">
-                                <number>2</number>
+                                <number>5</number>
                                </property>
                                <property name="topMargin">
-                                <number>2</number>
+                                <number>5</number>
                                </property>
                                <property name="rightMargin">
-                                <number>2</number>
+                                <number>5</number>
                                </property>
                                <property name="bottomMargin">
-                                <number>2</number>
+                                <number>5</number>
                                </property>
                                <item>
                                 <layout class="QHBoxLayout" name="horizontalLayout_52">
@@ -8427,7 +8269,7 @@ border-bottom-left-radius: 0;</string>
                             <item>
                              <widget class="QLabel" name="label_38">
                               <property name="text">
-                               <string>Last received:</string>
+                               <string>Incoming MIDI Events</string>
                               </property>
                              </widget>
                             </item>
@@ -8578,26 +8420,13 @@ border-bottom-left-radius: 0;</string>
                   <item>
                    <widget class="QGroupBox" name="groupBox_ExternalAppsPage">
                     <property name="styleSheet">
-                     <string notr="true">
-
-QGroupBox{
-	
-	margin-top: 0ex;
-
-
-	background-color: rgb(4, 59, 93);
-	
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
-	
-	
-	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-}</string>
+                     <string notr="true"/>
                     </property>
                     <property name="title">
                      <string/>
+                    </property>
+                    <property name="KonfytOtherPageGroupbox" stdset="0">
+                     <bool>true</bool>
                     </property>
                     <layout class="QGridLayout" name="gridLayout_25">
                      <item row="0" column="0">
@@ -8621,13 +8450,7 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QGroupBox{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-radius: 4px;
-	margin-top: 0ex;
-	padding-top: 1em;
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="title">
                         <string>External App</string>
@@ -8654,48 +8477,29 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                            </size>
                           </property>
                           <property name="styleSheet">
-                           <string notr="true">QGroupBox{
-	padding: 1px;
-	margin-top: 0;	
-	background-color:  rgba(107, 107, 107, 255);
-	border: 2px solid rgb(212, 212, 212);
-	border-radius: 1px;
-}
-
-QGroupBox::title {
-	subcontrol-position: top left;
-	subcontrol-origin: margin;
-	padding: 0 3px;
-}
-
-/*
-QComboBox {
-	max-width: 3em;
-}
-
-QSpinBox {
-	max-width: 3em;
-}
-*/</string>
+                           <string notr="true"/>
                           </property>
                           <property name="title">
                            <string/>
+                          </property>
+                          <property name="KonfytSubGroupbox" stdset="0">
+                           <bool>true</bool>
                           </property>
                           <layout class="QVBoxLayout" name="verticalLayout_35">
                            <property name="spacing">
                             <number>6</number>
                            </property>
                            <property name="leftMargin">
-                            <number>4</number>
+                            <number>9</number>
                            </property>
                            <property name="topMargin">
-                            <number>4</number>
+                            <number>9</number>
                            </property>
                            <property name="rightMargin">
-                            <number>4</number>
+                            <number>9</number>
                            </property>
                            <property name="bottomMargin">
-                            <number>4</number>
+                            <number>9</number>
                            </property>
                            <item>
                             <layout class="QGridLayout" name="gridLayout_24">
@@ -9044,26 +8848,13 @@ border-bottom-left-radius: 0;</string>
                   <item>
                    <widget class="QGroupBox" name="groupBox_ExternalAppsPage_2">
                     <property name="styleSheet">
-                     <string notr="true">
-
-QGroupBox{
-	
-	margin-top: 0ex;
-
-
-	background-color: rgb(4, 59, 93);
-	
-	background-color: qlineargradient(spread:pad, x1:1, y1:0.00568182, x2:0, y2:1, stop:0 rgba(0, 0, 0, 255), stop:1 rgba(74, 42, 6, 255));
-	
-	
-	border-top-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-	border-left-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(70, 70, 70, 255), stop:1 rgba(59, 59, 59, 255));
-border-right-color: qlineargradient(spread:pad, x1:0, y1:1, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 rgba(120, 120, 120, 255), stop:1 rgba(70, 70, 70, 255));
-}</string>
+                     <string notr="true"/>
                     </property>
                     <property name="title">
                      <string/>
+                    </property>
+                    <property name="KonfytOtherPageGroupbox" stdset="0">
+                     <bool>true</bool>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout">
                      <item>
@@ -9081,15 +8872,10 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                         </size>
                        </property>
                        <property name="styleSheet">
-                        <string notr="true">QGroupBox{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-radius: 4px;
-	margin-top: 0ex;
-}</string>
+                        <string notr="true"/>
                        </property>
                        <property name="title">
-                        <string/>
+                        <string>Script Editor</string>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_36">
                         <item>
@@ -9222,6 +9008,20 @@ border-bottom-color: qlineargradient(spread:pad, x1:1, y1:0, x2:0, y2:0, stop:0 
                         </item>
                         <item>
                          <layout class="QHBoxLayout" name="horizontalLayout_40">
+                          <item>
+                           <widget class="QLabel" name="label_25">
+                            <property name="text">
+                             <string>Script ID:</string>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QLabel" name="label_script_id">
+                            <property name="text">
+                             <string>-</string>
+                            </property>
+                           </widget>
+                          </item>
                           <item>
                            <widget class="QLabel" name="label_19">
                             <property name="text">
@@ -9712,33 +9512,30 @@ border-top-right-radius: 0;
                  <property name="bottomMargin">
                   <number>0</number>
                  </property>
-                 <property name="horizontalSpacing">
+                 <property name="spacing">
                   <number>5</number>
-                 </property>
-                 <property name="verticalSpacing">
-                  <number>8</number>
                  </property>
                  <item row="5" column="0">
                   <widget class="QGroupBox" name="groupBox_Testing">
                    <property name="styleSheet">
-                    <string notr="true">QGroupBox{
-
-	background-color: rgba(120,120,120, 255);
-	border: 0px solid;
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-    border-top-right-radius: 0px;
-    border-bottom-right-radius: 0px;
-	margin-top: 0ex;
-	padding-top: 1em;
-}
-
-</string>
+                    <string notr="true"/>
                    </property>
                    <property name="title">
                     <string>Bridges (Experimental)</string>
                    </property>
+                   <property name="KonfytRightGroupbox" stdset="0">
+                    <bool>true</bool>
+                   </property>
                    <layout class="QGridLayout" name="gridLayout_39">
+                    <property name="leftMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>5</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>5</number>
+                    </property>
                     <item row="0" column="0">
                      <widget class="QTextBrowser" name="textBrowser_Testing"/>
                     </item>
@@ -9748,21 +9545,13 @@ border-top-right-radius: 0;
                  <item row="1" column="0">
                   <widget class="QGroupBox" name="groupBox_5">
                    <property name="styleSheet">
-                    <string notr="true">QGroupBox{
-	background-color: rgba(120,120,120, 255);
-	border: 0px solid;
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-    border-top-right-radius: 0px;
-    border-bottom-right-radius: 0px;
-	margin-top: 0ex;
-	padding-top: 1em;
-}
-
-</string>
+                    <string notr="true"/>
                    </property>
                    <property name="title">
                     <string>Global Transpose</string>
+                   </property>
+                   <property name="KonfytRightGroupbox" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_36">
                     <item row="0" column="0">
@@ -9933,24 +9722,24 @@ border-bottom-left-radius: 0;</string>
                  <item row="2" column="0">
                   <widget class="QGroupBox" name="groupBox_4">
                    <property name="styleSheet">
-                    <string notr="true">QGroupBox{
-
-	background-color: rgba(120,120,120, 255);
-	border: 0px solid;
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-    border-top-right-radius: 0px;
-    border-bottom-right-radius: 0px;
-	margin-top: 0ex;
-	padding-top: 1em;
-}
-
-</string>
+                    <string notr="true"/>
                    </property>
                    <property name="title">
                     <string>Global Volume</string>
                    </property>
+                   <property name="KonfytRightGroupbox" stdset="0">
+                    <bool>true</bool>
+                   </property>
                    <layout class="QGridLayout" name="gridLayout_3">
+                    <property name="topMargin">
+                     <number>9</number>
+                    </property>
+                    <property name="rightMargin">
+                     <number>9</number>
+                    </property>
+                    <property name="bottomMargin">
+                     <number>9</number>
+                    </property>
                     <item row="0" column="2">
                      <widget class="QSlider" name="horizontalSlider_MasterGain">
                       <property name="styleSheet">
@@ -10015,27 +9804,20 @@ QSlider::handle:horizontal:hover {
                     </size>
                    </property>
                    <property name="styleSheet">
-                    <string notr="true">QGroupBox{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-    border-top-right-radius: 0px;
-    border-bottom-right-radius: 0px;
-	margin-top: 0ex;
-	padding-top: 1em;
-}
-</string>
+                    <string notr="true"/>
                    </property>
                    <property name="title">
                     <string>Warnings</string>
+                   </property>
+                   <property name="KonfytRightGroupbox" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_37">
                     <property name="leftMargin">
                      <number>5</number>
                     </property>
                     <property name="topMargin">
-                     <number>5</number>
+                     <number>9</number>
                     </property>
                     <property name="rightMargin">
                      <number>5</number>
@@ -10080,21 +9862,13 @@ QSlider::handle:horizontal:hover {
                     </size>
                    </property>
                    <property name="styleSheet">
-                    <string notr="true">QGroupBox{
-	background-color: rgba(100,100,100, 255);
-	border: 0px solid;
-	border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-    border-top-right-radius: 0px;
-    border-bottom-right-radius: 0px;
-	margin-top: 0ex;
-	padding-top: 1em;
-}
-
-</string>
+                    <string notr="true"/>
                    </property>
                    <property name="title">
                     <string>External Applications</string>
+                   </property>
+                   <property name="KonfytRightGroupbox" stdset="0">
+                    <bool>true</bool>
                    </property>
                    <layout class="QVBoxLayout" name="verticalLayout_16">
                     <property name="spacing">
@@ -10104,7 +9878,7 @@ QSlider::handle:horizontal:hover {
                      <number>5</number>
                     </property>
                     <property name="topMargin">
-                     <number>5</number>
+                     <number>9</number>
                     </property>
                     <property name="rightMargin">
                      <number>5</number>
