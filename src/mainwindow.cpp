@@ -3385,14 +3385,16 @@ bool MainWindow::saveProject(ProjectPtr prj)
     // yet and the user must be prompted for a directory.
     if (prj->getDirPath().isEmpty()) {
         // Prompt user for directory
-        saveProjectInNewDir(prj);
+        return saveProjectInNewDir(prj);
     } else {
         // Save in currently set directory
         if (prj->saveProject()) {
             print("Project saved.");
+            return true;
         } else {
             print("Failed to save project.");
             msgBox("Failed to save project.");
+            return false;
         }
     }
 }
