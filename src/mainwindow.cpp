@@ -360,6 +360,7 @@ void MainWindow::on_action_Edit_Script_triggered()
     ui->plainTextEdit_script->setPlainText(script);
     ui->checkBox_script_enable->setChecked(scriptEditLayer->isScriptEnabled());
     ui->checkBox_script_passMidiThrough->setChecked(scriptEditLayer->isPassMidiThrough());
+    ui->label_script_id->setText(scriptEditLayer->uri);
 
     ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
 
