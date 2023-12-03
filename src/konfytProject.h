@@ -221,11 +221,13 @@ public:
     void setProgramChangeSwitchPatches(bool value);
 
     // Other JACK MIDI connections
-    KonfytJackConPair addJackMidiCon(QString srcPort, QString destPort);
+    KonfytJackConPair addJackMidiConMake(QString srcPort, QString destPort);
+    KonfytJackConPair addJackMidiConBreak(QString srcPort, QString destPort);
     QList<KonfytJackConPair> getJackMidiConList();
     KonfytJackConPair removeJackMidiCon(int i);
     // Other JACK Audio connections
-    KonfytJackConPair addJackAudioCon(QString srcPort, QString destPort);
+    KonfytJackConPair addJackAudioConMake(QString srcPort, QString destPort);
+    KonfytJackConPair addJackAudioConBreak(QString srcPort, QString destPort);
     QList<KonfytJackConPair> getJackAudioConList();
     KonfytJackConPair removeJackAudioCon(int i);
 
@@ -288,7 +290,9 @@ private:
     int midiPickupRange = 127;
 
     QList<KonfytJackConPair> jackMidiConList;
+    void readJackMidiConList(QXmlStreamReader* r, bool makeNotBreak);
     QList<KonfytJackConPair> jackAudioConList;
+    void readJackAudioConList(QXmlStreamReader* r, bool makeNotBreak);
 
     bool modified = false; // Whether project has been modified since last load/save.
 
@@ -351,7 +355,9 @@ private:
     const char* XML_PRJ_TRIGGER_BANKLSB = "bankLSB";
     const char* XML_PRJ_PROG_CHANGE_SWITCH_PATCHES = "programChangeSwitchPatches";
     const char* XML_PRJ_OTHERJACK_MIDI_CON_LIST = "otherJackMidiConList";
+    const char* XML_PRJ_OTHERJACK_MIDI_CON_BREAK_LIST = "otherJackMidiConBreakList";
     const char* XML_PRJ_OTHERJACK_AUDIO_CON_LIST = "otherJackAudioConList";
+    const char* XML_PRJ_OTHERJACK_AUDIO_CON_BREAK_LIST = "otherJackAudioConBreakList";
     const char* XML_PRJ_OTHERJACKCON = "otherJackCon";
     const char* XML_PRJ_OTHERJACKCON_SRC = "srcPort";
     const char* XML_PRJ_OTHERJACKCON_DEST = "destPort";

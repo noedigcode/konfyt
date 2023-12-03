@@ -6753,17 +6753,19 @@ void MainWindow::updateJackPage()
 
 void MainWindow::updateJackPageButtonStates()
 {
-    // Enable add-connection button if both an output and input port are selected
-    ui->pushButton_jackConAdd->setEnabled(
-                (ui->treeWidget_jackPortsOut->currentItem() != nullptr)
-                && (ui->treeWidget_jackportsIn->currentItem() != nullptr));
+    // Enable add-connection buttons if both an output and input port are selected
+    bool inoutSel = (ui->treeWidget_jackPortsOut->currentItem() != nullptr)
+                    && (ui->treeWidget_jackportsIn->currentItem() != nullptr);
+
+    ui->pushButton_jackConAdd->setEnabled(inoutSel);
+    ui->pushButton_jackConAddBreak->setEnabled(inoutSel);
 
     // Enable remove-connection button if a connection is selected
     ui->pushButton_jackConRemove->setEnabled(
                 ui->listWidget_jackConnections->currentItem() != nullptr);
 }
 
-void MainWindow::on_pushButton_jackConAdd_clicked()
+void MainWindow::jackPage_addSelectedConnection(bool makeNotBreak)
 {
     QTreeWidgetItem* itemOut = ui->treeWidget_jackPortsOut->currentItem();
     QTreeWidgetItem* itemIn = ui->treeWidget_jackportsIn->currentItem();
@@ -6772,13 +6774,42 @@ void MainWindow::on_pushButton_jackConAdd_clicked()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
+    QString src = itemOut->text(0);
+    QString dest = itemIn->text(0);
+
+    // Cancel if project already contains a connection (make or break) with
+    // the same two ports
+    if (jackPage_audio) {
+        foreach (const KonfytJackConPair& prjPair, prj->getJackAudioConList()) {
+            if ((prjPair.srcPort == src) && (prjPair.destPort == dest)) {
+                print("A connection make/break with the same ports already exists.");
+                return;
+            }
+        }
+    } else {
+        foreach (const KonfytJackConPair& prjPair, prj->getJackMidiConList()) {
+            if ((prjPair.srcPort == src) && (prjPair.destPort == dest)) {
+                print("A connection make/break with the same ports already exists.");
+                return;
+            }
+        }
+    }
+
     KonfytJackConPair p;
     if (jackPage_audio) {
         // Add Audio Jack port to project
-        p = prj->addJackAudioCon(itemOut->text(0), itemIn->text(0));
+        if (makeNotBreak) {
+            p = prj->addJackAudioConMake(src, dest);
+        } else {
+            p = prj->addJackAudioConBreak(src, dest);
+        }
     } else {
         // Add MIDI Jack port to project
-        p = prj->addJackMidiCon(itemOut->text(0), itemIn->text(0));
+        if (makeNotBreak) {
+            p = prj->addJackMidiConMake(src, dest);
+        } else {
+            p = prj->addJackMidiConBreak(src, dest);
+        }
     }
 
     // Add to Jack engine
@@ -6789,10 +6820,20 @@ void MainWindow::on_pushButton_jackConAdd_clicked()
     updateGUIWarnings();
 }
 
+void MainWindow::on_pushButton_jackConAdd_clicked()
+{
+    jackPage_addSelectedConnection(true);
+}
+
+void MainWindow::on_pushButton_jackConAddBreak_clicked()
+{
+    jackPage_addSelectedConnection(false);
+}
+
 void MainWindow::on_pushButton_jackConRemove_clicked()
 {
     int row = ui->listWidget_jackConnections->currentRow();
-    if (row<0) { return; }
+    if (row < 0) { return; }
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 

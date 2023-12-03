@@ -126,14 +126,21 @@ struct KonfytJackConPair
 {
     QString srcPort;
     QString destPort;
+    bool makeNotBreak = true;
 
     QString toString()
     {
-        return srcPort + " \u2B95 " + destPort;
+        return QString("%1 \u2B95 %2 \u2B95 %3")
+                .arg(srcPort)
+                .arg(makeNotBreak ? "make" : "break")
+                .arg(destPort);
     }
 
-    bool equals(const KonfytJackConPair &a) {
-        return ( (this->srcPort == a.srcPort) && (this->destPort == a.destPort) );
+    bool equals(const KonfytJackConPair &a)
+    {
+        return (    (this->srcPort == a.srcPort)
+                 && (this->destPort == a.destPort)
+                 && (this->makeNotBreak == a.makeNotBreak) );
     }
 };
 

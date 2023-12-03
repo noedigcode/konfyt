@@ -595,6 +595,79 @@ void KonfytProject::postExternalAppsRead()
     }
 }
 
+void KonfytProject::readJackMidiConList(QXmlStreamReader* r, bool makeNotBreak)
+{
+    // NB: Do not clear the jackMidiConList, as this function is called
+    // separately for make and break connection lists during project load.
+
+    while (r->readNextStartElement()) {
+        if (r->name() == XML_PRJ_OTHERJACKCON) {
+
+            QString srcPort, destPort;
+            while (r->readNextStartElement()) {
+                if (r->name() == XML_PRJ_OTHERJACKCON_SRC) {
+                    srcPort = r->readElementText();
+                } else if (r->name() == XML_PRJ_OTHERJACKCON_DEST) {
+                    destPort = r->readElementText();
+                } else {
+                    print("readJackMidiConList: Unrecognized JACK con element: "
+                          + r->name().toString() );
+                    r->skipCurrentElement();
+                }
+            }
+
+            if (makeNotBreak) {
+                addJackMidiConMake(srcPort, destPort);
+            } else {
+                addJackMidiConBreak(srcPort, destPort);
+            }
+
+        } else {
+            print("readJackMidiConList: "
+                  "Unrecognized otherJackMidiConList element: "
+                  + r->name().toString() );
+            r->skipCurrentElement();
+        }
+    }
+}
+
+void KonfytProject::readJackAudioConList(QXmlStreamReader* r, bool makeNotBreak)
+{
+    // NB: Do not clear the jackAudioConList, as this function is called
+    // separately for make and break connection lists during project load.
+
+    while (r->readNextStartElement()) {
+        if (r->name() == XML_PRJ_OTHERJACKCON) {
+
+            QString srcPort, destPort;
+            while (r->readNextStartElement()) {
+                if (r->name() == XML_PRJ_OTHERJACKCON_SRC) {
+                    srcPort = r->readElementText();
+                } else if (r->name() == XML_PRJ_OTHERJACKCON_DEST) {
+                    destPort = r->readElementText();
+                } else {
+                    print("readJackAudioConList: "
+                          "Unrecognized JACK con element: "
+                          + r->name().toString() );
+                    r->skipCurrentElement();
+                }
+            }
+
+            if (makeNotBreak) {
+                addJackAudioConMake(srcPort, destPort);
+            } else {
+                addJackAudioConBreak(srcPort, destPort);
+            }
+
+        } else {
+            print("readJackAudioConList: "
+                  "Unrecognized otherJackAudioConList element: "
+                  + r->name().toString() );
+            r->skipCurrentElement();
+        }
+    }
+}
+
 /* Adds bus and returns unique bus id. */
 int KonfytProject::audioBus_add(QString busName)
 {
@@ -951,11 +1024,23 @@ void KonfytProject::setProgramChangeSwitchPatches(bool value)
     setModified(true);
 }
 
-KonfytJackConPair KonfytProject::addJackMidiCon(QString srcPort, QString destPort)
+KonfytJackConPair KonfytProject::addJackMidiConMake(QString srcPort, QString destPort)
 {
     KonfytJackConPair a;
     a.srcPort = srcPort;
     a.destPort = destPort;
+    a.makeNotBreak = true;
+    this->jackMidiConList.append(a);
+    setModified(true);
+    return a;
+}
+
+KonfytJackConPair KonfytProject::addJackMidiConBreak(QString srcPort, QString destPort)
+{
+    KonfytJackConPair a;
+    a.srcPort = srcPort;
+    a.destPort = destPort;
+    a.makeNotBreak = false;
     this->jackMidiConList.append(a);
     setModified(true);
     return a;
@@ -977,11 +1062,23 @@ KonfytJackConPair KonfytProject::removeJackMidiCon(int i)
     return p;
 }
 
-KonfytJackConPair KonfytProject::addJackAudioCon(QString srcPort, QString destPort)
+KonfytJackConPair KonfytProject::addJackAudioConMake(QString srcPort, QString destPort)
 {
     KonfytJackConPair a;
     a.srcPort = srcPort;
     a.destPort = destPort;
+    a.makeNotBreak = true;
+    jackAudioConList.append(a);
+    setModified(true);
+    return a;
+}
+
+KonfytJackConPair KonfytProject::addJackAudioConBreak(QString srcPort, QString destPort)
+{
+    KonfytJackConPair a;
+    a.srcPort = srcPort;
+    a.destPort = destPort;
+    a.makeNotBreak = false;
     jackAudioConList.append(a);
     setModified(true);
     return a;
@@ -1231,25 +1328,49 @@ void KonfytProject::writeToXmlStream(QXmlStreamWriter* stream)
     }
     stream->writeEndElement(); // end of trigger list
 
-    // Write other JACK MIDI connections list
+    // Write other JACK MIDI make-connections list
     stream->writeStartElement(XML_PRJ_OTHERJACK_MIDI_CON_LIST);
-    for (int i=0; i<jackMidiConList.count(); i++) {
+    foreach (const KonfytJackConPair& p, jackMidiConList) {
+        if (!p.makeNotBreak) { continue; }
         stream->writeStartElement(XML_PRJ_OTHERJACKCON);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackMidiConList[i].srcPort);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackMidiConList[i].destPort);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, p.srcPort);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, p.destPort);
         stream->writeEndElement(); // end JACK connection pair
     }
     stream->writeEndElement(); // Other JACK MIDI connections list
 
-    // Write other JACK Audio connections list
-    stream->writeStartElement(XML_PRJ_OTHERJACK_AUDIO_CON_LIST);
-    for (int i=0; i < jackAudioConList.count(); i++) {
-        stream->writeStartElement(XML_PRJ_OTHERJACKCON); // start JACK connection pair
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, jackAudioConList[i].srcPort);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, jackAudioConList[i].destPort);
-        stream->writeEndElement(); // end JACK connection pair
+    // Write other JACK MIDI break-connections list
+    stream->writeStartElement(XML_PRJ_OTHERJACK_MIDI_CON_BREAK_LIST);
+    foreach (const KonfytJackConPair& p, jackMidiConList) {
+        if (p.makeNotBreak) { continue; }
+        stream->writeStartElement(XML_PRJ_OTHERJACKCON);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, p.srcPort);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, p.destPort);
+        stream->writeEndElement();
     }
-    stream->writeEndElement(); // end JACK Audio connections list
+    stream->writeEndElement();
+
+    // Write other JACK Audio make-connections list
+    stream->writeStartElement(XML_PRJ_OTHERJACK_AUDIO_CON_LIST);
+    foreach (const KonfytJackConPair& p, jackAudioConList) {
+        if (!p.makeNotBreak) { continue; }
+        stream->writeStartElement(XML_PRJ_OTHERJACKCON);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, p.srcPort);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, p.destPort);
+        stream->writeEndElement();
+    }
+    stream->writeEndElement();
+
+    // Write other JACK Audio break-connections list
+    stream->writeStartElement(XML_PRJ_OTHERJACK_AUDIO_CON_BREAK_LIST);
+    foreach (const KonfytJackConPair& p, jackAudioConList) {
+        if (p.makeNotBreak) { continue; }
+        stream->writeStartElement(XML_PRJ_OTHERJACKCON);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, p.srcPort);
+        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, p.destPort);
+        stream->writeEndElement();
+    }
+    stream->writeEndElement();
 
     stream->writeEndElement(); // project
 
@@ -1268,6 +1389,8 @@ void KonfytProject::readFromXmlStream(QXmlStreamReader* r)
     preExternalAppsRead(); // Used for backwards compatibility.
     audioBusMap.clear();
     audioInPortMap.clear();
+    jackMidiConList.clear();
+    jackAudioConList.clear();
 
     while (r->readNextStartElement()) { // project
 
@@ -1486,62 +1609,19 @@ void KonfytProject::readFromXmlStream(QXmlStreamReader* r)
 
             } else if (r->name() == XML_PRJ_OTHERJACK_MIDI_CON_LIST) {
 
-                // Other JACK MIDI connections list
+                readJackMidiConList(r, true);
 
-                while (r->readNextStartElement()) {
-                    if (r->name() == XML_PRJ_OTHERJACKCON) {
+            } else if (r->name() == XML_PRJ_OTHERJACK_MIDI_CON_BREAK_LIST) {
 
-                        QString srcPort, destPort;
-                        while (r->readNextStartElement()) {
-                            if (r->name() == XML_PRJ_OTHERJACKCON_SRC) {
-                                srcPort = r->readElementText();
-                            } else if (r->name() == XML_PRJ_OTHERJACKCON_DEST) {
-                                destPort = r->readElementText();
-                            } else {
-                                print("loadProject: Unrecognized JACK con element: "
-                                      + r->name().toString() );
-                                r->skipCurrentElement();
-                            }
-                        }
-                        this->addJackMidiCon(srcPort, destPort);
-
-                    } else {
-                        print("loadProject: "
-                              "Unrecognized otherJackMidiConList element: "
-                              + r->name().toString() );
-                        r->skipCurrentElement();
-                    }
-                }
+                readJackMidiConList(r, false);
 
             } else if (r->name() == XML_PRJ_OTHERJACK_AUDIO_CON_LIST) {
 
-                // Other JACK Audio connections list
+                readJackAudioConList(r, true);
 
-                while (r->readNextStartElement()) {
-                    if (r->name() == XML_PRJ_OTHERJACKCON) {
+            } else if (r->name() == XML_PRJ_OTHERJACK_AUDIO_CON_BREAK_LIST) {
 
-                        QString srcPort, destPort;
-                        while (r->readNextStartElement()) {
-                            if (r->name() == XML_PRJ_OTHERJACKCON_SRC) {
-                                srcPort = r->readElementText();
-                            } else if (r->name() == XML_PRJ_OTHERJACKCON_DEST) {
-                                destPort = r->readElementText();
-                            } else {
-                                print("loadProject: "
-                                      "Unrecognized JACK con element: "
-                                      + r->name().toString() );
-                                r->skipCurrentElement();
-                            }
-                        }
-                        addJackAudioCon(srcPort, destPort);
-
-                    } else {
-                        print("loadProject: "
-                              "Unrecognized otherJackAudioConList element: "
-                              + r->name().toString() );
-                        r->skipCurrentElement();
-                    }
-                }
+                readJackAudioConList(r, false);
 
             } else {
                 print("loadProject: Unrecognized project element: "

@@ -858,9 +858,11 @@ private:
     void showJackPage();
     void updateJackPage();
     void updateJackPageButtonStates();
+    void jackPage_addSelectedConnection(bool makeNotBreak);
 private slots:
     void on_pushButton_ShowJackPage_clicked();
     void on_pushButton_jackConAdd_clicked();
+    void on_pushButton_jackConAddBreak_clicked();
     void on_pushButton_jackConRemove_clicked();
     void on_pushButton_JackAudioPorts_clicked();
     void on_pushButton_JackMidiPorts_clicked();

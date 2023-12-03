@@ -2269,7 +2269,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>4</number>
+                 <number>6</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -6367,7 +6367,7 @@ QScrollBar:horizontal {
                              </size>
                             </property>
                             <property name="toolTip">
-                             <string>Clear console</string>
+                             <string>Show audio ports and connections</string>
                             </property>
                             <property name="styleSheet">
                              <string notr="true">border-top-right-radius: 0;
@@ -6403,7 +6403,7 @@ border-bottom-right-radius: 0;
                              </size>
                             </property>
                             <property name="toolTip">
-                             <string>Show pop-out console</string>
+                             <string>Show MIDI ports and connections</string>
                             </property>
                             <property name="styleSheet">
                              <string notr="true">border-bottom-left-radius: 0;
@@ -6585,12 +6585,50 @@ border-top-left-radius: 0;
                               <height>0</height>
                              </size>
                             </property>
+                            <property name="toolTip">
+                             <string>Add selected port pair as a persistent connection</string>
+                            </property>
                             <property name="styleSheet">
                              <string notr="true">border-top-right-radius: 0;
 border-bottom-right-radius: 0;</string>
                             </property>
                             <property name="text">
-                             <string>Add</string>
+                             <string>Add Make</string>
+                            </property>
+                            <property name="icon">
+                             <iconset resource="../images.qrc">
+                              <normaloff>:/icons/down_w_tail.png</normaloff>:/icons/down_w_tail.png</iconset>
+                            </property>
+                            <property name="KonfytWideButton" stdset="0">
+                             <bool>true</bool>
+                            </property>
+                           </widget>
+                          </item>
+                          <item>
+                           <widget class="QPushButton" name="pushButton_jackConAddBreak">
+                            <property name="sizePolicy">
+                             <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                              <horstretch>0</horstretch>
+                              <verstretch>0</verstretch>
+                             </sizepolicy>
+                            </property>
+                            <property name="minimumSize">
+                             <size>
+                              <width>74</width>
+                              <height>0</height>
+                             </size>
+                            </property>
+                            <property name="toolTip">
+                             <string>Add selected port pair as a persistent connection break - the ports will be kept disconnected</string>
+                            </property>
+                            <property name="styleSheet">
+                             <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;
+border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                            </property>
+                            <property name="text">
+                             <string>Add Break</string>
                             </property>
                             <property name="icon">
                              <iconset resource="../images.qrc">
@@ -6614,6 +6652,9 @@ border-bottom-right-radius: 0;</string>
                               <width>74</width>
                               <height>0</height>
                              </size>
+                            </property>
+                            <property name="toolTip">
+                             <string>Remove the selected persistent connection port pair below</string>
                             </property>
                             <property name="styleSheet">
                              <string notr="true">border-top-left-radius: 0;
@@ -9498,7 +9539,7 @@ border-top-right-radius: 0;
                 <enum>QTabWidget::South</enum>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="tab_15">
                 <attribute name="title">

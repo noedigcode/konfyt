@@ -45,6 +45,7 @@ void KonfytJackEngine::timerEvent(QTimerEvent* /*event*/)
 {
     // JACK port connections
     if (mConnectCallback || mRegisterCallback) {
+
         mConnectCallback = false;
         mRegisterCallback = false;
         refreshAllPortsConnections();
@@ -76,12 +77,12 @@ void KonfytJackEngine::refreshAllPortsConnections()
 {
     if (!clientIsActive()) { return; }
 
-    // Refresh connections to each midi input port
+    // Refresh connections for midi input ports
     foreach (KfJackMidiPort* port, midiInPorts) {
         refreshConnections(port->jackPointer, port->connectionList, INPUT_PORT);
     }
 
-    // For each midi output port to external apps, refresh connections to all their clients
+    // Refresh connections for midi output ports
     foreach (KfJackMidiPort* port, midiOutPorts) {
         refreshConnections(port->jackPointer, port->connectionList, OUTPUT_PORT);
     }
@@ -111,7 +112,11 @@ void KonfytJackEngine::refreshAllPortsConnections()
 
     // Refresh other JACK connections
     foreach (const KonfytJackConPair &p, otherConsList) {
-        jack_connect(mJackClient, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
+        if (p.makeNotBreak) {
+            jack_connect(mJackClient, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
+        } else {
+            jack_disconnect(mJackClient, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
+        }
     }
 
 }
