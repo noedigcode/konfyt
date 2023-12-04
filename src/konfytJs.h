@@ -147,12 +147,13 @@ public:
 
     QJSEngine* jsEngine();
     float getAverageProcessTimeMs();
+    QString errorString();
 
     QString uri;
 
 signals:
     void print(QString msg);
-    void exceptionOccurred();
+    void errorStatusChanged(QString errorString);
     void sendMidiEvent(KonfytMidiEvent ev);
 
 public slots:
@@ -171,6 +172,7 @@ private:
     QJSValue jsMidiEventFunction;
 
     bool mEnabled = false;
+    QString mErrorString;
 
     static const int processTimesSize = 10;
     qint64 processTimesNs[processTimesSize] = {0};
@@ -222,11 +224,14 @@ public:
     QString script(KfPatchLayerSharedPtr patchLayer);
     void setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
     float scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer);
+    QString scriptErrorString(KfPatchLayerSharedPtr patchLayer);
 
     void updatePatchLayerURIs();
 
 signals:
     void print(QString msg);
+    void scriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
+                                  QString errorString);
 
 private:
     void runInThisThread(std::function<void()> func);

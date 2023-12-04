@@ -2269,7 +2269,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>6</number>
+                 <number>9</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -9049,6 +9049,20 @@ border-bottom-left-radius: 0;</string>
                           </property>
                           <property name="tabStopWidth">
                            <number>20</number>
+                          </property>
+                         </widget>
+                        </item>
+                        <item>
+                         <widget class="QLabel" name="label_script_error">
+                          <property name="styleSheet">
+                           <string notr="true">background-color: rgb(180, 0, 0);
+padding: 3px;</string>
+                          </property>
+                          <property name="text">
+                           <string>No errors</string>
+                          </property>
+                          <property name="wordWrap">
+                           <bool>true</bool>
                           </property>
                          </widget>
                         </item>

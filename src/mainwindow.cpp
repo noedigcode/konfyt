@@ -309,6 +309,9 @@ void MainWindow::setupScripting()
         print("js: " + msg);
     });
 
+    connect(&scriptEngine, &KonfytJSEngine::scriptErrorStatusChanged,
+            this, &MainWindow::onScriptErrorStatusChanged);
+
     scriptEngine.setJackEngine(&jack);
 
     // Setup timer that periodically gets script info from the engine
@@ -326,6 +329,17 @@ void MainWindow::setupScripting()
     }
 }
 
+void MainWindow::updateScriptEditorErrorText(QString errorString)
+{
+    if (errorString.isEmpty()) {
+        ui->label_script_error->setText("No error");
+        ui->label_script_error->setVisible(false);
+    } else {
+        ui->label_script_error->setText("Error: " + errorString);
+        ui->label_script_error->setVisible(true);
+    }
+}
+
 void MainWindow::onScriptInfoTimer()
 {
     if (ui->stackedWidget->currentWidget() != ui->scriptingPage) { return; }
@@ -334,6 +348,15 @@ void MainWindow::onScriptInfoTimer()
     double ms = scriptEngine.scriptAverageProcessTimeMs(scriptEditLayer);
     QString sms = QString::number(ms, 'f', 2);
     ui->label_script_processTime->setText(QString("%1 ms").arg(sms));
+}
+
+void MainWindow::onScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
+                                            QString errorString)
+{
+    // Update error text if the patch layer is the one currently being edited
+    if (patchLayer == scriptEditLayer) {
+        updateScriptEditorErrorText(errorString);
+    }
 }
 
 void MainWindow::on_action_Edit_Script_triggered()
@@ -361,6 +384,8 @@ void MainWindow::on_action_Edit_Script_triggered()
     ui->checkBox_script_enable->setChecked(scriptEditLayer->isScriptEnabled());
     ui->checkBox_script_passMidiThrough->setChecked(scriptEditLayer->isPassMidiThrough());
     ui->label_script_id->setText(scriptEditLayer->uri);
+
+    updateScriptEditorErrorText(scriptEngine.scriptErrorString(scriptEditLayer));
 
     ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
 
@@ -7734,3 +7759,4 @@ void MainWindow::on_plainTextEdit_script_textChanged()
         setProjectModified();
     }
 }
+

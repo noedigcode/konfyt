@@ -252,6 +252,11 @@ float KonfytJSEnv::getAverageProcessTimeMs()
     }
 }
 
+QString KonfytJSEnv::errorString()
+{
+    return mErrorString;
+}
+
 void KonfytJSEnv::sendMidi(QJSValue j)
 {
     KonfytMidiEvent ev = midi.jsObjectToMidiEvent(j);
@@ -313,19 +318,33 @@ bool KonfytJSEnv::evaluate(QString script)
 bool KonfytJSEnv::handleJsResult(QJSValue result)
 {
     if (result.isError()) {
-        print("*****************************");
+
+        // TODO SCRIPT ERROR: EMIT ERROR SIGNAL
+
         if (js->isInterrupted()) {
-            print("Script took too long to execute and has been stopped.");
+            mErrorString = "Script took too long to execute";
         } else {
-            print(QString("Evaluate error at line: %1").arg(
-                      result.property("lineNumber").toInt()));
-            print(result.toString());
+            mErrorString = QString("Line %1: %2")
+                    .arg(result.property("lineNumber").toInt())
+                    .arg(result.toString());
         }
+
         print("*****************************");
+        print("Script stopped due to error:");
+        print(mErrorString);
+        print("*****************************");
+
         setEnabledAndInitIfNeeded(false);
-        emit exceptionOccurred();
+        emit errorStatusChanged(mErrorString);
         return false;
+
     } else {
+
+        if (!mErrorString.isEmpty()) {
+            mErrorString = "";
+            emit errorStatusChanged(mErrorString);
+        }
+
         return true;
     }
 }
@@ -368,6 +387,9 @@ void TempParent::removeTemporaryChildren()
 
 KonfytJSEngine::KonfytJSEngine(QObject *parent) : QObject(parent)
 {
+    // For signal scriptErrorStatusChanged()
+    qRegisterMetaType<KfPatchLayerSharedPtr>("KfPatchLayerSharedPtr");
+
     // Start script watchdog timer in calling thread (i.e. before this
     // object has been moved to another thread, so not the scripting thread).
 
@@ -420,6 +442,11 @@ void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
             connect(&(s->env), &KonfytJSEnv::print, this, [=](QString msg)
             {
                 emit print(QString("script: [%1] %2").arg(s->env.uri, msg));
+            });
+            connect(&(s->env), &KonfytJSEnv::errorStatusChanged,
+                    this, [=](QString errorString)
+            {
+                emit scriptErrorStatusChanged(patchLayer, errorString);
             });
             s->env.uri = patchLayer->uri;
         }
@@ -493,6 +520,17 @@ float KonfytJSEngine::scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLaye
     }
 
     return s->env.getAverageProcessTimeMs();
+}
+
+QString KonfytJSEngine::scriptErrorString(KfPatchLayerSharedPtr patchLayer)
+{
+    ScriptEnvPtr s = layerEnvMap.value(patchLayer);
+    if (!s) {
+        print("Error: scriptErrorString: invalid patch layer");
+        return "KonfytJSEngine error: invalid patch layer";
+    }
+
+    return s->env.errorString();
 }
 
 void KonfytJSEngine::updatePatchLayerURIs()

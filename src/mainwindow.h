@@ -753,8 +753,11 @@ private:
     KfPatchLayerSharedPtr scriptEditLayer;
     bool scriptEditorIgnoreChanged = false;
     QTimer scriptInfoTimer;
+    void updateScriptEditorErrorText(QString errorString);
 private slots:
     void onScriptInfoTimer();
+    void onScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
+                                    QString errorString);
     void on_action_Edit_Script_triggered();
 
     // ========================================================================
