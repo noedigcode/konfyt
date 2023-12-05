@@ -64,10 +64,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setMasterInTranspose(0, false);
     setMasterGainFloat(1);
     setupLibraryContextMenu();
-
-    // Show welcome message in statusbar
-    QString app_name(APP_NAME);
-    ui->statusBar->showMessage("Welkom by " + app_name + ".",5000);
+    setupMidiIndicatorTimer();
 }
 
 MainWindow::~MainWindow()
@@ -3118,39 +3115,13 @@ void MainWindow::startWaiter(QString msg)
     // Disable all input (install event filter)
     eventFilterMode = EVENT_FILTER_MODE_WAITER;
     qApp->installEventFilter(this);
-    // Start waiterTimer
     waiterMessage = msg;
-    waiterState = 0;
-    waiterTimer.start(100, this);
 }
 
 void MainWindow::stopWaiter()
 {
-    // Stop waiterTimer
-    waiterTimer.stop();
-
-    // Show done message on status bar for a few seconds
-    ui->statusBar->showMessage("Done.", 3000);
-
     // Re-enable all input (remove event filter)
     qApp->removeEventFilter(this);
-}
-
-void MainWindow::timerEvent(QTimerEvent *ev)
-{
-    if (ev->timerId() == waiterTimer.timerId()) {
-        // We are busy waiting for something (startWaiter() has been called).
-        // Rotate the cool fan in the statusbar.
-        QString anim = "|/-\\";
-        ui->statusBar->showMessage(waiterMessage + "   " + QString(anim.at(waiterState)));
-        waiterState++;
-        if (waiterState >= anim.count()) {
-            waiterState = 0;
-        }
-    } else if (ev->timerId() == midiIndicatorTimer.timerId()) {
-        ui->MIDI_indicator->setChecked(false);
-        midiIndicatorTimer.stop();
-    }
 }
 
 void MainWindow::initAboutDialog()
@@ -3499,7 +3470,6 @@ bool MainWindow::saveProjectInNewDir(ProjectPtr prj)
     // Save the project
     if (mCurrentProject->saveProjectAs(saveDir)) {
         print("Project Saved to " + saveDir);
-        ui->statusBar->showMessage("Project saved.", 5000);
         return true;
     } else {
         print("Failed to save project.");
@@ -4549,46 +4519,50 @@ void MainWindow::on_pushButton_ShowConsole_clicked()
 
 bool MainWindow::eventFilter(QObject* /*object*/, QEvent *event)
 {
-    QMap<int, int> keysSetPatchIndex = { {Qt::Key_1, 0},
-                                         {Qt::Key_2, 1},
-                                         {Qt::Key_3, 2},
-                                         {Qt::Key_4, 3},
-                                         {Qt::Key_5, 4},
-                                         {Qt::Key_6, 5},
-                                         {Qt::Key_7, 6},
-                                         {Qt::Key_8, 7},
-                                         {Qt::Key_9, 8},
-                                         {Qt::Key_0, 9} };
-    QMap<int, int> keysSetLayerMute = { {Qt::Key_Q, 0},
-                                        {Qt::Key_W, 1},
-                                        {Qt::Key_E, 2},
-                                        {Qt::Key_R, 3},
-                                        {Qt::Key_T, 4},
-                                        {Qt::Key_Y, 5},
-                                        {Qt::Key_U, 6},
-                                        {Qt::Key_I, 7},
-                                        {Qt::Key_O, 8},
-                                        {Qt::Key_P, 9} };
-    QMap<int, int> keysLayerGainUp = { {Qt::Key_A, 0},
-                                       {Qt::Key_S, 1},
-                                       {Qt::Key_D, 2},
-                                       {Qt::Key_F, 3},
-                                       {Qt::Key_G, 4},
-                                       {Qt::Key_H, 5},
-                                       {Qt::Key_J, 6},
-                                       {Qt::Key_K, 7},
-                                       {Qt::Key_L, 8},
-                                       {Qt::Key_Semicolon, 9} };
-    QMap<int, int> keysLayerGainDown = { {Qt::Key_Z, 0},
-                                         {Qt::Key_X, 1},
-                                         {Qt::Key_C, 2},
-                                         {Qt::Key_V, 3},
-                                         {Qt::Key_B, 4},
-                                         {Qt::Key_N, 5},
-                                         {Qt::Key_M, 6},
-                                         {Qt::Key_Comma, 7},
-                                         {Qt::Key_Period, 8},
-                                         {Qt::Key_Slash, 9} };
+    static QMap<int, int> keysSetPatchIndex = {
+        {Qt::Key_1, 0},
+        {Qt::Key_2, 1},
+        {Qt::Key_3, 2},
+        {Qt::Key_4, 3},
+        {Qt::Key_5, 4},
+        {Qt::Key_6, 5},
+        {Qt::Key_7, 6},
+        {Qt::Key_8, 7},
+        {Qt::Key_9, 8},
+        {Qt::Key_0, 9} };
+    static QMap<int, int> keysSetLayerMute = {
+        {Qt::Key_Q, 0},
+        {Qt::Key_W, 1},
+        {Qt::Key_E, 2},
+        {Qt::Key_R, 3},
+        {Qt::Key_T, 4},
+        {Qt::Key_Y, 5},
+        {Qt::Key_U, 6},
+        {Qt::Key_I, 7},
+        {Qt::Key_O, 8},
+        {Qt::Key_P, 9} };
+    static QMap<int, int> keysLayerGainUp = {
+        {Qt::Key_A, 0},
+        {Qt::Key_S, 1},
+        {Qt::Key_D, 2},
+        {Qt::Key_F, 3},
+        {Qt::Key_G, 4},
+        {Qt::Key_H, 5},
+        {Qt::Key_J, 6},
+        {Qt::Key_K, 7},
+        {Qt::Key_L, 8},
+        {Qt::Key_Semicolon, 9} };
+    static QMap<int, int> keysLayerGainDown = {
+        {Qt::Key_Z, 0},
+        {Qt::Key_X, 1},
+        {Qt::Key_C, 2},
+        {Qt::Key_V, 3},
+        {Qt::Key_B, 4},
+        {Qt::Key_N, 5},
+        {Qt::Key_M, 6},
+        {Qt::Key_Comma, 7},
+        {Qt::Key_Period, 8},
+        {Qt::Key_Slash, 9} };
 
 
     // To find all actions:
@@ -5288,7 +5262,7 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
 
     // Global MIDI indicator "LED"
     ui->MIDI_indicator->setChecked(true);
-    midiIndicatorTimer.start(500, this);
+    midiIndicatorTimer.start();
 
     // Route MIDI Filter Editor last received
     if (midiFilterEditType == MidiFilterEditPort) {
@@ -6308,6 +6282,13 @@ void MainWindow::on_checkBox_ConsoleShowMidiMessages_clicked()
     setConsoleShowMidiMessages( ui->checkBox_ConsoleShowMidiMessages->isChecked() );
 }
 
+void MainWindow::setupMidiIndicatorTimer()
+{
+    connect(&midiIndicatorTimer, &QTimer::timeout,
+            this, &MainWindow::onMidiIndicatorTimerTick);
+    midiIndicatorTimer.setInterval(500);
+}
+
 void MainWindow::updateGlobalSustainIndicator()
 {
     ui->MIDI_indicator_sustain->setChecked(portIndicatorHandler.isSustainDown());
@@ -6316,6 +6297,12 @@ void MainWindow::updateGlobalSustainIndicator()
 void MainWindow::updateGlobalPitchbendIndicator()
 {
     ui->MIDI_indicator_pitchbend->setChecked(portIndicatorHandler.isPitchbendNonzero());
+}
+
+void MainWindow::onMidiIndicatorTimerTick()
+{
+    ui->MIDI_indicator->setChecked(false);
+    midiIndicatorTimer.stop();
 }
 
 void MainWindow::setupConsoleDialog()

@@ -585,16 +585,14 @@ private:
     /* Waiter
      * When a long operation is going to be performed which waits for a signal
      * to complete, call startWaiter() with an informative message.
-     * The message appears in the status bar. All GUI input is disabled.
-     * The waiterTimer is started which displays a waiting animation in the statusbar.
+     * (Currently the message is not displayed anywhere, as the status bar has
+     * been removed.)
+     * All GUI input is disabled.
      * When the signal is received which completes the operation, call stopWaiter(),
      * which will reset everything back to normal. */
     void startWaiter(QString msg);
     void stopWaiter();
-    int waiterState;
     QString waiterMessage;
-    QBasicTimer waiterTimer;
-    void timerEvent(QTimerEvent *ev);
 private slots:
     void scanThreadFihishedSlot();
 
@@ -924,10 +922,12 @@ private:
     PortIndicatorHandler portIndicatorHandler;
     LayerIndicatorHandler layerIndicatorHandler;
 
-    QBasicTimer midiIndicatorTimer;
+    QTimer midiIndicatorTimer;
+    void setupMidiIndicatorTimer();
     void updateGlobalSustainIndicator();
     void updateGlobalPitchbendIndicator();
 private slots:
+    void onMidiIndicatorTimerTick();
     void on_MIDI_indicator_clicked();
     void on_MIDI_indicator_sustain_clicked();
     void on_MIDI_indicator_pitchbend_clicked();

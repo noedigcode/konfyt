@@ -9553,7 +9553,7 @@ border-top-right-radius: 0;
                 <enum>QTabWidget::South</enum>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="tab_15">
                 <attribute name="title">
@@ -10478,11 +10478,6 @@ p, li { white-space: pre-wrap; }
      </widget>
     </item>
    </layout>
-  </widget>
-  <widget class="QStatusBar" name="statusBar">
-   <property name="enabled">
-    <bool>true</bool>
-   </property>
   </widget>
   <action name="actionNew_Patch">
    <property name="text">
