@@ -117,6 +117,7 @@ signals:
     void print(QString msg);
     void statusInfo(QString msg);
     void patchLayerLoaded(KfPatchLayerWeakPtr layer);
+    void patchLayerUnloaded(KfPatchLayerSharedPtr layer);
     
 private:
     KonfytPatch* mCurrentPatch = nullptr;

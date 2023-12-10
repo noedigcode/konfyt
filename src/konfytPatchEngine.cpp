@@ -257,6 +257,8 @@ void KonfytPatchEngine::unloadLayerFromEngines(KfPatchLayerWeakPtr layer)
             l->audioInPortData.jackRouteRight = nullptr;
         }
     }
+
+    emit patchLayerUnloaded(l);
 }
 
 void KonfytPatchEngine::reloadLayer(KfPatchLayerWeakPtr layer)

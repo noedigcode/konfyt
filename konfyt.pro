@@ -48,6 +48,7 @@ SOURCES += src/main.cpp\
     src/scriptEditWidget.cpp
 
 HEADERS  += src/mainwindow.h \
+    src/biqmap.h \
     src/consolewindow.h \
     src/indicatorHandlers.h \
     src/konfytAudio.h \

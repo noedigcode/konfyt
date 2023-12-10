@@ -22,6 +22,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "biqmap.h"
 #include "consolewindow.h"
 #include "indicatorHandlers.h"
 #include "konfytAudio.h"
@@ -749,6 +750,7 @@ private:
     QThread scriptingThread;
     void setupScripting();
     KfPatchLayerSharedPtr scriptEditLayer;
+    void showScriptEditorForPatchLayer(KfPatchLayerSharedPtr patchLayer);
     bool scriptEditorIgnoreChanged = false;
     QTimer scriptInfoTimer;
     void updateScriptEditorErrorText(QString errorString);
@@ -876,6 +878,24 @@ private slots:
             QListWidgetItem *current, QListWidgetItem *previous);
 
     // ========================================================================
+    // Warnings
+    // ========================================================================
+private:
+    void updateGUIWarnings();
+    void addWarning(QString warning);
+
+    // Script warnings
+private:
+    void setupScriptingWarnings();
+
+    BiQMap<KfPatchLayerSharedPtr, QListWidgetItem*> scriptWarningLayerMap;
+private slots:
+    void scriptWarningsOnScriptEngineErrorStatusChanged(
+            KfPatchLayerSharedPtr patchLayer, QString errorString);
+    void scriptWarningsOnPatchLayerUnloaded(KfPatchLayerSharedPtr patchLayer);
+    void scriptWarningsOnItemDoubleClicked(QListWidgetItem* item);
+
+    // ========================================================================
     // Other
     // ========================================================================
 
@@ -883,11 +903,6 @@ private:
     // Center view and sidebar (For changing to and from Saved MIDI Send List sidebar)
     QWidget* lastCenterWidget = nullptr;
     QWidget* lastSidebarWidget = nullptr;
-
-    // Warnings
-private:
-    void updateGUIWarnings();
-    void addWarning(QString warning);
 
     // Panic
 private:

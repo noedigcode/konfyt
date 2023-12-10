@@ -48,6 +48,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupPatchListAdapter();
     setupDatabase();
     setupExternalApps();
+    setupScriptingWarnings();
     // ----------------------------------------------------
     setupInitialProjectFromCmdLineArgs();
 
@@ -326,6 +327,38 @@ void MainWindow::setupScripting()
     }
 }
 
+void MainWindow::showScriptEditorForPatchLayer(KfPatchLayerSharedPtr patchLayer)
+{
+    scriptEditLayer = patchLayer;
+    if (!scriptEditLayer) { return; }
+
+    QString script = scriptEditLayer->script();
+    if (script.trimmed().isEmpty()) {
+        // Insert template
+        QFile file("://blank.js");
+        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            print("Error loading blank template script.");
+        } else {
+            script = file.readAll();
+            file.close();
+        }
+    }
+
+    scriptEditorIgnoreChanged = true;
+    ui->plainTextEdit_script->setPlainText(script);
+    ui->checkBox_script_enable->setChecked(scriptEditLayer->isScriptEnabled());
+    ui->checkBox_script_passMidiThrough->setChecked(scriptEditLayer->isPassMidiThrough());
+    ui->label_script_id->setText(scriptEditLayer->uri);
+
+    updateScriptEditorErrorText(scriptEngine.scriptErrorString(scriptEditLayer));
+
+    ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
+
+    // Highlight update button if layer script and loaded script in engine differ
+    bool loadedScriptDiffers = scriptEngine.script(scriptEditLayer) != script;
+    highlightButton(ui->pushButton_script_update, loadedScriptDiffers);
+}
+
 void MainWindow::updateScriptEditorErrorText(QString errorString)
 {
     if (errorString.isEmpty()) {
@@ -358,37 +391,13 @@ void MainWindow::onScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
 
 void MainWindow::on_action_Edit_Script_triggered()
 {
-    scriptEditLayer = layerToolMenuSourceitem->getPatchLayer().toStrongRef();
-    if (!scriptEditLayer) {
+    KfPatchLayerSharedPtr layer = layerToolMenuSourceitem->getPatchLayer();
+    if (!layer) {
         print("Error: edit script: null layer");
         return;
     }
 
-    QString script = scriptEditLayer->script();
-    if (script.trimmed().isEmpty()) {
-        // Insert template
-        QFile file("://blank.js");
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            print("Error loading blank template script.");
-        } else {
-            script = file.readAll();
-            file.close();
-        }
-    }
-
-    scriptEditorIgnoreChanged = true;
-    ui->plainTextEdit_script->setPlainText(script);
-    ui->checkBox_script_enable->setChecked(scriptEditLayer->isScriptEnabled());
-    ui->checkBox_script_passMidiThrough->setChecked(scriptEditLayer->isPassMidiThrough());
-    ui->label_script_id->setText(scriptEditLayer->uri);
-
-    updateScriptEditorErrorText(scriptEngine.scriptErrorString(scriptEditLayer));
-
-    ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
-
-    // Highlight update button if layer script and loaded script in engine differ
-    bool loadedScriptDiffers = scriptEngine.script(scriptEditLayer) != script;
-    highlightButton(ui->pushButton_script_update, loadedScriptDiffers);
+    showScriptEditorForPatchLayer(layer);
 }
 
 /* Scan given directory recursively and add project files to list. */
@@ -3677,6 +3686,60 @@ void MainWindow::updateGUIWarnings()
 void MainWindow::addWarning(QString warning)
 {
     ui->listWidget_Warnings->addItem(warning);
+}
+
+void MainWindow::setupScriptingWarnings()
+{
+    connect(&scriptEngine, &KonfytJSEngine::scriptErrorStatusChanged,
+            this, &MainWindow::scriptWarningsOnScriptEngineErrorStatusChanged);
+    connect(&pengine, &KonfytPatchEngine::patchLayerUnloaded,
+            this, &MainWindow::scriptWarningsOnPatchLayerUnloaded);
+
+    connect(ui->listWidget_Warnings, &QListWidget::itemDoubleClicked,
+            this, &MainWindow::scriptWarningsOnItemDoubleClicked);
+}
+
+void MainWindow::scriptWarningsOnScriptEngineErrorStatusChanged(
+        KfPatchLayerSharedPtr patchLayer, QString errorString)
+{
+    QListWidgetItem* item = scriptWarningLayerMap.value(patchLayer);
+    if (errorString.isEmpty()) {
+        if (item) {
+            // Remove warning
+            delete item;
+            scriptWarningLayerMap.remove(patchLayer);
+        }
+        return;
+    }
+    if (!item) {
+        // Create new item
+        item = new QListWidgetItem();
+        scriptWarningLayerMap.insert(patchLayer, item);
+        ui->listWidget_Warnings->addItem(item);
+    }
+
+    item->setText(QString("Script %1: %2").arg(patchLayer->uri, errorString));
+}
+
+void MainWindow::scriptWarningsOnPatchLayerUnloaded(KfPatchLayerSharedPtr patchLayer)
+{
+    QListWidgetItem* item = scriptWarningLayerMap.value(patchLayer);
+    if (item) {
+        // Remove warning
+        delete item;
+        scriptWarningLayerMap.remove(patchLayer);
+    }
+}
+
+void MainWindow::scriptWarningsOnItemDoubleClicked(QListWidgetItem* item)
+{
+    KfPatchLayerSharedPtr patchLayer = scriptWarningLayerMap.value(item);
+    if (!patchLayer) {
+        print("Error: script warning item double-clicked: null layer.");
+        return;
+    }
+
+    showScriptEditorForPatchLayer(patchLayer);
 }
 
 void MainWindow::triggerPanic(bool panic)
