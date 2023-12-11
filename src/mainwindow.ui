@@ -674,7 +674,7 @@ QStatusBar {
      <number>0</number>
     </property>
     <property name="bottomMargin">
-     <number>5</number>
+     <number>0</number>
     </property>
     <item>
      <widget class="QStackedWidget" name="stackedWidget_window">
@@ -696,7 +696,7 @@ QStatusBar {
          <number>0</number>
         </property>
         <property name="bottomMargin">
-         <number>0</number>
+         <number>5</number>
         </property>
         <item>
          <widget class="QFrame" name="frame_MainToolbar">

@@ -319,8 +319,6 @@ bool KonfytJSEnv::handleJsResult(QJSValue result)
 {
     if (result.isError()) {
 
-        // TODO SCRIPT ERROR: EMIT ERROR SIGNAL
-
         if (js->isInterrupted()) {
             mErrorString = "Script took too long to execute";
         } else {

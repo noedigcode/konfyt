@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2022 Gideon van der Kolf
+ * Copyright 2023 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
