@@ -6,12 +6,14 @@ A basic script skeleton looks like this:
 ```
 function init()
 {
-    // This gets called once when the script is loaded
+    // This gets called once
+    // when the script is loaded
 }
 
 function midiEvent(ev)
 {
-    // This gets called for every incoming MIDI event.
+    // This gets called for
+    // every incoming MIDI event.
 }
 ```
 
