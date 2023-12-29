@@ -461,6 +461,7 @@ void MainWindow::showScriptEditor()
 
     updateScriptEditorErrorText(errorText);
 
+    stackedWidgetBeforeScriptEditor = ui->stackedWidget->currentWidget();
     ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
 
     // Highlight update button if layer script and loaded script in engine differ
@@ -591,7 +592,11 @@ void MainWindow::on_checkBox_script_passMidiThrough_toggled(bool checked)
 
 void MainWindow::on_pushButton_scriptEditor_OK_clicked()
 {
-    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+    if (stackedWidgetBeforeScriptEditor) {
+        ui->stackedWidget->setCurrentWidget(stackedWidgetBeforeScriptEditor);
+    } else {
+        ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+    }
 }
 
 void MainWindow::on_plainTextEdit_script_textChanged()

@@ -784,6 +784,7 @@ private:
     void setupScripting();
     KfPatchLayerSharedPtr scriptEditLayer;
     PrjMidiPortPtr scriptEditPort;
+    QWidget* stackedWidgetBeforeScriptEditor = nullptr;
     void showScriptEditorForPatchLayer(KfPatchLayerSharedPtr patchLayer);
     void showScriptEditorForPort(PrjMidiPortPtr prjPort);
     void showScriptEditor();
