@@ -190,28 +190,37 @@ private:
     bool informedUserAboutProjectsDir = false;
     bool requestCurrentProjectClose();
 
+    void setProjectName(QString name);
+    void updateProjectNameInGui();
+
     KonfytPatch* newPatchToProject();
     void removePatchFromProject(int i);
     void addPatchToProject(KonfytPatch* patch);
     KonfytPatch* addPatchToProjectFromFile(QString filename);
     bool savePatchToLibrary(KonfytPatch* patch);
 
+    // Projects menu
+private:
     QMenu projectsMenu;
     QMap<QAction*, QFileInfo> projectsMenuMap;
     void updateProjectsMenu();
+private slots:
+    void onProjectMenu_ActionTrigger(QAction* action);
 
+    void on_actionProject_save_triggered();
+    void on_actionProject_New_triggered();
+    void on_actionProject_Open_triggered();
+    void on_actionProject_OpenDirectory_triggered();
+    void on_actionProject_SaveAs_triggered();
+    void on_toolButton_Project_clicked();
+
+    // Project modified
+private:
     void patchModified();
     void setProjectModified();
-    void setProjectName(QString name);
-    void updateProjectNameInGui();
-
 private slots:
-    // Project modified
     void onProjectModifiedStateChanged(bool modified);
     void onProjectMidiPickupRangeChanged(int range);
-
-    // Projects Menu
-    void onprojectMenu_ActionTrigger(QAction* action);
 
     // ========================================================================
     // Library and filesystem view
@@ -428,6 +437,9 @@ private:
     void updateLayerToolMenu();
 private slots:
     void onLayer_leftToolbutton_clicked(KonfytLayerWidget* layerItem);
+    void on_actionReload_Layer_triggered();
+    void on_actionRemove_Layer_triggered();
+    void on_actionOpen_In_File_Manager_layerwidget_triggered();
 
     // Layer MIDI input ports menu
 private:
@@ -473,8 +485,14 @@ private slots:
     void on_toolButton_layer_down_clicked();
     void on_toolButton_layer_up_clicked();
     void on_listWidget_Layers_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+    void on_actionSave_Patch_As_Copy_triggered();
+    void on_actionAdd_Patch_To_Library_triggered();
+    void on_actionSave_Patch_To_File_triggered();
+    void on_actionAlways_Active_triggered();
 
     // Patch List
+    void on_actionNew_Patch_triggered();
+    void on_actionAdd_Patch_From_File_triggered();
     void on_toolButton_RemovePatch_clicked();
     void on_toolButton_PatchUp_clicked();
     void on_toolButton_PatchDown_clicked();
@@ -541,6 +559,8 @@ private slots:
     void on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int column);
     void on_pushButton_connectionsPage_MidiFilter_clicked();
     void on_pushButton_connectionsPage_editScript_clicked();
+    void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
+    void on_toolButton_connectionsPage_portsBussesListOptions_clicked();
 
     // ========================================================================
     // Settings
@@ -643,6 +663,7 @@ private:
 private slots:
     void onMidiFilterEditorModified();
     void onMidiMapPresetMenuTrigger(QAction* action);
+    void on_actionEdit_MIDI_Filter_triggered();
     void on_pushButton_midiFilter_Cancel_clicked();
     void on_pushButton_midiFilter_Apply_clicked();
     void on_toolButton_MidiFilter_lowNote_clicked();
@@ -663,6 +684,17 @@ private slots:
     void on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &text);
     void on_toolButton_MidiFilter_velocityMap_presets_clicked();
     void on_toolButton_MidiFilter_velocityMap_save_clicked();
+    void on_comboBox_midiFilter_inChannel_currentIndexChanged(int index);
+    void on_spinBox_midiFilter_LowNote_valueChanged(int arg1);
+    void on_spinBox_midiFilter_HighNote_valueChanged(int arg1);
+    void on_spinBox_midiFilter_Add_valueChanged(int arg1);
+    void on_checkBox_midiFilter_ignoreGlobalTranspose_toggled(bool checked);
+    void on_checkBox_midiFilter_AllCCs_toggled(bool checked);
+    void on_lineEdit_MidiFilter_ccAllowed_textChanged(const QString &arg1);
+    void on_lineEdit_MidiFilter_ccBlocked_textChanged(const QString &arg1);
+    void on_checkBox_midiFilter_pitchbend_toggled(bool checked);
+    void on_checkBox_midiFilter_Prog_toggled(bool checked);
+    void on_actionPatch_MIDI_Filter_triggered();
 
     // ========================================================================
     // MIDI send list
@@ -765,6 +797,11 @@ private slots:
     void onPortScriptErrorStatusChanged(PrjMidiPortPtr prjPort,
                                         QString errorString);
     void on_action_Edit_Script_triggered();
+    void on_pushButton_script_update_clicked();
+    void on_checkBox_script_enable_toggled(bool checked);
+    void on_checkBox_script_passMidiThrough_toggled(bool checked);
+    void on_pushButton_scriptEditor_OK_clicked();
+    void on_plainTextEdit_script_textChanged();
 
     // ========================================================================
     // External apps
@@ -868,6 +905,7 @@ private slots:
             QListWidgetItem *current=nullptr, QListWidgetItem *previous=nullptr);
     void on_tree_Triggers_currentItemChanged(
             QTreeWidgetItem *current=nullptr, QTreeWidgetItem *previous=nullptr);
+    void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
 
     // ========================================================================
     // Other JACK connections
@@ -952,6 +990,8 @@ private:
     // Center view and sidebar (For changing to and from Saved MIDI Send List sidebar)
     QWidget* lastCenterWidget = nullptr;
     QWidget* lastSidebarWidget = nullptr;
+private slots:
+    void on_stackedWidget_currentChanged(int arg1);
 
     // Panic
 private:
@@ -960,6 +1000,8 @@ private:
 private slots:
     void on_pushButton_Panic_clicked();
     void on_pushButton_Panic_customContextMenuRequested(const QPoint &pos);
+    void on_actionPanic_triggered();
+    void on_actionPanicToggle_triggered();
 
     // About Dialog
 private:
@@ -1013,86 +1055,19 @@ private:
     void setMasterGainMidi(int value);
     void updateMasterGainCommon(float gain);
     void updateBusGainInJackEngine(int busId);
-    
-    // ========================================================================
-    // Actions
-
 private slots:
-    void on_actionSave_Patch_As_Copy_triggered();
-
-    void on_actionAdd_Patch_To_Library_triggered();
-
-    void on_actionSave_Patch_To_File_triggered();
-
-    void on_actionNew_Patch_triggered();
-
-    void on_actionAdd_Patch_From_File_triggered();
-
-    void on_actionMaster_Volume_Up_triggered();
-
-    void on_actionMaster_Volume_Down_triggered();
-
-    void on_actionPanic_triggered();
-
-    void on_actionPanicToggle_triggered();
-
-    void on_actionProject_save_triggered();
-
-    void on_actionProject_New_triggered();
-
-    void on_actionProject_Open_triggered();
-
-    void on_actionProject_OpenDirectory_triggered();
-
-    void on_actionProject_SaveAs_triggered();
-
-    void on_actionAlways_Active_triggered();
-
-    void on_actionEdit_MIDI_Filter_triggered();
-
-    void on_actionReload_Layer_triggered();
-
-    void on_actionOpen_In_File_Manager_layerwidget_triggered();
-
-    void on_actionRemove_Layer_triggered();
-
-    // ========================================================================
-
     void on_horizontalSlider_MasterGain_valueChanged(int value);
-
+    void on_actionMaster_Volume_Up_triggered();
+    void on_actionMaster_Volume_Down_triggered();
+    
+    // Other widget/action slots
+private slots:
     void on_pushButton_LiveMode_clicked();
 
     void on_pushButton_RestartApp_clicked();
 
-    void on_toolButton_Project_clicked();
-
     void on_pushButton_LavaMonster_clicked();    
 
-    void on_stackedWidget_currentChanged(int arg1);
-
-    void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
-
-    void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
-
-    void on_comboBox_midiFilter_inChannel_currentIndexChanged(int index);
-    void on_spinBox_midiFilter_LowNote_valueChanged(int arg1);
-    void on_spinBox_midiFilter_HighNote_valueChanged(int arg1);
-    void on_spinBox_midiFilter_Add_valueChanged(int arg1);
-    void on_checkBox_midiFilter_ignoreGlobalTranspose_toggled(bool checked);
-    void on_checkBox_midiFilter_AllCCs_toggled(bool checked);
-    void on_lineEdit_MidiFilter_ccAllowed_textChanged(const QString &arg1);
-    void on_lineEdit_MidiFilter_ccBlocked_textChanged(const QString &arg1);
-    void on_checkBox_midiFilter_pitchbend_toggled(bool checked);
-    void on_checkBox_midiFilter_Prog_toggled(bool checked);
-    void on_toolButton_connectionsPage_portsBussesListOptions_clicked();
-
-    void on_actionPatch_MIDI_Filter_triggered();
-
-    void on_pushButton_script_update_clicked();
-    void on_checkBox_script_enable_toggled(bool checked);
-    void on_checkBox_script_passMidiThrough_toggled(bool checked);
-    void on_pushButton_scriptEditor_OK_clicked();
-    void on_plainTextEdit_script_textChanged();
 };
 
 #endif // MAINWINDOW_H

@@ -117,12 +117,11 @@ void MainWindow::setupGuiMenuButtons()
     projectButtonMenu->addAction(ui->actionProject_save);
     updateProjectsMenu();
     connect(&projectsMenu, &QMenu::triggered,
-            this, &MainWindow::onprojectMenu_ActionTrigger);
+            this, &MainWindow::onProjectMenu_ActionTrigger);
     projectButtonMenu->addMenu(&projectsMenu);
     projectButtonMenu->addAction(ui->actionProject_New);
     projectButtonMenu->addAction(ui->actionProject_SaveAs);
     ui->toolButton_Project->setMenu(projectButtonMenu);
-
 
     // Add-midi-port-to-patch button
     connect(&patchMidiOutPortsMenu, &QMenu::aboutToShow,
@@ -162,7 +161,6 @@ void MainWindow::setupGuiMenuButtons()
     ui->toolButton_LibraryPreview->setMenu(&previewButtonMenu);
 
     ui->tabWidget_library->setCornerWidget(ui->frame_preview);
-    //ui->tabWidget_library->tabBar()->setFixedHeight(ui->frame_preview->height() + 2);
 }
 
 void MainWindow::setupGuiDefaults()
@@ -265,7 +263,7 @@ void MainWindow::updateProjectsMenu()
     projectsMenu.addAction(ui->actionProject_OpenDirectory);
 }
 
-void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
+void MainWindow::onProjectMenu_ActionTrigger(QAction* action)
 {
     if (!requestCurrentProjectClose()) { return; }
 
@@ -273,6 +271,78 @@ void MainWindow::onprojectMenu_ActionTrigger(QAction *action)
         QFileInfo fi = projectsMenuMap.value(action);
         loadProjectFromFile(fi.filePath()); // Open project from file and load it
     }
+}
+
+void MainWindow::on_actionProject_save_triggered()
+{
+    saveCurrentProject();
+}
+
+void MainWindow::on_actionProject_New_triggered()
+{
+    if (requestCurrentProjectClose()) {
+        loadNewProject(); // Create and load new project
+        newPatchToProject(); // Create a new patch and add to current project.
+        setCurrentPatchByIndex(0);
+        mCurrentProject->setModified(false);
+    }
+}
+
+void MainWindow::on_actionProject_Open_triggered()
+{
+    if (!requestCurrentProjectClose()) { return; }
+
+    // Show open dialog box
+    QString filename = QFileDialog::getOpenFileName(this,
+                            "Select project to open", mProjectsDir,
+                            "*" + KonfytProject::PROJECT_FILENAME_EXTENSION);
+    if (filename.isEmpty()) {
+        print("Cancelled.");
+        return;
+    }
+
+    loadProjectFromFile(filename);
+}
+
+void MainWindow::on_actionProject_OpenDirectory_triggered()
+{
+    openFileManager( mProjectsDir );
+}
+
+void MainWindow::on_actionProject_SaveAs_triggered()
+{
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
+
+    bool oldModified = prj->isModified();
+
+    // Query user for new project name
+    QString oldName = prj->getProjectName();
+    QString newName = QInputDialog::getText(this, "Save Project As",
+                                            "New Project Name", QLineEdit::Normal, prj->getProjectName());
+    if (newName.isEmpty()) { return; }
+    setProjectName(newName);
+
+    QString oldDirPath = prj->getDirPath();
+    prj->setDirPath("");
+
+    // Clear project filename so a new one will be derived from the project name
+    QString oldFilename = prj->getProjectFileName();
+    prj->setProjectFileName("");
+
+    bool saved = saveProjectInNewDir(prj);
+    if (!saved) {
+        // Restore original project state
+        setProjectName(oldName);
+        prj->setDirPath(oldDirPath);
+        prj->setProjectFileName(oldFilename);
+        prj->setModified(oldModified);
+    }
+}
+
+void MainWindow::on_toolButton_Project_clicked()
+{
+    saveCurrentProject();
 }
 
 void MainWindow::onJackXrunOccurred()
@@ -288,13 +358,8 @@ void MainWindow::onJackXrunOccurred()
 
 void MainWindow::onJackPortRegisteredOrConnected()
 {
-    // Refresh ports/connections tree
     updateConnectionsTree();
-
-    // Refresh the other JACK connections page
     updateOtherJackConsPage();
-
-    // Update warnings section
     updatePortConnectionWarnings();
 }
 
@@ -459,6 +524,97 @@ void MainWindow::on_action_Edit_Script_triggered()
     showScriptEditorForPatchLayer(layer);
 }
 
+void MainWindow::on_pushButton_script_update_clicked()
+{
+    QString content = ui->plainTextEdit_script->toPlainText();
+
+    if (scriptEditLayer) {
+        pengine.setLayerScript(scriptEditLayer, content);
+    } else if (scriptEditPort) {
+        scriptEditPort->script = content;
+        scriptEngine.addJackPortScript(scriptEditPort);
+    } else {
+        print("Error: no script edit layer or port set");
+        return;
+    }
+
+    highlightButton(ui->pushButton_script_update, false);
+}
+
+void MainWindow::on_checkBox_script_enable_toggled(bool checked)
+{
+    if (scriptEditLayer) {
+        if (scriptEditLayer->isScriptEnabled() != checked) {
+            setProjectModified();
+            if (checked) {
+                // If enabling, also update the script
+                on_pushButton_script_update_clicked();
+            }
+            pengine.setLayerScriptEnabled(scriptEditLayer, checked);
+        }
+    } else if (scriptEditPort) {
+        if (scriptEditPort->scriptEnabled != checked) {
+            setProjectModified();
+            if (checked) {
+                // If enabling, also update the script
+                on_pushButton_script_update_clicked();
+            }
+            scriptEditPort->scriptEnabled = checked;
+            scriptEngine.setScriptEnabled(scriptEditPort, checked);
+        }
+    } else {
+        print("Error: no script edit layer or port set");
+        return;
+    }
+}
+
+void MainWindow::on_checkBox_script_passMidiThrough_toggled(bool checked)
+{
+    if (scriptEditLayer) {
+        if (scriptEditLayer->isPassMidiThrough() != checked) {
+            setProjectModified();
+            pengine.setLayerPassMidiThrough(scriptEditLayer, checked);
+        }
+    } else if (scriptEditPort) {
+        if (scriptEditPort->passMidiThrough != checked) {
+            setProjectModified();
+            scriptEditPort->passMidiThrough = checked;
+            bool blockInJack = !checked;
+            jack.setMidiPortBlockMidiDirectThrough(scriptEditPort->jackPort, blockInJack);
+        }
+    } else {
+        print("Error: no script edit layer or port set");
+        return;
+    }
+}
+
+void MainWindow::on_pushButton_scriptEditor_OK_clicked()
+{
+    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
+}
+
+void MainWindow::on_plainTextEdit_script_textChanged()
+{
+    if (scriptEditorIgnoreChanged) {
+        // Text changed by internals
+        scriptEditorIgnoreChanged = false;
+    } else {
+        // Text changed by user.
+        // Store script in layer/port so it will persist changing of screens.
+        // Highlight update button to indicate.
+        QString content = ui->plainTextEdit_script->toPlainText();
+        if (scriptEditLayer) {
+            scriptEditLayer->setScript(content);
+        } else if (scriptEditPort) {
+            scriptEditPort->script = content;
+        } else {
+            return;
+        }
+        highlightButton(ui->pushButton_script_update, true);
+        setProjectModified();
+    }
+}
+
 /* Scan given directory recursively and add project files to list. */
 void MainWindow::scanDirForProjects(QString dirname)
 {
@@ -466,7 +622,7 @@ void MainWindow::scanDirForProjects(QString dirname)
         print("Projects directory does not exist: " + dirname);
     } else {
         projectDirList = scanDirForFiles(dirname,
-                                    KonfytProject::PROJECT_FILENAME_EXTENSION);
+                                         KonfytProject::PROJECT_FILENAME_EXTENSION);
     }
 }
 
@@ -754,6 +910,14 @@ void MainWindow::onMidiMapPresetMenuTrigger(QAction *action)
     if (midiMapPresetMenuRequester == ui->toolButton_MidiFilter_velocityMap_presets) {
         ui->lineEdit_MidiFilter_velocityMap->setText(action->data().toString());
     }
+}
+
+void MainWindow::on_actionEdit_MIDI_Filter_triggered()
+{
+    midiFilterEditType = MidiFilterEditLayer;
+    midiFilterEditItem = layerToolMenuSourceitem;
+    midiFilterEditRoute = jackMidiRouteFromLayerWidget(midiFilterEditItem);
+    showMidiFilterEditor();
 }
 
 void MainWindow::showMidiFilterEditor()
@@ -1306,7 +1470,6 @@ void MainWindow::updateConnectionsTree()
 
     ui->tree_Connections->sortItems(0, Qt::AscendingOrder);
     ui->tree_Connections->expandAll();
-
 }
 
 void MainWindow::clearPortsBussesConnectionsData()
@@ -1683,7 +1846,6 @@ void MainWindow::loadProject(ProjectPtr prj)
         scriptEngine.addJackPortScript(prjPort);
     }
 
-
     // Process MIDI out ports
 
     QList<int> midiOutIds = prj->midiOutPort_getAllPortIds();
@@ -1857,7 +2019,6 @@ void MainWindow::unloadCurrentProject()
     jack.removeAllAudioInAndOutPorts();
     jack.removeAllMidiInAndOutPorts();
     jack.clearOtherJackConPair();
-    updatePortConnectionWarnings();
 }
 
 /* Clears and fills the specified menu with items corresponding to project MIDI
@@ -2625,7 +2786,6 @@ void MainWindow::setupFilesystemView()
     {
         cdFilesystemView( mSettingsDir );
     });
-
 }
 
 /* Log a message in the GUI console. */
@@ -3131,12 +3291,6 @@ void MainWindow::setPreviewMode(bool previewModeOn)
     }
 }
 
-void MainWindow::on_horizontalSlider_MasterGain_valueChanged(int value)
-{
-    setMasterGainFloat( (float)value /
-                        (float)ui->horizontalSlider_MasterGain->maximum() );
-}
-
 void MainWindow::on_lineEdit_PatchName_returnPressed()
 {
     on_lineEdit_PatchName_editingFinished();
@@ -3442,6 +3596,12 @@ void MainWindow::on_toolButton_PatchDown_clicked()
     patchListAdapter.moveSelectedPatchDown();
 }
 
+void MainWindow::on_toolButton_AddPatch_clicked()
+{
+    // Add a new patch to the project.
+    on_actionNew_Patch_triggered();
+}
+
 void MainWindow::patchModified()
 {
     setProjectModified();
@@ -3452,26 +3612,6 @@ void MainWindow::setProjectModified()
     if (!mCurrentProject) { return; }
 
     mCurrentProject->setModified(true);
-}
-
-/* Set the name of the current project and updates the GUI. */
-void MainWindow::setProjectName(QString name)
-{
-    if (!mCurrentProject) { return; }
-
-    mCurrentProject->setProjectName(name);
-    updateProjectNameInGui();
-    updateWindowTitle();
-}
-
-/* Update GUI with current project name. */
-void MainWindow::updateProjectNameInGui()
-{
-    QString name;
-    if (mCurrentProject) {
-        name = mCurrentProject->getProjectName();
-    }
-    ui->lineEdit_ProjectName->setText(name);
 }
 
 void MainWindow::onProjectModifiedStateChanged(bool modified)
@@ -3626,6 +3766,26 @@ bool MainWindow::requestCurrentProjectClose()
     }
 
     return true;
+}
+
+void MainWindow::setProjectName(QString name)
+{
+    // Set the name of the current project and updates the GUI.
+
+    KONFYT_ASSERT_RETURN(!mCurrentProject.isNull());
+
+    mCurrentProject->setProjectName(name);
+    updateProjectNameInGui();
+    updateWindowTitle();
+}
+
+void MainWindow::updateProjectNameInGui()
+{
+    QString name;
+    if (mCurrentProject) {
+        name = mCurrentProject->getProjectName();
+    }
+    ui->lineEdit_ProjectName->setText(name);
 }
 
 void MainWindow::updatePortConnectionWarnings()
@@ -3990,7 +4150,7 @@ void MainWindow::updateOtherJackAudioConnectionWarnings()
 void MainWindow::audioBusWarnings_onBusRemoved(PrjAudioBusPtr bus)
 {
     QListWidgetItem* item = audioBusWarningMap.value(bus);
-    if (bus) {
+    if (item) {
         audioBusWarningMap.remove(item);
         delete item; // Removes item from QListWidget
     }
@@ -4167,6 +4327,28 @@ void MainWindow::scriptWarningsOnItemDoubleClicked(QListWidgetItem* item)
         showScriptEditorForPort(prjPort);
 
     }
+}
+
+void MainWindow::on_stackedWidget_currentChanged(int /*arg1*/)
+{
+    QWidget* currentWidget = ui->stackedWidget->currentWidget();
+    if (lastCenterWidget == ui->midiSendListPage) {
+        // Changed away from MIDI Send List page
+        ui->stackedWidget_left->setCurrentWidget(lastSidebarWidget);
+    } else if (lastCenterWidget == ui->scriptingPage) {
+        // Changed away from scripting
+        ui->stackedWidget_left->setCurrentWidget(lastSidebarWidget);
+    } else if (currentWidget == ui->midiSendListPage) {
+        // Changed to MIDI Send List Page
+        // Save current sidebar widget and change to saved MIDI send list
+        lastSidebarWidget = ui->stackedWidget_left->currentWidget();
+        ui->stackedWidget_left->setCurrentWidget(ui->page_savedMidiMsges);
+    } else if (currentWidget == ui->scriptingPage) {
+        // Changed to scripting
+        lastSidebarWidget = ui->stackedWidget_left->currentWidget();
+        ui->stackedWidget_left->setCurrentWidget(ui->page_left_scripting);
+    }
+    lastCenterWidget = currentWidget;
 }
 
 void MainWindow::triggerPanic(bool panic)
@@ -4551,6 +4733,26 @@ void MainWindow::onLayer_leftToolbutton_clicked(KonfytLayerWidget *layerItem)
     // The rest will be done in the menu/submenu trigger slots.
 }
 
+void MainWindow::on_actionReload_Layer_triggered()
+{
+    pengine.reloadLayer( layerToolMenuSourceitem->getPatchLayer() );
+    layerToolMenuSourceitem->refresh();
+}
+
+void MainWindow::on_actionRemove_Layer_triggered()
+{
+    removePatchLayer( layerToolMenuSourceitem );
+}
+
+void MainWindow::on_actionOpen_In_File_Manager_layerwidget_triggered()
+{
+    QString filepath = layerToolMenuSourceitem->getFilePath();
+    // If path is a file, change path to the folder name of the file
+    QFileInfo info(filepath);
+    if (!info.isDir()) { filepath = info.path(); }
+    openFileManager(filepath);
+}
+
 /* Clears and fills specified menu with items corresponding to project audio
  * output buses as well as a current bus connections entry and a new bus entry.
  * A property is set for each action corresponding to the bus id, -1 for the new
@@ -4920,91 +5122,6 @@ void MainWindow::on_pushButton_Settings_Sfz_clicked()
     }
 }
 
-/* Action to save current patch as a copy in the current project. */
-void MainWindow::on_actionSave_Patch_As_Copy_triggered()
-{
-    KonfytPatch* p = pengine.currentPatch();
-    KonfytPatch* newPatch = new KonfytPatch();
-    newPatch->fromByteArray(p->toByteArray());
-
-    addPatchToProject(newPatch);
-
-    setCurrentPatch(newPatch);
-
-    ui->lineEdit_PatchName->setFocus();
-    ui->lineEdit_PatchName->selectAll();
-}
-
-/* Action to add current patch to the library. */
-void MainWindow::on_actionAdd_Patch_To_Library_triggered()
-{
-    KonfytPatch* pt = pengine.currentPatch(); // Get current patch
-
-    if (savePatchToLibrary(pt)) {
-        print("Saved to library.");
-    } else {
-        print("Could not save patch to library.");
-        msgBox("Could not save patch to library.");
-    }
-}
-
-/* Action to save the current patch to file. */
-void MainWindow::on_actionSave_Patch_To_File_triggered()
-{
-    QString ext = QString(".%1").arg(KONFYT_PATCH_SUFFIX);
-
-    KonfytPatch* pt = pengine.currentPatch(); // Get current patch
-    QFileDialog d;
-    QString filename = d.getSaveFileName(this,
-                                         "Save patch as file", mPatchesDir,
-                                         QString("*%1").arg(ext));
-    if (filename == "") { return; } // Dialog was cancelled.
-
-    // Add suffix if not already added
-    if (!filename.endsWith(ext)) { filename = filename + ext; }
-
-    if (pt->savePatchToFile(filename)) {
-        print("Patch saved to file: " + filename);
-    } else {
-        print("Failed saving patch to file: " + filename);
-        msgBox("Could not save patch to file.", filename);
-    }
-}
-
-/* Action to add new patch to project. */
-void MainWindow::on_actionNew_Patch_triggered()
-{
-    KonfytPatch* patch = newPatchToProject();
-    setCurrentPatch(patch);
-    ui->lineEdit_PatchName->setFocus();
-    ui->lineEdit_PatchName->selectAll();
-}
-
-/* Action to Let user browse and select a patch file to add to the project. */
-void MainWindow::on_actionAdd_Patch_From_File_triggered()
-{
-    if (!mCurrentProject) {
-        print("No project active.");
-        return;
-    }
-
-    QFileDialog d;
-    QString filename = d.getOpenFileName(this,
-                                         "Open patch from file",
-                                         mPatchesDir,
-                                         "*." + QString(KONFYT_PATCH_SUFFIX));
-    if (filename.isEmpty()) { return; }
-
-    addPatchToProjectFromFile(filename);
-}
-
-/* Add button clicked (not its menu). */
-void MainWindow::on_toolButton_AddPatch_clicked()
-{
-    // Add a new patch to the project.
-    on_actionNew_Patch_triggered();
-}
-
 void MainWindow::on_pushButton_ShowConsole_clicked()
 {
     consoleWindow.show();
@@ -5244,18 +5361,6 @@ void MainWindow::on_pushButton_LiveMode_clicked()
         // Remove event filter
         qApp->removeEventFilter(this);
     }
-}
-
-void MainWindow::on_actionMaster_Volume_Up_triggered()
-{
-    int value = qMin(masterGainMidiCtrlr.value() + 1, 127);
-    setMasterGainMidi(value);
-}
-
-void MainWindow::on_actionMaster_Volume_Down_triggered()
-{
-    int value = qMax(masterGainMidiCtrlr.value() - 1, 0);
-    setMasterGainMidi(value);
 }
 
 /* Library/filesystem soundfont program list: item double clicked. */
@@ -6052,47 +6157,30 @@ void MainWindow::setupExternalAppsMenu()
 
     extAppsMenu.addSeparator();
 
-    extAppsMenu.addAction("a2jmidid -ue (export hardware, without ALSA IDs)",
-                          this, [=]()
-    {
-        externalAppToEditor(ExternalApp("a2jmidid -ue", "a2jmidid -ue"));
-    });
+    // Factory preset external app menu items
 
-    extAppsMenu.addAction("zynaddsubfx -l (Load .xmz state file)",
-                          this, [=]()
-    {
-        externalAppToEditor(ExternalApp("ZynAddSubFx", "zynaddsubfx -l "));
-    });
+    struct ExtAppStockMenuItem {
+        QString menuText;
+        QString name;
+        QString cmd;
+    };
 
-    extAppsMenu.addAction("zynaddsubfx -L (Load .xiz instrument file)",
-                          this, [=]()
-    {
-        externalAppToEditor(ExternalApp("ZynAddSubFx", "zynaddsubfx -L "));
-    });
+    QList<ExtAppStockMenuItem> stockItems = {
+        {"a2jmidid -ue (export hardware, without ALSA IDs)", "a2jmidid -ue", "a2jmidid -ue"},
+        {"zynaddsubfx -l (Load .xmz state file)", "ZynAddSubFx", "zynaddsubfx -l "},
+        {"zynaddsubfx -L (Load .xiz instrument file)", "ZynAddSubFx", "zynaddsubfx -L "},
+        {"jack-keyboard", "jack-keyboard", "jack-keyboard"},
+        {"VMPK (Virtual Keyboard)", "VMPK Virtual Keyboard", "vmpk"},
+        {"Ardour", "Ardour", "ardour "},
+        {"Carla", "Carla", "carla "}
+    };
 
-    extAppsMenu.addAction("jack-keyboard",
-                          this, [=]()
-    {
-        externalAppToEditor(ExternalApp("jack-keyboard", "jack-keyboard"));
-    });
-
-    extAppsMenu.addAction("VMPK (Virtual Keyboard)",
-                          this, [=]()
-    {
-        externalAppToEditor(ExternalApp("VMPK Virtual Keyboard", "vmpk"));
-    });
-
-    extAppsMenu.addAction("Ardour",
-                          this, [=]()
-    {
-        externalAppToEditor(ExternalApp("Ardour", "ardour "));
-    });
-
-    extAppsMenu.addAction("Carla",
-                          this, [=]()
-    {
-        externalAppToEditor(ExternalApp("Carla", "carla "));
-    });
+    foreach (ExtAppStockMenuItem item, stockItems) {
+        extAppsMenu.addAction(item.menuText, this, [=]()
+        {
+            externalAppToEditor(ExternalApp(item.name, item.cmd));
+        });
+    }
 }
 
 void MainWindow::on_toolButton_ExtAppsMenu_clicked()
@@ -6824,6 +6912,14 @@ void MainWindow::on_tree_Triggers_currentItemChanged(
     ui->pushButton_triggersPage_clear->setEnabled(enabled);
 }
 
+void MainWindow::on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1)
+{
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
+
+    prj->setMidiPickupRange(arg1);
+}
+
 void MainWindow::setupOtherJackConsPage()
 {
     updateOtherJackConsPageButtonStates();
@@ -6884,43 +6980,6 @@ void MainWindow::on_pushButton_RestartApp_clicked()
     }
 }
 
-void MainWindow::on_actionProject_save_triggered()
-{
-    // Save project
-    saveCurrentProject();
-}
-
-void MainWindow::on_actionProject_New_triggered()
-{
-    if (requestCurrentProjectClose()) {
-        loadNewProject(); // Create and load new project
-        newPatchToProject(); // Create a new patch and add to current project.
-        setCurrentPatchByIndex(0);
-        mCurrentProject->setModified(false);
-    }
-}
-
-void MainWindow::on_actionProject_Open_triggered()
-{
-    if (!requestCurrentProjectClose()) { return; }
-
-    // Show open dialog box
-    QString filename = QFileDialog::getOpenFileName(this,
-                "Select project to open", mProjectsDir,
-                "*" + KonfytProject::PROJECT_FILENAME_EXTENSION);
-    if (filename.isEmpty()) {
-        print("Cancelled.");
-        return;
-    }
-
-    loadProjectFromFile(filename);
-}
-
-void MainWindow::on_actionProject_OpenDirectory_triggered()
-{
-    openFileManager( mProjectsDir );
-}
-
 void MainWindow::on_textBrowser_patchNote_textChanged()
 {
     if (patchNote_ignoreChange) {
@@ -6963,67 +7022,104 @@ void MainWindow::on_listWidget_Layers_currentItemChanged(
     }
 }
 
-void MainWindow::on_toolButton_Project_clicked()
+void MainWindow::on_actionSave_Patch_As_Copy_triggered()
 {
-    saveCurrentProject();
+    // Action to save current patch as a copy in the current project.
+
+    KonfytPatch* p = pengine.currentPatch();
+    KonfytPatch* newPatch = new KonfytPatch();
+    newPatch->fromByteArray(p->toByteArray());
+
+    addPatchToProject(newPatch);
+
+    setCurrentPatch(newPatch);
+
+    ui->lineEdit_PatchName->setFocus();
+    ui->lineEdit_PatchName->selectAll();
 }
 
-void MainWindow::on_actionProject_SaveAs_triggered()
+void MainWindow::on_actionAdd_Patch_To_Library_triggered()
 {
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) { return; }
+    // Action to add current patch to the library.
 
-    bool oldModified = prj->isModified();
+    KonfytPatch* pt = pengine.currentPatch(); // Get current patch
 
-    // Query user for new project name
-    QString oldName = prj->getProjectName();
-    QString newName = QInputDialog::getText(this, "Save Project As",
-                "New Project Name", QLineEdit::Normal, prj->getProjectName());
-    if (newName.isEmpty()) { return; }
-    setProjectName(newName);
-
-    QString oldDirPath = prj->getDirPath();
-    prj->setDirPath("");
-
-    // Clear project filename so a new one will be derived from the project name
-    QString oldFilename = prj->getProjectFileName();
-    prj->setProjectFileName("");
-
-    bool saved = saveProjectInNewDir(prj);
-    if (!saved) {
-        // Restore original project state
-        setProjectName(oldName);
-        prj->setDirPath(oldDirPath);
-        prj->setProjectFileName(oldFilename);
-        prj->setModified(oldModified);
+    if (savePatchToLibrary(pt)) {
+        print("Saved to library.");
+    } else {
+        print("Could not save patch to library.");
+        msgBox("Could not save patch to library.");
     }
+}
+
+void MainWindow::on_actionSave_Patch_To_File_triggered()
+{
+    // Action to save the current patch to file.
+
+    QString ext = QString(".%1").arg(KONFYT_PATCH_SUFFIX);
+
+    KonfytPatch* pt = pengine.currentPatch(); // Get current patch
+    QFileDialog d;
+    QString filename = d.getSaveFileName(this,
+                                         "Save patch as file", mPatchesDir,
+                                         QString("*%1").arg(ext));
+    if (filename == "") { return; } // Dialog was cancelled.
+
+    // Add suffix if not already added
+    if (!filename.endsWith(ext)) { filename = filename + ext; }
+
+    if (pt->savePatchToFile(filename)) {
+        print("Patch saved to file: " + filename);
+    } else {
+        print("Failed saving patch to file: " + filename);
+        msgBox("Could not save patch to file.", filename);
+    }
+}
+
+void MainWindow::on_actionAlways_Active_triggered()
+{
+    // Action to toggle always-active for current patch.
+
+    KonfytPatch* p = pengine.currentPatch();
+    p->alwaysActive = !p->alwaysActive;
+    ui->actionAlways_Active->setChecked(p->alwaysActive);
+    ui->label_patch_alwaysActive->setVisible(p->alwaysActive);
+
+    mCurrentProject->setModified(true);
+}
+
+void MainWindow::on_actionNew_Patch_triggered()
+{
+    // Action to add new patch to project.
+
+    KonfytPatch* patch = newPatchToProject();
+    setCurrentPatch(patch);
+    ui->lineEdit_PatchName->setFocus();
+    ui->lineEdit_PatchName->selectAll();
+}
+
+void MainWindow::on_actionAdd_Patch_From_File_triggered()
+{
+    // Action to Let user browse and select a patch file to add to the project.
+
+    if (!mCurrentProject) {
+        print("No project active.");
+        return;
+    }
+
+    QFileDialog d;
+    QString filename = d.getOpenFileName(this,
+                                         "Open patch from file",
+                                         mPatchesDir,
+                                         "*." + QString(KONFYT_PATCH_SUFFIX));
+    if (filename.isEmpty()) { return; }
+
+    addPatchToProjectFromFile(filename);
 }
 
 void MainWindow::on_pushButton_Panic_clicked()
 {
     ui->actionPanicToggle->trigger();
-}
-
-void MainWindow::on_actionPanic_triggered()
-{
-    // Momentary panic
-    // Enable panic state and disable after short time delay
-
-    triggerPanic(true);
-
-    QTimer* t = new QTimer(this);
-    connect(t, &QTimer::timeout, this, [=]()
-    {
-        triggerPanic(false);
-        t->deleteLater();
-    });
-    t->start(100);
-}
-
-void MainWindow::on_actionPanicToggle_triggered()
-{
-    // Toggle panic state
-    triggerPanic( !panicState );
 }
 
 void MainWindow::on_MIDI_indicator_clicked()
@@ -7145,6 +7241,67 @@ void MainWindow::on_toolButton_MidiFilter_velocityMap_save_clicked()
     addMidiMapUserPresetMenuAction(preset);
 }
 
+void MainWindow::on_comboBox_midiFilter_inChannel_currentIndexChanged(int /*index*/)
+{
+    onMidiFilterEditorModified();
+}
+
+void MainWindow::on_spinBox_midiFilter_LowNote_valueChanged(int /*arg1*/)
+{
+    onMidiFilterEditorModified();
+}
+
+void MainWindow::on_spinBox_midiFilter_HighNote_valueChanged(int /*arg1*/)
+{
+    onMidiFilterEditorModified();
+}
+
+void MainWindow::on_spinBox_midiFilter_Add_valueChanged(int /*arg1*/)
+{
+    onMidiFilterEditorModified();
+}
+
+void MainWindow::on_checkBox_midiFilter_ignoreGlobalTranspose_toggled(bool /*checked*/)
+{
+    onMidiFilterEditorModified();
+}
+
+void MainWindow::on_checkBox_midiFilter_AllCCs_toggled(bool /*checked*/)
+{
+    onMidiFilterEditorModified();
+}
+
+void MainWindow::on_lineEdit_MidiFilter_ccAllowed_textChanged(const QString& /*arg1*/)
+{
+    onMidiFilterEditorModified();
+}
+
+void MainWindow::on_lineEdit_MidiFilter_ccBlocked_textChanged(const QString& /*arg1*/)
+{
+    onMidiFilterEditorModified();
+}
+
+void MainWindow::on_checkBox_midiFilter_pitchbend_toggled(bool /*checked*/)
+{
+    onMidiFilterEditorModified();
+}
+
+void MainWindow::on_checkBox_midiFilter_Prog_toggled(bool /*checked*/)
+{
+    onMidiFilterEditorModified();
+}
+
+void MainWindow::on_actionPatch_MIDI_Filter_triggered()
+{
+    KonfytPatch* patch = pengine.currentPatch();
+    if (!patch) { return; }
+
+    midiFilterEditPatch = patch;
+
+    midiFilterEditType = MidiFilterEditPatch;
+    showMidiFilterEditor();
+}
+
 void MainWindow::setMasterInTranspose(int transpose, bool relative)
 {
     if (relative) {
@@ -7243,6 +7400,24 @@ void MainWindow::updateBusGainInJackEngine(int busId)
 
     jack.setPortGain(bus->leftJackPort, gain);
     jack.setPortGain(bus->rightJackPort, gain);
+}
+
+void MainWindow::on_horizontalSlider_MasterGain_valueChanged(int value)
+{
+    setMasterGainFloat( (float)value /
+                        (float)ui->horizontalSlider_MasterGain->maximum() );
+}
+
+void MainWindow::on_actionMaster_Volume_Up_triggered()
+{
+    int value = qMin(masterGainMidiCtrlr.value() + 1, 127);
+    setMasterGainMidi(value);
+}
+
+void MainWindow::on_actionMaster_Volume_Down_triggered()
+{
+    int value = qMax(masterGainMidiCtrlr.value() - 1, 0);
+    setMasterGainMidi(value);
 }
 
 void MainWindow::on_pushButton_ShowJackPage_clicked()
@@ -7520,6 +7695,29 @@ void MainWindow::on_pushButton_connectionsPage_editScript_clicked()
     }
 }
 
+void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
+{
+    if (!mCurrentProject) { return; }
+    QTreeWidgetItem* currentItem = ui->tree_portsBusses->currentItem();
+    if (currentItem->parent() != busParent) { return; }
+
+    int busId = tree_busMap.value(currentItem);
+    PrjAudioBusPtr bus = mCurrentProject->audioBus_getBus(busId);
+    KONFYT_ASSERT_RETURN(!bus.isNull());
+    bus->ignoreMasterGain = ui->checkBox_connectionsPage_ignoreGlobalVolume->isChecked();
+
+    // Update in project
+    mCurrentProject->audioBus_replace(busId, bus);
+
+    // Update in JACK engine
+    updateBusGainInJackEngine(busId);
+}
+
+void MainWindow::on_toolButton_connectionsPage_portsBussesListOptions_clicked()
+{
+    onPortsBusesTreeMenuRequested();
+}
+
 void MainWindow::setupSettings()
 {
     // Settings dir is standard (XDG) config dir
@@ -7591,6 +7789,28 @@ void MainWindow::on_pushButton_Panic_customContextMenuRequested(const QPoint& /*
 {
     // Momentary panic
     on_actionPanic_triggered();
+}
+
+void MainWindow::on_actionPanic_triggered()
+{
+    // Momentary panic
+    // Enable panic state and disable after short time delay
+
+    triggerPanic(true);
+
+    QTimer* t = new QTimer(this);
+    connect(t, &QTimer::timeout, this, [=]()
+    {
+        triggerPanic(false);
+        t->deleteLater();
+    });
+    t->start(100);
+}
+
+void MainWindow::on_actionPanicToggle_triggered()
+{
+    // Toggle panic state
+    triggerPanic( !panicState );
 }
 
 void MainWindow::setupMidiSendListEditor()
@@ -7759,45 +7979,6 @@ void MainWindow::setupWarningConnectionsForProject(ProjectPtr prj)
     {
         updatePortConnectionWarnings();
     });
-}
-
-/* Action to toggle always-active for current patch. */
-void MainWindow::on_actionAlways_Active_triggered()
-{
-    KonfytPatch* p = pengine.currentPatch();
-    p->alwaysActive = !p->alwaysActive;
-    ui->actionAlways_Active->setChecked(p->alwaysActive);
-    ui->label_patch_alwaysActive->setVisible(p->alwaysActive);
-
-    mCurrentProject->setModified(true);
-}
-
-void MainWindow::on_actionEdit_MIDI_Filter_triggered()
-{
-    midiFilterEditType = MidiFilterEditLayer;
-    midiFilterEditItem = layerToolMenuSourceitem;
-    midiFilterEditRoute = jackMidiRouteFromLayerWidget(midiFilterEditItem);
-    showMidiFilterEditor();
-}
-
-void MainWindow::on_actionReload_Layer_triggered()
-{
-    pengine.reloadLayer( layerToolMenuSourceitem->getPatchLayer() );
-    layerToolMenuSourceitem->refresh();
-}
-
-void MainWindow::on_actionOpen_In_File_Manager_layerwidget_triggered()
-{
-    QString filepath = layerToolMenuSourceitem->getFilePath();
-    // If path is a file, change path to the folder name of the file
-    QFileInfo info(filepath);
-    if (!info.isDir()) { filepath = info.path(); }
-    openFileManager(filepath);
-}
-
-void MainWindow::on_actionRemove_Layer_triggered()
-{
-    removePatchLayer( layerToolMenuSourceitem );
 }
 
 void MainWindow::on_pushButton_midiSendList_apply_clicked()
@@ -8186,215 +8367,8 @@ void MainWindow::on_pushButton_midiSendList_sendAll_clicked()
     }
 }
 
-void MainWindow::on_stackedWidget_currentChanged(int /*arg1*/)
-{
-    QWidget* currentWidget = ui->stackedWidget->currentWidget();
-    if (lastCenterWidget == ui->midiSendListPage) {
-        // Changed away from MIDI Send List page
-        ui->stackedWidget_left->setCurrentWidget(lastSidebarWidget);
-    } else if (lastCenterWidget == ui->scriptingPage) {
-        // Changed away from scripting
-        ui->stackedWidget_left->setCurrentWidget(lastSidebarWidget);
-    } else if (currentWidget == ui->midiSendListPage) {
-        // Changed to MIDI Send List Page
-        // Save current sidebar widget and change to saved MIDI send list
-        lastSidebarWidget = ui->stackedWidget_left->currentWidget();
-        ui->stackedWidget_left->setCurrentWidget(ui->page_savedMidiMsges);
-    } else if (currentWidget == ui->scriptingPage) {
-        // Changed to scripting
-        lastSidebarWidget = ui->stackedWidget_left->currentWidget();
-        ui->stackedWidget_left->setCurrentWidget(ui->page_left_scripting);
-    }
-    lastCenterWidget = currentWidget;
-}
-
 void MainWindow::on_toolButton_LibraryPreview_clicked()
 {
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
 
-void MainWindow::on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1)
-{
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) { return; }
-
-    prj->setMidiPickupRange(arg1);
-}
-
-void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
-{
-    if (!mCurrentProject) { return; }
-    QTreeWidgetItem* currentItem = ui->tree_portsBusses->currentItem();
-    if (currentItem->parent() != busParent) { return; }
-
-    int busId = tree_busMap.value(currentItem);
-    PrjAudioBusPtr bus = mCurrentProject->audioBus_getBus(busId);
-    KONFYT_ASSERT_RETURN(!bus.isNull());
-    bus->ignoreMasterGain = ui->checkBox_connectionsPage_ignoreGlobalVolume->isChecked();
-
-    // Update in project
-    mCurrentProject->audioBus_replace(busId, bus);
-
-    // Update in JACK engine
-    updateBusGainInJackEngine(busId);
-}
-
-void MainWindow::on_comboBox_midiFilter_inChannel_currentIndexChanged(int /*index*/)
-{
-    onMidiFilterEditorModified();
-}
-
-void MainWindow::on_spinBox_midiFilter_LowNote_valueChanged(int /*arg1*/)
-{
-    onMidiFilterEditorModified();
-}
-
-void MainWindow::on_spinBox_midiFilter_HighNote_valueChanged(int /*arg1*/)
-{
-    onMidiFilterEditorModified();
-}
-
-void MainWindow::on_spinBox_midiFilter_Add_valueChanged(int /*arg1*/)
-{
-    onMidiFilterEditorModified();
-}
-
-void MainWindow::on_checkBox_midiFilter_ignoreGlobalTranspose_toggled(bool /*checked*/)
-{
-    onMidiFilterEditorModified();
-}
-
-void MainWindow::on_checkBox_midiFilter_AllCCs_toggled(bool /*checked*/)
-{
-    onMidiFilterEditorModified();
-}
-
-void MainWindow::on_lineEdit_MidiFilter_ccAllowed_textChanged(const QString& /*arg1*/)
-{
-    onMidiFilterEditorModified();
-}
-
-void MainWindow::on_lineEdit_MidiFilter_ccBlocked_textChanged(const QString& /*arg1*/)
-{
-    onMidiFilterEditorModified();
-}
-
-void MainWindow::on_checkBox_midiFilter_pitchbend_toggled(bool /*checked*/)
-{
-    onMidiFilterEditorModified();
-}
-
-void MainWindow::on_checkBox_midiFilter_Prog_toggled(bool /*checked*/)
-{
-    onMidiFilterEditorModified();
-}
-
-void MainWindow::on_toolButton_connectionsPage_portsBussesListOptions_clicked()
-{
-    onPortsBusesTreeMenuRequested();
-}
-
-void MainWindow::on_actionPatch_MIDI_Filter_triggered()
-{
-    KonfytPatch* patch = pengine.currentPatch();
-    if (!patch) { return; }
-
-    midiFilterEditPatch = patch;
-
-    midiFilterEditType = MidiFilterEditPatch;
-    showMidiFilterEditor();
-}
-
-void MainWindow::on_pushButton_script_update_clicked()
-{
-    QString content = ui->plainTextEdit_script->toPlainText();
-
-    if (scriptEditLayer) {
-        pengine.setLayerScript(scriptEditLayer, content);
-    } else if (scriptEditPort) {
-        scriptEditPort->script = content;
-        scriptEngine.addJackPortScript(scriptEditPort);
-    } else {
-        print("Error: no script edit layer or port set");
-        return;
-    }
-
-    highlightButton(ui->pushButton_script_update, false);
-}
-
-void MainWindow::on_checkBox_script_enable_toggled(bool checked)
-{
-    if (scriptEditLayer) {
-        if (scriptEditLayer->isScriptEnabled() != checked) {
-            setProjectModified();
-            if (checked) {
-                // If enabling, also update the script
-                on_pushButton_script_update_clicked();
-            }
-            pengine.setLayerScriptEnabled(scriptEditLayer, checked);
-        }
-    } else if (scriptEditPort) {
-        if (scriptEditPort->scriptEnabled != checked) {
-            setProjectModified();
-            if (checked) {
-                // If enabling, also update the script
-                on_pushButton_script_update_clicked();
-            }
-            scriptEditPort->scriptEnabled = checked;
-            scriptEngine.setScriptEnabled(scriptEditPort, checked);
-        }
-    } else {
-        print("Error: no script edit layer or port set");
-        return;
-    }
-}
-
-
-void MainWindow::on_checkBox_script_passMidiThrough_toggled(bool checked)
-{
-    if (scriptEditLayer) {
-        if (scriptEditLayer->isPassMidiThrough() != checked) {
-            setProjectModified();
-            pengine.setLayerPassMidiThrough(scriptEditLayer, checked);
-        }
-    } else if (scriptEditPort) {
-        if (scriptEditPort->passMidiThrough != checked) {
-            setProjectModified();
-            scriptEditPort->passMidiThrough = checked;
-            bool blockInJack = !checked;
-            jack.setMidiPortBlockMidiDirectThrough(scriptEditPort->jackPort, blockInJack);
-        }
-    } else {
-        print("Error: no script edit layer or port set");
-        return;
-    }
-}
-
-
-void MainWindow::on_pushButton_scriptEditor_OK_clicked()
-{
-    ui->stackedWidget->setCurrentWidget(ui->PatchPage);
-}
-
-
-void MainWindow::on_plainTextEdit_script_textChanged()
-{
-    if (scriptEditorIgnoreChanged) {
-        // Text changed by internals
-        scriptEditorIgnoreChanged = false;
-    } else {
-        // Text changed by user.
-        // Store script in layer/port so it will persist changing of screens.
-        // Highlight update button to indicate.
-        QString content = ui->plainTextEdit_script->toPlainText();
-        if (scriptEditLayer) {
-            scriptEditLayer->setScript(content);
-        } else if (scriptEditPort) {
-            scriptEditPort->script = content;
-        } else {
-            return;
-        }
-        highlightButton(ui->pushButton_script_update, true);
-        setProjectModified();
-    }
-}
