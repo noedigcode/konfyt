@@ -133,6 +133,7 @@ public:
 signals:
     void print(QString msg);
     void initialised(bool error, QString errString);
+    void errorStringChanged(QString errorString);
 
 private:
     QString mClientName;
@@ -144,6 +145,9 @@ private:
     QMap<int, LsChannel> chans;
     QList<int> freeAudioChannels;
     QList<int> freeMidiPorts;
+
+    QString mLastErrorString;
+    void setErrorString(QString s);
 
     QProcess* process = nullptr;
 

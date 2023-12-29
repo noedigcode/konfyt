@@ -628,6 +628,8 @@ void KonfytPatchEngine::setupAndInitSfzEngine(KonfytAppInfo appInfo)
             this, &KonfytPatchEngine::statusInfo);
     connect(sfzEngine, &KonfytBaseSoundEngine::initDone,
             this, &KonfytPatchEngine::onSfzEngineInitDone);
+    connect(sfzEngine, &KonfytBaseSoundEngine::errorStringChanged,
+            this, &KonfytPatchEngine::sfzEngineErrorStringChanged);
 
     sfzEngine->initEngine(jack);
 }
@@ -1008,6 +1010,7 @@ void KonfytPatchEngine::onSfzEngineInitDone(QString error)
     } else {
         print("SFZ engine initialisation error: " + error);
     }
+    emit sfzEngineErrorStringChanged(error);
 }
 
 void KonfytPatchEngine::onProjectPatchURIsNeedUdating()

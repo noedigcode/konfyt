@@ -25,6 +25,7 @@ KonfytLscpEngine::KonfytLscpEngine(QObject *parent) : KonfytBaseSoundEngine(pare
 {
     connect(&ls, &KonfytLscp::print, this, &KonfytLscpEngine::print);
     connect(&ls, &KonfytLscp::initialised, this, &KonfytLscpEngine::onLsInitialised);
+    connect(&ls, &KonfytLscp::errorStringChanged, this, &KonfytLscpEngine::errorStringChanged);
 }
 
 KonfytLscpEngine::~KonfytLscpEngine()

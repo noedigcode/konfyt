@@ -982,6 +982,14 @@ private slots:
     void scriptWarningsOnPortRemoved(PrjMidiPortPtr prjPort);
     void scriptWarningsOnItemDoubleClicked(QListWidgetItem* item);
 
+    // SFZ engine warnings
+private:
+    void setupSfzEngineWarnings();
+    QListWidgetItem* sfzEngineWarningItem = nullptr;
+private slots:
+    void sfzEngineWarnings_onSfzEngineErrorChanged(QString error);
+    void sfzEngineWarnings_onItemDoubleClicked(QListWidgetItem* item);
+
     // ========================================================================
     // Other
     // ========================================================================

@@ -2269,7 +2269,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>9</number>
+                 <number>5</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -9564,7 +9564,7 @@ border-top-right-radius: 0;
                 <enum>QTabWidget::South</enum>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="tab_15">
                 <attribute name="title">

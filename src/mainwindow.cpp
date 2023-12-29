@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupExternalApps();
     setupPortConnectionWarnings();
     setupScriptingWarnings();
+    setupSfzEngineWarnings();
     // ----------------------------------------------------
     setupInitialProjectFromCmdLineArgs();
 
@@ -4329,6 +4330,40 @@ void MainWindow::scriptWarningsOnItemDoubleClicked(QListWidgetItem* item)
     }
 }
 
+void MainWindow::setupSfzEngineWarnings()
+{
+    connect(ui->listWidget_Warnings, &QListWidget::itemDoubleClicked,
+            this, &MainWindow::sfzEngineWarnings_onItemDoubleClicked);
+
+    connect(&pengine, &KonfytPatchEngine::sfzEngineErrorStringChanged,
+           this, &MainWindow::sfzEngineWarnings_onSfzEngineErrorChanged);
+}
+
+void MainWindow::sfzEngineWarnings_onSfzEngineErrorChanged(QString error)
+{
+    if (error.isEmpty()) {
+        // Remove warning item if it exists
+        if (sfzEngineWarningItem) {
+            delete sfzEngineWarningItem; // Removes item from QListWidget
+            sfzEngineWarningItem = nullptr;
+        }
+    } else {
+        // There is an error. Create item if it doesn't exist.
+        if (!sfzEngineWarningItem) {
+            sfzEngineWarningItem = new QListWidgetItem();
+            ui->listWidget_Warnings->addItem(sfzEngineWarningItem);
+        }
+        sfzEngineWarningItem->setText("SFZ Engine: " + error);
+    }
+}
+
+void MainWindow::sfzEngineWarnings_onItemDoubleClicked(QListWidgetItem* item)
+{
+    if (item == sfzEngineWarningItem) {
+        // Not handled yet.
+    }
+}
+
 void MainWindow::on_stackedWidget_currentChanged(int /*arg1*/)
 {
     QWidget* currentWidget = ui->stackedWidget->currentWidget();
@@ -5083,7 +5118,7 @@ void MainWindow::on_pushButton_settings_Projects_clicked()
     // Show dialog to select projects directory
     QFileDialog d;
     QString path = d.getExistingDirectory( this, "Select projects directory",
-                                           ui->comboBox_settings_projectsDir->currentText() );
+                        ui->comboBox_settings_projectsDir->currentText() );
     if ( !path.isEmpty() ) {
         ui->comboBox_settings_projectsDir->setCurrentText( path );
     }
@@ -5094,7 +5129,7 @@ void MainWindow::on_pushButton_Settings_Soundfonts_clicked()
     // Show dialog to select soundfonts directory
     QFileDialog d;
     QString path = d.getExistingDirectory( this, "Select soundfonts directory",
-                                           ui->comboBox_settings_soundfontDirs->currentText() );
+                        ui->comboBox_settings_soundfontDirs->currentText() );
     if ( !path.isEmpty() ) {
         ui->comboBox_settings_soundfontDirs->setCurrentText( path );
     }
@@ -5105,7 +5140,7 @@ void MainWindow::on_pushButton_Settings_Patches_clicked()
     // Show dialog to select patches directory
     QFileDialog d;
     QString path = d.getExistingDirectory( this, "Select patches directory",
-                                           ui->comboBox_settings_patchDirs->currentText() );
+                            ui->comboBox_settings_patchDirs->currentText() );
     if ( !path.isEmpty() ) {
         ui->comboBox_settings_patchDirs->setCurrentText( path );
     }
@@ -5116,7 +5151,7 @@ void MainWindow::on_pushButton_Settings_Sfz_clicked()
     // Show dialog to select sfz directory
     QFileDialog d;
     QString path = d.getExistingDirectory( this, "Select sfz directory",
-                                           ui->comboBox_settings_sfzDirs->currentText() );
+                            ui->comboBox_settings_sfzDirs->currentText() );
     if ( !path.isEmpty() ) {
         ui->comboBox_settings_sfzDirs->setCurrentText( path );
     }
@@ -6467,7 +6502,6 @@ void MainWindow::on_actionRemove_BusPort_triggered()
     delete item;
     updatePatchView();
 }
-
 
 /* Prepare and show the filesystem tree view context menu. */
 void MainWindow::on_treeWidget_filesystem_customContextMenuRequested(const QPoint &pos)

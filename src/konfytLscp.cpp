@@ -50,7 +50,10 @@ lscp_status_t KonfytLscp::client_callback(lscp_client_t* /*pClient*/,
 void KonfytLscp::init()
 {
     createClient();
-    if (client) { return; }
+    if (client) {
+        setErrorString("");
+        return;
+    }
 
     print("Could not initialise client. Attempting to run Linuxsampler...");
     if (!process) {
@@ -66,10 +69,12 @@ void KonfytLscp::init()
                 createClient();
                 if (client == NULL) {
                     print("Could not initialise client. Retrying after delay...");
+                    setErrorString("Linuxsampler client init error");
                     t->start(1000);
                 } else {
                     t->deleteLater();
                     print("Client initialised.");
+                    setErrorString("");
                     emit initialised(false, "");
                 }
             });
@@ -80,12 +85,14 @@ void KonfytLscp::init()
                 this, [=](int exitCode, QProcess::ExitStatus /*exitStatus*/)
         {
             print(QString("Linuxsampler process finished with exit code %1.").arg(exitCode));
+            setErrorString("Linuxsampler process exited");
         });
     #if (QT_VERSION >= QT_VERSION_CHECK(5, 6, 0))
         connect(process, &QProcess::errorOccurred,
                 this, [=](QProcess::ProcessError /*error*/)
         {
             print("Error occurred running Linuxsampler process: " + process->errorString());
+            setErrorString("Linuxsampler process error");
         });
     #endif
     }
@@ -358,12 +365,14 @@ int KonfytLscp::addSfzChannelAndPorts(QString file)
     int iAudioDev = getAudioDeviceIdByName(mClientName);
     if (iAudioDev < 0) {
         print("Error getting audio device named " + mClientName);
+        setErrorString("Audio device error");
         return -1;
     }
 
     int iMidiDev = getMidiDeviceIdByName(mClientName);
     if (iMidiDev < 0) {
         print("Error getting MIDI device named " + mClientName);
+        setErrorString("MIDI device error");
         return -1;
     }
 
@@ -371,6 +380,7 @@ int KonfytLscp::addSfzChannelAndPorts(QString file)
     if (chan < 0) {
         print("Failed adding channel.");
         print("Result: " + QString( lscp_client_get_result(client) ));
+        setErrorString("Failed adding channel");
         return -1;
     }
 
@@ -382,6 +392,7 @@ int KonfytLscp::addSfzChannelAndPorts(QString file)
     if (status != LSCP_OK) {
         print("Failed loading SFZ engine.");
         print("Result: " + QString( lscp_client_get_result(client) ));
+        setErrorString("Failed loading SFZ engine");
         return -1;
     }
 
@@ -394,6 +405,7 @@ int KonfytLscp::addSfzChannelAndPorts(QString file)
         print(QString("Failed connecting audio device %1 to channel %2.")
               .arg(iAudioDev).arg(chan));
         print("Result: " + QString( lscp_client_get_result(client) ));
+        setErrorString("Audio device connection error");
         return -1;
     }
     lscp_set_channel_audio_channel(client, chan, 0, audioPortLeft);
@@ -404,6 +416,7 @@ int KonfytLscp::addSfzChannelAndPorts(QString file)
         print(QString("Failed connecting MIDI device %1 to port %2.")
               .arg(iMidiDev).arg(chan));
         print("Result: " + QString( lscp_client_get_result(client) ));
+        setErrorString("MIDI device connection error");
         return -1;
     }
     lscp_set_channel_midi_port(client, chan, midiPort);
@@ -415,6 +428,7 @@ int KonfytLscp::addSfzChannelAndPorts(QString file)
     if (status != LSCP_OK) {
         print("Failed loading instrument: " + fileEscaped);
         print("Result: " + QString( lscp_client_get_result(client) ));
+        setErrorString("Failed loading instrument");
         return -1;
     }
 
@@ -451,6 +465,7 @@ int KonfytLscp::addSfzChannelAndPorts(QString file)
 
     chans.insert(chan, info);
 
+    setErrorString("");
     return chan;
 }
 
@@ -534,6 +549,14 @@ void KonfytLscp::destroyClient()
 {
     lscp_client_destroy(client);
     client = NULL;
+}
+
+void KonfytLscp::setErrorString(QString s)
+{
+    if (mLastErrorString != s) {
+        mLastErrorString = s;
+        emit errorStringChanged(mLastErrorString);
+    }
 }
 
 void KonfytLscp::setupConnectionCheckTimer()
