@@ -353,7 +353,7 @@ void MainWindow::showScriptEditor()
     QString script;
     bool scriptEnabled;
     bool passMidiThrough;
-    QString uri;
+    QString title;
     QString errorText;
     QString lastLoadedScript;
 
@@ -361,14 +361,14 @@ void MainWindow::showScriptEditor()
         script = scriptEditLayer->script();
         scriptEnabled = scriptEditLayer->isScriptEnabled();
         passMidiThrough = scriptEditLayer->isPassMidiThrough();
-        uri = scriptEditLayer->uri;
+        title = QString("Layer: %1").arg(scriptEditLayer->uri);
         errorText = scriptEngine.scriptErrorString(scriptEditLayer);
         lastLoadedScript = scriptEngine.script(scriptEditLayer);
     } else if (scriptEditPort) {
         script = scriptEditPort->script;
         scriptEnabled = scriptEditPort->scriptEnabled;
         passMidiThrough = scriptEditPort->passMidiThrough;
-        uri = scriptEditPort->portName;
+        title = QString("Port: %1").arg(scriptEditPort->portName);
         errorText = scriptEngine.scriptErrorString(scriptEditPort);
         lastLoadedScript = scriptEngine.script(scriptEditPort);
     } else {
@@ -376,8 +376,8 @@ void MainWindow::showScriptEditor()
         return;
     }
 
+    // If the script is empty, insert a template script
     if (script.trimmed().isEmpty()) {
-        // Insert template
         QFile file("://blank.js");
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             print("Error loading blank template script.");
@@ -387,11 +387,11 @@ void MainWindow::showScriptEditor()
         }
     }
 
-    scriptEditorIgnoreChanged = true;
+    scriptEditorIgnoreChanged = true; // To subdue signals/slots while updating
     ui->plainTextEdit_script->setPlainText(script);
     ui->checkBox_script_enable->setChecked(scriptEnabled);
     ui->checkBox_script_passMidiThrough->setChecked(passMidiThrough);
-    ui->groupBox_scriptEditor->setTitle("Script Editor - " + uri);
+    ui->groupBox_scriptEditor->setTitle("Script Editor - " + title);
 
     updateScriptEditorErrorText(errorText);
 
@@ -4109,7 +4109,7 @@ void MainWindow::scriptWarningsOnScriptEngineLayerErrorStatusChanged(
         ui->listWidget_Warnings->addItem(item);
     }
 
-    item->setText(QString("Script %1: %2").arg(patchLayer->uri, errorString));
+    item->setText(QString("Layer script error: %1").arg(patchLayer->uri));
 }
 
 void MainWindow::scriptWarningsOnScriptEnginePortErrorStatusChanged(
@@ -4131,7 +4131,7 @@ void MainWindow::scriptWarningsOnScriptEnginePortErrorStatusChanged(
         ui->listWidget_Warnings->addItem(item);
     }
 
-    item->setText(QString("Port script %1: %2").arg(prjPort->portName, errorString));
+    item->setText(QString("Port script error: %1").arg(prjPort->portName));
 }
 
 void MainWindow::scriptWarningsOnPatchLayerUnloaded(KfPatchLayerSharedPtr patchLayer)

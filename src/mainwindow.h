@@ -744,7 +744,7 @@ private slots:
     void onJackPortRegisteredOrConnected();
 
     // ========================================================================
-    // Scripting
+    // Scripting / Script editor
     // ========================================================================
 private:
     KonfytJSEngine scriptEngine;
@@ -899,6 +899,8 @@ private slots:
     // ========================================================================
     // Warnings
     // ========================================================================
+
+    // Port connection warnings
 private:
     void setupPortConnectionWarnings();
     void setupWarningConnectionsForProject(ProjectPtr prj);
