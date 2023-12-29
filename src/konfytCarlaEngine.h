@@ -68,6 +68,9 @@ public:
     QString pluginName(int ID);
 
 private:
+    QString mLastErrorString;
+    void setErrorString(QString s);
+
 #ifdef CARLA_USE_HANDLE
     CarlaHostHandle carlaHandle;
 #endif

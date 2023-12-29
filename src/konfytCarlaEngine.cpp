@@ -71,6 +71,7 @@ int KonfytCarlaEngine::addSfz(QString path)
     if ( !returnValue ) {
         // Not a success.
         print("Carla failed to load plugin.");
+        setErrorString("Carla plugin load error");
         return -1;
     }
 
@@ -87,6 +88,7 @@ int KonfytCarlaEngine::addSfz(QString path)
 
     pluginUniqueIDCounter++;
 
+    setErrorString("");
     // Return the unique ID used by this class to distinguish the plugin
     return pluginData.ID;
 }
@@ -113,6 +115,14 @@ QString KonfytCarlaEngine::pluginName(int ID)
     KONFYT_ASSERT( pluginDataMap.contains(ID) );
 
     return pluginDataMap.value(ID).name;
+}
+
+void KonfytCarlaEngine::setErrorString(QString s)
+{
+    if (s != mLastErrorString) {
+        mLastErrorString = s;
+        emit errorStringChanged(mLastErrorString);
+    }
 }
 
 QString KonfytCarlaEngine::midiInJackPortName(int ID)
@@ -172,6 +182,9 @@ void KonfytCarlaEngine::initEngine(KonfytJackEngine* jackEngine)
         error = CARLA_FUNC_V(carla_get_last_error);
         print("Carla engine initialisation error:");
         print(error);
+        setErrorString("Carla init error");
+    } else {
+        setErrorString("");
     }
     emit initDone(error);
 }
