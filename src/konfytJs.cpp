@@ -387,6 +387,7 @@ KonfytJSEngine::KonfytJSEngine(QObject *parent) : QObject(parent)
 {
     // For signal scriptErrorStatusChanged()
     qRegisterMetaType<KfPatchLayerSharedPtr>("KfPatchLayerSharedPtr");
+    qRegisterMetaType<PrjMidiPortPtr>("PrjMidiPortPtr");
 
     // Start script watchdog timer in calling thread (i.e. before this
     // object has been moved to another thread, so not the scripting thread).
@@ -444,38 +445,86 @@ void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
             connect(&(s->env), &KonfytJSEnv::errorStatusChanged,
                     this, [=](QString errorString)
             {
-                emit scriptErrorStatusChanged(patchLayer, errorString);
+                emit layerScriptErrorStatusChanged(patchLayer, errorString);
             });
             s->env.uri = patchLayer->uri;
+
+            routeEnvMap.insert(route, s);
+            layerEnvMap.insert(patchLayer, s);
         }
 
         beforeScriptRun(s);
         s->env.setScriptAndInitIfEnabled(patchLayer->script(),
                                          patchLayer->isScriptEnabled());
         afterScriptRun(s);
+    });
+}
 
-        routeEnvMap.insert(route, s);
-        layerEnvMap.insert(patchLayer, s);
+void KonfytJSEngine::addJackPortScript(PrjMidiPortPtr prjPort)
+{
+    runInThisThread([=]()
+    {
+        if (!prjPort) {
+            print("Error: addJackPortScript: null port");
+            return;
+        }
+
+        ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
+        if (!s) {
+            s.reset(new ScriptEnv());
+            connect(&(s->env), &KonfytJSEnv::sendMidiEvent,
+                    this, [=](KonfytMidiEvent ev)
+            {
+                jack->sendMidiEventsOnPort(prjPort->jackPort, {ev});
+            });
+            connect(&(s->env), &KonfytJSEnv::print, this, [=](QString msg)
+            {
+                emit print(QString("MIDI-in port script: [%1] %2").arg(s->env.uri, msg));
+            });
+            connect(&(s->env), &KonfytJSEnv::errorStatusChanged,
+                    this, [=](QString errorString)
+            {
+                emit portScriptErrorStatusChanged(prjPort, errorString);
+            });
+            s->env.uri = prjPort->portName;
+
+            jackPortEnvMap.insert(prjPort->jackPort, s);
+            prjPortEnvMap.insert(prjPort, s);
+        }
+
+        beforeScriptRun(s);
+        s->env.setScriptAndInitIfEnabled(prjPort->script, prjPort->scriptEnabled);
+        afterScriptRun(s);
     });
 }
 
 void KonfytJSEngine::removeLayerScript(KfPatchLayerSharedPtr patchLayer)
 {
-    // Capture weak pointer so lambda doesn't hog shared pointer
-    KfPatchLayerWeakPtr wp(patchLayer);
-
     runInThisThread([=]()
     {
-        KfPatchLayerSharedPtr layer(wp);
-        ScriptEnvPtr s = layerEnvMap.value(layer);
+        ScriptEnvPtr s = layerEnvMap.value(patchLayer);
         if (!s) {
             print("Error: removeLayerScript: invalid patch layer");
             return;
         }
 
         routeEnvMap.remove(routeEnvMap.key(s));
-        layerEnvMap.remove(layer);
+        layerEnvMap.remove(patchLayer);
+    });
+}
 
+void KonfytJSEngine::removeJackPortScript(PrjMidiPortPtr prjPort)
+{
+    runInThisThread([=]()
+    {
+        ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
+        if (!s) {
+            print("Error: removeJackPortScript: invalid project port");
+            return;
+        }
+
+        jackPortEnvMap.remove(jackPortEnvMap.key(s));
+        prjPortEnvMap.remove(prjPort);
     });
 }
 
@@ -486,6 +535,20 @@ QString KonfytJSEngine::script(KfPatchLayerSharedPtr patchLayer)
     ScriptEnvPtr s = layerEnvMap.value(patchLayer);
     if (!s) {
         print("Error: script: invalid patch layer");
+    } else {
+        ret = s->env.script();
+    }
+
+    return ret;
+}
+
+QString KonfytJSEngine::script(PrjMidiPortPtr prjPort)
+{
+    QString ret;
+
+    ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
+    if (!s) {
+        print("Error: script: invalid project port");
     } else {
         ret = s->env.script();
     }
@@ -509,11 +572,38 @@ void KonfytJSEngine::setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool ena
     });
 }
 
+void KonfytJSEngine::setScriptEnabled(PrjMidiPortPtr prjPort, bool enable)
+{
+    runInThisThread([=]()
+    {
+        ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
+        if (!s) {
+            print("Error: setScriptEnabled: invalid project port");
+            return;
+        }
+
+        beforeScriptRun(s);
+        s->env.setEnabledAndInitIfNeeded(enable);
+        afterScriptRun(s);
+    });
+}
+
 float KonfytJSEngine::scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer)
 {
     ScriptEnvPtr s = layerEnvMap.value(patchLayer);
     if (!s) {
         print("Error: scriptAverageProcessTimeMs: invalid patch layer");
+        return 0;
+    }
+
+    return s->env.getAverageProcessTimeMs();
+}
+
+float KonfytJSEngine::scriptAverageProcessTimeMs(PrjMidiPortPtr prjPort)
+{
+    ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
+    if (!s) {
+        print("Error: scriptAverageProcessTimeMs: invalid project port");
         return 0;
     }
 
@@ -531,6 +621,17 @@ QString KonfytJSEngine::scriptErrorString(KfPatchLayerSharedPtr patchLayer)
     return s->env.errorString();
 }
 
+QString KonfytJSEngine::scriptErrorString(PrjMidiPortPtr prjPort)
+{
+    ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
+    if (!s) {
+        print("Error: scriptErrorString: invalid project port");
+        return "KonfytJSEngine error: invalid project port";
+    }
+
+    return s->env.errorString();
+}
+
 void KonfytJSEngine::updatePatchLayerURIs()
 {
     runInThisThread([=]()
@@ -538,6 +639,17 @@ void KonfytJSEngine::updatePatchLayerURIs()
         foreach (KfPatchLayerSharedPtr layer, layerEnvMap.keys()) {
             ScriptEnvPtr s = layerEnvMap[layer];
             s->env.uri = layer->uri;
+        }
+    });
+}
+
+void KonfytJSEngine::updateProjectPortURIs()
+{
+    runInThisThread([=]()
+    {
+        foreach (PrjMidiPortPtr prjPort, prjPortEnvMap.keys()) {
+            ScriptEnvPtr s = prjPortEnvMap[prjPort];
+            s->env.uri = prjPort->portName;
         }
     });
 }
@@ -575,11 +687,16 @@ KfJackMidiRoute *KonfytJSEngine::jackMidiRouteFromLayer(KfPatchLayerSharedPtr la
 void KonfytJSEngine::onNewMidiEventsAvailable()
 {
     // Read MIDI rx events from inter-thread buffer, and distribute to script
-    // environments based on the route.
+    // environments based on the route or port
     int n = mRxBuffer->availableToRead();
     for (int i=0; i < n; i++) {
         KfJackMidiRxEvent rxev = mRxBuffer->read();
-        ScriptEnvPtr s = routeEnvMap.value(rxev.midiRoute);
+        ScriptEnvPtr s;
+        if (rxev.midiRoute) {
+            s = routeEnvMap.value(rxev.midiRoute);
+        } else {
+            s = jackPortEnvMap.value(rxev.sourcePort);
+        }
         if (!s) { continue; }
         if (!s->env.isEnabled()) { continue; }
         s->env.addEvent(rxev.midiEvent);
@@ -588,6 +705,13 @@ void KonfytJSEngine::onNewMidiEventsAvailable()
     // Run all script environment process functions if enabled and they have
     // MIDI events to process.
     foreach (ScriptEnvPtr s, routeEnvMap.values()) {
+        if (!s->env.isEnabled()) { continue; }
+        if (s->env.eventCount() == 0) { continue; }
+        beforeScriptRun(s);
+        s->env.runProcess();
+        afterScriptRun(s);
+    }
+    foreach (ScriptEnvPtr s, jackPortEnvMap.values()) {
         if (!s->env.isEnabled()) { continue; }
         if (s->env.eventCount() == 0) { continue; }
         beforeScriptRun(s);

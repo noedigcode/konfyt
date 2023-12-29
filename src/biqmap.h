@@ -37,9 +37,23 @@ public:
         maptu.insert(a, b);
         maput.insert(b, a);
     }
+    void insert(U b, T a)
+    {
+        maptu.insert(a, b);
+        maput.insert(b, a);
+    }
 
     U value(T key) { return maptu.value(key); }
     T value(U key) { return maput.value(key); }
+
+    QList<T> leftValues()
+    {
+        return maptu.keys();
+    }
+    QList<U> rightValues()
+    {
+        return maput.keys();
+    }
 
     void remove(T key)
     {
@@ -49,7 +63,14 @@ public:
     void remove(U key)
     {
         T val = maput.take(key);
-        maput.remove(val);
+        maptu.remove(val);
+    }
+
+    bool contains(T key) {
+        return maptu.contains(key);
+    }
+    bool contains(U key) {
+        return maput.contains(key);
     }
 private:
     QMap<T, U> maptu;

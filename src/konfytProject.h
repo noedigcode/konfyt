@@ -52,6 +52,7 @@ struct PrjAudioBus
     QStringList rightOutClients;
     bool ignoreMasterGain = false;
 };
+typedef QSharedPointer<PrjAudioBus> PrjAudioBusPtr;
 
 // ============================================================================
 
@@ -65,6 +66,7 @@ struct PrjAudioInPort
     QStringList leftInClients;
     QStringList rightInClients;
 };
+typedef QSharedPointer<PrjAudioInPort> PrjAudioInPortPtr;
 
 // ============================================================================
 
@@ -74,7 +76,12 @@ struct PrjMidiPort
     QStringList clients;
     KfJackMidiPort* jackPort = nullptr; // TODO THIS MUST NOT BE IN PROJECT
     KonfytMidiFilter filter = KonfytMidiFilter::allPassFilter();
+    QString script;
+    bool scriptEnabled = false;
+    // True to pass original events through in addition to script processing.
+    bool passMidiThrough = true;
 };
+typedef QSharedPointer<PrjMidiPort> PrjMidiPortPtr;
 
 // ============================================================================
 
@@ -153,10 +160,12 @@ public:
 
     // MIDI input ports
     QList<int> midiInPort_getAllPortIds();  // Get list of port ids
+    QList<PrjMidiPortPtr> midiInPort_getAllPorts();
     int midiInPort_addPort(QString portName);
     void midiInPort_removePort(int portId);
     bool midiInPort_exists(int portId);
-    PrjMidiPort midiInPort_getPort(int portId);
+    PrjMidiPortPtr midiInPort_getPort(int portId);
+    int midiInPort_idFromPtr(PrjMidiPortPtr p);
     int midiInPort_getPortIdWithJackId(KfJackMidiPort *jackPort);
     int midiInPort_getFirstPortId(int skipId);
     int midiInPort_count();
@@ -169,10 +178,12 @@ public:
 
     // MIDI output ports
     QList<int> midiOutPort_getAllPortIds();  // Get list of port ids
+    QList<PrjMidiPortPtr> midiOutPort_getAllPorts();
     int midiOutPort_addPort(QString portName);
     void midiOutPort_removePort(int portId);
     bool midiOutPort_exists(int portId) const;
-    PrjMidiPort midiOutPort_getPort(int portId) const;
+    PrjMidiPortPtr midiOutPort_getPort(int portId) const;
+    int midiOutPort_idFromPtr(PrjMidiPortPtr p);
     int midiOutPort_count();
     void midiOutPort_setName(int portId, QString name);
     void midiOutPort_setJackPort(int portId, KfJackMidiPort* jackport);
@@ -182,10 +193,12 @@ public:
 
     // Audio input ports
     QList<int> audioInPort_getAllPortIds(); // Get list of port ids
+    QList<PrjAudioInPortPtr> audioInPort_getAllPorts();
     int audioInPort_add(QString portName);
     void audioInPort_remove(int portId);
     bool audioInPort_exists(int portId) const;
-    PrjAudioInPort audioInPort_getPort(int portId) const;
+    PrjAudioInPortPtr audioInPort_getPort(int portId) const;
+    int audioInPort_idFromPtr(PrjAudioInPortPtr p);
     int audioInPort_count();
     void audioInPort_setName(int portId, QString name);
     void audioInPort_setJackPorts(int portId, KfJackAudioPort* left, KfJackAudioPort* right);
@@ -197,11 +210,14 @@ public:
     void audioBus_remove(int busId);
     int audioBus_count();
     bool audioBus_exists(int busId);
-    PrjAudioBus audioBus_getBus(int busId);
+    PrjAudioBusPtr audioBus_getBus(int busId);
+    int audioBus_idFromPtr(PrjAudioBusPtr p);
     int audioBus_getFirstBusId(int skipId);
     QList<int> audioBus_getAllBusIds();
-    void audioBus_replace(int busId, PrjAudioBus newBus);
-    void audioBus_replace_noModify(int busId, PrjAudioBus newBus);
+    QList<PrjAudioBusPtr> audioBus_getAllBuses();
+    void audioBus_setName(int busId, QString name);
+    void audioBus_replace(int busId, PrjAudioBusPtr newBus);
+    void audioBus_replace_noModify(int busId, PrjAudioBusPtr newBus);
     void audioBus_addClient(int busId, PortLeftRight leftRight, QString client);
     void audioBus_removeClient(int busId, PortLeftRight leftRight, QString client);
 
@@ -239,6 +255,7 @@ signals:
     void print(QString msg);
     void projectModifiedStateChanged(bool modified);
     void patchURIsNeedUpdating();
+    void audioBusNameChanged(int busId);
     void midiInPortNameChanged(int portId);
     void midiOutPortNameChanged(int portId);
     void audioInPortNameChanged(int portId);
@@ -259,19 +276,27 @@ private:
     void writeToXmlStream(QXmlStreamWriter *stream);
     void readFromXmlStream(QXmlStreamReader* r);
 
-    QMap<int, PrjMidiPort> midiInPortMap;
+    QMap<int, PrjMidiPortPtr> midiInPortMap;
     int midiInPort_getUniqueId();
 
-    QMap<int, PrjMidiPort> midiOutPortMap;
+    QMap<int, PrjMidiPortPtr> midiOutPortMap;
     int midiOutPort_getUniqueId();
 
-    QMap<int, PrjAudioInPort> audioInPortMap;
+    QMap<int, PrjAudioInPortPtr> audioInPortMap;
     int audioInPort_getUniqueId();
 
-    QMap<int, PrjAudioBus> audioBusMap;
+    QMap<int, PrjAudioBusPtr> audioBusMap;
     int audioBus_getUniqueId();
 
     int getUniqueIdHelper(QList<int> ids);
+
+    struct PortScriptData {
+        QString content;
+        bool enabled = false;
+        bool passMidiThrough = true;
+    };
+    void writePortScript(QXmlStreamWriter* w, PrjMidiPortPtr prjPort) const;
+    PortScriptData readPortScript(QXmlStreamReader* r);
 
     QMap<int, ExternalApp> externalApps;
     int getUniqueExternalAppId();
@@ -332,6 +357,11 @@ private:
     const char* XML_PRJ_AUDIOIN_PORT_RGAIN = "rightGain";
     const char* XML_PRJ_AUDIOIN_PORT_LCLIENT = "leftClient";
     const char* XML_PRJ_AUDIOIN_PORT_RCLIENT = "rightClient";
+
+    const char* XML_PRJ_PORT_SCRIPT = "script";
+    const char* XML_PRJ_PORT_SCRIPT_CONTENT = "content";
+    const char* XML_PRJ_PORT_SCRIPT_ENABLED = "enabled";
+    const char* XML_PRJ_PORT_SCRIPT_PASS_MIDI_THROUGH = "passMidiThrough";
 
     // TODO DEPRECATED - replaced by EXT_APP below
     const char* XML_PRJ_PROCESSLIST = "processList";

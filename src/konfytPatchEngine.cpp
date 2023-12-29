@@ -304,7 +304,7 @@ void KonfytPatchEngine::updateLayerRouting(KfPatchLayerSharedPtr layer)
 
     KonfytPatchLayer::LayerType layerType = layer->layerType();
 
-    PrjAudioBus bus;
+    PrjAudioBusPtr bus;
     if ( (layerType == KonfytPatchLayer::TypeSoundfontProgram) ||
          (layerType == KonfytPatchLayer::TypeSfz) ||
          (layerType == KonfytPatchLayer::TypeAudioIn) )
@@ -323,8 +323,14 @@ void KonfytPatchEngine::updateLayerRouting(KfPatchLayerSharedPtr layer)
         } else {
             bus = mCurrentProject->audioBus_getBus(layer->busIdInProject());
         }
+
+        if (!bus) {
+            print(QString("Error: updateLayerRouting: bus null for layer %1")
+                  .arg(layer->uri));
+            return;
+        }
     }
-    PrjMidiPort midiInPort;
+    PrjMidiPortPtr midiInPort;
     if ( (layerType == KonfytPatchLayer::TypeSoundfontProgram) ||
          (layerType == KonfytPatchLayer::TypeSfz) ||
          (layerType == KonfytPatchLayer::TypeMidiOut) )
@@ -343,29 +349,41 @@ void KonfytPatchEngine::updateLayerRouting(KfPatchLayerSharedPtr layer)
         } else {
             midiInPort = mCurrentProject->midiInPort_getPort(layer->midiInPortIdInProject());
         }
+
+        if (!midiInPort) {
+            print(QString("Error: updateLayerRouting: midiInPort null for layer %1")
+                  .arg(layer->uri));
+            return;
+        }
     }
 
     if (layerType ==  KonfytPatchLayer::TypeSoundfontProgram) {
 
         LayerSoundfontData sfData = layer->soundfontData;
-        jack->setSoundfontRouting( sfData.portsInJackEngine, midiInPort.jackPort,
-                                   bus.leftJackPort, bus.rightJackPort );
+        jack->setSoundfontRouting( sfData.portsInJackEngine, midiInPort->jackPort,
+                                   bus->leftJackPort, bus->rightJackPort );
 
     } else if (layerType == KonfytPatchLayer::TypeSfz) {
 
         LayerSfzData pluginData = layer->sfzData;
         jack->setPluginRouting(pluginData.portsInJackEngine,
-                               midiInPort.jackPort,
-                               bus.leftJackPort, bus.rightJackPort);
+                               midiInPort->jackPort,
+                               bus->leftJackPort, bus->rightJackPort);
 
     } else if (layerType == KonfytPatchLayer::TypeMidiOut) {
 
         LayerMidiOutData portData = layer->midiOutputPortData;
         if (mCurrentProject->midiOutPort_exists(portData.portIdInProject)) {
 
-            PrjMidiPort prjMidiOutPort = mCurrentProject->midiOutPort_getPort( portData.portIdInProject );
-            jack->setMidiRoute(portData.jackRoute, midiInPort.jackPort,
-                               prjMidiOutPort.jackPort);
+            PrjMidiPortPtr prjMidiOutPort =
+                mCurrentProject->midiOutPort_getPort( portData.portIdInProject );
+            if (prjMidiOutPort) {
+                jack->setMidiRoute(portData.jackRoute, midiInPort->jackPort,
+                               prjMidiOutPort->jackPort);
+            } else {
+                print(QString("Error: updateLayerRouting: midiOutPort null for id %1")
+                      .arg(portData.portIdInProject));
+            }
 
         } else {
             print(QString("WARNING: Layer %1 invalid MIDI out port %2")
@@ -380,15 +398,21 @@ void KonfytPatchEngine::updateLayerRouting(KfPatchLayerSharedPtr layer)
         LayerAudioInData audioPortData = layer->audioInPortData;
         if (mCurrentProject->audioInPort_exists(audioPortData.portIdInProject)) {
 
-            PrjAudioInPort portPair = mCurrentProject->audioInPort_getPort(audioPortData.portIdInProject);
-            // Left channel Bus routing
-            jack->setAudioRoute(audioPortData.jackRouteLeft,
-                                portPair.leftJackPort,
-                                bus.leftJackPort);
-            // Right channel Bus routing
-            jack->setAudioRoute(audioPortData.jackRouteRight,
-                                portPair.rightJackPort,
-                                bus.rightJackPort);
+            PrjAudioInPortPtr portPair = mCurrentProject->audioInPort_getPort(
+                        audioPortData.portIdInProject);
+            if (portPair) {
+                // Left channel Bus routing
+                jack->setAudioRoute(audioPortData.jackRouteLeft,
+                                    portPair->leftJackPort,
+                                    bus->leftJackPort);
+                // Right channel Bus routing
+                jack->setAudioRoute(audioPortData.jackRouteRight,
+                                    portPair->rightJackPort,
+                                    bus->rightJackPort);
+            } else {
+                print(QString("Error: updateLayerRouting: audioInPort null for id %1")
+                      .arg(audioPortData.portIdInProject));
+            }
 
         } else {
             print(QString("WARNING: Layer %1 invalid audio input port %2")
@@ -905,45 +929,52 @@ void KonfytPatchEngine::loadAudioInputPort(KfPatchLayerSharedPtr layer)
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    PrjAudioInPort srcPorts = mCurrentProject->audioInPort_getPort(portId);
+    PrjAudioInPortPtr srcPorts = mCurrentProject->audioInPort_getPort(portId);
+    KONFYT_ASSERT_RETURN(!srcPorts.isNull());
 
     // Get destination ports (bus)
-    if (!mCurrentProject->audioBus_exists(layer->busIdInProject())) {
-        layer->setErrorMessage("No bus in project: " + n2s(portId));
+    int busId = layer->busIdInProject();
+    if (!mCurrentProject->audioBus_exists(busId)) {
+        layer->setErrorMessage("No bus in project: " + n2s(busId));
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    PrjAudioBus destPorts = mCurrentProject->audioBus_getBus(layer->busIdInProject());
+    PrjAudioBusPtr destPorts = mCurrentProject->audioBus_getBus(busId);
+    KONFYT_ASSERT_RETURN(!destPorts.isNull());
 
     // Route for left port
     layer->audioInPortData.jackRouteLeft = jack->addAudioRoute(
-                srcPorts.leftJackPort, destPorts.leftJackPort);
+                srcPorts->leftJackPort, destPorts->leftJackPort);
     // Route for right port
     layer->audioInPortData.jackRouteRight = jack->addAudioRoute(
-                srcPorts.rightJackPort, destPorts.rightJackPort);
+                srcPorts->rightJackPort, destPorts->rightJackPort);
 }
 
 void KonfytPatchEngine::loadMidiOutputPort(KfPatchLayerSharedPtr layer)
 {
     // Get source port
-    if (!mCurrentProject->midiInPort_exists(layer->midiInPortIdInProject())) {
-        layer->setErrorMessage("No MIDI-in port in project: " + n2s(layer->midiInPortIdInProject()));
+    int srcId = layer->midiInPortIdInProject();
+    if (!mCurrentProject->midiInPort_exists(srcId)) {
+        layer->setErrorMessage("No MIDI-in port in project: " + n2s(srcId));
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    PrjMidiPort srcPort = mCurrentProject->midiInPort_getPort(layer->midiInPortIdInProject());
+    PrjMidiPortPtr srcPort = mCurrentProject->midiInPort_getPort(srcId);
+    KONFYT_ASSERT_RETURN(!srcPort.isNull());
 
     // Get destination port
-    if (!mCurrentProject->midiOutPort_exists(layer->midiOutputPortData.portIdInProject)) {
-        layer->setErrorMessage("No MIDI-out port in project: " + n2s(layer->midiOutputPortData.portIdInProject));
+    int destId = layer->midiOutputPortData.portIdInProject;
+    if (!mCurrentProject->midiOutPort_exists(destId)) {
+        layer->setErrorMessage("No MIDI-out port in project: " + n2s(destId));
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    PrjMidiPort destPort = mCurrentProject->midiOutPort_getPort(layer->midiOutputPortData.portIdInProject);
+    PrjMidiPortPtr destPort = mCurrentProject->midiOutPort_getPort(destId);
+    KONFYT_ASSERT_RETURN(!destPort.isNull());
 
     // Create route
     layer->midiOutputPortData.jackRoute = jack->addMidiRoute(
-                srcPort.jackPort, destPort.jackPort);
+                srcPort->jackPort, destPort->jackPort);
 
     // Set MIDI Filter
     if (layer->midiOutputPortData.jackRoute) {

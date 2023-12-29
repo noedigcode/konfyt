@@ -56,6 +56,10 @@ protected:
     jack_port_t* jackPointer = nullptr;
     void* buffer;
     KonfytMidiFilter filter;
+    // True to block events from being sent through, for when events need to be
+    // diverted solely to scripting.
+    bool blockDirectThrough = false;
+    RingbufferQMutex<KonfytMidiEvent> eventsTxBuffer{100};
     QStringList connectionList;
     int noteOns = 0;
     bool sustainNonZero = false;
@@ -143,6 +147,7 @@ struct KonfytJackConPair
                  && (this->makeNotBreak == a.makeNotBreak) );
     }
 };
+typedef QSharedPointer<KonfytJackConPair> KonfytJackConPairPtr;
 
 struct KfJackMidiRxEvent
 {

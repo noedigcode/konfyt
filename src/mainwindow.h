@@ -484,7 +484,7 @@ private slots:
     void toggleShowPatchListNotes();
 
     // ========================================================================
-    // Connections page (Ports and buses)
+    // Connections screen (Ports and buses)
     // ========================================================================
 private:
     // portsBusesTreeMenu: Context menu when item in the tree is right-clicked on
@@ -540,6 +540,7 @@ private slots:
     void on_actionRename_BusPort_triggered();
     void on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int column);
     void on_pushButton_connectionsPage_MidiFilter_clicked();
+    void on_pushButton_connectionsPage_editScript_clicked();
 
     // ========================================================================
     // Settings
@@ -750,14 +751,19 @@ private:
     QThread scriptingThread;
     void setupScripting();
     KfPatchLayerSharedPtr scriptEditLayer;
+    PrjMidiPortPtr scriptEditPort;
     void showScriptEditorForPatchLayer(KfPatchLayerSharedPtr patchLayer);
+    void showScriptEditorForPort(PrjMidiPortPtr prjPort);
+    void showScriptEditor();
     bool scriptEditorIgnoreChanged = false;
     QTimer scriptInfoTimer;
     void updateScriptEditorErrorText(QString errorString);
 private slots:
     void onScriptInfoTimer();
-    void onScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
-                                    QString errorString);
+    void onLayerScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
+                                         QString errorString);
+    void onPortScriptErrorStatusChanged(PrjMidiPortPtr prjPort,
+                                        QString errorString);
     void on_action_Edit_Script_triggered();
 
     // ========================================================================
@@ -813,6 +819,17 @@ private:
     int addMidiInPort();
     int addMidiOutPort();
 
+    void removeAudioBusFromEngines(PrjAudioBusPtr bus);
+    void removeMidiInPortFromEngines(PrjMidiPortPtr prjPort);
+    void removeMidiOutPortFromEngines(PrjMidiPortPtr prjPort);
+    void removeAudioInPortFromEngines(PrjAudioInPortPtr prjPort);
+
+signals:
+    void audioBusRemoved(PrjAudioBusPtr bus);
+    void midiInPortRemoved(PrjMidiPortPtr prjPort);
+    void midiOutPortRemoved(PrjMidiPortPtr prjPort);
+    void audioInPortRemoved(PrjAudioInPortPtr prjPort);
+
     // ========================================================================
     // Triggers
     // ========================================================================
@@ -857,11 +874,13 @@ private slots:
     // ========================================================================
 private:
     bool jackPage_audio = true; // True to display audio ports, false for MIDI
-    void setupJackPage();
-    void showJackPage();
-    void updateJackPage();
-    void updateJackPageButtonStates();
-    void jackPage_addSelectedConnection(bool makeNotBreak);
+    void setupOtherJackConsPage();
+    void showOtherJackConsPage();
+    void showOtherJackConsPageMidi();
+    void showOtherJackConsPageAudio();
+    void updateOtherJackConsPage();
+    void updateOtherJackConsPageButtonStates();
+    void otherJackConsPage_addSelectedConnection(bool makeNotBreak);
 private slots:
     void on_pushButton_ShowJackPage_clicked();
     void on_pushButton_jackConAdd_clicked();
@@ -881,18 +900,46 @@ private slots:
     // Warnings
     // ========================================================================
 private:
-    void updateGUIWarnings();
-    void addWarning(QString warning);
+    void setupPortConnectionWarnings();
+    void setupWarningConnectionsForProject(ProjectPtr prj);
+
+    void updatePortConnectionWarnings();
+    void updateAudioBusWarnings();
+    void updateMidiInPortsWarnings();
+    void updateMidiOutPortWarnings();
+    void updateAudioInPortWarnings();
+    void updateOtherJackMidiConnectionWarnings();
+    void updateOtherJackAudioConnectionWarnings();
+
+    BiQMap<PrjAudioBusPtr, QListWidgetItem*> audioBusWarningMap;
+    BiQMap<PrjMidiPortPtr, QListWidgetItem*> midiPortWarningMap; // MIDI in and out ports
+    BiQMap<PrjAudioInPortPtr, QListWidgetItem*> audioInPortWarningMap;
+
+    QListWidgetItem* otherJackMidiConsWarningHeader = nullptr;
+    BiQMap<QListWidgetItem*, QString> otherJackMidiConsWarningMap;
+
+    QListWidgetItem* otherJackAudioConsWarningHeader = nullptr;
+    BiQMap<QListWidgetItem*, QString> otherJackAudioConsWarningMap;
+
+private slots:
+    void audioBusWarnings_onBusRemoved(PrjAudioBusPtr bus);
+    void midiPortWarnings_onPortRemoved(PrjMidiPortPtr prjPort);
+    void audioInPortWarnings_onPortRemoved(PrjAudioInPortPtr prjPort);
+    void portWarnings_onItemDoubleClicked(QListWidgetItem* item);
 
     // Script warnings
 private:
     void setupScriptingWarnings();
 
     BiQMap<KfPatchLayerSharedPtr, QListWidgetItem*> scriptWarningLayerMap;
+    BiQMap<PrjMidiPortPtr, QListWidgetItem*> scriptWarningPortMap;
 private slots:
-    void scriptWarningsOnScriptEngineErrorStatusChanged(
+    void scriptWarningsOnScriptEngineLayerErrorStatusChanged(
             KfPatchLayerSharedPtr patchLayer, QString errorString);
+    void scriptWarningsOnScriptEnginePortErrorStatusChanged(
+            PrjMidiPortPtr prjPort, QString errorString);
     void scriptWarningsOnPatchLayerUnloaded(KfPatchLayerSharedPtr patchLayer);
+    void scriptWarningsOnPortRemoved(PrjMidiPortPtr prjPort);
     void scriptWarningsOnItemDoubleClicked(QListWidgetItem* item);
 
     // ========================================================================

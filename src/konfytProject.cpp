@@ -310,10 +310,16 @@ QList<int> KonfytProject::midiInPort_getAllPortIds()
     return midiInPortMap.keys();
 }
 
+QList<PrjMidiPortPtr> KonfytProject::midiInPort_getAllPorts()
+{
+    return midiInPortMap.values();
+}
+
 int KonfytProject::midiInPort_addPort(QString portName)
 {
-    PrjMidiPort p;
-    p.portName = portName;
+    PrjMidiPortPtr p(new PrjMidiPort());
+
+    p->portName = portName;
 
     int portId = midiInPort_getUniqueId();
     midiInPortMap.insert(portId, p);
@@ -336,11 +342,18 @@ bool KonfytProject::midiInPort_exists(int portId)
     return midiInPortMap.contains(portId);
 }
 
-PrjMidiPort KonfytProject::midiInPort_getPort(int portId)
+PrjMidiPortPtr KonfytProject::midiInPort_getPort(int portId)
 {
-    KONFYT_ASSERT_RETURN_VAL(midiInPort_exists(portId), PrjMidiPort());
+    KONFYT_ASSERT_RETURN_VAL(midiInPort_exists(portId), PrjMidiPortPtr());
 
     return midiInPortMap.value(portId);
+}
+
+/* Returns the port id corresponding to the specified port pointer, or -1 if the
+ * specified port does not exist. */
+int KonfytProject::midiInPort_idFromPtr(PrjMidiPortPtr p)
+{
+    return midiInPortMap.key(p, -1);
 }
 
 int KonfytProject::midiInPort_getPortIdWithJackId(KfJackMidiPort *jackPort)
@@ -349,8 +362,8 @@ int KonfytProject::midiInPort_getPortIdWithJackId(KfJackMidiPort *jackPort)
 
     QList<int> ids = midiInPortMap.keys();
     foreach (int id, ids) {
-        PrjMidiPort p = midiInPortMap[id];
-        if (p.jackPort == jackPort) {
+        PrjMidiPortPtr p = midiInPortMap[id];
+        if (p->jackPort == jackPort) {
             ret = id;
             break;
         }
@@ -366,7 +379,7 @@ int KonfytProject::midiInPort_getFirstPortId(int skipId)
     QList<int> l = midiInPortMap.keys();
     KONFYT_ASSERT_RETURN_VAL(l.count(), ret);
 
-    for (int i=0; i<l.count(); i++) {
+    for (int i=0; i < l.count(); i++) {
         if (l[i] != skipId) {
             ret = l[i];
             break;
@@ -385,7 +398,7 @@ void KonfytProject::midiInPort_setName(int portId, QString name)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    midiInPortMap[portId].portName = name;
+    midiInPortMap[portId]->portName = name;
     setModified(true);
     emit midiInPortNameChanged(portId);
 }
@@ -394,7 +407,7 @@ void KonfytProject::midiInPort_setJackPort(int portId, KfJackMidiPort *jackport)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    midiInPortMap[portId].jackPort = jackport;
+    midiInPortMap[portId]->jackPort = jackport;
     // Do not set the project modified
 }
 
@@ -403,7 +416,7 @@ QStringList KonfytProject::midiInPort_getClients(int portId)
     QStringList ret;
     KONFYT_ASSERT_RETURN_VAL(midiInPort_exists(portId), ret);
 
-    ret = midiInPortMap.value(portId).clients;
+    ret = midiInPortMap.value(portId)->clients;
 
     return ret;
 }
@@ -412,36 +425,39 @@ void KonfytProject::midiInPort_addClient(int portId, QString client)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    PrjMidiPort p = midiInPortMap.value(portId);
-    p.clients.append(client);
-    midiInPortMap.insert(portId, p);
-    setModified(true);
+    PrjMidiPortPtr p = midiInPortMap.value(portId);
+    if (p) {
+        p->clients.append(client);
+        setModified(true);
+    }
 }
 
 void KonfytProject::midiInPort_removeClient(int portId, QString client)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    PrjMidiPort p = midiInPortMap.value(portId);
-    p.clients.removeAll(client);
-    midiInPortMap.insert(portId, p);
-    setModified(true);
+    PrjMidiPortPtr p = midiInPortMap.value(portId);
+    if (p) {
+        p->clients.removeAll(client);
+        setModified(true);
+    }
 }
 
 void KonfytProject::midiInPort_setPortFilter(int portId, KonfytMidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    PrjMidiPort p = midiInPortMap.value(portId);
-    p.filter = filter;
-    midiInPortMap.insert(portId, p);
-    setModified(true);
+    PrjMidiPortPtr p = midiInPortMap.value(portId);
+    if (p) {
+        p->filter = filter;
+        setModified(true);
+    }
 }
 
 int KonfytProject::midiOutPort_addPort(QString portName)
 {
-    PrjMidiPort p;
-    p.portName = portName;
+    PrjMidiPortPtr p(new PrjMidiPort());
+    p->portName = portName;
 
     int portId = midiOutPort_getUniqueId();
     midiOutPortMap.insert(portId, p);
@@ -483,6 +499,38 @@ int KonfytProject::getUniqueIdHelper(QList<int> ids)
         if (ids[i]>id) { id = ids[i]; }
     }
     return id+1;
+}
+
+void KonfytProject::writePortScript(QXmlStreamWriter* w, PrjMidiPortPtr prjPort) const
+{
+    w->writeStartElement(XML_PRJ_PORT_SCRIPT);
+
+    w->writeTextElement(XML_PRJ_PORT_SCRIPT_CONTENT, prjPort->script);
+    w->writeTextElement(XML_PRJ_PORT_SCRIPT_ENABLED,
+                             QVariant(prjPort->scriptEnabled).toString());
+    w->writeTextElement(XML_PRJ_PORT_SCRIPT_PASS_MIDI_THROUGH,
+                             QVariant(prjPort->passMidiThrough).toString());
+
+    w->writeEndElement(); // script
+}
+
+KonfytProject::PortScriptData KonfytProject::readPortScript(QXmlStreamReader* r)
+{
+    PortScriptData ret;
+
+    while (r->readNextStartElement()) {
+        if (r->name() == XML_PRJ_PORT_SCRIPT_CONTENT) {
+            ret.content = r->readElementText();
+        } else if (r->name() == XML_PRJ_PORT_SCRIPT_ENABLED) {
+            ret.enabled = QVariant(r->readElementText()).toBool();
+        } else if (r->name() == XML_PRJ_PORT_SCRIPT_PASS_MIDI_THROUGH) {
+            ret.passMidiThrough = QVariant(r->readElementText()).toBool();
+        } else {
+            r->skipCurrentElement();
+        }
+    }
+
+    return ret;
 }
 
 int KonfytProject::getUniqueExternalAppId()
@@ -599,6 +647,8 @@ void KonfytProject::readJackMidiConList(QXmlStreamReader* r, bool makeNotBreak)
 {
     // NB: Do not clear the jackMidiConList, as this function is called
     // separately for make and break connection lists during project load.
+    // Make and break lists are stored separately for backwards compatibility
+    // with older versions which only saved make connections.
 
     while (r->readNextStartElement()) {
         if (r->name() == XML_PRJ_OTHERJACKCON) {
@@ -635,6 +685,8 @@ void KonfytProject::readJackAudioConList(QXmlStreamReader* r, bool makeNotBreak)
 {
     // NB: Do not clear the jackAudioConList, as this function is called
     // separately for make and break connection lists during project load.
+    // Make and break lists are stored separately for backwards compatibility
+    // with older versions which only saved make connections.
 
     while (r->readNextStartElement()) {
         if (r->name() == XML_PRJ_OTHERJACKCON) {
@@ -671,8 +723,8 @@ void KonfytProject::readJackAudioConList(QXmlStreamReader* r, bool makeNotBreak)
 /* Adds bus and returns unique bus id. */
 int KonfytProject::audioBus_add(QString busName)
 {
-    PrjAudioBus bus;
-    bus.busName = busName;
+    PrjAudioBusPtr bus(new PrjAudioBus());
+    bus->busName = busName;
 
     int busId = audioBus_getUniqueId();
     audioBusMap.insert(busId, bus);
@@ -700,11 +752,18 @@ bool KonfytProject::audioBus_exists(int busId)
     return audioBusMap.contains(busId);
 }
 
-PrjAudioBus KonfytProject::audioBus_getBus(int busId)
+PrjAudioBusPtr KonfytProject::audioBus_getBus(int busId)
 {
     KONFYT_ASSERT(audioBusMap.contains(busId));
 
     return audioBusMap.value(busId);
+}
+
+/* Returns the bus id corresponding to the specified bus pointer, or -1 if the
+ * specified bus does not exist. */
+int KonfytProject::audioBus_idFromPtr(PrjAudioBusPtr p)
+{
+    return audioBusMap.key(p, -1);
 }
 
 /* Gets the first bus Id that is not skipId. */
@@ -730,14 +789,27 @@ QList<int> KonfytProject::audioBus_getAllBusIds()
     return audioBusMap.keys();
 }
 
-void KonfytProject::audioBus_replace(int busId, PrjAudioBus newBus)
+QList<PrjAudioBusPtr> KonfytProject::audioBus_getAllBuses()
+{
+    return audioBusMap.values();
+}
+
+void KonfytProject::audioBus_setName(int busId, QString name)
+{
+    KONFYT_ASSERT_RETURN(audioBus_exists(busId));
+    audioBusMap[busId]->busName = name;
+    setModified(true);
+    emit audioBusNameChanged(busId);
+}
+
+void KonfytProject::audioBus_replace(int busId, PrjAudioBusPtr newBus)
 {
     audioBus_replace_noModify(busId, newBus);
     setModified(true);
 }
 
 /* Do not change the project's modified state. */
-void KonfytProject::audioBus_replace_noModify(int busId, PrjAudioBus newBus)
+void KonfytProject::audioBus_replace_noModify(int busId, PrjAudioBusPtr newBus)
 {
     KONFYT_ASSERT_RETURN(audioBusMap.contains(busId));
 
@@ -748,17 +820,19 @@ void KonfytProject::audioBus_addClient(int busId, PortLeftRight leftRight, QStri
 {
     KONFYT_ASSERT_RETURN(audioBusMap.contains(busId));
 
-    PrjAudioBus b = audioBusMap.value(busId);
+    PrjAudioBusPtr b = audioBusMap.value(busId);
+    if (!b) { return; }
+
     if (leftRight == KonfytProject::LeftPort) {
-        if (!b.leftOutClients.contains(client)) {
-            b.leftOutClients.append(client);
+        if (!b->leftOutClients.contains(client)) {
+            b->leftOutClients.append(client);
         }
     } else {
-        if (!b.rightOutClients.contains(client)) {
-            b.rightOutClients.append(client);
+        if (!b->rightOutClients.contains(client)) {
+            b->rightOutClients.append(client);
         }
     }
-    audioBusMap.insert(busId, b);
+
     setModified(true);
 }
 
@@ -766,11 +840,13 @@ void KonfytProject::audioBus_removeClient(int busId, PortLeftRight leftRight, QS
 {
     KONFYT_ASSERT_RETURN(audioBusMap.contains(busId));
 
-    PrjAudioBus b = audioBusMap.value(busId);
+    PrjAudioBusPtr b = audioBusMap.value(busId);
+    if (!b) { return; }
+
     if (leftRight == KonfytProject::LeftPort) {
-        b.leftOutClients.removeAll(client);
+        b->leftOutClients.removeAll(client);
     } else {
-        b.rightOutClients.removeAll(client);
+        b->rightOutClients.removeAll(client);
     }
     audioBusMap.insert(busId, b);
     setModified(true);
@@ -792,10 +868,15 @@ QList<int> KonfytProject::audioInPort_getAllPortIds()
     return audioInPortMap.keys();
 }
 
+QList<PrjAudioInPortPtr> KonfytProject::audioInPort_getAllPorts()
+{
+    return audioInPortMap.values();
+}
+
 int KonfytProject::audioInPort_add(QString portName)
 {
-    PrjAudioInPort port;
-    port.portName = portName;
+    PrjAudioInPortPtr port(new PrjAudioInPort());
+    port->portName = portName;
 
     int portId = audioInPort_getUniqueId();
     audioInPortMap.insert(portId, port);
@@ -820,17 +901,22 @@ int KonfytProject::audioInPort_count()
 
 void KonfytProject::audioInPort_setName(int portId, QString name)
 {
-    KONFYT_ASSERT_RETURN(audioInPort_exists(portId));
-    audioInPortMap[portId].portName = name;
+    PrjAudioInPortPtr p = audioInPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
+
+    p->portName = name;
+
     setModified(true);
     emit audioInPortNameChanged(portId);
 }
 
 void KonfytProject::audioInPort_setJackPorts(int portId, KfJackAudioPort *left, KfJackAudioPort *right)
 {
-    KONFYT_ASSERT_RETURN(audioInPort_exists(portId));
-    audioInPortMap[portId].leftJackPort = left;
-    audioInPortMap[portId].rightJackPort = right;
+    PrjAudioInPortPtr p = audioInPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
+
+    p->leftJackPort = left;
+    p->rightJackPort = right;
     // Do not set modified
 }
 
@@ -839,42 +925,49 @@ bool KonfytProject::audioInPort_exists(int portId) const
     return audioInPortMap.contains(portId);
 }
 
-PrjAudioInPort KonfytProject::audioInPort_getPort(int portId) const
+PrjAudioInPortPtr KonfytProject::audioInPort_getPort(int portId) const
 {
     KONFYT_ASSERT(audioInPortMap.contains(portId));
 
     return audioInPortMap.value(portId);
 }
 
+/* Returns the port id corresponding to the specified port pointer, or -1 if the
+ * specified port does not exist. */
+int KonfytProject::audioInPort_idFromPtr(PrjAudioInPortPtr p)
+{
+    return audioInPortMap.key(p, -1);
+}
+
 void KonfytProject::audioInPort_addClient(int portId, PortLeftRight leftRight, QString client)
 {
-    KONFYT_ASSERT_RETURN(audioInPortMap.contains(portId));
+    PrjAudioInPortPtr p = audioInPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
 
-    PrjAudioInPort p = audioInPortMap.value(portId);
     if (leftRight == KonfytProject::LeftPort) {
-        if (!p.leftInClients.contains(client)) {
-            p.leftInClients.append(client);
+        if (!p->leftInClients.contains(client)) {
+            p->leftInClients.append(client);
         }
     } else {
-        if (!p.rightInClients.contains(client)) {
-            p.rightInClients.append(client);
+        if (!p->rightInClients.contains(client)) {
+            p->rightInClients.append(client);
         }
     }
-    audioInPortMap.insert(portId, p);
+
     setModified(true);
 }
 
 void KonfytProject::audioInPort_removeClient(int portId, PortLeftRight leftRight, QString client)
 {
-    KONFYT_ASSERT_RETURN(audioInPortMap.contains(portId));
+    PrjAudioInPortPtr p = audioInPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
 
-    PrjAudioInPort p = audioInPortMap.value(portId);
     if (leftRight == KonfytProject::LeftPort) {
-        p.leftInClients.removeAll(client);
+        p->leftInClients.removeAll(client);
     } else {
-        p.rightInClients.removeAll(client);
+        p->rightInClients.removeAll(client);
     }
-    audioInPortMap.insert(portId, p);
+
     setModified(true);
 }
 
@@ -893,16 +986,21 @@ int KonfytProject::midiOutPort_count()
 
 void KonfytProject::midiOutPort_setName(int portId, QString name)
 {
-    KONFYT_ASSERT_RETURN(midiOutPort_exists(portId));
-    midiOutPortMap[portId].portName = name;
+    PrjMidiPortPtr p = midiOutPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
+
+    p->portName = name;
+
     setModified(true);
     emit midiOutPortNameChanged(portId);
 }
 
 void KonfytProject::midiOutPort_setJackPort(int portId, KfJackMidiPort *jackport)
 {
-    KONFYT_ASSERT_RETURN(midiOutPort_exists(portId));
-    midiOutPortMap[portId].jackPort = jackport;
+    PrjMidiPortPtr p = midiOutPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
+
+    p->jackPort = jackport;
     // Do not set modified
 }
 
@@ -911,30 +1009,37 @@ bool KonfytProject::midiOutPort_exists(int portId) const
     return midiOutPortMap.contains(portId);
 }
 
-PrjMidiPort KonfytProject::midiOutPort_getPort(int portId) const
+PrjMidiPortPtr KonfytProject::midiOutPort_getPort(int portId) const
 {
     KONFYT_ASSERT(midiOutPortMap.contains(portId));
 
     return midiOutPortMap.value(portId);
 }
 
+/* Returns the port id corresponding to the specified port pointer, or -1 if the
+ * specified port does not exist. */
+int KonfytProject::midiOutPort_idFromPtr(PrjMidiPortPtr p)
+{
+    return midiOutPortMap.key(p, -1);
+}
+
 void KonfytProject::midiOutPort_addClient(int portId, QString client)
 {
-    KONFYT_ASSERT_RETURN(midiOutPortMap.contains(portId));
+    PrjMidiPortPtr p = midiOutPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
 
-    PrjMidiPort p = midiOutPortMap.value(portId);
-    p.clients.append(client);
-    midiOutPortMap.insert(portId, p);
+    p->clients.append(client);
+
     setModified(true);
 }
 
 void KonfytProject::midiOutPort_removeClient(int portId, QString client)
 {
-    KONFYT_ASSERT_RETURN(midiOutPortMap.contains(portId));
+    PrjMidiPortPtr p = midiOutPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
 
-    PrjMidiPort p = midiOutPortMap.value(portId);
-    p.clients.removeAll(client);
-    midiOutPortMap.insert(portId, p);
+    p->clients.removeAll(client);
+
     setModified(true);
 }
 
@@ -943,11 +1048,22 @@ QList<int> KonfytProject::midiOutPort_getAllPortIds()
     return midiOutPortMap.keys();
 }
 
+QList<PrjMidiPortPtr> KonfytProject::midiOutPort_getAllPorts()
+{
+    return midiOutPortMap.values();
+}
+
 QStringList KonfytProject::midiOutPort_getClients(int portId)
 {
-    KONFYT_ASSERT(midiOutPortMap.contains(portId));
+    QStringList ret;
 
-    return midiOutPortMap.value(portId).clients;
+    PrjMidiPortPtr p = midiOutPortMap.value(portId);
+    KONFYT_ASSERT(!p.isNull());
+    if (p) {
+        ret = p->clients;
+    }
+
+    return ret;
 }
 
 void KonfytProject::removeExternalApp(int id)
@@ -1236,15 +1352,15 @@ void KonfytProject::writeToXmlStream(QXmlStreamWriter* stream)
     QList<int> midiInIds = midiInPort_getAllPortIds();
     for (int i=0; i < midiInIds.count(); i++) {
         int id = midiInIds[i];
-        PrjMidiPort p = midiInPort_getPort(id);
+        PrjMidiPortPtr p = midiInPort_getPort(id);
         stream->writeStartElement(XML_PRJ_MIDI_IN_PORT);
         stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_ID, n2s(id));
-        stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_NAME, p.portName);
-        p.filter.writeToXMLStream(stream);
-        QStringList l = p.clients;
-        for (int j=0; j < l.count(); j++) {
-            stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_CLIENT, l.at(j));
+        stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_NAME, p->portName);
+        p->filter.writeToXMLStream(stream);
+        foreach (QString client, p->clients) {
+            stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_CLIENT, client);
         }
+        writePortScript(stream, p);
         stream->writeEndElement(); // end of port
     }
     stream->writeEndElement(); // end of midiInPortList
@@ -1254,13 +1370,12 @@ void KonfytProject::writeToXmlStream(QXmlStreamWriter* stream)
     QList<int> midiOutIds = midiOutPort_getAllPortIds();
     for (int i=0; i<midiOutIds.count(); i++) {
         int id = midiOutIds[i];
-        PrjMidiPort p = midiOutPort_getPort(id);
+        PrjMidiPortPtr p = midiOutPort_getPort(id);
         stream->writeStartElement(XML_PRJ_MIDI_OUT_PORT);
         stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_ID, n2s(id));
-        stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_NAME, p.portName);
-        QStringList l = p.clients;
-        for (int j=0; j<l.count(); j++) {
-            stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_CLIENT, l.at(j));
+        stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_NAME, p->portName);
+        foreach (QString client, p->clients) {
+            stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_CLIENT, client);
         }
         stream->writeEndElement(); // end of port
     }
@@ -1271,18 +1386,18 @@ void KonfytProject::writeToXmlStream(QXmlStreamWriter* stream)
     QList<int> busIds = audioBus_getAllBusIds();
     for (int i=0; i<busIds.count(); i++) {
         stream->writeStartElement(XML_PRJ_BUS);
-        PrjAudioBus b = audioBusMap.value(busIds[i]);
+        PrjAudioBusPtr b = audioBusMap.value(busIds[i]);
         stream->writeTextElement( XML_PRJ_BUS_ID, n2s(busIds[i]) );
-        stream->writeTextElement( XML_PRJ_BUS_NAME, b.busName );
-        stream->writeTextElement( XML_PRJ_BUS_LGAIN, n2s(b.leftGain) );
-        stream->writeTextElement( XML_PRJ_BUS_RGAIN, n2s(b.rightGain) );
+        stream->writeTextElement( XML_PRJ_BUS_NAME, b->busName );
+        stream->writeTextElement( XML_PRJ_BUS_LGAIN, n2s(b->leftGain) );
+        stream->writeTextElement( XML_PRJ_BUS_RGAIN, n2s(b->rightGain) );
         stream->writeTextElement( XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME,
-                                 bool2str(b.ignoreMasterGain) );
-        for (int j=0; j<b.leftOutClients.count(); j++) {
-            stream->writeTextElement( XML_PRJ_BUS_LCLIENT, b.leftOutClients.at(j) );
+                                 bool2str(b->ignoreMasterGain) );
+        foreach (QString client, b->leftOutClients) {
+            stream->writeTextElement(XML_PRJ_BUS_LCLIENT, client);
         }
-        for (int j=0; j<b.rightOutClients.count(); j++) {
-            stream->writeTextElement( XML_PRJ_BUS_RCLIENT, b.rightOutClients.at(j) );
+        foreach (QString client, b->rightOutClients) {
+            stream->writeTextElement(XML_PRJ_BUS_RCLIENT, client);
         }
         stream->writeEndElement(); // end of bus
     }
@@ -1293,17 +1408,17 @@ void KonfytProject::writeToXmlStream(QXmlStreamWriter* stream)
     QList<int> audioInIds = audioInPort_getAllPortIds();
     for (int i=0; i<audioInIds.count(); i++) {
         int id = audioInIds[i];
-        PrjAudioInPort p = audioInPort_getPort(id);
+        PrjAudioInPortPtr p = audioInPort_getPort(id);
         stream->writeStartElement(XML_PRJ_AUDIOIN_PORT);
         stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_ID, n2s(id) );
-        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_NAME, p.portName );
-        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_LGAIN, n2s(p.leftGain) );
-        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_RGAIN, n2s(p.rightGain) );
-        for (int j=0; j<p.leftInClients.count(); j++) {
-            stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_LCLIENT, p.leftInClients.at(j) );
+        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_NAME, p->portName );
+        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_LGAIN, n2s(p->leftGain) );
+        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_RGAIN, n2s(p->rightGain) );
+        foreach (QString client, p->leftInClients) {
+            stream->writeTextElement(XML_PRJ_AUDIOIN_PORT_LCLIENT, client);
         }
-        for (int j=0; j<p.rightInClients.count(); j++) {
-            stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_RCLIENT, p.rightInClients.at(j) );
+        foreach (QString client, p->rightInClients) {
+            stream->writeTextElement(XML_PRJ_AUDIOIN_PORT_RCLIENT, client);
         }
         stream->writeEndElement(); // end of port
     }
@@ -1329,6 +1444,8 @@ void KonfytProject::writeToXmlStream(QXmlStreamWriter* stream)
     stream->writeEndElement(); // end of trigger list
 
     // Write other JACK MIDI make-connections list
+    // Make and break lists are stored separately for backwards compatibility
+    // with older versions which only saved make connections.
     stream->writeStartElement(XML_PRJ_OTHERJACK_MIDI_CON_LIST);
     foreach (const KonfytJackConPair& p, jackMidiConList) {
         if (!p.makeNotBreak) { continue; }
@@ -1351,6 +1468,8 @@ void KonfytProject::writeToXmlStream(QXmlStreamWriter* stream)
     stream->writeEndElement();
 
     // Write other JACK Audio make-connections list
+    // Make and break lists are stored separately for backwards compatibility
+    // with older versions which only saved make connections.
     stream->writeStartElement(XML_PRJ_OTHERJACK_AUDIO_CON_LIST);
     foreach (const KonfytJackConPair& p, jackAudioConList) {
         if (!p.makeNotBreak) { continue; }
@@ -1446,17 +1565,22 @@ void KonfytProject::readFromXmlStream(QXmlStreamReader* r)
             } else if (r->name() == XML_PRJ_MIDI_IN_PORTLIST) {
 
                 while (r->readNextStartElement()) { // port
-                    PrjMidiPort p;
+                    PrjMidiPortPtr p(new PrjMidiPort());
                     int id = midiInPort_getUniqueId();
                     while (r->readNextStartElement()) {
                         if (r->name() == XML_PRJ_MIDI_IN_PORT_ID) {
                             id = r->readElementText().toInt();
                         } else if (r->name() == XML_PRJ_MIDI_IN_PORT_NAME) {
-                            p.portName = r->readElementText();
+                            p->portName = r->readElementText();
                         } else if (r->name() == XML_PRJ_MIDI_IN_PORT_CLIENT) {
-                            p.clients.append( r->readElementText() );
+                            p->clients.append( r->readElementText() );
                         } else if (r->name() == XML_MIDIFILTER) {
-                            p.filter.readFromXMLStream(r);
+                            p->filter.readFromXMLStream(r);
+                        } else if (r->name() == XML_PRJ_PORT_SCRIPT) {
+                            PortScriptData s = readPortScript(r);
+                            p->script = s.content;
+                            p->scriptEnabled = s.enabled;
+                            p->passMidiThrough = s.passMidiThrough;
                         } else {
                             print("loadProject: "
                                   "Unrecognized midiInPortList port element: "
@@ -1473,15 +1597,15 @@ void KonfytProject::readFromXmlStream(QXmlStreamReader* r)
             } else if (r->name() == XML_PRJ_MIDI_OUT_PORTLIST) {
 
                 while (r->readNextStartElement()) { // port
-                    PrjMidiPort p;
+                    PrjMidiPortPtr p(new PrjMidiPort());
                     int id = midiOutPort_getUniqueId();
                     while (r->readNextStartElement()) {
                         if (r->name() == XML_PRJ_MIDI_OUT_PORT_ID) {
                             id = r->readElementText().toInt();
                         } else if (r->name() == XML_PRJ_MIDI_OUT_PORT_NAME) {
-                            p.portName = r->readElementText();
+                            p->portName = r->readElementText();
                         } else if (r->name() == XML_PRJ_MIDI_OUT_PORT_CLIENT) {
-                            p.clients.append( r->readElementText() );
+                            p->clients.append( r->readElementText() );
                         } else {
                             print("loadProject: "
                                   "Unrecognized midiOutPortList port element: "
@@ -1499,23 +1623,23 @@ void KonfytProject::readFromXmlStream(QXmlStreamReader* r)
             } else if (r->name() == XML_PRJ_BUSLIST) {
 
                 while (r->readNextStartElement()) { // bus
-                    PrjAudioBus b;
+                    PrjAudioBusPtr b(new PrjAudioBus());
                     int id = audioBus_getUniqueId();
                     while (r->readNextStartElement()) {
                         if (r->name() == XML_PRJ_BUS_ID) {
                             id = r->readElementText().toInt();
                         } else if (r->name() == XML_PRJ_BUS_NAME) {
-                            b.busName = r->readElementText();
+                            b->busName = r->readElementText();
                         } else if (r->name() == XML_PRJ_BUS_LGAIN) {
-                            b.leftGain = r->readElementText().toFloat();
+                            b->leftGain = r->readElementText().toFloat();
                         } else if (r->name() == XML_PRJ_BUS_RGAIN) {
-                            b.rightGain = r->readElementText().toFloat();
+                            b->rightGain = r->readElementText().toFloat();
                         } else if (r->name() == XML_PRJ_BUS_LCLIENT) {
-                            b.leftOutClients.append( r->readElementText() );
+                            b->leftOutClients.append( r->readElementText() );
                         } else if (r->name() == XML_PRJ_BUS_RCLIENT) {
-                            b.rightOutClients.append( r->readElementText() );
+                            b->rightOutClients.append( r->readElementText() );
                         } else if (r->name() == XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME) {
-                            b.ignoreMasterGain = Qstr2bool(r->readElementText());
+                            b->ignoreMasterGain = Qstr2bool(r->readElementText());
                         } else {
                             print("loadProject: Unrecognized bus element: "
                                   + r->name().toString() );
@@ -1531,21 +1655,21 @@ void KonfytProject::readFromXmlStream(QXmlStreamReader* r)
             } else if (r->name() == XML_PRJ_AUDIOINLIST) {
 
                 while (r->readNextStartElement()) { // port
-                    PrjAudioInPort p;
+                    PrjAudioInPortPtr p(new PrjAudioInPort());
                     int id = audioInPort_getUniqueId();
                     while (r->readNextStartElement()) {
                         if (r->name() == XML_PRJ_AUDIOIN_PORT_ID) {
                             id = r->readElementText().toInt();
                         } else if (r->name() == XML_PRJ_AUDIOIN_PORT_NAME) {
-                            p.portName = r->readElementText();
+                            p->portName = r->readElementText();
                         } else if (r->name() == XML_PRJ_AUDIOIN_PORT_LGAIN) {
-                            p.leftGain = r->readElementText().toFloat();
+                            p->leftGain = r->readElementText().toFloat();
                         } else if (r->name() == XML_PRJ_AUDIOIN_PORT_RGAIN) {
-                            p.rightGain = r->readElementText().toFloat();
+                            p->rightGain = r->readElementText().toFloat();
                         } else if (r->name() == XML_PRJ_AUDIOIN_PORT_LCLIENT) {
-                            p.leftInClients.append( r->readElementText() );
+                            p->leftInClients.append( r->readElementText() );
                         } else if (r->name() == XML_PRJ_AUDIOIN_PORT_RCLIENT) {
-                            p.rightInClients.append( r->readElementText() );
+                            p->rightInClients.append( r->readElementText() );
                         } else {
                             print("loadProject: "
                                   "Unrecognized audio input port element: "

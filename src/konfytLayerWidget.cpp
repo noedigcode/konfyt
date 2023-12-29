@@ -226,7 +226,7 @@ void KonfytLayerWidget::setUpGUI()
             // TODO: setErrorMessage should not be done here, it should be set
             //       in the engine when loading the patch
             if (mProject->midiOutPort_exists(portId)) {
-                text = text + ": " + mProject->midiOutPort_getPort(portId).portName;
+                text = text + ": " + mProject->midiOutPort_getPort(portId)->portName;
             } else {
                 layer->setErrorMessage("No MIDI out port " + n2s(portId) + " in project.");
             }
@@ -250,7 +250,7 @@ void KonfytLayerWidget::setUpGUI()
             // TODO: setErrorMessage should not be done here, it should be set
             //       in the engine when loading the patch
             if (mProject->audioInPort_exists(portId)) {
-                text = text + ": " + mProject->audioInPort_getPort(portId).portName;
+                text = text + ": " + mProject->audioInPort_getPort(portId)->portName;
             } else {
                 layer->setErrorMessage("No audio in port " + n2s(portId) + " in project.");
             }
@@ -326,7 +326,7 @@ void KonfytLayerWidget::updateRightToolButton()
         int busId = layer->busIdInProject();
         if ( mProject->audioBus_exists(busId) ) {
             ui->toolButton_right->setText( n2s(busId) );
-            ui->toolButton_right->setToolTip("Bus: " + mProject->audioBus_getBus(busId).busName);
+            ui->toolButton_right->setToolTip("Bus: " + mProject->audioBus_getBus(busId)->busName);
             ui->toolButton_right->setStyleSheet("");
         } else {
             ui->toolButton_right->setText( n2s(busId) + "!" );
@@ -345,7 +345,7 @@ void KonfytLayerWidget::updateInputSideToolButton()
         int midiPortId = layer->midiInPortIdInProject();
         if (mProject->midiInPort_exists(midiPortId)) {
             QString btnTxt = QString("%1:").arg(midiPortId);
-            QString tooltip = "MIDI In Port: " + mProject->midiInPort_getPort(midiPortId).portName;
+            QString tooltip = "MIDI In Port: " + mProject->midiInPort_getPort(midiPortId)->portName;
             tooltip.append("\nMIDI Channel: ");
             int inChan = layer->midiFilter().inChan;
             if (inChan < 0) {

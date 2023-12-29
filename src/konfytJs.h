@@ -220,18 +220,26 @@ public:
     void setJackEngine(KonfytJackEngine* jackEngine);
 
     void addLayerScript(KfPatchLayerSharedPtr patchLayer);
+    void addJackPortScript(PrjMidiPortPtr prjPort);
     void removeLayerScript(KfPatchLayerSharedPtr patchLayer);
+    void removeJackPortScript(PrjMidiPortPtr prjPort);
     QString script(KfPatchLayerSharedPtr patchLayer);
+    QString script(PrjMidiPortPtr prjPort);
     void setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
+    void setScriptEnabled(PrjMidiPortPtr prjPort, bool enable);
     float scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer);
+    float scriptAverageProcessTimeMs(PrjMidiPortPtr prjPort);
     QString scriptErrorString(KfPatchLayerSharedPtr patchLayer);
+    QString scriptErrorString(PrjMidiPortPtr prjPort);
 
     void updatePatchLayerURIs();
+    void updateProjectPortURIs();
 
 signals:
     void print(QString msg);
-    void scriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
-                                  QString errorString);
+    void layerScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
+                                       QString errorString);
+    void portScriptErrorStatusChanged(PrjMidiPortPtr prjPort, QString errorString);
 
 private:
     void runInThisThread(std::function<void()> func);
@@ -246,6 +254,9 @@ private:
 
     QMap<KfJackMidiRoute*, ScriptEnvPtr> routeEnvMap;
     QMap<KfPatchLayerSharedPtr, ScriptEnvPtr> layerEnvMap;
+
+    QMap<KfJackMidiPort*, ScriptEnvPtr> jackPortEnvMap;
+    QMap<PrjMidiPortPtr, ScriptEnvPtr> prjPortEnvMap;
 
     ScriptEnvPtr runningScript;
     const int watchdogMax = 4;

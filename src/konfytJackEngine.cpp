@@ -604,6 +604,29 @@ void KonfytJackEngine::setPortGain(KfJackAudioPort *port, float gain)
     port->gain = gain;
 }
 
+bool KonfytJackEngine::sendMidiEventsOnPort(KfJackMidiPort* port, QList<KonfytMidiEvent> events)
+{
+    KONFYT_ASSERT_RETURN_VAL(port, false);
+
+    bool success = true;
+    foreach (KonfytMidiEvent event, events) {
+        success = port->eventsTxBuffer.stash(event);
+        if (!success) { break; }
+    }
+    port->eventsTxBuffer.commit();
+    if (!success) {
+        print("KonfytJackEngine::sendMidiEventsOnPort event TX buffer full.");
+    }
+    return success;
+}
+
+void KonfytJackEngine::setMidiPortBlockMidiDirectThrough(KfJackMidiPort* port, bool block)
+{
+    KONFYT_ASSERT_RETURN(port);
+
+    port->blockDirectThrough = block;
+}
+
 KfJackAudioRoute *KonfytJackEngine::addAudioRoute(KfJackAudioPort *sourcePort, KfJackAudioPort *destPort)
 {
     KfJackAudioRoute* route = addAudioRoute();
@@ -1277,7 +1300,8 @@ void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
             nevents = jack_midi_get_event_count(sourcePort->buffer);
         }
 
-        // For each midi input event...
+        // Handle each MIDI input event from JACK
+        jack_nframes_t lastEventTime = 0;
         for (jack_nframes_t i = 0; i < nevents; i++) {
 
             // Get input event
@@ -1293,125 +1317,154 @@ void KonfytJackEngine::jackProcess_processMidiInPorts(jack_nframes_t nframes)
                 continue;
             }
 
-            // Handle bank select: modify event and store bank select
-            handleBankSelect(sourcePort->bankMSB, sourcePort->bankLSB, &ev);
-
-            // Send to GUI
+            // Send to scripting
             KfJackMidiRxEvent portRxEv = { .sourcePort = sourcePort,
                                            .midiRoute = nullptr,
                                            .midiEvent = ev};
-            midiRxBuffer.stash(portRxEv);
+            if (midiRxBufferForJs->tryWrite(portRxEv)) {
+                midiForJsWritten = true;
+            }
 
-            if (panicState != NoPanic) { continue; }
+            // blockDirectThrough blocks events from going through so they
+            // are only processed by scripts.
+            if (sourcePort->blockDirectThrough) { continue; }
 
-            // For each MIDI route...
-            for (int iRoute = 0; iRoute < midiRoutes.count(); iRoute++) {
+            // Handle bank select: modify event and store bank select
+            handleBankSelect(sourcePort->bankMSB, sourcePort->bankLSB, &ev);
 
-                KfJackMidiRoute* route = midiRoutes[iRoute];
-
-                if (route->source != sourcePort) { continue; }
-                if (route->destIsJackPort && route->destPort == nullptr) { continue; }
-
-                if (!route->preFilter.passFilter(&ev)) { continue; }
-                KonfytMidiEvent preEvent = route->preFilter.modify(&ev);
-
-                if (!route->filter.passFilter(&preEvent)) { continue; }
-                KonfytMidiEvent evToSend = route->filter.modify(&preEvent);
-
-                // Handle bank select: modify event and store bank select
-                handleBankSelect(route->bankMSB, route->bankLSB, &evToSend);
-
-                bool passEvent = route->active;
-                bool guiOnly = false;
-                bool recordNoteon = false;
-                bool recordSustain = false;
-                bool recordPitchbend = false;
-
-                if (evToSend.type() == MIDI_EVENT_TYPE_NOTEOFF) {
-                    // Note-offs are handled here and not passed.
-                    passEvent = false;
-                    guiOnly = handleNoteoffEvent(evToSend, route, inEvent_jack.time);
-                } else if ( (evToSend.type() == MIDI_EVENT_TYPE_CC) && (evToSend.data1() == 64) ) {
-                    // CC 64 = Sustain. Sustain on/off action based on threshold.
-                    if (evToSend.data2() <= KONFYT_JACK_SUSTAIN_THRESH) {
-                        // Sustain zero. Pass and clear sustain if previously recorded.
-                        if ((route->sustain >> evToSend.channel) & 0x1) {
-                            // Sustain was previously recorded for this channel.
-                            // Pass this sustain-zero event (even if route inactive)
-                            passEvent = true;
-                            // Clear sustain flag for this channel
-                            route->sustain ^= (1 << evToSend.channel);
-                        }
-                    } else {
-                        recordSustain = true;
-                    }
-                } else if ( (evToSend.type() == MIDI_EVENT_TYPE_PITCHBEND) ) {
-                    if (evToSend.pitchbendValueSigned() == 0) {
-                        // Pitchbend zero
-                        if ((route->pitchbend >> evToSend.channel) & 0x1) {
-                            passEvent = true; // Pass even if route inactive
-                            route->pitchbend ^= (1 << evToSend.channel);
-                        }
-                    } else {
-                        recordPitchbend = true;
-                    }
-                } else if ( evToSend.type() == MIDI_EVENT_TYPE_NOTEON ) {
-                    int note = evToSend.note();
-                    if (!route->filter.ignoreGlobalTranspose) {
-                        note += mGlobalTranspose;
-                    }
-                    evToSend.setNote(note);
-                    if ( (note < 0) || (note > 127) ) {
-                        passEvent = false;
-                    }
-                    recordNoteon = true;
-                }
-
-                KfJackMidiRxEvent routeRxEv = { .sourcePort = nullptr,
-                                                .midiRoute = route,
-                                                .midiEvent = evToSend };
-                if (passEvent || guiOnly) {
-                    // Give to GUI
-                    midiRxBuffer.stash(routeRxEv);
-                }
-
-                // Send to Scripting. Send all events as long as route is active.
-                if (route->active) {
-                    if (midiRxBufferForJs->tryWrite(routeRxEv)) {
-                        midiForJsWritten = true;
-                    }
-                }
-
-                // blockDirectThrough blocks events from going through so they
-                // are only processed by scripts.
-                if (route->blockDirectThrough) { continue; }
-                if (!passEvent) { continue; }
-
-                // Write MIDI output
-                writeRouteMidi(route, evToSend, inEvent_jack.time);
-
-                // Record noteon, sustain or pitchbend for off events later.
-                if (recordNoteon) {
-                    KonfytJackNoteOnRecord rec;
-                    if (route->filter.ignoreGlobalTranspose) {
-                        rec.globalTranspose = 0;
-                    } else {
-                        rec.globalTranspose = mGlobalTranspose;
-                    }
-                    rec.note = evToSend.note();
-                    rec.channel = evToSend.channel;
-                    route->noteOnList.add(rec);
-                } else if (recordPitchbend) {
-                    route->pitchbend |= 1 << evToSend.channel;
-                } else if (recordSustain) {
-                    route->sustain |= 1 << evToSend.channel;
-                }
-
-            } // end of for midi route
+            jackProcess_processMidiInPortEvent(sourcePort, ev, inEvent_jack.time);
+            lastEventTime = inEvent_jack.time;
 
         } // end for each midi input event
 
+        // Handle each MIDI tx event that originated from this app, i.e. scripts
+        // (and not from JACK input)
+        sourcePort->eventsTxBuffer.startRead();
+        while (sourcePort->eventsTxBuffer.hasNext()) {
+            KonfytMidiEvent event = sourcePort->eventsTxBuffer.readNext();
+            jackProcess_processMidiInPortEvent(sourcePort, event, lastEventTime);
+        }
+        sourcePort->eventsTxBuffer.endRead();
+
+
     } // end for each midi input port
+}
+
+void KonfytJackEngine::jackProcess_processMidiInPortEvent(
+        KfJackMidiPort* sourcePort, KonfytMidiEvent ev, jack_nframes_t time)
+{
+    // Send to GUI
+    KfJackMidiRxEvent portRxEv = { .sourcePort = sourcePort,
+                                   .midiRoute = nullptr,
+                                   .midiEvent = ev};
+    midiRxBuffer.stash(portRxEv);
+
+    if (panicState != NoPanic) { return; }
+
+    // For each MIDI route...
+    for (int iRoute = 0; iRoute < midiRoutes.count(); iRoute++) {
+
+        KfJackMidiRoute* route = midiRoutes[iRoute];
+
+        if (route->source != sourcePort) { continue; }
+        if (route->destIsJackPort && route->destPort == nullptr) { continue; }
+
+        if (!route->preFilter.passFilter(&ev)) { continue; }
+        KonfytMidiEvent preEvent = route->preFilter.modify(&ev);
+
+        if (!route->filter.passFilter(&preEvent)) { continue; }
+        KonfytMidiEvent evToSend = route->filter.modify(&preEvent);
+
+        // Handle bank select: modify event and store bank select
+        handleBankSelect(route->bankMSB, route->bankLSB, &evToSend);
+
+        bool passEvent = route->active;
+        bool guiOnly = false;
+        bool recordNoteon = false;
+        bool recordSustain = false;
+        bool recordPitchbend = false;
+
+        if (evToSend.type() == MIDI_EVENT_TYPE_NOTEOFF) {
+            // Note-offs are handled here and not passed.
+            passEvent = false;
+            guiOnly = handleNoteoffEvent(evToSend, route, time);
+        } else if ( (evToSend.type() == MIDI_EVENT_TYPE_CC) && (evToSend.data1() == 64) ) {
+            // CC 64 = Sustain. Sustain on/off action based on threshold.
+            if (evToSend.data2() <= KONFYT_JACK_SUSTAIN_THRESH) {
+                // Sustain zero. Pass and clear sustain if previously recorded.
+                if ((route->sustain >> evToSend.channel) & 0x1) {
+                    // Sustain was previously recorded for this channel.
+                    // Pass this sustain-zero event (even if route inactive)
+                    passEvent = true;
+                    // Clear sustain flag for this channel
+                    route->sustain ^= (1 << evToSend.channel);
+                }
+            } else {
+                recordSustain = true;
+            }
+        } else if ( (evToSend.type() == MIDI_EVENT_TYPE_PITCHBEND) ) {
+            if (evToSend.pitchbendValueSigned() == 0) {
+                // Pitchbend zero
+                if ((route->pitchbend >> evToSend.channel) & 0x1) {
+                    passEvent = true; // Pass even if route inactive
+                    route->pitchbend ^= (1 << evToSend.channel);
+                }
+            } else {
+                recordPitchbend = true;
+            }
+        } else if ( evToSend.type() == MIDI_EVENT_TYPE_NOTEON ) {
+            int note = evToSend.note();
+            if (!route->filter.ignoreGlobalTranspose) {
+                note += mGlobalTranspose;
+            }
+            evToSend.setNote(note);
+            if ( (note < 0) || (note > 127) ) {
+                passEvent = false;
+            }
+            recordNoteon = true;
+        }
+
+        KfJackMidiRxEvent routeRxEv = { .sourcePort = nullptr,
+                                        .midiRoute = route,
+                                        .midiEvent = evToSend };
+        if (passEvent || guiOnly) {
+            // Give to GUI
+            midiRxBuffer.stash(routeRxEv);
+        }
+
+        // Send to Scripting. Send all events as long as route is active.
+        if (route->active) {
+            if (midiRxBufferForJs->tryWrite(routeRxEv)) {
+                midiForJsWritten = true;
+            }
+        }
+
+        // blockDirectThrough blocks events from going through so they
+        // are only processed by scripts.
+        if (route->blockDirectThrough) { continue; }
+        if (!passEvent) { continue; }
+
+        // Write MIDI output
+        writeRouteMidi(route, evToSend, time);
+
+        // Record noteon, sustain or pitchbend for off events later.
+        if (recordNoteon) {
+            KonfytJackNoteOnRecord rec;
+            if (route->filter.ignoreGlobalTranspose) {
+                rec.globalTranspose = 0;
+            } else {
+                rec.globalTranspose = mGlobalTranspose;
+            }
+            rec.note = evToSend.note();
+            rec.channel = evToSend.channel;
+            route->noteOnList.add(rec);
+        } else if (recordPitchbend) {
+            route->pitchbend |= 1 << evToSend.channel;
+        } else if (recordSustain) {
+            route->sustain |= 1 << evToSend.channel;
+        }
+
+    } // end of for midi route
 }
 
 void KonfytJackEngine::jackProcess_sendMidiRouteTxEvents(jack_nframes_t /*nframes*/)

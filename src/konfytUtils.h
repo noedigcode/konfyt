@@ -56,6 +56,9 @@
 /* Like KONFYT_ASSERT_RETURN with a return value. */
 #define KONFYT_ASSERT_RETURN_VAL(cond, ret) Q_ASSERT(cond); if (!(cond)) { konfytAssertMsg(__FILE__, __LINE__, __func__, #cond); return ret; }
 
+/* Like KONFYT_ASSERT but contains a continue statement for loops. */
+#define KONFYT_ASSERT_CONTINUE(cond) Q_ASSERT(cond); if (!(cond)) { konfytAssertMsg(__FILE__, __LINE__, __func__, #cond); continue; }
+
 void konfytAssertMsg(const char* file, int line, const char* func,
                      const char* text);
 

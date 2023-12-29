@@ -104,6 +104,8 @@ public:
     void removeAndDisconnectPortClient(KfJackAudioPort *port, QString mJackClient);
     void setPortFilter(KfJackMidiPort *port, KonfytMidiFilter filter);
     void setPortGain(KfJackAudioPort *port, float gain);
+    bool sendMidiEventsOnPort(KfJackMidiPort* port, QList<KonfytMidiEvent> events);
+    void setMidiPortBlockMidiDirectThrough(KfJackMidiPort* port, bool block);
 
     // Audio routes
     KfJackAudioRoute* addAudioRoute(KfJackAudioPort* sourcePort, KfJackAudioPort* destPort);
@@ -263,6 +265,9 @@ private:
     void jackProcess_prepareMidiOutBuffers(jack_nframes_t nframes);
     void jackProcess_midiPanicOutput();
     void jackProcess_processMidiInPorts(jack_nframes_t nframes);
+    void jackProcess_processMidiInPortEvent(KfJackMidiPort* sourcePort,
+                                            KonfytMidiEvent ev,
+                                            jack_nframes_t time);
     void jackProcess_sendMidiRouteTxEvents(jack_nframes_t nframes);
 };
 

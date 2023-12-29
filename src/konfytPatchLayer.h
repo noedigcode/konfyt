@@ -146,8 +146,7 @@ private:
 
     QString mScript;
     bool mScriptEnabled = false;
-    // True to pass original events through to output in addition to script
-    // processing.
+    // True to pass original events to output in addition to script processing.
     bool mPassMidiThrough = true;
 
     MidiValueController gainMidiCtrl;
