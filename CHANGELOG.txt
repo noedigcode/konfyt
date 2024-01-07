@@ -1,6 +1,25 @@
 Changelog
 =========
 
+[1.6.0] - January 2024
+----------------------
+
+Added
+
+- MIDI input port scripts.
+- Show warning when SFZ engine fails to load.
+
+Changes
+
+- Refactored warnings backend. Double-clicking on warnings now go to the
+  corresponding GUI area. Warnings text update when port names are updated.
+
+Fixes
+
+- Script warnings related crash: when port warnings appeared after a script
+  warning was active, crash would happen when script warning was removed.
+
+
 [1.5.0] - December 2023
 -----------------------
 
