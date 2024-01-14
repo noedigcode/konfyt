@@ -8,6 +8,10 @@ Added
 
 - MIDI input port scripts.
 - Show warning when SFZ engine fails to load.
+- When saving a project that was not saved before, and that still has the default
+  new project name, show an input box for the user to set the name before saving.
+- After saving/save-as, rescan the projects directory to update the project open
+  menu.
 
 Changes
 
@@ -18,6 +22,9 @@ Fixes
 
 - Script warnings related crash: when port warnings appeared after a script
   warning was active, crash would happen when script warning was removed.
+- Fix script editor OK button not doing anything after a script warning was
+  double-clicked while the script editor was already visible.
+- Correct button tooltips in MIDI send list editor.
 
 
 [1.5.0] - December 2023
