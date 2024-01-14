@@ -2269,7 +2269,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>5</number>
+                 <number>7</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -7789,9 +7789,6 @@ border-bottom-right-radius: 0;</string>
                                           <verstretch>0</verstretch>
                                          </sizepolicy>
                                         </property>
-                                        <property name="toolTip">
-                                         <string>Replace the selected item in the list</string>
-                                        </property>
                                         <property name="styleSheet">
                                          <string notr="true">border-top-left-radius: 0;
 border-bottom-left-radius: 0;
@@ -7811,9 +7808,6 @@ border-bottom-right-radius: 0;</string>
                                           <verstretch>0</verstretch>
                                          </sizepolicy>
                                         </property>
-                                        <property name="toolTip">
-                                         <string>Replace the selected item in the list</string>
-                                        </property>
                                         <property name="styleSheet">
                                          <string notr="true">border-top-left-radius: 0;
 border-bottom-left-radius: 0;
@@ -7832,9 +7826,6 @@ border-bottom-right-radius: 0;</string>
                                           <horstretch>0</horstretch>
                                           <verstretch>0</verstretch>
                                          </sizepolicy>
-                                        </property>
-                                        <property name="toolTip">
-                                         <string>Replace the selected item in the list</string>
                                         </property>
                                         <property name="styleSheet">
                                          <string notr="true">border-top-left-radius: 0;

@@ -175,10 +175,8 @@ private:
     // Project related
     // ========================================================================
 private:
-    QStringList projectDirList;
     ProjectPtr mCurrentProject;
     void setupInitialProjectFromCmdLineArgs();
-    void scanDirForProjects(QString dirname);
     ProjectPtr newProjectPtr();
     void loadNewProject();
     bool loadProjectFromFile(QString filename);
@@ -190,7 +188,6 @@ private:
     bool informedUserAboutProjectsDir = false;
     bool requestCurrentProjectClose();
 
-    void setProjectName(QString name);
     void updateProjectNameInGui();
 
     KonfytPatch* newPatchToProject();
@@ -220,6 +217,7 @@ private:
     void setProjectModified();
 private slots:
     void onProjectModifiedStateChanged(bool modified);
+    void onProjectNameChanged();
     void onProjectMidiPickupRangeChanged(int range);
 
     // ========================================================================

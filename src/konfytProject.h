@@ -125,6 +125,7 @@ class KonfytProject : public QObject
 public:
     enum PortLeftRight { LeftPort, RightPort };
 
+    static const QString NEW_PROJECT_DEFAULT_NAME;
     static const QString PROJECT_FILENAME_EXTENSION;
     static const QString PROJECT_PATCH_DIR;
     static const QString PROJECT_BACKUP_DIR;
@@ -254,6 +255,7 @@ public:
 signals:
     void print(QString msg);
     void projectModifiedStateChanged(bool modified);
+    void projectNameChanged();
     void patchURIsNeedUpdating();
     void audioBusNameChanged(int busId);
     void midiInPortNameChanged(int portId);
@@ -268,7 +270,7 @@ signals:
 private:
     QList<KonfytPatch*> patchList;
     QString mProjectDirpath;
-    QString mProjectName = "New Project";
+    QString mProjectName = NEW_PROJECT_DEFAULT_NAME;
     QString mProjectFilename;
 
     QString filenameFromProjectName();

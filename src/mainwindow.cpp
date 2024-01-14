@@ -54,7 +54,6 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     // ----------------------------------------------------
     setupInitialProjectFromCmdLineArgs();
 
-    scanDirForProjects(mProjectsDir);
     setupGuiMenuButtons();
     setupConnectionsPage();
     setupTriggersPage();
@@ -242,6 +241,17 @@ void MainWindow::shortcut_panic_activated()
  * projects dir. */
 void MainWindow::updateProjectsMenu()
 {
+    // Scan projects dir for projects
+    QStringList projectDirList;
+    if (!dirExists(mProjectsDir)) {
+        print("Projects directory does not exist: " + mProjectsDir);
+    } else {
+        projectDirList = scanDirForFiles(mProjectsDir,
+                                    KonfytProject::PROJECT_FILENAME_EXTENSION);
+    }
+
+    // Setup menu
+
     projectsMenu.clear();
     projectsMenuMap.clear();
 
@@ -252,10 +262,10 @@ void MainWindow::updateProjectsMenu()
     if (projectDirList.count() == 0) {
         projectsMenu.addAction("No projects found in project directory.");
     } else {
-        for (int i=0; i<projectDirList.count(); i++) {
-            QFileInfo fi = projectDirList[i];
+        foreach (QString dir, projectDirList) {
+            QFileInfo fi(dir);
             QAction* newAction = projectsMenu.addAction(
-                        fi.fileName().remove(KonfytProject::PROJECT_FILENAME_EXTENSION) );
+                fi.fileName().remove(KonfytProject::PROJECT_FILENAME_EXTENSION));
             newAction->setToolTip(fi.filePath());
             projectsMenuMap.insert(newAction, fi);
         }
@@ -320,9 +330,11 @@ void MainWindow::on_actionProject_SaveAs_triggered()
     // Query user for new project name
     QString oldName = prj->getProjectName();
     QString newName = QInputDialog::getText(this, "Save Project As",
-                                            "New Project Name", QLineEdit::Normal, prj->getProjectName());
+                                            "New Project Name",
+                                            QLineEdit::Normal,
+                                            prj->getProjectName());
     if (newName.isEmpty()) { return; }
-    setProjectName(newName);
+    prj->setProjectName(newName);
 
     QString oldDirPath = prj->getDirPath();
     prj->setDirPath("");
@@ -334,7 +346,7 @@ void MainWindow::on_actionProject_SaveAs_triggered()
     bool saved = saveProjectInNewDir(prj);
     if (!saved) {
         // Restore original project state
-        setProjectName(oldName);
+        prj->setProjectName(oldName);
         prj->setDirPath(oldDirPath);
         prj->setProjectFileName(oldFilename);
         prj->setModified(oldModified);
@@ -461,8 +473,12 @@ void MainWindow::showScriptEditor()
 
     updateScriptEditorErrorText(errorText);
 
-    stackedWidgetBeforeScriptEditor = ui->stackedWidget->currentWidget();
-    ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
+    // Store the current screen before showing the editor so we can return to it
+    // later. (Except if current screen is already the script editor.)
+    if (ui->stackedWidget->currentWidget() != ui->scriptingPage) {
+        stackedWidgetBeforeScriptEditor = ui->stackedWidget->currentWidget();
+        ui->stackedWidget->setCurrentWidget(ui->scriptingPage);
+    }
 
     // Highlight update button if layer script and loaded script in engine differ
     bool loadedScriptDiffers = lastLoadedScript != script;
@@ -592,6 +608,7 @@ void MainWindow::on_checkBox_script_passMidiThrough_toggled(bool checked)
 
 void MainWindow::on_pushButton_scriptEditor_OK_clicked()
 {
+    // Return to the previous screen that was stored when the script editor was shown
     if (stackedWidgetBeforeScriptEditor) {
         ui->stackedWidget->setCurrentWidget(stackedWidgetBeforeScriptEditor);
     } else {
@@ -618,17 +635,6 @@ void MainWindow::on_plainTextEdit_script_textChanged()
         }
         highlightButton(ui->pushButton_script_update, true);
         setProjectModified();
-    }
-}
-
-/* Scan given directory recursively and add project files to list. */
-void MainWindow::scanDirForProjects(QString dirname)
-{
-    if (!dirExists(dirname)) {
-        print("Projects directory does not exist: " + dirname);
-    } else {
-        projectDirList = scanDirForFiles(dirname,
-                                         KonfytProject::PROJECT_FILENAME_EXTENSION);
     }
 }
 
@@ -1122,7 +1128,6 @@ bool MainWindow::saveSettingsFile()
 void MainWindow::loadNewProject()
 {
     ProjectPtr prj = newProjectPtr();
-    prj->setProjectName("New Project");
     loadProject(prj);
 }
 
@@ -1815,6 +1820,8 @@ void MainWindow::loadProject(ProjectPtr prj)
     // Connect project signals
     connect(prj.data(), &KonfytProject::projectModifiedStateChanged,
             this, &MainWindow::onProjectModifiedStateChanged);
+    connect(prj.data(), &KonfytProject::projectNameChanged,
+            this, &MainWindow::onProjectNameChanged);
     connect(prj.data(), &KonfytProject::midiPickupRangeChanged,
             this, &MainWindow::onProjectMidiPickupRangeChanged);
 
@@ -3327,7 +3334,9 @@ void MainWindow::onPatchMidiOutPortsMenu_aboutToShow()
 
 void MainWindow::on_lineEdit_ProjectName_editingFinished()
 {
-    setProjectName(ui->lineEdit_ProjectName->text());
+    if (mCurrentProject.isNull()) { return; }
+
+    mCurrentProject->setProjectName(ui->lineEdit_ProjectName->text());
 }
 
 /* Save patch to library (in other words, to patchesDir directory.) */
@@ -3625,6 +3634,14 @@ void MainWindow::onProjectModifiedStateChanged(bool modified)
     highlightButton(ui->toolButton_Project, modified);
 }
 
+void MainWindow::onProjectNameChanged()
+{
+    KONFYT_ASSERT_RETURN(!mCurrentProject.isNull());
+
+    updateProjectNameInGui();
+    updateWindowTitle();
+}
+
 void MainWindow::onProjectMidiPickupRangeChanged(int range)
 {
     ui->spinBox_Triggers_midiPickupRange->setValue(range);
@@ -3652,6 +3669,19 @@ bool MainWindow::saveProject(ProjectPtr prj)
     // If the project directory path is empty, it means it hasn't been saved
     // yet and the user must be prompted for a directory.
     if (prj->getDirPath().isEmpty()) {
+
+        // If the project name hasn't been set yet, prompt user for name
+        if (prj->getProjectName() == KonfytProject::NEW_PROJECT_DEFAULT_NAME) {
+            QString newName = QInputDialog::getText(this, "Save Project",
+                "The project name has not been set yet. Enter a name for the project.",
+                QLineEdit::Normal, prj->getProjectName());
+            if (newName.trimmed().isEmpty()) {
+                // User clicked cancel or provided empty name. Cancel save.
+                return false;
+            }
+            prj->setProjectName(newName);
+        }
+
         // Prompt user for directory
         return saveProjectInNewDir(prj);
     } else {
@@ -3742,6 +3772,7 @@ bool MainWindow::saveProjectInNewDir(ProjectPtr prj)
     // Save the project
     if (mCurrentProject->saveProjectAs(saveDir)) {
         print("Project Saved to " + saveDir);
+        updateProjectsMenu();
         return true;
     } else {
         print("Failed to save project.");
@@ -3772,17 +3803,6 @@ bool MainWindow::requestCurrentProjectClose()
     }
 
     return true;
-}
-
-void MainWindow::setProjectName(QString name)
-{
-    // Set the name of the current project and updates the GUI.
-
-    KONFYT_ASSERT_RETURN(!mCurrentProject.isNull());
-
-    mCurrentProject->setProjectName(name);
-    updateProjectNameInGui();
-    updateWindowTitle();
 }
 
 void MainWindow::updateProjectNameInGui()

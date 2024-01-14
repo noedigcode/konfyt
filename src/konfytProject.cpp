@@ -27,6 +27,7 @@
 
 // ============================================================================
 
+const QString KonfytProject::NEW_PROJECT_DEFAULT_NAME = "New Project";
 const QString KonfytProject::PROJECT_FILENAME_EXTENSION = ".konfytproject";
 const QString KonfytProject::PROJECT_PATCH_DIR = "patches";
 const QString KonfytProject::PROJECT_BACKUP_DIR = "backup";
@@ -284,6 +285,7 @@ QString KonfytProject::getProjectName()
 void KonfytProject::setProjectName(QString newName)
 {
     mProjectName = newName;
+    emit projectNameChanged();
     setModified(true);
 }
 
