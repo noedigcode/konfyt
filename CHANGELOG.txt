@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Unreleased
+----------
+
+Fixes
+
+- Clear triggers when loading new project to prevent left-over triggers from
+  the previously loaded project.
+
+
 [1.6.0] - January 2024
 ----------------------
 

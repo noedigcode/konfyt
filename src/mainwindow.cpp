@@ -1937,14 +1937,15 @@ void MainWindow::loadProject(ProjectPtr prj)
     // External applications
     setupExternalAppsForCurrentProject();
 
-    // Get triggers from project and add to quick lookup hash
-    QList<KonfytTrigger> trigs = prj->getTriggerList();
-    QList<QAction*> actions = triggersItemActionHash.values();
-    for (int i=0; i<trigs.count(); i++) {
-        // Find action matching text
-        for (int j=0; j<actions.count(); j++) {
-            if (trigs[i].actionText == actions[j]->text()) {
-                triggersMidiActionHash.insert(trigs[i].toInt(), actions[j]);
+    // Triggers
+
+    triggersMidiActionHash.clear();
+
+    foreach (KonfytTrigger trig, prj->getTriggerList()) {
+        // Find action that matches text
+        foreach (QAction* action, triggersItemActionHash.values()) {
+            if (trig.actionText == action->text()) {
+                triggersMidiActionHash.insert(trig.toInt(), action);
             }
         }
     }
@@ -6014,7 +6015,7 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
     }
 
     // Get the appropriate action based on the key
-    QAction* action = triggersMidiActionHash[key];
+    QAction* action = triggersMidiActionHash.value(key);
 
     // Perform the action
     if (action == ui->actionPanic) {

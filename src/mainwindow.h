@@ -876,7 +876,8 @@ private:
      * Saving and loading to the project is done automatically. */
 
     QHash<QTreeWidgetItem*, QAction*> triggersItemActionHash;
-    QHash<int, QAction*> triggersMidiActionHash; // Map midi status and data1 bytes to action for fast midi event to action lookup
+    // Map an int hash of MIDI events to actions for fast lookup
+    QHash<int, QAction*> triggersMidiActionHash;
     void initTriggers();
     void setupTriggersPage();
     void showTriggersPage();
