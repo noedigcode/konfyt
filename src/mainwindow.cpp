@@ -1153,10 +1153,15 @@ void MainWindow::setupConnectionsPage()
     // Connections tree widget column widths
     ui->tree_Connections->header()->setSectionResizeMode(QHeaderView::Stretch);
     ui->tree_Connections->header()->setStretchLastSection(false);
-    ui->tree_Connections->header()->setSectionResizeMode(TREECON_COL_L, QHeaderView::Fixed);
+    ui->tree_Connections->header()->setSectionResizeMode(TREECON_COL_L,
+                                                QHeaderView::ResizeToContents);
     ui->tree_Connections->header()->resizeSection(TREECON_COL_L, 30);
-    ui->tree_Connections->header()->setSectionResizeMode(TREECON_COL_R, QHeaderView::Fixed);
+    ui->tree_Connections->header()->setSectionResizeMode(TREECON_COL_R,
+                                                QHeaderView::ResizeToContents);
     ui->tree_Connections->header()->resizeSection(TREECON_COL_R, 30);
+    ui->tree_Connections->header()->setSectionResizeMode(TREECON_COL_MIDI,
+                                                QHeaderView::ResizeToContents);
+    ui->tree_Connections->header()->resizeSection(TREECON_COL_MIDI, 30);
 
     // Set up portsBuses tree context menu
     ui->tree_portsBusses->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -1546,24 +1551,44 @@ void MainWindow::addClientPortToTree(QString jackport)
     portItem->setText(TREECON_COL_PORT, portname); // Extract port name
     clientItem->addChild(portItem);
     conPortsMap.insert(portItem, jackport);
+
     // Add checkboxes to client
-    QCheckBox* cbl = new QCheckBox();
-    QCheckBox* cbr = new QCheckBox();
-    ui->tree_Connections->setItemWidget(portItem, TREECON_COL_L, cbl);
-    connect(cbl, &QCheckBox::clicked, this, [=]()
-    {
-        checkboxes_clicked_slot(cbl);
-    });
-    conChecksMap1.insert(cbl, portItem); // Map the checkbox to the tree item
-    if ( ui->tree_portsBusses->currentItem()->parent() != midiOutParent ) { // Midi ports only have one checkbox
-        if (ui->tree_portsBusses->currentItem()->parent() != midiInParent) {
-            ui->tree_Connections->setItemWidget(portItem, TREECON_COL_R, cbr);
-            connect(cbr, &QCheckBox::clicked, this, [=]()
-            {
-                checkboxes_clicked_slot(cbr);
-            });
-            conChecksMap2.insert(cbr, portItem); // Map the checkbox to the tree item
-        }
+    QTreeWidgetItem* parent = ui->tree_portsBusses->currentItem()->parent();
+    if ((parent == midiOutParent) || (parent == midiInParent)) {
+        // MIDI port. Only one checkbox column
+        ui->tree_Connections->hideColumn(TREECON_COL_L);
+        ui->tree_Connections->hideColumn(TREECON_COL_R);
+        ui->tree_Connections->showColumn(TREECON_COL_MIDI);
+
+        QCheckBox* cb = new QCheckBox();
+        ui->tree_Connections->setItemWidget(portItem, TREECON_COL_MIDI, cb);
+        conChecksMap1.insert(cb, portItem);
+        connect(cb, &QCheckBox::clicked, this, [=]()
+        {
+            checkboxes_clicked_slot(cb);
+        });
+
+    } else {
+        // Audio port. Left and right checkbox columns.
+        ui->tree_Connections->showColumn(TREECON_COL_L);
+        ui->tree_Connections->showColumn(TREECON_COL_R);
+        ui->tree_Connections->hideColumn(TREECON_COL_MIDI);
+
+        QCheckBox* cbl = new QCheckBox();
+        ui->tree_Connections->setItemWidget(portItem, TREECON_COL_L, cbl);
+        conChecksMap1.insert(cbl, portItem);
+        connect(cbl, &QCheckBox::clicked, this, [=]()
+        {
+            checkboxes_clicked_slot(cbl);
+        });
+
+        QCheckBox* cbr = new QCheckBox();
+        ui->tree_Connections->setItemWidget(portItem, TREECON_COL_R, cbr);
+        conChecksMap2.insert(cbr, portItem);
+        connect(cbr, &QCheckBox::clicked, this, [=]()
+        {
+            checkboxes_clicked_slot(cbr);
+        });
     }
 }
 

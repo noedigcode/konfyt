@@ -2269,7 +2269,7 @@ p, li { white-space: pre-wrap; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>4</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -5670,12 +5670,17 @@ border-bottom-left-radius: 0;</string>
                          </column>
                          <column>
                           <property name="text">
-                           <string>L</string>
+                           <string>Left</string>
                           </property>
                          </column>
                          <column>
                           <property name="text">
-                           <string>R</string>
+                           <string>Right</string>
+                          </property>
+                         </column>
+                         <column>
+                          <property name="text">
+                           <string>MIDI</string>
                           </property>
                          </column>
                         </widget>

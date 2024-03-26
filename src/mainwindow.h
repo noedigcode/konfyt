@@ -84,6 +84,7 @@
 #define TREECON_COL_PORT 0
 #define TREECON_COL_L 1
 #define TREECON_COL_R 2
+#define TREECON_COL_MIDI 3
 
 #define XML_SETTINGS "settings"
 #define XML_SETTINGS_PRJDIR "projectsDir"
