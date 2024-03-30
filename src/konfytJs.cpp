@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2023 Gideon van der Kolf
+ * Copyright 2024 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -257,10 +257,51 @@ QString KonfytJSEnv::errorString()
     return mErrorString;
 }
 
+QStringList KonfytJSEnv::takePrints()
+{
+    QStringList ret = mToPrint;
+    mToPrint.clear();
+    return ret;
+}
+
+QList<KonfytMidiEvent> KonfytJSEnv::takeMidiToSend()
+{
+    QList<KonfytMidiEvent> ret = mMidiToSend;
+    mMidiToSend.clear();
+    return ret;
+}
+
 void KonfytJSEnv::sendMidi(QJSValue j)
 {
+    // Add MIDI message to the queue, to be handled later outside this class,
+    // obtained with takeMidiToSend().
+    // A queue with a max limit is used to prevent infinite loops clogging up
+    // the signals system and stalling the application.
+
     KonfytMidiEvent ev = midi.jsObjectToMidiEvent(j);
-    emit sendMidiEvent(ev);
+    if (mMidiToSend.count() < MIDI_SEND_MAX) {
+        mMidiToSend.append(ev);
+        if (mMidiToSend.count() == MIDI_SEND_MAX) {
+            mToPrint.append(QString("Maximum MIDI send count of %1 reached.")
+                            .arg(MIDI_SEND_MAX));
+        }
+    }
+}
+
+void KonfytJSEnv::print(QString msg)
+{
+    // Add print message to the queue, to be handled later outside this class,
+    // obtained with takePrints().
+    // A queue with a max limit is used to prevent infinite loops clogging up
+    // the signals system and stalling the application.
+
+    if (mToPrint.count() < PRINT_MAX) {
+        mToPrint.append(msg);
+        if (mToPrint.count() == PRINT_MAX) {
+            mToPrint.append(QString("Maximum print count of %1 reached.")
+                            .arg(PRINT_MAX));
+        }
+    }
 }
 
 void KonfytJSEnv::addProcessTime(qint64 timeNs)
@@ -434,14 +475,8 @@ void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
         ScriptEnvPtr s = layerEnvMap.value(patchLayer);
         if (!s) {
             s.reset(new ScriptEnv());
-            connect(&(s->env), &KonfytJSEnv::sendMidiEvent, this, [=](KonfytMidiEvent ev)
-            {
-                jack->sendMidiEventsOnRoute(route, {ev});
-            });
-            connect(&(s->env), &KonfytJSEnv::print, this, [=](QString msg)
-            {
-                emit print(QString("script: [%1] %2").arg(s->env.uri, msg));
-            });
+            s->route = route;
+
             connect(&(s->env), &KonfytJSEnv::errorStatusChanged,
                     this, [=](QString errorString)
             {
@@ -472,15 +507,8 @@ void KonfytJSEngine::addJackPortScript(PrjMidiPortPtr prjPort)
         ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
         if (!s) {
             s.reset(new ScriptEnv());
-            connect(&(s->env), &KonfytJSEnv::sendMidiEvent,
-                    this, [=](KonfytMidiEvent ev)
-            {
-                jack->sendMidiEventsOnPort(prjPort->jackPort, {ev});
-            });
-            connect(&(s->env), &KonfytJSEnv::print, this, [=](QString msg)
-            {
-                emit print(QString("MIDI-in port script: [%1] %2").arg(s->env.uri, msg));
-            });
+            s->prjPort = prjPort;
+
             connect(&(s->env), &KonfytJSEnv::errorStatusChanged,
                     this, [=](QString errorString)
             {
@@ -665,10 +693,22 @@ void KonfytJSEngine::beforeScriptRun(ScriptEnvPtr s)
     runningScript = s;
 }
 
-void KonfytJSEngine::afterScriptRun(ScriptEnvPtr /*s*/)
+void KonfytJSEngine::afterScriptRun(ScriptEnvPtr s)
 {
     runningScript.reset();
     watchdog = watchdogMax;
+
+    // Send all queued MIDI events
+    if (s->prjPort) {
+        jack->sendMidiEventsOnPort(s->prjPort->jackPort, s->env.takeMidiToSend());
+    } else if (s->route) {
+        jack->sendMidiEventsOnRoute(s->route, s->env.takeMidiToSend());
+    }
+
+    // Print all queued messages
+    foreach (QString msg, s->env.takePrints()) {
+        emit print(QString("script: [%1] %2").arg(s->env.uri, msg));
+    }
 }
 
 KfJackMidiRoute *KonfytJSEngine::jackMidiRouteFromLayer(KfPatchLayerSharedPtr layer)

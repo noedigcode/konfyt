@@ -13,6 +13,8 @@ Fixes
 
 - Clear triggers when loading new project to prevent left-over triggers from
   the previously loaded project.
+- Limit prints and MIDI sends from scripts in a cycle so infinite loops containing
+  these don't stall the application.
 
 
 [1.6.0] - January 2024

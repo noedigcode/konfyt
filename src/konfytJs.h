@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2023 Gideon van der Kolf
+ * Copyright 2024 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -151,14 +151,16 @@ public:
 
     QString uri;
 
+    QStringList takePrints();
+    QList<KonfytMidiEvent> takeMidiToSend();
+
 signals:
-    void print(QString msg);
     void errorStatusChanged(QString errorString);
-    void sendMidiEvent(KonfytMidiEvent ev);
 
 public slots:
-    // For use from script
     void sendMidi(QJSValue j);
+    // For use from script:
+    void print(QString msg);
 
 private:
     // NB: JS garbage collector doesn't like it if tempParent's parent is this
@@ -191,6 +193,11 @@ private:
 
     QList<KonfytMidiEvent> midiEvents;
     QJSValue jsMidiRxArray;
+
+    static const int PRINT_MAX = 1000;
+    QStringList mToPrint;
+    static const int MIDI_SEND_MAX = 1000;
+    QList<KonfytMidiEvent> mMidiToSend;
 
     // Constants
     const QString TYPE_NOTEON = "noteon";
@@ -249,6 +256,10 @@ private:
 
     struct ScriptEnv {
         KonfytJSEnv env;
+        // The script is either for a port or layer. Whichever is applicable
+        // will not be null.
+        PrjMidiPortPtr prjPort;
+        KfJackMidiRoute* route = nullptr;
     };
     typedef QSharedPointer<ScriptEnv> ScriptEnvPtr;
 
