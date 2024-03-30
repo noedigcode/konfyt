@@ -810,6 +810,7 @@ private slots:
     void on_pushButton_scripts_rescan_clicked();
     void on_treeWidget_scripts_currentItemChanged(QTreeWidgetItem *current,
                                                   QTreeWidgetItem *previous);
+    void on_tabWidget_scripting_currentChanged(int index);
 
     // ========================================================================
     // External apps

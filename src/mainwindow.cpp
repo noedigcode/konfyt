@@ -675,8 +675,10 @@ void MainWindow::on_pushButton_scripts_rescan_clicked()
             QList<KfPatchLayerWeakPtr> layers = patch->layers();
             foreach (KfPatchLayerSharedPtr layer, layers) {
                 if (!layer) { continue; }
-                if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {
-                    if (layer->script().trimmed().isEmpty()) { continue; }
+                if (layer->hasMidiInput()) {
+                    if (layer->script().trimmed().isEmpty()) {
+                        continue;
+                    }
                     QTreeWidgetItem* item = new QTreeWidgetItem();
                     item->setText(0, QString("Layer %1").arg(layer->name()));
                     item->setIcon(0, mFileIcon);
@@ -717,6 +719,19 @@ void MainWindow::on_treeWidget_scripts_currentItemChanged(
 {
     QString script = mItemScriptMap.value(current);
     ui->plainTextEdit_script_browser->setPlainText(script);
+}
+
+void MainWindow::on_tabWidget_scripting_currentChanged(int index)
+{
+    // On the first change to the scripting projects tab, rescan all projects.
+    // Note: This makes sense as the default tab is the help tab, as set in
+    // setupGuiDefaults().
+
+    if (index == ui->tabWidget_scripting->indexOf(ui->tab_scripting_projects)) {
+        if (ui->treeWidget_scripts->topLevelItemCount() == 0) {
+            on_pushButton_scripts_rescan_clicked();
+        }
+    }
 }
 
 ProjectPtr MainWindow::newProjectPtr()
