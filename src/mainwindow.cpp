@@ -204,6 +204,9 @@ void MainWindow::setupGuiDefaults()
         ui->stackedWidget->setCurrentWidget(ui->PatchPage);
     }
 
+    // Default tab in script editor sidebar
+    ui->tabWidget_scripting->setCurrentWidget(ui->tab_scripting_help);
+
     // Initialise external apps widgets
     onExternalAppItemSelectionChanged(-1); // -1 = no app selected
 }
@@ -636,6 +639,84 @@ void MainWindow::on_plainTextEdit_script_textChanged()
         highlightButton(ui->pushButton_script_update, true);
         setProjectModified();
     }
+}
+
+void MainWindow::on_pushButton_scripts_rescan_clicked()
+{
+    QStringList paths = scanDirForFiles(mProjectsDir,
+                                        KonfytProject::PROJECT_FILENAME_EXTENSION);
+
+    ui->treeWidget_scripts->clear();
+    mItemScriptMap.clear();
+
+    foreach (QString path, paths) {
+        ProjectPtr prj(new KonfytProject());
+        if (!prj->loadProject(path)) { return; }
+
+        QTreeWidgetItem* projectItem = new QTreeWidgetItem();
+
+        QList<PrjMidiPortPtr> midiInPorts = prj->midiInPort_getAllPorts();
+        foreach (PrjMidiPortPtr port, midiInPorts) {
+            if (port->script.trimmed().isEmpty()) { continue; }
+            QTreeWidgetItem* item = new QTreeWidgetItem();
+            item->setText(0, QString("Port %1").arg(port->portName));
+            item->setIcon(0, mFileIcon);
+            mItemScriptMap.insert(item, port->script);
+            projectItem->addChild(item);
+        }
+
+        QList<KonfytPatch*> patches = prj->getPatchList();
+        foreach (KonfytPatch* patch, patches) {
+
+            QTreeWidgetItem* patchItem = new QTreeWidgetItem();
+            patchItem->setText(0, QString("Patch %1").arg(patch->name()));
+            patchItem->setIcon(0, mFolderIcon);
+
+            QList<KfPatchLayerWeakPtr> layers = patch->layers();
+            foreach (KfPatchLayerSharedPtr layer, layers) {
+                if (!layer) { continue; }
+                if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+                    if (layer->script().trimmed().isEmpty()) { continue; }
+                    QTreeWidgetItem* item = new QTreeWidgetItem();
+                    item->setText(0, QString("Layer %1").arg(layer->name()));
+                    item->setIcon(0, mFileIcon);
+                    mItemScriptMap.insert(item, layer->script());
+                    patchItem->addChild(item);
+                }
+            }
+
+            if (patchItem->childCount()) {
+                projectItem->addChild(patchItem);
+            } else {
+                delete patchItem;
+            }
+
+        }
+
+        if (projectItem->childCount()) {
+            projectItem->setText(0, prj->getProjectName());
+            projectItem->setIcon(0, mFolderIcon);
+            ui->treeWidget_scripts->addTopLevelItem(projectItem);
+        } else {
+            delete projectItem;
+        }
+    }
+
+    if (ui->treeWidget_scripts->topLevelItemCount() == 0) {
+        QTreeWidgetItem* item = new QTreeWidgetItem();
+        item->setText(0, "No projects with scripts found");
+        ui->treeWidget_scripts->addTopLevelItem(item);
+    }
+
+    ui->treeWidget_scripts->sortItems(0, Qt::AscendingOrder);
+    ui->treeWidget_scripts->expandAll();
+}
+
+void MainWindow::on_treeWidget_scripts_currentItemChanged(
+        QTreeWidgetItem* current, QTreeWidgetItem* /*previous*/)
+{
+    QString script = mItemScriptMap.value(current);
+    ui->plainTextEdit_script_browser->setPlainText(script);
 }
 
 ProjectPtr MainWindow::newProjectPtr()

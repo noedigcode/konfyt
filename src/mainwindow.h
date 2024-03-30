@@ -803,6 +803,14 @@ private slots:
     void on_pushButton_scriptEditor_OK_clicked();
     void on_plainTextEdit_script_textChanged();
 
+    // Listing scripts from projects
+private:
+    QMap<QTreeWidgetItem*, QString> mItemScriptMap;
+private slots:
+    void on_pushButton_scripts_rescan_clicked();
+    void on_treeWidget_scripts_currentItemChanged(QTreeWidgetItem *current,
+                                                  QTreeWidgetItem *previous);
+
     // ========================================================================
     // External apps
     // ========================================================================
@@ -1075,7 +1083,7 @@ private slots:
 
     void on_pushButton_RestartApp_clicked();
 
-    void on_pushButton_LavaMonster_clicked();    
+    void on_pushButton_LavaMonster_clicked();
 
 };
 
