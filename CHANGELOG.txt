@@ -4,6 +4,11 @@ Changelog
 Unreleased
 ----------
 
+Added
+
+- Script editor sidebar tab listing scripts of other projects in the default
+  projects directory.
+
 Changes
 
 - MIDI port connection check boxes are now in their own "MIDI" column and the

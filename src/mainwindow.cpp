@@ -249,7 +249,7 @@ void MainWindow::updateProjectsMenu()
     if (!dirExists(mProjectsDir)) {
         print("Projects directory does not exist: " + mProjectsDir);
     } else {
-        projectDirList = scanDirForFiles(mProjectsDir,
+        projectDirList = scanDirForFilesSkipBackupSubdirs(mProjectsDir,
                                     KonfytProject::PROJECT_FILENAME_EXTENSION);
     }
 
@@ -641,15 +641,19 @@ void MainWindow::on_plainTextEdit_script_textChanged()
     }
 }
 
-void MainWindow::on_pushButton_scripts_rescan_clicked()
+/* Scan specified path for projects and extract scripts from the projects.
+ * Construct a QTreeWidgetItem tree, adding items and scripts to the specified
+ * map and returning the root item. */
+QTreeWidgetItem* MainWindow::scanProjectScripts(QString path, ItemScriptMap* map)
 {
-    QStringList paths = scanDirForFiles(mProjectsDir,
-                                        KonfytProject::PROJECT_FILENAME_EXTENSION);
+    QTreeWidgetItem* root = new QTreeWidgetItem();
+    root->setIcon(0, mFolderIcon);
 
-    ui->treeWidget_scripts->clear();
-    mItemScriptMap.clear();
+    QStringList paths = scanDirForFilesSkipBackupSubdirs(path,
+                                    KonfytProject::PROJECT_FILENAME_EXTENSION);
 
     foreach (QString path, paths) {
+
         ProjectPtr prj(new KonfytProject());
         if (!prj->loadProject(path)) { return; }
 
@@ -681,6 +685,7 @@ void MainWindow::on_pushButton_scripts_rescan_clicked()
                     }
                     QTreeWidgetItem* item = new QTreeWidgetItem();
                     item->setText(0, QString("Layer %1").arg(layer->name()));
+                    item->setToolTip(0, item->text(0));
                     item->setIcon(0, mFileIcon);
                     mItemScriptMap.insert(item, layer->script());
                     patchItem->addChild(item);
@@ -695,23 +700,67 @@ void MainWindow::on_pushButton_scripts_rescan_clicked()
 
         }
 
+        // Check backups dir
+        QString backupPath = QString("%1/%2").arg(QFileInfo(path).dir().path())
+                                        .arg(KonfytProject::PROJECT_BACKUP_DIR);
+        if (dirExists(backupPath)) {
+            QTreeWidgetItem* backupsItem = scanProjectScripts(backupPath, map);
+            if (backupsItem->childCount()) {
+                backupsItem->setText(0, KonfytProject::PROJECT_BACKUP_DIR);
+                projectItem->addChild(backupsItem);
+            } else {
+                delete backupsItem;
+            }
+        }
+
+        // Add project item to root if it has children
         if (projectItem->childCount()) {
-            projectItem->setText(0, prj->getProjectName());
+            // If the project name and dir name are not the same, add dir name
+            // in brackets. Especially useful for backups.
+            QString text = prj->getProjectName();
+            QString projectDir = QFileInfo(path).dir().dirName();
+            if (text != projectDir) {
+                text += QString(" (%1)").arg(projectDir);
+            }
+            projectItem->setText(0, text);
+            projectItem->setToolTip(0, projectItem->text(0));
             projectItem->setIcon(0, mFolderIcon);
-            ui->treeWidget_scripts->addTopLevelItem(projectItem);
+            root->addChild(projectItem);
         } else {
             delete projectItem;
         }
+
     }
 
-    if (ui->treeWidget_scripts->topLevelItemCount() == 0) {
+    return root;
+}
+
+void MainWindow::on_pushButton_scripts_rescan_clicked()
+{
+    ui->treeWidget_scripts->clear();
+    mItemScriptMap.clear();
+
+    QTreeWidgetItem* root = scanProjectScripts(mProjectsDir, &mItemScriptMap);
+    root->setText(0, "Projects");
+
+    if (root->childCount() == 0) {
         QTreeWidgetItem* item = new QTreeWidgetItem();
         item->setText(0, "No projects with scripts found");
-        ui->treeWidget_scripts->addTopLevelItem(item);
+        root->addChild(item);
     }
 
+    ui->treeWidget_scripts->addTopLevelItem(root);
+
     ui->treeWidget_scripts->sortItems(0, Qt::AscendingOrder);
+
+    // Expand all except backup dirs
     ui->treeWidget_scripts->expandAll();
+    QList<QTreeWidgetItem*> backupItems =
+            ui->treeWidget_scripts->findItems(KonfytProject::PROJECT_BACKUP_DIR,
+                                    Qt::MatchFixedString | Qt::MatchRecursive);
+    foreach (QTreeWidgetItem* item, backupItems) {
+        ui->treeWidget_scripts->setItemExpanded(item, false);
+    }
 }
 
 void MainWindow::on_treeWidget_scripts_currentItemChanged(
@@ -731,6 +780,16 @@ void MainWindow::on_tabWidget_scripting_currentChanged(int index)
         if (ui->treeWidget_scripts->topLevelItemCount() == 0) {
             on_pushButton_scripts_rescan_clicked();
         }
+    }
+}
+
+void MainWindow::on_treeWidget_scripts_itemClicked(QTreeWidgetItem* item, int /*column*/)
+{
+    // Expand / unexpand item due to click (makes things a lot easier)
+    // Note (2022-10-27, Ubuntu Studio 22.04, KDE Plasma 5.24.6) calling setExpaned
+    // for leaf items interferes with the itemDoubleClicked signal.
+    if (item->childCount()) {
+        item->setExpanded(!item->isExpanded());
     }
 }
 
@@ -3010,7 +3069,8 @@ bool MainWindow::dirExists(QString dirname)
     return dir.exists();
 }
 
-QStringList MainWindow::scanDirForFiles(QString dirname, QString filenameExtension)
+QStringList MainWindow::scanDirForFilesSkipBackupSubdirs(QString dirname,
+                                                QString filenameExtension)
 {
     QStringList ret;
 
@@ -3045,7 +3105,7 @@ QStringList MainWindow::scanDirForFiles(QString dirname, QString filenameExtensi
         } else if (fi.isDir()) {
             // Scan the dir if it is not a backup dir
             if (fi.fileName() != KonfytProject::PROJECT_BACKUP_DIR) {
-                ret.append(scanDirForFiles(fi.filePath(), filenameExtension));
+                ret.append(scanDirForFilesSkipBackupSubdirs(fi.filePath(), filenameExtension));
             }
         }
     }
@@ -8300,7 +8360,7 @@ void MainWindow::addSavedMidiSendItem(MidiSendItem item)
 void MainWindow::loadSavedMidiSendItems(QString dirname)
 {
     print("Scanning for MIDI Send Message presets...");
-    QStringList files = scanDirForFiles(dirname);
+    QStringList files = scanDirForFilesSkipBackupSubdirs(dirname);
 
     foreach (QString filename, files) {
         QFile file(filename);

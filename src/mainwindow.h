@@ -165,7 +165,8 @@ private:
     int msgBoxYesNo(QString text, QString infoText = "");
     int msgBoxYesNoCancel(QString text, QString infoText = "");
     bool dirExists(QString dirname);
-    QStringList scanDirForFiles(QString dirname, QString filenameExtension = "");
+    QStringList scanDirForFilesSkipBackupSubdirs(QString dirname,
+                                                 QString filenameExtension = "");
     void openFileManager(QString path);
 
     // Widget helper functions
@@ -805,12 +806,16 @@ private slots:
 
     // Listing scripts from projects
 private:
-    QMap<QTreeWidgetItem*, QString> mItemScriptMap;
+    typedef QMap<QTreeWidgetItem*, QString> ItemScriptMap;
+    ItemScriptMap mItemScriptMap;
+
+    QTreeWidgetItem* scanProjectScripts(QString path, ItemScriptMap* map);
 private slots:
     void on_pushButton_scripts_rescan_clicked();
     void on_treeWidget_scripts_currentItemChanged(QTreeWidgetItem *current,
                                                   QTreeWidgetItem *previous);
     void on_tabWidget_scripting_currentChanged(int index);
+    void on_treeWidget_scripts_itemClicked(QTreeWidgetItem *item, int column);
 
     // ========================================================================
     // External apps
