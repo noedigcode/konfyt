@@ -759,7 +759,7 @@ void MainWindow::on_pushButton_scripts_rescan_clicked()
             ui->treeWidget_scripts->findItems(KonfytProject::PROJECT_BACKUP_DIR,
                                     Qt::MatchFixedString | Qt::MatchRecursive);
     foreach (QTreeWidgetItem* item, backupItems) {
-        ui->treeWidget_scripts->setItemExpanded(item, false);
+        item->setExpanded(false);
     }
 }
 
