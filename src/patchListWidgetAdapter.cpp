@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2022 Gideon van der Kolf
+ * Copyright 2024 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -21,23 +21,24 @@
 
 #include "patchListWidgetAdapter.h"
 
+
 PatchListWidgetAdapter::PatchListWidgetAdapter(QObject *parent) : QObject(parent)
 {
 
 }
 
-void PatchListWidgetAdapter::init(QListWidget *listWidget)
+void PatchListWidgetAdapter::init(GidListWidget* listWidget)
 {
-    w = listWidget;
-    connect(w, &QListWidget::currentItemChanged,
+    mListWidget = listWidget;
+    connect(mListWidget, &GidListWidget::currentItemChanged,
             this, &PatchListWidgetAdapter::onListWidgetCurrentChanged);
-    connect(w->model(), &QAbstractItemModel::rowsMoved,
-            this, &PatchListWidgetAdapter::onListWidgetModelRowsMoved);
+    connect(mListWidget, &GidListWidget::itemMoved,
+            this, &PatchListWidgetAdapter::onListWidgetItemMoved);
 }
 
 void PatchListWidgetAdapter::addPatch(KonfytPatch *patch)
 {
-    insertPatch(patch, w->count());
+    insertPatch(patch, mListWidget->count());
 }
 
 void PatchListWidgetAdapter::insertPatch(KonfytPatch *patch, int index)
@@ -48,7 +49,7 @@ void PatchListWidgetAdapter::insertPatch(KonfytPatch *patch, int index)
     data.item = new QListWidgetItem();
     patchDataMap.insert(patch, data);
     itemPatchMap.insert(data.item, patch);
-    w->insertItem(index, data.item);
+    mListWidget->insertItem(index, data.item);
     updatePatchItem(patch);
 }
 
@@ -79,25 +80,25 @@ void PatchListWidgetAdapter::clear()
 {
     patchDataMap.clear();
     itemPatchMap.clear();
-    w->clear();
+    mListWidget->clear();
 }
 
 void PatchListWidgetAdapter::moveSelectedPatchUp()
 {
-    int from = w->currentRow();
+    int from = mListWidget->currentRow();
     if (from < 0) { return; }
     int to = from - 1;
-    if (to < 0) { to = w->count()-1; }
+    if (to < 0) { to = mListWidget->count()-1; }
     moveItem(from, to);
     emit patchMoved(from, to);
 }
 
 void PatchListWidgetAdapter::moveSelectedPatchDown()
 {
-    int from = w->currentRow();
+    int from = mListWidget->currentRow();
     if (from < 0) { return; }
     int to = from + 1;
-    if (to >= w->count()) { to = 0; }
+    if (to >= mListWidget->count()) { to = 0; }
     moveItem(from, to);
     emit patchMoved(from, to);
 }
@@ -133,8 +134,10 @@ void PatchListWidgetAdapter::setCurrentPatch(KonfytPatch *patch)
     if (patch) { updatePatchIcon(patch); }
 
     QListWidgetItem* item = nullptr;
-    if (patchDataMap.contains(patch)) { item = patchDataMap.value(patch).item; }
-    w->setCurrentItem(item);
+    if (patchDataMap.contains(patch)) {
+        item = patchDataMap.value(patch).item;
+    }
+    mListWidget->setCurrentItem(item);
 }
 
 void PatchListWidgetAdapter::onListWidgetCurrentChanged(QListWidgetItem *item)
@@ -143,18 +146,9 @@ void PatchListWidgetAdapter::onListWidgetCurrentChanged(QListWidgetItem *item)
     emit patchSelected(patch);
 }
 
-void PatchListWidgetAdapter::onListWidgetModelRowsMoved(
-        const QModelIndex& /*parent*/, int start, int /*end*/,
-        const QModelIndex& /*destination*/, int row)
+void PatchListWidgetAdapter::onListWidgetItemMoved(QListWidgetItem* /*item*/,
+                                                   int from, int to)
 {
-    int from = start;
-    int to = row;
-    // The destination row is the row number to which the item is to be moved
-    // before it has been removed from the list. Thus, to get the destination
-    // row after the item has been moved (i.e. as if calling list.take(from) and
-    // then list.insert(to)), "to" becomes one less if the destination row is
-    // higher than the source (start) row.
-    if (from < to) { to--; }
     emit patchMoved(from, to);
     updateAll();
 }
@@ -164,7 +158,7 @@ void PatchListWidgetAdapter::updatePatchItem(KonfytPatch *patch)
     KONFYT_ASSERT_RETURN(patchDataMap.contains(patch));
     PatchData data = patchDataMap.value(patch);
 
-    int index = w->row(data.item);
+    int index = mListWidget->row(data.item);
     QString txt;
     if (mNumbersVisible) {
         txt.append(QString("%1 ").arg(index+1));
@@ -213,13 +207,13 @@ void PatchListWidgetAdapter::updateAll()
 
 void PatchListWidgetAdapter::moveItem(int indexFrom, int indexTo)
 {
-    KONFYT_ASSERT_RETURN( (indexTo >= 0) && (indexTo <= w->count()) );
+    KONFYT_ASSERT_RETURN( (indexTo >= 0) && (indexTo <= mListWidget->count()) );
 
-    w->blockSignals(true);
-    QListWidgetItem* item = w->takeItem(indexFrom);
+    mListWidget->blockSignals(true);
+    QListWidgetItem* item = mListWidget->takeItem(indexFrom);
     KONFYT_ASSERT(item);
-    w->insertItem(indexTo, item);
-    w->setCurrentItem(item);
-    w->blockSignals(false);
+    mListWidget->insertItem(indexTo, item);
+    mListWidget->setCurrentItem(item);
+    mListWidget->blockSignals(false);
     updateAll();
 }

@@ -17,6 +17,7 @@ TEMPLATE = app
 INCLUDEPATH += src
 
 SOURCES += src/main.cpp\
+    src/GidListWidget.cpp \
     src/consolewindow.cpp \
     src/indicatorHandlers.cpp \
     src/konfytAudio.cpp \
@@ -48,6 +49,7 @@ SOURCES += src/main.cpp\
     src/scriptEditWidget.cpp
 
 HEADERS  += src/mainwindow.h \
+    src/GidListWidget.h \
     src/biqmap.h \
     src/consolewindow.h \
     src/indicatorHandlers.h \

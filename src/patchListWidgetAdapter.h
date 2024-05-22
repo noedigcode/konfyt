@@ -1,6 +1,6 @@
 /******************************************************************************
  *
- * Copyright 2022 Gideon van der Kolf
+ * Copyright 2024 Gideon van der Kolf
  *
  * This file is part of Konfyt.
  *
@@ -22,10 +22,10 @@
 #ifndef PATCHLISTWIDGETADAPTER_H
 #define PATCHLISTWIDGETADAPTER_H
 
+#include "GidListWidget.h"
 #include "konfytUtils.h"
 #include "konfytPatch.h"
 
-#include <QListWidget>
 #include <QListWidgetItem>
 #include <QMap>
 #include <QObject>
@@ -36,7 +36,7 @@ class PatchListWidgetAdapter : public QObject
 public:
     explicit PatchListWidgetAdapter(QObject *parent = nullptr);
 
-    void init(QListWidget* listWidget);
+    void init(GidListWidget* listWidget);
     void addPatch(KonfytPatch* patch);
     void insertPatch(KonfytPatch* patch, int index);
     void addPatches(QList<KonfytPatch*> patches);
@@ -63,7 +63,7 @@ private:
     };
     const QString notenames = "CDEFGAB";
 
-    QListWidget* w = nullptr;
+    GidListWidget* mListWidget = nullptr;
     QMap<KonfytPatch*, PatchData> patchDataMap;
     QMap<QListWidgetItem*, KonfytPatch*> itemPatchMap;
     bool mNumbersVisible = true;
@@ -72,9 +72,7 @@ private:
 
 private slots:
     void onListWidgetCurrentChanged(QListWidgetItem* item);
-    void onListWidgetModelRowsMoved(const QModelIndex &parent, int start,
-                                    int end, const QModelIndex &destination,
-                                    int row);
+    void onListWidgetItemMoved(QListWidgetItem* item, int from, int to);
     void updatePatchItem(KonfytPatch* patch);
     void updatePatchIcon(KonfytPatch* patch);
     void updateAll();

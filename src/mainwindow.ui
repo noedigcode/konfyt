@@ -2510,7 +2510,7 @@ p, li { white-space: pre-wrap; }
                           </widget>
                          </item>
                          <item>
-                          <widget class="QListWidget" name="listWidget_Patches">
+                          <widget class="GidListWidget" name="listWidget_Patches">
                            <property name="sizePolicy">
                             <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
                              <horstretch>0</horstretch>
@@ -2534,9 +2534,6 @@ p, li { white-space: pre-wrap; }
                            </property>
                            <property name="dragEnabled">
                             <bool>true</bool>
-                           </property>
-                           <property name="dragDropMode">
-                            <enum>QAbstractItemView::InternalMove</enum>
                            </property>
                           </widget>
                          </item>
@@ -11056,6 +11053,11 @@ p, li { white-space: pre-wrap; }
    <class>ScriptEditWidget</class>
    <extends>QPlainTextEdit</extends>
    <header>scriptEditWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>GidListWidget</class>
+   <extends>QListWidget</extends>
+   <header>GidListWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>
