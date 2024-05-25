@@ -1,6 +1,14 @@
 Changelog
 =========
 
+[1.6.2] - Unreleased
+--------------------
+
+Fixes
+
+- Fix occasional crashes when reordering pathces with drag and drop.
+
+
 [1.6.1] - April 2024
 --------------------
 
