@@ -226,7 +226,7 @@ public:
     KonfytJSEngine(QObject* parent= nullptr);
     void setJackEngine(KonfytJackEngine* jackEngine);
 
-    void addLayerScript(KfPatchLayerSharedPtr patchLayer);
+    void addOrUpdateLayerScript(KfPatchLayerSharedPtr patchLayer);
     void addJackPortScript(PrjMidiPortPtr prjPort);
     void removeLayerScript(KfPatchLayerSharedPtr patchLayer);
     void removeJackPortScript(PrjMidiPortPtr prjPort);
@@ -268,6 +268,12 @@ private:
 
     QMap<KfJackMidiPort*, ScriptEnvPtr> jackPortEnvMap;
     QMap<PrjMidiPortPtr, ScriptEnvPtr> prjPortEnvMap;
+
+    // Lists for use in GUI thread. These are kept in sync with the maps above
+    // used in the JS thread. Separate containers are used in different threads
+    // to prevent race conditions.
+    QSet<KfPatchLayerSharedPtr> layers_guiThread;
+    QSet<PrjMidiPortPtr> ports_guiThread;
 
     ScriptEnvPtr runningScript;
     const int watchdogMax = 4;

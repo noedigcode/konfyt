@@ -458,14 +458,24 @@ void KonfytJSEngine::setJackEngine(KonfytJackEngine *jackEngine)
             Qt::QueuedConnection);
 }
 
-void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
+void KonfytJSEngine::addOrUpdateLayerScript(KfPatchLayerSharedPtr patchLayer)
 {
+    if (!patchLayer) {
+        print("Error: addLayerScript: null patchLayer");
+        return;
+    }
+
+    // Extract required info as we don't want to access patchLayer members in
+    // the other thread to prevent race conditions
+    QString uri = patchLayer->uri;
+    QString script = patchLayer->script();
+    bool isScriptEnabled = patchLayer->isScriptEnabled();
+
+    layers_guiThread.insert(patchLayer);
+
     runInThisThread([=]()
     {
-        if (!patchLayer) {
-            print("Error: addLayerScript: null patchLayer");
-            return;
-        }
+
         KfJackMidiRoute* route = jackMidiRouteFromLayer(patchLayer);
         if (!route) {
             print("Error: addLayerScript: null Jack MIDI route");
@@ -482,28 +492,36 @@ void KonfytJSEngine::addLayerScript(KfPatchLayerSharedPtr patchLayer)
             {
                 emit layerScriptErrorStatusChanged(patchLayer, errorString);
             });
-            s->env.uri = patchLayer->uri;
+            s->env.uri = uri;
 
             routeEnvMap.insert(route, s);
             layerEnvMap.insert(patchLayer, s);
         }
 
         beforeScriptRun(s);
-        s->env.setScriptAndInitIfEnabled(patchLayer->script(),
-                                         patchLayer->isScriptEnabled());
+        s->env.setScriptAndInitIfEnabled(script, isScriptEnabled);
         afterScriptRun(s);
     });
 }
 
 void KonfytJSEngine::addJackPortScript(PrjMidiPortPtr prjPort)
 {
+    if (!prjPort) {
+        print("Error: addJackPortScript: null port");
+        return;
+    }
+
+    // Extract required info as we don't want to access prjPort members in
+    // the other thread to prevent race conditions
+    QString uri = prjPort->portName;
+    QString script = prjPort->script;
+    bool isScriptEnabled = prjPort->scriptEnabled;
+    KfJackMidiPort* jackPort = prjPort->jackPort;
+
+    ports_guiThread.insert(prjPort);
+
     runInThisThread([=]()
     {
-        if (!prjPort) {
-            print("Error: addJackPortScript: null port");
-            return;
-        }
-
         ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
         if (!s) {
             s.reset(new ScriptEnv());
@@ -514,20 +532,22 @@ void KonfytJSEngine::addJackPortScript(PrjMidiPortPtr prjPort)
             {
                 emit portScriptErrorStatusChanged(prjPort, errorString);
             });
-            s->env.uri = prjPort->portName;
+            s->env.uri = uri;
 
-            jackPortEnvMap.insert(prjPort->jackPort, s);
+            jackPortEnvMap.insert(jackPort, s);
             prjPortEnvMap.insert(prjPort, s);
         }
 
         beforeScriptRun(s);
-        s->env.setScriptAndInitIfEnabled(prjPort->script, prjPort->scriptEnabled);
+        s->env.setScriptAndInitIfEnabled(script, isScriptEnabled);
         afterScriptRun(s);
     });
 }
 
 void KonfytJSEngine::removeLayerScript(KfPatchLayerSharedPtr patchLayer)
 {
+    layers_guiThread.remove(patchLayer);
+
     runInThisThread([=]()
     {
         ScriptEnvPtr s = layerEnvMap.value(patchLayer);
@@ -543,6 +563,8 @@ void KonfytJSEngine::removeLayerScript(KfPatchLayerSharedPtr patchLayer)
 
 void KonfytJSEngine::removeJackPortScript(PrjMidiPortPtr prjPort)
 {
+    ports_guiThread.remove(prjPort);
+
     runInThisThread([=]()
     {
         ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
@@ -560,11 +582,11 @@ QString KonfytJSEngine::script(KfPatchLayerSharedPtr patchLayer)
 {
     QString ret;
 
-    ScriptEnvPtr s = layerEnvMap.value(patchLayer);
+    ScriptEnvPtr s = layerEnvMap.value(patchLayer); // TODO WARNING: CROSSES THREAD BOUNDARY
     if (!s) {
         print("Error: script: invalid patch layer");
     } else {
-        ret = s->env.script();
+        ret = s->env.script(); // TODO WARNING: CROSSES THREAD BOUNDARY
     }
 
     return ret;
@@ -574,17 +596,18 @@ QString KonfytJSEngine::script(PrjMidiPortPtr prjPort)
 {
     QString ret;
 
-    ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
+    ScriptEnvPtr s = prjPortEnvMap.value(prjPort); // TODO WARNING: CROSSES THREAD BOUNDARY
     if (!s) {
         print("Error: script: invalid project port");
     } else {
-        ret = s->env.script();
+        ret = s->env.script(); // TODO WARNING: CROSSES THREAD BOUNDARY
     }
 
     return ret;
 }
 
-void KonfytJSEngine::setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable)
+void KonfytJSEngine::setScriptEnabled(KfPatchLayerSharedPtr patchLayer,
+                                      bool enable)
 {
     runInThisThread([=]()
     {
@@ -618,66 +641,80 @@ void KonfytJSEngine::setScriptEnabled(PrjMidiPortPtr prjPort, bool enable)
 
 float KonfytJSEngine::scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer)
 {
-    ScriptEnvPtr s = layerEnvMap.value(patchLayer);
+    ScriptEnvPtr s = layerEnvMap.value(patchLayer); // TODO WARNING: CROSSES THREAD BOUNDARY
     if (!s) {
         print("Error: scriptAverageProcessTimeMs: invalid patch layer");
         return 0;
     }
 
-    return s->env.getAverageProcessTimeMs();
+    return s->env.getAverageProcessTimeMs(); // TODO WARNING: CROSSES THREAD BOUNDARY
 }
 
 float KonfytJSEngine::scriptAverageProcessTimeMs(PrjMidiPortPtr prjPort)
 {
-    ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
+    ScriptEnvPtr s = prjPortEnvMap.value(prjPort); // TODO WARNING: CROSSES THREAD BOUNDARY
     if (!s) {
         print("Error: scriptAverageProcessTimeMs: invalid project port");
         return 0;
     }
 
-    return s->env.getAverageProcessTimeMs();
+    return s->env.getAverageProcessTimeMs(); // TODO WARNING: CROSSES THREAD BOUNDARY
 }
 
 QString KonfytJSEngine::scriptErrorString(KfPatchLayerSharedPtr patchLayer)
 {
-    ScriptEnvPtr s = layerEnvMap.value(patchLayer);
+    ScriptEnvPtr s = layerEnvMap.value(patchLayer); // TODO WARNING: CROSSES THREAD BOUNDARY
     if (!s) {
         print("Error: scriptErrorString: invalid patch layer");
         return "KonfytJSEngine error: invalid patch layer";
     }
 
-    return s->env.errorString();
+    return s->env.errorString(); // TODO WARNING: CROSSES THREAD BOUNDARY
 }
 
 QString KonfytJSEngine::scriptErrorString(PrjMidiPortPtr prjPort)
 {
-    ScriptEnvPtr s = prjPortEnvMap.value(prjPort);
+    ScriptEnvPtr s = prjPortEnvMap.value(prjPort); // TODO WARNING: CROSSES THREAD BOUNDARY
     if (!s) {
         print("Error: scriptErrorString: invalid project port");
         return "KonfytJSEngine error: invalid project port";
     }
 
-    return s->env.errorString();
+    return s->env.errorString(); // TODO WARNING: CROSSES THREAD BOUNDARY
 }
 
 void KonfytJSEngine::updatePatchLayerURIs()
 {
+    // Separate URIs from layers to pass over thread boundary as layer members
+    // should not be accessed in other thread
+    QMap<KfPatchLayerSharedPtr, QString> uris;
+    foreach (KfPatchLayerSharedPtr layer, layers_guiThread) {
+        uris.insert(layer, layer->uri);
+    }
+
     runInThisThread([=]()
     {
         foreach (KfPatchLayerSharedPtr layer, layerEnvMap.keys()) {
             ScriptEnvPtr s = layerEnvMap[layer];
-            s->env.uri = layer->uri;
+            s->env.uri = uris.value(layer);
         }
     });
 }
 
 void KonfytJSEngine::updateProjectPortURIs()
 {
+    // Separate URIs from layers to pass over thread boundary as layer members
+    // should not be accessed in other thread
+    QMap<PrjMidiPortPtr, QString> uris;
+    foreach (PrjMidiPortPtr port, ports_guiThread) {
+        uris.insert(port, port->portName);
+    }
+
     runInThisThread([=]()
     {
         foreach (PrjMidiPortPtr prjPort, prjPortEnvMap.keys()) {
             ScriptEnvPtr s = prjPortEnvMap[prjPort];
-            s->env.uri = prjPort->portName;
+            s->env.uri = uris.value(prjPort);
         }
     });
 }

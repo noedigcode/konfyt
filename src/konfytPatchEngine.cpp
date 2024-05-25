@@ -754,7 +754,7 @@ void KonfytPatchEngine::setLayerMidiInPort(KfPatchLayerWeakPtr patchLayer, int p
 void KonfytPatchEngine::setLayerScript(KfPatchLayerSharedPtr patchLayer, QString script)
 {
     patchLayer->setScript(script);
-    scriptEngine->addLayerScript(patchLayer);
+    scriptEngine->addOrUpdateLayerScript(patchLayer);
 }
 
 void KonfytPatchEngine::setLayerScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable)
@@ -893,7 +893,7 @@ void KonfytPatchEngine::loadSfzLayer(KfPatchLayerSharedPtr layer)
     layer->sfzData.portsInJackEngine = jackPorts;
 
     // Add to script engine
-    scriptEngine->addLayerScript(layer);
+    scriptEngine->addOrUpdateLayerScript(layer);
     updateLayerBlockMidiDirectThroughInJack(layer);
 
     emit patchLayerLoaded(layer); // TODO 2023-10-06 Why only for SFZ layers?
@@ -918,7 +918,7 @@ void KonfytPatchEngine::loadSoundfontLayer(KfPatchLayerSharedPtr layer)
     jack->setSoundfontMidiFilter(jackPorts, layer->midiFilter());
 
     // Add to script engine
-    scriptEngine->addLayerScript(layer);
+    scriptEngine->addOrUpdateLayerScript(layer);
     updateLayerBlockMidiDirectThroughInJack(layer);
 }
 
@@ -985,7 +985,7 @@ void KonfytPatchEngine::loadMidiOutputPort(KfPatchLayerSharedPtr layer)
     }
 
     // Add to script engine
-    scriptEngine->addLayerScript(layer);
+    scriptEngine->addOrUpdateLayerScript(layer);
     updateLayerBlockMidiDirectThroughInJack(layer);
 }
 
