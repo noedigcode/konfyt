@@ -21,7 +21,6 @@
 
 #include "GidListWidget.h"
 
-#include <QApplication>
 #include <QMimeData>
 #include <QPainter>
 
@@ -31,6 +30,11 @@ GidListWidget::GidListWidget(QWidget* parent)
 {
     setDragEnabled(true);
     setAcceptDrops(true);
+}
+
+void GidListWidget::setDropLineColor(QColor color)
+{
+    mDropLineColor = color;
 }
 
 void GidListWidget::mousePressEvent(QMouseEvent* event)
@@ -61,8 +65,8 @@ void GidListWidget::paintEvent(QPaintEvent* event)
     // Draw drag/drop line
     if (mDragItem) {
         QPainter painter(viewport());
-        painter.setRenderHint(QPainter::Antialiasing, true);
-        painter.setPen(QApplication::palette().text().color());
+        painter.setRenderHint(QPainter::Antialiasing, false);
+        painter.setPen(mDropLineColor);
         painter.drawLine(mDropLine);
     }
 }

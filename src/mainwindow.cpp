@@ -209,6 +209,8 @@ void MainWindow::setupGuiDefaults()
 
     // Initialise external apps widgets
     onExternalAppItemSelectionChanged(-1); // -1 = no app selected
+
+    ui->listWidget_Patches->setDropLineColor(Qt::white);
 }
 
 void MainWindow::printArgumentsInfo()

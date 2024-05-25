@@ -34,6 +34,7 @@
 #ifndef GIDLISTWIDGET_H
 #define GIDLISTWIDGET_H
 
+#include <QApplication>
 #include <QDrag>
 #include <QListWidget>
 #include <QMouseEvent>
@@ -46,6 +47,8 @@ class GidListWidget : public QListWidget
 
 public:
     GidListWidget(QWidget *parent = nullptr);
+
+    void setDropLineColor(QColor color);
 
 signals:
     void itemMoved(QListWidgetItem* item, int from, int to);
@@ -62,6 +65,8 @@ private:
     QPoint mDragStartPos;
     QLine mDropLine;
     QListWidgetItem* mDragItem = nullptr;
+
+    QColor mDropLineColor {QApplication::palette().text().color()};
 
     void startDrag();
     void updateDropLineLocation(QPoint pos);
