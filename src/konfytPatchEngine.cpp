@@ -634,7 +634,7 @@ void KonfytPatchEngine::setupAndInitSfzEngine(KonfytAppInfo appInfo)
     sfzEngine->initEngine(jack);
 }
 
-/* Update layer URIs in specified patch and trigger update in scripting engine.
+/* Update layer URIs in specified patch.
  * This must be called if some action caused the patch and/or its layers indices
  * to change, i.e. insert, remove and move of patches or layers. */
 void KonfytPatchEngine::updatePatchLayersURIs(KonfytPatch *patch)
@@ -647,8 +647,6 @@ void KonfytPatchEngine::updatePatchLayersURIs(KonfytPatch *patch)
         KfPatchLayerSharedPtr layer = patch->layer(i);
         layer->uri = QString("P%1L%2").arg(ipatch+1).arg(i+1);
     }
-
-    scriptEngine->updatePatchLayerURIs();
 }
 
 /* Return the current patch. */

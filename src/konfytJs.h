@@ -25,6 +25,7 @@
 #include "sleepyRingBuffer.h"
 #include "konfytJackEngine.h"
 
+#include <QElapsedTimer>
 #include <QJSEngine>
 #include <QJsonObject>
 #include <QObject>
@@ -96,6 +97,24 @@ private:
 
 // =============================================================================
 
+class AverageTimer
+{
+public:
+    void start();
+    void recordTime();
+    float getAverageProcessTimeMs();
+
+private:
+    QElapsedTimer elapsedTimer;
+    static const int processTimesSize = 10;
+    qint64 processTimesNs[processTimesSize] = {0};
+    int iProcessTimes = 0;
+    int processTimesCount = 0;
+    qint64 sumProcessTimesNs = 0;
+};
+
+// =============================================================================
+
 class KonfytJSEnv; // Forward declaration for use in KonfytJSMidi
 
 /* This is used as the global Midi object in the scripting environment.
@@ -146,10 +165,9 @@ public:
     int eventCount();
 
     QJSEngine* jsEngine();
-    float getAverageProcessTimeMs();
+    float getAverageTotalProcessTimeMs();
+    float getAveragePerEventProcessTimeMs();
     QString errorString();
-
-    QString uri;
 
     QStringList takePrints();
     QList<KonfytMidiEvent> takeMidiToSend();
@@ -173,15 +191,11 @@ private:
     QJSValue jsMidi; // "Midi" object in script environment
     QJSValue jsMidiEventFunction;
 
+    AverageTimer eventProcessTimer;
+    AverageTimer totalProcessTimer;
+
     bool mEnabled = false;
     QString mErrorString;
-
-    static const int processTimesSize = 10;
-    qint64 processTimesNs[processTimesSize] = {0};
-    int iProcessTimes = 0;
-    int processTimesCount = 0;
-    qint64 sumProcessTimesNs = 0;
-    void addProcessTime(qint64 timeNs);
 
     void resetEnvironment();
     bool evaluate(QString script);
@@ -227,29 +241,39 @@ public:
     void setJackEngine(KonfytJackEngine* jackEngine);
 
     void addOrUpdateLayerScript(KfPatchLayerSharedPtr patchLayer);
-    void addJackPortScript(PrjMidiPortPtr prjPort);
+    void addOrUpdateJackPortScript(PrjMidiPortPtr prjPort);
     void removeLayerScript(KfPatchLayerSharedPtr patchLayer);
     void removeJackPortScript(PrjMidiPortPtr prjPort);
     QString script(KfPatchLayerSharedPtr patchLayer);
     QString script(PrjMidiPortPtr prjPort);
     void setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
     void setScriptEnabled(PrjMidiPortPtr prjPort, bool enable);
-    float scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer);
-    float scriptAverageProcessTimeMs(PrjMidiPortPtr prjPort);
-    QString scriptErrorString(KfPatchLayerSharedPtr patchLayer);
-    QString scriptErrorString(PrjMidiPortPtr prjPort);
-
-    void updatePatchLayerURIs();
-    void updateProjectPortURIs();
+    void scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer,
+                                     QObject* context,
+                                     std::function<void(float, float)> callback);
+    void scriptAverageProcessTimeMs(PrjMidiPortPtr prjPort, QObject* context,
+                                     std::function<void(float, float)> callback);
+    void scriptErrorString(KfPatchLayerSharedPtr patchLayer, QObject* context,
+                           std::function<void(QString)> callback);
+    void scriptErrorString(PrjMidiPortPtr prjPort, QObject* context,
+                              std::function<void(QString)> callback);
 
 signals:
     void print(QString msg);
+    void layerScriptPrint(KfPatchLayerSharedPtr patchLayer, QString msg);
+    void portScriptPrint(PrjMidiPortPtr prjPort, QString msg);
     void layerScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
                                        QString errorString);
     void portScriptErrorStatusChanged(PrjMidiPortPtr prjPort, QString errorString);
 
 private:
-    void runInThisThread(std::function<void()> func);
+    // GUI thread (outside caller) - "cached" for quick access from GUI thread
+    QMap<KfPatchLayerSharedPtr, QString> layerScriptMap_guiThread;
+    QMap<PrjMidiPortPtr, QString> prjPortScriptMap_guiThread;
+
+    // JS thread (this object) - all below are only to be used in JS thread
+
+    void runInThread(QObject* context, std::function<void()> func);
 
     KonfytJackEngine* jack = nullptr;
     QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent>> mRxBuffer;
@@ -259,6 +283,7 @@ private:
         // The script is either for a port or layer. Whichever is applicable
         // will not be null.
         PrjMidiPortPtr prjPort;
+        KfPatchLayerSharedPtr patchLayer;
         KfJackMidiRoute* route = nullptr;
     };
     typedef QSharedPointer<ScriptEnv> ScriptEnvPtr;
@@ -268,12 +293,6 @@ private:
 
     QMap<KfJackMidiPort*, ScriptEnvPtr> jackPortEnvMap;
     QMap<PrjMidiPortPtr, ScriptEnvPtr> prjPortEnvMap;
-
-    // Lists for use in GUI thread. These are kept in sync with the maps above
-    // used in the JS thread. Separate containers are used in different threads
-    // to prevent race conditions.
-    QSet<KfPatchLayerSharedPtr> layers_guiThread;
-    QSet<PrjMidiPortPtr> ports_guiThread;
 
     ScriptEnvPtr runningScript;
     const int watchdogMax = 4;

@@ -386,11 +386,11 @@ void MainWindow::setupScripting()
     scriptEngine.moveToThread(&scriptingThread);
     scriptingThread.start();
 
-    connect(&scriptEngine, &KonfytJSEngine::print, this, [=](QString msg)
-    {
-        print("js: " + msg);
-    });
-
+    connect(&scriptEngine, &KonfytJSEngine::print, this, &MainWindow::onJsEnginePrint);
+    connect(&scriptEngine, &KonfytJSEngine::layerScriptPrint,
+            this, &MainWindow::onLayerScriptPrint);
+    connect(&scriptEngine, &KonfytJSEngine::portScriptPrint,
+            this, &MainWindow::onPortScriptPrint);
     connect(&scriptEngine, &KonfytJSEngine::layerScriptErrorStatusChanged,
             this, &MainWindow::onLayerScriptErrorStatusChanged);
     connect(&scriptEngine, &KonfytJSEngine::portScriptErrorStatusChanged,
@@ -415,18 +415,18 @@ void MainWindow::setupScripting()
 
 void MainWindow::showScriptEditorForPatchLayer(KfPatchLayerSharedPtr patchLayer)
 {
-    scriptEditPort.reset();
-    scriptEditLayer = patchLayer;
-    if (!scriptEditLayer) { return; }
+    mScriptEditPort.reset();
+    mScriptEditLayer = patchLayer;
+    if (!mScriptEditLayer) { return; }
 
     showScriptEditor();
 }
 
 void MainWindow::showScriptEditorForPort(PrjMidiPortPtr prjPort)
 {
-    scriptEditLayer.reset();
-    scriptEditPort = prjPort;
-    if (!scriptEditPort) { return; }
+    mScriptEditLayer.reset();
+    mScriptEditPort = prjPort;
+    if (!mScriptEditPort) { return; }
 
     showScriptEditor();
 }
@@ -437,23 +437,38 @@ void MainWindow::showScriptEditor()
     bool scriptEnabled;
     bool passMidiThrough;
     QString title;
-    QString errorText;
     QString lastLoadedScript;
 
-    if (scriptEditLayer) {
-        script = scriptEditLayer->script();
-        scriptEnabled = scriptEditLayer->isScriptEnabled();
-        passMidiThrough = scriptEditLayer->isPassMidiThrough();
-        title = QString("Layer: %1").arg(scriptEditLayer->uri);
-        errorText = scriptEngine.scriptErrorString(scriptEditLayer);
-        lastLoadedScript = scriptEngine.script(scriptEditLayer);
-    } else if (scriptEditPort) {
-        script = scriptEditPort->script;
-        scriptEnabled = scriptEditPort->scriptEnabled;
-        passMidiThrough = scriptEditPort->passMidiThrough;
-        title = QString("Port: %1").arg(scriptEditPort->portName);
-        errorText = scriptEngine.scriptErrorString(scriptEditPort);
-        lastLoadedScript = scriptEngine.script(scriptEditPort);
+    if (mScriptEditLayer) {
+        script = mScriptEditLayer->script();
+        scriptEnabled = mScriptEditLayer->isScriptEnabled();
+        passMidiThrough = mScriptEditLayer->isPassMidiThrough();
+        title = QString("Layer: %1").arg(mScriptEditLayer->uri);
+
+        KfPatchLayerSharedPtr layer = mScriptEditLayer;
+        scriptEngine.scriptErrorString(layer, this, [=](QString errorText)
+        {
+            if (this->mScriptEditLayer == layer) {
+                updateScriptEditorErrorText(errorText);
+            }
+        });
+
+        lastLoadedScript = scriptEngine.script(mScriptEditLayer);
+    } else if (mScriptEditPort) {
+        script = mScriptEditPort->script;
+        scriptEnabled = mScriptEditPort->scriptEnabled;
+        passMidiThrough = mScriptEditPort->passMidiThrough;
+        title = QString("Port: %1").arg(mScriptEditPort->portName);
+
+        PrjMidiPortPtr port = mScriptEditPort;
+        scriptEngine.scriptErrorString(port, this, [=](QString errorText)
+        {
+            if (this->mScriptEditPort == port) {
+                updateScriptEditorErrorText(errorText);
+            }
+        });
+
+        lastLoadedScript = scriptEngine.script(mScriptEditPort);
     } else {
         print("Error: showScriptEditor: no valid layer or port");
         return;
@@ -476,8 +491,6 @@ void MainWindow::showScriptEditor()
     ui->checkBox_script_passMidiThrough->setChecked(passMidiThrough);
     ui->groupBox_scriptEditor->setTitle("Script Editor - " + title);
 
-    updateScriptEditorErrorText(errorText);
-
     // Store the current screen before showing the editor so we can return to it
     // later. (Except if current screen is already the script editor.)
     if (ui->stackedWidget->currentWidget() != ui->scriptingPage) {
@@ -488,6 +501,16 @@ void MainWindow::showScriptEditor()
     // Highlight update button if layer script and loaded script in engine differ
     bool loadedScriptDiffers = lastLoadedScript != script;
     highlightButton(ui->pushButton_script_update, loadedScriptDiffers);
+}
+
+void MainWindow::updateScriptEditorScriptProcessTimeText(float perEventMs,
+                                                   float totalProcessMs)
+{
+    QString text = QString("per event: %1 ms, total: %2 ms")
+            .arg((double)perEventMs, 0, 'f', 3)
+            .arg((double)totalProcessMs, 0, 'f', 3);
+
+    ui->label_script_processTime->setText(text);
 }
 
 void MainWindow::updateScriptEditorErrorText(QString errorString)
@@ -505,24 +528,51 @@ void MainWindow::onScriptInfoTimer()
 {
     if (ui->stackedWidget->currentWidget() != ui->scriptingPage) { return; }
 
-    double ms = 0;
-    if (scriptEditLayer) {
-        ms = scriptEngine.scriptAverageProcessTimeMs(scriptEditLayer);
-    } else if (scriptEditPort) {
-        ms = scriptEngine.scriptAverageProcessTimeMs(scriptEditPort);
-    } else {
-        return;
-    }
+    if (mScriptEditLayer) {
 
-    QString sms = QString::number(ms, 'f', 2);
-    ui->label_script_processTime->setText(QString("%1 ms").arg(sms));
+        KfPatchLayerSharedPtr layer = mScriptEditLayer;
+        scriptEngine.scriptAverageProcessTimeMs(layer, this,
+                                    [=](float perEventMs, float totalProcessMs)
+        {
+            if (this->mScriptEditLayer == layer) {
+                updateScriptEditorScriptProcessTimeText(perEventMs, totalProcessMs);
+            }
+        });
+
+    } else if (mScriptEditPort) {
+
+        PrjMidiPortPtr port = mScriptEditPort;
+        scriptEngine.scriptAverageProcessTimeMs(port, this,
+                                    [=](float perEventMs, float totalProcessMs)
+        {
+            if (this->mScriptEditPort == port) {
+                updateScriptEditorScriptProcessTimeText(perEventMs, totalProcessMs);
+            }
+        });
+
+    }
+}
+
+void MainWindow::onJsEnginePrint(QString msg)
+{
+    print("js: " + msg);
+}
+
+void MainWindow::onLayerScriptPrint(KfPatchLayerSharedPtr patchLayer, QString msg)
+{
+    onJsEnginePrint(QString("script: [%1] %2").arg(patchLayer->uri, msg));
+}
+
+void MainWindow::onPortScriptPrint(PrjMidiPortPtr prjPort, QString msg)
+{
+    onJsEnginePrint(QString("script: [%1] %2").arg(prjPort->portName, msg));
 }
 
 void MainWindow::onLayerScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
                                             QString errorString)
 {
     // Update error text if the patch layer is the one currently being edited
-    if (patchLayer == scriptEditLayer) {
+    if (patchLayer == mScriptEditLayer) {
         updateScriptEditorErrorText(errorString);
     }
 }
@@ -531,7 +581,7 @@ void MainWindow::onPortScriptErrorStatusChanged(PrjMidiPortPtr prjPort,
                                                 QString errorString)
 {
     // Update error text if the port is the one currently being edited
-    if (prjPort == scriptEditPort) {
+    if (prjPort == mScriptEditPort) {
         updateScriptEditorErrorText(errorString);
     }
 }
@@ -551,11 +601,11 @@ void MainWindow::on_pushButton_script_update_clicked()
 {
     QString content = ui->plainTextEdit_script->toPlainText();
 
-    if (scriptEditLayer) {
-        pengine.setLayerScript(scriptEditLayer, content);
-    } else if (scriptEditPort) {
-        scriptEditPort->script = content;
-        scriptEngine.addJackPortScript(scriptEditPort);
+    if (mScriptEditLayer) {
+        pengine.setLayerScript(mScriptEditLayer, content);
+    } else if (mScriptEditPort) {
+        mScriptEditPort->script = content;
+        scriptEngine.addOrUpdateJackPortScript(mScriptEditPort);
     } else {
         print("Error: no script edit layer or port set");
         return;
@@ -566,24 +616,24 @@ void MainWindow::on_pushButton_script_update_clicked()
 
 void MainWindow::on_checkBox_script_enable_toggled(bool checked)
 {
-    if (scriptEditLayer) {
-        if (scriptEditLayer->isScriptEnabled() != checked) {
+    if (mScriptEditLayer) {
+        if (mScriptEditLayer->isScriptEnabled() != checked) {
             setProjectModified();
             if (checked) {
                 // If enabling, also update the script
                 on_pushButton_script_update_clicked();
             }
-            pengine.setLayerScriptEnabled(scriptEditLayer, checked);
+            pengine.setLayerScriptEnabled(mScriptEditLayer, checked);
         }
-    } else if (scriptEditPort) {
-        if (scriptEditPort->scriptEnabled != checked) {
+    } else if (mScriptEditPort) {
+        if (mScriptEditPort->scriptEnabled != checked) {
             setProjectModified();
             if (checked) {
                 // If enabling, also update the script
                 on_pushButton_script_update_clicked();
             }
-            scriptEditPort->scriptEnabled = checked;
-            scriptEngine.setScriptEnabled(scriptEditPort, checked);
+            mScriptEditPort->scriptEnabled = checked;
+            scriptEngine.setScriptEnabled(mScriptEditPort, checked);
         }
     } else {
         print("Error: no script edit layer or port set");
@@ -593,17 +643,17 @@ void MainWindow::on_checkBox_script_enable_toggled(bool checked)
 
 void MainWindow::on_checkBox_script_passMidiThrough_toggled(bool checked)
 {
-    if (scriptEditLayer) {
-        if (scriptEditLayer->isPassMidiThrough() != checked) {
+    if (mScriptEditLayer) {
+        if (mScriptEditLayer->isPassMidiThrough() != checked) {
             setProjectModified();
-            pengine.setLayerPassMidiThrough(scriptEditLayer, checked);
+            pengine.setLayerPassMidiThrough(mScriptEditLayer, checked);
         }
-    } else if (scriptEditPort) {
-        if (scriptEditPort->passMidiThrough != checked) {
+    } else if (mScriptEditPort) {
+        if (mScriptEditPort->passMidiThrough != checked) {
             setProjectModified();
-            scriptEditPort->passMidiThrough = checked;
+            mScriptEditPort->passMidiThrough = checked;
             bool blockInJack = !checked;
-            jack.setMidiPortBlockMidiDirectThrough(scriptEditPort->jackPort, blockInJack);
+            jack.setMidiPortBlockMidiDirectThrough(mScriptEditPort->jackPort, blockInJack);
         }
     } else {
         print("Error: no script edit layer or port set");
@@ -631,10 +681,10 @@ void MainWindow::on_plainTextEdit_script_textChanged()
         // Store script in layer/port so it will persist changing of screens.
         // Highlight update button to indicate.
         QString content = ui->plainTextEdit_script->toPlainText();
-        if (scriptEditLayer) {
-            scriptEditLayer->setScript(content);
-        } else if (scriptEditPort) {
-            scriptEditPort->script = content;
+        if (mScriptEditLayer) {
+            mScriptEditLayer->setScript(content);
+        } else if (mScriptEditPort) {
+            mScriptEditPort->script = content;
         } else {
             return;
         }
@@ -2038,7 +2088,7 @@ void MainWindow::loadProject(ProjectPtr prj)
         // Scripting
         jack.setMidiPortBlockMidiDirectThrough(prjPort->jackPort,
                                                !prjPort->passMidiThrough);
-        scriptEngine.addJackPortScript(prjPort);
+        scriptEngine.addOrUpdateJackPortScript(prjPort);
     }
 
     // Process MIDI out ports
@@ -5960,7 +6010,7 @@ int MainWindow::addMidiInPort()
     // Scripting
     jack.setMidiPortBlockMidiDirectThrough(prjPort->jackPort,
                                            !prjPort->passMidiThrough);
-    scriptEngine.addJackPortScript(prjPort);
+    scriptEngine.addOrUpdateJackPortScript(prjPort);
 
     return prjPortId;
 }

@@ -782,17 +782,22 @@ private:
     KonfytJSEngine scriptEngine;
     QThread scriptingThread;
     void setupScripting();
-    KfPatchLayerSharedPtr scriptEditLayer;
-    PrjMidiPortPtr scriptEditPort;
+    KfPatchLayerSharedPtr mScriptEditLayer;
+    PrjMidiPortPtr mScriptEditPort;
     QWidget* stackedWidgetBeforeScriptEditor = nullptr;
     void showScriptEditorForPatchLayer(KfPatchLayerSharedPtr patchLayer);
     void showScriptEditorForPort(PrjMidiPortPtr prjPort);
     void showScriptEditor();
     bool scriptEditorIgnoreChanged = false;
     QTimer scriptInfoTimer;
+    void updateScriptEditorScriptProcessTimeText(float perEventMs, float totalProcessMs);
+    void updateScriptEditorTotalProcessTimeText(float processTimeMs);
     void updateScriptEditorErrorText(QString errorString);
 private slots:
     void onScriptInfoTimer();
+    void onJsEnginePrint(QString msg);
+    void onLayerScriptPrint(KfPatchLayerSharedPtr patchLayer, QString msg);
+    void onPortScriptPrint(PrjMidiPortPtr prjPort, QString msg);
     void onLayerScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
                                          QString errorString);
     void onPortScriptErrorStatusChanged(PrjMidiPortPtr prjPort,
