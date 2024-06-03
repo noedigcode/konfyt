@@ -1,12 +1,19 @@
 Changelog
 =========
 
-[1.6.2] - Unreleased
---------------------
+[1.6.2] - June 2024
+-------------------
+
+Changes
+
+- Script editor process time now correctly shows the process time per event and
+  shows 3 decimal digits.
 
 Fixes
 
 - Fix occasional crashes when reordering pathces with drag and drop.
+- Fix additional potential scripting thread race conditions.
+- Fix potential crash with project script scanning.
 
 
 [1.6.1] - April 2024
