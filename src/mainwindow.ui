@@ -9262,10 +9262,7 @@ padding: 3px;</string>
                          </widget>
                         </item>
                         <item>
-                         <layout class="QHBoxLayout" name="horizontalLayout_82">
-                          <property name="topMargin">
-                           <number>0</number>
-                          </property>
+                         <layout class="QHBoxLayout" name="horizontalLayout_40">
                           <item>
                            <widget class="QLabel" name="label_19">
                             <property name="text">
@@ -9280,23 +9277,6 @@ padding: 3px;</string>
                             </property>
                            </widget>
                           </item>
-                          <item>
-                           <spacer name="horizontalSpacer_25">
-                            <property name="orientation">
-                             <enum>Qt::Horizontal</enum>
-                            </property>
-                            <property name="sizeHint" stdset="0">
-                             <size>
-                              <width>40</width>
-                              <height>20</height>
-                             </size>
-                            </property>
-                           </spacer>
-                          </item>
-                         </layout>
-                        </item>
-                        <item>
-                         <layout class="QHBoxLayout" name="horizontalLayout_40">
                           <item>
                            <spacer name="horizontalSpacer_23">
                             <property name="orientation">

@@ -504,11 +504,10 @@ void MainWindow::showScriptEditor()
 }
 
 void MainWindow::updateScriptEditorScriptProcessTimeText(float perEventMs,
-                                                   float totalProcessMs)
+                                                   float /*totalProcessMs*/)
 {
-    QString text = QString("per event: %1 ms, total: %2 ms")
-            .arg((double)perEventMs, 0, 'f', 3)
-            .arg((double)totalProcessMs, 0, 'f', 3);
+    QString text = QString("%1 ms")
+            .arg((double)perEventMs, 0, 'f', 3);
 
     ui->label_script_processTime->setText(text);
 }
