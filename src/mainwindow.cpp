@@ -706,7 +706,7 @@ QTreeWidgetItem* MainWindow::scanProjectScripts(QString path, ItemScriptMap* map
     foreach (QString path, paths) {
 
         ProjectPtr prj(new KonfytProject());
-        if (!prj->loadProject(path)) { return; }
+        if (!prj->loadProject(path)) { continue; }
 
         QTreeWidgetItem* projectItem = new QTreeWidgetItem();
 
