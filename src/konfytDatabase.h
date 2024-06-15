@@ -37,6 +37,8 @@
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 
+#include <functional>
+
 #define XML_DATABASE "database"
 
 
@@ -64,23 +66,24 @@ public:
 
     KfSoundPtr patchFromFile(QString filename);
 
+    void scan(QObject* context, std::function<void()> callback);
+    void requestSfontFromFile(QString filename);
+
 signals:
     // Signals emitted by this class
     void print(QString msg);
     void scanFinished();
     void scanStatus(QString msg);
     void sfontFromFileFinished(KfSoundPtr sfont);
-    // Signals to trigger work in this class/thread
-    void scan();
-    void requestSfontFromFile(QString filename);
 
 private slots:
-    void doScan();
     void doRequestSfontFromFile(QString filename);
 
 private:
     QStringList sfontsToLoad;
     QStringList sfontIgnoreList;
+
+    void runInThread(QObject* context, std::function<void()> func);
 
     void scanDirForFiles(QString dirname, QStringList suffixes, QStringList &list);
     void scanSfonts();

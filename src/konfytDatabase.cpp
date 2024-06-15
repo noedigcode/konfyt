@@ -28,12 +28,7 @@
 
 KonfytDatabaseWorker::KonfytDatabaseWorker()
 {
-    connect(this, &KonfytDatabaseWorker::scan,
-            this, &KonfytDatabaseWorker::doScan,
-            Qt::QueuedConnection);
-    connect(this, &KonfytDatabaseWorker::requestSfontFromFile,
-            this, &KonfytDatabaseWorker::doRequestSfontFromFile,
-            Qt::QueuedConnection);
+
 }
 
 void KonfytDatabaseWorker::setSfontIgnoreList(QList<KfSoundPtr> sfonts)
@@ -67,29 +62,48 @@ KfSoundPtr KonfytDatabaseWorker::patchFromFile(QString filename)
  * To get info on soundfonts, they have to be loaded into Fluidsynth.
  * To save time, soundfonts in the specified ignoreList will not be loaded into
  * Fluidsynth. */
-void KonfytDatabaseWorker::doScan()
+void KonfytDatabaseWorker::scan(QObject* context,
+                                std::function<void ()> callback)
 {
-    scanSfzs();
-    scanPatches();
-    scanSfonts();
-
-    // Create remote scanner and scan all soundfonts discovered by scanSfonts().
-
-    RemoteScannerServer* scanner = new RemoteScannerServer();
-    connect(scanner, &RemoteScannerServer::print,
-            this, &KonfytDatabaseWorker::print);
-    connect(scanner, &RemoteScannerServer::scanStatus,
-            this, &KonfytDatabaseWorker::scanStatus);
-    connect(scanner, &RemoteScannerServer::finished, this, [=]()
+    runInThread(this, [=]()
     {
-        scanner->deleteLater();
-        emit scanFinished();
+        scanSfzs();
+        scanPatches();
+        scanSfonts();
+
+        // Create remote scanner and scan all soundfonts discovered by scanSfonts().
+
+        RemoteScannerServer* scanner = new RemoteScannerServer();
+        connect(scanner, &RemoteScannerServer::print,
+                this, &KonfytDatabaseWorker::print);
+        connect(scanner, &RemoteScannerServer::scanStatus,
+                this, &KonfytDatabaseWorker::scanStatus);
+        connect(scanner, &RemoteScannerServer::finished, this, [=]()
+        {
+            scanner->deleteLater();
+            emit scanFinished();
+        });
+        connect(scanner, &RemoteScannerServer::newSoundfont, this, [=](KfSoundPtr s)
+        {
+            sfontResults.append(s);
+        });
+        scanner->scan(sfontsToLoad);
+
+        runInThread(context, callback);
     });
-    connect(scanner, &RemoteScannerServer::newSoundfont, this, [=](KfSoundPtr s)
+}
+
+/* Create a konfytSoundfont object from a filename by loading it into
+ * Fluidsynth in order to extract soundfont info, returning it with a signal so
+ * the rest of the application can continue during this potentially long
+ * operation. */
+void KonfytDatabaseWorker::requestSfontFromFile(QString filename)
+{
+    runInThread(this, [=]()
     {
-        sfontResults.append(s);
+        KfSoundPtr newSfont = fluidsynth.soundfontFromFile(filename);
+        emit sfontFromFileFinished(newSfont);
     });
-    scanner->scan(sfontsToLoad);
 }
 
 /* Scans directory and subdirectories recursively and add all files with
@@ -188,14 +202,10 @@ void KonfytDatabaseWorker::scanPatches()
     }
 }
 
-/* Slot to create a konfytSoundfont object from a filename by loading it into
- * Fluidsynth in order to extract soundfont info, returning it with a signal so
- * the rest of the application can continue during this potentially long
- * operation. */
-void KonfytDatabaseWorker::doRequestSfontFromFile(QString filename)
+void KonfytDatabaseWorker::runInThread(QObject *context,
+                                       std::function<void ()> func)
 {
-    KfSoundPtr newSfont = fluidsynth.soundfontFromFile(filename);
-    emit sfontFromFileFinished(newSfont);
+    QMetaObject::invokeMethod(context, func, Qt::QueuedConnection);
 }
 
 
@@ -297,7 +307,7 @@ void KonfytDatabase::scan()
     worker.setSfontIgnoreList(mAllSoundfonts);
     worker.sfzDir = mSfzDir;
     worker.patchDir = mPatchesDir;
-    worker.scan();
+    worker.scan(this, [=](){ onScanFinished(); });
     // We now wait for the scanDirsFinished signal from the worker.
     // See the onScanFinished() slot.
 }
