@@ -76,9 +76,6 @@ signals:
     void scanStatus(QString msg);
     void sfontFromFileFinished(KfSoundPtr sfont);
 
-private slots:
-    void doRequestSfontFromFile(QString filename);
-
 private:
     QStringList sfontsToLoad;
     QStringList sfontIgnoreList;
