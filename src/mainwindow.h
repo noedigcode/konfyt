@@ -706,6 +706,7 @@ private:
     KfJackMidiRoute* midiSendListEditRoute = nullptr;
     QList<MidiSendItem> midiSendList;
     void setupMidiSendListEditor();
+    void updateMidiSendListEditorButtonStates();
     void showMidiSendListEditor();
     void midiEventToMidiSendEditor(MidiSendItem item);
     MidiSendItem midiEventFromMidiSendEditor();
@@ -738,6 +739,8 @@ private slots:
     void on_pushButton_midiSendList_remove_clicked();
     void on_pushButton_midiSendList_sendSelected_clicked();
     void on_pushButton_midiSendList_sendAll_clicked();
+    void on_listWidget_midiSendList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
+    void on_treeWidget_savedMidiMessages_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
 
     // Saved MIDI send items (presets)
 private:
@@ -1015,7 +1018,7 @@ private slots:
     // ========================================================================
 
 private:
-    // Center view and sidebar (For changing to and from Saved MIDI Send List sidebar)
+    // Center-view and sidebar (For changing to and from Saved MIDI Send List sidebar)
     QWidget* lastCenterWidget = nullptr;
     QWidget* lastSidebarWidget = nullptr;
 private slots:
@@ -1091,9 +1094,7 @@ private slots:
     // Other widget/action slots
 private slots:
     void on_pushButton_LiveMode_clicked();
-
     void on_pushButton_RestartApp_clicked();
-
     void on_pushButton_LavaMonster_clicked();
 
 };

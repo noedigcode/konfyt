@@ -8110,6 +8110,22 @@ void MainWindow::setupMidiSendListEditor()
     connect(&midiSendListEditorMidiRxList, &MidiEventListWidgetAdapter::itemClicked,
             this, &MainWindow::onMidiSendListEditorMidiRxListItemClicked);
     midiSendListEditorMidiRxList.init(ui->listWidget_midiSendList_lastReceived);
+
+    updateMidiSendListEditorButtonStates();
+}
+
+void MainWindow::updateMidiSendListEditorButtonStates()
+{
+    // MIDI send list
+    bool enable = ui->listWidget_midiSendList->currentItem() != nullptr;
+    ui->pushButton_midiSendList_replace->setEnabled(enable);
+    ui->toolButton_midiSendList_down->setEnabled(enable);
+    ui->toolButton_midiSendList_up->setEnabled(enable);
+    ui->pushButton_midiSendList_remove->setEnabled(enable);
+
+    // Saved MIDI messages list
+    enable = ui->treeWidget_savedMidiMessages->currentItem() != nullptr;
+    ui->pushButton_savedMidiMsgs_remove->setEnabled(enable);
 }
 
 void MainWindow::showMidiSendListEditor()
@@ -8659,8 +8675,17 @@ void MainWindow::on_pushButton_midiSendList_sendAll_clicked()
     }
 }
 
+void MainWindow::on_listWidget_midiSendList_currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous)
+{
+    updateMidiSendListEditorButtonStates();
+}
+
+void MainWindow::on_treeWidget_savedMidiMessages_currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+{
+    updateMidiSendListEditorButtonStates();
+}
+
 void MainWindow::on_toolButton_LibraryPreview_clicked()
 {
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
-
