@@ -11,6 +11,8 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += C++11
 
+QMAKE_CXXFLAGS += -Wno-deprecated -Wno-deprecated-declarations
+
 TARGET = konfyt
 TEMPLATE = app
 
