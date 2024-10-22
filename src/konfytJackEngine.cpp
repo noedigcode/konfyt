@@ -1713,11 +1713,12 @@ void KonfytJackEngine::removeMidiPort(KfJackMidiPort *port)
 
     midiInPorts.removeAll(port);
     midiOutPorts.removeAll(port);
-    jack_port_unregister(mJackClient, port->jackPointer);
-    delete port;
 
     // Remove this port from any routes.
     removePortFromAllRoutes(port);
+
+    jack_port_unregister(mJackClient, port->jackPointer);
+    delete port;
 
     pauseJackProcessing(false);
 }
@@ -1730,11 +1731,12 @@ void KonfytJackEngine::removeAudioPort(KfJackAudioPort *port)
 
     audioInPorts.removeAll(port);
     audioOutPorts.removeAll(port);
-    jack_port_unregister(mJackClient, port->jackPointer);
-    delete port;
 
     // Remove this port from any routes.
     removePortFromAllRoutes(port);
+
+    jack_port_unregister(mJackClient, port->jackPointer);
+    delete port;
 
     pauseJackProcessing(false);
 }
