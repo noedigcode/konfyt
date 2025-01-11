@@ -61,11 +61,13 @@ public:
     static void jackPortRegistrationCallback(jack_port_id_t port, int registered, void *arg);
     static int jackProcessCallback(jack_nframes_t nframes, void *arg);
     static int jackXrunCallback(void *arg);
+    static int jackBufferSizeCallback(jack_nframes_t nframes, void*arg);
 
     // Non-static JACK callback functions
     int jackProcessCallback(jack_nframes_t nframes);
     void jackPortConnectCallback();
     void jackPortRegistrationCallback();
+    void jackBufferSizeCallback(jack_nframes_t nframes);
 
     void setFluidsynthEngine(KonfytFluidsynthEngine* e);
 
@@ -170,11 +172,12 @@ signals:
 
 private:
     jack_client_t* mJackClient;
-    jack_nframes_t mJackBufferSize; // TODO THIS MIGHT CHANGE, REGISTER BUFSIZE CALLBACK TO UPDATE
+    jack_nframes_t mJackBufferSize;
     bool mClientActive = false; // True when the Jack client has been successfully activated
     uint32_t mJackSampleRate;
     bool mConnectCallback = false;
     bool mRegisterCallback = false;
+    bool mBufferSizeCallback = false;
     uint32_t mLastSentMidiEventTime = 0;
 
     // MIDI data received from JACK thread
@@ -187,6 +190,7 @@ private:
 
     // Audio data received from JACK thread
     int mAudioBufferSumCycleCount = 100;
+    void updateAudioBufferSumCycleCount();
     RingbufferQMutex<KfJackAudioRxEvent> audioRxBuffer{1000};
     QList<KfJackAudioRxEvent> extractedAudioRx;
 

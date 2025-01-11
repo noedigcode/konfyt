@@ -52,6 +52,12 @@ void KonfytJackEngine::timerEvent(QTimerEvent* /*event*/)
         emit jackPortRegisteredOrConnected();
     }
 
+    // JACK buffer size change
+    if (mBufferSizeCallback) {
+        mBufferSizeCallback = false;
+        print(QString("Buffer size changed to: %1").arg(mJackBufferSize));
+    }
+
     // Transfer events that were received in JACK tread from ringbuffers to lists
     // that will be retrieved later by the GUI thread.
 
@@ -863,6 +869,13 @@ int KonfytJackEngine::jackXrunCallback(void *arg)
     return 0;
 }
 
+int KonfytJackEngine::jackBufferSizeCallback(jack_nframes_t nframes, void* arg)
+{
+    KonfytJackEngine* e = (KonfytJackEngine*)arg;
+    e->jackBufferSizeCallback(nframes);
+    return 0;
+}
+
 /* Non-static class instance-specific JACK process callback. */
 int KonfytJackEngine::jackProcessCallback(jack_nframes_t nframes)
 {
@@ -932,6 +945,25 @@ void KonfytJackEngine::jackPortConnectCallback()
 void KonfytJackEngine::jackPortRegistrationCallback()
 {
     mRegisterCallback = true;
+}
+
+void KonfytJackEngine::jackBufferSizeCallback(jack_nframes_t nframes)
+{
+    mJackBufferSize = nframes;
+
+    updateAudioBufferSumCycleCount();
+
+    // Re-allocate buffers for Fluidsynth ports to match the new buffer size.
+    foreach (KfJackPluginPorts* p, fluidsynthPorts) {
+        free(p->audioInLeft->buffer);
+        p->audioInLeft->buffer = malloc(sizeof(jack_default_audio_sample_t)
+                                        * mJackBufferSize);
+        free(p->audioInRight->buffer);
+        p->audioInRight->buffer = malloc(sizeof(jack_default_audio_sample_t)
+                                         * mJackBufferSize);
+    }
+
+    mBufferSizeCallback = true;
 }
 
 void KonfytJackEngine::setFluidsynthEngine(KonfytFluidsynthEngine *e)
@@ -1541,8 +1573,11 @@ bool KonfytJackEngine::initJackClient(QString name)
                 KonfytJackEngine::jackProcessCallback, this);
     jack_set_xrun_callback(mJackClient,
                 KonfytJackEngine::jackXrunCallback, this);
+    jack_set_buffer_size_callback(mJackClient,
+                KonfytJackEngine::jackBufferSizeCallback, this);
 
     mJackBufferSize = jack_get_buffer_size(mJackClient);
+    print(QString("Buffer size: %1").arg(mJackBufferSize));
 
     // Activate the client
     if (jack_activate(mJackClient)) {
@@ -1559,7 +1594,7 @@ bool KonfytJackEngine::initJackClient(QString name)
     mJackSampleRate = jack_get_sample_rate(mJackClient);
     print("Samplerate " + n2s(mJackSampleRate));
 
-    mAudioBufferSumCycleCount = mJackSampleRate/mJackBufferSize/10;
+    updateAudioBufferSumCycleCount();
 
     fadeOutValuesCount = mJackSampleRate*fadeOutSecs;
     // Linear fadeout
@@ -1804,6 +1839,17 @@ void KonfytJackEngine::setGlobalTranspose(int transpose)
 QSharedPointer<SleepyRingBuffer<KfJackMidiRxEvent> > KonfytJackEngine::getMidiRxBufferForJs()
 {
     return midiRxBufferForJs;
+}
+
+void KonfytJackEngine::updateAudioBufferSumCycleCount()
+{
+    /* This determines the refresh rate of the audio peak indicator in the GUI,
+     * in terms of the audio buffer cycle count.
+     * Number of cycles per second = sample rate / buffer size.
+     * Thus, to update the audio peak indicators 10 times a second,
+     * set AudioBufferSumCycleCount = (sample rate / buffersize) / 10
+     */
+    mAudioBufferSumCycleCount = mJackSampleRate/mJackBufferSize/10;
 }
 
 jack_port_t *KonfytJackEngine::registerJackMidiPort(QString name, bool input)
