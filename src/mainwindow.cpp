@@ -1697,7 +1697,7 @@ void MainWindow::clearConnectionsTree()
 void MainWindow::addClientPortToTree(QString jackport)
 {
     // Extract client name
-    QString client = jackport.split(":").at(0);
+    QString client = KonfytJackEngine::clientNameFromJackPortString(jackport);
     QTreeWidgetItem* clientItem;
     // If client is already in map, get the tree item. Otherwise, add to map.
     if (conClientsMap.contains(client)) {
@@ -1711,8 +1711,7 @@ void MainWindow::addClientPortToTree(QString jackport)
     ui->tree_Connections->addTopLevelItem(clientItem);
     // Create a tree item for the port, and add as a child to the client tree item.
     QTreeWidgetItem* portItem = new QTreeWidgetItem();
-    QString portname = jackport;
-    portname.replace(client + ":", "");
+    QString portname = KonfytJackEngine::portNameFromJackPortString(jackport);
     portItem->setText(TREECON_COL_PORT, portname); // Extract port name
     clientItem->addChild(portItem);
     conPortsMap.insert(portItem, jackport);

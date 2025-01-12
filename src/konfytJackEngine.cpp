@@ -1700,10 +1700,22 @@ QSet<QString> KonfytJackEngine::getJackClientsList()
     ports.append(getAudioOutputPortsList());
 
     foreach (const QString& port, ports) {
-        clients.insert(port.split(":").value(0));
+        clients.insert(clientNameFromJackPortString(port));
     }
 
     return clients;
+}
+
+QString KonfytJackEngine::clientNameFromJackPortString(QString portString)
+{
+    return portString.split(":").value(0);
+}
+
+QString KonfytJackEngine::portNameFromJackPortString(QString portString)
+{
+    QString clientName = clientNameFromJackPortString(portString);
+    // Remove clientName and ":" from start of port string to get only port name
+    return portString.right(portString.length() - clientName.length() - 1);
 }
 
 KfJackMidiPort *KonfytJackEngine::addMidiPort(QString name, bool isInput)

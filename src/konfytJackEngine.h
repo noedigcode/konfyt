@@ -89,6 +89,8 @@ public:
     QStringList getAudioInputPortsList();
     QStringList getAudioOutputPortsList();
     QSet<QString> getJackClientsList();
+    static QString clientNameFromJackPortString(QString portString);
+    static QString portNameFromJackPortString(QString portString);
 
     // Audio / MIDI in/out ports
     KfJackMidiPort* addMidiPort(QString name, bool isInput);
