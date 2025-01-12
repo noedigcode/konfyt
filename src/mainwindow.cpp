@@ -6207,6 +6207,41 @@ void MainWindow::removeAudioInPortFromEngines(Project::AudioPortPtr prjPort)
     emit audioInPortRemoved(prjPort);
 }
 
+void MainWindow::updateGuiForJackConRegexPreview()
+{
+    QRegularExpression clientRe(ui->lineEdit_jackCon_regex_client->text());
+    QRegularExpression portRe(ui->lineEdit_jackCon_regex_port->text());
+
+    ui->tree_Connections->clearSelection();
+
+    foreach (QString client, conClientsMap.keys()) {
+        QRegularExpressionMatch clientMatch = clientRe.match(client);
+        if (clientMatch.hasMatch()) {
+            QTreeWidgetItem* clientItem = conClientsMap.value(client);
+            for (int i = 0; i < clientItem->childCount(); i++) {
+                QTreeWidgetItem* portItem = clientItem->child(i);
+                QString jackPortString = conPortsMap.value(portItem);
+                QString portName =
+                    KonfytJackEngine::portNameFromJackPortString(jackPortString);
+                QRegularExpressionMatch portMatch = portRe.match(portName);
+                if (portMatch.hasMatch()) {
+                    portItem->setSelected(true);
+                }
+            }
+        }
+    }
+}
+
+void MainWindow::on_lineEdit_jackCon_regex_client_textChanged(const QString &arg1)
+{
+    updateGuiForJackConRegexPreview();
+}
+
+void MainWindow::on_lineEdit_jackCon_regex_port_textChanged(const QString &arg1)
+{
+    updateGuiForJackConRegexPreview();
+}
+
 void MainWindow::on_actionAdd_MIDI_Out_Port_triggered()
 {
     int portId = addMidiOutPort();

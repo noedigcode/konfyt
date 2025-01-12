@@ -934,6 +934,14 @@ signals:
     void midiOutPortRemoved(Project::MidiPortPtr prjPort);
     void audioInPortRemoved(Project::AudioPortPtr prjPort);
 
+    // Regex connections
+private:
+    void updateGuiForJackConRegexPreview();
+
+private slots:
+    void on_lineEdit_jackCon_regex_client_textChanged(const QString &arg1);
+    void on_lineEdit_jackCon_regex_port_textChanged(const QString &arg1);
+
     // -----------------------------------------------------------------------
     // Triggers
 private:
