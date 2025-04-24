@@ -8973,3 +8973,15 @@ QAction *MainWindow::ResetOptionMenu::actionWithValue(KonfytReset value)
 
 
 
+
+void MainWindow::on_pushButton_jackCon_regex_add_clicked()
+{
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
+
+    KonfytPortRegex r;
+    r.clientRegex = ui->lineEdit_jackCon_regex_client->text();
+    r.portRegex = ui->lineEdit_jackCon_regex_port->text();
+
+}
+

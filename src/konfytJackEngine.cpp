@@ -124,7 +124,6 @@ void KonfytJackEngine::refreshAllPortsConnections()
             jack_disconnect(mJackClient, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
         }
     }
-
 }
 
 void KonfytJackEngine::refreshConnections(jack_port_t *jackPort,

@@ -167,6 +167,7 @@ public:
     void midiInPort_addClient(int portId, QString client);
     void midiInPort_removeClient(int portId, QString client);
     void midiInPort_setPortFilter(int portId, MidiFilter filter);
+    void midiInPort_addPortConnectRegex(int portId, KonfytPortRegex r);
 
     // -----------------------------------------------------------------------
     // MIDI output ports

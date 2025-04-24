@@ -101,5 +101,15 @@ struct Result
     static Result success();
 };
 
+// =============================================================================
+
+struct KonfytPortRegex
+{
+    QString clientRegex;
+    QString portRegex;
+    bool leftConnected = false;
+    bool rightConnected = false;
+};
+
 
 #endif // KONFYT_STRUCTS_H

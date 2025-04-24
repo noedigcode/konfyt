@@ -1146,6 +1146,7 @@ private slots:
     void on_pushButton_RestartApp_clicked();
     void on_pushButton_LavaMonster_clicked();
 
+    void on_pushButton_jackCon_regex_add_clicked();
 };
 
 #endif // MAINWINDOW_H
