@@ -63,6 +63,9 @@ QString getUniquePath(QString dirname, QString name, QString extension)
 {
     QString extra = "";
     QString ret;
+    if (!extension.isEmpty() && !extension.startsWith(".")) {
+        extension.prepend(".");
+    }
 
     for (int i = 2; i < INT_MAX; i++) {
         ret = QString("%1/%2%3%4").arg(dirname).arg(name).arg(extra).arg(extension);
