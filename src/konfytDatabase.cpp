@@ -81,15 +81,13 @@ void KonfytDatabaseWorker::scan(QObject* context,
         connect(scanner, &RemoteScannerServer::finished, this, [=]()
         {
             scanner->deleteLater();
-            emit scanFinished();
+            runInThread(context, callback);
         });
         connect(scanner, &RemoteScannerServer::newSoundfont, this, [=](KfSoundPtr s)
         {
             sfontResults.append(s);
         });
         scanner->scan(sfontsToLoad);
-
-        runInThread(context, callback);
     });
 }
 
@@ -185,6 +183,7 @@ void KonfytDatabaseWorker::scanSfzs()
 void KonfytDatabaseWorker::scanPatches()
 {
     QStringList patchSuffix = {KONFYT_PATCH_SUFFIX};
+    patchResults.clear();
 
     emit scanStatus("Scanning for patches in " + patchDir);
     QStringList patchPaths;
@@ -221,9 +220,6 @@ KonfytDatabase::KonfytDatabase()
 
     connect(&worker, &KonfytDatabaseWorker::scanStatus,
             this, &KonfytDatabase::scanStatusFromWorker);
-
-    connect(&worker, &KonfytDatabaseWorker::scanFinished,
-            this, &KonfytDatabase::onScanFinished);
 
     qRegisterMetaType<KfSoundPtr>("KfSoundPtr");
     connect(&worker, &KonfytDatabaseWorker::sfontFromFileFinished,

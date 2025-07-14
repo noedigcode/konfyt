@@ -72,7 +72,6 @@ public:
 signals:
     // Signals emitted by this class
     void print(QString msg);
-    void scanFinished();
     void scanStatus(QString msg);
     void sfontFromFileFinished(KfSoundPtr sfont);
 
