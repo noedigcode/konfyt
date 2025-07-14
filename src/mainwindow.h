@@ -238,10 +238,14 @@ private:
     void showSelectedSfontProgramList();
     void showSfzContentInLibFsInfoArea(QString filename);
     QString loadSfzFileText(QString filename);
+
+    QMenu libraryBottomContextMenu;
+
 private slots:
     void on_tabWidget_library_currentChanged(int index);
     void on_listWidget_LibraryBottom_currentRowChanged(int currentRow);
     void on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem *item);
+    void on_listWidget_LibraryBottom_customContextMenuRequested(const QPoint &pos);
 
     // Preview button & menu
 private:
@@ -1097,7 +1101,6 @@ private slots:
     void on_pushButton_LiveMode_clicked();
     void on_pushButton_RestartApp_clicked();
     void on_pushButton_LavaMonster_clicked();
-
 };
 
 #endif // MAINWINDOW_H

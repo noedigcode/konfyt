@@ -5679,6 +5679,25 @@ void MainWindow::on_listWidget_LibraryBottom_itemDoubleClicked(QListWidgetItem* 
         selectedSfont->presets.value(ui->listWidget_LibraryBottom->row(item)));
 }
 
+void MainWindow::on_listWidget_LibraryBottom_customContextMenuRequested(const QPoint& /*pos*/)
+{
+    KfSoundPtr sf = librarySelectedSfont();
+    if (!sf) { return; }
+
+    KonfytSoundPreset s = selectedSoundfontProgramInLibOrFs();
+
+    libraryBottomContextMenu.clear();
+    libraryBottomContextMenu.addAction("Add as patch to library", this, [=]()
+    {
+        KonfytPatch patch;
+        patch.setName(QString("Soundfont %1 - %2").arg(sf->name).arg(s.name));
+        patch.addSfLayer(sf->filename, s);
+
+        savePatchToLibrary(&patch);
+    });
+    libraryBottomContextMenu.popup(QCursor::pos());
+}
+
 /* Library tree: item double clicked. */
 void MainWindow::on_treeWidget_Library_itemDoubleClicked(
         QTreeWidgetItem *item, int /*column*/)
@@ -8701,3 +8720,4 @@ void MainWindow::on_toolButton_LibraryPreview_clicked()
 {
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
+

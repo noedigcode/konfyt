@@ -1758,7 +1758,11 @@ border-bottom-left-radius: 0;</string>
                           <number>0</number>
                          </property>
                          <item row="0" column="0">
-                          <widget class="QListWidget" name="listWidget_LibraryBottom"/>
+                          <widget class="QListWidget" name="listWidget_LibraryBottom">
+                           <property name="contextMenuPolicy">
+                            <enum>Qt::CustomContextMenu</enum>
+                           </property>
+                          </widget>
                          </item>
                         </layout>
                        </widget>
