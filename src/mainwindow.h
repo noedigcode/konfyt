@@ -291,6 +291,7 @@ private:
 
     bool mLibrarySearchModeActive;
     void fillLibraryTreeWithAll();
+    void refreshLibraryPatchTree();
     void fillLibraryTreeWithSearch(QString search);
 
     QMenu libraryContextMenu;

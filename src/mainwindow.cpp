@@ -2824,6 +2824,18 @@ void MainWindow::fillLibraryTreeWithAll()
     ui->treeWidget_Library->insertTopLevelItem(0, libraryPatchTree.rootTreeItem);
 }
 
+void MainWindow::refreshLibraryPatchTree()
+{
+    QTreeWidgetItem* root = libraryPatchTree.rootTreeItem;
+    while (root->childCount()) {
+        root->removeChild(root->child(0));
+    }
+    libraryPatchTree.foldersMap.clear();
+    libraryPatchTree.soundsMap.clear();
+
+    buildPatchTree(db.patchTree.root);
+}
+
 void MainWindow::preparePreviewMenu()
 {
     previewButtonMenu.clear();
@@ -3597,7 +3609,7 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
 
         // Refresh tree view if not in searchmode
         if (!mLibrarySearchModeActive) {
-            fillLibraryTreeWithAll();
+            refreshLibraryPatchTree();
         }
 
         saveDatabase();
