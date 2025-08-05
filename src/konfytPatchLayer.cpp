@@ -55,6 +55,7 @@ void KonfytPatchLayer::initLayer(LayerSoundfontData newLayerData)
     mLayerType = TypeSoundfontProgram;
     soundfontData = newLayerData;
     mName = soundfontData.parentSoundfont + "/" + soundfontData.program.name;
+    mMidiFilter.passProg = false;
 }
 
 void KonfytPatchLayer::initLayer(LayerSfzData newLayerData)
@@ -62,6 +63,7 @@ void KonfytPatchLayer::initLayer(LayerSfzData newLayerData)
     mLayerType = TypeSfz;
     sfzData = newLayerData;
     mName = "SFZ";
+    mMidiFilter.passProg = false;
 }
 
 void KonfytPatchLayer::initLayer(LayerMidiOutData newLayerData)
@@ -69,6 +71,7 @@ void KonfytPatchLayer::initLayer(LayerMidiOutData newLayerData)
     mLayerType = TypeMidiOut;
     midiOutputPortData = newLayerData;
     mName = "MIDI Out Port";
+    mMidiFilter.passProg = true;
 }
 
 void KonfytPatchLayer::initLayer(LayerAudioInData newLayerData)
