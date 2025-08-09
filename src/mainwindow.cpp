@@ -8706,12 +8706,14 @@ void MainWindow::on_pushButton_midiSendList_sendAll_clicked()
     }
 }
 
-void MainWindow::on_listWidget_midiSendList_currentItemChanged(QListWidgetItem* current, QListWidgetItem* previous)
+void MainWindow::on_listWidget_midiSendList_currentItemChanged(
+        QListWidgetItem* /*current*/, QListWidgetItem* /*previous*/)
 {
     updateMidiSendListEditorButtonStates();
 }
 
-void MainWindow::on_treeWidget_savedMidiMessages_currentItemChanged(QTreeWidgetItem* current, QTreeWidgetItem* previous)
+void MainWindow::on_treeWidget_savedMidiMessages_currentItemChanged(
+        QTreeWidgetItem* /*current*/, QTreeWidgetItem* /*previous*/)
 {
     updateMidiSendListEditorButtonStates();
 }
