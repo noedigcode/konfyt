@@ -259,18 +259,37 @@ void ScriptEditWidget::insertEnterKeepIndentation()
     QTextCursor cur = textCursor();
     cur.beginEditBlock();
     cur.insertText("\n" + indentText);
+
     // If braceOpen, insert additional indent, newline and brace close
     if (braceOpen) {
         cur.insertText(INDENT);
         if (addClosingBrace) {
             int pos = cur.position(); // Position where cursor should end up
             cur.insertText("\n" + indentText + "}");
+
+            // If at bottom of view, scroll down to make the added closing brace
+            // visible, so the user can see it has been inserted.
+            setTextCursor(cur);
+            if (!cur.block().next().isValid()) {
+                // Workaround if we're at the end of the document. Somehow
+                // ensureCursorVisible() doesn't do the trick here. Queue a
+                // function on the event loop to scroll to the bottom.
+                QMetaObject::invokeMethod(this, [=]() {
+                    verticalScrollBar()->setValue(verticalScrollBar()->maximum());
+                }, Qt::QueuedConnection);
+            } else {
+                // We're not at the end of the document. In this case, we can
+                // simply use ensureCursorVisible().
+                ensureCursorVisible();
+            }
+
             // Return cursor to in-between braces
             cur.setPosition(pos);
             setTextCursor(cur);
         }
     }
     cur.endEditBlock();
+    ensureCursorVisible();
 }
 
 void ScriptEditWidget::gotoLineStartBeforeOrAfterIndent(bool shift)
