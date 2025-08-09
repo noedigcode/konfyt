@@ -21,12 +21,66 @@
 
 #include "scriptEditWidget.h"
 
-#include <QTextBlock>
 #include <QDebug>
+#include <QPainter>
+#include <QScrollBar>
+#include <QTextBlock>
 
 ScriptEditWidget::ScriptEditWidget(QWidget *parent) : QPlainTextEdit(parent)
 {
+    lineNumberArea = new LineNumberArea(this);
+
     setLineWrapMode(NoWrap);
+
+    connect(this, &QPlainTextEdit::blockCountChanged,
+            this, &ScriptEditWidget::updateLineNumberAreaWidth);
+    connect(this, &QPlainTextEdit::updateRequest,
+            this, &ScriptEditWidget::updateLineNumberArea);
+
+    updateLineNumberAreaWidth(0);
+}
+
+void ScriptEditWidget::lineNumberAreaPaintEvent(QPaintEvent* event)
+{
+    QPainter painter(lineNumberArea);
+    painter.fillRect(event->rect(), Qt::black);
+
+    QTextBlock block = firstVisibleBlock();
+    int blockNumber = block.blockNumber();
+    int top = blockBoundingRect(block).translated(contentOffset()).top();
+    int bottom = top + blockBoundingRect(block).height();
+
+    while (block.isValid() && top <= event->rect().bottom()) {
+        if (block.isVisible() && bottom >= event->rect().top()) {
+            QString text = QString::number(blockNumber + 1);
+            painter.setPen(Qt::lightGray);
+            painter.drawText(
+                        0, top,
+                        lineNumberArea->width() - LINE_NUMBER_AREA_RIGHT_PADDING,
+                        fontMetrics().height(), Qt::AlignRight,
+                        text);
+        }
+
+        block = block.next();
+        top = bottom;
+        bottom = top + blockBoundingRect(block).height();
+        ++blockNumber;
+    }
+}
+
+int ScriptEditWidget::lineNumberAreaWidth()
+{
+    int digits = 1;
+    int blocks = qMax(1, blockCount());
+    while (blocks >= 10) {
+        blocks /= 10;
+        ++digits;
+    }
+
+    int space = LINE_NUMBER_AREA_EXTRA_PADDING
+            + fontMetrics().horizontalAdvance('9') * digits
+            + LINE_NUMBER_AREA_RIGHT_PADDING;
+    return space;
 }
 
 void ScriptEditWidget::keyPressEvent(QKeyEvent *event)
@@ -73,6 +127,15 @@ void ScriptEditWidget::keyPressEvent(QKeyEvent *event)
         QPlainTextEdit::keyPressEvent(event);
         break;
     }
+}
+
+void ScriptEditWidget::resizeEvent(QResizeEvent* event)
+{
+    QPlainTextEdit::resizeEvent(event);
+
+    QRect cr = contentsRect();
+    lineNumberArea->setGeometry(QRect(cr.left(), cr.top(),
+                                      lineNumberAreaWidth(), cr.height()));
 }
 
 void ScriptEditWidget::insertIndent()
@@ -365,4 +428,39 @@ void ScriptEditWidget::select(int startPos, int endPos)
     c.setPosition(startPos);
     c.setPosition(endPos, QTextCursor::KeepAnchor);
     this->setTextCursor(c);
+}
+
+void ScriptEditWidget::updateLineNumberAreaWidth(int /*newBlockCount*/)
+{
+    setViewportMargins(lineNumberAreaWidth(), 0, 0, 0);
+}
+
+void ScriptEditWidget::updateLineNumberArea(const QRect& rect, int dy)
+{
+    if (dy) {
+        lineNumberArea->scroll(0, dy);
+    } else {
+        lineNumberArea->update(0, rect.y(), lineNumberArea->width(), rect.height());
+    }
+
+    // If entire viewport was updated, recalculate line number area width
+    if (rect.contains(viewport()->rect())) {
+        updateLineNumberAreaWidth();
+    }
+}
+
+LineNumberArea::LineNumberArea(ScriptEditWidget* editWidget)
+    : QWidget(editWidget), editWidget(editWidget)
+{
+
+}
+
+QSize LineNumberArea::sizeHint() const
+{
+    return QSize(editWidget->lineNumberAreaWidth(), 0);
+}
+
+void LineNumberArea::paintEvent(QPaintEvent* event)
+{
+    editWidget->lineNumberAreaPaintEvent(event);
 }

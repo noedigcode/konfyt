@@ -25,16 +25,26 @@
 #include <QPlainTextEdit>
 #include <QWidget>
 
+class LineNumberArea;
+
 class ScriptEditWidget : public QPlainTextEdit
 {
     Q_OBJECT
 public:
     ScriptEditWidget(QWidget* parent = nullptr);
 
+    void lineNumberAreaPaintEvent(QPaintEvent *event);
+    int lineNumberAreaWidth();
+
 protected:
     const QString INDENT = "    ";
+    const int LINE_NUMBER_AREA_EXTRA_PADDING = 4;
+    const int LINE_NUMBER_AREA_RIGHT_PADDING = 4;
 
-    void keyPressEvent(QKeyEvent *event) override;
+    LineNumberArea* lineNumberArea;
+
+    void keyPressEvent(QKeyEvent* event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
     void insertIndent();
     void deIndent();
@@ -47,6 +57,25 @@ protected:
     QList<QTextCursor> getLineStartsOfSelection();
 
     void select(int startPos, int endPos);
+
+private slots:
+    void updateLineNumberAreaWidth(int newBlockCount = 0);
+    void updateLineNumberArea(const QRect& rect, int dy);
+};
+
+
+class LineNumberArea : public QWidget
+{
+public:
+    LineNumberArea(ScriptEditWidget* editWidget);
+
+    QSize sizeHint() const override;
+
+protected:
+    void paintEvent(QPaintEvent* event) override;
+
+private:
+    ScriptEditWidget* editWidget;
 };
 
 #endif // SCRIPTEDITWIDGET_H
