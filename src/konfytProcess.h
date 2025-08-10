@@ -82,6 +82,7 @@ public:
     void runApp(int id);
     void stopApp(int id);
     KonfytProcess::State getAppState(int id);
+    void stopAllRunningApps();
 
 signals:
     void print(QString msg);

@@ -567,6 +567,10 @@ void KonfytProject::writeExternalApps(QXmlStreamWriter *w)
         w->writeTextElement(XML_PRJ_EXT_APP_CMD, app.command);
         w->writeTextElement(XML_PRJ_EXT_APP_RUNATSTARTUP, bool2str(app.runAtStartup));
         w->writeTextElement(XML_PRJ_EXT_APP_RESTART, bool2str(app.autoRestart));
+        w->writeTextElement(XML_PRJ_EXT_APP_WARN_BEFORE_CLOSING,
+                            bool2str(app.warnBeforeClosing));
+        w->writeTextElement(XML_PRJ_EXT_APP_START_DETACHED,
+                            bool2str(app.startDetached));
         w->writeEndElement();
     }
     w->writeEndElement(); // end of external apps
@@ -623,6 +627,10 @@ void KonfytProject::readExternalApps(QXmlStreamReader *r)
                         app.runAtStartup = Qstr2bool(r->readElementText());
                     } else if (r->name() == XML_PRJ_EXT_APP_RESTART) {
                         app.autoRestart = Qstr2bool(r->readElementText());
+                    } else if (r->name() == XML_PRJ_EXT_APP_WARN_BEFORE_CLOSING) {
+                        app.warnBeforeClosing = Qstr2bool(r->readElementText());
+                    } else if (r->name() == XML_PRJ_EXT_APP_START_DETACHED) {
+                        app.startDetached = Qstr2bool(r->readElementText());
                     } else {
                         print("loadProject: Unrecognized externalApp element: " + r->name().toString());
                         r->skipCurrentElement();

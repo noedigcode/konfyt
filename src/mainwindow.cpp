@@ -6400,6 +6400,8 @@ void MainWindow::externalAppToEditor(ExternalApp app)
     ui->lineEdit_extAppEditor_command->setText(app.command);
     ui->checkBox_extApp_runAtStartup->setChecked(app.runAtStartup);
     ui->checkBox_extApp_restart->setChecked(app.autoRestart);
+    ui->checkBox_extApp_warnBeforeClosing->setChecked(app.warnBeforeClosing);
+    ui->checkBox_extApp_startDetached->setChecked(app.startDetached);
 }
 
 ExternalApp MainWindow::externalAppFromEditor()
@@ -6409,6 +6411,8 @@ ExternalApp MainWindow::externalAppFromEditor()
     app.command = ui->lineEdit_extAppEditor_command->text();
     app.runAtStartup = ui->checkBox_extApp_runAtStartup->isChecked();
     app.autoRestart = ui->checkBox_extApp_restart->isChecked();
+    app.warnBeforeClosing = ui->checkBox_extApp_warnBeforeClosing->isChecked();
+    app.startDetached = ui->checkBox_extApp_startDetached->isChecked();
     return app;
 }
 
@@ -6972,6 +6976,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
         // Write settings to save window maximized state and last project
         saveSettingsFile();
+
+        // Close all running external apps, warning the user if applicable
+        externalAppRunner.stopAllRunningApps();
 
     } else {
         event->ignore();

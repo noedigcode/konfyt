@@ -115,6 +115,20 @@ struct ExternalApp
     QString command;
     bool runAtStartup = false;
     bool autoRestart = false;
+    bool warnBeforeClosing = true;
+    bool startDetached = false;
+
+    QString displayName()
+    {
+        QString text = friendlyName;
+        if (text.trimmed().isEmpty()) {
+            text = command;
+        }
+        if (text.trimmed().isEmpty()) {
+            text = "(no name)";
+        }
+        return text;
+    }
 };
 
 // ============================================================================
@@ -376,6 +390,8 @@ private:
     const char* XML_PRJ_EXT_APP_CMD = "command";
     const char* XML_PRJ_EXT_APP_RUNATSTARTUP = "runAtStartup";
     const char* XML_PRJ_EXT_APP_RESTART = "autoRestart";
+    const char* XML_PRJ_EXT_APP_WARN_BEFORE_CLOSING = "warnBeforeClosing";
+    const char* XML_PRJ_EXT_APP_START_DETACHED = "startDetached";
 
     const char* XML_PRJ_TRIGGERLIST = "triggerList";
     const char* XML_PRJ_TRIGGER = "trigger";

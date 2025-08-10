@@ -21,7 +21,7 @@
 
 #include "konfytProcess.h"
 
-#include <QDebug>
+#include <QMessageBox>
 
 // =============================================================================
 // KonfytProcess
@@ -56,7 +56,11 @@ void KonfytProcess::start()
     mState = STARTING;
     emit stateChanged();
 
-    process.start(expandedAppName());
+    if (appInfo.startDetached) {
+        process.startDetached(expandedAppName());
+    } else {
+        process.start(expandedAppName());
+    }
 }
 
 void KonfytProcess::stop()
@@ -70,6 +74,14 @@ void KonfytProcess::stop()
         process.kill();
     } else {
         // Not stopping already. Try terminate.
+
+        if (appInfo.warnBeforeClosing) {
+            QMessageBox::warning(nullptr, "External app about to close",
+                QString("The external app %1 is about to close. "
+                "Ensure you have saved all work in the app before clicking OK.")
+                                 .arg(appInfo.displayName()));
+        }
+
         mState = STOPPING;
         emit stateChanged();
         process.terminate();
@@ -135,6 +147,7 @@ void ExternalAppRunner::setProject(ProjectPtr project)
 {
     if (mProject) {
         disconnect(mProject.data(), nullptr, this, nullptr);
+        stopAllRunningApps();
         processes.clear();
     }
     mProject = project;
@@ -147,7 +160,7 @@ void ExternalAppRunner::setProject(ProjectPtr project)
     foreach (int id, mProject->getExternalAppIds()) {
         ExternalApp app = mProject->getExternalApp(id);
         if (app.runAtStartup) {
-            print("Auto-starting external app: " + app.friendlyName);
+            print("Auto-starting external app: " + app.displayName());
             runApp(id);
         }
     }
@@ -193,6 +206,16 @@ KonfytProcess::State ExternalAppRunner::getAppState(int id)
     }
 
     return ret;
+}
+
+void ExternalAppRunner::stopAllRunningApps()
+{
+    foreach (int id, processes.keys()) {
+        ProcessPtr p = processes.value(id);
+        if (p->isRunning() && !p->appInfo.startDetached) {
+            stopApp(id);
+        }
+    }
 }
 
 ExternalAppRunner::ProcessPtr ExternalAppRunner::addNewProcess(int id)
@@ -261,7 +284,7 @@ void ExternalAppRunner::onProcessFinished(int id)
              (p->state() == KonfytProcess::CRASHED) ||
              (p->state() == KonfytProcess::ERROR) ) {
 
-            QString name = p->appInfo.friendlyName;
+            QString name = p->appInfo.displayName();
             int delay = 1000;
             print(QString("External app will be auto-restarted in %1ms: %2")
                   .arg(delay).arg(name));
@@ -333,13 +356,7 @@ void ExternalAppsListAdapter::selectAppInList(int id)
 
 void ExternalAppsListAdapter::updateItem(QListWidgetItem *item, ExternalApp app, KonfytProcess::State state)
 {
-    QString text = app.friendlyName;
-    if (text.trimmed().isEmpty()) {
-        text = app.command;
-    }
-    if (text.trimmed().isEmpty()) {
-        text = "(no name)";
-    }
+    QString text = app.displayName();
 
     if (state == KonfytProcess::RUNNING) {
         text.prepend("[running] ");
