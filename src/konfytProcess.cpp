@@ -75,15 +75,20 @@ void KonfytProcess::stop()
     } else {
         // Not stopping already. Try terminate.
 
+        // Change state to STOPPING before showing message, so the app isn't
+        // restarted when user closes it while the message is shown.
+        mState = STOPPING;
+        emit stateChanged();
+
+        // Show message to inform user that app will be closed. This gives the
+        // user a chance to save and close the app themselves.
         if (appInfo.warnBeforeClosing) {
             QMessageBox::warning(nullptr, "External app about to close",
-                QString("The external app %1 is about to close. "
+                QString("The external app \"%1\" is about to close. "
                 "Ensure you have saved all work in the app before clicking OK.")
                                  .arg(appInfo.displayName()));
         }
 
-        mState = STOPPING;
-        emit stateChanged();
         process.terminate();
     }
 }
