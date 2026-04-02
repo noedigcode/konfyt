@@ -281,12 +281,12 @@ void MainWindow::updateProjectsMenu()
 
 void MainWindow::onProjectMenu_ActionTrigger(QAction* action)
 {
+    if (!projectsMenuMap.contains(action)) { return; }
+
     if (!requestCurrentProjectClose()) { return; }
 
-    if ( projectsMenuMap.contains(action) ) {
-        QFileInfo fi = projectsMenuMap.value(action);
-        loadProjectFromFile(fi.filePath()); // Open project from file and load it
-    }
+    QFileInfo fi = projectsMenuMap.value(action);
+    loadProjectFromFile(fi.filePath());
 }
 
 void MainWindow::on_actionProject_save_triggered()
