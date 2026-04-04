@@ -100,6 +100,7 @@ void KonfytPatch::writeToXmlStream(QXmlStreamWriter *stream) const
 
     stream->writeTextElement(XML_PATCH_NOTE, this->note());
     stream->writeTextElement(XML_PATCH_ALWAYSACTIVE, QVariant(alwaysActive).toString());
+    stream->writeTextElement(XML_PATCH_RESET_OPTION, konfytResetToString(mResetOption));
 
     patchMidiFilter.writeToXMLStream(stream);
 
@@ -154,6 +155,11 @@ void KonfytPatch::readFromXmlStream(QXmlStreamReader *r, QString *errors)
 
                 this->alwaysActive = QVariant(r->readElementText()).toBool();
 
+            } else if (r->name() == XML_PATCH_RESET_OPTION) {
+
+                mResetOption = konfytResetFromString(r->readElementText(),
+                                                     KonfytReset::Inherit);
+
             } else if (r->name() == XML_MIDIFILTER) {
 
                 this->patchMidiFilter.readFromXMLStream(r);
@@ -197,6 +203,8 @@ void KonfytPatch::xmlWriteSfontLayer(QXmlStreamWriter *stream, KfPatchLayerShare
     stream->writeTextElement(XML_PATCH_SFLAYER_SOLO, bool2str(layer->isSolo()));
     stream->writeTextElement(XML_PATCH_SFLAYER_MUTE, bool2str(layer->isMute()));
     stream->writeTextElement(XML_PATCH_SFLAYER_MIDI_IN, n2s(layer->midiInPortIdInProject()));
+    stream->writeTextElement(XML_PATCH_LAYER_RESET_OPTION,
+                             konfytResetToString(layer->getResetOption()));
 
     // Midi filter
     layer->midiFilter().writeToXMLStream(stream);
@@ -217,6 +225,7 @@ void KonfytPatch::xmlReadSfontLayer(QXmlStreamReader *r, QString *errors)
     bool mute = false;
     KonfytMidiFilter midiFilter;
     LayerScriptData script;
+    KonfytReset resetOption = KonfytReset::Inherit;
 
     while (r->readNextStartElement()) { // layer properties
 
@@ -242,6 +251,8 @@ void KonfytPatch::xmlReadSfontLayer(QXmlStreamReader *r, QString *errors)
             midiIn = r->readElementText().toInt();
         } else if (r->name() == XML_PATCH_LAYER_SCRIPT) {
             script = xmlReadLayerScript(r);
+        } else if (r->name() == XML_PATCH_LAYER_RESET_OPTION) {
+            resetOption = konfytResetFromString(r->readElementText(), resetOption);
         } else {
             appendError(errors, "Unrecognized sfLayer element: " + r->name().toString() );
             r->skipCurrentElement();
@@ -259,6 +270,7 @@ void KonfytPatch::xmlReadSfontLayer(QXmlStreamReader *r, QString *errors)
     layer->setScript(script.content);
     layer->setScriptEnabled(script.enabled);
     layer->setPassMidiThrough(script.passMidiThrough);
+    layer->setResetOption(resetOption);
 }
 
 void KonfytPatch::xmlWriteSfzLayer(QXmlStreamWriter *stream, KfPatchLayerSharedPtr layer) const
@@ -273,6 +285,8 @@ void KonfytPatch::xmlWriteSfzLayer(QXmlStreamWriter *stream, KfPatchLayerSharedP
     stream->writeTextElement(XML_PATCH_SFZLAYER_SOLO, bool2str(layer->isSolo()));
     stream->writeTextElement(XML_PATCH_SFZLAYER_MUTE, bool2str(layer->isMute()));
     stream->writeTextElement(XML_PATCH_SFZLAYER_MIDI_IN, n2s(layer->midiInPortIdInProject()));
+    stream->writeTextElement(XML_PATCH_LAYER_RESET_OPTION,
+                             konfytResetToString(layer->getResetOption()));
 
     // Midi filter
     layer->midiFilter().writeToXMLStream(stream);
@@ -293,6 +307,7 @@ void KonfytPatch::xmlReadSfzLayer(QXmlStreamReader *r, QString *errors)
     bool mute = false;
     KonfytMidiFilter midiFilter;
     LayerScriptData script;
+    KonfytReset resetOption = KonfytReset::Inherit;
 
     while (r->readNextStartElement()) {
 
@@ -314,7 +329,9 @@ void KonfytPatch::xmlReadSfzLayer(QXmlStreamReader *r, QString *errors)
             midiFilter.readFromXMLStream(r);
         } else if (r->name() == XML_PATCH_LAYER_SCRIPT) {
             script = xmlReadLayerScript(r);
-        } else {
+        } else if (r->name() == XML_PATCH_LAYER_RESET_OPTION) {
+            resetOption = konfytResetFromString(r->readElementText(), resetOption);
+        }  else {
             appendError(errors, "Unrecognized sfzLayer element: " + r->name().toString() );
             r->skipCurrentElement();
         }
@@ -331,6 +348,7 @@ void KonfytPatch::xmlReadSfzLayer(QXmlStreamReader *r, QString *errors)
     layer->setScript(script.content);
     layer->setScriptEnabled(script.enabled);
     layer->setPassMidiThrough(script.passMidiThrough);
+    layer->setResetOption(resetOption);
 }
 
 void KonfytPatch::xmlWriteMidiOutLayer(QXmlStreamWriter *stream, KfPatchLayerSharedPtr layer) const
@@ -342,6 +360,8 @@ void KonfytPatch::xmlWriteMidiOutLayer(QXmlStreamWriter *stream, KfPatchLayerSha
     stream->writeTextElement(XML_PATCH_MIDIOUT_SOLO, bool2str(layer->isSolo()));
     stream->writeTextElement(XML_PATCH_MIDIOUT_MUTE, bool2str(layer->isMute()));
     stream->writeTextElement(XML_PATCH_MIDIOUT_MIDI_IN, n2s(layer->midiInPortIdInProject()));
+    stream->writeTextElement(XML_PATCH_LAYER_RESET_OPTION,
+                             konfytResetToString(layer->getResetOption()));
 
     // Midi filter
     layer->midiFilter().writeToXMLStream(stream);
@@ -371,6 +391,7 @@ void KonfytPatch::xmlReadMidiOutLayer(QXmlStreamReader *r, QString *errors)
     bool mute = false;
     KonfytMidiFilter midiFilter;
     LayerScriptData script;
+    KonfytReset resetOption = KonfytReset::Inherit;
 
     while (r->readNextStartElement()) { // port
         if (r->name() == XML_PATCH_MIDIOUT_PORT) {
@@ -383,7 +404,9 @@ void KonfytPatch::xmlReadMidiOutLayer(QXmlStreamReader *r, QString *errors)
             midiFilter.readFromXMLStream(r);
         } else if (r->name() == XML_PATCH_LAYER_SCRIPT) {
             script = xmlReadLayerScript(r);
-        } else if (r->name() == XML_PATCH_MIDIOUT_MIDI_IN) {
+        } else if (r->name() == XML_PATCH_LAYER_RESET_OPTION) {
+            resetOption = konfytResetFromString(r->readElementText(), resetOption);
+        }  else if (r->name() == XML_PATCH_MIDIOUT_MIDI_IN) {
             midiIn = r->readElementText().toInt();
         } else if (r->name() == XML_PATCH_MIDISENDLIST) {
             while (r->readNextStartElement()) {
@@ -415,6 +438,7 @@ void KonfytPatch::xmlReadMidiOutLayer(QXmlStreamReader *r, QString *errors)
     layer->setScript(script.content);
     layer->setScriptEnabled(script.enabled);
     layer->setPassMidiThrough(script.passMidiThrough);
+    layer->setResetOption(resetOption);
 }
 
 void KonfytPatch::xmlWriteAudioInLayer(QXmlStreamWriter *stream, KfPatchLayerSharedPtr layer) const
@@ -428,6 +452,8 @@ void KonfytPatch::xmlWriteAudioInLayer(QXmlStreamWriter *stream, KfPatchLayerSha
     stream->writeTextElement(XML_PATCH_AUDIOIN_BUS, n2s(layer->busIdInProject()));
     stream->writeTextElement(XML_PATCH_AUDIOIN_SOLO, bool2str(layer->isSolo()));
     stream->writeTextElement(XML_PATCH_AUDIOIN_MUTE, bool2str(layer->isMute()));
+    stream->writeTextElement(XML_PATCH_LAYER_RESET_OPTION,
+                             konfytResetToString(layer->getResetOption()));
 
     stream->writeEndElement();
 }
@@ -440,15 +466,24 @@ void KonfytPatch::xmlReadAudioInLayer(QXmlStreamReader *r, QString *errors)
     float gain = 1.0;
     bool solo = false;
     bool mute = false;
+    KonfytReset resetOption = KonfytReset::Inherit;
 
     while (r->readNextStartElement()) {
-        if (r->name() == XML_PATCH_AUDIOIN_NAME) { name = r->readElementText(); }
-        else if (r->name() == XML_PATCH_AUDIOIN_PORT) { a.portIdInProject = r->readElementText().toInt(); }
-        else if (r->name() == XML_PATCH_AUDIOIN_GAIN) { gain = r->readElementText().toFloat(); }
-        else if (r->name() == XML_PATCH_AUDIOIN_BUS) { bus = r->readElementText().toInt(); }
-        else if (r->name() == XML_PATCH_AUDIOIN_SOLO) { solo = (r->readElementText() == "1"); }
-        else if (r->name() == XML_PATCH_AUDIOIN_MUTE) { mute = (r->readElementText() == "1"); }
-        else {
+        if (r->name() == XML_PATCH_AUDIOIN_NAME) {
+            name = r->readElementText();
+        } else if (r->name() == XML_PATCH_AUDIOIN_PORT) {
+            a.portIdInProject = r->readElementText().toInt();
+        } else if (r->name() == XML_PATCH_AUDIOIN_GAIN) {
+            gain = r->readElementText().toFloat();
+        } else if (r->name() == XML_PATCH_AUDIOIN_BUS) {
+            bus = r->readElementText().toInt();
+        } else if (r->name() == XML_PATCH_AUDIOIN_SOLO) {
+            solo = (r->readElementText() == "1");
+        } else if (r->name() == XML_PATCH_AUDIOIN_MUTE) {
+            mute = (r->readElementText() == "1");
+        } else if (r->name() == XML_PATCH_LAYER_RESET_OPTION) {
+            resetOption = konfytResetFromString(r->readElementText(), resetOption);
+        }  else {
             appendError(errors,
                         "Unrecognized audioInPortLayer element: " + r->name().toString() );
             r->skipCurrentElement();
@@ -460,6 +495,7 @@ void KonfytPatch::xmlReadAudioInLayer(QXmlStreamReader *r, QString *errors)
     layer->setGain(gain);
     layer->setSolo(solo);
     layer->setMute(mute);
+    layer->setResetOption(resetOption);
 }
 
 void KonfytPatch::xmlWriteLayerScript(QXmlStreamWriter *stream,
@@ -541,6 +577,13 @@ int KonfytPatch::layerIndex(KfPatchLayerWeakPtr layer) const
     return layerList.indexOf(layer.toStrongRef());
 }
 
+void KonfytPatch::createLayerResetSnapshots()
+{
+    foreach (KfPatchLayerSharedPtr layer, layerList) {
+        layer->createResetSnapshot();
+    }
+}
+
 KfPatchLayerWeakPtr KonfytPatch::addSfLayer(QString soundfontPath, KonfytSoundPreset preset)
 {
     LayerSoundfontData sfData;
@@ -573,6 +616,16 @@ QString KonfytPatch::name() const
 void KonfytPatch::setNote(QString newNote)
 {
     this->patchNote = newNote;
+}
+
+KonfytReset KonfytPatch::getResetOption()
+{
+    return mResetOption;
+}
+
+void KonfytPatch::setResetOption(KonfytReset option)
+{
+    mResetOption = option;
 }
 
 QString KonfytPatch::note() const

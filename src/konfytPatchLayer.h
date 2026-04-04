@@ -107,6 +107,11 @@ public:
     int midiInPortIdInProject() const;
     void setMidiInPortIdInProject(int port);
 
+    void setResetOption(KonfytReset option);
+    KonfytReset getResetOption();
+    void createResetSnapshot();
+    void restoreResetSnapshotIfAllowed(KonfytReset inheritedOption);
+
     QString script() const;
     void setScript(QString script);
     bool isScriptEnabled() const;
@@ -143,6 +148,15 @@ private:
     QString mName = "UNINITIALIZED LAYER";
     int mBusIdInProject = 0;
     int mMidiInPortIdInProject = 0;
+
+    KonfytReset mResetOption = KonfytReset::Inherit;
+    struct ResetSnapshot
+    {
+        bool valid = false;
+        float gain = 0;
+        bool solo = false;
+        bool mute = false;
+    } mResetSnapshot;
 
     QString mScript;
     bool mScriptEnabled = false;

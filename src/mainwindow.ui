@@ -527,6 +527,15 @@ QTabWidget::pane { /* The tab widget frame */
 	margin-top: 1px;
  }
 
+QTabWidget#tabWidget_settings::pane {
+	margin-top: 0;	
+	padding-top: 0;
+	background-color: rgb(90, 90, 90);
+	border: 1px solid rgb(40, 40, 40);
+	border-radius: 3px;
+	border-top-left-radius: 0;
+}
+
 
 /* ---------------------------------------------------------------------- */
 QTextBrowser {
@@ -777,7 +786,7 @@ QStatusBar {
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>23</height>
+               <height>29</height>
               </size>
              </property>
              <property name="styleSheet">
@@ -1068,7 +1077,7 @@ border-bottom-left-radius: 0;</string>
              <property name="maximumSize">
               <size>
                <width>16777215</width>
-               <height>23</height>
+               <height>29</height>
               </size>
              </property>
              <property name="styleSheet">
@@ -1171,7 +1180,7 @@ border-bottom-left-radius: 0;</string>
                 </size>
                </property>
                <property name="currentIndex">
-                <number>1</number>
+                <number>0</number>
                </property>
                <widget class="QWidget" name="pageLibrary">
                 <layout class="QGridLayout" name="gridLayout_6">
@@ -1254,13 +1263,13 @@ border-bottom-left-radius: 0;</string>
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>23</height>
+                             <height>29</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>23</height>
+                             <height>29</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -1526,13 +1535,13 @@ QScrollBar:horizontal {
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>23</height>
+                             <height>29</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>23</height>
+                             <height>29</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -1806,13 +1815,13 @@ border-bottom-left-radius: 0;</string>
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>23</height>
+                        <height>29</height>
                        </size>
                       </property>
                       <property name="maximumSize">
                        <size>
                         <width>16777215</width>
-                        <height>23</height>
+                        <height>29</height>
                        </size>
                       </property>
                       <property name="styleSheet">
@@ -1946,13 +1955,13 @@ border-bottom-left-radius: 0;</string>
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>23</height>
+                          <height>29</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
                           <width>16777215</width>
-                          <height>23</height>
+                          <height>29</height>
                          </size>
                         </property>
                         <property name="styleSheet">
@@ -2269,8 +2278,8 @@ p, li { white-space: pre-wrap; }
 hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Noto Sans'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Ubuntu';&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                           </property>
                          </widget>
                         </item>
@@ -2309,13 +2318,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
                             <property name="minimumSize">
                              <size>
                               <width>0</width>
-                              <height>23</height>
+                              <height>29</height>
                              </size>
                             </property>
                             <property name="maximumSize">
                              <size>
                               <width>16777215</width>
-                              <height>23</height>
+                              <height>29</height>
                              </size>
                             </property>
                             <property name="styleSheet">
@@ -2453,7 +2462,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>8</number>
+                 <number>1</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -2555,13 +2564,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>23</height>
+                             <height>29</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>23</height>
+                             <height>29</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -2926,7 +2935,7 @@ p, li { white-space: pre-wrap; }
 hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Noto Sans'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Lucida Sans'; font-size:8pt;&quot;&gt;Type a note here to be associated with the current patch.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                                   </property>
                                  </widget>
@@ -2979,13 +2988,13 @@ li.checked::marker { content: &quot;\2612&quot;; }
                                      <property name="minimumSize">
                                       <size>
                                        <width>0</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="maximumSize">
                                       <size>
                                        <width>16777215</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="styleSheet">
@@ -3284,7 +3293,7 @@ border-bottom: 1px solid rgb(40,40,40);</string>
                      <item row="1" column="1">
                       <widget class="QGroupBox" name="groupBox_Settings">
                        <property name="sizePolicy">
-                        <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                          <horstretch>0</horstretch>
                          <verstretch>0</verstretch>
                         </sizepolicy>
@@ -3299,517 +3308,801 @@ border-bottom: 1px solid rgb(40,40,40);</string>
                         <string notr="true"/>
                        </property>
                        <property name="title">
-                        <string>Global Settings</string>
+                        <string>Settings</string>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_17">
+                        <property name="topMargin">
+                         <number>12</number>
+                        </property>
                         <item>
-                         <widget class="QGroupBox" name="groupBox_SubSettings">
-                          <property name="styleSheet">
-                           <string notr="true"/>
+                         <widget class="QTabWidget" name="tabWidget_settings">
+                          <property name="sizePolicy">
+                           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                            <horstretch>0</horstretch>
+                            <verstretch>0</verstretch>
+                           </sizepolicy>
                           </property>
-                          <property name="title">
-                           <string/>
+                          <property name="currentIndex">
+                           <number>2</number>
                           </property>
-                          <property name="KonfytSubGroupbox" stdset="0">
-                           <bool>true</bool>
-                          </property>
-                          <layout class="QGridLayout" name="gridLayout_20">
-                           <item row="9" column="0">
-                            <widget class="QLabel" name="label_24">
-                             <property name="text">
-                              <string>File manager (leave empty for default)</string>
-                             </property>
-                            </widget>
-                           </item>
-                           <item row="10" column="0">
-                            <widget class="QFrame" name="frame_25">
-                             <property name="minimumSize">
-                              <size>
-                               <width>0</width>
-                               <height>23</height>
-                              </size>
-                             </property>
-                             <property name="maximumSize">
-                              <size>
-                               <width>16777215</width>
-                               <height>23</height>
-                              </size>
-                             </property>
-                             <property name="styleSheet">
-                              <string notr="true"/>
-                             </property>
-                             <property name="frameShape">
-                              <enum>QFrame::StyledPanel</enum>
-                             </property>
-                             <property name="frameShadow">
-                              <enum>QFrame::Raised</enum>
-                             </property>
-                             <property name="buttonFrame" stdset="0">
-                              <bool>true</bool>
-                             </property>
-                             <layout class="QHBoxLayout" name="horizontalLayout_20">
-                              <property name="spacing">
-                               <number>1</number>
+                          <widget class="QWidget" name="tab_settings_currentProject">
+                           <attribute name="title">
+                            <string>Current Project</string>
+                           </attribute>
+                           <layout class="QVBoxLayout" name="verticalLayout_43">
+                            <item>
+                             <widget class="QLabel" name="label_27">
+                              <property name="text">
+                               <string>Default patch layer reset behaviour</string>
                               </property>
-                              <property name="leftMargin">
-                               <number>0</number>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QFrame" name="frame_68">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>29</height>
+                               </size>
                               </property>
-                              <property name="topMargin">
-                               <number>0</number>
+                              <property name="maximumSize">
+                               <size>
+                                <width>16777215</width>
+                                <height>29</height>
+                               </size>
                               </property>
-                              <property name="rightMargin">
-                               <number>0</number>
+                              <property name="styleSheet">
+                               <string notr="true"/>
                               </property>
-                              <property name="bottomMargin">
-                               <number>0</number>
+                              <property name="frameShape">
+                               <enum>QFrame::StyledPanel</enum>
                               </property>
-                              <item>
-                               <widget class="QComboBox" name="comboBox_Settings_filemanager">
-                                <property name="sizePolicy">
-                                 <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                                  <horstretch>0</horstretch>
-                                  <verstretch>0</verstretch>
-                                 </sizepolicy>
+                              <property name="frameShadow">
+                               <enum>QFrame::Raised</enum>
+                              </property>
+                              <property name="buttonFrame" stdset="0">
+                               <bool>true</bool>
+                              </property>
+                              <layout class="QHBoxLayout" name="horizontalLayout_86">
+                               <property name="spacing">
+                                <number>1</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <widget class="QComboBox" name="comboBox_Settings_project_resetOption">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="minimumSize">
+                                  <size>
+                                   <width>0</width>
+                                   <height>23</height>
+                                  </size>
+                                 </property>
+                                 <property name="editable">
+                                  <bool>false</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QScrollArea" name="scrollArea">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true">QScrollArea {
+	border: 0;
+}</string>
+                              </property>
+                              <property name="widgetResizable">
+                               <bool>true</bool>
+                              </property>
+                              <widget class="QWidget" name="scrollAreaWidgetContents">
+                               <property name="geometry">
+                                <rect>
+                                 <x>0</x>
+                                 <y>0</y>
+                                 <width>415</width>
+                                 <height>243</height>
+                                </rect>
+                               </property>
+                               <layout class="QVBoxLayout" name="verticalLayout_44">
+                                <property name="leftMargin">
+                                 <number>0</number>
                                 </property>
-                                <property name="minimumSize">
-                                 <size>
-                                  <width>0</width>
-                                  <height>23</height>
-                                 </size>
+                                <property name="topMargin">
+                                 <number>0</number>
                                 </property>
-                                <property name="editable">
-                                 <bool>true</bool>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
                                 </property>
                                 <item>
-                                 <property name="text">
-                                  <string>thunar</string>
-                                 </property>
+                                 <widget class="QLabel" name="label_50">
+                                  <property name="sizePolicy">
+                                   <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                   </sizepolicy>
+                                  </property>
+                                  <property name="text">
+                                   <string>The patch layer reset option dictates whether a layer keeps changes when changing to another patch, or whether it resets.
+The default project setting above will take effect if a layer and its patch's option is set to Inherit.</string>
+                                  </property>
+                                  <property name="alignment">
+                                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                                  </property>
+                                  <property name="wordWrap">
+                                   <bool>true</bool>
+                                  </property>
+                                 </widget>
                                 </item>
+                               </layout>
+                              </widget>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
+                          <widget class="QWidget" name="tab_settings_general">
+                           <attribute name="title">
+                            <string>General</string>
+                           </attribute>
+                           <layout class="QVBoxLayout" name="verticalLayout_42">
+                            <item>
+                             <widget class="QLabel" name="label_48">
+                              <property name="text">
+                               <string>Default patch layer reset behaviour for new projects</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QFrame" name="frame_71">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>16777215</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true"/>
+                              </property>
+                              <property name="frameShape">
+                               <enum>QFrame::StyledPanel</enum>
+                              </property>
+                              <property name="frameShadow">
+                               <enum>QFrame::Raised</enum>
+                              </property>
+                              <property name="buttonFrame" stdset="0">
+                               <bool>true</bool>
+                              </property>
+                              <layout class="QHBoxLayout" name="horizontalLayout_89">
+                               <property name="spacing">
+                                <number>1</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <widget class="QComboBox" name="comboBox_Settings_resetOptionDefaultForNewProjects">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="minimumSize">
+                                  <size>
+                                   <width>0</width>
+                                   <height>23</height>
+                                  </size>
+                                 </property>
+                                 <property name="editable">
+                                  <bool>false</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QLabel" name="label_24">
+                              <property name="text">
+                               <string>File manager (leave empty for default)</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QFrame" name="frame_25">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>16777215</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true"/>
+                              </property>
+                              <property name="frameShape">
+                               <enum>QFrame::StyledPanel</enum>
+                              </property>
+                              <property name="frameShadow">
+                               <enum>QFrame::Raised</enum>
+                              </property>
+                              <property name="buttonFrame" stdset="0">
+                               <bool>true</bool>
+                              </property>
+                              <layout class="QHBoxLayout" name="horizontalLayout_20">
+                               <property name="spacing">
+                                <number>1</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <widget class="QComboBox" name="comboBox_Settings_filemanager">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="minimumSize">
+                                  <size>
+                                   <width>0</width>
+                                   <height>23</height>
+                                  </size>
+                                 </property>
+                                 <property name="editable">
+                                  <bool>true</bool>
+                                 </property>
+                                 <item>
+                                  <property name="text">
+                                   <string>thunar</string>
+                                  </property>
+                                 </item>
+                                 <item>
+                                  <property name="text">
+                                   <string>pcmanfm</string>
+                                  </property>
+                                 </item>
+                                 <item>
+                                  <property name="text">
+                                   <string>nautilus</string>
+                                  </property>
+                                 </item>
+                                 <item>
+                                  <property name="text">
+                                   <string>dolphin</string>
+                                  </property>
+                                 </item>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QCheckBox" name="checkBox_settings_promptOnQuit">
+                              <property name="text">
+                               <string>Show confirmation dialog when quitting</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QCheckBox" name="checkBox_settings_openLastProjectAtStartup">
+                              <property name="text">
+                               <string>Open last project at startup</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <spacer name="verticalSpacer_10">
+                              <property name="orientation">
+                               <enum>Qt::Vertical</enum>
+                              </property>
+                              <property name="sizeHint" stdset="0">
+                               <size>
+                                <width>20</width>
+                                <height>40</height>
+                               </size>
+                              </property>
+                             </spacer>
+                            </item>
+                           </layout>
+                          </widget>
+                          <widget class="QWidget" name="tab_settings_paths">
+                           <attribute name="title">
+                            <string>Paths</string>
+                           </attribute>
+                           <layout class="QVBoxLayout" name="verticalLayout_41">
+                            <item>
+                             <widget class="QLabel" name="label_2">
+                              <property name="text">
+                               <string>Projects directory</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QFrame" name="frame_14">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>16777215</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true"/>
+                              </property>
+                              <property name="frameShape">
+                               <enum>QFrame::StyledPanel</enum>
+                              </property>
+                              <property name="frameShadow">
+                               <enum>QFrame::Raised</enum>
+                              </property>
+                              <property name="buttonFrame" stdset="0">
+                               <bool>true</bool>
+                              </property>
+                              <layout class="QHBoxLayout" name="horizontalLayout_6">
+                               <property name="spacing">
+                                <number>1</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <widget class="QComboBox" name="comboBox_settings_projectsDir">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                                 </property>
+                                 <property name="editable">
+                                  <bool>true</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QPushButton" name="pushButton_settings_Projects">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="maximumSize">
+                                  <size>
+                                   <width>16777215</width>
+                                   <height>16777215</height>
+                                  </size>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                                 </property>
+                                 <property name="text">
+                                  <string>...</string>
+                                 </property>
+                                 <property name="checkable">
+                                  <bool>false</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QLabel" name="label_6">
+                              <property name="text">
+                               <string>Soundfonts directory</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QFrame" name="frame_15">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>16777215</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true"/>
+                              </property>
+                              <property name="frameShape">
+                               <enum>QFrame::StyledPanel</enum>
+                              </property>
+                              <property name="frameShadow">
+                               <enum>QFrame::Raised</enum>
+                              </property>
+                              <property name="buttonFrame" stdset="0">
+                               <bool>true</bool>
+                              </property>
+                              <layout class="QHBoxLayout" name="horizontalLayout_7">
+                               <property name="spacing">
+                                <number>1</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <widget class="QComboBox" name="comboBox_settings_soundfontDirs">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                                 </property>
+                                 <property name="editable">
+                                  <bool>true</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QPushButton" name="pushButton_Settings_Soundfonts">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="maximumSize">
+                                  <size>
+                                   <width>16777215</width>
+                                   <height>16777215</height>
+                                  </size>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                                 </property>
+                                 <property name="text">
+                                  <string>...</string>
+                                 </property>
+                                 <property name="checkable">
+                                  <bool>false</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QLabel" name="label_8">
+                              <property name="text">
+                               <string>Patches directory</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QFrame" name="frame_16">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>16777215</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true"/>
+                              </property>
+                              <property name="frameShape">
+                               <enum>QFrame::StyledPanel</enum>
+                              </property>
+                              <property name="frameShadow">
+                               <enum>QFrame::Raised</enum>
+                              </property>
+                              <property name="buttonFrame" stdset="0">
+                               <bool>true</bool>
+                              </property>
+                              <layout class="QHBoxLayout" name="horizontalLayout_8">
+                               <property name="spacing">
+                                <number>1</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <widget class="QComboBox" name="comboBox_settings_patchDirs">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                                 </property>
+                                 <property name="editable">
+                                  <bool>true</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QPushButton" name="pushButton_Settings_Patches">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="maximumSize">
+                                  <size>
+                                   <width>16777215</width>
+                                   <height>16777215</height>
+                                  </size>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                                 </property>
+                                 <property name="text">
+                                  <string>...</string>
+                                 </property>
+                                 <property name="checkable">
+                                  <bool>false</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QLabel" name="label_9">
+                              <property name="text">
+                               <string>Samples (SFZ and GIG) directory</string>
+                              </property>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QFrame" name="frame_17">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>16777215</width>
+                                <height>29</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true"/>
+                              </property>
+                              <property name="frameShape">
+                               <enum>QFrame::StyledPanel</enum>
+                              </property>
+                              <property name="frameShadow">
+                               <enum>QFrame::Raised</enum>
+                              </property>
+                              <property name="buttonFrame" stdset="0">
+                               <bool>true</bool>
+                              </property>
+                              <layout class="QHBoxLayout" name="horizontalLayout_9">
+                               <property name="spacing">
+                                <number>1</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <widget class="QComboBox" name="comboBox_settings_sfzDirs">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;</string>
+                                 </property>
+                                 <property name="editable">
+                                  <bool>true</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QPushButton" name="pushButton_Settings_Sfz">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="maximumSize">
+                                  <size>
+                                   <width>16777215</width>
+                                   <height>16777215</height>
+                                  </size>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                                 </property>
+                                 <property name="text">
+                                  <string>...</string>
+                                 </property>
+                                 <property name="checkable">
+                                  <bool>false</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                            </item>
+                            <item>
+                             <widget class="QScrollArea" name="scrollArea_2">
+                              <property name="styleSheet">
+                               <string notr="true">QScrollArea {
+	border: 0;
+}</string>
+                              </property>
+                              <property name="widgetResizable">
+                               <bool>true</bool>
+                              </property>
+                              <widget class="QWidget" name="scrollAreaWidgetContents_2">
+                               <property name="geometry">
+                                <rect>
+                                 <x>0</x>
+                                 <y>0</y>
+                                 <width>415</width>
+                                 <height>66</height>
+                                </rect>
+                               </property>
+                               <layout class="QVBoxLayout" name="verticalLayout_45">
+                                <property name="leftMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="topMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
+                                </property>
                                 <item>
-                                 <property name="text">
-                                  <string>pcmanfm</string>
-                                 </property>
+                                 <widget class="QLabel" name="label_SettingsPath">
+                                  <property name="sizePolicy">
+                                   <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                   </sizepolicy>
+                                  </property>
+                                  <property name="text">
+                                   <string>Settings and database files are saved in: </string>
+                                  </property>
+                                  <property name="alignment">
+                                   <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                                  </property>
+                                  <property name="wordWrap">
+                                   <bool>true</bool>
+                                  </property>
+                                 </widget>
                                 </item>
-                                <item>
-                                 <property name="text">
-                                  <string>nautilus</string>
-                                 </property>
-                                </item>
-                                <item>
-                                 <property name="text">
-                                  <string>dolphin</string>
-                                 </property>
-                                </item>
-                               </widget>
-                              </item>
-                             </layout>
-                            </widget>
-                           </item>
-                           <item row="12" column="0">
-                            <widget class="QCheckBox" name="checkBox_settings_openLastProjectAtStartup">
-                             <property name="text">
-                              <string>Open last project at startup</string>
-                             </property>
-                            </widget>
-                           </item>
-                           <item row="6" column="0">
-                            <widget class="QFrame" name="frame_16">
-                             <property name="minimumSize">
-                              <size>
-                               <width>0</width>
-                               <height>23</height>
-                              </size>
-                             </property>
-                             <property name="maximumSize">
-                              <size>
-                               <width>16777215</width>
-                               <height>23</height>
-                              </size>
-                             </property>
-                             <property name="styleSheet">
-                              <string notr="true"/>
-                             </property>
-                             <property name="frameShape">
-                              <enum>QFrame::StyledPanel</enum>
-                             </property>
-                             <property name="frameShadow">
-                              <enum>QFrame::Raised</enum>
-                             </property>
-                             <property name="buttonFrame" stdset="0">
-                              <bool>true</bool>
-                             </property>
-                             <layout class="QHBoxLayout" name="horizontalLayout_8">
-                              <property name="spacing">
-                               <number>1</number>
-                              </property>
-                              <property name="leftMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="topMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="rightMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="bottomMargin">
-                               <number>0</number>
-                              </property>
-                              <item>
-                               <widget class="QComboBox" name="comboBox_settings_patchDirs">
-                                <property name="sizePolicy">
-                                 <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                                  <horstretch>0</horstretch>
-                                  <verstretch>0</verstretch>
-                                 </sizepolicy>
-                                </property>
-                                <property name="styleSheet">
-                                 <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                                </property>
-                                <property name="editable">
-                                 <bool>true</bool>
-                                </property>
-                               </widget>
-                              </item>
-                              <item>
-                               <widget class="QPushButton" name="pushButton_Settings_Patches">
-                                <property name="sizePolicy">
-                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                                  <horstretch>0</horstretch>
-                                  <verstretch>0</verstretch>
-                                 </sizepolicy>
-                                </property>
-                                <property name="maximumSize">
-                                 <size>
-                                  <width>16777215</width>
-                                  <height>16777215</height>
-                                 </size>
-                                </property>
-                                <property name="styleSheet">
-                                 <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                                </property>
-                                <property name="text">
-                                 <string>...</string>
-                                </property>
-                                <property name="checkable">
-                                 <bool>false</bool>
-                                </property>
-                               </widget>
-                              </item>
-                             </layout>
-                            </widget>
-                           </item>
-                           <item row="1" column="0">
-                            <widget class="QLabel" name="label_2">
-                             <property name="text">
-                              <string>Projects directory</string>
-                             </property>
-                            </widget>
-                           </item>
-                           <item row="5" column="0">
-                            <widget class="QLabel" name="label_8">
-                             <property name="text">
-                              <string>Patches directory</string>
-                             </property>
-                            </widget>
-                           </item>
-                           <item row="8" column="0">
-                            <widget class="QFrame" name="frame_17">
-                             <property name="minimumSize">
-                              <size>
-                               <width>0</width>
-                               <height>23</height>
-                              </size>
-                             </property>
-                             <property name="maximumSize">
-                              <size>
-                               <width>16777215</width>
-                               <height>23</height>
-                              </size>
-                             </property>
-                             <property name="styleSheet">
-                              <string notr="true"/>
-                             </property>
-                             <property name="frameShape">
-                              <enum>QFrame::StyledPanel</enum>
-                             </property>
-                             <property name="frameShadow">
-                              <enum>QFrame::Raised</enum>
-                             </property>
-                             <property name="buttonFrame" stdset="0">
-                              <bool>true</bool>
-                             </property>
-                             <layout class="QHBoxLayout" name="horizontalLayout_9">
-                              <property name="spacing">
-                               <number>1</number>
-                              </property>
-                              <property name="leftMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="topMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="rightMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="bottomMargin">
-                               <number>0</number>
-                              </property>
-                              <item>
-                               <widget class="QComboBox" name="comboBox_settings_sfzDirs">
-                                <property name="sizePolicy">
-                                 <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                                  <horstretch>0</horstretch>
-                                  <verstretch>0</verstretch>
-                                 </sizepolicy>
-                                </property>
-                                <property name="styleSheet">
-                                 <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                                </property>
-                                <property name="editable">
-                                 <bool>true</bool>
-                                </property>
-                               </widget>
-                              </item>
-                              <item>
-                               <widget class="QPushButton" name="pushButton_Settings_Sfz">
-                                <property name="sizePolicy">
-                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                                  <horstretch>0</horstretch>
-                                  <verstretch>0</verstretch>
-                                 </sizepolicy>
-                                </property>
-                                <property name="maximumSize">
-                                 <size>
-                                  <width>16777215</width>
-                                  <height>16777215</height>
-                                 </size>
-                                </property>
-                                <property name="styleSheet">
-                                 <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                                </property>
-                                <property name="text">
-                                 <string>...</string>
-                                </property>
-                                <property name="checkable">
-                                 <bool>false</bool>
-                                </property>
-                               </widget>
-                              </item>
-                             </layout>
-                            </widget>
-                           </item>
-                           <item row="4" column="0">
-                            <widget class="QFrame" name="frame_15">
-                             <property name="minimumSize">
-                              <size>
-                               <width>0</width>
-                               <height>23</height>
-                              </size>
-                             </property>
-                             <property name="maximumSize">
-                              <size>
-                               <width>16777215</width>
-                               <height>23</height>
-                              </size>
-                             </property>
-                             <property name="styleSheet">
-                              <string notr="true"/>
-                             </property>
-                             <property name="frameShape">
-                              <enum>QFrame::StyledPanel</enum>
-                             </property>
-                             <property name="frameShadow">
-                              <enum>QFrame::Raised</enum>
-                             </property>
-                             <property name="buttonFrame" stdset="0">
-                              <bool>true</bool>
-                             </property>
-                             <layout class="QHBoxLayout" name="horizontalLayout_7">
-                              <property name="spacing">
-                               <number>1</number>
-                              </property>
-                              <property name="leftMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="topMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="rightMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="bottomMargin">
-                               <number>0</number>
-                              </property>
-                              <item>
-                               <widget class="QComboBox" name="comboBox_settings_soundfontDirs">
-                                <property name="sizePolicy">
-                                 <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                                  <horstretch>0</horstretch>
-                                  <verstretch>0</verstretch>
-                                 </sizepolicy>
-                                </property>
-                                <property name="styleSheet">
-                                 <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                                </property>
-                                <property name="editable">
-                                 <bool>true</bool>
-                                </property>
-                               </widget>
-                              </item>
-                              <item>
-                               <widget class="QPushButton" name="pushButton_Settings_Soundfonts">
-                                <property name="sizePolicy">
-                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                                  <horstretch>0</horstretch>
-                                  <verstretch>0</verstretch>
-                                 </sizepolicy>
-                                </property>
-                                <property name="maximumSize">
-                                 <size>
-                                  <width>16777215</width>
-                                  <height>16777215</height>
-                                 </size>
-                                </property>
-                                <property name="styleSheet">
-                                 <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                                </property>
-                                <property name="text">
-                                 <string>...</string>
-                                </property>
-                                <property name="checkable">
-                                 <bool>false</bool>
-                                </property>
-                               </widget>
-                              </item>
-                             </layout>
-                            </widget>
-                           </item>
-                           <item row="7" column="0">
-                            <widget class="QLabel" name="label_9">
-                             <property name="text">
-                              <string>Samples (SFZ and GIG) directory</string>
-                             </property>
-                            </widget>
-                           </item>
-                           <item row="11" column="0">
-                            <widget class="QCheckBox" name="checkBox_settings_promptOnQuit">
-                             <property name="text">
-                              <string>Show confirmation dialog when quitting</string>
-                             </property>
-                            </widget>
-                           </item>
-                           <item row="3" column="0">
-                            <widget class="QLabel" name="label_6">
-                             <property name="text">
-                              <string>Soundfonts directory</string>
-                             </property>
-                            </widget>
-                           </item>
-                           <item row="2" column="0">
-                            <widget class="QFrame" name="frame_14">
-                             <property name="minimumSize">
-                              <size>
-                               <width>0</width>
-                               <height>23</height>
-                              </size>
-                             </property>
-                             <property name="maximumSize">
-                              <size>
-                               <width>16777215</width>
-                               <height>23</height>
-                              </size>
-                             </property>
-                             <property name="styleSheet">
-                              <string notr="true"/>
-                             </property>
-                             <property name="frameShape">
-                              <enum>QFrame::StyledPanel</enum>
-                             </property>
-                             <property name="frameShadow">
-                              <enum>QFrame::Raised</enum>
-                             </property>
-                             <property name="buttonFrame" stdset="0">
-                              <bool>true</bool>
-                             </property>
-                             <layout class="QHBoxLayout" name="horizontalLayout_6">
-                              <property name="spacing">
-                               <number>1</number>
-                              </property>
-                              <property name="leftMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="topMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="rightMargin">
-                               <number>0</number>
-                              </property>
-                              <property name="bottomMargin">
-                               <number>0</number>
-                              </property>
-                              <item>
-                               <widget class="QComboBox" name="comboBox_settings_projectsDir">
-                                <property name="sizePolicy">
-                                 <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                                  <horstretch>0</horstretch>
-                                  <verstretch>0</verstretch>
-                                 </sizepolicy>
-                                </property>
-                                <property name="styleSheet">
-                                 <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;</string>
-                                </property>
-                                <property name="editable">
-                                 <bool>true</bool>
-                                </property>
-                               </widget>
-                              </item>
-                              <item>
-                               <widget class="QPushButton" name="pushButton_settings_Projects">
-                                <property name="sizePolicy">
-                                 <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                                  <horstretch>0</horstretch>
-                                  <verstretch>0</verstretch>
-                                 </sizepolicy>
-                                </property>
-                                <property name="maximumSize">
-                                 <size>
-                                  <width>16777215</width>
-                                  <height>16777215</height>
-                                 </size>
-                                </property>
-                                <property name="styleSheet">
-                                 <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                                </property>
-                                <property name="text">
-                                 <string>...</string>
-                                </property>
-                                <property name="checkable">
-                                 <bool>false</bool>
-                                </property>
-                               </widget>
-                              </item>
-                             </layout>
-                            </widget>
-                           </item>
-                          </layout>
-                         </widget>
-                        </item>
-                        <item>
-                         <widget class="QLabel" name="label_SettingsPath">
-                          <property name="text">
-                           <string>Settings and database files are saved in: </string>
-                          </property>
-                          <property name="wordWrap">
-                           <bool>true</bool>
-                          </property>
+                               </layout>
+                              </widget>
+                             </widget>
+                            </item>
+                           </layout>
+                          </widget>
                          </widget>
                         </item>
                         <item>
@@ -4021,13 +4314,13 @@ border-bottom-left-radius: 0;</string>
                             <property name="minimumSize">
                              <size>
                               <width>0</width>
-                              <height>23</height>
+                              <height>29</height>
                              </size>
                             </property>
                             <property name="maximumSize">
                              <size>
                               <width>16777215</width>
-                              <height>23</height>
+                              <height>29</height>
                              </size>
                             </property>
                             <property name="styleSheet">
@@ -4123,13 +4416,13 @@ border-bottom-left-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -4301,13 +4594,13 @@ border-bottom-left-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -4402,13 +4695,13 @@ border-bottom-left-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -4520,13 +4813,13 @@ border-bottom-left-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -4656,13 +4949,13 @@ border-bottom-left-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -4737,13 +5030,13 @@ border-bottom-right-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>22</height>
+                                 <height>28</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>22</height>
+                                 <height>28</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -4936,13 +5229,13 @@ border-left: 0px;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -5059,13 +5352,13 @@ border-bottom-left-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -5185,13 +5478,13 @@ border-bottom-left-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -5335,13 +5628,13 @@ border-bottom-left-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -5509,13 +5802,13 @@ border-bottom-left-radius: 0;</string>
                             <property name="minimumSize">
                              <size>
                               <width>0</width>
-                              <height>23</height>
+                              <height>29</height>
                              </size>
                             </property>
                             <property name="maximumSize">
                              <size>
                               <width>16777215</width>
-                              <height>23</height>
+                              <height>29</height>
                              </size>
                             </property>
                             <property name="styleSheet">
@@ -5556,7 +5849,7 @@ border-bottom-left-radius: 0;</string>
                                </property>
                                <property name="minimumSize">
                                 <size>
-                                 <width>66</width>
+                                 <width>82</width>
                                  <height>0</height>
                                 </size>
                                </property>
@@ -5778,13 +6071,13 @@ border-bottom-left-radius: 0;</string>
                            <property name="minimumSize">
                             <size>
                              <width>0</width>
-                             <height>23</height>
+                             <height>29</height>
                             </size>
                            </property>
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>23</height>
+                             <height>29</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -6021,7 +6314,7 @@ border-top-left-radius: 0;</string>
                               </property>
                               <property name="minimumSize">
                                <size>
-                                <width>66</width>
+                                <width>82</width>
                                 <height>0</height>
                                </size>
                               </property>
@@ -6165,7 +6458,7 @@ QScrollBar:horizontal {
                            <property name="maximumSize">
                             <size>
                              <width>16777215</width>
-                             <height>23</height>
+                             <height>29</height>
                             </size>
                            </property>
                            <property name="styleSheet">
@@ -6430,7 +6723,7 @@ QScrollBar:horizontal {
                             </property>
                             <property name="minimumSize">
                              <size>
-                              <width>66</width>
+                              <width>82</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -6570,7 +6863,7 @@ QScrollBar:horizontal {
                             </property>
                             <property name="minimumSize">
                              <size>
-                              <width>66</width>
+                              <width>82</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -6612,7 +6905,7 @@ border-bottom-right-radius: 0;
                             </property>
                             <property name="minimumSize">
                              <size>
-                              <width>66</width>
+                              <width>82</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -6708,7 +7001,7 @@ border-top-left-radius: 0;
                             </property>
                             <property name="minimumSize">
                              <size>
-                              <width>66</width>
+                              <width>82</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -6754,7 +7047,7 @@ border-top-left-radius: 0;
                          <property name="minimumSize">
                           <size>
                            <width>0</width>
-                           <height>23</height>
+                           <height>29</height>
                           </size>
                          </property>
                          <property name="styleSheet">
@@ -6795,7 +7088,7 @@ border-top-left-radius: 0;
                             </property>
                             <property name="minimumSize">
                              <size>
-                              <width>66</width>
+                              <width>82</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -6828,7 +7121,7 @@ border-bottom-right-radius: 0;</string>
                             </property>
                             <property name="minimumSize">
                              <size>
-                              <width>66</width>
+                              <width>82</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -6863,7 +7156,7 @@ border-bottom-left-radius: 0;</string>
                             </property>
                             <property name="minimumSize">
                              <size>
-                              <width>66</width>
+                              <width>82</width>
                               <height>0</height>
                              </size>
                             </property>
@@ -6975,13 +7268,13 @@ border-bottom-left-radius: 0;</string>
                                 <property name="minimumSize">
                                  <size>
                                   <width>0</width>
-                                  <height>23</height>
+                                  <height>29</height>
                                  </size>
                                 </property>
                                 <property name="maximumSize">
                                  <size>
                                   <width>16777215</width>
-                                  <height>23</height>
+                                  <height>29</height>
                                  </size>
                                 </property>
                                 <property name="styleSheet">
@@ -7068,13 +7361,13 @@ border-bottom-left-radius: 0;</string>
                                 <property name="minimumSize">
                                  <size>
                                   <width>0</width>
-                                  <height>23</height>
+                                  <height>29</height>
                                  </size>
                                 </property>
                                 <property name="maximumSize">
                                  <size>
                                   <width>16777215</width>
-                                  <height>23</height>
+                                  <height>29</height>
                                  </size>
                                 </property>
                                 <property name="styleSheet">
@@ -7115,7 +7408,7 @@ border-bottom-left-radius: 0;</string>
                                    </property>
                                    <property name="minimumSize">
                                     <size>
-                                     <width>66</width>
+                                     <width>82</width>
                                      <height>0</height>
                                     </size>
                                    </property>
@@ -7191,13 +7484,13 @@ border-bottom-left-radius: 0;</string>
                                    <property name="minimumSize">
                                     <size>
                                      <width>0</width>
-                                     <height>23</height>
+                                     <height>29</height>
                                     </size>
                                    </property>
                                    <property name="maximumSize">
                                     <size>
                                      <width>16777215</width>
-                                     <height>23</height>
+                                     <height>29</height>
                                     </size>
                                    </property>
                                    <property name="styleSheet">
@@ -7262,13 +7555,13 @@ border-bottom-left-radius: 0;</string>
                                      <property name="minimumSize">
                                       <size>
                                        <width>0</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="maximumSize">
                                       <size>
                                        <width>16777215</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="styleSheet">
@@ -7364,13 +7657,13 @@ border-bottom-left-radius: 0;</string>
                                      <property name="minimumSize">
                                       <size>
                                        <width>0</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="maximumSize">
                                       <size>
                                        <width>16777215</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="styleSheet">
@@ -7463,13 +7756,13 @@ border-bottom-left-radius: 0;</string>
                                      <property name="minimumSize">
                                       <size>
                                        <width>0</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="maximumSize">
                                       <size>
                                        <width>16777215</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="styleSheet">
@@ -7537,13 +7830,13 @@ border-bottom-left-radius: 0;</string>
                                      <property name="minimumSize">
                                       <size>
                                        <width>0</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="maximumSize">
                                       <size>
                                        <width>16777215</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="styleSheet">
@@ -7659,13 +7952,13 @@ border-bottom-left-radius: 0;</string>
                                      <property name="minimumSize">
                                       <size>
                                        <width>0</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="maximumSize">
                                       <size>
                                        <width>16777215</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="styleSheet">
@@ -7736,13 +8029,13 @@ border-bottom-left-radius: 0;</string>
                                      <property name="minimumSize">
                                       <size>
                                        <width>0</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="maximumSize">
                                       <size>
                                        <width>16777215</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="styleSheet">
@@ -7817,13 +8110,13 @@ border-bottom-left-radius: 0;</string>
                                      <property name="minimumSize">
                                       <size>
                                        <width>0</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="maximumSize">
                                       <size>
                                        <width>16777215</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="styleSheet">
@@ -7910,13 +8203,13 @@ border-bottom-left-radius: 0;</string>
                                      <property name="minimumSize">
                                       <size>
                                        <width>0</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="maximumSize">
                                       <size>
                                        <width>16777215</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="styleSheet">
@@ -8075,13 +8368,13 @@ border-bottom-left-radius: 0;</string>
                                      <property name="minimumSize">
                                       <size>
                                        <width>0</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="maximumSize">
                                       <size>
                                        <width>16777215</width>
-                                       <height>23</height>
+                                       <height>29</height>
                                       </size>
                                      </property>
                                      <property name="styleSheet">
@@ -8174,13 +8467,13 @@ border-bottom-left-radius: 0;</string>
                                 <property name="minimumSize">
                                  <size>
                                   <width>0</width>
-                                  <height>23</height>
+                                  <height>29</height>
                                  </size>
                                 </property>
                                 <property name="maximumSize">
                                  <size>
                                   <width>16777215</width>
-                                  <height>23</height>
+                                  <height>29</height>
                                  </size>
                                 </property>
                                 <property name="styleSheet">
@@ -8315,13 +8608,13 @@ border-bottom-left-radius: 0;</string>
                                 <property name="minimumSize">
                                  <size>
                                   <width>0</width>
-                                  <height>23</height>
+                                  <height>29</height>
                                  </size>
                                 </property>
                                 <property name="maximumSize">
                                  <size>
                                   <width>16777215</width>
-                                  <height>23</height>
+                                  <height>29</height>
                                  </size>
                                 </property>
                                 <property name="styleSheet">
@@ -8476,7 +8769,7 @@ border-bottom-right-radius: 0;</string>
                                    </property>
                                    <property name="minimumSize">
                                     <size>
-                                     <width>66</width>
+                                     <width>82</width>
                                      <height>0</height>
                                     </size>
                                    </property>
@@ -8547,13 +8840,13 @@ border-bottom-left-radius: 0;</string>
                                 <property name="minimumSize">
                                  <size>
                                   <width>0</width>
-                                  <height>23</height>
+                                  <height>29</height>
                                  </size>
                                 </property>
                                 <property name="maximumSize">
                                  <size>
                                   <width>16777215</width>
-                                  <height>23</height>
+                                  <height>29</height>
                                  </size>
                                 </property>
                                 <property name="styleSheet">
@@ -8594,7 +8887,7 @@ border-bottom-left-radius: 0;</string>
                                    </property>
                                    <property name="minimumSize">
                                     <size>
-                                     <width>66</width>
+                                     <width>82</width>
                                      <height>0</height>
                                     </size>
                                    </property>
@@ -8621,7 +8914,7 @@ border-bottom-right-radius: 0;
                                    </property>
                                    <property name="minimumSize">
                                     <size>
-                                     <width>66</width>
+                                     <width>82</width>
                                      <height>0</height>
                                     </size>
                                    </property>
@@ -8707,6 +9000,9 @@ border-bottom-left-radius: 0;</string>
                         <string>External App</string>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_33">
+                        <property name="topMargin">
+                         <number>9</number>
+                        </property>
                         <item>
                          <widget class="QGroupBox" name="groupBox_26">
                           <property name="sizePolicy">
@@ -8772,13 +9068,13 @@ border-bottom-left-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -8827,13 +9123,13 @@ border-bottom-left-radius: 0;</string>
                                <property name="minimumSize">
                                 <size>
                                  <width>0</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="maximumSize">
                                 <size>
                                  <width>16777215</width>
-                                 <height>23</height>
+                                 <height>29</height>
                                 </size>
                                </property>
                                <property name="styleSheet">
@@ -9029,13 +9325,13 @@ border-bottom-left-radius: 0;</string>
                             <property name="minimumSize">
                              <size>
                               <width>0</width>
-                              <height>23</height>
+                              <height>29</height>
                              </size>
                             </property>
                             <property name="maximumSize">
                              <size>
                               <width>16777215</width>
-                              <height>23</height>
+                              <height>29</height>
                              </size>
                             </property>
                             <property name="styleSheet">
@@ -9076,7 +9372,7 @@ border-bottom-left-radius: 0;</string>
                                </property>
                                <property name="minimumSize">
                                 <size>
-                                 <width>66</width>
+                                 <width>82</width>
                                  <height>0</height>
                                 </size>
                                </property>
@@ -9103,7 +9399,7 @@ border-bottom-right-radius: 0;
                                </property>
                                <property name="minimumSize">
                                 <size>
-                                 <width>66</width>
+                                 <width>82</width>
                                  <height>0</height>
                                 </size>
                                </property>
@@ -9179,6 +9475,9 @@ border-bottom-left-radius: 0;</string>
                         <string>Script Editor</string>
                        </property>
                        <layout class="QVBoxLayout" name="verticalLayout_36">
+                        <property name="topMargin">
+                         <number>9</number>
+                        </property>
                         <item>
                          <layout class="QHBoxLayout" name="horizontalLayout_24">
                           <item>
@@ -9192,13 +9491,13 @@ border-bottom-left-radius: 0;</string>
                             <property name="minimumSize">
                              <size>
                               <width>0</width>
-                              <height>23</height>
+                              <height>29</height>
                              </size>
                             </property>
                             <property name="maximumSize">
                              <size>
                               <width>16777215</width>
-                              <height>23</height>
+                              <height>29</height>
                              </size>
                             </property>
                             <property name="styleSheet">
@@ -9390,7 +9689,7 @@ padding: 3px;</string>
                                </property>
                                <property name="minimumSize">
                                 <size>
-                                 <width>66</width>
+                                 <width>82</width>
                                  <height>0</height>
                                 </size>
                                </property>
@@ -9422,25 +9721,17 @@ padding: 3px;</string>
                  <widget class="QLabel" name="label_5">
                   <property name="geometry">
                    <rect>
-                    <x>260</x>
-                    <y>40</y>
-                    <width>131</width>
+                    <x>120</x>
+                    <y>70</y>
+                    <width>221</width>
                     <height>51</height>
                    </rect>
                   </property>
-                  <property name="font">
-                   <font>
-                    <family>Sans</family>
-                    <pointsize>20</pointsize>
-                    <italic>false</italic>
-                    <bold>false</bold>
-                   </font>
-                  </property>
                   <property name="styleSheet">
-                   <string notr="true">font: 75 20pt &quot;Sans&quot;;</string>
+                   <string notr="true"/>
                   </property>
                   <property name="text">
-                   <string>Sandbox</string>
+                   <string>Development / Sandbox</string>
                   </property>
                  </widget>
                  <widget class="QFrame" name="frame_62">
@@ -9449,7 +9740,7 @@ padding: 3px;</string>
                     <x>120</x>
                     <y>210</y>
                     <width>91</width>
-                    <height>23</height>
+                    <height>29</height>
                    </rect>
                   </property>
                   <property name="styleSheet">
@@ -9516,6 +9807,34 @@ padding: 3px;</string>
                   <property name="text">
                    <string>This is used as stylesheet reference</string>
                   </property>
+                 </widget>
+                 <widget class="QGroupBox" name="groupBox_SubSettings_4">
+                  <property name="geometry">
+                   <rect>
+                    <x>120</x>
+                    <y>280</y>
+                    <width>381</width>
+                    <height>91</height>
+                   </rect>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
+                  <property name="title">
+                   <string/>
+                  </property>
+                  <property name="KonfytSubGroupbox" stdset="0">
+                   <bool>true</bool>
+                  </property>
+                  <layout class="QGridLayout" name="gridLayout_58">
+                   <item row="0" column="0">
+                    <widget class="QLabel" name="label_49">
+                     <property name="text">
+                      <string>GroupBox with KonfytSubGroupbox=true</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
                  </widget>
                 </widget>
                </widget>
@@ -9856,18 +10175,21 @@ border-top-right-radius: 0;
                     <bool>true</bool>
                    </property>
                    <layout class="QGridLayout" name="gridLayout_36">
+                    <property name="topMargin">
+                     <number>9</number>
+                    </property>
                     <item row="0" column="0">
                      <widget class="QFrame" name="frame_32">
                       <property name="minimumSize">
                        <size>
                         <width>0</width>
-                        <height>23</height>
+                        <height>29</height>
                        </size>
                       </property>
                       <property name="maximumSize">
                        <size>
                         <width>16777215</width>
-                        <height>23</height>
+                        <height>29</height>
                        </size>
                       </property>
                       <property name="styleSheet">
@@ -10201,13 +10523,13 @@ QSlider::handle:horizontal:hover {
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>23</height>
+                          <height>29</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
                           <width>16777215</width>
-                          <height>23</height>
+                          <height>29</height>
                          </size>
                         </property>
                         <property name="styleSheet">
@@ -10309,13 +10631,13 @@ border-bottom-right-radius: 0;</string>
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>23</height>
+                          <height>29</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
                           <width>16777215</width>
-                          <height>23</height>
+                          <height>29</height>
                          </size>
                         </property>
                         <property name="styleSheet">
@@ -10426,13 +10748,13 @@ border-bottom-left-radius: 0;
                         <property name="minimumSize">
                          <size>
                           <width>0</width>
-                          <height>23</height>
+                          <height>29</height>
                          </size>
                         </property>
                         <property name="maximumSize">
                          <size>
                           <width>16777215</width>
-                          <height>23</height>
+                          <height>29</height>
                          </size>
                         </property>
                         <property name="styleSheet">
@@ -10601,20 +10923,20 @@ p, li { white-space: pre-wrap; }
 hr { height: 1px; border-width: 0; }
 li.unchecked::marker { content: &quot;\2610&quot;; }
 li.checked::marker { content: &quot;\2612&quot;; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Noto Sans'; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;img src=&quot;:/icons/konfyt 128.png&quot; /&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans';&quot;&gt;Konfyt&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans';&quot;&gt;Digital Keyboard Workstation&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans';&quot;&gt;Gideon van der Kolf 2014-%APP_YEAR%&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Noto Sans';&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans';&quot;&gt;Konfyt version: %APP_VERSION%&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Noto Sans';&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans';&quot;&gt;%MORE_VERSION_TEXT%&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'Noto Sans';&quot;&gt;&lt;br /&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans';&quot;&gt;You are welcome&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans';&quot;&gt;and encouraged&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans';&quot;&gt;to send any sort of feedback to&lt;/span&gt;&lt;/p&gt;
-&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-family:'Noto Sans';&quot;&gt;noedigcode@gmail.com&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Konfyt&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Digital Keyboard Workstation&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Gideon van der Kolf 2014-%APP_YEAR%&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Konfyt version: %APP_VERSION%&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;%MORE_VERSION_TEXT%&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;You are welcome&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;and encouraged&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;to send any sort of feedback to&lt;/p&gt;
+&lt;p align=&quot;center&quot; style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;noedigcode@gmail.com&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
             </widget>
            </item>
@@ -10638,7 +10960,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                <property name="maximumSize">
                 <size>
                  <width>16777215</width>
-                 <height>23</height>
+                 <height>29</height>
                 </size>
                </property>
                <property name="styleSheet">
@@ -10679,7 +11001,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                   </property>
                   <property name="minimumSize">
                    <size>
-                    <width>66</width>
+                    <width>82</width>
                     <height>0</height>
                    </size>
                   </property>

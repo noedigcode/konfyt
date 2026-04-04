@@ -172,6 +172,8 @@ public:
     void setShowPatchListNotes(bool show);
     void setMidiPickupRange(int range);
     int getMidiPickupRange();
+    KonfytReset getResetOption();
+    void setResetOption(KonfytReset option);
 
     // MIDI input ports
     QList<int> midiInPort_getAllPortIds();  // Get list of port ids
@@ -286,6 +288,7 @@ private:
     QString mProjectDirpath;
     QString mProjectName = NEW_PROJECT_DEFAULT_NAME;
     QString mProjectFilename;
+    KonfytReset mResetOption = KonfytReset::NoReset;
 
     QString filenameFromProjectName();
     void backupProject(QString dirpath, QString projectFilename, QString tag);
@@ -341,6 +344,7 @@ private:
     const char* XML_PRJ = "konfytProject";
     const char* XML_PRJ_NAME = "name";
     const char* XML_PRJ_KONFYT_VERSION = "KonfytVersion";
+    const char* XML_PRJ_RESET_OPTION = "resetOption";
     const char* XML_PRJ_PATCH = "patch";
     const char* XML_PRJ_PATCH_FILENAME = "filename";
     const char* XML_PRJ_PATCH_LIST_NUMBERS = "patchListNumbers";

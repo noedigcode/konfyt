@@ -44,6 +44,7 @@
 #include <QAction>
 #include <QCheckBox>
 #include <QCloseEvent>
+#include <QComboBox>
 #include <QDesktopServices>
 #include <QElapsedTimer>
 #include <QFileDialog>
@@ -96,6 +97,7 @@
 #define XML_SETTINGS_START_MAXIMIZED "startMaximized"
 #define XML_SETTINGS_OPEN_LAST_PROJECT "openLastProject"
 #define XML_SETTINGS_LAST_PROJECT_FILEPATH "lastProjectFilePath"
+#define XML_SETTINGS_DEFAULT_RESET_OPTION "defaultResetOption"
 
 #define XML_MIDI_MAP_PRESETS "midiMapPresets"
 #define XML_MIDI_MAP_PRESET "midiMapPreset"
@@ -168,6 +170,32 @@ private:
     QStringList scanDirForFilesSkipBackupSubdirs(QString dirname,
                                                  QString filenameExtension = "");
     void openFileManager(QString path);
+
+    struct ResetOptionComboBox
+    {
+        void initComboBox(QComboBox* comboBox);
+        KonfytReset selectedValue();
+        void updateSelectedOption(KonfytReset option);
+    private:
+        QComboBox* mComboBox = nullptr;
+        QList<KonfytReset> mValues;
+        void addItem(QString text, KonfytReset value);
+    };
+
+    struct ResetOptionMenu
+    {
+        ResetOptionMenu();
+        QMenu* menu();
+        void setInheritActionText(QString text);
+        void updateMenu(KonfytReset selected, KonfytReset inherited);
+        KonfytReset actionValue(QAction* action);
+    private:
+        QMenu mMenu;
+        QString mInheritActionText {"Inherit"};
+        QList<KonfytReset> mValues;
+        void addAction(QString text, KonfytReset value);
+        QAction* actionWithValue(KonfytReset value);
+    };
 
     // Widget helper functions
 private:
@@ -397,9 +425,22 @@ private:
     PatchListWidgetAdapter patchListAdapter;
     void setupPatchListAdapter();
     bool patchNote_ignoreChange = false;
+
 private slots:
     void onPatchSelected(KonfytPatch* patch);
     void onPatchLayerLoaded(KfPatchLayerWeakPtr patchLayer);
+
+    // Patch menu
+private:
+    void setupPatchMenu();
+
+    // Patch menu reset option submenu
+private:
+    ResetOptionMenu patchResetOptionMenu;
+    void setupPatchResetOptionMenu();
+private slots:
+    void onPatchResetOptionMenuAboutToShow();
+    void onPatchResetOptionMenuTriggered(QAction* action);
 
     // Layers
 private:
@@ -438,9 +479,14 @@ private slots:
     // Layer left toolbutton menu
 private:
     QMenu layerToolMenu;
-    KonfytLayerWidget* layerToolMenuSourceitem;
+    QAction* audioInLayerInputPortConnectionsAction;
+    ResetOptionMenu layerResetOptionMenu;
+    void setupLayerToolMenu();
+    KonfytLayerWidget* layerToolMenuSourceitem = nullptr;
     void updateLayerToolMenu();
 private slots:
+    void onAudioInLayerInputPortConnectionActionTrigger();
+    void onLayerResetOptionMenuActionTrigger(QAction* action);
     void onLayer_leftToolbutton_clicked(KonfytLayerWidget* layerItem);
     void on_actionReload_Layer_triggered();
     void on_actionRemove_Layer_triggered();
@@ -572,6 +618,8 @@ private slots:
     // ========================================================================
 private:
     bool mSettingsFirstRun = false;
+    ResetOptionComboBox mProjectResetOptionComboBox;
+    ResetOptionComboBox mSettingsDefaultResetOptionComboBox;
     void setupSettings();
     void showSettingsDialog();
     void applySettings();
@@ -589,6 +637,8 @@ private:
     QString mSfzDir;
     void setSfzDir(QString path);
     QString mFilemanager;
+    KonfytReset mDefaultResetOption = KonfytReset::NoReset;
+
     void createSettingsDir();
     bool loadSettingsFile(QString dir);
     bool saveSettingsFile();

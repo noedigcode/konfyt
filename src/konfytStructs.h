@@ -38,6 +38,19 @@ enum KonfytSoundType
 
 // =============================================================================
 
+enum class KonfytReset
+{
+    Inherit,
+    Reset,
+    NoReset
+};
+
+KonfytReset konfytResetFromString(QString s, KonfytReset defaultValue);
+QString konfytResetToString(KonfytReset value);
+KonfytReset konfytResetFromInherits(QList<KonfytReset> inheritChain, KonfytReset defaultValue);
+
+// =============================================================================
+
 struct KonfytSoundPreset
 {
     QString name;

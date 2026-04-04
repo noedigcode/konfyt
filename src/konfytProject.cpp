@@ -201,6 +201,19 @@ int KonfytProject::getMidiPickupRange()
     return midiPickupRange;
 }
 
+KonfytReset KonfytProject::getResetOption()
+{
+    return mResetOption;
+}
+
+void KonfytProject::setResetOption(KonfytReset option)
+{
+    if (option != mResetOption) {
+        mResetOption = option;
+        setModified(true);
+    }
+}
+
 void KonfytProject::addPatch(KonfytPatch *newPatch)
 {
     patchList.append(newPatch);
@@ -1331,6 +1344,7 @@ void KonfytProject::writeToXmlStream(QXmlStreamWriter* stream)
     stream->writeTextElement(XML_PRJ_PATCH_LIST_NUMBERS, bool2str(patchListNumbers));
     stream->writeTextElement(XML_PRJ_PATCH_LIST_NOTES, bool2str(patchListNotes));
     stream->writeTextElement(XML_PRJ_MIDI_PICKUP_RANGE, n2s(midiPickupRange));
+    stream->writeTextElement(XML_PRJ_RESET_OPTION, konfytResetToString(mResetOption));
 
     // Write patches
     for (int i=0; i<patchList.count(); i++) {
@@ -1526,7 +1540,7 @@ void KonfytProject::readFromXmlStream(QXmlStreamReader* r)
         // Get the project name attribute
         QXmlStreamAttributes ats =  r->attributes();
         if (ats.count()) {
-            this->mProjectName = ats.at(0).value().toString(); // Project name
+            mProjectName = ats.value(XML_PRJ_NAME).toString();
         }
 
         while (r->readNextStartElement()) {
@@ -1567,6 +1581,11 @@ void KonfytProject::readFromXmlStream(QXmlStreamReader* r)
             } else if (r->name() == XML_PRJ_PATCH_LIST_NOTES) {
 
                 patchListNotes = Qstr2bool(r->readElementText());
+
+            } else if (r->name() == XML_PRJ_RESET_OPTION) {
+
+                mResetOption = konfytResetFromString(r->readElementText(),
+                                                     KonfytReset::Inherit);
 
             } else if (r->name() == XML_PRJ_MIDI_PICKUP_RANGE) {
 

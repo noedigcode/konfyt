@@ -25,6 +25,7 @@ SOURCES += src/main.cpp\
     src/konfytAudio.cpp \
     src/konfytJs.cpp \
     src/konfytLscp.cpp \
+    src/konfytStructs.cpp \
     src/konfytUtils.cpp \
         src/mainwindow.cpp \
     src/konfytPatchEngine.cpp \

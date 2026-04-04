@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupJack();
     setupPatchEngine();
     setupScripting();
+    setupLayerToolMenu();
 
     // ----------------------------------------------------
     // The following need to happen before loading project or cmdline arguments
@@ -104,13 +105,7 @@ void MainWindow::setupGuiMenuButtons()
     ui->toolButton_AddPatch->setMenu(addPatchMenu);
 
     // Patch menu button
-    QMenu* patchMenu = new QMenu();
-    patchMenu->addAction(ui->actionPatch_MIDI_Filter);
-    patchMenu->addAction(ui->actionAlways_Active);
-    patchMenu->addAction(ui->actionSave_Patch_As_Copy);
-    patchMenu->addAction(ui->actionAdd_Patch_To_Library);
-    patchMenu->addAction(ui->actionSave_Patch_To_File);
-    ui->toolButton_patchMenu->setMenu(patchMenu);
+    setupPatchMenu();
 
     // Project button menu
     QMenu* projectButtonMenu = new QMenu();
@@ -859,6 +854,12 @@ void MainWindow::showSettingsDialog()
     ui->comboBox_settings_soundfontDirs->setCurrentText(mSoundfontsDir);
     ui->checkBox_settings_promptOnQuit->setChecked(mPromptOnQuit);
     ui->checkBox_settings_openLastProjectAtStartup->setChecked(mOpenLastProjectAtStartup);
+    mSettingsDefaultResetOptionComboBox.updateSelectedOption(mDefaultResetOption);
+
+    if (mCurrentProject) {
+        mProjectResetOptionComboBox.updateSelectedOption(
+                    mCurrentProject->getResetOption());
+    }
 
     int i = ui->comboBox_Settings_filemanager->findText(mFilemanager);
     if (i>=0) {
@@ -1207,6 +1208,11 @@ void MainWindow::showMidiFilterEditor()
 
 void MainWindow::applySettings()
 {
+    // Project settings
+    if (mCurrentProject) {
+        mCurrentProject->setResetOption(mProjectResetOptionComboBox.selectedValue());
+    }
+
     // Get settings from dialog.
     mProjectsDir = ui->comboBox_settings_projectsDir->currentText();
     setPatchesDir(ui->comboBox_settings_patchDirs->currentText());
@@ -1215,6 +1221,7 @@ void MainWindow::applySettings()
     mFilemanager = ui->comboBox_Settings_filemanager->currentText();
     mPromptOnQuit = ui->checkBox_settings_promptOnQuit->isChecked();
     mOpenLastProjectAtStartup = ui->checkBox_settings_openLastProjectAtStartup->isChecked();
+    mDefaultResetOption = mSettingsDefaultResetOptionComboBox.selectedValue();
 
     print("Settings applied.");
 
@@ -1265,6 +1272,9 @@ bool MainWindow::loadSettingsFile(QString dir)
                     setSfzDir(r.readElementText());
                 } else if (r.name() == XML_SETTINGS_FILEMAN) {
                     mFilemanager = r.readElementText();
+                } else if (r.name() == XML_SETTINGS_DEFAULT_RESET_OPTION) {
+                    mDefaultResetOption = konfytResetFromString(
+                                r.readElementText(), KonfytReset::NoReset);
                 } else if (r.name() == XML_SETTINGS_PROMPT_ON_QUIT) {
                     mPromptOnQuit = Qstr2bool(r.readElementText());
                 } else if (r.name() == XML_SETTINGS_START_MAXIMIZED) {
@@ -1316,6 +1326,8 @@ bool MainWindow::saveSettingsFile()
     stream.writeTextElement(XML_SETTINGS_PATCHESDIR, mPatchesDir);
     stream.writeTextElement(XML_SETTINGS_SFZDIR, mSfzDir);
     stream.writeTextElement(XML_SETTINGS_FILEMAN, mFilemanager);
+    stream.writeTextElement(XML_SETTINGS_DEFAULT_RESET_OPTION,
+                            konfytResetToString(mDefaultResetOption));
     stream.writeTextElement(XML_SETTINGS_PROMPT_ON_QUIT, bool2str(mPromptOnQuit));
     mStartMaximized = this->isMaximized();
     stream.writeTextElement(XML_SETTINGS_START_MAXIMIZED, bool2str(mStartMaximized));
@@ -1334,6 +1346,10 @@ bool MainWindow::saveSettingsFile()
 void MainWindow::loadNewProject()
 {
     ProjectPtr prj = newProjectPtr();
+
+    prj->setResetOption(mDefaultResetOption);
+    prj->setModified(false);
+
     loadProject(prj);
 }
 
@@ -2060,6 +2076,9 @@ void MainWindow::loadProject(ProjectPtr prj)
 
     updateProjectNameInGui();
 
+    // Project-specific settings
+    mProjectResetOptionComboBox.updateSelectedOption(prj->getResetOption());
+
     // Populate patch list for current project
     patchListAdapter.clear();
     patchListAdapter.addPatches(mCurrentProject->getPatchList());
@@ -2779,6 +2798,16 @@ void MainWindow::setupPatchListAdapter()
     });
 }
 
+void MainWindow::setupPatchResetOptionMenu()
+{
+    patchResetOptionMenu.menu()->setTitle("Reset On Patch Change");
+    patchResetOptionMenu.setInheritActionText("Inherit Project Setting");
+    connect(patchResetOptionMenu.menu(), &QMenu::triggered,
+            this, &MainWindow::onPatchResetOptionMenuTriggered);
+    connect(patchResetOptionMenu.menu(), &QMenu::aboutToShow,
+            this, &MainWindow::onPatchResetOptionMenuAboutToShow);
+}
+
 void MainWindow::onPatchSelected(KonfytPatch *patch)
 {
     setCurrentPatch(patch);
@@ -2795,6 +2824,23 @@ void MainWindow::onPatchLayerLoaded(KfPatchLayerWeakPtr patchLayer)
             w->refresh();
         }
     }
+}
+
+void MainWindow::setupPatchMenu()
+{
+    QMenu* patchMenu = new QMenu();
+    patchMenu->addAction(ui->actionPatch_MIDI_Filter);
+    patchMenu->addAction(ui->actionAlways_Active);
+
+    // Patch menu reset on patch change submenu
+    setupPatchResetOptionMenu();
+    patchMenu->addMenu(patchResetOptionMenu.menu());
+
+    patchMenu->addAction(ui->actionSave_Patch_As_Copy);
+    patchMenu->addAction(ui->actionAdd_Patch_To_Library);
+    patchMenu->addAction(ui->actionSave_Patch_To_File);
+
+    ui->toolButton_patchMenu->setMenu(patchMenu);
 }
 
 /* Fill the library tree widget with all the entries in the database. */
@@ -4791,6 +4837,32 @@ void MainWindow::onPatchAudioInPortsMenu_ActionTrigger(QAction *action)
     addAudioInPortToCurrentPatch( portId );
 }
 
+void MainWindow::setupLayerToolMenu()
+{
+    // Set up reset option menu
+    layerResetOptionMenu.menu()->setTitle("Reset On Patch Change");
+    layerResetOptionMenu.setInheritActionText("Inherit From Patch And Project");
+    connect(layerResetOptionMenu.menu(), &QMenu::triggered,
+            this, &MainWindow::onLayerResetOptionMenuActionTrigger);
+
+
+    layerToolMenu.addMenu(&layerMidiInPortsMenu);
+    layerToolMenu.addMenu(&layerMidiInChannelMenu);
+    layerToolMenu.addAction(ui->actionEdit_MIDI_Filter);
+    layerToolMenu.addAction(ui->action_Edit_Script);
+
+    audioInLayerInputPortConnectionsAction = layerToolMenu.addAction("Input Port Connections...");
+    connect(audioInLayerInputPortConnectionsAction, &QAction::triggered,
+            this, &MainWindow::onAudioInLayerInputPortConnectionActionTrigger);
+
+    layerToolMenu.addAction( ui->actionEdit_MIDI_Send_List );
+    layerToolMenu.addAction( ui->actionReload_Layer );
+    layerToolMenu.addMenu(layerResetOptionMenu.menu());
+    layerToolMenu.addAction(ui->actionOpen_In_File_Manager_layerwidget);
+    layerToolMenu.addSeparator();
+    layerToolMenu.addAction( ui->actionRemove_Layer );
+}
+
 /* Layer midi output channel menu item has been clicked. */
 void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
 {
@@ -4814,6 +4886,27 @@ void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
 
         patchModified();
     }
+}
+
+void MainWindow::onPatchResetOptionMenuAboutToShow()
+{
+    if (!mCurrentPatch) { return; }
+
+    KonfytReset patchOption = mCurrentPatch->getResetOption();
+    KonfytReset projectOption = KonfytReset::NoReset;
+    if (mCurrentProject) {
+        projectOption = mCurrentProject->getResetOption();
+    }
+    patchResetOptionMenu.updateMenu(patchOption, projectOption);
+}
+
+void MainWindow::onPatchResetOptionMenuTriggered(QAction *action)
+{
+    if (!mCurrentPatch) { return; }
+
+    KonfytReset option = patchResetOptionMenu.actionValue(action);
+    mCurrentPatch->setResetOption(option);
+    setProjectModified();
 }
 
 /* Menu item has been clicked in the layer MIDI-In port menu. */
@@ -5329,47 +5422,81 @@ void MainWindow::updateLayerToolMenu()
     KfPatchLayerSharedPtr patchLayer = layerWidget->getPatchLayer().toStrongRef();
     KonfytPatchLayer::LayerType type = patchLayer->layerType();
 
-    layerToolMenu.clear();
+    // Update reset option menu
+    KonfytReset projectResetOption = KonfytReset::Inherit;
+    if (mCurrentProject) {
+        projectResetOption = mCurrentProject->getResetOption();
+    }
+    KonfytReset patchResetOption = KonfytReset::Inherit;
+    if (mCurrentPatch) {
+        patchResetOption = mCurrentPatch->getResetOption();
+    }
+    KonfytReset inheritedResetOption = konfytResetFromInherits(
+                {patchResetOption, projectResetOption}, KonfytReset::NoReset);
+    layerResetOptionMenu.updateMenu(patchLayer->getResetOption(),
+                                    inheritedResetOption);
+
     // Menu items for layers with MIDI input
-    if (    (type != KonfytPatchLayer::TypeUninitialized)
-         && (!patchLayer->hasError())
-         && (type != KonfytPatchLayer::TypeAudioIn) )
-    {
+
+    bool showMidiIn = (type != KonfytPatchLayer::TypeUninitialized)
+            && (!patchLayer->hasError())
+            && (type != KonfytPatchLayer::TypeAudioIn);
+
+    if (showMidiIn) {
         updateMidiInPortsMenu(&layerMidiInPortsMenu, patchLayer->midiInPortIdInProject());
-        layerToolMenu.addMenu(&layerMidiInPortsMenu);
         updateMidiInChannelMenu(&layerMidiInChannelMenu, patchLayer->midiFilter().inChan);
-        layerToolMenu.addMenu(&layerMidiInChannelMenu);
-        layerToolMenu.addAction(ui->actionEdit_MIDI_Filter);
-        layerToolMenu.addAction(ui->action_Edit_Script);
     }
+
+    layerMidiInPortsMenu.menuAction()->setVisible(showMidiIn);
+    layerMidiInChannelMenu.menuAction()->setVisible(showMidiIn);
+    ui->actionEdit_MIDI_Filter->setVisible(showMidiIn);
+    ui->action_Edit_Script->setVisible(showMidiIn);
+
     // Menu items for Audio input port layers
-    if (type == KonfytPatchLayer::TypeAudioIn) {
-        QAction* a = layerToolMenu.addAction("Input Port Connections...");
-        connect(a, &QAction::triggered, this, [=]()
-        {
-            // Show port in connections page
-            showConnectionsPage();
-            connectionsTreeSelectAudioInPort(patchLayer->audioInPortData.portIdInProject);
-        });
-    }
+
+    bool showAudioIn = (type == KonfytPatchLayer::TypeAudioIn);
+    audioInLayerInputPortConnectionsAction->setVisible(showAudioIn);
+
     // Menu items for MIDI output port layers
-    if (type == KonfytPatchLayer::TypeMidiOut) {
-        layerToolMenu.addAction( ui->actionEdit_MIDI_Send_List );
-    }
+
+    bool showMidiOut = (type == KonfytPatchLayer::TypeMidiOut);
+    ui->actionEdit_MIDI_Send_List->setVisible(showMidiOut);
+
     // Menu items for instrument layers
-    if (    (type == KonfytPatchLayer::TypeSfz)
-         || (type == KonfytPatchLayer::TypeSoundfontProgram) )
-    {
-        layerToolMenu.addAction( ui->actionReload_Layer );
-    }
+
+    bool showInstr = (type == KonfytPatchLayer::TypeSfz)
+            || (type == KonfytPatchLayer::TypeSoundfontProgram);
+
+    ui->actionReload_Layer->setVisible(showInstr);
+
     // Menu items for layers that have a file path
+
     QString filepath = layerWidget->getFilePath();
-    if (!filepath.isEmpty()) {
-        layerToolMenu.addAction(ui->actionOpen_In_File_Manager_layerwidget);
-    }
-    // Remove layer menu item
-    if (layerToolMenu.actions().count()) { layerToolMenu.addSeparator(); }
-    layerToolMenu.addAction( ui->actionRemove_Layer );
+    bool showFileman = !filepath.isEmpty();
+    ui->actionOpen_In_File_Manager_layerwidget->setVisible(showFileman);
+}
+
+void MainWindow::onAudioInLayerInputPortConnectionActionTrigger()
+{
+    // Show port in connections page and select audio input port
+
+    if (!layerToolMenuSourceitem) { return; }
+    KfPatchLayerSharedPtr patchLayer = layerToolMenuSourceitem->getPatchLayer();
+    if (!patchLayer) { return; }
+
+    showConnectionsPage();
+    connectionsTreeSelectAudioInPort(patchLayer->audioInPortData.portIdInProject);
+}
+
+void MainWindow::onLayerResetOptionMenuActionTrigger(QAction *action)
+{
+    if (!layerToolMenuSourceitem) { return; }
+    KfPatchLayerSharedPtr patchLayer = layerToolMenuSourceitem->getPatchLayer();
+    if (!patchLayer) { return; }
+
+    KonfytReset option = layerResetOptionMenu.actionValue(action);
+    patchLayer->setResetOption(option);
+    patchModified();
 }
 
 void MainWindow::on_pushButton_Settings_Cancel_clicked()
@@ -7415,7 +7542,7 @@ void MainWindow::on_actionAlways_Active_triggered()
     ui->actionAlways_Active->setChecked(p->alwaysActive);
     ui->label_patch_alwaysActive->setVisible(p->alwaysActive);
 
-    mCurrentProject->setModified(true);
+    setProjectModified();
 }
 
 void MainWindow::on_actionNew_Patch_triggered()
@@ -8099,6 +8226,11 @@ void MainWindow::setupSettings()
     ui->comboBox_settings_sfzDirs->addItem(docsPath + "/sfz");
     ui->comboBox_settings_sfzDirs->addItem(appDataPath + "/sfz");
 
+    mProjectResetOptionComboBox.initComboBox(
+                ui->comboBox_Settings_project_resetOption);
+    mSettingsDefaultResetOptionComboBox.initComboBox(
+                ui->comboBox_Settings_resetOptionDefaultForNewProjects);
+
     // Initialise default settings
     if (mProjectsDir.isEmpty()) {
         mProjectsDir = ui->comboBox_settings_projectsDir->itemText(0);
@@ -8112,6 +8244,9 @@ void MainWindow::setupSettings()
     if (mSfzDir.isEmpty()) {
         setSfzDir(ui->comboBox_settings_sfzDirs->itemText(0));
     }
+
+    // Default settings tab
+    ui->tabWidget_settings->setCurrentWidget(ui->tab_settings_currentProject);
 }
 
 /* User right-clicked on panic button. */
@@ -8730,3 +8865,91 @@ void MainWindow::on_toolButton_LibraryPreview_clicked()
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
 
+
+void MainWindow::ResetOptionComboBox::initComboBox(QComboBox *comboBox)
+{
+    mComboBox = comboBox;
+    comboBox->clear();
+    comboBox->setEditable(false);
+
+    addItem("Reset", KonfytReset::Reset);
+    addItem("Do Not Reset", KonfytReset::NoReset);
+}
+
+KonfytReset MainWindow::ResetOptionComboBox::selectedValue()
+{
+    return mValues.value(mComboBox->currentIndex(), KonfytReset::NoReset);
+}
+
+void MainWindow::ResetOptionComboBox::updateSelectedOption(KonfytReset option)
+{
+    int index = mValues.indexOf(option);
+    if ((index >= 0) && (index < mComboBox->count())) {
+        mComboBox->setCurrentIndex(index);
+    }
+}
+
+void MainWindow::ResetOptionComboBox::addItem(QString text, KonfytReset value)
+{
+    mComboBox->addItem(text);
+    mValues.append(value);
+}
+
+MainWindow::ResetOptionMenu::ResetOptionMenu()
+{
+    addAction(mInheritActionText, KonfytReset::Inherit);
+    addAction("Reset", KonfytReset::Reset);
+    addAction("Do Not Reset", KonfytReset::NoReset);
+}
+
+QMenu *MainWindow::ResetOptionMenu::menu()
+{
+    return &mMenu;
+}
+
+void MainWindow::ResetOptionMenu::setInheritActionText(QString text)
+{
+    mInheritActionText = text;
+}
+
+void MainWindow::ResetOptionMenu::updateMenu(KonfytReset selected, KonfytReset inherited)
+{
+    // Update action check states to only check the selected action
+    QList<QAction*> actions = mMenu.actions();
+    for (int i = 0; i < mValues.count(); i++) {
+        QAction* action = actions[i];
+        action->setChecked(mValues[i] == selected);
+    }
+    // Add inherited action text
+    QAction* a = actionWithValue(KonfytReset::Inherit);
+    if (a) {
+        a->setText(QString("%1 (%2)")
+                   .arg(mInheritActionText)
+                   .arg(konfytResetToString(inherited)));
+    }
+}
+
+KonfytReset MainWindow::ResetOptionMenu::actionValue(QAction *action)
+{
+    int index = mMenu.actions().indexOf(action);
+    return mValues.value(index, KonfytReset::NoReset);
+}
+
+void MainWindow::ResetOptionMenu::addAction(QString text, KonfytReset value)
+{
+    QAction* action = mMenu.addAction(text);
+    action->setCheckable(true);
+    mValues.append(value);
+}
+
+QAction *MainWindow::ResetOptionMenu::actionWithValue(KonfytReset value)
+{
+    QAction* ret = nullptr;
+    for (int i = 0; i < mValues.count(); i++) {
+        if (mValues[i] == value) {
+            ret = mMenu.actions().value(i);
+            break;
+        }
+    }
+    return ret;
+}

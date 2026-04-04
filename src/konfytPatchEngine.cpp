@@ -62,6 +62,8 @@ void KonfytPatchEngine::setProject(ProjectPtr project)
     mCurrentProject = project;
     connect(project.data(), &KonfytProject::patchURIsNeedUpdating,
             this, &KonfytPatchEngine::onProjectPatchURIsNeedUdating);
+    connect(project.data(), &KonfytProject::projectModifiedStateChanged,
+            this, &KonfytPatchEngine::onProjectModifiedStateChanged);
 
     onProjectPatchURIsNeedUdating();
 }
@@ -85,26 +87,60 @@ void KonfytPatchEngine::unloadPatch(KonfytPatch *patch)
     if (mCurrentPatch == patch) { mCurrentPatch = nullptr; }
 }
 
-/* Load patch, replacing the current patch. */
-void KonfytPatchEngine::loadPatchAndSetCurrent(KonfytPatch *patch)
+/* Load newPatch, replacing the current newPatch. */
+void KonfytPatchEngine::loadPatchAndSetCurrent(KonfytPatch *newPatch)
 {
-    if (patch == nullptr) { return; }
+    if (newPatch == nullptr) { return; }
 
-    // Deactivate routes for current patch
-    if (patch != mCurrentPatch) {
-        if (mCurrentPatch != nullptr) {
+    bool switchToDifferentPatch = (newPatch != mCurrentPatch);
+
+    if (mCurrentPatch && switchToDifferentPatch) {
+
+        // Switching away from current patch.
+        // Deactivate routes and restore snapshot depending on reset option.
+        foreach (KfPatchLayerSharedPtr layer, mCurrentPatch->layers()) {
+
+            // Deactivate layer
+            if (!mCurrentPatch->alwaysActive) {
+                setLayerActive(layer, false);
+            }
+
+            // Restore snapshot
             if (!mCurrentPatch->alwaysActive) {
 
-                foreach (KfPatchLayerSharedPtr layer, mCurrentPatch->layers()) {
-                    setLayerActive(layer, false);
+                // Determine inherited reset option from project and patch
+                KonfytReset projectOption = KonfytReset::NoReset;
+                if (mCurrentProject) {
+                    projectOption = mCurrentProject->getResetOption();
                 }
+                KonfytReset patchOption = mCurrentPatch->getResetOption();
 
+                KonfytReset inheritedOption = konfytResetFromInherits(
+                                                {patchOption, projectOption},
+                                                KonfytReset::NoReset);
+
+                // Restore layer reset snapshot, providing inherited option
+                // from project and patch which will be used if the layer's
+                // is set to inherited.
+                layer->restoreResetSnapshotIfAllowed(inheritedOption);
+                updateLayerGain(layer);
             }
+            updatePatchLayersSoloMute(mCurrentPatch);
+
         }
     }
 
-    mCurrentPatch = patch;
-    loadPatch(patch);
+    if (switchToDifferentPatch) {
+        // Switched to patch. Create a reset snapshot for each layer.
+        // Only do this when switching to a different patch, as this function
+        // could be called on the current patch when loading new layers, in
+        // which situation we don't want to create a snapshot for the newly
+        // created layers.
+        newPatch->createLayerResetSnapshots();
+    }
+
+    mCurrentPatch = newPatch;
+    loadPatch(newPatch);
 }
 
 void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
@@ -675,7 +711,10 @@ void KonfytPatchEngine::setLayerGain(KfPatchLayerWeakPtr patchLayer, float newGa
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
-    patchLayer.toStrongRef()->setGain(newGain);
+    KfPatchLayerSharedPtr p = patchLayer.toStrongRef();
+    KONFYT_ASSERT_RETURN(!p.isNull());
+    p->setGain(newGain);
+
     updateLayerGain(patchLayer);
 }
 
@@ -1017,6 +1056,17 @@ void KonfytPatchEngine::onProjectPatchURIsNeedUdating()
 
     foreach (KonfytPatch* patch, mCurrentProject->getPatchList()) {
         updatePatchLayersURIs(patch);
+    }
+}
+
+void KonfytPatchEngine::onProjectModifiedStateChanged(bool modified)
+{
+    if (!modified) {
+        // Modified == false means project was saved. Create new patch reset
+        // snapshots.
+        foreach (KonfytPatch* patch, mCurrentProject->getPatchList()) {
+            patch->createLayerResetSnapshots();
+        }
     }
 }
 

@@ -171,6 +171,40 @@ void KonfytPatchLayer::setMidiInPortIdInProject(int port)
     mMidiInPortIdInProject = port;
 }
 
+void KonfytPatchLayer::setResetOption(KonfytReset option)
+{
+    mResetOption = option;
+}
+
+KonfytReset KonfytPatchLayer::getResetOption()
+{
+    return mResetOption;
+}
+
+void KonfytPatchLayer::createResetSnapshot()
+{
+    mResetSnapshot.valid = true;
+    mResetSnapshot.gain = mGain;
+    mResetSnapshot.solo = mSolo;
+    mResetSnapshot.mute = mMute;
+}
+
+void KonfytPatchLayer::restoreResetSnapshotIfAllowed(KonfytReset inheritedOption)
+{
+    KonfytReset resultingOption = konfytResetFromInherits(
+                                        {mResetOption, inheritedOption},
+                                        KonfytReset::NoReset);
+
+    if (resultingOption != KonfytReset::Reset) { return; }
+
+    if (!mResetSnapshot.valid) { return; }
+
+    // Apply reset
+    setGain(mResetSnapshot.gain);
+    setSolo(mResetSnapshot.solo);
+    setMute(mResetSnapshot.mute);
+}
+
 QString KonfytPatchLayer::script() const
 {
     return mScript;

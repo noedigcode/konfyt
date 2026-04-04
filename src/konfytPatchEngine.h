@@ -60,7 +60,7 @@ public:
     // ----------------------------------------------------
     // Patches
     // ----------------------------------------------------
-    void loadPatchAndSetCurrent(KonfytPatch* patch);
+    void loadPatchAndSetCurrent(KonfytPatch* newPatch);
     void loadPatch(KonfytPatch* patch);
     void reloadPatch();
     void unloadPatch(KonfytPatch* patch);
@@ -155,6 +155,7 @@ private:
 private slots:
     void onSfzEngineInitDone(QString error);
     void onProjectPatchURIsNeedUdating();
+    void onProjectModifiedStateChanged(bool modified);
 };
 
 #endif // KONFYT_PATCH_ENGINE_H

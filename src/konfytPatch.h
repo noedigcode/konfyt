@@ -36,6 +36,7 @@
 #define XML_PATCH_NAME "name"
 #define XML_PATCH_NOTE "patchNote"
 #define XML_PATCH_ALWAYSACTIVE "alwaysActive"
+#define XML_PATCH_RESET_OPTION "resetOption"
 
 #define XML_PATCH_SFLAYER "sfLayer"
 #define XML_PATCH_SFLAYER_FILENAME "soundfont_filename"
@@ -76,6 +77,8 @@
 #define XML_PATCH_LAYER_SCRIPT_ENABLED "enabled"
 #define XML_PATCH_LAYER_SCRIPT_PASS_MIDI_THROUGH "passMidiThrough"
 
+#define XML_PATCH_LAYER_RESET_OPTION "resetOption"
+
 #define XML_PATCH_MIDISENDLIST "midiSendList"
 
 typedef QWeakPointer<KonfytPatchLayer> KfPatchLayerWeakPtr;
@@ -94,6 +97,8 @@ public:
     void setNote(QString newNote);
     bool alwaysActive = false;
     KonfytMidiFilter patchMidiFilter = KonfytMidiFilter::allPassFilter(); // Patch-wide MIDI filter
+    KonfytReset getResetOption();
+    void setResetOption(KonfytReset option);
 
     // ----------------------------------------------------
     // General layer related functions
@@ -106,11 +111,11 @@ public:
     void moveLayer(KfPatchLayerWeakPtr layer, int newIndex);
     void clearLayers();
     int layerIndex(KfPatchLayerWeakPtr layer) const;
+    void createLayerResetSnapshots();
 
     // ----------------------------------------------------
     // Soundfont layer related functions
     // ----------------------------------------------------
-
     KfPatchLayerWeakPtr addSfLayer(QString soundfontPath, KonfytSoundPreset preset);
     QList<KfPatchLayerWeakPtr> getSfLayerList() const;
 
@@ -123,7 +128,6 @@ public:
     // ----------------------------------------------------
     // Midi routing
     // ----------------------------------------------------
-
     QList<int> getMidiOutputPortListProjectIds() const;
     QList<KfPatchLayerWeakPtr> getMidiOutputLayerList() const;
     KfPatchLayerWeakPtr addMidiOutputPort(int newPort);
@@ -132,7 +136,6 @@ public:
     // ----------------------------------------------------
     // Audio input ports
     // ----------------------------------------------------
-
     QList<int> getAudioInPortListProjectIds() const;
     QList<KfPatchLayerWeakPtr> getAudioInLayerList() const;
     KfPatchLayerWeakPtr addAudioInPort(int newPort);
@@ -141,7 +144,6 @@ public:
     // ----------------------------------------------------
     // Save/load functions
     // ----------------------------------------------------
-
     bool savePatchToFile(QString filename) const;
     bool loadPatchFromFile(QString filename, QString* errors = nullptr);
 
@@ -151,6 +153,7 @@ public:
 private:
     QString patchName;
     QString patchNote;  // Custom note for user instructions or to describe the patch
+    KonfytReset mResetOption = KonfytReset::Inherit;
 
     // List of layers (all types, order is important for user in the patch)
     QList<KfPatchLayerSharedPtr> layerList;
