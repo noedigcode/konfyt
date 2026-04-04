@@ -1,6 +1,46 @@
 Changelog
 =========
 
+[1.7.0] - April 2026
+--------------------
+
+Added
+
+- Patch layer reset options: Add option to reset patch gain, solo and mute
+  when switching to another patch. Add settings on project, patch and layer
+  levels. Layers and patches can be set to reset, no reset or to inherit.
+  A default setting for new projects is also added to settings.
+- External apps: Add options to start detached and to warn before closing.
+  This modifies the project file format.
+- Context menu to save soundfont program as library patch when right-clicking
+  on soundfont program in the library bottom list.
+- Line numbers in script editor.
+
+Changes
+
+- Allow program changes by default in MIDI filter for new MIDI out port layers.
+  (Remains off by default for Soundfont and SFZ layers.)
+- MIDI send list editor: disable buttons when no items are selected in the MIDI
+  send list or saved MIDI messages list.
+- When adding patch to the library, do not reset the entire GUI tree and only
+  refresh the patch items.
+- Refactor settings GUI into tabs to make space for the new patch layer reset
+  options, and to clearly separate project specific and general settings.
+
+Fixes
+
+- Fix library patch list not being cleared when rescanning database.
+- Fix saving patches to library ending up with filenames without dot separating
+  extension.
+- Script editor: When adding newlines at bottom of view, scroll down so the
+  cursor remains visible. When a closing brace is automatically added, ensure
+  that the closing brace is also visible (even though cursor will be placed
+  in the line above the closing brace).
+- Do not show project close/save prompt when selecting non-open items in the
+  project open menu (i.e. open projects directory or the placeholder action
+  if there are no projects to show).
+
+
 [1.6.2] - June 2024
 -------------------
 
