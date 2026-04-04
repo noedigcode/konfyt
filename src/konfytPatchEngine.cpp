@@ -123,9 +123,7 @@ void KonfytPatchEngine::loadPatchAndSetCurrent(KonfytPatch *newPatch)
                 // from project and patch which will be used if the layer's
                 // is set to inherited.
                 layer->restoreResetSnapshotIfAllowed(inheritedOption);
-                updateLayerGain(layer);
             }
-            updatePatchLayersSoloMute(mCurrentPatch);
 
         }
     }
@@ -196,7 +194,7 @@ void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
 
     // Set layers active based on solo and mute
     if (patch->alwaysActive || (patch == mCurrentPatch)) {
-        updatePatchLayersSoloMute(patch);
+        activatePatchLayerRoutesForSoloMute(patch);
     }
 }
 
@@ -512,7 +510,7 @@ void KonfytPatchEngine::updateLayerGain(KfPatchLayerSharedPtr layer)
     }
 }
 
-void KonfytPatchEngine::updatePatchLayersSoloMute(KonfytPatch *patch)
+void KonfytPatchEngine::activatePatchLayerRoutesForSoloMute(KonfytPatch *patch)
 {
     if (patch == nullptr) { return; }
 
@@ -749,7 +747,7 @@ void KonfytPatchEngine::setLayerSolo(KfPatchLayerWeakPtr patchLayer, bool solo)
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
     patchLayer.toStrongRef()->setSolo(solo);
-    updatePatchLayersSoloMute(mCurrentPatch);
+    activatePatchLayerRoutesForSoloMute(mCurrentPatch);
 }
 
 /* Set layer solo, using layer index as parameter. */
@@ -765,7 +763,7 @@ void KonfytPatchEngine::setLayerMute(KfPatchLayerWeakPtr patchLayer, bool mute)
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
     patchLayer.toStrongRef()->setMute(mute);
-    updatePatchLayersSoloMute(mCurrentPatch);
+    activatePatchLayerRoutesForSoloMute(mCurrentPatch);
 }
 
 /* Set layer mute, using layer index as parameter. */

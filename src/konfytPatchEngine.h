@@ -133,7 +133,7 @@ private:
     void loadMidiOutputPort(KfPatchLayerSharedPtr layer);
     void updateLayerRouting(KfPatchLayerSharedPtr layer);
     void updateLayerGain(KfPatchLayerSharedPtr layer);
-    void updatePatchLayersSoloMute(KonfytPatch* patch);
+    void activatePatchLayerRoutesForSoloMute(KonfytPatch* patch);
     void setLayerActive(KfPatchLayerSharedPtr layer, bool active);
     void updateLayerPatchMidiFilterInJackEngine(KonfytPatch* patch,
                                                 KfPatchLayerSharedPtr layer);
