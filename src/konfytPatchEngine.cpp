@@ -349,7 +349,7 @@ void KonfytPatchEngine::updateLayerRouting(KonfytPatchLayerPtr layer)
 
     KonfytPatchLayer::LayerType layerType = layer->layerType();
 
-    PrjAudioBusPtr bus;
+    KonfytProject::AudioPortPtr bus;
     if ( (layerType == KonfytPatchLayer::TypeSoundfontProgram) ||
          (layerType == KonfytPatchLayer::TypeSfz) ||
          (layerType == KonfytPatchLayer::TypeAudioIn) )
@@ -375,7 +375,7 @@ void KonfytPatchEngine::updateLayerRouting(KonfytPatchLayerPtr layer)
             return;
         }
     }
-    PrjMidiPortPtr midiInPort;
+    KonfytProject::MidiPortPtr midiInPort;
     if ( (layerType == KonfytPatchLayer::TypeSoundfontProgram) ||
          (layerType == KonfytPatchLayer::TypeSfz) ||
          (layerType == KonfytPatchLayer::TypeMidiOut) )
@@ -420,7 +420,7 @@ void KonfytPatchEngine::updateLayerRouting(KonfytPatchLayerPtr layer)
         LayerMidiOutData portData = layer->midiOutputPortData;
         if (mCurrentProject->midiOutPort_exists(portData.portIdInProject)) {
 
-            PrjMidiPortPtr prjMidiOutPort =
+            KonfytProject::MidiPortPtr prjMidiOutPort =
                 mCurrentProject->midiOutPort_getPort( portData.portIdInProject );
             if (prjMidiOutPort) {
                 jack->setMidiRoute(portData.jackRoute, midiInPort->jackPort,
@@ -443,7 +443,8 @@ void KonfytPatchEngine::updateLayerRouting(KonfytPatchLayerPtr layer)
         LayerAudioInData audioPortData = layer->audioInPortData;
         if (mCurrentProject->audioInPort_exists(audioPortData.portIdInProject)) {
 
-            PrjAudioInPortPtr portPair = mCurrentProject->audioInPort_getPort(
+            KonfytProject::AudioPortPtr portPair =
+                    mCurrentProject->audioInPort_getPort(
                         audioPortData.portIdInProject);
             if (portPair) {
                 // Left channel Bus routing
@@ -980,7 +981,7 @@ void KonfytPatchEngine::loadAudioInputPort(KonfytPatchLayerPtr layer)
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    PrjAudioInPortPtr srcPorts = mCurrentProject->audioInPort_getPort(portId);
+    KonfytProject::AudioPortPtr srcPorts = mCurrentProject->audioInPort_getPort(portId);
     KONFYT_ASSERT_RETURN(!srcPorts.isNull());
 
     // Get destination ports (bus)
@@ -990,7 +991,7 @@ void KonfytPatchEngine::loadAudioInputPort(KonfytPatchLayerPtr layer)
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    PrjAudioBusPtr destPorts = mCurrentProject->audioBus_getBus(busId);
+    KonfytProject::AudioPortPtr destPorts = mCurrentProject->audioBus_getBus(busId);
     KONFYT_ASSERT_RETURN(!destPorts.isNull());
 
     // Route for left port
@@ -1010,7 +1011,7 @@ void KonfytPatchEngine::loadMidiOutputPort(KonfytPatchLayerPtr layer)
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    PrjMidiPortPtr srcPort = mCurrentProject->midiInPort_getPort(srcId);
+    KonfytProject::MidiPortPtr srcPort = mCurrentProject->midiInPort_getPort(srcId);
     KONFYT_ASSERT_RETURN(!srcPort.isNull());
 
     // Get destination port
@@ -1020,7 +1021,7 @@ void KonfytPatchEngine::loadMidiOutputPort(KonfytPatchLayerPtr layer)
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    PrjMidiPortPtr destPort = mCurrentProject->midiOutPort_getPort(destId);
+    KonfytProject::MidiPortPtr destPort = mCurrentProject->midiOutPort_getPort(destId);
     KONFYT_ASSERT_RETURN(!destPort.isNull());
 
     // Create route

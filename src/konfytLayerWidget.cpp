@@ -247,7 +247,7 @@ void KonfytLayerWidget::setUpGUI()
             // TODO: setErrorMessage should not be done here, it should be set
             //       in the engine when loading the patch
             if (mProject->audioInPort_exists(portId)) {
-                text = text + ": " + mProject->audioInPort_getPort(portId)->portName;
+                text = text + ": " + mProject->audioInPort_getPort(portId)->name;
             } else {
                 mPatchLayer->setErrorMessage("No audio in port " + n2s(portId) + " in project.");
             }
@@ -323,7 +323,7 @@ void KonfytLayerWidget::updateRightToolButton()
         int busId = mPatchLayer->busIdInProject();
         if ( mProject->audioBus_exists(busId) ) {
             ui->toolButton_right->setText( n2s(busId) );
-            ui->toolButton_right->setToolTip("Bus: " + mProject->audioBus_getBus(busId)->busName);
+            ui->toolButton_right->setToolTip("Bus: " + mProject->audioBus_getBus(busId)->name);
             ui->toolButton_right->setStyleSheet("");
         } else {
             ui->toolButton_right->setText( n2s(busId) + "!" );

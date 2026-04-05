@@ -28,6 +28,9 @@
 #include <QXmlStreamWriter>
 #include <QXmlStreamReader>
 
+// ===========================================================================
+// MIDI Constants
+
 #define MIDI_EVENT_TYPE_NOTEON 0x90
 #define MIDI_EVENT_TYPE_NOTEOFF 0x80
 #define MIDI_EVENT_TYPE_POLY_AFTERTOUCH 0xA0
@@ -58,17 +61,8 @@
 
 #define MIDI_SUSTAIN_THRESH 63
 
-#define XML_MIDIEVENT "midiEvent"
-#define XML_MIDIEVENT_TYPE "type"
-#define XML_MIDIEVENT_CHANNEL "channel"
-#define XML_MIDIEVENT_DATA1 "data1"
-#define XML_MIDIEVENT_DATA2 "data2"
-#define XML_MIDIEVENT_DATAHEX "dataHex"
-#define XML_MIDIEVENT_BANKMSB "bankMSB"
-#define XML_MIDIEVENT_BANKLSB "bankLSB"
-
-#define XML_MIDI_SEND_ITEM "midiSendItem"
-#define XML_MIDI_SEND_ITEM_DESCRIPTION "description"
+// ===========================================================================
+// MIDI functions
 
 int pitchbendDataToSignedInt(unsigned char *data12);
 int pitchbendDataToSignedInt(int data1, int data2);
@@ -81,6 +75,7 @@ int midiBanksToInt(int bankMSB, int bankLSB);
 int midiBankMSB(int bankCombined);
 int midiBankLSB(int bankCombined);
 
+// ===========================================================================
 
 struct KonfytMidiEvent
 {
@@ -152,8 +147,18 @@ public:
     void writeToXMLStream(QXmlStreamWriter* w) const;
     /* Reads from XML stream and returns error messages. */
     QString readFromXmlStream(QXmlStreamReader* r);
+
+    static constexpr const char* XML_MIDIEVENT = "midiEvent";
+    static constexpr const char* XML_MIDIEVENT_TYPE = "type";
+    static constexpr const char* XML_MIDIEVENT_CHANNEL = "channel";
+    static constexpr const char* XML_MIDIEVENT_DATA1 = "data1";
+    static constexpr const char* XML_MIDIEVENT_DATA2 = "data2";
+    static constexpr const char* XML_MIDIEVENT_DATAHEX = "dataHex";
+    static constexpr const char* XML_MIDIEVENT_BANKMSB = "bankMSB";
+    static constexpr const char* XML_MIDIEVENT_BANKLSB = "bankLSB";
 };
 
+// ===========================================================================
 
 struct MidiSendItem
 {
@@ -166,32 +171,20 @@ struct MidiSendItem
     void writeToXMLStream(QXmlStreamWriter* w) const;
     /* Reads from XML stream and returns error messages. */
     QString readFromXmlStream(QXmlStreamReader* r);
+
+    static constexpr const char* XML_MIDI_SEND_ITEM = "midiSendItem";
+    static constexpr const char* XML_MIDI_SEND_ITEM_DESCRIPTION = "description";
 };
 
+// ===========================================================================
 
+/* Logic to filter an incoming MIDI value based on a pickup range. */
 struct MidiValueController
 {
     int pickupRange = 127;
-    void setValue(int value)
-    {
-        mValue = value;
-    }
-    int value()
-    {
-        return mValue;
-    }
-    bool midiInput(int value)
-    {
-        bool updated = false;
-
-        int delta = qAbs(mValue - value);
-        if (delta < pickupRange) {
-            mValue = value;
-            updated = true;
-        }
-
-        return updated;
-    }
+    void setValue(int value);
+    int value();
+    bool midiInput(int value);
 private:
     int mValue = 0;
 };

@@ -45,7 +45,7 @@ public:
     ~KonfytProcess();
 
     QProcess process;
-    ExternalApp appInfo;
+    KonfytProject::ExternalApp appInfo;
     QString projectDir;
 
     QString expandedAppName();
@@ -128,7 +128,7 @@ private:
     ExternalAppRunner* mRunner = nullptr;
     QMap<int, QListWidgetItem*> itemIdMap;
 
-    void updateItem(QListWidgetItem* item, ExternalApp app,
+    void updateItem(QListWidgetItem* item, KonfytProject::ExternalApp app,
                     KonfytProcess::State state);
 
 private slots:

@@ -415,7 +415,7 @@ QString MidiSendItem::readFromXmlStream(QXmlStreamReader *r)
             error += readFromXmlStream(r);
         } else if (r->name() == XML_MIDI_SEND_ITEM_DESCRIPTION) {
             description = r->readElementText();
-        } else if (r->name() == XML_MIDIEVENT) {
+        } else if (r->name() == KonfytMidiEvent::XML_MIDIEVENT) {
             error += midiEvent.readFromXmlStream(r);
         } else {
             error += QString("MidiSendItem::readFromXmlStream:"
@@ -426,3 +426,26 @@ QString MidiSendItem::readFromXmlStream(QXmlStreamReader *r)
     return error;
 }
 
+
+void MidiValueController::setValue(int value)
+{
+    mValue = value;
+}
+
+int MidiValueController::value()
+{
+    return mValue;
+}
+
+bool MidiValueController::midiInput(int value)
+{
+    bool updated = false;
+
+    int delta = qAbs(mValue - value);
+    if (delta < pickupRange) {
+        mValue = value;
+        updated = true;
+    }
+
+    return updated;
+}

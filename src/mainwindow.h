@@ -844,10 +844,10 @@ private:
     QThread scriptingThread;
     void setupScripting();
     KonfytPatchLayerPtr mScriptEditLayer;
-    PrjMidiPortPtr mScriptEditPort;
+    KonfytProject::MidiPortPtr mScriptEditPort;
     QWidget* stackedWidgetBeforeScriptEditor = nullptr;
     void showScriptEditorForPatchLayer(KonfytPatchLayerPtr patchLayer);
-    void showScriptEditorForPort(PrjMidiPortPtr prjPort);
+    void showScriptEditorForPort(KonfytProject::MidiPortPtr prjPort);
     void showScriptEditor();
     bool scriptEditorIgnoreChanged = false;
     QTimer scriptInfoTimer;
@@ -858,10 +858,10 @@ private slots:
     void onScriptInfoTimer();
     void onJsEnginePrint(QString msg);
     void onLayerScriptPrint(KonfytPatchLayerPtr patchLayer, QString msg);
-    void onPortScriptPrint(PrjMidiPortPtr prjPort, QString msg);
+    void onPortScriptPrint(KonfytProject::MidiPortPtr prjPort, QString msg);
     void onLayerScriptErrorStatusChanged(KonfytPatchLayerPtr patchLayer,
                                          QString errorString);
-    void onPortScriptErrorStatusChanged(PrjMidiPortPtr prjPort,
+    void onPortScriptErrorStatusChanged(KonfytProject::MidiPortPtr prjPort,
                                         QString errorString);
     void on_action_Edit_Script_triggered();
     void on_pushButton_script_update_clicked();
@@ -896,8 +896,8 @@ private:
     // External apps editor
 private:
     int externalAppEditorCurrentId = -1;
-    void externalAppToEditor(ExternalApp app);
-    ExternalApp externalAppFromEditor();
+    void externalAppToEditor(KonfytProject::ExternalApp app);
+    KonfytProject::ExternalApp externalAppFromEditor();
 
     void showExternalAppEditor(int id);
     void hideExternalAppEditor();
@@ -936,16 +936,16 @@ private:
     int addMidiInPort();
     int addMidiOutPort();
 
-    void removeAudioBusFromEngines(PrjAudioBusPtr bus);
-    void removeMidiInPortFromEngines(PrjMidiPortPtr prjPort);
-    void removeMidiOutPortFromEngines(PrjMidiPortPtr prjPort);
-    void removeAudioInPortFromEngines(PrjAudioInPortPtr prjPort);
+    void removeAudioBusFromEngines(KonfytProject::AudioPortPtr bus);
+    void removeMidiInPortFromEngines(KonfytProject::MidiPortPtr prjPort);
+    void removeMidiOutPortFromEngines(KonfytProject::MidiPortPtr prjPort);
+    void removeAudioInPortFromEngines(KonfytProject::AudioPortPtr prjPort);
 
 signals:
-    void audioBusRemoved(PrjAudioBusPtr bus);
-    void midiInPortRemoved(PrjMidiPortPtr prjPort);
-    void midiOutPortRemoved(PrjMidiPortPtr prjPort);
-    void audioInPortRemoved(PrjAudioInPortPtr prjPort);
+    void audioBusRemoved(KonfytProject::AudioPortPtr bus);
+    void midiInPortRemoved(KonfytProject::MidiPortPtr prjPort);
+    void midiOutPortRemoved(KonfytProject::MidiPortPtr prjPort);
+    void audioInPortRemoved(KonfytProject::AudioPortPtr prjPort);
 
     // ========================================================================
     // Triggers
@@ -1032,9 +1032,9 @@ private:
     void updateOtherJackMidiConnectionWarnings();
     void updateOtherJackAudioConnectionWarnings();
 
-    BiQMap<PrjAudioBusPtr, QListWidgetItem*> audioBusWarningMap;
-    BiQMap<PrjMidiPortPtr, QListWidgetItem*> midiPortWarningMap; // MIDI in and out ports
-    BiQMap<PrjAudioInPortPtr, QListWidgetItem*> audioInPortWarningMap;
+    BiQMap<KonfytProject::AudioPortPtr, QListWidgetItem*> audioBusWarningMap;
+    BiQMap<KonfytProject::MidiPortPtr, QListWidgetItem*> midiPortWarningMap; // MIDI in and out ports
+    BiQMap<KonfytProject::AudioPortPtr, QListWidgetItem*> audioInPortWarningMap;
 
     QListWidgetItem* otherJackMidiConsWarningHeader = nullptr;
     BiQMap<QListWidgetItem*, QString> otherJackMidiConsWarningMap;
@@ -1043,9 +1043,9 @@ private:
     BiQMap<QListWidgetItem*, QString> otherJackAudioConsWarningMap;
 
 private slots:
-    void audioBusWarnings_onBusRemoved(PrjAudioBusPtr bus);
-    void midiPortWarnings_onPortRemoved(PrjMidiPortPtr prjPort);
-    void audioInPortWarnings_onPortRemoved(PrjAudioInPortPtr prjPort);
+    void audioBusWarnings_onBusRemoved(KonfytProject::AudioPortPtr bus);
+    void midiPortWarnings_onPortRemoved(KonfytProject::MidiPortPtr prjPort);
+    void audioInPortWarnings_onPortRemoved(KonfytProject::AudioPortPtr prjPort);
     void portWarnings_onItemDoubleClicked(QListWidgetItem* item);
 
     // Script warnings
@@ -1053,14 +1053,14 @@ private:
     void setupScriptingWarnings();
 
     BiQMap<KonfytPatchLayerPtr, QListWidgetItem*> scriptWarningLayerMap;
-    BiQMap<PrjMidiPortPtr, QListWidgetItem*> scriptWarningPortMap;
+    BiQMap<KonfytProject::MidiPortPtr, QListWidgetItem*> scriptWarningPortMap;
 private slots:
     void scriptWarningsOnScriptEngineLayerErrorStatusChanged(
             KonfytPatchLayerPtr patchLayer, QString errorString);
     void scriptWarningsOnScriptEnginePortErrorStatusChanged(
-            PrjMidiPortPtr prjPort, QString errorString);
+            KonfytProject::MidiPortPtr prjPort, QString errorString);
     void scriptWarningsOnPatchLayerUnloaded(KonfytPatchLayerPtr patchLayer);
-    void scriptWarningsOnPortRemoved(PrjMidiPortPtr prjPort);
+    void scriptWarningsOnPortRemoved(KonfytProject::MidiPortPtr prjPort);
     void scriptWarningsOnItemDoubleClicked(QListWidgetItem* item);
 
     // SFZ engine warnings

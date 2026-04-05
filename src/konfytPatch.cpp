@@ -80,7 +80,7 @@ QList<KonfytPatchLayerPtr> KonfytPatch::layersOfType(
         KonfytPatchLayer::LayerType layerType) const
 {
     QList<KonfytPatchLayerPtr> l;
-    foreach (KonfytPatchLayerPtr layer, layerList) {
+    foreach (KonfytPatchLayerPtr layer, mLayers) {
         if (layer->layerType() == layerType) {
             l.append(layer);
         }
@@ -97,7 +97,7 @@ void KonfytPatch::writeToXmlStream(QXmlStreamWriter *stream) const
     stream->writeComment("This is a Konfyt patch file.");
 
     stream->writeStartElement(XML_PATCH);
-    stream->writeAttribute(XML_PATCH_NAME, this->patchName);
+    stream->writeAttribute(XML_PATCH_NAME, this->mPatchName);
 
     stream->writeTextElement(XML_PATCH_NOTE, this->note());
     stream->writeTextElement(XML_PATCH_ALWAYSACTIVE, QVariant(alwaysActive).toString());
@@ -106,7 +106,7 @@ void KonfytPatch::writeToXmlStream(QXmlStreamWriter *stream) const
     patchMidiFilter.writeToXMLStream(stream);
 
     // Save all layers in order.
-    foreach (KonfytPatchLayerPtr layer, layerList) {
+    foreach (KonfytPatchLayerPtr layer, mLayers) {
         layer->writeToXmlStream(stream);
     }
 
@@ -126,7 +126,7 @@ void KonfytPatch::readFromXmlStream(QXmlStreamReader *r, QString *errors)
         // Get the patch name attribute
         QXmlStreamAttributes ats =  r->attributes();
         if (ats.count()) {
-            this->patchName = ats.at(0).value().toString();
+            this->mPatchName = ats.at(0).value().toString();
         }
 
         while (r->readNextStartElement()) {
@@ -148,19 +148,19 @@ void KonfytPatch::readFromXmlStream(QXmlStreamReader *r, QString *errors)
 
                 this->patchMidiFilter.readFromXMLStream(r);
 
-            } else if (r->name() == XML_PATCH_SFLAYER) {
+            } else if (r->name() == KonfytPatchLayer::XML_SF_LAYER) {
 
                 xmlReadLayer(r, errors);
 
-            } else if (r->name() == XML_PATCH_SFZLAYER) {
+            } else if (r->name() == KonfytPatchLayer::XML_SFZ_LAYER) {
 
                 xmlReadLayer(r, errors);
 
-            } else if (r->name() == XML_PATCH_MIDIOUT) {
+            } else if (r->name() == KonfytPatchLayer::XML_MIDIOUT) {
 
                 xmlReadLayer(r, errors);
 
-            } else if (r->name() == XML_PATCH_AUDIOIN) {
+            } else if (r->name() == KonfytPatchLayer::XML_AUDIOIN) {
 
                 xmlReadLayer(r, errors);
 
@@ -176,7 +176,7 @@ void KonfytPatch::xmlReadLayer(QXmlStreamReader *r, QString *errors)
 {
     KonfytPatchLayerPtr layer(new KonfytPatchLayer());
     layer->readFromXmlStream(r, errors);
-    layerList.append(layer);
+    mLayers.append(layer);
 }
 
 void KonfytPatch::appendError(QString *errorString, QString msg)
@@ -191,49 +191,49 @@ void KonfytPatch::appendError(QString *errorString, QString msg)
  * This includes all types of layers. */
 bool KonfytPatch::isValidLayerIndex(int layerIndex) const
 {
-    return ( (layerIndex >= 0) && (layerIndex < layerList.count()) );
+    return ( (layerIndex >= 0) && (layerIndex < mLayers.count()) );
 }
 
 void KonfytPatch::removeLayer(KonfytPatchLayerPtr layer)
 {
-    layerList.removeAll(layer);
+    mLayers.removeAll(layer);
 }
 
 void KonfytPatch::moveLayer(KonfytPatchLayerPtr layer, int newIndex)
 {
     KONFYT_ASSERT_RETURN(newIndex >= 0);
-    KONFYT_ASSERT_RETURN(newIndex < layerList.count());
+    KONFYT_ASSERT_RETURN(newIndex < mLayers.count());
 
     int oldIndex = layerIndex(layer);
     KONFYT_ASSERT_RETURN(oldIndex >= 0);
 
-    layerList.move(oldIndex, newIndex);
+    mLayers.move(oldIndex, newIndex);
 }
 
 /* Removes all the layers in the patch. */
 void KonfytPatch::clearLayers()
 {
-    while (layerList.count()) {
-        removeLayer(layerList.first());
+    while (mLayers.count()) {
+        removeLayer(mLayers.first());
     }
 }
 
 /* Returns the index of the layer in the patch, -1 if not found. */
 int KonfytPatch::layerIndex(KonfytPatchLayerPtr layer) const
 {
-    return layerList.indexOf(layer);
+    return mLayers.indexOf(layer);
 }
 
 void KonfytPatch::createLayerResetSnapshots()
 {
-    foreach (KonfytPatchLayerPtr layer, layerList) {
+    foreach (KonfytPatchLayerPtr layer, mLayers) {
         layer->createResetSnapshot();
     }
 }
 
 void KonfytPatch::addLayer(KonfytPatchLayerPtr layer)
 {
-    layerList.append(layer);
+    mLayers.append(layer);
 }
 
 KonfytPatchLayerPtr KonfytPatch::addSfLayer(QString soundfontPath,
@@ -246,29 +246,29 @@ KonfytPatchLayerPtr KonfytPatch::addSfLayer(QString soundfontPath,
     KonfytPatchLayerPtr layer(new KonfytPatchLayer());
     layer->initLayer(sfData);
 
-    layerList.append(layer);
+    mLayers.append(layer);
 
     return layer;
 }
 
 int KonfytPatch::layerCount() const
 {
-    return this->layerList.count();
+    return this->mLayers.count();
 }
 
 void KonfytPatch::setName(QString newName)
 {
-    this->patchName = newName;
+    this->mPatchName = newName;
 }
 
 QString KonfytPatch::name() const
 {
-    return this->patchName;
+    return this->mPatchName;
 }
 
 void KonfytPatch::setNote(QString newNote)
 {
-    this->patchNote = newNote;
+    this->mPatchNote = newNote;
 }
 
 KonfytReset KonfytPatch::getResetOption()
@@ -283,14 +283,14 @@ void KonfytPatch::setResetOption(KonfytReset option)
 
 QString KonfytPatch::note() const
 {
-    return this->patchNote;
+    return this->mPatchNote;
 }
 
 QList<KonfytPatchLayerPtr> KonfytPatch::layers()
 {
     // Create a list of weak ptrs from shared ptrs list
     QList<KonfytPatchLayerPtr> l;
-    foreach (KonfytPatchLayerPtr layer, layerList) {
+    foreach (KonfytPatchLayerPtr layer, mLayers) {
         l.append(layer);
     }
     return l;
@@ -298,7 +298,7 @@ QList<KonfytPatchLayerPtr> KonfytPatch::layers()
 
 KonfytPatchLayerPtr KonfytPatch::layer(int index)
 {
-    return layerList.value(index);
+    return mLayers.value(index);
 }
 
 /* Return list of port project ids of the patch's midi output ports. */
@@ -352,7 +352,7 @@ KonfytPatchLayerPtr KonfytPatch::addAudioInPort(LayerAudioInData newPort, QStrin
     layer->setName(name);
     layer->initLayer(newPort);
 
-    layerList.append(layer);
+    mLayers.append(layer);
 
     return layer;
 }
@@ -372,7 +372,7 @@ KonfytPatchLayerPtr KonfytPatch::addMidiOutputPort(LayerMidiOutData newPort)
     layer.reset(new KonfytPatchLayer());
     layer->initLayer(newPort);
 
-    layerList.append(layer);
+    mLayers.append(layer);
 
     return layer;
 }
@@ -383,7 +383,7 @@ KonfytPatchLayerPtr KonfytPatch::addPlugin(LayerSfzData newPlugin, QString name)
     layer->setName(name);
     layer->initLayer(newPlugin);
 
-    layerList.append(layer);
+    mLayers.append(layer);
 
     return layer;
 }

@@ -28,49 +28,6 @@
 #include "konfytMidiFilter.h"
 #include "konfytStructs.h"
 
-#define XML_PATCH_SFLAYER "sfLayer"
-#define XML_PATCH_SFLAYER_FILENAME "soundfont_filename"
-#define XML_PATCH_SFLAYER_BANK "bank"
-#define XML_PATCH_SFLAYER_PROGRAM "program"
-#define XML_PATCH_SFLAYER_NAME "name"
-#define XML_PATCH_SFLAYER_GAIN "gain"
-#define XML_PATCH_SFLAYER_BUS "bus"
-#define XML_PATCH_SFLAYER_SOLO "solo"
-#define XML_PATCH_SFLAYER_MUTE "mute"
-#define XML_PATCH_SFLAYER_MIDI_IN "midiIn"
-
-#define XML_PATCH_SFZLAYER "sfzLayer"
-#define XML_PATCH_SFZLAYER_NAME "name"
-#define XML_PATCH_SFZLAYER_PATH "path"
-#define XML_PATCH_SFZLAYER_GAIN "gain"
-#define XML_PATCH_SFZLAYER_BUS "bus"
-#define XML_PATCH_SFZLAYER_SOLO "solo"
-#define XML_PATCH_SFZLAYER_MUTE "mute"
-#define XML_PATCH_SFZLAYER_MIDI_IN "midiIn"
-
-#define XML_PATCH_MIDIOUT "midiOutputPortLayer"
-#define XML_PATCH_MIDIOUT_PORT "port"
-#define XML_PATCH_MIDIOUT_SOLO "solo"
-#define XML_PATCH_MIDIOUT_MUTE "mute"
-#define XML_PATCH_MIDIOUT_MIDI_IN "midiIn"
-
-#define XML_PATCH_AUDIOIN "audioInPortLayer"
-#define XML_PATCH_AUDIOIN_NAME "name"
-#define XML_PATCH_AUDIOIN_PORT "port"
-#define XML_PATCH_AUDIOIN_GAIN "gain"
-#define XML_PATCH_AUDIOIN_BUS "bus"
-#define XML_PATCH_AUDIOIN_SOLO "solo"
-#define XML_PATCH_AUDIOIN_MUTE "mute"
-
-#define XML_PATCH_LAYER_SCRIPT "script"
-#define XML_PATCH_LAYER_SCRIPT_CONTENT "content"
-#define XML_PATCH_LAYER_SCRIPT_ENABLED "enabled"
-#define XML_PATCH_LAYER_SCRIPT_PASS_MIDI_THROUGH "passMidiThrough"
-
-#define XML_PATCH_LAYER_RESET_OPTION "resetOption"
-
-#define XML_PATCH_MIDISENDLIST "midiSendList"
-
 // ============================================================================
 
 struct LayerSoundfontData
@@ -232,6 +189,50 @@ private:
     LayerScriptData readScriptFromXmlStream(QXmlStreamReader* r, QString* errors);
 
     void appendError(QString *errorString, QString msg);
+
+public:
+    static constexpr const char* XML_SF_LAYER = "sfLayer";
+    static constexpr const char* XML_SF_FILENAME = "soundfont_filename";
+    static constexpr const char* XML_SF_BANK = "bank";
+    static constexpr const char* XML_SF_PROGRAM = "program";
+    static constexpr const char* XML_SF_NAME = "name";
+    static constexpr const char* XML_SF_GAIN = "gain";
+    static constexpr const char* XML_SF_BUS = "bus";
+    static constexpr const char* XML_SF_SOLO = "solo";
+    static constexpr const char* XML_SF_MUTE = "mute";
+    static constexpr const char* XML_SF_MIDI_IN = "midiIn";
+
+    static constexpr const char* XML_SFZ_LAYER = "sfzLayer";
+    static constexpr const char* XML_SFZ_NAME = "name";
+    static constexpr const char* XML_SFZ_PATH = "path";
+    static constexpr const char* XML_SFZ_GAIN = "gain";
+    static constexpr const char* XML_SFZ_BUS = "bus";
+    static constexpr const char* XML_SFZ_SOLO = "solo";
+    static constexpr const char* XML_SFZ_MUTE = "mute";
+    static constexpr const char* XML_SFZ_MIDI_IN = "midiIn";
+
+    static constexpr const char* XML_MIDIOUT = "midiOutputPortLayer";
+    static constexpr const char* XML_MIDIOUT_PORT = "port";
+    static constexpr const char* XML_MIDIOUT_SOLO = "solo";
+    static constexpr const char* XML_MIDIOUT_MUTE = "mute";
+    static constexpr const char* XML_MIDIOUT_MIDI_IN = "midiIn";
+
+    static constexpr const char* XML_AUDIOIN = "audioInPortLayer";
+    static constexpr const char* XML_AUDIOIN_NAME = "name";
+    static constexpr const char* XML_AUDIOIN_PORT = "port";
+    static constexpr const char* XML_AUDIOIN_GAIN = "gain";
+    static constexpr const char* XML_AUDIOIN_BUS = "bus";
+    static constexpr const char* XML_AUDIOIN_SOLO = "solo";
+    static constexpr const char* XML_AUDIOIN_MUTE = "mute";
+
+    static constexpr const char* XML_SCRIPT = "script";
+    static constexpr const char* XML_SCRIPT_CONTENT = "content";
+    static constexpr const char* XML_SCRIPT_ENABLED = "enabled";
+    static constexpr const char* XML_SCRIPT_PASS_MIDI_THROUGH = "passMidiThrough";
+
+    static constexpr const char* XML_RESET_OPTION = "resetOption";
+
+    static constexpr const char* XML_MIDISENDLIST = "midiSendList";
 };
 
 typedef QSharedPointer<KonfytPatchLayer> KonfytPatchLayerPtr;

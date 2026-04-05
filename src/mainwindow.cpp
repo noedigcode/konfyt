@@ -417,7 +417,7 @@ void MainWindow::showScriptEditorForPatchLayer(KonfytPatchLayerPtr patchLayer)
     showScriptEditor();
 }
 
-void MainWindow::showScriptEditorForPort(PrjMidiPortPtr prjPort)
+void MainWindow::showScriptEditorForPort(KonfytProject::MidiPortPtr prjPort)
 {
     mScriptEditLayer.reset();
     mScriptEditPort = prjPort;
@@ -455,7 +455,7 @@ void MainWindow::showScriptEditor()
         passMidiThrough = mScriptEditPort->passMidiThrough;
         title = QString("Port: %1").arg(mScriptEditPort->portName);
 
-        PrjMidiPortPtr port = mScriptEditPort;
+        KonfytProject::MidiPortPtr port = mScriptEditPort;
         scriptEngine.scriptErrorString(port, this, [=](QString errorText)
         {
             if (this->mScriptEditPort == port) {
@@ -535,7 +535,7 @@ void MainWindow::onScriptInfoTimer()
 
     } else if (mScriptEditPort) {
 
-        PrjMidiPortPtr port = mScriptEditPort;
+        KonfytProject::MidiPortPtr port = mScriptEditPort;
         scriptEngine.scriptAverageProcessTimeMs(port, this,
                                     [=](float perEventMs, float totalProcessMs)
         {
@@ -557,7 +557,7 @@ void MainWindow::onLayerScriptPrint(KonfytPatchLayerPtr patchLayer, QString msg)
     onJsEnginePrint(QString("script: [%1] %2").arg(patchLayer->uri, msg));
 }
 
-void MainWindow::onPortScriptPrint(PrjMidiPortPtr prjPort, QString msg)
+void MainWindow::onPortScriptPrint(KonfytProject::MidiPortPtr prjPort, QString msg)
 {
     onJsEnginePrint(QString("script: [%1] %2").arg(prjPort->portName, msg));
 }
@@ -571,7 +571,7 @@ void MainWindow::onLayerScriptErrorStatusChanged(KonfytPatchLayerPtr patchLayer,
     }
 }
 
-void MainWindow::onPortScriptErrorStatusChanged(PrjMidiPortPtr prjPort,
+void MainWindow::onPortScriptErrorStatusChanged(KonfytProject::MidiPortPtr prjPort,
                                                 QString errorString)
 {
     // Update error text if the port is the one currently being edited
@@ -705,8 +705,8 @@ QTreeWidgetItem* MainWindow::scanProjectScripts(QString path, ItemScriptMap* map
 
         QTreeWidgetItem* projectItem = new QTreeWidgetItem();
 
-        QList<PrjMidiPortPtr> midiInPorts = prj->midiInPort_getAllPorts();
-        foreach (PrjMidiPortPtr port, midiInPorts) {
+        QList<KonfytProject::MidiPortPtr> midiInPorts = prj->midiInPort_getAllPorts();
+        foreach (KonfytProject::MidiPortPtr port, midiInPorts) {
             if (port->script.trimmed().isEmpty()) { continue; }
             QTreeWidgetItem* item = new QTreeWidgetItem();
             item->setText(0, QString("Port %1").arg(port->portName));
@@ -951,7 +951,7 @@ void MainWindow::updateMidiFilterBeingEdited(KonfytMidiFilter newFilter)
     case MainWindow::MidiFilterEditPort:
     {
         prj->midiInPort_setPortFilter(midiFilterEditPort, newFilter);
-        PrjMidiPortPtr prjPort = prj->midiInPort_getPort(midiFilterEditPort);
+        KonfytProject::MidiPortPtr prjPort = prj->midiInPort_getPort(midiFilterEditPort);
         if (prjPort) {
             jack.setPortFilter(prjPort->jackPort, newFilter);
         }
@@ -1148,7 +1148,7 @@ void MainWindow::showMidiFilterEditor()
     case MainWindow::MidiFilterEditPort:
     {
         if (!mCurrentProject) { return; }
-        PrjMidiPortPtr prjPort = mCurrentProject->midiInPort_getPort(midiFilterEditPort);
+        KonfytProject::MidiPortPtr prjPort = mCurrentProject->midiInPort_getPort(midiFilterEditPort);
         if (prjPort) {
             f = prjPort->filter;
         }
@@ -1479,11 +1479,11 @@ void MainWindow::updatePortsBussesTree()
     QList<int> busIds = prj->audioBus_getAllBusIds();
     for (int i=0; i < busIds.count(); i++) {
         int id = busIds[i];
-        PrjAudioBusPtr b = prj->audioBus_getBus(id);
+        KonfytProject::AudioPortPtr b = prj->audioBus_getBus(id);
         KONFYT_ASSERT_CONTINUE(!b.isNull());
         QTreeWidgetItem* item = new QTreeWidgetItem();
         item->setFlags(item->flags() | Qt::ItemIsEditable);
-        item->setText(0, b->busName);
+        item->setText(0, b->name);
         tree_busMap.insert(item, id);
         busParent->addChild(item);
     }
@@ -1493,11 +1493,11 @@ void MainWindow::updatePortsBussesTree()
     QList<int> audioInIds = prj->audioInPort_getAllPortIds();
     for (int i=0; i < audioInIds.count(); i++) {
         int id = audioInIds[i];
-        PrjAudioInPortPtr p = prj->audioInPort_getPort(id);
+        KonfytProject::AudioPortPtr p = prj->audioInPort_getPort(id);
         KONFYT_ASSERT_CONTINUE(!p.isNull());
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setFlags(item->flags() | Qt::ItemIsEditable);
-        item->setText(0, p->portName);
+        item->setText(0, p->name);
         tree_audioInMap.insert(item, id);
         audioInParent->addChild(item);
     }
@@ -1507,7 +1507,7 @@ void MainWindow::updatePortsBussesTree()
     QList<int> midiOutIds = prj->midiOutPort_getAllPortIds();
     for (int i=0; i < midiOutIds.count(); i++) {
         int id = midiOutIds[i];
-        PrjMidiPortPtr p = prj->midiOutPort_getPort(id);
+        KonfytProject::MidiPortPtr p = prj->midiOutPort_getPort(id);
         KONFYT_ASSERT_CONTINUE(!p.isNull());
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setFlags(item->flags() | Qt::ItemIsEditable);
@@ -1521,7 +1521,7 @@ void MainWindow::updatePortsBussesTree()
     QList<int> midiInIds = prj->midiInPort_getAllPortIds();
     for (int i=0; i < midiInIds.count(); i++) {
         int id = midiInIds[i];
-        PrjMidiPortPtr p = prj->midiInPort_getPort(id);
+        KonfytProject::MidiPortPtr p = prj->midiInPort_getPort(id);
         if (!p) { continue; }
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setFlags(item->flags() | Qt::ItemIsEditable);
@@ -1581,20 +1581,20 @@ void MainWindow::updateConnectionsTree()
     QStringList rightCons;
     if ( ui->tree_portsBusses->currentItem()->parent() == busParent ) {
         // Get the selected bus
-        PrjAudioBusPtr bus = prj->audioBus_getBus(id);
+        KonfytProject::AudioPortPtr bus = prj->audioBus_getBus(id);
         if (bus) {
-            leftCons = bus->leftOutClients;
-            rightCons = bus->rightOutClients;
+            leftCons = bus->leftClients;
+            rightCons = bus->rightClients;
         } else {
             print("Error: updateConnectionsTree: bus null for id " + n2s(id));
         }
 
     } else if ( ui->tree_portsBusses->currentItem()->parent() == audioInParent ) {
         // An audio input port is selected
-        PrjAudioInPortPtr p = prj->audioInPort_getPort(id);
+        KonfytProject::AudioPortPtr p = prj->audioInPort_getPort(id);
         if (p) {
-            leftCons = p->leftInClients;
-            rightCons = p->rightInClients;
+            leftCons = p->leftClients;
+            rightCons = p->rightClients;
         } else {
             print("Error: updateConnectionsTree: audioInPort null for id " + n2s(id));
         }
@@ -1839,7 +1839,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     if ( ui->tree_portsBusses->currentItem()->parent() == busParent ) {
         // Get the selected bus
         int busId = tree_busMap.value( ui->tree_portsBusses->currentItem() );
-        PrjAudioBusPtr bus = prj->audioBus_getBus(busId);
+        KonfytProject::AudioPortPtr bus = prj->audioBus_getBus(busId);
         if (bus) {
             KfJackAudioPort* jackPort;
             if (leftRight == KonfytProject::LeftPort) { jackPort = bus->leftJackPort; }
@@ -1861,7 +1861,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     } else if ( ui->tree_portsBusses->currentItem()->parent() == audioInParent ) {
         // An audio input port is selected
         int portId = tree_audioInMap.value( ui->tree_portsBusses->currentItem() );
-        PrjAudioInPortPtr p = prj->audioInPort_getPort(portId);
+        KonfytProject::AudioPortPtr p = prj->audioInPort_getPort(portId);
         if (p) {
             KfJackAudioPort* jackPort;
             if (leftRight == KonfytProject::LeftPort) { jackPort = p->leftJackPort; }
@@ -1883,7 +1883,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     } else if ( ui->tree_portsBusses->currentItem()->parent() == midiOutParent ) {
         // A midi output port is selected
         int portId = tree_midiOutMap.value( ui->tree_portsBusses->currentItem() );
-        PrjMidiPortPtr p = prj->midiOutPort_getPort(portId);
+        KonfytProject::MidiPortPtr p = prj->midiOutPort_getPort(portId);
         if (p) {
             if (c->isChecked()) {
                 // Connect
@@ -1901,7 +1901,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     } else if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
         // Midi input is selected
         int portId = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
-        PrjMidiPortPtr p = prj->midiInPort_getPort(portId);
+        KonfytProject::MidiPortPtr p = prj->midiInPort_getPort(portId);
         if (p) {
             if (c->isChecked()) {
                 // Connect
@@ -2017,7 +2017,7 @@ void MainWindow::showTriggersPage()
     }
 
     // Get triggers from project and show in gui list
-    QList<KonfytTrigger> l = prj->getTriggerList();
+    QList<KonfytProject::Trigger> l = prj->getTriggerList();
     for (int i=0; i<l.count(); i++) {
         for (int j=0; j<items.count(); j++) {
             if (triggersItemActionHash[items[j]]->text() == l[i].actionText) {
@@ -2076,7 +2076,7 @@ void MainWindow::loadProject(ProjectPtr prj)
         prj->midiInPort_setJackPort(prjPortId, addMidiInPortToJack(prjPortId));
 
         // Also add port clients to Jack
-        PrjMidiPortPtr prjPort = prj->midiInPort_getPort(prjPortId);
+        KonfytProject::MidiPortPtr prjPort = prj->midiInPort_getPort(prjPortId);
         if (!prjPort) { continue; }
         foreach (QString client, prjPort->clients) {
             jack.addPortClient(prjPort->jackPort, client);
@@ -2100,7 +2100,7 @@ void MainWindow::loadProject(ProjectPtr prj)
         prj->midiOutPort_setJackPort(prjPortId, addMidiOutPortToJack(prjPortId));
 
         // Also add port clients to Jack
-        PrjMidiPortPtr projectPort = prj->midiOutPort_getPort(prjPortId);
+        KonfytProject::MidiPortPtr projectPort = prj->midiOutPort_getPort(prjPortId);
         KONFYT_ASSERT_CONTINUE(!projectPort.isNull());
         foreach (QString client, projectPort->clients) {
             jack.addPortClient(projectPort->jackPort, client);
@@ -2112,7 +2112,7 @@ void MainWindow::loadProject(ProjectPtr prj)
     QList<int> busIds = prj->audioBus_getAllBusIds();
     for (int j=0; j < busIds.count(); j++) {
         int id = busIds[j];
-        PrjAudioBusPtr b =  prj->audioBus_getBus(id);
+        KonfytProject::AudioPortPtr b =  prj->audioBus_getBus(id);
         KONFYT_ASSERT_CONTINUE(!b.isNull());
 
         // Add audio bus ports to jack client
@@ -2125,14 +2125,14 @@ void MainWindow::loadProject(ProjectPtr prj)
             b->rightJackPort = right;
             prj->audioBus_replace_noModify( id, b ); // use noModify function as to not change the project's modified state.
             // Add port clients to jack client
-            foreach (QString client, b->leftOutClients) {
+            foreach (QString client, b->leftClients) {
                 jack.addPortClient(b->leftJackPort, client);
             }
-            foreach (QString client, b->rightOutClients) {
+            foreach (QString client, b->rightClients) {
                 jack.addPortClient(b->rightJackPort, client);
             }
         } else {
-            print("ERROR: setCurrentProject: Failed to create audio bus Jack port(s).");
+            print("ERROR: setCurrentProject: Failed to create audio bus JACK port(s).");
         }
         updateBusGainInJackEngine(id);
 
@@ -2152,16 +2152,16 @@ void MainWindow::loadProject(ProjectPtr prj)
             // Update left and right port numbers in project
             prj->audioInPort_setJackPorts(id, left, right);
             // Add port clients to jack client
-            PrjAudioInPortPtr p = prj->audioInPort_getPort(id);
+            KonfytProject::AudioPortPtr p = prj->audioInPort_getPort(id);
             KONFYT_ASSERT_CONTINUE(!p.isNull());
-            foreach (QString client, p->leftInClients) {
+            foreach (QString client, p->leftClients) {
                 jack.addPortClient(p->leftJackPort, client);
             }
-            foreach (QString client, p->rightInClients) {
+            foreach (QString client, p->rightClients) {
                 jack.addPortClient(p->rightJackPort, client);
             }
         } else {
-            print("ERROR: setCurrentProject: Failed to create audio input Jack port(s).");
+            print("ERROR: setCurrentProject: Failed to create audio input JACK port(s).");
         }
 
     }
@@ -2173,7 +2173,7 @@ void MainWindow::loadProject(ProjectPtr prj)
 
     triggersMidiActionHash.clear();
 
-    foreach (KonfytTrigger trig, prj->getTriggerList()) {
+    foreach (KonfytProject::Trigger trig, prj->getTriggerList()) {
         // Find action that matches text
         foreach (QAction* action, triggersItemActionHash.values()) {
             if (trig.actionText == action->text()) {
@@ -2242,22 +2242,22 @@ void MainWindow::unloadCurrentProject()
     }
 
     // Remove all buses from engines
-    foreach (PrjAudioBusPtr bus, mCurrentProject->audioBus_getAllBuses()) {
+    foreach (KonfytProject::AudioPortPtr bus, mCurrentProject->audioBus_getAllBuses()) {
         removeAudioBusFromEngines(bus);
     }
 
     // Remove all MIDI input ports from engines
-    foreach (PrjMidiPortPtr prjPort, mCurrentProject->midiInPort_getAllPorts()) {
+    foreach (KonfytProject::MidiPortPtr prjPort, mCurrentProject->midiInPort_getAllPorts()) {
         removeMidiInPortFromEngines(prjPort);
     }
 
     // Remove all MIDI output ports from engines
-    foreach (PrjMidiPortPtr prjPort, mCurrentProject->midiOutPort_getAllPorts()) {
+    foreach (KonfytProject::MidiPortPtr prjPort, mCurrentProject->midiOutPort_getAllPorts()) {
         removeMidiOutPortFromEngines(prjPort);
     }
 
     // Remove all audio input ports from engines
-    foreach (PrjAudioInPortPtr prjPort, mCurrentProject->audioInPort_getAllPorts()) {
+    foreach (KonfytProject::AudioPortPtr prjPort, mCurrentProject->audioInPort_getAllPorts()) {
         removeAudioInPortFromEngines(prjPort);
     }
 
@@ -2279,7 +2279,7 @@ void MainWindow::updateMidiOutPortsMenu(QMenu *menu)
 
     QList<int> midiOutIds = prj->midiOutPort_getAllPortIds();
     foreach (int id, midiOutIds) {
-        PrjMidiPortPtr projectPort = prj->midiOutPort_getPort(id);
+        KonfytProject::MidiPortPtr projectPort = prj->midiOutPort_getPort(id);
         KONFYT_ASSERT_CONTINUE(!projectPort.isNull());
         QAction* action = patchMidiOutPortsMenu.addAction( n2s(id) + " " + projectPort->portName);
         action->setProperty(PTY_MIDI_OUT_PORT, id);
@@ -2302,9 +2302,9 @@ void MainWindow::updateAudioInPortsMenu(QMenu *menu)
 
     QList<int> audioInIds = prj->audioInPort_getAllPortIds();
     foreach (int id, audioInIds) {
-        PrjAudioInPortPtr projectPort = prj->audioInPort_getPort(id);
+        KonfytProject::AudioPortPtr projectPort = prj->audioInPort_getPort(id);
         KONFYT_ASSERT_CONTINUE(!projectPort.isNull());
-        QAction* action = menu->addAction( n2s(id) + " " + projectPort->portName );
+        QAction* action = menu->addAction( n2s(id) + " " + projectPort->name );
         action->setProperty(PTY_AUDIO_IN_PORT, id);
     }
 
@@ -4114,35 +4114,35 @@ void MainWindow::updateAudioBusWarnings()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (PrjAudioBusPtr bus, prj->audioBus_getAllBuses()) {
+    foreach (KonfytProject::AudioPortPtr bus, prj->audioBus_getAllBuses()) {
         if (!bus) { continue; }
 
         QString errorText;
 
         // Check for no connections
 
-        bool noLeftClients = (bus->leftOutClients.count() == 0);
-        bool noRightClients = (bus->rightOutClients.count() == 0);
+        bool noLeftClients = (bus->leftClients.count() == 0);
+        bool noRightClients = (bus->rightClients.count() == 0);
         if (noLeftClients && noRightClients) {
-            errorText = QString("Bus \"%1\" not connected").arg(bus->busName);
+            errorText = QString("Bus \"%1\" not connected").arg(bus->name);
         } else if (noLeftClients) {
-            errorText = QString("Bus \"%1\" left not connected").arg(bus->busName);
+            errorText = QString("Bus \"%1\" left not connected").arg(bus->name);
         } else if (noRightClients) {
-            errorText = QString("Bus \"%1\" right not connected").arg(bus->busName);
+            errorText = QString("Bus \"%1\" right not connected").arg(bus->name);
         }
 
         // Check if clients are available
 
         QStringList jackAudioInPorts = jack.getAudioInputPortsList();
         bool notRunning = false;
-        foreach (QString client, bus->leftOutClients) {
+        foreach (QString client, bus->leftClients) {
             if (!jackAudioInPorts.contains(client)) {
                 notRunning = true;
                 break;
             }
         }
         if (!notRunning) {
-            foreach (QString client, bus->rightOutClients) {
+            foreach (QString client, bus->rightClients) {
                 if (!jackAudioInPorts.contains(client)) {
                     notRunning = true;
                     break;
@@ -4150,7 +4150,7 @@ void MainWindow::updateAudioBusWarnings()
             }
         }
         if (notRunning) {
-            errorText = QString("Bus \"%1\" client(s) inactive").arg(bus->busName);
+            errorText = QString("Bus \"%1\" client(s) inactive").arg(bus->name);
         }
 
         // Update GUI item
@@ -4179,7 +4179,7 @@ void MainWindow::updateMidiInPortsWarnings()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (PrjMidiPortPtr prjPort, prj->midiInPort_getAllPorts()) {
+    foreach (KonfytProject::MidiPortPtr prjPort, prj->midiInPort_getAllPorts()) {
         if (!prjPort) { continue; }
 
         QString errorText;
@@ -4232,7 +4232,7 @@ void MainWindow::updateMidiOutPortWarnings()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (PrjMidiPortPtr prjPort, prj->midiOutPort_getAllPorts()) {
+    foreach (KonfytProject::MidiPortPtr prjPort, prj->midiOutPort_getAllPorts()) {
         if (!prjPort) { continue; }
 
         QString errorText;
@@ -4286,38 +4286,38 @@ void MainWindow::updateAudioInPortWarnings()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (PrjAudioInPortPtr prjPort, prj->audioInPort_getAllPorts()) {
+    foreach (KonfytProject::AudioPortPtr prjPort, prj->audioInPort_getAllPorts()) {
         if (!prjPort) { continue; }
 
         QString errorText;
 
         // Check for no connections
 
-        bool noLeftClients = (prjPort->leftInClients.count() == 0);
-        bool noRightClients = (prjPort->rightInClients.count() == 0);
+        bool noLeftClients = (prjPort->leftClients.count() == 0);
+        bool noRightClients = (prjPort->rightClients.count() == 0);
         if (noLeftClients && noRightClients) {
             errorText = QString("Audio-in \"%1\" not connected")
-                    .arg(prjPort->portName);
+                    .arg(prjPort->name);
         } else if (noLeftClients) {
             errorText = QString("Audio-in \"%1\" left not connected")
-                    .arg(prjPort->portName);
+                    .arg(prjPort->name);
         } else if (noRightClients) {
             errorText = QString("Audio-in \"%1\" right not connected")
-                    .arg(prjPort->portName);
+                    .arg(prjPort->name);
         }
 
         // Check for clients not available
 
         QStringList jackAudioInPorts = jack.getAudioOutputPortsList();
         bool notRunning = false;
-        foreach (QString client, prjPort->leftInClients) {
+        foreach (QString client, prjPort->leftClients) {
             if (!jackAudioInPorts.contains(client)) {
                 notRunning = true;
                 break;
             }
         }
         if (!notRunning) {
-            foreach (QString client, prjPort->rightInClients) {
+            foreach (QString client, prjPort->rightClients) {
                 if (!jackAudioInPorts.contains(client)) {
                     notRunning = true;
                     break;
@@ -4326,7 +4326,7 @@ void MainWindow::updateAudioInPortWarnings()
         }
         if (notRunning) {
             errorText = QString("Audio-in \"%1\" client(s) inactive")
-                    .arg(prjPort->portName);
+                    .arg(prjPort->name);
         }
 
         // Update GUI item
@@ -4458,7 +4458,7 @@ void MainWindow::updateOtherJackAudioConnectionWarnings()
     }
 }
 
-void MainWindow::audioBusWarnings_onBusRemoved(PrjAudioBusPtr bus)
+void MainWindow::audioBusWarnings_onBusRemoved(KonfytProject::AudioPortPtr bus)
 {
     QListWidgetItem* item = audioBusWarningMap.value(bus);
     if (item) {
@@ -4467,7 +4467,7 @@ void MainWindow::audioBusWarnings_onBusRemoved(PrjAudioBusPtr bus)
     }
 }
 
-void MainWindow::midiPortWarnings_onPortRemoved(PrjMidiPortPtr prjPort)
+void MainWindow::midiPortWarnings_onPortRemoved(KonfytProject::MidiPortPtr prjPort)
 {
     QListWidgetItem* item = midiPortWarningMap.value(prjPort);
     if (item) {
@@ -4476,7 +4476,7 @@ void MainWindow::midiPortWarnings_onPortRemoved(PrjMidiPortPtr prjPort)
     }
 }
 
-void MainWindow::audioInPortWarnings_onPortRemoved(PrjAudioInPortPtr prjPort)
+void MainWindow::audioInPortWarnings_onPortRemoved(KonfytProject::AudioPortPtr prjPort)
 {
     QListWidgetItem* item = audioInPortWarningMap.value(prjPort);
     if (item) {
@@ -4492,7 +4492,7 @@ void MainWindow::portWarnings_onItemDoubleClicked(QListWidgetItem* item)
     if (audioBusWarningMap.contains(item)) {
 
         // Show ports/buses screen and select bus
-        PrjAudioBusPtr bus = audioBusWarningMap.value(item);
+        KonfytProject::AudioPortPtr bus = audioBusWarningMap.value(item);
         showConnectionsPage();
         int busId = mCurrentProject->audioBus_idFromPtr(bus);
         connectionsTreeSelectBus(busId);
@@ -4500,7 +4500,7 @@ void MainWindow::portWarnings_onItemDoubleClicked(QListWidgetItem* item)
     } else if (midiPortWarningMap.contains(item)) {
 
         // Show ports/buses screen and select MIDI port
-        PrjMidiPortPtr p = midiPortWarningMap.value(item);
+        KonfytProject::MidiPortPtr p = midiPortWarningMap.value(item);
         showConnectionsPage();
         int id = mCurrentProject->midiInPort_idFromPtr(p);
         if (id >= 0) {
@@ -4515,7 +4515,7 @@ void MainWindow::portWarnings_onItemDoubleClicked(QListWidgetItem* item)
     } else if (audioInPortWarningMap.contains(item)) {
 
         // Show ports/buses screen and select audio port
-        PrjAudioInPortPtr p = audioInPortWarningMap.value(item);
+        KonfytProject::AudioPortPtr p = audioInPortWarningMap.value(item);
         showConnectionsPage();
         int id = mCurrentProject->audioInPort_idFromPtr(p);
         if (id >= 0) {
@@ -4584,7 +4584,7 @@ void MainWindow::scriptWarningsOnScriptEngineLayerErrorStatusChanged(
 }
 
 void MainWindow::scriptWarningsOnScriptEnginePortErrorStatusChanged(
-        PrjMidiPortPtr prjPort, QString errorString)
+        KonfytProject::MidiPortPtr prjPort, QString errorString)
 {
     QListWidgetItem* item = scriptWarningPortMap.value(prjPort);
     if (errorString.isEmpty()) {
@@ -4615,7 +4615,7 @@ void MainWindow::scriptWarningsOnPatchLayerUnloaded(KonfytPatchLayerPtr patchLay
     }
 }
 
-void MainWindow::scriptWarningsOnPortRemoved(PrjMidiPortPtr prjPort)
+void MainWindow::scriptWarningsOnPortRemoved(KonfytProject::MidiPortPtr prjPort)
 {
     QListWidgetItem* item = scriptWarningPortMap.value(prjPort);
     if (item) {
@@ -4634,7 +4634,7 @@ void MainWindow::scriptWarningsOnItemDoubleClicked(QListWidgetItem* item)
 
     } else if (scriptWarningPortMap.contains(item)) {
 
-        PrjMidiPortPtr prjPort = scriptWarningPortMap.value(item);
+        KonfytProject::MidiPortPtr prjPort = scriptWarningPortMap.value(item);
         showScriptEditorForPort(prjPort);
 
     }
@@ -5042,7 +5042,7 @@ void MainWindow::on_pushButton_extApp_add_clicked()
 {
     if (!mCurrentProject) { return; }
 
-    int id = mCurrentProject->addExternalApp(ExternalApp());
+    int id = mCurrentProject->addExternalApp(KonfytProject::ExternalApp());
     showExternalAppEditor(id);
 
     // Select newly added app in the list widget, but invoke it on the event
@@ -5187,9 +5187,9 @@ void MainWindow::updateBusMenu(QMenu *menu, int currentBusId)
 
     QList<int> busIds = prj->audioBus_getAllBusIds();
     foreach (int id, busIds) {
-        PrjAudioBusPtr b = prj->audioBus_getBus(id);
+        KonfytProject::AudioPortPtr b = prj->audioBus_getBus(id);
         KONFYT_ASSERT_CONTINUE(!b.isNull());
-        QAction* action = menu->addAction( n2s(id) + " " + b->busName );
+        QAction* action = menu->addAction( n2s(id) + " " + b->name );
         action->setProperty(PTY_AUDIO_OUT_BUS, id);
         if (id == currentBusId) {
             action->setIcon(QIcon("://icons/right_w_outline.png"));
@@ -5393,7 +5393,7 @@ void MainWindow::updateMidiInPortsMenu(QMenu *menu, int currentPortId)
 
     QList<int> midiInIds = prj->midiInPort_getAllPortIds();
     foreach(int id, midiInIds) {
-        PrjMidiPortPtr prjPort = prj->midiInPort_getPort(id);
+        KonfytProject::MidiPortPtr prjPort = prj->midiInPort_getPort(id);
         if (!prjPort) { continue; }
         QAction* action = menu->addAction( n2s(id) + " " + prjPort->portName);
         action->setProperty(PTY_MIDI_IN_PORT, id);
@@ -6100,10 +6100,10 @@ int MainWindow::addBus()
     addAudioBusToJack( busId, &left, &right );
     if ( (left == nullptr) || (right == nullptr) ) {
         prj->audioBus_remove(busId);
-        print("ERROR: Failed to create audio bus. Failed to add Jack port(s).");
+        print("ERROR: Failed to create audio bus. Failed to add JACK port(s).");
         return -1;
     }
-    PrjAudioBusPtr bus = prj->audioBus_getBus(busId);
+    KonfytProject::AudioPortPtr bus = prj->audioBus_getBus(busId);
     KONFYT_ASSERT(!bus.isNull());
     if (bus) {
         bus->leftJackPort = left;
@@ -6150,7 +6150,7 @@ int MainWindow::addAudioInPort()
 
         return portId;
     } else {
-        print("ERROR: Failed to create audio input port. Failed to add Jack port.");
+        print("ERROR: Failed to create audio input port. Failed to add JACK port.");
         prj->audioInPort_remove(portId);
         return -1;
     }
@@ -6167,7 +6167,7 @@ int MainWindow::addMidiInPort()
     }
 
     int prjPortId = prj->midiInPort_addPort("New MIDI In Port");
-    PrjMidiPortPtr prjPort = prj->midiInPort_getPort(prjPortId);
+    KonfytProject::MidiPortPtr prjPort = prj->midiInPort_getPort(prjPortId);
     KfJackMidiPort* jackPort = addMidiInPortToJack(prjPortId);
     if (!jackPort) {
         // Could not create Jack port. Remove port from project again.
@@ -6232,7 +6232,7 @@ int MainWindow::addMidiOutPort()
     }
 }
 
-void MainWindow::removeAudioBusFromEngines(PrjAudioBusPtr bus)
+void MainWindow::removeAudioBusFromEngines(KonfytProject::AudioPortPtr bus)
 {
     if (!bus) { return; }
 
@@ -6242,7 +6242,7 @@ void MainWindow::removeAudioBusFromEngines(PrjAudioBusPtr bus)
     emit audioBusRemoved(bus);
 }
 
-void MainWindow::removeMidiInPortFromEngines(PrjMidiPortPtr prjPort)
+void MainWindow::removeMidiInPortFromEngines(KonfytProject::MidiPortPtr prjPort)
 {
     if (!prjPort) { return; }
 
@@ -6252,7 +6252,7 @@ void MainWindow::removeMidiInPortFromEngines(PrjMidiPortPtr prjPort)
     emit midiInPortRemoved(prjPort);
 }
 
-void MainWindow::removeMidiOutPortFromEngines(PrjMidiPortPtr prjPort)
+void MainWindow::removeMidiOutPortFromEngines(KonfytProject::MidiPortPtr prjPort)
 {
     if (!prjPort) { return; }
 
@@ -6262,7 +6262,7 @@ void MainWindow::removeMidiOutPortFromEngines(PrjMidiPortPtr prjPort)
     emit midiOutPortRemoved(prjPort);
 }
 
-void MainWindow::removeAudioInPortFromEngines(PrjAudioInPortPtr prjPort)
+void MainWindow::removeAudioInPortFromEngines(KonfytProject::AudioPortPtr prjPort)
 {
     KONFYT_ASSERT_RETURN(!prjPort.isNull());
 
@@ -6368,7 +6368,7 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
     if (mConsoleShowMidiMessages) {
         QString portName = "UNKNOWN";
         if (portIdInPrj >= 0) {
-            PrjMidiPortPtr prjPort = prj->midiInPort_getPort(portIdInPrj);
+            KonfytProject::MidiPortPtr prjPort = prj->midiInPort_getPort(portIdInPrj);
             if (prjPort) {
                 portName = prjPort->portName;
             }
@@ -6538,7 +6538,7 @@ void MainWindow::setupExternalAppsForCurrentProject()
             this, &MainWindow::externalAppEditor_onExternalAppRemoved);
 }
 
-void MainWindow::externalAppToEditor(ExternalApp app)
+void MainWindow::externalAppToEditor(KonfytProject::ExternalApp app)
 {
     ui->lineEdit_extApp_name->setText(app.friendlyName);
     ui->lineEdit_extAppEditor_command->setText(app.command);
@@ -6548,9 +6548,9 @@ void MainWindow::externalAppToEditor(ExternalApp app)
     ui->checkBox_extApp_startDetached->setChecked(app.startDetached);
 }
 
-ExternalApp MainWindow::externalAppFromEditor()
+KonfytProject::ExternalApp MainWindow::externalAppFromEditor()
 {
-    ExternalApp app;
+    KonfytProject::ExternalApp app;
     app.friendlyName = ui->lineEdit_extApp_name->text();
     app.command = ui->lineEdit_extAppEditor_command->text();
     app.runAtStartup = ui->checkBox_extApp_runAtStartup->isChecked();
@@ -6650,7 +6650,7 @@ void MainWindow::setupExternalAppsMenu()
     foreach (ExtAppStockMenuItem item, stockItems) {
         extAppsMenu.addAction(item.menuText, this, [=]()
         {
-            externalAppToEditor(ExternalApp(item.name, item.cmd));
+            externalAppToEditor(KonfytProject::ExternalApp(item.name, item.cmd));
         });
     }
 }
@@ -6692,7 +6692,7 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(
         if (current->parent() == busParent) {
             ui->checkBox_connectionsPage_ignoreGlobalVolume->setVisible(true);
             int busId = tree_busMap.value(current);
-            PrjAudioBusPtr bus = mCurrentProject->audioBus_getBus(busId);
+            KonfytProject::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
             if (bus) {
                 ui->checkBox_connectionsPage_ignoreGlobalVolume->setChecked(
                         bus->ignoreMasterGain);
@@ -6721,20 +6721,20 @@ void MainWindow::on_actionRemove_BusPort_triggered()
 
     int id = 0;
     QString name;
-    PrjAudioBusPtr bus;
-    PrjAudioInPortPtr audioInPort;
-    PrjMidiPortPtr midiOutPort;
-    PrjMidiPortPtr midiInPort;
+    KonfytProject::AudioPortPtr bus;
+    KonfytProject::AudioPortPtr audioInPort;
+    KonfytProject::MidiPortPtr midiOutPort;
+    KonfytProject::MidiPortPtr midiInPort;
 
     if (busSelected) {
         if (prj->audioBus_count() == 1) { return; } // Do not remove last bus
         id = tree_busMap.value(item);
         bus = prj->audioBus_getBus(id);
-        name = bus->busName;
+        name = bus->name;
     } else if (audioInSelected) {
         id = tree_audioInMap.value(item);
         audioInPort = prj->audioInPort_getPort(id);
-        name = audioInPort->portName;
+        name = audioInPort->name;
     } else if (midiOutSelected) {
         id = tree_midiOutMap.value(item);
         midiOutPort = prj->midiOutPort_getPort(id);
@@ -6818,7 +6818,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         // ------------------------------------------------------------------------------
         if (busSelected) {
             int busIdToChangeTo = prj->audioBus_getFirstBusId(id);
-            PrjAudioBusPtr busToChangeTo = prj->audioBus_getBus(busIdToChangeTo);
+            KonfytProject::AudioPortPtr busToChangeTo = prj->audioBus_getBus(busIdToChangeTo);
 
             KONFYT_ASSERT_RETURN(busIdToChangeTo >= 0);
             KONFYT_ASSERT_RETURN(!busToChangeTo.isNull());
@@ -6828,7 +6828,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 " Are you sure you want to delete the bus?"
                 " All layers using this bus will be assigned to bus \"%2\".")
                     .arg(selectedText)
-                    .arg(busToChangeTo->busName);
+                    .arg(busToChangeTo->name);
             int choice = msgBoxYesNo(text, detailedText);
             if (choice == QMessageBox::Yes) {
                 // User chose to remove bus
@@ -7313,7 +7313,7 @@ void MainWindow::on_pushButton_triggersPage_assign_clicked()
 
     KonfytMidiEvent selectedEvent = triggersPageMidiEventList.selectedMidiEvent();
     QAction* action = triggersItemActionHash[item];
-    KonfytTrigger trig = KonfytTrigger();
+    KonfytProject::Trigger trig;
 
     trig.actionText = action->text();
     trig.bankLSB = selectedEvent.bankLSB;
@@ -7863,7 +7863,7 @@ void MainWindow::updateBusGainInJackEngine(int busId)
 {
     KONFYT_ASSERT_RETURN(!mCurrentProject.isNull());
 
-    PrjAudioBusPtr bus = mCurrentProject->audioBus_getBus(busId);
+    KonfytProject::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
     KONFYT_ASSERT_RETURN(!bus.isNull());
 
     float gain = 1;
@@ -8188,7 +8188,7 @@ void MainWindow::on_pushButton_connectionsPage_editScript_clicked()
     if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
         // Midi input port is selected
         int portId = tree_midiInMap.value(ui->tree_portsBusses->currentItem());
-        PrjMidiPortPtr prjPort = mCurrentProject->midiInPort_getPort(portId);
+        KonfytProject::MidiPortPtr prjPort = mCurrentProject->midiInPort_getPort(portId);
         if (prjPort) {
             showScriptEditorForPort(prjPort);
         }
@@ -8202,7 +8202,7 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
     if (currentItem->parent() != busParent) { return; }
 
     int busId = tree_busMap.value(currentItem);
-    PrjAudioBusPtr bus = mCurrentProject->audioBus_getBus(busId);
+    KonfytProject::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
     KONFYT_ASSERT_RETURN(!bus.isNull());
     bus->ignoreMasterGain = ui->checkBox_connectionsPage_ignoreGlobalVolume->isChecked();
 

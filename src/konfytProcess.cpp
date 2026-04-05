@@ -163,7 +163,7 @@ void ExternalAppRunner::setProject(ProjectPtr project)
 
     // Run all apps which are set to run at startup
     foreach (int id, mProject->getExternalAppIds()) {
-        ExternalApp app = mProject->getExternalApp(id);
+        KonfytProject::ExternalApp app = mProject->getExternalApp(id);
         if (app.runAtStartup) {
             print("Auto-starting external app: " + app.displayName());
             runApp(id);
@@ -359,7 +359,9 @@ void ExternalAppsListAdapter::selectAppInList(int id)
     mListWidget->setCurrentItem( itemIdMap.value(id) );
 }
 
-void ExternalAppsListAdapter::updateItem(QListWidgetItem *item, ExternalApp app, KonfytProcess::State state)
+void ExternalAppsListAdapter::updateItem(QListWidgetItem *item,
+                                         KonfytProject::ExternalApp app,
+                                         KonfytProcess::State state)
 {
     QString text = app.displayName();
 
@@ -407,7 +409,7 @@ void ExternalAppsListAdapter::onListWidgetItemDoubleClicked(QListWidgetItem *ite
 
 void ExternalAppsListAdapter::onAppAdded(int id)
 {
-    ExternalApp app = mProject->getExternalApp(id);
+    KonfytProject::ExternalApp app = mProject->getExternalApp(id);
     QListWidgetItem* item = new QListWidgetItem();
     updateItem(item, app, mRunner->getAppState(id));
     itemIdMap.insert(id, item);
@@ -427,7 +429,7 @@ void ExternalAppsListAdapter::onAppModified(int id)
 {
     QListWidgetItem* item = itemIdMap.value(id);
     if (!item) { return; }
-    ExternalApp app = mProject->getExternalApp(id);
+    KonfytProject::ExternalApp app = mProject->getExternalApp(id);
     updateItem(item, app, mRunner->getAppState(id));
 }
 
@@ -435,7 +437,7 @@ void ExternalAppsListAdapter::onAppStateChanged(int id)
 {
     QListWidgetItem* item = itemIdMap.value(id);
     if (!item) { return; }
-    ExternalApp app = mProject->getExternalApp(id);
+    KonfytProject::ExternalApp app = mProject->getExternalApp(id);
     updateItem(item, app, mRunner->getAppState(id));
 }
 
