@@ -48,7 +48,7 @@ KfSoundPtr KonfytDatabaseWorker::patchFromFile(QString filename)
         ret.reset(new KonfytSound(KfSoundTypePatch));
         ret->filename = filename;
         ret->name = p.name();
-        foreach (KfPatchLayerSharedPtr layer, p.layers()) {
+        foreach (KonfytPatchLayerPtr layer, p.layers()) {
             KonfytSoundPreset preset;
             preset.name = layer->name();
             ret->presets.append(preset);

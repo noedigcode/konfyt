@@ -137,11 +137,10 @@ void KonfytLayerWidget::paintEvent(QPaintEvent* /*e*/)
 
 void KonfytLayerWidget::onProjectMidiOutPortNameChanged(int portId)
 {
-    KfPatchLayerSharedPtr layer = mPatchLayer.toStrongRef();
-    if (layer.isNull()) { return; }
+    if (!mPatchLayer) { return; }
 
-    if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {
-        if (portId == layer->midiOutputPortData.portIdInProject) {
+    if (mPatchLayer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+        if (portId == mPatchLayer->midiOutputPortData.portIdInProject) {
             refresh();
         }
     }
@@ -149,11 +148,10 @@ void KonfytLayerWidget::onProjectMidiOutPortNameChanged(int portId)
 
 void KonfytLayerWidget::onProjectAudioInPortNameChanged(int portId)
 {
-    KfPatchLayerSharedPtr layer = mPatchLayer.toStrongRef();
-    if (layer.isNull()) { return; }
+    if (!mPatchLayer) { return; }
 
-    if (layer->layerType() == KonfytPatchLayer::TypeAudioIn) {
-        if (portId == layer->audioInPortData.portIdInProject) {
+    if (mPatchLayer->layerType() == KonfytPatchLayer::TypeAudioIn) {
+        if (portId == mPatchLayer->audioInPortData.portIdInProject) {
             refresh();
         }
     }
@@ -165,7 +163,7 @@ void KonfytLayerWidget::on_toolButton_left_clicked()
 }
 
 /* This function has to be called before the object can be used. */
-void KonfytLayerWidget::initLayer(KfPatchLayerWeakPtr patchLayer, QListWidgetItem *listItem)
+void KonfytLayerWidget::initLayer(KonfytPatchLayerPtr patchLayer, QListWidgetItem *listItem)
 {
     mPatchLayer = patchLayer;
     mListWidgetItem = listItem;
@@ -196,31 +194,30 @@ void KonfytLayerWidget::setUpGUI()
     QString tooltip;
     bool backgroundFilter = true;
 
-    KfPatchLayerSharedPtr layer = mPatchLayer.toStrongRef();
-    if (layer.isNull()) {
+    if (!mPatchLayer) {
         ui->lineEdit->setText("ERROR: Null layer.");
         return;
     }
 
-    if (layer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+    if (mPatchLayer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
 
-        mFilepath = layer->soundfontData.parentSoundfont;
+        mFilepath = mPatchLayer->soundfontData.parentSoundfont;
         // Display soundfont and program name
-        text = (layer->soundfontData.parentSoundfont + "/" +
-                layer->soundfontData.program.name);
+        text = (mPatchLayer->soundfontData.parentSoundfont + "/" +
+                mPatchLayer->soundfontData.program.name);
         tooltip = text;
 
-    } else if (layer->layerType() == KonfytPatchLayer::TypeSfz) {
+    } else if (mPatchLayer->layerType() == KonfytPatchLayer::TypeSfz) {
 
-        mFilepath = layer->sfzData.path;
+        mFilepath = mPatchLayer->sfzData.path;
         // Display sfz name
-        text = layer->sfzData.path;
-        tooltip = layer->name() + ": " + layer->sfzData.path;
+        text = mPatchLayer->sfzData.path;
+        tooltip = mPatchLayer->name() + ": " + mPatchLayer->sfzData.path;
 
-    } else if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+    } else if (mPatchLayer->layerType() == KonfytPatchLayer::TypeMidiOut) {
 
         // Display port id and name
-        int portId = layer->midiOutputPortData.portIdInProject;
+        int portId = mPatchLayer->midiOutputPortData.portIdInProject;
         text = "MIDI Out " + n2s(portId);
         if (mProject) {
             // TODO: setErrorMessage should not be done here, it should be set
@@ -228,12 +225,12 @@ void KonfytLayerWidget::setUpGUI()
             if (mProject->midiOutPort_exists(portId)) {
                 text = text + ": " + mProject->midiOutPort_getPort(portId)->portName;
             } else {
-                layer->setErrorMessage("No MIDI out port " + n2s(portId) + " in project.");
+                mPatchLayer->setErrorMessage("No MIDI out port " + n2s(portId) + " in project.");
             }
         }
         gainSliderVisible = false;
         // Use right toolbutton as MIDI output channel
-        int outchan = layer->midiFilter().outChan;
+        int outchan = mPatchLayer->midiFilter().outChan;
         if (outchan >= 0) {
             ui->toolButton_right->setText( n2s(outchan+1));
         } else {
@@ -241,10 +238,10 @@ void KonfytLayerWidget::setUpGUI()
         }
         ui->toolButton_right->setToolTip("MIDI Output Channel");
 
-    } else if (layer->layerType() == KonfytPatchLayer::TypeAudioIn ) {
+    } else if (mPatchLayer->layerType() == KonfytPatchLayer::TypeAudioIn ) {
 
         // Display port id and name
-        int portId = layer->audioInPortData.portIdInProject;
+        int portId = mPatchLayer->audioInPortData.portIdInProject;
         text = "Audio In " + n2s(portId);
         if (mProject) {
             // TODO: setErrorMessage should not be done here, it should be set
@@ -252,7 +249,7 @@ void KonfytLayerWidget::setUpGUI()
             if (mProject->audioInPort_exists(portId)) {
                 text = text + ": " + mProject->audioInPort_getPort(portId)->portName;
             } else {
-                layer->setErrorMessage("No audio in port " + n2s(portId) + " in project.");
+                mPatchLayer->setErrorMessage("No audio in port " + n2s(portId) + " in project.");
             }
         }
         backgroundFilter = false;
@@ -269,22 +266,22 @@ void KonfytLayerWidget::setUpGUI()
     }
 
     // Gain
-    setSliderGain(layer->gain());
+    setSliderGain(mPatchLayer->gain());
     // Solo and mute
-    ui->toolButton_solo->setChecked(layer->isSolo());
-    ui->toolButton_mute->setChecked(layer->isMute());
+    ui->toolButton_solo->setChecked(mPatchLayer->isSolo());
+    ui->toolButton_mute->setChecked(mPatchLayer->isMute());
 
     // Update buttons
     updateRightToolButton();
     updateInputSideToolButton();
 
     // MIDI Events Send button
-    ui->toolButton_sendEvents->setVisible( layer->midiSendList.count() > 0 );
+    ui->toolButton_sendEvents->setVisible( mPatchLayer->midiSendList.count() > 0 );
 
     // If the layer has an error (marked when loading in patchEngine), indicate it.
-    if (layer->hasError()) {
+    if (mPatchLayer->hasError()) {
 
-        text = "ERROR: " + layer->errorMessage();
+        text = "ERROR: " + mPatchLayer->errorMessage();
 
         gainSliderVisible = false;
         soloButtonVisible = false;
@@ -304,7 +301,7 @@ void KonfytLayerWidget::setUpGUI()
     if (backgroundFilter) { updateBackgroundFromFilter(); }
     else { changeBackground(0,127); }
 
-    ui->lineEdit->setProperty("konfytError", layer->hasError());
+    ui->lineEdit->setProperty("konfytError", mPatchLayer->hasError());
     ui->lineEdit->style()->unpolish(ui->lineEdit);
     ui->lineEdit->style()->polish(ui->lineEdit);
 }
@@ -312,18 +309,18 @@ void KonfytLayerWidget::setUpGUI()
 /* Change the background to indicate MIDI filter zone. */
 void KonfytLayerWidget::updateBackgroundFromFilter()
 {
-    KonfytMidiFilter filter = mPatchLayer.toStrongRef()->midiFilter();
+    if (!mPatchLayer) { return; }
+    KonfytMidiFilter filter = mPatchLayer->midiFilter();
     KonfytMidiFilterZone z = filter.zone;
     this->changeBackground(z.lowNote, z.highNote);
 }
 
 void KonfytLayerWidget::updateRightToolButton()
 {
-    KfPatchLayerSharedPtr layer = mPatchLayer.toStrongRef();
-    if (!layer) { return; }
+    if (!mPatchLayer) { return; }
 
-    if ( (mProject) && (layer->layerType() != KonfytPatchLayer::TypeMidiOut) ) {
-        int busId = layer->busIdInProject();
+    if ( (mProject) && (mPatchLayer->layerType() != KonfytPatchLayer::TypeMidiOut) ) {
+        int busId = mPatchLayer->busIdInProject();
         if ( mProject->audioBus_exists(busId) ) {
             ui->toolButton_right->setText( n2s(busId) );
             ui->toolButton_right->setToolTip("Bus: " + mProject->audioBus_getBus(busId)->busName);
@@ -338,16 +335,15 @@ void KonfytLayerWidget::updateRightToolButton()
 
 void KonfytLayerWidget::updateInputSideToolButton()
 {
-    KfPatchLayerSharedPtr layer = mPatchLayer.toStrongRef();
-    if (!layer) { return; }
+    if (!mPatchLayer) { return; }
 
-    if ( (mProject) && (layer->layerType() != KonfytPatchLayer::TypeAudioIn) ) {
-        int midiPortId = layer->midiInPortIdInProject();
+    if ( (mProject) && (mPatchLayer->layerType() != KonfytPatchLayer::TypeAudioIn) ) {
+        int midiPortId = mPatchLayer->midiInPortIdInProject();
         if (mProject->midiInPort_exists(midiPortId)) {
             QString btnTxt = QString("%1:").arg(midiPortId);
             QString tooltip = "MIDI In Port: " + mProject->midiInPort_getPort(midiPortId)->portName;
             tooltip.append("\nMIDI Channel: ");
-            int inChan = layer->midiFilter().inChan;
+            int inChan = mPatchLayer->midiFilter().inChan;
             if (inChan < 0) {
                 btnTxt.append("A");
                 tooltip.append("All");
@@ -377,7 +373,7 @@ void KonfytLayerWidget::changeBackground(int min, int max)
     //this->repaint(); // Done in audioIndicateTimerEvent()
 }
 
-KfPatchLayerWeakPtr KonfytLayerWidget::getPatchLayer()
+KonfytPatchLayerPtr KonfytLayerWidget::getPatchLayer()
 {
     return mPatchLayer;
 }

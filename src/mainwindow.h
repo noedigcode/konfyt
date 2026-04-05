@@ -428,7 +428,7 @@ private:
 
 private slots:
     void onPatchSelected(KonfytPatch* patch);
-    void onPatchLayerLoaded(KfPatchLayerWeakPtr patchLayer);
+    void onPatchLayerLoaded(KonfytPatchLayerPtr patchLayer);
 
     // Patch menu
 private:
@@ -445,9 +445,9 @@ private slots:
     // Layers
 private:
     QList<KonfytLayerWidget*> layerWidgetList;
-    void addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer, int index = -1);
+    void addPatchLayerToGUI(KonfytPatchLayerPtr patchLayer, int index = -1);
     void addPatchLayerToIndicatorHandler(KonfytLayerWidget* layerWidget,
-                                         KfPatchLayerWeakPtr patchLayer);
+                                         KonfytPatchLayerPtr patchLayer);
     void removePatchLayer(KonfytLayerWidget *layerWidget);
     void removePatchLayerFromGuiOnly(KonfytLayerWidget *layerWidget);
     void clearPatchLayersFromGuiOnly();
@@ -838,10 +838,10 @@ private:
     KonfytJSEngine scriptEngine;
     QThread scriptingThread;
     void setupScripting();
-    KfPatchLayerSharedPtr mScriptEditLayer;
+    KonfytPatchLayerPtr mScriptEditLayer;
     PrjMidiPortPtr mScriptEditPort;
     QWidget* stackedWidgetBeforeScriptEditor = nullptr;
-    void showScriptEditorForPatchLayer(KfPatchLayerSharedPtr patchLayer);
+    void showScriptEditorForPatchLayer(KonfytPatchLayerPtr patchLayer);
     void showScriptEditorForPort(PrjMidiPortPtr prjPort);
     void showScriptEditor();
     bool scriptEditorIgnoreChanged = false;
@@ -852,9 +852,9 @@ private:
 private slots:
     void onScriptInfoTimer();
     void onJsEnginePrint(QString msg);
-    void onLayerScriptPrint(KfPatchLayerSharedPtr patchLayer, QString msg);
+    void onLayerScriptPrint(KonfytPatchLayerPtr patchLayer, QString msg);
     void onPortScriptPrint(PrjMidiPortPtr prjPort, QString msg);
-    void onLayerScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
+    void onLayerScriptErrorStatusChanged(KonfytPatchLayerPtr patchLayer,
                                          QString errorString);
     void onPortScriptErrorStatusChanged(PrjMidiPortPtr prjPort,
                                         QString errorString);
@@ -1047,14 +1047,14 @@ private slots:
 private:
     void setupScriptingWarnings();
 
-    BiQMap<KfPatchLayerSharedPtr, QListWidgetItem*> scriptWarningLayerMap;
+    BiQMap<KonfytPatchLayerPtr, QListWidgetItem*> scriptWarningLayerMap;
     BiQMap<PrjMidiPortPtr, QListWidgetItem*> scriptWarningPortMap;
 private slots:
     void scriptWarningsOnScriptEngineLayerErrorStatusChanged(
-            KfPatchLayerSharedPtr patchLayer, QString errorString);
+            KonfytPatchLayerPtr patchLayer, QString errorString);
     void scriptWarningsOnScriptEnginePortErrorStatusChanged(
             PrjMidiPortPtr prjPort, QString errorString);
-    void scriptWarningsOnPatchLayerUnloaded(KfPatchLayerSharedPtr patchLayer);
+    void scriptWarningsOnPatchLayerUnloaded(KonfytPatchLayerPtr patchLayer);
     void scriptWarningsOnPortRemoved(PrjMidiPortPtr prjPort);
     void scriptWarningsOnItemDoubleClicked(QListWidgetItem* item);
 

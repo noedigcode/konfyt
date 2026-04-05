@@ -240,35 +240,35 @@ public:
     KonfytJSEngine(QObject* parent= nullptr);
     void setJackEngine(KonfytJackEngine* jackEngine);
 
-    void addOrUpdateLayerScript(KfPatchLayerSharedPtr patchLayer);
+    void addOrUpdateLayerScript(KonfytPatchLayerPtr patchLayer);
     void addOrUpdateJackPortScript(PrjMidiPortPtr prjPort);
-    void removeLayerScript(KfPatchLayerSharedPtr patchLayer);
+    void removeLayerScript(KonfytPatchLayerPtr patchLayer);
     void removeJackPortScript(PrjMidiPortPtr prjPort);
-    QString script(KfPatchLayerSharedPtr patchLayer);
+    QString script(KonfytPatchLayerPtr patchLayer);
     QString script(PrjMidiPortPtr prjPort);
-    void setScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
+    void setScriptEnabled(KonfytPatchLayerPtr patchLayer, bool enable);
     void setScriptEnabled(PrjMidiPortPtr prjPort, bool enable);
-    void scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer,
+    void scriptAverageProcessTimeMs(KonfytPatchLayerPtr patchLayer,
                                      QObject* context,
                                      std::function<void(float, float)> callback);
     void scriptAverageProcessTimeMs(PrjMidiPortPtr prjPort, QObject* context,
                                      std::function<void(float, float)> callback);
-    void scriptErrorString(KfPatchLayerSharedPtr patchLayer, QObject* context,
+    void scriptErrorString(KonfytPatchLayerPtr patchLayer, QObject* context,
                            std::function<void(QString)> callback);
     void scriptErrorString(PrjMidiPortPtr prjPort, QObject* context,
                               std::function<void(QString)> callback);
 
 signals:
     void print(QString msg);
-    void layerScriptPrint(KfPatchLayerSharedPtr patchLayer, QString msg);
+    void layerScriptPrint(KonfytPatchLayerPtr patchLayer, QString msg);
     void portScriptPrint(PrjMidiPortPtr prjPort, QString msg);
-    void layerScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
+    void layerScriptErrorStatusChanged(KonfytPatchLayerPtr patchLayer,
                                        QString errorString);
     void portScriptErrorStatusChanged(PrjMidiPortPtr prjPort, QString errorString);
 
 private:
     // GUI thread (outside caller) - "cached" for quick access from GUI thread
-    QMap<KfPatchLayerSharedPtr, QString> layerScriptMap_guiThread;
+    QMap<KonfytPatchLayerPtr, QString> layerScriptMap_guiThread;
     QMap<PrjMidiPortPtr, QString> prjPortScriptMap_guiThread;
 
     // JS thread (this object) - all below are only to be used in JS thread
@@ -283,13 +283,13 @@ private:
         // The script is either for a port or layer. Whichever is applicable
         // will not be null.
         PrjMidiPortPtr prjPort;
-        KfPatchLayerSharedPtr patchLayer;
+        KonfytPatchLayerPtr patchLayer;
         KfJackMidiRoute* route = nullptr;
     };
     typedef QSharedPointer<ScriptEnv> ScriptEnvPtr;
 
     QMap<KfJackMidiRoute*, ScriptEnvPtr> routeEnvMap;
-    QMap<KfPatchLayerSharedPtr, ScriptEnvPtr> layerEnvMap;
+    QMap<KonfytPatchLayerPtr, ScriptEnvPtr> layerEnvMap;
 
     QMap<KfJackMidiPort*, ScriptEnvPtr> jackPortEnvMap;
     QMap<PrjMidiPortPtr, ScriptEnvPtr> prjPortEnvMap;
@@ -300,7 +300,7 @@ private:
     void beforeScriptRun(ScriptEnvPtr s);
     void afterScriptRun(ScriptEnvPtr s);
 
-    KfJackMidiRoute* jackMidiRouteFromLayer(KfPatchLayerSharedPtr layer);
+    KfJackMidiRoute* jackMidiRouteFromLayer(KonfytPatchLayerPtr layer);
 
 private slots:
     void onNewMidiEventsAvailable();

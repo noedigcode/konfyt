@@ -408,7 +408,7 @@ void MainWindow::setupScripting()
     }
 }
 
-void MainWindow::showScriptEditorForPatchLayer(KfPatchLayerSharedPtr patchLayer)
+void MainWindow::showScriptEditorForPatchLayer(KonfytPatchLayerPtr patchLayer)
 {
     mScriptEditPort.reset();
     mScriptEditLayer = patchLayer;
@@ -440,7 +440,7 @@ void MainWindow::showScriptEditor()
         passMidiThrough = mScriptEditLayer->isPassMidiThrough();
         title = QString("Layer: %1").arg(mScriptEditLayer->uri);
 
-        KfPatchLayerSharedPtr layer = mScriptEditLayer;
+        KonfytPatchLayerPtr layer = mScriptEditLayer;
         scriptEngine.scriptErrorString(layer, this, [=](QString errorText)
         {
             if (this->mScriptEditLayer == layer) {
@@ -524,7 +524,7 @@ void MainWindow::onScriptInfoTimer()
 
     if (mScriptEditLayer) {
 
-        KfPatchLayerSharedPtr layer = mScriptEditLayer;
+        KonfytPatchLayerPtr layer = mScriptEditLayer;
         scriptEngine.scriptAverageProcessTimeMs(layer, this,
                                     [=](float perEventMs, float totalProcessMs)
         {
@@ -552,7 +552,7 @@ void MainWindow::onJsEnginePrint(QString msg)
     print("js: " + msg);
 }
 
-void MainWindow::onLayerScriptPrint(KfPatchLayerSharedPtr patchLayer, QString msg)
+void MainWindow::onLayerScriptPrint(KonfytPatchLayerPtr patchLayer, QString msg)
 {
     onJsEnginePrint(QString("script: [%1] %2").arg(patchLayer->uri, msg));
 }
@@ -562,7 +562,7 @@ void MainWindow::onPortScriptPrint(PrjMidiPortPtr prjPort, QString msg)
     onJsEnginePrint(QString("script: [%1] %2").arg(prjPort->portName, msg));
 }
 
-void MainWindow::onLayerScriptErrorStatusChanged(KfPatchLayerSharedPtr patchLayer,
+void MainWindow::onLayerScriptErrorStatusChanged(KonfytPatchLayerPtr patchLayer,
                                             QString errorString)
 {
     // Update error text if the patch layer is the one currently being edited
@@ -582,7 +582,7 @@ void MainWindow::onPortScriptErrorStatusChanged(PrjMidiPortPtr prjPort,
 
 void MainWindow::on_action_Edit_Script_triggered()
 {
-    KfPatchLayerSharedPtr layer = layerToolMenuSourceitem->getPatchLayer();
+    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
     if (!layer) {
         print("Error: edit script: null layer");
         return;
@@ -722,8 +722,8 @@ QTreeWidgetItem* MainWindow::scanProjectScripts(QString path, ItemScriptMap* map
             patchItem->setText(0, QString("Patch %1").arg(patch->name()));
             patchItem->setIcon(0, mFolderIcon);
 
-            QList<KfPatchLayerWeakPtr> layers = patch->layers();
-            foreach (KfPatchLayerSharedPtr layer, layers) {
+            QList<KonfytPatchLayerPtr> layers = patch->layers();
+            foreach (KonfytPatchLayerPtr layer, layers) {
                 if (!layer) { continue; }
                 if (layer->hasMidiInput()) {
                     if (layer->script().trimmed().isEmpty()) {
@@ -1155,7 +1155,7 @@ void MainWindow::showMidiFilterEditor()
         break;
     }
     case MainWindow::MidiFilterEditLayer:
-        f = midiFilterEditItem->getPatchLayer().toStrongRef()->midiFilter();
+        f = midiFilterEditItem->getPatchLayer()->midiFilter();
         break;
     case MainWindow::MidiFilterEditPatch:
         if (!midiFilterEditPatch) { return; }
@@ -2724,7 +2724,7 @@ void MainWindow::updatePatchView()
     ui->stackedWidget_patchLayers->setCurrentWidget(ui->page_patchLayers);
 
     // Get list of layer items
-    foreach (KfPatchLayerWeakPtr layer, patch->layers()) {
+    foreach (KonfytPatchLayerPtr layer, patch->layers()) {
         // Add to gui layer list
         addPatchLayerToGUI(layer);
     }
@@ -2795,7 +2795,7 @@ void MainWindow::onPatchSelected(KonfytPatch *patch)
     setCurrentPatch(patch);
 }
 
-void MainWindow::onPatchLayerLoaded(KfPatchLayerWeakPtr patchLayer)
+void MainWindow::onPatchLayerLoaded(KonfytPatchLayerPtr patchLayer)
 {
     foreach (KonfytLayerWidget* w, layerWidgetList) {
         if (w->getPatchLayer() == patchLayer) {
@@ -3496,7 +3496,7 @@ void MainWindow::addSfzToCurrentPatch(QString sfzPath)
     newPatchIfCurrentNull();
 
     // Add layer to engine
-    KfPatchLayerWeakPtr layer = pengine.addSfzLayer(sfzPath);
+    KonfytPatchLayerPtr layer = pengine.addSfzLayer(sfzPath);
 
     // Add layer to GUI
     addPatchLayerToGUI(layer);
@@ -3510,7 +3510,7 @@ void MainWindow::addSoundfontProgramToCurrentPatch(QString soundfontPath, Konfyt
     newPatchIfCurrentNull();
 
     // Add program to engine
-    KfPatchLayerWeakPtr layer = pengine.addSfProgramLayer(soundfontPath, p);
+    KonfytPatchLayerPtr layer = pengine.addSfProgramLayer(soundfontPath, p);
 
     // Add layer to GUI
     addPatchLayerToGUI(layer);
@@ -3537,7 +3537,7 @@ void MainWindow::addMidiPortToCurrentPatch(int port)
     newPatchIfCurrentNull();
 
     // Add port to current patch in engine
-    KfPatchLayerWeakPtr layer = pengine.addMidiOutPortToPatch(port);
+    KonfytPatchLayerPtr layer = pengine.addMidiOutPortToPatch(port);
 
     // Add to GUI list
     addPatchLayerToGUI(layer);
@@ -3551,7 +3551,7 @@ void MainWindow::addAudioInPortToCurrentPatch(int port)
     newPatchIfCurrentNull();
 
     // Add port to current patch in engine
-    KfPatchLayerWeakPtr layer = pengine.addAudioInPortToPatch(port);
+    KonfytPatchLayerPtr layer = pengine.addAudioInPortToPatch(port);
 
     // Add to GUI list
     addPatchLayerToGUI(layer);
@@ -4551,7 +4551,7 @@ void MainWindow::setupScriptingWarnings()
 }
 
 void MainWindow::scriptWarningsOnScriptEngineLayerErrorStatusChanged(
-        KfPatchLayerSharedPtr patchLayer, QString errorString)
+        KonfytPatchLayerPtr patchLayer, QString errorString)
 {
     QListWidgetItem* item = scriptWarningLayerMap.value(patchLayer);
     if (errorString.isEmpty()) {
@@ -4594,7 +4594,7 @@ void MainWindow::scriptWarningsOnScriptEnginePortErrorStatusChanged(
     item->setText(QString("Port script error: %1").arg(prjPort->portName));
 }
 
-void MainWindow::scriptWarningsOnPatchLayerUnloaded(KfPatchLayerSharedPtr patchLayer)
+void MainWindow::scriptWarningsOnPatchLayerUnloaded(KonfytPatchLayerPtr patchLayer)
 {
     QListWidgetItem* item = scriptWarningLayerMap.value(patchLayer);
     if (item) {
@@ -4618,7 +4618,7 @@ void MainWindow::scriptWarningsOnItemDoubleClicked(QListWidgetItem* item)
 {
     if (scriptWarningLayerMap.contains(item)) {
 
-        KfPatchLayerSharedPtr patchLayer = scriptWarningLayerMap.value(item);
+        KonfytPatchLayerPtr patchLayer = scriptWarningLayerMap.value(item);
         showScriptEditorForPatchLayer(patchLayer);
 
     } else if (scriptWarningPortMap.contains(item)) {
@@ -4699,7 +4699,7 @@ void MainWindow::triggerPanic(bool panic)
 
     // Clear sustain and pitchbend indicators for all layers
     foreach (KonfytLayerWidget* w, layerWidgetList) {
-        if ( ! w->getPatchLayer().toStrongRef()->hasMidiInput() ) { continue; }
+        if ( ! w->getPatchLayer()->hasMidiInput() ) { continue; }
         w->indicateSustain(false);
         w->indicatePitchbend(false);
     }
@@ -4727,7 +4727,7 @@ void MainWindow::midi_setLayerGain(int layerIndex, int midiValue,
 
         // Set channel gain in GUI slider
         this->layerWidgetList.at(layerIndex)->setSliderGain(
-            pengine.currentPatch()->layer(layerIndex).toStrongRef()->gain());
+            pengine.currentPatch()->layer(layerIndex)->gain());
     }
 }
 
@@ -4735,7 +4735,7 @@ void MainWindow::midi_setLayerMute(int layer, int midiValue)
 {
     if (midiValue > 0) {
         if ((layer>=0) && (layer < pengine.getNumLayers()) ) {
-            bool newMute = !(pengine.currentPatch()->layers().at(layer).toStrongRef()->isMute());
+            bool newMute = !(pengine.currentPatch()->layers().at(layer)->isMute());
             pengine.setLayerMute(layer, newMute);
             // Set in GUI layer item
             this->layerWidgetList.at(layer)->setMuteButton(newMute);
@@ -4747,7 +4747,7 @@ void MainWindow::midi_setLayerSolo(int layer, int midiValue)
 {
     if (midiValue > 0) {
         if ((layer>=0) && (layer < pengine.getNumLayers()) ) {
-            bool newSolo = !(pengine.currentPatch()->layers().at(layer).toStrongRef()->isSolo());
+            bool newSolo = !(pengine.currentPatch()->layers().at(layer)->isSolo());
             pengine.setLayerSolo(layer, newSolo);
             // Set in GUI layer item
             this->layerWidgetList.at(layer)->setSoloButton(newSolo);
@@ -4850,7 +4850,7 @@ void MainWindow::setupLayerToolMenu()
 void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
 {
     int channel = action->property(PTY_MIDI_CHANNEL).toInt();
-    KfPatchLayerSharedPtr layer = layerToolMenuSourceitem->getPatchLayer().toStrongRef();
+    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
 
     if (channel == -2) {
         // Get current port id and show it in the connections page
@@ -4865,7 +4865,7 @@ void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
         // Update layer widget
         layerToolMenuSourceitem->refresh();
         // Update in pengine
-        pengine.setLayerFilter(layer.toWeakRef(), filter);
+        pengine.setLayerFilter(layer, filter);
 
         patchModified();
     }
@@ -4895,7 +4895,7 @@ void MainWindow::onPatchResetOptionMenuTriggered(QAction *action)
 /* Menu item has been clicked in the layer MIDI-In port menu. */
 void MainWindow::onLayerMidiInPortsMenu_ActionTrigger(QAction *action)
 {
-    KfPatchLayerSharedPtr layer = layerToolMenuSourceitem->getPatchLayer().toStrongRef();
+    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
 
     int portId = action->property(PTY_MIDI_IN_PORT).toInt();
     if (portId == -2) {
@@ -4918,7 +4918,7 @@ void MainWindow::onLayerMidiInPortsMenu_ActionTrigger(QAction *action)
         // Update the layer widget
         layerToolMenuSourceitem->refresh();
         // Update in pengine
-        pengine.setLayerMidiInPort(layer.toWeakRef(), portId );
+        pengine.setLayerMidiInPort(layer, portId );
 
         patchModified();
     }
@@ -4928,7 +4928,7 @@ void MainWindow::onLayerMidiInChannelMenu_ActionTrigger(QAction *action)
 {
     int channel = action->property(PTY_MIDI_CHANNEL).toInt();
 
-    KfPatchLayerSharedPtr layer = layerToolMenuSourceitem->getPatchLayer().toStrongRef();
+    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
     KonfytMidiFilter filter = layer->midiFilter();
     filter.inChan = channel;
     layer->setMidiFilter(filter);
@@ -4936,7 +4936,7 @@ void MainWindow::onLayerMidiInChannelMenu_ActionTrigger(QAction *action)
     // Update the layer widget
     layerToolMenuSourceitem->refresh();
     // Update in pengine
-    pengine.setLayerFilter(layer.toWeakRef(), filter);
+    pengine.setLayerFilter(layer, filter);
 
     patchModified();
 }
@@ -4949,7 +4949,7 @@ void MainWindow::onLayer_midiSend_clicked(KonfytLayerWidget *layerWidget)
 /* Layer bus menu item has been clicked. */
 void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
 {
-    KfPatchLayerSharedPtr layer = layerToolMenuSourceitem->getPatchLayer().toStrongRef();
+    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
 
     int busId = action->property(PTY_AUDIO_OUT_BUS).toInt();
     if (busId == -2) {
@@ -4972,7 +4972,7 @@ void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
         // Update the layer widget
         layerToolMenuSourceitem->refresh();
         // Update in pengine
-        pengine.setLayerBus(layer.toWeakRef(), busId);
+        pengine.setLayerBus(layer, busId);
 
         patchModified();
     }
@@ -5086,7 +5086,7 @@ void MainWindow::onLayer_rightToolbutton_clicked(KonfytLayerWidget *layerWidget)
     // Save the layer item for future use
     layerToolMenuSourceitem = layerWidget;
 
-    KfPatchLayerSharedPtr layer = layerWidget->getPatchLayer().toStrongRef();
+    KonfytPatchLayerPtr layer = layerWidget->getPatchLayer();
 
     KonfytPatchLayer::LayerType type = layer->layerType();
     if (type == KonfytPatchLayer::TypeMidiOut) {
@@ -5197,7 +5197,7 @@ void MainWindow::updateLayerMidiOutChannelMenu(QMenu *menu, int currentMidiPort)
 
 /* Add a patch layer to the GUI layer list. If index is -1, it is added to the
  * end of the list. */
-void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer, int index)
+void MainWindow::addPatchLayerToGUI(KonfytPatchLayerPtr patchLayer, int index)
 {
     // Create new GUI layer item
     KonfytLayerWidget* layerWidget = new KonfytLayerWidget();
@@ -5239,9 +5239,9 @@ void MainWindow::addPatchLayerToGUI(KfPatchLayerWeakPtr patchLayer, int index)
             this, &MainWindow::onLayer_midiSend_clicked);
 }
 
-void MainWindow::addPatchLayerToIndicatorHandler(KonfytLayerWidget *layerWidget, KfPatchLayerWeakPtr patchLayer)
+void MainWindow::addPatchLayerToIndicatorHandler(KonfytLayerWidget *layerWidget, KonfytPatchLayerPtr patchLayer)
 {
-    KfPatchLayerSharedPtr pl(patchLayer);
+    KonfytPatchLayerPtr pl(patchLayer);
     KfJackMidiRoute* midiRoute = nullptr;
     KfJackAudioRoute* audioRoute1 = nullptr;
     KfJackAudioRoute* audioRoute2 = nullptr;
@@ -5311,7 +5311,7 @@ void MainWindow::movePatchLayer(int indexFrom, int indexTo)
     KONFYT_ASSERT_RETURN(indexTo < layerWidgetList.count());
 
     KonfytLayerWidget* layerWidget = layerWidgetList.value(indexFrom);
-    KfPatchLayerWeakPtr patchLayer = layerWidget->getPatchLayer();
+    KonfytPatchLayerPtr patchLayer = layerWidget->getPatchLayer();
 
     pengine.moveLayer(patchLayer, indexTo);
 
@@ -5325,7 +5325,7 @@ KfJackMidiRoute *MainWindow::jackMidiRouteFromLayerWidget(KonfytLayerWidget *lay
 {
     KfJackMidiRoute* route = nullptr;
 
-    KfPatchLayerSharedPtr patchLayer = layerWidget->getPatchLayer();
+    KonfytPatchLayerPtr patchLayer = layerWidget->getPatchLayer();
     if (!patchLayer) { return nullptr; }
 
     KonfytPatchLayer::LayerType type = patchLayer->layerType();
@@ -5402,7 +5402,7 @@ void MainWindow::updateMidiInChannelMenu(QMenu *menu, int currentChannel)
 void MainWindow::updateLayerToolMenu()
 {
     KonfytLayerWidget* layerWidget = layerToolMenuSourceitem;
-    KfPatchLayerSharedPtr patchLayer = layerWidget->getPatchLayer().toStrongRef();
+    KonfytPatchLayerPtr patchLayer = layerWidget->getPatchLayer();
     KonfytPatchLayer::LayerType type = patchLayer->layerType();
 
     // Update reset option menu
@@ -5464,7 +5464,7 @@ void MainWindow::onAudioInLayerInputPortConnectionActionTrigger()
     // Show port in connections page and select audio input port
 
     if (!layerToolMenuSourceitem) { return; }
-    KfPatchLayerSharedPtr patchLayer = layerToolMenuSourceitem->getPatchLayer();
+    KonfytPatchLayerPtr patchLayer = layerToolMenuSourceitem->getPatchLayer();
     if (!patchLayer) { return; }
 
     showConnectionsPage();
@@ -5474,7 +5474,7 @@ void MainWindow::onAudioInLayerInputPortConnectionActionTrigger()
 void MainWindow::onLayerResetOptionMenuActionTrigger(QAction *action)
 {
     if (!layerToolMenuSourceitem) { return; }
-    KfPatchLayerSharedPtr patchLayer = layerToolMenuSourceitem->getPatchLayer();
+    KonfytPatchLayerPtr patchLayer = layerToolMenuSourceitem->getPatchLayer();
     if (!patchLayer) { return; }
 
     KonfytReset option = layerResetOptionMenu.actionValue(action);
@@ -6719,7 +6719,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         KonfytPatch* patch = nullptr;
         int patchIndex = 0;
         QList<int> iLayers;
-        QList<KfPatchLayerWeakPtr> layers;
+        QList<KonfytPatchLayerPtr> layers;
     };
     QList<PatchUse> used;
     QList<KonfytPatch*> patchList = prj->getPatchList();
@@ -6727,9 +6727,9 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         PatchUse use;
         use.patchIndex = iPatch;
         use.patch = patchList[iPatch];
-        QList<KfPatchLayerWeakPtr> layers = use.patch->layers();
+        QList<KonfytPatchLayerPtr> layers = use.patch->layers();
         for (int iLayer=0; iLayer < layers.count(); iLayer++) {
-            KfPatchLayerSharedPtr layer = layers[iLayer];
+            KonfytPatchLayerPtr layer = layers[iLayer];
             bool append = false;
             if (busSelected) {
                 if ( (layer->layerType() == KonfytPatchLayer::TypeAudioIn)
@@ -6800,7 +6800,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove bus
                 // Change the bus for all layers still using this one
                 foreach (const PatchUse& use, used) {
-                    foreach (KfPatchLayerWeakPtr layer, use.layers) {
+                    foreach (KonfytPatchLayerPtr layer, use.layers) {
                         pengine.setLayerBus(layer, busIdToChangeTo);
                     }
                 }
@@ -6819,7 +6819,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove port.
                 // Remove it from all patches where it was in use
                 foreach (const PatchUse& use, used) {
-                    foreach (KfPatchLayerWeakPtr layer, use.layers) {
+                    foreach (KonfytPatchLayerPtr layer, use.layers) {
                         pengine.removeLayer(use.patch, layer);
                     }
                 }
@@ -6838,7 +6838,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove port.
                 // Remove it from all patches where it was in use
                 foreach (const PatchUse& use, used) {
-                    foreach (KfPatchLayerWeakPtr layer, use.layers) {
+                    foreach (KonfytPatchLayerPtr layer, use.layers) {
                         pengine.removeLayer(use.patch, layer);
                     }
                 }
@@ -6859,7 +6859,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove port
                 // Change the port for all layers still using this one
                 foreach (const PatchUse& use, used) {
-                    foreach (KfPatchLayerWeakPtr layer, use.layers) {
+                    foreach (KonfytPatchLayerPtr layer, use.layers) {
                         pengine.setLayerMidiInPort(layer, portToChangeTo);
                     }
                 }
@@ -7034,7 +7034,7 @@ void MainWindow::setupPatchEngine()
 /* Update the input and output port settings for the preview patch layer. */
 void MainWindow::updatePreviewPatchLayer()
 {
-    foreach (KfPatchLayerSharedPtr layer, mPreviewPatch.layers()) {
+    foreach (KonfytPatchLayerPtr layer, mPreviewPatch.layers()) {
         if (layer->hasError()) { continue; }
 
         // Set the MIDI input channel
@@ -8312,7 +8312,7 @@ void MainWindow::updateMidiSendListEditorButtonStates()
 
 void MainWindow::showMidiSendListEditor()
 {
-    midiSendList = midiSendListEditItem->getPatchLayer().toStrongRef()->midiSendList;
+    midiSendList = midiSendListEditItem->getPatchLayer()->midiSendList;
 
     ui->listWidget_midiSendList->clear();
     foreach (MidiSendItem item, midiSendList) {
@@ -8473,7 +8473,7 @@ void MainWindow::setupWarningConnectionsForProject(ProjectPtr prj)
 
 void MainWindow::on_pushButton_midiSendList_apply_clicked()
 {
-    midiSendListEditItem->getPatchLayer().toStrongRef()->midiSendList = midiSendList;
+    midiSendListEditItem->getPatchLayer()->midiSendList = midiSendList;
 
     // Update in GUI layer item
     midiSendListEditItem->refresh();
@@ -8839,7 +8839,7 @@ void MainWindow::on_pushButton_midiSendList_sendSelected_clicked()
     // Send the MIDI message currently being edited
 
     KonfytMidiEvent event = midiEventFromMidiSendEditor().midiEvent;
-    KfPatchLayerSharedPtr layer = midiSendListEditItem->getPatchLayer();
+    KonfytPatchLayerPtr layer = midiSendListEditItem->getPatchLayer();
     if (!layer->hasError()) {
         jack.sendMidiEventsOnRoute(layer->midiOutputPortData.jackRoute, {event});
     }
@@ -8847,7 +8847,7 @@ void MainWindow::on_pushButton_midiSendList_sendSelected_clicked()
 
 void MainWindow::on_pushButton_midiSendList_sendAll_clicked()
 {
-    KfPatchLayerSharedPtr layer = midiSendListEditItem->getPatchLayer();
+    KonfytPatchLayerPtr layer = midiSendListEditItem->getPatchLayer();
     if (!layer->hasError()) {
         QList<KonfytMidiEvent> events;
         foreach (MidiSendItem item, midiSendList) {

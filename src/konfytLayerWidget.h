@@ -50,7 +50,7 @@ public:
     void setProject(ProjectPtr project);
 
     // This function has to be called before using the object.
-    void initLayer(KfPatchLayerWeakPtr patchLayer, QListWidgetItem* listItem);
+    void initLayer(KonfytPatchLayerPtr patchLayer, QListWidgetItem* listItem);
 
     // Update the layer widget
     void refresh();
@@ -59,7 +59,7 @@ public:
     void setSliderGain(float newGain);
     void setSoloButton(bool solo);
     void setMuteButton(bool mute);
-    KfPatchLayerWeakPtr getPatchLayer();
+    KonfytPatchLayerPtr getPatchLayer();
     QListWidgetItem* getListWidgetItem();
     QString getFilePath();
 
@@ -81,7 +81,7 @@ private:
     Ui::KonfytLayerWidget *ui;
     ProjectPtr mProject; // Pointer to current project to get bus and port naming info
 
-    KfPatchLayerWeakPtr mPatchLayer;
+    KonfytPatchLayerPtr mPatchLayer;
     QListWidgetItem* mListWidgetItem;
     QString mFilepath;
     bool mHighlighted = false;

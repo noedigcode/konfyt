@@ -444,7 +444,7 @@ void TempParent::removeTemporaryChildren()
 KonfytJSEngine::KonfytJSEngine(QObject *parent) : QObject(parent)
 {
     // For signal scriptErrorStatusChanged()
-    qRegisterMetaType<KfPatchLayerSharedPtr>("KfPatchLayerSharedPtr");
+    qRegisterMetaType<KonfytPatchLayerPtr>("KfPatchLayerSharedPtr");
     qRegisterMetaType<PrjMidiPortPtr>("PrjMidiPortPtr");
 
     // Start script watchdog timer in calling thread (i.e. before this
@@ -475,7 +475,7 @@ void KonfytJSEngine::setJackEngine(KonfytJackEngine *jackEngine)
             Qt::QueuedConnection);
 }
 
-void KonfytJSEngine::addOrUpdateLayerScript(KfPatchLayerSharedPtr patchLayer)
+void KonfytJSEngine::addOrUpdateLayerScript(KonfytPatchLayerPtr patchLayer)
 {
     if (!patchLayer) {
         print("Error: addLayerScript: null patchLayer");
@@ -558,7 +558,7 @@ void KonfytJSEngine::addOrUpdateJackPortScript(PrjMidiPortPtr prjPort)
     });
 }
 
-void KonfytJSEngine::removeLayerScript(KfPatchLayerSharedPtr patchLayer)
+void KonfytJSEngine::removeLayerScript(KonfytPatchLayerPtr patchLayer)
 {
     layerScriptMap_guiThread.remove(patchLayer);
 
@@ -592,7 +592,7 @@ void KonfytJSEngine::removeJackPortScript(PrjMidiPortPtr prjPort)
     });
 }
 
-QString KonfytJSEngine::script(KfPatchLayerSharedPtr patchLayer)
+QString KonfytJSEngine::script(KonfytPatchLayerPtr patchLayer)
 {
     // Get from cached values in GUI script map, no need to cross thread boundary
     QString ret;
@@ -616,7 +616,7 @@ QString KonfytJSEngine::script(PrjMidiPortPtr prjPort)
     return ret;
 }
 
-void KonfytJSEngine::setScriptEnabled(KfPatchLayerSharedPtr patchLayer,
+void KonfytJSEngine::setScriptEnabled(KonfytPatchLayerPtr patchLayer,
                                       bool enable)
 {
     runInThread(this, [=]()
@@ -649,7 +649,7 @@ void KonfytJSEngine::setScriptEnabled(PrjMidiPortPtr prjPort, bool enable)
     });
 }
 
-void KonfytJSEngine::scriptAverageProcessTimeMs(KfPatchLayerSharedPtr patchLayer,
+void KonfytJSEngine::scriptAverageProcessTimeMs(KonfytPatchLayerPtr patchLayer,
                 QObject* context, std::function<void(float, float)> callback)
 {
     runInThread(this, [=]()
@@ -689,7 +689,7 @@ void KonfytJSEngine::scriptAverageProcessTimeMs(PrjMidiPortPtr prjPort,
     });
 }
 
-void KonfytJSEngine::scriptErrorString(KfPatchLayerSharedPtr patchLayer,
+void KonfytJSEngine::scriptErrorString(KonfytPatchLayerPtr patchLayer,
                                        QObject* context,
                                        std::function<void(QString)> callback)
 {
@@ -762,7 +762,7 @@ void KonfytJSEngine::afterScriptRun(ScriptEnvPtr s)
     }
 }
 
-KfJackMidiRoute *KonfytJSEngine::jackMidiRouteFromLayer(KfPatchLayerSharedPtr layer)
+KfJackMidiRoute *KonfytJSEngine::jackMidiRouteFromLayer(KonfytPatchLayerPtr layer)
 {
     KfJackMidiRoute* ret = nullptr;
     if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {

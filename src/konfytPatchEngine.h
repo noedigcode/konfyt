@@ -64,8 +64,8 @@ public:
     void loadPatch(KonfytPatch* patch);
     void reloadPatch();
     void unloadPatch(KonfytPatch* patch);
-    void unloadLayerFromEngines(KfPatchLayerWeakPtr layer);
-    void reloadLayer(KfPatchLayerWeakPtr layer);
+    void unloadLayerFromEngines(KonfytPatchLayerPtr layer);
+    void reloadLayer(KonfytPatchLayerPtr layer);
     bool isPatchLoaded(KonfytPatch* patch);
 
     KonfytPatch* currentPatch();
@@ -76,48 +76,41 @@ public:
     // ----------------------------------------------------
 
     // General use for any type of layer
-    void setLayerFilter(KfPatchLayerWeakPtr patchLayer, KonfytMidiFilter filter);
-    void setLayerGain(KfPatchLayerWeakPtr patchLayer, float newGain);
+    void setLayerFilter(KonfytPatchLayerPtr patchLayer, KonfytMidiFilter filter);
+    void setLayerGain(KonfytPatchLayerPtr patchLayer, float newGain);
     void setLayerGain(int layerIndex, float newGain);
     void setLayerGainByMidi(int layerIndex, int midiValue);
     void setLayerGainByMidiRelative(int layerIndex, int midiValue);
-    void setLayerSolo(KfPatchLayerWeakPtr patchLayer, bool solo);
+    void setLayerSolo(KonfytPatchLayerPtr patchLayer, bool solo);
     void setLayerSolo(int layerIndex, bool solo);
-    void setLayerMute(KfPatchLayerWeakPtr patchLayer, bool mute);
+    void setLayerMute(KonfytPatchLayerPtr patchLayer, bool mute);
     void setLayerMute(int layerIndex, bool mute);
-    void setLayerBus(KfPatchLayerWeakPtr patchLayer, int bus);
-    void setLayerMidiInPort(KfPatchLayerWeakPtr patchLayer, int portId);
+    void setLayerBus(KonfytPatchLayerPtr patchLayer, int bus);
+    void setLayerMidiInPort(KonfytPatchLayerPtr patchLayer, int portId);
 
-    void setLayerScript(KfPatchLayerSharedPtr patchLayer, QString script);
-    void setLayerScriptEnabled(KfPatchLayerSharedPtr patchLayer, bool enable);
-    void setLayerPassMidiThrough(KfPatchLayerSharedPtr patchLayer, bool pass);
+    void setLayerScript(KonfytPatchLayerPtr patchLayer, QString script);
+    void setLayerScriptEnabled(KonfytPatchLayerPtr patchLayer, bool enable);
+    void setLayerPassMidiThrough(KonfytPatchLayerPtr patchLayer, bool pass);
 
     void sendCurrentPatchMidi();
-    void sendLayerMidi(KfPatchLayerWeakPtr patchLayer);
+    void sendLayerMidi(KonfytPatchLayerPtr patchLayer);
 
     int getNumLayers() const;
-    void removeLayer(KfPatchLayerWeakPtr layer); // currentPatch
-    void removeLayer(KonfytPatch* patch, KfPatchLayerWeakPtr layer);
-    void moveLayer(KfPatchLayerWeakPtr layer, int newIndex);
+    void removeLayer(KonfytPatchLayerPtr layer); // currentPatch
+    void removeLayer(KonfytPatch* patch, KonfytPatchLayerPtr layer);
+    void moveLayer(KonfytPatchLayerPtr layer, int newIndex);
 
-    // Soundfont / Fluidsynth layers
-    KfPatchLayerWeakPtr addSfProgramLayer(QString soundfontPath,
+    KonfytPatchLayerPtr addSfProgramLayer(QString soundfontPath,
                                           KonfytSoundPreset newProgram);
-
-    // SFZ layers
-    KfPatchLayerWeakPtr addSfzLayer(QString path);
-
-    // Midi output port layers
-    KfPatchLayerWeakPtr addMidiOutPortToPatch(int port);
-
-    // Audio input layers
-    KfPatchLayerWeakPtr addAudioInPortToPatch(int port);
+    KonfytPatchLayerPtr addSfzLayer(QString path);
+    KonfytPatchLayerPtr addMidiOutPortToPatch(int port);
+    KonfytPatchLayerPtr addAudioInPortToPatch(int port);
 
 signals:
     void print(QString msg);
     void statusInfo(QString msg);
-    void patchLayerLoaded(KfPatchLayerWeakPtr layer);
-    void patchLayerUnloaded(KfPatchLayerSharedPtr layer);
+    void patchLayerLoaded(KonfytPatchLayerPtr layer);
+    void patchLayerUnloaded(KonfytPatchLayerPtr layer);
     void sfzEngineErrorStringChanged(QString errorString);
     
 private:
@@ -127,18 +120,18 @@ private:
 
     QList<KonfytPatch*> patches;
 
-    void loadSfzLayer(KfPatchLayerSharedPtr layer);
-    void loadSoundfontLayer(KfPatchLayerSharedPtr layer);
-    void loadAudioInputPort(KfPatchLayerSharedPtr layer);
-    void loadMidiOutputPort(KfPatchLayerSharedPtr layer);
-    void updateLayerRouting(KfPatchLayerSharedPtr layer);
-    void updateLayerGain(KfPatchLayerSharedPtr layer);
+    void loadSfzLayer(KonfytPatchLayerPtr layer);
+    void loadSoundfontLayer(KonfytPatchLayerPtr layer);
+    void loadAudioInputPort(KonfytPatchLayerPtr layer);
+    void loadMidiOutputPort(KonfytPatchLayerPtr layer);
+    void updateLayerRouting(KonfytPatchLayerPtr layer);
+    void updateLayerGain(KonfytPatchLayerPtr layer);
     void activatePatchLayerRoutesForSoloMute(KonfytPatch* patch);
-    void setLayerActive(KfPatchLayerSharedPtr layer, bool active);
+    void setLayerActive(KonfytPatchLayerPtr layer, bool active);
     void updateLayerPatchMidiFilterInJackEngine(KonfytPatch* patch,
-                                                KfPatchLayerSharedPtr layer);
+                                                KonfytPatchLayerPtr layer);
 
-    void updateLayerBlockMidiDirectThroughInJack(KfPatchLayerSharedPtr patchLayer);
+    void updateLayerBlockMidiDirectThroughInJack(KonfytPatchLayerPtr patchLayer);
 
     KonfytFluidsynthEngine fluidsynthEngine;
     void setupAndInitFluidsynthEngine();

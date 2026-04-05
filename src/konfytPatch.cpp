@@ -24,7 +24,7 @@
 #include "konfytUtils.h"
 
 
-QList<KfPatchLayerWeakPtr> KonfytPatch::getSfLayerList() const
+QList<KonfytPatchLayerPtr> KonfytPatch::getSfLayerList() const
 {
     return layersOfType(KonfytPatchLayer::TypeSoundfontProgram);
 }
@@ -76,12 +76,13 @@ void KonfytPatch::fromByteArray(QByteArray data)
     readFromXmlStream(&r);
 }
 
-QList<KfPatchLayerWeakPtr> KonfytPatch::layersOfType(KonfytPatchLayer::LayerType layerType) const
+QList<KonfytPatchLayerPtr> KonfytPatch::layersOfType(
+        KonfytPatchLayer::LayerType layerType) const
 {
-    QList<KfPatchLayerWeakPtr> l;
-    foreach (KfPatchLayerSharedPtr layer, layerList) {
+    QList<KonfytPatchLayerPtr> l;
+    foreach (KonfytPatchLayerPtr layer, layerList) {
         if (layer->layerType() == layerType) {
-            l.append(layer.toWeakRef());
+            l.append(layer);
         }
     }
 
@@ -166,19 +167,19 @@ void KonfytPatch::readFromXmlStream(QXmlStreamReader *r, QString *errors)
 
             } else if (r->name() == XML_PATCH_SFLAYER) {
 
-                xmlReadSfontLayer(r, errors);
+                xmlReadLayer(r, errors);
 
             } else if (r->name() == XML_PATCH_SFZLAYER) {
 
-                xmlReadSfzLayer(r, errors);
+                xmlReadLayer(r, errors);
 
             } else if (r->name() == XML_PATCH_MIDIOUT) {
 
-                xmlReadMidiOutLayer(r, errors);
+                xmlReadLayer(r, errors);
 
             } else if (r->name() == XML_PATCH_AUDIOIN) {
 
-                xmlReadAudioInLayer(r, errors);
+                xmlReadLayer(r, errors);
 
             } else {
                 appendError(errors, "Unrecognized layer type: " + r->name().toString() );
@@ -547,12 +548,12 @@ bool KonfytPatch::isValidLayerIndex(int layerIndex) const
     return ( (layerIndex >= 0) && (layerIndex < layerList.count()) );
 }
 
-void KonfytPatch::removeLayer(KfPatchLayerWeakPtr layer)
+void KonfytPatch::removeLayer(KonfytPatchLayerPtr layer)
 {
-    layerList.removeAll(layer.toStrongRef());
+    layerList.removeAll(layer);
 }
 
-void KonfytPatch::moveLayer(KfPatchLayerWeakPtr layer, int newIndex)
+void KonfytPatch::moveLayer(KonfytPatchLayerPtr layer, int newIndex)
 {
     KONFYT_ASSERT_RETURN(newIndex >= 0);
     KONFYT_ASSERT_RETURN(newIndex < layerList.count());
@@ -572,30 +573,36 @@ void KonfytPatch::clearLayers()
 }
 
 /* Returns the index of the layer in the patch, -1 if not found. */
-int KonfytPatch::layerIndex(KfPatchLayerWeakPtr layer) const
+int KonfytPatch::layerIndex(KonfytPatchLayerPtr layer) const
 {
-    return layerList.indexOf(layer.toStrongRef());
+    return layerList.indexOf(layer);
 }
 
 void KonfytPatch::createLayerResetSnapshots()
 {
-    foreach (KfPatchLayerSharedPtr layer, layerList) {
+    foreach (KonfytPatchLayerPtr layer, layerList) {
         layer->createResetSnapshot();
     }
 }
 
-KfPatchLayerWeakPtr KonfytPatch::addSfLayer(QString soundfontPath, KonfytSoundPreset preset)
+void KonfytPatch::addLayer(KonfytPatchLayerPtr layer)
+{
+    layerList.append(layer);
+}
+
+KonfytPatchLayerPtr KonfytPatch::addSfLayer(QString soundfontPath,
+                                            KonfytSoundPreset preset)
 {
     LayerSoundfontData sfData;
     sfData.program = preset;
     sfData.parentSoundfont = soundfontPath;
 
-    KfPatchLayerSharedPtr layer(new KonfytPatchLayer());
+    KonfytPatchLayerPtr layer(new KonfytPatchLayer());
     layer->initLayer(sfData);
 
     layerList.append(layer);
 
-    return layer.toWeakRef();
+    return layer;
 }
 
 int KonfytPatch::layerCount() const
@@ -633,29 +640,28 @@ QString KonfytPatch::note() const
     return this->patchNote;
 }
 
-QList<KfPatchLayerWeakPtr> KonfytPatch::layers()
+QList<KonfytPatchLayerPtr> KonfytPatch::layers()
 {
     // Create a list of weak ptrs from shared ptrs list
-    QList<KfPatchLayerWeakPtr> l;
-    foreach (KfPatchLayerWeakPtr layer, layerList) {
+    QList<KonfytPatchLayerPtr> l;
+    foreach (KonfytPatchLayerPtr layer, layerList) {
         l.append(layer);
     }
     return l;
 }
 
-KfPatchLayerWeakPtr KonfytPatch::layer(int index)
+KonfytPatchLayerPtr KonfytPatch::layer(int index)
 {
-    QSharedPointer<KonfytPatchLayer> layer = layerList.at(index);
-    return layer.toWeakRef();
+    return layerList.value(index);
 }
 
 /* Return list of port project ids of the patch's midi output ports. */
 QList<int> KonfytPatch::getMidiOutputPortListProjectIds() const
 {
-    QList<KfPatchLayerWeakPtr> layers = layersOfType(KonfytPatchLayer::TypeMidiOut);
+    QList<KonfytPatchLayerPtr> layers = layersOfType(KonfytPatchLayer::TypeMidiOut);
     QList<int> l;
-    foreach (KfPatchLayerWeakPtr layer, layers) {
-        l.append(layer.toStrongRef()->midiOutputPortData.portIdInProject);
+    foreach (KonfytPatchLayerPtr layer, layers) {
+        l.append(layer->midiOutputPortData.portIdInProject);
     }
     return l;
 }
@@ -663,25 +669,25 @@ QList<int> KonfytPatch::getMidiOutputPortListProjectIds() const
 /* Return list of port ids of patch's audio input ports. */
 QList<int> KonfytPatch::getAudioInPortListProjectIds() const
 {
-    QList<KfPatchLayerWeakPtr> layers = layersOfType(KonfytPatchLayer::TypeAudioIn);
+    QList<KonfytPatchLayerPtr> layers = layersOfType(KonfytPatchLayer::TypeAudioIn);
     QList<int> l;
-    foreach (KfPatchLayerWeakPtr layer, layers) {
-        l.append(layer.toStrongRef()->audioInPortData.portIdInProject);
+    foreach (KonfytPatchLayerPtr layer, layers) {
+        l.append(layer->audioInPortData.portIdInProject);
     }
     return l;
 }
 
-QList<KfPatchLayerWeakPtr> KonfytPatch::getAudioInLayerList() const
+QList<KonfytPatchLayerPtr> KonfytPatch::getAudioInLayerList() const
 {
     return layersOfType(KonfytPatchLayer::TypeAudioIn);
 }
 
-QList<KfPatchLayerWeakPtr> KonfytPatch::getMidiOutputLayerList() const
+QList<KonfytPatchLayerPtr> KonfytPatch::getMidiOutputLayerList() const
 {
     return layersOfType(KonfytPatchLayer::TypeMidiOut);
 }
 
-KfPatchLayerWeakPtr KonfytPatch::addAudioInPort(int newPort)
+KonfytPatchLayerPtr KonfytPatch::addAudioInPort(int newPort)
 {
     // Set up a default new audio input port with the specified port number
     LayerAudioInData a;
@@ -691,9 +697,9 @@ KfPatchLayerWeakPtr KonfytPatch::addAudioInPort(int newPort)
     return addAudioInPort(a, name);
 }
 
-KfPatchLayerWeakPtr KonfytPatch::addAudioInPort(LayerAudioInData newPort, QString name)
+KonfytPatchLayerPtr KonfytPatch::addAudioInPort(LayerAudioInData newPort, QString name)
 {
-    KfPatchLayerSharedPtr layer;
+    KonfytPatchLayerPtr layer;
 
     // Set up layer item
     layer.reset(new KonfytPatchLayer());
@@ -702,10 +708,10 @@ KfPatchLayerWeakPtr KonfytPatch::addAudioInPort(LayerAudioInData newPort, QStrin
     // Add to layer list
     layerList.append(layer);
 
-    return layer.toWeakRef();
+    return layer;
 }
 
-KfPatchLayerWeakPtr KonfytPatch::addMidiOutputPort(int newPort)
+KonfytPatchLayerPtr KonfytPatch::addMidiOutputPort(int newPort)
 {
     LayerMidiOutData m = LayerMidiOutData();
     m.portIdInProject = newPort;
@@ -713,30 +719,30 @@ KfPatchLayerWeakPtr KonfytPatch::addMidiOutputPort(int newPort)
     return addMidiOutputPort(m);
 }
 
-KfPatchLayerWeakPtr KonfytPatch::addMidiOutputPort(LayerMidiOutData newPort)
+KonfytPatchLayerPtr KonfytPatch::addMidiOutputPort(LayerMidiOutData newPort)
 {
-    KfPatchLayerSharedPtr layer;
+    KonfytPatchLayerPtr layer;
 
     layer.reset(new KonfytPatchLayer());
     layer->initLayer(newPort);
     // Add to layer list
     layerList.append(layer);
 
-    return layer.toWeakRef();
+    return layer;
 }
 
-KfPatchLayerWeakPtr KonfytPatch::addPlugin(LayerSfzData newPlugin, QString name)
+KonfytPatchLayerPtr KonfytPatch::addPlugin(LayerSfzData newPlugin, QString name)
 {
-    KfPatchLayerSharedPtr layer(new KonfytPatchLayer);
+    KonfytPatchLayerPtr layer(new KonfytPatchLayer);
     layer->setName(name);
     layer->initLayer(newPlugin);
 
     layerList.append(layer);
 
-    return layer.toWeakRef();
+    return layer;
 }
 
-QList<KfPatchLayerWeakPtr> KonfytPatch::getPluginLayerList() const
+QList<KonfytPatchLayerPtr> KonfytPatch::getPluginLayerList() const
 {
     return layersOfType(KonfytPatchLayer::TypeSfz);
 }
