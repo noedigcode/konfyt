@@ -11058,7 +11058,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
   </action>
   <action name="actionSave_Patch_As_Copy">
    <property name="text">
-    <string>Create Copy</string>
+    <string>Duplicate Patch</string>
    </property>
    <property name="toolTip">
     <string>Save Patch As Copy</string>
@@ -11066,12 +11066,12 @@ li.checked::marker { content: &quot;\2612&quot;; }
   </action>
   <action name="actionAdd_Patch_To_Library">
    <property name="text">
-    <string>Add To Library</string>
+    <string>Add Patch To Library</string>
    </property>
   </action>
   <action name="actionSave_Patch_To_File">
    <property name="text">
-    <string>Save To File...</string>
+    <string>Save Patch To File...</string>
    </property>
   </action>
   <action name="actionMaster_Volume_Up">
@@ -11424,6 +11424,22 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <action name="action_CopyFilesystemPath">
    <property name="text">
     <string>Copy Path</string>
+   </property>
+  </action>
+  <action name="actionCopy_Layer">
+   <property name="text">
+    <string>Copy Layer</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
+   </property>
+  </action>
+  <action name="actionPaste_Layer">
+   <property name="text">
+    <string>Paste Layer</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::NoRole</enum>
    </property>
   </action>
  </widget>

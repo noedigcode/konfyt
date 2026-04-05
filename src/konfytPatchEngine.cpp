@@ -246,10 +246,17 @@ void KonfytPatchEngine::moveLayer(KonfytPatchLayerPtr layer, int newIndex)
     updatePatchLayersURIs(mCurrentPatch);
 }
 
+void KonfytPatchEngine::addLayer(KonfytPatchLayerPtr layer)
 {
-    KfPatchLayerSharedPtr l = layer.toStrongRef();
-    if (l->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
-        if (l->soundfontData.synthInEngine) {
+    KONFYT_ASSERT_RETURN(mCurrentPatch);
+
+    mCurrentPatch->addLayer(layer);
+    updatePatchLayersURIs(mCurrentPatch);
+
+    // reloadPatch() will also take care of applying patch-wide MIDI filter to layer
+
+    reloadPatch();
+}
 
 void KonfytPatchEngine::unloadLayerFromEngines(KonfytPatchLayerPtr layer)
 {

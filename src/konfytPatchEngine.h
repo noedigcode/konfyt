@@ -100,6 +100,7 @@ public:
     void removeLayer(KonfytPatch* patch, KonfytPatchLayerPtr layer);
     void moveLayer(KonfytPatchLayerPtr layer, int newIndex);
 
+    void addLayer(KonfytPatchLayerPtr layer);
     KonfytPatchLayerPtr addSfProgramLayer(QString soundfontPath,
                                           KonfytSoundPreset newProgram);
     KonfytPatchLayerPtr addSfzLayer(QString path);

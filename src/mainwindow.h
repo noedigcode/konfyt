@@ -453,6 +453,9 @@ private:
     void clearPatchLayersFromGuiOnly();
     void movePatchLayer(int indexFrom, int indexTo);
     KfJackMidiRoute* jackMidiRouteFromLayerWidget(KonfytLayerWidget* layerWidget);
+
+    QByteArray mCopiedLayerData;
+
 private slots:
     void onLayer_slider_moved(KonfytLayerWidget* layerWidget, float gain);
     void onLayer_solo_clicked(KonfytLayerWidget* layerWidget, bool solo);
@@ -490,6 +493,8 @@ private slots:
     void onLayer_leftToolbutton_clicked(KonfytLayerWidget* layerItem);
     void on_actionReload_Layer_triggered();
     void on_actionRemove_Layer_triggered();
+    void on_actionCopy_Layer_triggered();
+    void on_actionPaste_Layer_triggered();
     void on_actionOpen_In_File_Manager_layerwidget_triggered();
 
     // Layer MIDI input ports menu
@@ -1149,6 +1154,7 @@ private slots:
     void on_pushButton_LiveMode_clicked();
     void on_pushButton_RestartApp_clicked();
     void on_pushButton_LavaMonster_clicked();
+
 };
 
 #endif // MAINWINDOW_H

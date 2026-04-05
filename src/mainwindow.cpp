@@ -2811,6 +2811,14 @@ void MainWindow::onPatchLayerLoaded(KonfytPatchLayerPtr patchLayer)
 void MainWindow::setupPatchMenu()
 {
     QMenu* patchMenu = new QMenu();
+    connect(patchMenu, &QMenu::aboutToShow,
+            this, [=]()
+    {
+        // Updates before menu is shown
+        bool layerCopied = !mCopiedLayerData.isEmpty();
+        ui->actionPaste_Layer->setEnabled(layerCopied);
+    });
+
     patchMenu->addAction(ui->actionPatch_MIDI_Filter);
     patchMenu->addAction(ui->actionAlways_Active);
 
@@ -2821,6 +2829,9 @@ void MainWindow::setupPatchMenu()
     patchMenu->addAction(ui->actionSave_Patch_As_Copy);
     patchMenu->addAction(ui->actionAdd_Patch_To_Library);
     patchMenu->addAction(ui->actionSave_Patch_To_File);
+
+    patchMenu->addSeparator();
+    patchMenu->addAction(ui->actionPaste_Layer);
 
     ui->toolButton_patchMenu->setMenu(patchMenu);
 }
@@ -4842,6 +4853,7 @@ void MainWindow::setupLayerToolMenu()
     layerToolMenu.addAction( ui->actionReload_Layer );
     layerToolMenu.addMenu(layerResetOptionMenu.menu());
     layerToolMenu.addAction(ui->actionOpen_In_File_Manager_layerwidget);
+    layerToolMenu.addAction(ui->actionCopy_Layer);
     layerToolMenu.addSeparator();
     layerToolMenu.addAction( ui->actionRemove_Layer );
 }
@@ -5123,6 +5135,28 @@ void MainWindow::on_actionReload_Layer_triggered()
 void MainWindow::on_actionRemove_Layer_triggered()
 {
     removePatchLayer( layerToolMenuSourceitem );
+}
+
+void MainWindow::on_actionCopy_Layer_triggered()
+{
+    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
+    if (!layer) { return; }
+
+    mCopiedLayerData = layer->toByteArray();
+}
+
+void MainWindow::on_actionPaste_Layer_triggered()
+{
+    if (!mCurrentPatch) { return; }
+    if (mCopiedLayerData.isEmpty()) { return; }
+
+    KonfytPatchLayerPtr layer(new KonfytPatchLayer());
+    layer->fromByteArray(mCopiedLayerData);
+
+    pengine.addLayer(layer);
+    addPatchLayerToGUI(layer);
+
+    patchModified();
 }
 
 void MainWindow::on_actionOpen_In_File_Manager_layerwidget_triggered()
@@ -8962,3 +8996,6 @@ QAction *MainWindow::ResetOptionMenu::actionWithValue(KonfytReset value)
     }
     return ret;
 }
+
+
+

@@ -38,48 +38,6 @@
 #define XML_PATCH_ALWAYSACTIVE "alwaysActive"
 #define XML_PATCH_RESET_OPTION "resetOption"
 
-#define XML_PATCH_SFLAYER "sfLayer"
-#define XML_PATCH_SFLAYER_FILENAME "soundfont_filename"
-#define XML_PATCH_SFLAYER_BANK "bank"
-#define XML_PATCH_SFLAYER_PROGRAM "program"
-#define XML_PATCH_SFLAYER_NAME "name"
-#define XML_PATCH_SFLAYER_GAIN "gain"
-#define XML_PATCH_SFLAYER_BUS "bus"
-#define XML_PATCH_SFLAYER_SOLO "solo"
-#define XML_PATCH_SFLAYER_MUTE "mute"
-#define XML_PATCH_SFLAYER_MIDI_IN "midiIn"
-
-#define XML_PATCH_SFZLAYER "sfzLayer"
-#define XML_PATCH_SFZLAYER_NAME "name"
-#define XML_PATCH_SFZLAYER_PATH "path"
-#define XML_PATCH_SFZLAYER_GAIN "gain"
-#define XML_PATCH_SFZLAYER_BUS "bus"
-#define XML_PATCH_SFZLAYER_SOLO "solo"
-#define XML_PATCH_SFZLAYER_MUTE "mute"
-#define XML_PATCH_SFZLAYER_MIDI_IN "midiIn"
-
-#define XML_PATCH_MIDIOUT "midiOutputPortLayer"
-#define XML_PATCH_MIDIOUT_PORT "port"
-#define XML_PATCH_MIDIOUT_SOLO "solo"
-#define XML_PATCH_MIDIOUT_MUTE "mute"
-#define XML_PATCH_MIDIOUT_MIDI_IN "midiIn"
-
-#define XML_PATCH_AUDIOIN "audioInPortLayer"
-#define XML_PATCH_AUDIOIN_NAME "name"
-#define XML_PATCH_AUDIOIN_PORT "port"
-#define XML_PATCH_AUDIOIN_GAIN "gain"
-#define XML_PATCH_AUDIOIN_BUS "bus"
-#define XML_PATCH_AUDIOIN_SOLO "solo"
-#define XML_PATCH_AUDIOIN_MUTE "mute"
-
-#define XML_PATCH_LAYER_SCRIPT "script"
-#define XML_PATCH_LAYER_SCRIPT_CONTENT "content"
-#define XML_PATCH_LAYER_SCRIPT_ENABLED "enabled"
-#define XML_PATCH_LAYER_SCRIPT_PASS_MIDI_THROUGH "passMidiThrough"
-
-#define XML_PATCH_LAYER_RESET_OPTION "resetOption"
-
-#define XML_PATCH_MIDISENDLIST "midiSendList"
 
 class KonfytPatch
 {
@@ -162,22 +120,7 @@ private:
     void writeToXmlStream(QXmlStreamWriter* stream) const;
     void readFromXmlStream(QXmlStreamReader* r, QString* errors = nullptr);
 
-    void xmlWriteSfontLayer(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
-    void xmlReadSfontLayer(QXmlStreamReader* r, QString* errors = nullptr);
-    void xmlWriteSfzLayer(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
-    void xmlReadSfzLayer(QXmlStreamReader* r, QString* errors = nullptr);
-    void xmlWriteMidiOutLayer(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
-    void xmlReadMidiOutLayer(QXmlStreamReader* r, QString* errors = nullptr);
-    void xmlWriteAudioInLayer(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
-    void xmlReadAudioInLayer(QXmlStreamReader* r, QString* errors = nullptr);
-
-    struct LayerScriptData {
-        QString content;
-        bool enabled = false;
-        bool passMidiThrough = true;
-    };
-    void xmlWriteLayerScript(QXmlStreamWriter* stream, KfPatchLayerSharedPtr layer) const;
-    LayerScriptData xmlReadLayerScript(QXmlStreamReader* r);
+    void xmlReadLayer(QXmlStreamReader* r, QString* errors = nullptr);
 
     void appendError(QString *errorString, QString msg);
 };

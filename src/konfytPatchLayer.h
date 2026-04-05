@@ -28,6 +28,49 @@
 #include "konfytMidiFilter.h"
 #include "konfytStructs.h"
 
+#define XML_PATCH_SFLAYER "sfLayer"
+#define XML_PATCH_SFLAYER_FILENAME "soundfont_filename"
+#define XML_PATCH_SFLAYER_BANK "bank"
+#define XML_PATCH_SFLAYER_PROGRAM "program"
+#define XML_PATCH_SFLAYER_NAME "name"
+#define XML_PATCH_SFLAYER_GAIN "gain"
+#define XML_PATCH_SFLAYER_BUS "bus"
+#define XML_PATCH_SFLAYER_SOLO "solo"
+#define XML_PATCH_SFLAYER_MUTE "mute"
+#define XML_PATCH_SFLAYER_MIDI_IN "midiIn"
+
+#define XML_PATCH_SFZLAYER "sfzLayer"
+#define XML_PATCH_SFZLAYER_NAME "name"
+#define XML_PATCH_SFZLAYER_PATH "path"
+#define XML_PATCH_SFZLAYER_GAIN "gain"
+#define XML_PATCH_SFZLAYER_BUS "bus"
+#define XML_PATCH_SFZLAYER_SOLO "solo"
+#define XML_PATCH_SFZLAYER_MUTE "mute"
+#define XML_PATCH_SFZLAYER_MIDI_IN "midiIn"
+
+#define XML_PATCH_MIDIOUT "midiOutputPortLayer"
+#define XML_PATCH_MIDIOUT_PORT "port"
+#define XML_PATCH_MIDIOUT_SOLO "solo"
+#define XML_PATCH_MIDIOUT_MUTE "mute"
+#define XML_PATCH_MIDIOUT_MIDI_IN "midiIn"
+
+#define XML_PATCH_AUDIOIN "audioInPortLayer"
+#define XML_PATCH_AUDIOIN_NAME "name"
+#define XML_PATCH_AUDIOIN_PORT "port"
+#define XML_PATCH_AUDIOIN_GAIN "gain"
+#define XML_PATCH_AUDIOIN_BUS "bus"
+#define XML_PATCH_AUDIOIN_SOLO "solo"
+#define XML_PATCH_AUDIOIN_MUTE "mute"
+
+#define XML_PATCH_LAYER_SCRIPT "script"
+#define XML_PATCH_LAYER_SCRIPT_CONTENT "content"
+#define XML_PATCH_LAYER_SCRIPT_ENABLED "enabled"
+#define XML_PATCH_LAYER_SCRIPT_PASS_MIDI_THROUGH "passMidiThrough"
+
+#define XML_PATCH_LAYER_RESET_OPTION "resetOption"
+
+#define XML_PATCH_MIDISENDLIST "midiSendList"
+
 // ============================================================================
 
 struct LayerSoundfontData
@@ -138,6 +181,12 @@ public:
 
     QString uri;
 
+    void writeToXmlStream(QXmlStreamWriter* stream) const;
+    void readFromXmlStream(QXmlStreamReader* r, QString* errors = nullptr);
+
+    QByteArray toByteArray();
+    void fromByteArray(QByteArray data);
+
 private:
     LayerType mLayerType = TypeUninitialized;
     QString mErrorMessage;
@@ -164,6 +213,27 @@ private:
     bool mPassMidiThrough = true;
 
     MidiValueController gainMidiCtrl;
+
+    void writeSoundfontDataToXmlStream(QXmlStreamWriter* stream) const;
+    void readSoundfontDataFromXmlStream(QXmlStreamReader* r, QString* errors);
+    void writeSfzDataToXmlStream(QXmlStreamWriter* stream) const;
+    void readSfzDataFromXmlStream(QXmlStreamReader* r, QString* errors);
+    void writeMidiOutDataToXmlStream(QXmlStreamWriter* stream) const;
+    void readMidiOutDataFromXmlStream(QXmlStreamReader* r, QString* errors);
+    void writeAudioInDataToXmlStream(QXmlStreamWriter* stream) const;
+    void readAudioInDataFromXmlStream(QXmlStreamReader* r, QString* errors);
+    void writeScriptToXmlStream(QXmlStreamWriter* stream) const;
+
+    struct LayerScriptData {
+        QString content;
+        bool enabled = false;
+        bool passMidiThrough = true;
+    };
+    LayerScriptData readScriptFromXmlStream(QXmlStreamReader* r, QString* errors);
+
+    void appendError(QString *errorString, QString msg);
 };
+
+typedef QSharedPointer<KonfytPatchLayer> KonfytPatchLayerPtr;
 
 #endif // KONFYT_PATCH_LAYER_H
