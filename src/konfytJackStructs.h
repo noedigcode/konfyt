@@ -34,7 +34,7 @@ struct KonfytJackPortsSpec
 {
     QString name;
     QString midiOutConnectTo;
-    KonfytMidiFilter midiFilter;
+    MidiFilter midiFilter;
     QString audioInLeftConnectTo;
     QString audioInRightConnectTo;
 };
@@ -55,7 +55,7 @@ struct KfJackMidiPort
 protected:
     jack_port_t* jackPointer = nullptr;
     void* buffer;
-    KonfytMidiFilter filter;
+    MidiFilter filter;
     // True to block events from being sent through, for when events need to be
     // diverted solely to scripting.
     bool blockDirectThrough = false;
@@ -84,8 +84,8 @@ protected:
     // True to block events from being sent through, for when events need to be
     // diverted solely to scripting.
     bool blockDirectThrough = false;
-    KonfytMidiFilter preFilter;
-    KonfytMidiFilter filter;
+    MidiFilter preFilter;
+    MidiFilter filter;
     KfJackMidiPort* source = nullptr;
     KfJackMidiPort* destPort = nullptr;
     KfFluidSynth* destFluidsynthID = nullptr;

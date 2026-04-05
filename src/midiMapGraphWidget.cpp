@@ -28,7 +28,7 @@ MidiMapGraphWidget::MidiMapGraphWidget(QWidget *parent) : QWidget(parent)
 
 }
 
-void MidiMapGraphWidget::setMapping(KonfytMidiMapping m)
+void MidiMapGraphWidget::setMapping(MidiFilterMapping m)
 {
     mapping = m;
     repaint();

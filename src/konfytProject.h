@@ -36,11 +36,11 @@
 #include <QXmlStreamWriter>
 
 
-class KonfytProject;
-typedef QSharedPointer<KonfytProject> ProjectPtr;
+class Project;
+typedef QSharedPointer<Project> ProjectPtr;
 
 
-class KonfytProject : public QObject
+class Project : public QObject
 {
     Q_OBJECT
 public:
@@ -67,7 +67,7 @@ public:
         QString portName;
         QStringList clients;
         KfJackMidiPort* jackPort = nullptr; // TODO THIS MUST NOT BE IN PROJECT
-        KonfytMidiFilter filter = KonfytMidiFilter::allPassFilter();
+        MidiFilter filter = MidiFilter::allPassFilter();
         QString script;
         bool scriptEnabled = false;
         // True to pass original events through in addition to script processing.
@@ -116,7 +116,7 @@ public:
     static const QString PROJECT_PATCH_DIR;
     static const QString PROJECT_BACKUP_DIR;
 
-    explicit KonfytProject(QObject *parent = 0);
+    explicit Project(QObject *parent = 0);
 
     bool loadProject(QString filepath);
     bool saveProject();
@@ -124,13 +124,13 @@ public:
     bool isModified();
     void setModified(bool mod);
 
-    void addPatch(KonfytPatch* newPatch);
-    void insertPatch(KonfytPatch* newPatch, int index);
-    KonfytPatch* removePatch(int i);
+    void addPatch(Patch* newPatch);
+    void insertPatch(Patch* newPatch, int index);
+    Patch* removePatch(int i);
     void movePatch(int indexFrom, int indexTo);
-    KonfytPatch* getPatch(int i);
-    int getPatchIndex(KonfytPatch* patch);
-    QList<KonfytPatch*> getPatchList();
+    Patch* getPatch(int i);
+    int getPatchIndex(Patch* patch);
+    QList<Patch*> getPatchList();
     int getNumPatches();
 
     QString getDirPath();
@@ -167,7 +167,7 @@ public:
     QStringList midiInPort_getClients(int portId);  // Get client list of single port
     void midiInPort_addClient(int portId, QString client);
     void midiInPort_removeClient(int portId, QString client);
-    void midiInPort_setPortFilter(int portId, KonfytMidiFilter filter);
+    void midiInPort_setPortFilter(int portId, MidiFilter filter);
 
     // -----------------------------------------------------------------------
     // MIDI output ports
@@ -271,7 +271,7 @@ signals:
     void externalAppModified(int id);
     
 private:
-    QList<KonfytPatch*> patchList;
+    QList<Patch*> patchList;
     QString mProjectDirpath;
     QString mProjectName = NEW_PROJECT_DEFAULT_NAME;
     QString mProjectFilename;

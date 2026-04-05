@@ -32,13 +32,6 @@
 #include <iostream>
 
 
-int wrapIndex(int index, int listLength)
-{
-    if (index < 0) { index = listLength - 1; }
-    if (index >= listLength) { index = 0; }
-    return index;
-}
-
 QString sanitiseFilename(QString filename)
 {
     static QString invalid = "<>:\"/\\|?*";

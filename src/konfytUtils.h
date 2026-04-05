@@ -24,10 +24,17 @@
 
 #include <QString>
 
+// ===========================================================================
+// Version Info
 
 #define APP_NAME "Konfyt"
 #define APP_VERSION "1.7.0-rc3"
 #define APP_YEAR "2026"
+
+QString getCompileVersionText();
+
+// ===========================================================================
+// String conversion
 
 #define n2s(x) QString::number(x)
 #define bool2int(x) (x ? 1 : 0)
@@ -35,12 +42,14 @@
 #define int2bool(x) (x!=0)
 #define Qstr2bool(x) (x!="0")
 
-#define STRING_PROJECT_DIR "$PROJ_DIR$"
-#define KONFYT_PATCH_SUFFIX "konfytpatch"
+// ===========================================================================
+// Filesnames and paths
 
-// ============================================================================
+QString sanitiseFilename(QString path);
+QString getUniquePath(QString dirname, QString name, QString extension);
+
+// ===========================================================================
 // Assert
-// ============================================================================
 
 /* Q_ASSERT if in debug mode. If not in debug mode and the condition is false,
  * print file, line, function name and condition to stdout. */
@@ -62,12 +71,6 @@
 void konfytAssertMsg(const char* file, int line, const char* func,
                      const char* text);
 
-// ============================================================================
-
-int wrapIndex(int index, int listLength);
-QString sanitiseFilename(QString path);
-QString getUniquePath(QString dirname, QString name, QString extension);
-QString getCompileVersionText();
 
 
 #endif // KONFYT_DEFINES_H

@@ -37,22 +37,22 @@ public:
     explicit PatchListWidgetAdapter(QObject *parent = nullptr);
 
     void init(GidListWidget* listWidget);
-    void addPatch(KonfytPatch* patch);
-    void insertPatch(KonfytPatch* patch, int index);
-    void addPatches(QList<KonfytPatch*> patches);
-    void removePatch(KonfytPatch* patch);
-    void patchModified(KonfytPatch* patch);
+    void addPatch(Patch* patch);
+    void insertPatch(Patch* patch, int index);
+    void addPatches(QList<Patch*> patches);
+    void removePatch(Patch* patch);
+    void patchModified(Patch* patch);
     void clear();
     void moveSelectedPatchUp();
     void moveSelectedPatchDown();
     void setPatchNumbersVisible(bool visible);
     void setPatchNotesVisible(bool visible);
-    void setPatchLoaded(KonfytPatch* patch, bool loaded);
-    void setCurrentPatch(KonfytPatch* patch);
+    void setPatchLoaded(Patch* patch, bool loaded);
+    void setCurrentPatch(Patch* patch);
 
 signals:
     /* Emitted when current patch selection changed. nullptr if no patch is selected. */
-    void patchSelected(KonfytPatch* patch);
+    void patchSelected(Patch* patch);
     void patchMoved(int indexFrom, int indexTo);
 
 private:
@@ -64,17 +64,17 @@ private:
     const QString notenames = "CDEFGAB";
 
     GidListWidget* mListWidget = nullptr;
-    QMap<KonfytPatch*, PatchData> patchDataMap;
-    QMap<QListWidgetItem*, KonfytPatch*> itemPatchMap;
+    QMap<Patch*, PatchData> patchDataMap;
+    QMap<QListWidgetItem*, Patch*> itemPatchMap;
     bool mNumbersVisible = true;
     bool mNotesVisible = false;
-    KonfytPatch* mCurrentPatch = nullptr;
+    Patch* mCurrentPatch = nullptr;
 
 private slots:
     void onListWidgetCurrentChanged(QListWidgetItem* item);
     void onListWidgetItemMoved(QListWidgetItem* item, int from, int to);
-    void updatePatchItem(KonfytPatch* patch);
-    void updatePatchIcon(KonfytPatch* patch);
+    void updatePatchItem(Patch* patch);
+    void updatePatchIcon(Patch* patch);
     void updateAll();
     void moveItem(int indexFrom, int indexTo);
 };

@@ -24,9 +24,9 @@
 #include <QRegularExpression>
 
 
-KonfytMidiFilter KonfytMidiFilter::allPassFilter()
+MidiFilter MidiFilter::allPassFilter()
 {
-    KonfytMidiFilter f;
+    MidiFilter f;
     f.passCC.clear();
     f.blockCC.clear();
     f.passAllCC = true;
@@ -41,7 +41,7 @@ KonfytMidiFilter KonfytMidiFilter::allPassFilter()
     return f;
 }
 
-void KonfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, int highVel, int velLimitMin, int velLimitMax)
+void MidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, int highVel, int velLimitMin, int velLimitMax)
 {
     zone.lowNote = lowNote;
     zone.highNote = highNote;
@@ -52,14 +52,14 @@ void KonfytMidiFilter::setZone(int lowNote, int highNote, int add, int lowVel, i
     zone.velLimitMax = velLimitMax;
 }
 
-void KonfytMidiFilter::setZone(KonfytMidiFilterZone newZone)
+void MidiFilter::setZone(MidiFilterZone newZone)
 {
     zone = newZone;
 }
 
 /* Returns true if midi event in specified buffer passes based on
  * filter rules (e.g. note is in the required key and velocity zone). */
-bool KonfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
+bool MidiFilter::passFilter(const KonfytMidiEvent* ev)
 {
     bool pass = false;
 
@@ -120,7 +120,7 @@ bool KonfytMidiFilter::passFilter(const KonfytMidiEvent* ev)
 /* Modify buffer (containing midi event) based on filter rules,
  * e.g. transposing, midi channel, etc.
  * It is assumed that passFilter() has already been called and returned true. */
-KonfytMidiEvent KonfytMidiFilter::modify(const KonfytMidiEvent* ev)
+KonfytMidiEvent MidiFilter::modify(const KonfytMidiEvent* ev)
 {
     KonfytMidiEvent r = *ev;
 
@@ -146,87 +146,87 @@ KonfytMidiEvent KonfytMidiFilter::modify(const KonfytMidiEvent* ev)
     return r;
 }
 
-void KonfytMidiFilter::writeToXMLStream(QXmlStreamWriter *stream) const
+void MidiFilter::writeToXMLStream(QXmlStreamWriter *stream) const
 {
     stream->writeStartElement(XML_MIDIFILTER);
 
     // Note / velocity zone
-    KonfytMidiFilterZone z = this->zone;
-    stream->writeStartElement(XML_MIDIFILTER_ZONE);
-    stream->writeTextElement(XML_MIDIFILTER_ZONE_LOWNOTE, n2s(z.lowNote));
-    stream->writeTextElement(XML_MIDIFILTER_ZONE_HINOTE, n2s(z.highNote));
-    stream->writeTextElement(XML_MIDIFILTER_ZONE_ADD, n2s(z.add));
-    stream->writeTextElement(XML_MIDIFILTER_ZONE_LOWVEL, n2s(z.lowVel));
-    stream->writeTextElement(XML_MIDIFILTER_ZONE_HIVEL, n2s(z.highVel));
-    stream->writeTextElement(XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN, n2s(z.velLimitMin));
-    stream->writeTextElement(XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX, n2s(z.velLimitMax));
-    stream->writeTextElement(XML_MIDIFILTER_ZONE_PITCH_DOWN_MAX, n2s(z.pitchDownMax));
-    stream->writeTextElement(XML_MIDIFILTER_ZONE_PITCH_UP_MAX, n2s(z.pitchUpMax));
-    stream->writeTextElement(XML_MIDIFILTER_ZONE_VELOCITY_MAP, z.velocityMap.toString());
+    MidiFilterZone z = this->zone;
+    stream->writeStartElement(XML_ZONE);
+    stream->writeTextElement(XML_ZONE_LOWNOTE, n2s(z.lowNote));
+    stream->writeTextElement(XML_ZONE_HINOTE, n2s(z.highNote));
+    stream->writeTextElement(XML_ZONE_ADD, n2s(z.add));
+    stream->writeTextElement(XML_ZONE_LOWVEL, n2s(z.lowVel));
+    stream->writeTextElement(XML_ZONE_HIVEL, n2s(z.highVel));
+    stream->writeTextElement(XML_ZONE_VEL_LIMIT_MIN, n2s(z.velLimitMin));
+    stream->writeTextElement(XML_ZONE_VEL_LIMIT_MAX, n2s(z.velLimitMax));
+    stream->writeTextElement(XML_ZONE_PITCH_DOWN_MAX, n2s(z.pitchDownMax));
+    stream->writeTextElement(XML_ZONE_PITCH_UP_MAX, n2s(z.pitchUpMax));
+    stream->writeTextElement(XML_ZONE_VELOCITY_MAP, z.velocityMap.toString());
     stream->writeEndElement();
 
     // passAllCC
     QString tempBool;
     if (this->passAllCC) { tempBool = "1"; } else { tempBool = "0"; }
-    stream->writeTextElement(XML_MIDIFILTER_PASSALLCC, tempBool);
+    stream->writeTextElement(XML_PASSALLCC, tempBool);
 
     // passPitchbend
     if (this->passPitchbend) { tempBool = "1"; } else { tempBool = "0"; }
-    stream->writeTextElement(XML_MIDIFILTER_PASSPB, tempBool);
+    stream->writeTextElement(XML_PASSPB, tempBool);
 
     // passProg
     if (this->passProg) { tempBool = "1"; } else { tempBool = "0"; }
-    stream->writeTextElement(XML_MIDIFILTER_PASSPROG, tempBool);
+    stream->writeTextElement(XML_PASSPROG, tempBool);
 
     // ignoreGlobalTranspose
-    stream->writeTextElement(XML_MIDIFILTER_IGNORE_GLOBAL_TRANSPOSE,
+    stream->writeTextElement(XML_IGNORE_GLOBAL_TRANSPOSE,
                              bool2str(this->ignoreGlobalTranspose));
 
     // List of allowed CCs
     for (int i=0; i<this->passCC.count(); i++) {
-        stream->writeTextElement(XML_MIDIFILTER_CC, n2s(this->passCC.at(i)));
+        stream->writeTextElement(XML_CC, n2s(this->passCC.at(i)));
     }
     // List of blocked CCs
     foreach (int cc, blockCC) {
-        stream->writeTextElement(XML_MIDIFILTER_BLOCK_CC, n2s(cc));
+        stream->writeTextElement(XML_BLOCK_CC, n2s(cc));
     }
 
     // Input/output channels
-    stream->writeTextElement(XML_MIDIFILTER_INCHAN, n2s(this->inChan));
-    stream->writeTextElement(XML_MIDIFILTER_OUTCHAN, n2s(this->outChan));
+    stream->writeTextElement(XML_INCHAN, n2s(this->inChan));
+    stream->writeTextElement(XML_OUTCHAN, n2s(this->outChan));
 
     stream->writeEndElement(); // midiFilter
 }
 
-void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
+void MidiFilter::readFromXMLStream(QXmlStreamReader *r)
 {
     this->passCC.clear();
     this->blockCC.clear();
 
     while (r->readNextStartElement()) { // Filter properties
-        if (r->name() == XML_MIDIFILTER_ZONE) {
-            KonfytMidiFilterZone z;
+        if (r->name() == XML_ZONE) {
+            MidiFilterZone z;
             bool gotMap = false;
             while (r->readNextStartElement()) { // zone properties
-                if (r->name() == XML_MIDIFILTER_ZONE_LOWNOTE) {
+                if (r->name() == XML_ZONE_LOWNOTE) {
                     z.lowNote = r->readElementText().toInt();
-                } else if (r->name() == XML_MIDIFILTER_ZONE_HINOTE) {
+                } else if (r->name() == XML_ZONE_HINOTE) {
                     z.highNote = r->readElementText().toInt();
-                } else if (r->name() == XML_MIDIFILTER_ZONE_ADD) {
+                } else if (r->name() == XML_ZONE_ADD) {
                     z.add = r->readElementText().toInt();
-                } else if (r->name() ==  XML_MIDIFILTER_ZONE_LOWVEL) {
+                } else if (r->name() ==  XML_ZONE_LOWVEL) {
                     z.lowVel = r->readElementText().toInt();
-                } else if (r->name() == XML_MIDIFILTER_ZONE_HIVEL) {
+                } else if (r->name() == XML_ZONE_HIVEL) {
                     z.highVel = r->readElementText().toInt();
-                } else if (r->name() == XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN) {
+                } else if (r->name() == XML_ZONE_VEL_LIMIT_MIN) {
                     z.velLimitMin = r->readElementText().toInt();
-                } else if (r->name() == XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX) {
+                } else if (r->name() == XML_ZONE_VEL_LIMIT_MAX) {
                     z.velLimitMax = r->readElementText().toInt();
-                } else if (r->name() == XML_MIDIFILTER_ZONE_PITCH_DOWN_MAX) {
+                } else if (r->name() == XML_ZONE_PITCH_DOWN_MAX) {
                     z.pitchDownMax = r->readElementText().toInt();
-                } else if (r->name() == XML_MIDIFILTER_ZONE_PITCH_UP_MAX) {
+                } else if (r->name() == XML_ZONE_PITCH_UP_MAX) {
                     z.pitchUpMax = r->readElementText().toInt();
-                } else if (r->name() == XML_MIDIFILTER_ZONE_VELOCITY_MAP) {
+                } else if (r->name() == XML_ZONE_VELOCITY_MAP) {
                     gotMap = true;
                     z.velocityMap.fromString(r->readElementText());
                 } else {
@@ -239,21 +239,21 @@ void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
                 // Convert the old velocity min/max and limits to a map.
                 deprecatedVelocityToMap();
             }
-        } else if (r->name() == XML_MIDIFILTER_PASSALLCC) {
+        } else if (r->name() == XML_PASSALLCC) {
             this->passAllCC = (r->readElementText() == "1");
-        } else if (r->name() == XML_MIDIFILTER_PASSPB) {
+        } else if (r->name() == XML_PASSPB) {
             this->passPitchbend = (r->readElementText() == "1");
-        } else if (r->name() == XML_MIDIFILTER_PASSPROG) {
+        } else if (r->name() == XML_PASSPROG) {
             this->passProg = (r->readElementText() == "1");
-        } else if (r->name() == XML_MIDIFILTER_IGNORE_GLOBAL_TRANSPOSE) {
+        } else if (r->name() == XML_IGNORE_GLOBAL_TRANSPOSE) {
             this->ignoreGlobalTranspose = (r->readElementText() == "1");
-        } else if (r->name() == XML_MIDIFILTER_CC) {
+        } else if (r->name() == XML_CC) {
             this->passCC.append(r->readElementText().toInt());
-        } else if (r->name() == XML_MIDIFILTER_BLOCK_CC) {
+        } else if (r->name() == XML_BLOCK_CC) {
             this->blockCC.append(r->readElementText().toInt());
-        } else if (r->name() == XML_MIDIFILTER_INCHAN) {
+        } else if (r->name() == XML_INCHAN) {
             this->inChan = r->readElementText().toInt();
-        } else if (r->name() == XML_MIDIFILTER_OUTCHAN) {
+        } else if (r->name() == XML_OUTCHAN) {
             this->outChan = r->readElementText().toInt();
         } else {
             r->skipCurrentElement();
@@ -262,7 +262,7 @@ void KonfytMidiFilter::readFromXMLStream(QXmlStreamReader *r)
 }
 
 /* Translate the old deprecated velocity min/max and limits to a velocity map. */
-void KonfytMidiFilter::deprecatedVelocityToMap()
+void MidiFilter::deprecatedVelocityToMap()
 {
     zone.velocityMap.inNodes.clear();
     zone.velocityMap.outNodes.clear();
@@ -304,7 +304,7 @@ void KonfytMidiFilter::deprecatedVelocityToMap()
     }
 }
 
-int KonfytMidiMapping::map(int inValue)
+int MidiFilterMapping::map(int inValue)
 {
     if ((inValue < 0) || (inValue > 127)) {
         return 0;
@@ -312,14 +312,14 @@ int KonfytMidiMapping::map(int inValue)
     return mMap[inValue];
 }
 
-KonfytMidiMapping::KonfytMidiMapping()
+MidiFilterMapping::MidiFilterMapping()
 {
     inNodes << 0 << 127;
     outNodes << 0 << 127;
     update();
 }
 
-void KonfytMidiMapping::update()
+void MidiFilterMapping::update()
 {
     int lastin = 0;
     int lastout = outNodes.value(0);
@@ -344,12 +344,12 @@ void KonfytMidiMapping::update()
     }
 }
 
-int KonfytMidiMapping::clamp(int value, int min, int max)
+int MidiFilterMapping::clamp(int value, int min, int max)
 {
     return qMax(min, qMin(max, value));
 }
 
-void KonfytMidiMapping::fromString(QString s)
+void MidiFilterMapping::fromString(QString s)
 {
     // Decode string in the form [i1, i2, ... in; o1, o2, ... on]
     // Where i1 to in and o1 to on are integers,
@@ -376,7 +376,7 @@ void KonfytMidiMapping::fromString(QString s)
     update();
 }
 
-QString KonfytMidiMapping::toString()
+QString MidiFilterMapping::toString()
 {
     QString s1;
     foreach (int i, inNodes) {

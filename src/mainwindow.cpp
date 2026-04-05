@@ -247,7 +247,7 @@ void MainWindow::updateProjectsMenu()
         print("Projects directory does not exist: " + mProjectsDir);
     } else {
         projectDirList = scanDirForFilesSkipBackupSubdirs(mProjectsDir,
-                                    KonfytProject::PROJECT_FILENAME_EXTENSION);
+                                    Project::PROJECT_FILENAME_EXTENSION);
     }
 
     // Setup menu
@@ -265,7 +265,7 @@ void MainWindow::updateProjectsMenu()
         foreach (QString dir, projectDirList) {
             QFileInfo fi(dir);
             QAction* newAction = projectsMenu.addAction(
-                fi.fileName().remove(KonfytProject::PROJECT_FILENAME_EXTENSION));
+                fi.fileName().remove(Project::PROJECT_FILENAME_EXTENSION));
             newAction->setToolTip(fi.filePath());
             projectsMenuMap.insert(newAction, fi);
         }
@@ -306,7 +306,7 @@ void MainWindow::on_actionProject_Open_triggered()
     // Show open dialog box
     QString filename = QFileDialog::getOpenFileName(this,
                             "Select project to open", mProjectsDir,
-                            "*" + KonfytProject::PROJECT_FILENAME_EXTENSION);
+                            "*" + Project::PROJECT_FILENAME_EXTENSION);
     if (filename.isEmpty()) {
         print("Cancelled.");
         return;
@@ -408,7 +408,7 @@ void MainWindow::setupScripting()
     }
 }
 
-void MainWindow::showScriptEditorForPatchLayer(KonfytPatchLayerPtr patchLayer)
+void MainWindow::showScriptEditorForPatchLayer(PatchLayerPtr patchLayer)
 {
     mScriptEditPort.reset();
     mScriptEditLayer = patchLayer;
@@ -417,7 +417,7 @@ void MainWindow::showScriptEditorForPatchLayer(KonfytPatchLayerPtr patchLayer)
     showScriptEditor();
 }
 
-void MainWindow::showScriptEditorForPort(KonfytProject::MidiPortPtr prjPort)
+void MainWindow::showScriptEditorForPort(Project::MidiPortPtr prjPort)
 {
     mScriptEditLayer.reset();
     mScriptEditPort = prjPort;
@@ -440,7 +440,7 @@ void MainWindow::showScriptEditor()
         passMidiThrough = mScriptEditLayer->isPassMidiThrough();
         title = QString("Layer: %1").arg(mScriptEditLayer->uri);
 
-        KonfytPatchLayerPtr layer = mScriptEditLayer;
+        PatchLayerPtr layer = mScriptEditLayer;
         scriptEngine.scriptErrorString(layer, this, [=](QString errorText)
         {
             if (this->mScriptEditLayer == layer) {
@@ -455,7 +455,7 @@ void MainWindow::showScriptEditor()
         passMidiThrough = mScriptEditPort->passMidiThrough;
         title = QString("Port: %1").arg(mScriptEditPort->portName);
 
-        KonfytProject::MidiPortPtr port = mScriptEditPort;
+        Project::MidiPortPtr port = mScriptEditPort;
         scriptEngine.scriptErrorString(port, this, [=](QString errorText)
         {
             if (this->mScriptEditPort == port) {
@@ -524,7 +524,7 @@ void MainWindow::onScriptInfoTimer()
 
     if (mScriptEditLayer) {
 
-        KonfytPatchLayerPtr layer = mScriptEditLayer;
+        PatchLayerPtr layer = mScriptEditLayer;
         scriptEngine.scriptAverageProcessTimeMs(layer, this,
                                     [=](float perEventMs, float totalProcessMs)
         {
@@ -535,7 +535,7 @@ void MainWindow::onScriptInfoTimer()
 
     } else if (mScriptEditPort) {
 
-        KonfytProject::MidiPortPtr port = mScriptEditPort;
+        Project::MidiPortPtr port = mScriptEditPort;
         scriptEngine.scriptAverageProcessTimeMs(port, this,
                                     [=](float perEventMs, float totalProcessMs)
         {
@@ -552,17 +552,17 @@ void MainWindow::onJsEnginePrint(QString msg)
     print("js: " + msg);
 }
 
-void MainWindow::onLayerScriptPrint(KonfytPatchLayerPtr patchLayer, QString msg)
+void MainWindow::onLayerScriptPrint(PatchLayerPtr patchLayer, QString msg)
 {
     onJsEnginePrint(QString("script: [%1] %2").arg(patchLayer->uri, msg));
 }
 
-void MainWindow::onPortScriptPrint(KonfytProject::MidiPortPtr prjPort, QString msg)
+void MainWindow::onPortScriptPrint(Project::MidiPortPtr prjPort, QString msg)
 {
     onJsEnginePrint(QString("script: [%1] %2").arg(prjPort->portName, msg));
 }
 
-void MainWindow::onLayerScriptErrorStatusChanged(KonfytPatchLayerPtr patchLayer,
+void MainWindow::onLayerScriptErrorStatusChanged(PatchLayerPtr patchLayer,
                                             QString errorString)
 {
     // Update error text if the patch layer is the one currently being edited
@@ -571,7 +571,7 @@ void MainWindow::onLayerScriptErrorStatusChanged(KonfytPatchLayerPtr patchLayer,
     }
 }
 
-void MainWindow::onPortScriptErrorStatusChanged(KonfytProject::MidiPortPtr prjPort,
+void MainWindow::onPortScriptErrorStatusChanged(Project::MidiPortPtr prjPort,
                                                 QString errorString)
 {
     // Update error text if the port is the one currently being edited
@@ -582,7 +582,7 @@ void MainWindow::onPortScriptErrorStatusChanged(KonfytProject::MidiPortPtr prjPo
 
 void MainWindow::on_action_Edit_Script_triggered()
 {
-    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
+    PatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
     if (!layer) {
         print("Error: edit script: null layer");
         return;
@@ -696,17 +696,17 @@ QTreeWidgetItem* MainWindow::scanProjectScripts(QString path, ItemScriptMap* map
     root->setIcon(0, mFolderIcon);
 
     QStringList paths = scanDirForFilesSkipBackupSubdirs(path,
-                                    KonfytProject::PROJECT_FILENAME_EXTENSION);
+                                    Project::PROJECT_FILENAME_EXTENSION);
 
     foreach (QString path, paths) {
 
-        ProjectPtr prj(new KonfytProject());
+        ProjectPtr prj(new Project());
         if (!prj->loadProject(path)) { continue; }
 
         QTreeWidgetItem* projectItem = new QTreeWidgetItem();
 
-        QList<KonfytProject::MidiPortPtr> midiInPorts = prj->midiInPort_getAllPorts();
-        foreach (KonfytProject::MidiPortPtr port, midiInPorts) {
+        QList<Project::MidiPortPtr> midiInPorts = prj->midiInPort_getAllPorts();
+        foreach (Project::MidiPortPtr port, midiInPorts) {
             if (port->script.trimmed().isEmpty()) { continue; }
             QTreeWidgetItem* item = new QTreeWidgetItem();
             item->setText(0, QString("Port %1").arg(port->portName));
@@ -715,15 +715,15 @@ QTreeWidgetItem* MainWindow::scanProjectScripts(QString path, ItemScriptMap* map
             projectItem->addChild(item);
         }
 
-        QList<KonfytPatch*> patches = prj->getPatchList();
-        foreach (KonfytPatch* patch, patches) {
+        QList<Patch*> patches = prj->getPatchList();
+        foreach (Patch* patch, patches) {
 
             QTreeWidgetItem* patchItem = new QTreeWidgetItem();
             patchItem->setText(0, QString("Patch %1").arg(patch->name()));
             patchItem->setIcon(0, mFolderIcon);
 
-            QList<KonfytPatchLayerPtr> layers = patch->layers();
-            foreach (KonfytPatchLayerPtr layer, layers) {
+            QList<PatchLayerPtr> layers = patch->layers();
+            foreach (PatchLayerPtr layer, layers) {
                 if (!layer) { continue; }
                 if (layer->hasMidiInput()) {
                     if (layer->script().trimmed().isEmpty()) {
@@ -748,11 +748,11 @@ QTreeWidgetItem* MainWindow::scanProjectScripts(QString path, ItemScriptMap* map
 
         // Check backups dir
         QString backupPath = QString("%1/%2").arg(QFileInfo(path).dir().path())
-                                        .arg(KonfytProject::PROJECT_BACKUP_DIR);
+                                        .arg(Project::PROJECT_BACKUP_DIR);
         if (dirExists(backupPath)) {
             QTreeWidgetItem* backupsItem = scanProjectScripts(backupPath, map);
             if (backupsItem->childCount()) {
-                backupsItem->setText(0, KonfytProject::PROJECT_BACKUP_DIR);
+                backupsItem->setText(0, Project::PROJECT_BACKUP_DIR);
                 projectItem->addChild(backupsItem);
             } else {
                 delete backupsItem;
@@ -802,7 +802,7 @@ void MainWindow::on_pushButton_scripts_rescan_clicked()
     // Expand all except backup dirs
     ui->treeWidget_scripts->expandAll();
     QList<QTreeWidgetItem*> backupItems =
-            ui->treeWidget_scripts->findItems(KonfytProject::PROJECT_BACKUP_DIR,
+            ui->treeWidget_scripts->findItems(Project::PROJECT_BACKUP_DIR,
                                     Qt::MatchFixedString | Qt::MatchRecursive);
     foreach (QTreeWidgetItem* item, backupItems) {
         item->setExpanded(false);
@@ -841,8 +841,8 @@ void MainWindow::on_treeWidget_scripts_itemClicked(QTreeWidgetItem* item, int /*
 
 ProjectPtr MainWindow::newProjectPtr()
 {
-    ProjectPtr prj(new KonfytProject());
-    connect(prj.data(), &KonfytProject::print, this, &MainWindow::print);
+    ProjectPtr prj(new Project());
+    connect(prj.data(), &Project::print, this, &MainWindow::print);
     return prj;
 }
 
@@ -911,9 +911,9 @@ QString MainWindow::intListToText(QList<int> lst)
     return ret;
 }
 
-KonfytMidiFilter MainWindow::midiFilterFromGuiEditor()
+MidiFilter MainWindow::midiFilterFromGuiEditor()
 {
-    KonfytMidiFilter f = midiFilterUnderEdit;
+    MidiFilter f = midiFilterUnderEdit;
 
     // Update the filter from the GUI
     f.zone.lowNote = ui->spinBox_midiFilter_LowNote->value();
@@ -939,7 +939,7 @@ KonfytMidiFilter MainWindow::midiFilterFromGuiEditor()
     return f;
 }
 
-void MainWindow::updateMidiFilterBeingEdited(KonfytMidiFilter newFilter)
+void MainWindow::updateMidiFilterBeingEdited(MidiFilter newFilter)
 {
     ProjectPtr prj = mCurrentProject;
     if (!prj) {
@@ -951,7 +951,7 @@ void MainWindow::updateMidiFilterBeingEdited(KonfytMidiFilter newFilter)
     case MainWindow::MidiFilterEditPort:
     {
         prj->midiInPort_setPortFilter(midiFilterEditPort, newFilter);
-        KonfytProject::MidiPortPtr prjPort = prj->midiInPort_getPort(midiFilterEditPort);
+        Project::MidiPortPtr prjPort = prj->midiInPort_getPort(midiFilterEditPort);
         if (prjPort) {
             jack.setPortFilter(prjPort->jackPort, newFilter);
         }
@@ -1143,12 +1143,12 @@ void MainWindow::showMidiFilterEditor()
 {
     // Switch to midi filter view
 
-    KonfytMidiFilter f;
+    MidiFilter f;
     switch (midiFilterEditType) {
     case MainWindow::MidiFilterEditPort:
     {
         if (!mCurrentProject) { return; }
-        KonfytProject::MidiPortPtr prjPort = mCurrentProject->midiInPort_getPort(midiFilterEditPort);
+        Project::MidiPortPtr prjPort = mCurrentProject->midiInPort_getPort(midiFilterEditPort);
         if (prjPort) {
             f = prjPort->filter;
         }
@@ -1171,7 +1171,7 @@ void MainWindow::showMidiFilterEditor()
 
     blockMidiFilterEditorModified = true;
 
-    KonfytMidiFilterZone z = f.zone;
+    MidiFilterZone z = f.zone;
     ui->spinBox_midiFilter_LowNote->setValue(z.lowNote);
     ui->spinBox_midiFilter_HighNote->setValue(z.highNote);
     ui->spinBox_midiFilter_Add->setValue(z.add);
@@ -1479,7 +1479,7 @@ void MainWindow::updatePortsBussesTree()
     QList<int> busIds = prj->audioBus_getAllBusIds();
     for (int i=0; i < busIds.count(); i++) {
         int id = busIds[i];
-        KonfytProject::AudioPortPtr b = prj->audioBus_getBus(id);
+        Project::AudioPortPtr b = prj->audioBus_getBus(id);
         KONFYT_ASSERT_CONTINUE(!b.isNull());
         QTreeWidgetItem* item = new QTreeWidgetItem();
         item->setFlags(item->flags() | Qt::ItemIsEditable);
@@ -1493,7 +1493,7 @@ void MainWindow::updatePortsBussesTree()
     QList<int> audioInIds = prj->audioInPort_getAllPortIds();
     for (int i=0; i < audioInIds.count(); i++) {
         int id = audioInIds[i];
-        KonfytProject::AudioPortPtr p = prj->audioInPort_getPort(id);
+        Project::AudioPortPtr p = prj->audioInPort_getPort(id);
         KONFYT_ASSERT_CONTINUE(!p.isNull());
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setFlags(item->flags() | Qt::ItemIsEditable);
@@ -1507,7 +1507,7 @@ void MainWindow::updatePortsBussesTree()
     QList<int> midiOutIds = prj->midiOutPort_getAllPortIds();
     for (int i=0; i < midiOutIds.count(); i++) {
         int id = midiOutIds[i];
-        KonfytProject::MidiPortPtr p = prj->midiOutPort_getPort(id);
+        Project::MidiPortPtr p = prj->midiOutPort_getPort(id);
         KONFYT_ASSERT_CONTINUE(!p.isNull());
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setFlags(item->flags() | Qt::ItemIsEditable);
@@ -1521,7 +1521,7 @@ void MainWindow::updatePortsBussesTree()
     QList<int> midiInIds = prj->midiInPort_getAllPortIds();
     for (int i=0; i < midiInIds.count(); i++) {
         int id = midiInIds[i];
-        KonfytProject::MidiPortPtr p = prj->midiInPort_getPort(id);
+        Project::MidiPortPtr p = prj->midiInPort_getPort(id);
         if (!p) { continue; }
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setFlags(item->flags() | Qt::ItemIsEditable);
@@ -1581,7 +1581,7 @@ void MainWindow::updateConnectionsTree()
     QStringList rightCons;
     if ( ui->tree_portsBusses->currentItem()->parent() == busParent ) {
         // Get the selected bus
-        KonfytProject::AudioPortPtr bus = prj->audioBus_getBus(id);
+        Project::AudioPortPtr bus = prj->audioBus_getBus(id);
         if (bus) {
             leftCons = bus->leftClients;
             rightCons = bus->rightClients;
@@ -1591,7 +1591,7 @@ void MainWindow::updateConnectionsTree()
 
     } else if ( ui->tree_portsBusses->currentItem()->parent() == audioInParent ) {
         // An audio input port is selected
-        KonfytProject::AudioPortPtr p = prj->audioInPort_getPort(id);
+        Project::AudioPortPtr p = prj->audioInPort_getPort(id);
         if (p) {
             leftCons = p->leftClients;
             rightCons = p->rightClients;
@@ -1822,15 +1822,15 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     if (!prj) { return; }
 
     QTreeWidgetItem* t;
-    KonfytProject::PortLeftRight leftRight;
+    Project::PortLeftRight leftRight;
     if (conChecksMap1.contains(c)) {
         // Checkbox is in the left column
         t = conChecksMap1[c];
-        leftRight = KonfytProject::LeftPort;
+        leftRight = Project::LeftPort;
     } else {
         // Checkbox is in the right column
         t = conChecksMap2[c];
-        leftRight = KonfytProject::RightPort;
+        leftRight = Project::RightPort;
     }
 
     // Now we get the JACK port string:
@@ -1839,10 +1839,10 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     if ( ui->tree_portsBusses->currentItem()->parent() == busParent ) {
         // Get the selected bus
         int busId = tree_busMap.value( ui->tree_portsBusses->currentItem() );
-        KonfytProject::AudioPortPtr bus = prj->audioBus_getBus(busId);
+        Project::AudioPortPtr bus = prj->audioBus_getBus(busId);
         if (bus) {
             KfJackAudioPort* jackPort;
-            if (leftRight == KonfytProject::LeftPort) { jackPort = bus->leftJackPort; }
+            if (leftRight == Project::LeftPort) { jackPort = bus->leftJackPort; }
             else { jackPort = bus->rightJackPort; }
 
             if (c->isChecked()) {
@@ -1861,10 +1861,10 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     } else if ( ui->tree_portsBusses->currentItem()->parent() == audioInParent ) {
         // An audio input port is selected
         int portId = tree_audioInMap.value( ui->tree_portsBusses->currentItem() );
-        KonfytProject::AudioPortPtr p = prj->audioInPort_getPort(portId);
+        Project::AudioPortPtr p = prj->audioInPort_getPort(portId);
         if (p) {
             KfJackAudioPort* jackPort;
-            if (leftRight == KonfytProject::LeftPort) { jackPort = p->leftJackPort; }
+            if (leftRight == Project::LeftPort) { jackPort = p->leftJackPort; }
             else { jackPort = p->rightJackPort; }
 
             if (c->isChecked()) {
@@ -1883,7 +1883,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     } else if ( ui->tree_portsBusses->currentItem()->parent() == midiOutParent ) {
         // A midi output port is selected
         int portId = tree_midiOutMap.value( ui->tree_portsBusses->currentItem() );
-        KonfytProject::MidiPortPtr p = prj->midiOutPort_getPort(portId);
+        Project::MidiPortPtr p = prj->midiOutPort_getPort(portId);
         if (p) {
             if (c->isChecked()) {
                 // Connect
@@ -1901,7 +1901,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     } else if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
         // Midi input is selected
         int portId = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
-        KonfytProject::MidiPortPtr p = prj->midiInPort_getPort(portId);
+        Project::MidiPortPtr p = prj->midiInPort_getPort(portId);
         if (p) {
             if (c->isChecked()) {
                 // Connect
@@ -2017,7 +2017,7 @@ void MainWindow::showTriggersPage()
     }
 
     // Get triggers from project and show in gui list
-    QList<KonfytProject::Trigger> l = prj->getTriggerList();
+    QList<Project::Trigger> l = prj->getTriggerList();
     for (int i=0; i<l.count(); i++) {
         for (int j=0; j<items.count(); j++) {
             if (triggersItemActionHash[items[j]]->text() == l[i].actionText) {
@@ -2047,11 +2047,11 @@ void MainWindow::loadProject(ProjectPtr prj)
     pengine.setProject(mCurrentProject);
 
     // Connect project signals
-    connect(prj.data(), &KonfytProject::projectModifiedStateChanged,
+    connect(prj.data(), &Project::projectModifiedStateChanged,
             this, &MainWindow::onProjectModifiedStateChanged);
-    connect(prj.data(), &KonfytProject::projectNameChanged,
+    connect(prj.data(), &Project::projectNameChanged,
             this, &MainWindow::onProjectNameChanged);
-    connect(prj.data(), &KonfytProject::midiPickupRangeChanged,
+    connect(prj.data(), &Project::midiPickupRangeChanged,
             this, &MainWindow::onProjectMidiPickupRangeChanged);
 
     setupWarningConnectionsForProject(prj);
@@ -2076,7 +2076,7 @@ void MainWindow::loadProject(ProjectPtr prj)
         prj->midiInPort_setJackPort(prjPortId, addMidiInPortToJack(prjPortId));
 
         // Also add port clients to Jack
-        KonfytProject::MidiPortPtr prjPort = prj->midiInPort_getPort(prjPortId);
+        Project::MidiPortPtr prjPort = prj->midiInPort_getPort(prjPortId);
         if (!prjPort) { continue; }
         foreach (QString client, prjPort->clients) {
             jack.addPortClient(prjPort->jackPort, client);
@@ -2100,7 +2100,7 @@ void MainWindow::loadProject(ProjectPtr prj)
         prj->midiOutPort_setJackPort(prjPortId, addMidiOutPortToJack(prjPortId));
 
         // Also add port clients to Jack
-        KonfytProject::MidiPortPtr projectPort = prj->midiOutPort_getPort(prjPortId);
+        Project::MidiPortPtr projectPort = prj->midiOutPort_getPort(prjPortId);
         KONFYT_ASSERT_CONTINUE(!projectPort.isNull());
         foreach (QString client, projectPort->clients) {
             jack.addPortClient(projectPort->jackPort, client);
@@ -2112,7 +2112,7 @@ void MainWindow::loadProject(ProjectPtr prj)
     QList<int> busIds = prj->audioBus_getAllBusIds();
     for (int j=0; j < busIds.count(); j++) {
         int id = busIds[j];
-        KonfytProject::AudioPortPtr b =  prj->audioBus_getBus(id);
+        Project::AudioPortPtr b =  prj->audioBus_getBus(id);
         KONFYT_ASSERT_CONTINUE(!b.isNull());
 
         // Add audio bus ports to jack client
@@ -2152,7 +2152,7 @@ void MainWindow::loadProject(ProjectPtr prj)
             // Update left and right port numbers in project
             prj->audioInPort_setJackPorts(id, left, right);
             // Add port clients to jack client
-            KonfytProject::AudioPortPtr p = prj->audioInPort_getPort(id);
+            Project::AudioPortPtr p = prj->audioInPort_getPort(id);
             KONFYT_ASSERT_CONTINUE(!p.isNull());
             foreach (QString client, p->leftClients) {
                 jack.addPortClient(p->leftJackPort, client);
@@ -2173,7 +2173,7 @@ void MainWindow::loadProject(ProjectPtr prj)
 
     triggersMidiActionHash.clear();
 
-    foreach (KonfytProject::Trigger trig, prj->getTriggerList()) {
+    foreach (Project::Trigger trig, prj->getTriggerList()) {
         // Find action that matches text
         foreach (QAction* action, triggersItemActionHash.values()) {
             if (trig.actionText == action->text()) {
@@ -2237,27 +2237,27 @@ void MainWindow::unloadCurrentProject()
 
     clearPortsBussesConnectionsData();
 
-    foreach (KonfytPatch* patch, mCurrentProject->getPatchList()) {
+    foreach (Patch* patch, mCurrentProject->getPatchList()) {
         pengine.unloadPatch(patch);
     }
 
     // Remove all buses from engines
-    foreach (KonfytProject::AudioPortPtr bus, mCurrentProject->audioBus_getAllBuses()) {
+    foreach (Project::AudioPortPtr bus, mCurrentProject->audioBus_getAllBuses()) {
         removeAudioBusFromEngines(bus);
     }
 
     // Remove all MIDI input ports from engines
-    foreach (KonfytProject::MidiPortPtr prjPort, mCurrentProject->midiInPort_getAllPorts()) {
+    foreach (Project::MidiPortPtr prjPort, mCurrentProject->midiInPort_getAllPorts()) {
         removeMidiInPortFromEngines(prjPort);
     }
 
     // Remove all MIDI output ports from engines
-    foreach (KonfytProject::MidiPortPtr prjPort, mCurrentProject->midiOutPort_getAllPorts()) {
+    foreach (Project::MidiPortPtr prjPort, mCurrentProject->midiOutPort_getAllPorts()) {
         removeMidiOutPortFromEngines(prjPort);
     }
 
     // Remove all audio input ports from engines
-    foreach (KonfytProject::AudioPortPtr prjPort, mCurrentProject->audioInPort_getAllPorts()) {
+    foreach (Project::AudioPortPtr prjPort, mCurrentProject->audioInPort_getAllPorts()) {
         removeAudioInPortFromEngines(prjPort);
     }
 
@@ -2279,7 +2279,7 @@ void MainWindow::updateMidiOutPortsMenu(QMenu *menu)
 
     QList<int> midiOutIds = prj->midiOutPort_getAllPortIds();
     foreach (int id, midiOutIds) {
-        KonfytProject::MidiPortPtr projectPort = prj->midiOutPort_getPort(id);
+        Project::MidiPortPtr projectPort = prj->midiOutPort_getPort(id);
         KONFYT_ASSERT_CONTINUE(!projectPort.isNull());
         QAction* action = patchMidiOutPortsMenu.addAction( n2s(id) + " " + projectPort->portName);
         action->setProperty(PTY_MIDI_OUT_PORT, id);
@@ -2302,7 +2302,7 @@ void MainWindow::updateAudioInPortsMenu(QMenu *menu)
 
     QList<int> audioInIds = prj->audioInPort_getAllPortIds();
     foreach (int id, audioInIds) {
-        KonfytProject::AudioPortPtr projectPort = prj->audioInPort_getPort(id);
+        Project::AudioPortPtr projectPort = prj->audioInPort_getPort(id);
         KONFYT_ASSERT_CONTINUE(!projectPort.isNull());
         QAction* action = menu->addAction( n2s(id) + " " + projectPort->name );
         action->setProperty(PTY_AUDIO_IN_PORT, id);
@@ -2314,9 +2314,9 @@ void MainWindow::updateAudioInPortsMenu(QMenu *menu)
 }
 
 /* Create a new patch, and add it to the current project. (And update the GUI.) */
-KonfytPatch *MainWindow::newPatchToProject()
+Patch *MainWindow::newPatchToProject()
 {
-    KonfytPatch* patch = new KonfytPatch();
+    Patch* patch = new Patch();
     patch->setName("New Patch");
 
     addPatchToProject(patch);
@@ -2333,7 +2333,7 @@ void MainWindow::removePatchFromProject(int i)
     if ( (i>=0) && (i<prj->getNumPatches()) ) {
 
         // Remove from project
-        KonfytPatch* patch = prj->removePatch(i);
+        Patch* patch = prj->removePatch(i);
 
         // Remove from patch engine
         pengine.unloadPatch(patch);
@@ -2354,7 +2354,7 @@ void MainWindow::removePatchFromProject(int i)
 
 /* Add a patch to the current project, after the current patch (or at end if
  * none) and update the GUI. */
-void MainWindow::addPatchToProject(KonfytPatch* patch)
+void MainWindow::addPatchToProject(Patch* patch)
 {
     if (!mCurrentProject) {
         print("ERROR: addPatchToProject: No active project.");
@@ -2377,14 +2377,14 @@ void MainWindow::addPatchToProject(KonfytPatch* patch)
     setCurrentPatchByIndex(index);
 }
 
-KonfytPatch *MainWindow::addPatchToProjectFromFile(QString filename)
+Patch *MainWindow::addPatchToProjectFromFile(QString filename)
 {
     if (!mCurrentProject) {
         print("ERROR: addPatchToProjectFromFile: No active project.");
         return nullptr;
     }
 
-    KonfytPatch* pt = new KonfytPatch();
+    Patch* pt = new Patch();
     QString errors;
     if (pt->loadPatchFromFile(filename, &errors)) {
         addPatchToProject(pt);
@@ -2699,7 +2699,7 @@ void MainWindow::loadAllPatches()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (KonfytPatch* patch, prj->getPatchList()) {
+    foreach (Patch* patch, prj->getPatchList()) {
         pengine.loadPatch(patch);
         patchListAdapter.setPatchLoaded(patch, true);
     }
@@ -2710,7 +2710,7 @@ void MainWindow::updatePatchView()
     clearPatchLayersFromGuiOnly();
 
     // Only for master patch, not preview mode patch
-    KonfytPatch* patch = mCurrentPatch;
+    Patch* patch = mCurrentPatch;
     if (patch == nullptr) {
         // No patch active
         ui->lineEdit_PatchName->setText("");
@@ -2724,7 +2724,7 @@ void MainWindow::updatePatchView()
     ui->stackedWidget_patchLayers->setCurrentWidget(ui->page_patchLayers);
 
     // Get list of layer items
-    foreach (KonfytPatchLayerPtr layer, patch->layers()) {
+    foreach (PatchLayerPtr layer, patch->layers()) {
         // Add to gui layer list
         addPatchLayerToGUI(layer);
     }
@@ -2749,7 +2749,7 @@ void MainWindow::updateWindowTitle()
     if (mPreviewMode) {
         title += "Preview";
     } else {
-        KonfytPatch* currentPatch = pengine.currentPatch();
+        Patch* currentPatch = pengine.currentPatch();
         if (currentPatch) {
             title += currentPatch->name();
         }
@@ -2790,12 +2790,12 @@ void MainWindow::setupPatchResetOptionMenu()
             this, &MainWindow::onPatchResetOptionMenuAboutToShow);
 }
 
-void MainWindow::onPatchSelected(KonfytPatch *patch)
+void MainWindow::onPatchSelected(Patch *patch)
 {
     setCurrentPatch(patch);
 }
 
-void MainWindow::onPatchLayerLoaded(KonfytPatchLayerPtr patchLayer)
+void MainWindow::onPatchLayerLoaded(PatchLayerPtr patchLayer)
 {
     foreach (KonfytLayerWidget* w, layerWidgetList) {
         if (w->getPatchLayer() == patchLayer) {
@@ -3206,7 +3206,7 @@ QStringList MainWindow::scanDirForFilesSkipBackupSubdirs(QString dirname,
             }
         } else if (fi.isDir()) {
             // Scan the dir if it is not a backup dir
-            if (fi.fileName() != KonfytProject::PROJECT_BACKUP_DIR) {
+            if (fi.fileName() != Project::PROJECT_BACKUP_DIR) {
                 ret.append(scanDirForFilesSkipBackupSubdirs(fi.filePath(), filenameExtension));
             }
         }
@@ -3368,7 +3368,7 @@ bool MainWindow::fileExtensionIs(QString filepath, QString extension)
 /* Determine if specified file is a Konfyt patch file. */
 bool MainWindow::fileExtensionIsPatch(QString filepath)
 {
-    return fileExtensionIs(filepath, KONFYT_PATCH_SUFFIX);
+    return fileExtensionIs(filepath, Patch::PATCH_FILENAME_SUFFIX);
 }
 
 bool MainWindow::fileExtensionIsSfzOrGig(QString filepath)
@@ -3392,7 +3392,7 @@ void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*
 }
 
 /* Set the current patch, and update the GUI accordingly. */
-void MainWindow::setCurrentPatch(KonfytPatch* patch)
+void MainWindow::setCurrentPatch(Patch* patch)
 {
     mCurrentPatch = patch;
     loadCurrentPatchAndUpdateGui();
@@ -3507,7 +3507,7 @@ void MainWindow::addSfzToCurrentPatch(QString sfzPath)
     newPatchIfCurrentNull();
 
     // Add layer to engine
-    KonfytPatchLayerPtr layer = pengine.addSfzLayer(sfzPath);
+    PatchLayerPtr layer = pengine.addSfzLayer(sfzPath);
 
     // Add layer to GUI
     addPatchLayerToGUI(layer);
@@ -3521,7 +3521,7 @@ void MainWindow::addSoundfontProgramToCurrentPatch(QString soundfontPath, Konfyt
     newPatchIfCurrentNull();
 
     // Add program to engine
-    KonfytPatchLayerPtr layer = pengine.addSfProgramLayer(soundfontPath, p);
+    PatchLayerPtr layer = pengine.addSfProgramLayer(soundfontPath, p);
 
     // Add layer to GUI
     addPatchLayerToGUI(layer);
@@ -3548,7 +3548,7 @@ void MainWindow::addMidiPortToCurrentPatch(int port)
     newPatchIfCurrentNull();
 
     // Add port to current patch in engine
-    KonfytPatchLayerPtr layer = pengine.addMidiOutPortToPatch(port);
+    PatchLayerPtr layer = pengine.addMidiOutPortToPatch(port);
 
     // Add to GUI list
     addPatchLayerToGUI(layer);
@@ -3562,7 +3562,7 @@ void MainWindow::addAudioInPortToCurrentPatch(int port)
     newPatchIfCurrentNull();
 
     // Add port to current patch in engine
-    KonfytPatchLayerPtr layer = pengine.addAudioInPortToPatch(port);
+    PatchLayerPtr layer = pengine.addAudioInPortToPatch(port);
 
     // Add to GUI list
     addPatchLayerToGUI(layer);
@@ -3599,7 +3599,7 @@ void MainWindow::on_lineEdit_PatchName_returnPressed()
 
 void MainWindow::on_lineEdit_PatchName_editingFinished()
 {
-    KonfytPatch* patch = pengine.currentPatch();
+    Patch* patch = pengine.currentPatch();
     if (!patch) { return; }
 
     // Rename patch
@@ -3625,7 +3625,7 @@ void MainWindow::on_lineEdit_ProjectName_editingFinished()
 }
 
 /* Save patch to library (in other words, to patchesDir directory.) */
-bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
+bool MainWindow::savePatchToLibrary(Patch *patch)
 {
     QDir dir(mPatchesDir);
     if (!dir.exists()) {
@@ -3635,7 +3635,7 @@ bool MainWindow::savePatchToLibrary(KonfytPatch *patch)
 
     // Create unique name
     QString filepath = getUniquePath(dir.path(), sanitiseFilename(patch->name()),
-                                     KONFYT_PATCH_SUFFIX);
+                                     Patch::PATCH_FILENAME_SUFFIX);
     if (filepath.isEmpty()) {
         print("Could not find a unique filename.");
         return false;
@@ -3956,7 +3956,7 @@ bool MainWindow::saveProject(ProjectPtr prj)
     if (prj->getDirPath().isEmpty()) {
 
         // If the project name hasn't been set yet, prompt user for name
-        if (prj->getProjectName() == KonfytProject::NEW_PROJECT_DEFAULT_NAME) {
+        if (prj->getProjectName() == Project::NEW_PROJECT_DEFAULT_NAME) {
             QString newName = QInputDialog::getText(this, "Save Project",
                 "The project name has not been set yet. Enter a name for the project.",
                 QLineEdit::Normal, prj->getProjectName());
@@ -4114,7 +4114,7 @@ void MainWindow::updateAudioBusWarnings()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (KonfytProject::AudioPortPtr bus, prj->audioBus_getAllBuses()) {
+    foreach (Project::AudioPortPtr bus, prj->audioBus_getAllBuses()) {
         if (!bus) { continue; }
 
         QString errorText;
@@ -4179,7 +4179,7 @@ void MainWindow::updateMidiInPortsWarnings()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (KonfytProject::MidiPortPtr prjPort, prj->midiInPort_getAllPorts()) {
+    foreach (Project::MidiPortPtr prjPort, prj->midiInPort_getAllPorts()) {
         if (!prjPort) { continue; }
 
         QString errorText;
@@ -4232,7 +4232,7 @@ void MainWindow::updateMidiOutPortWarnings()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (KonfytProject::MidiPortPtr prjPort, prj->midiOutPort_getAllPorts()) {
+    foreach (Project::MidiPortPtr prjPort, prj->midiOutPort_getAllPorts()) {
         if (!prjPort) { continue; }
 
         QString errorText;
@@ -4286,7 +4286,7 @@ void MainWindow::updateAudioInPortWarnings()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (KonfytProject::AudioPortPtr prjPort, prj->audioInPort_getAllPorts()) {
+    foreach (Project::AudioPortPtr prjPort, prj->audioInPort_getAllPorts()) {
         if (!prjPort) { continue; }
 
         QString errorText;
@@ -4458,7 +4458,7 @@ void MainWindow::updateOtherJackAudioConnectionWarnings()
     }
 }
 
-void MainWindow::audioBusWarnings_onBusRemoved(KonfytProject::AudioPortPtr bus)
+void MainWindow::audioBusWarnings_onBusRemoved(Project::AudioPortPtr bus)
 {
     QListWidgetItem* item = audioBusWarningMap.value(bus);
     if (item) {
@@ -4467,7 +4467,7 @@ void MainWindow::audioBusWarnings_onBusRemoved(KonfytProject::AudioPortPtr bus)
     }
 }
 
-void MainWindow::midiPortWarnings_onPortRemoved(KonfytProject::MidiPortPtr prjPort)
+void MainWindow::midiPortWarnings_onPortRemoved(Project::MidiPortPtr prjPort)
 {
     QListWidgetItem* item = midiPortWarningMap.value(prjPort);
     if (item) {
@@ -4476,7 +4476,7 @@ void MainWindow::midiPortWarnings_onPortRemoved(KonfytProject::MidiPortPtr prjPo
     }
 }
 
-void MainWindow::audioInPortWarnings_onPortRemoved(KonfytProject::AudioPortPtr prjPort)
+void MainWindow::audioInPortWarnings_onPortRemoved(Project::AudioPortPtr prjPort)
 {
     QListWidgetItem* item = audioInPortWarningMap.value(prjPort);
     if (item) {
@@ -4492,7 +4492,7 @@ void MainWindow::portWarnings_onItemDoubleClicked(QListWidgetItem* item)
     if (audioBusWarningMap.contains(item)) {
 
         // Show ports/buses screen and select bus
-        KonfytProject::AudioPortPtr bus = audioBusWarningMap.value(item);
+        Project::AudioPortPtr bus = audioBusWarningMap.value(item);
         showConnectionsPage();
         int busId = mCurrentProject->audioBus_idFromPtr(bus);
         connectionsTreeSelectBus(busId);
@@ -4500,7 +4500,7 @@ void MainWindow::portWarnings_onItemDoubleClicked(QListWidgetItem* item)
     } else if (midiPortWarningMap.contains(item)) {
 
         // Show ports/buses screen and select MIDI port
-        KonfytProject::MidiPortPtr p = midiPortWarningMap.value(item);
+        Project::MidiPortPtr p = midiPortWarningMap.value(item);
         showConnectionsPage();
         int id = mCurrentProject->midiInPort_idFromPtr(p);
         if (id >= 0) {
@@ -4515,7 +4515,7 @@ void MainWindow::portWarnings_onItemDoubleClicked(QListWidgetItem* item)
     } else if (audioInPortWarningMap.contains(item)) {
 
         // Show ports/buses screen and select audio port
-        KonfytProject::AudioPortPtr p = audioInPortWarningMap.value(item);
+        Project::AudioPortPtr p = audioInPortWarningMap.value(item);
         showConnectionsPage();
         int id = mCurrentProject->audioInPort_idFromPtr(p);
         if (id >= 0) {
@@ -4562,7 +4562,7 @@ void MainWindow::setupScriptingWarnings()
 }
 
 void MainWindow::scriptWarningsOnScriptEngineLayerErrorStatusChanged(
-        KonfytPatchLayerPtr patchLayer, QString errorString)
+        PatchLayerPtr patchLayer, QString errorString)
 {
     QListWidgetItem* item = scriptWarningLayerMap.value(patchLayer);
     if (errorString.isEmpty()) {
@@ -4584,7 +4584,7 @@ void MainWindow::scriptWarningsOnScriptEngineLayerErrorStatusChanged(
 }
 
 void MainWindow::scriptWarningsOnScriptEnginePortErrorStatusChanged(
-        KonfytProject::MidiPortPtr prjPort, QString errorString)
+        Project::MidiPortPtr prjPort, QString errorString)
 {
     QListWidgetItem* item = scriptWarningPortMap.value(prjPort);
     if (errorString.isEmpty()) {
@@ -4605,7 +4605,7 @@ void MainWindow::scriptWarningsOnScriptEnginePortErrorStatusChanged(
     item->setText(QString("Port script error: %1").arg(prjPort->portName));
 }
 
-void MainWindow::scriptWarningsOnPatchLayerUnloaded(KonfytPatchLayerPtr patchLayer)
+void MainWindow::scriptWarningsOnPatchLayerUnloaded(PatchLayerPtr patchLayer)
 {
     QListWidgetItem* item = scriptWarningLayerMap.value(patchLayer);
     if (item) {
@@ -4615,7 +4615,7 @@ void MainWindow::scriptWarningsOnPatchLayerUnloaded(KonfytPatchLayerPtr patchLay
     }
 }
 
-void MainWindow::scriptWarningsOnPortRemoved(KonfytProject::MidiPortPtr prjPort)
+void MainWindow::scriptWarningsOnPortRemoved(Project::MidiPortPtr prjPort)
 {
     QListWidgetItem* item = scriptWarningPortMap.value(prjPort);
     if (item) {
@@ -4629,12 +4629,12 @@ void MainWindow::scriptWarningsOnItemDoubleClicked(QListWidgetItem* item)
 {
     if (scriptWarningLayerMap.contains(item)) {
 
-        KonfytPatchLayerPtr patchLayer = scriptWarningLayerMap.value(item);
+        PatchLayerPtr patchLayer = scriptWarningLayerMap.value(item);
         showScriptEditorForPatchLayer(patchLayer);
 
     } else if (scriptWarningPortMap.contains(item)) {
 
-        KonfytProject::MidiPortPtr prjPort = scriptWarningPortMap.value(item);
+        Project::MidiPortPtr prjPort = scriptWarningPortMap.value(item);
         showScriptEditorForPort(prjPort);
 
     }
@@ -4862,7 +4862,7 @@ void MainWindow::setupLayerToolMenu()
 void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
 {
     int channel = action->property(PTY_MIDI_CHANNEL).toInt();
-    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
+    PatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
 
     if (channel == -2) {
         // Get current port id and show it in the connections page
@@ -4870,7 +4870,7 @@ void MainWindow::onLayerMidiOutChannelMenu_ActionTrigger(QAction* action)
         connectionsTreeSelectMidiOutPort(layer->midiOutputPortData.portIdInProject);
     } else {
         // Update layer MIDI filter with output channel
-        KonfytMidiFilter filter = layer->midiFilter();
+        MidiFilter filter = layer->midiFilter();
         filter.outChan = channel;
         layer->setMidiFilter(filter);
 
@@ -4907,7 +4907,7 @@ void MainWindow::onPatchResetOptionMenuTriggered(QAction *action)
 /* Menu item has been clicked in the layer MIDI-In port menu. */
 void MainWindow::onLayerMidiInPortsMenu_ActionTrigger(QAction *action)
 {
-    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
+    PatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
 
     int portId = action->property(PTY_MIDI_IN_PORT).toInt();
     if (portId == -2) {
@@ -4940,8 +4940,8 @@ void MainWindow::onLayerMidiInChannelMenu_ActionTrigger(QAction *action)
 {
     int channel = action->property(PTY_MIDI_CHANNEL).toInt();
 
-    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
-    KonfytMidiFilter filter = layer->midiFilter();
+    PatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
+    MidiFilter filter = layer->midiFilter();
     filter.inChan = channel;
     layer->setMidiFilter(filter);
 
@@ -4961,7 +4961,7 @@ void MainWindow::onLayer_midiSend_clicked(KonfytLayerWidget *layerWidget)
 /* Layer bus menu item has been clicked. */
 void MainWindow::onLayerBusMenu_ActionTrigger(QAction *action)
 {
-    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
+    PatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
 
     int busId = action->property(PTY_AUDIO_OUT_BUS).toInt();
     if (busId == -2) {
@@ -5042,7 +5042,7 @@ void MainWindow::on_pushButton_extApp_add_clicked()
 {
     if (!mCurrentProject) { return; }
 
-    int id = mCurrentProject->addExternalApp(KonfytProject::ExternalApp());
+    int id = mCurrentProject->addExternalApp(Project::ExternalApp());
     showExternalAppEditor(id);
 
     // Select newly added app in the list widget, but invoke it on the event
@@ -5098,10 +5098,10 @@ void MainWindow::onLayer_rightToolbutton_clicked(KonfytLayerWidget *layerWidget)
     // Save the layer item for future use
     layerToolMenuSourceitem = layerWidget;
 
-    KonfytPatchLayerPtr layer = layerWidget->getPatchLayer();
+    PatchLayerPtr layer = layerWidget->getPatchLayer();
 
-    KonfytPatchLayer::LayerType type = layer->layerType();
-    if (type == KonfytPatchLayer::TypeMidiOut) {
+    PatchLayer::LayerType type = layer->layerType();
+    if (type == PatchLayer::TypeMidiOut) {
         // Show MIDI channel menu
         updateLayerMidiOutChannelMenu(&layerMidiOutChannelMenu,
                 layer->midiFilter().outChan);
@@ -5139,7 +5139,7 @@ void MainWindow::on_actionRemove_Layer_triggered()
 
 void MainWindow::on_actionCopy_Layer_triggered()
 {
-    KonfytPatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
+    PatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
     if (!layer) { return; }
 
     mCopiedLayerData = layer->toByteArray();
@@ -5150,7 +5150,7 @@ void MainWindow::on_actionPaste_Layer_triggered()
     if (!mCurrentPatch) { return; }
     if (mCopiedLayerData.isEmpty()) { return; }
 
-    KonfytPatchLayerPtr layer(new KonfytPatchLayer());
+    PatchLayerPtr layer(new PatchLayer());
     layer->fromByteArray(mCopiedLayerData);
 
     pengine.addLayer(layer);
@@ -5187,7 +5187,7 @@ void MainWindow::updateBusMenu(QMenu *menu, int currentBusId)
 
     QList<int> busIds = prj->audioBus_getAllBusIds();
     foreach (int id, busIds) {
-        KonfytProject::AudioPortPtr b = prj->audioBus_getBus(id);
+        Project::AudioPortPtr b = prj->audioBus_getBus(id);
         KONFYT_ASSERT_CONTINUE(!b.isNull());
         QAction* action = menu->addAction( n2s(id) + " " + b->name );
         action->setProperty(PTY_AUDIO_OUT_BUS, id);
@@ -5231,7 +5231,7 @@ void MainWindow::updateLayerMidiOutChannelMenu(QMenu *menu, int currentMidiPort)
 
 /* Add a patch layer to the GUI layer list. If index is -1, it is added to the
  * end of the list. */
-void MainWindow::addPatchLayerToGUI(KonfytPatchLayerPtr patchLayer, int index)
+void MainWindow::addPatchLayerToGUI(PatchLayerPtr patchLayer, int index)
 {
     // Create new GUI layer item
     KonfytLayerWidget* layerWidget = new KonfytLayerWidget();
@@ -5273,25 +5273,25 @@ void MainWindow::addPatchLayerToGUI(KonfytPatchLayerPtr patchLayer, int index)
             this, &MainWindow::onLayer_midiSend_clicked);
 }
 
-void MainWindow::addPatchLayerToIndicatorHandler(KonfytLayerWidget *layerWidget, KonfytPatchLayerPtr patchLayer)
+void MainWindow::addPatchLayerToIndicatorHandler(KonfytLayerWidget *layerWidget, PatchLayerPtr patchLayer)
 {
-    KonfytPatchLayerPtr pl(patchLayer);
+    PatchLayerPtr pl(patchLayer);
     KfJackMidiRoute* midiRoute = nullptr;
     KfJackAudioRoute* audioRoute1 = nullptr;
     KfJackAudioRoute* audioRoute2 = nullptr;
-    if (pl->layerType() == KonfytPatchLayer::TypeMidiOut) {
+    if (pl->layerType() == PatchLayer::TypeMidiOut) {
         midiRoute = pl->midiOutputPortData.jackRoute;
-    } else if (pl->layerType() == KonfytPatchLayer::TypeSfz) {
+    } else if (pl->layerType() == PatchLayer::TypeSfz) {
         midiRoute = jack.getPluginMidiRoute(pl->sfzData.portsInJackEngine);
         QList<KfJackAudioRoute*> a = jack.getPluginAudioRoutes(pl->sfzData.portsInJackEngine);
         audioRoute1 = a.value(0);
         audioRoute2 = a.value(1);
-    } else if (pl->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+    } else if (pl->layerType() == PatchLayer::TypeSoundfontProgram) {
         midiRoute = jack.getPluginMidiRoute(pl->soundfontData.portsInJackEngine);
         QList<KfJackAudioRoute*> a = jack.getPluginAudioRoutes(pl->soundfontData.portsInJackEngine);
         audioRoute1 = a.value(0);
         audioRoute2 = a.value(1);
-    } else if (pl->layerType() == KonfytPatchLayer::TypeAudioIn) {
+    } else if (pl->layerType() == PatchLayer::TypeAudioIn) {
         audioRoute1 = pl->audioInPortData.jackRouteLeft;
         audioRoute2 = pl->audioInPortData.jackRouteRight;
     }
@@ -5345,7 +5345,7 @@ void MainWindow::movePatchLayer(int indexFrom, int indexTo)
     KONFYT_ASSERT_RETURN(indexTo < layerWidgetList.count());
 
     KonfytLayerWidget* layerWidget = layerWidgetList.value(indexFrom);
-    KonfytPatchLayerPtr patchLayer = layerWidget->getPatchLayer();
+    PatchLayerPtr patchLayer = layerWidget->getPatchLayer();
 
     pengine.moveLayer(patchLayer, indexTo);
 
@@ -5359,15 +5359,15 @@ KfJackMidiRoute *MainWindow::jackMidiRouteFromLayerWidget(KonfytLayerWidget *lay
 {
     KfJackMidiRoute* route = nullptr;
 
-    KonfytPatchLayerPtr patchLayer = layerWidget->getPatchLayer();
+    PatchLayerPtr patchLayer = layerWidget->getPatchLayer();
     if (!patchLayer) { return nullptr; }
 
-    KonfytPatchLayer::LayerType type = patchLayer->layerType();
-    if (type == KonfytPatchLayer::TypeMidiOut) {
+    PatchLayer::LayerType type = patchLayer->layerType();
+    if (type == PatchLayer::TypeMidiOut) {
         route = patchLayer->midiOutputPortData.jackRoute;
-    } else if (type == KonfytPatchLayer::TypeSfz) {
+    } else if (type == PatchLayer::TypeSfz) {
         route = jack.getPluginMidiRoute(patchLayer->sfzData.portsInJackEngine);
-    } else if (type == KonfytPatchLayer::TypeSoundfontProgram) {
+    } else if (type == PatchLayer::TypeSoundfontProgram) {
         route = jack.getPluginMidiRoute(patchLayer->soundfontData.portsInJackEngine);
     }
 
@@ -5393,7 +5393,7 @@ void MainWindow::updateMidiInPortsMenu(QMenu *menu, int currentPortId)
 
     QList<int> midiInIds = prj->midiInPort_getAllPortIds();
     foreach(int id, midiInIds) {
-        KonfytProject::MidiPortPtr prjPort = prj->midiInPort_getPort(id);
+        Project::MidiPortPtr prjPort = prj->midiInPort_getPort(id);
         if (!prjPort) { continue; }
         QAction* action = menu->addAction( n2s(id) + " " + prjPort->portName);
         action->setProperty(PTY_MIDI_IN_PORT, id);
@@ -5436,8 +5436,8 @@ void MainWindow::updateMidiInChannelMenu(QMenu *menu, int currentChannel)
 void MainWindow::updateLayerToolMenu()
 {
     KonfytLayerWidget* layerWidget = layerToolMenuSourceitem;
-    KonfytPatchLayerPtr patchLayer = layerWidget->getPatchLayer();
-    KonfytPatchLayer::LayerType type = patchLayer->layerType();
+    PatchLayerPtr patchLayer = layerWidget->getPatchLayer();
+    PatchLayer::LayerType type = patchLayer->layerType();
 
     // Update reset option menu
     KonfytReset projectResetOption = KonfytReset::Inherit;
@@ -5455,9 +5455,9 @@ void MainWindow::updateLayerToolMenu()
 
     // Menu items for layers with MIDI input
 
-    bool showMidiIn = (type != KonfytPatchLayer::TypeUninitialized)
+    bool showMidiIn = (type != PatchLayer::TypeUninitialized)
             && (!patchLayer->hasError())
-            && (type != KonfytPatchLayer::TypeAudioIn);
+            && (type != PatchLayer::TypeAudioIn);
 
     if (showMidiIn) {
         updateMidiInPortsMenu(&layerMidiInPortsMenu, patchLayer->midiInPortIdInProject());
@@ -5471,18 +5471,18 @@ void MainWindow::updateLayerToolMenu()
 
     // Menu items for Audio input port layers
 
-    bool showAudioIn = (type == KonfytPatchLayer::TypeAudioIn);
+    bool showAudioIn = (type == PatchLayer::TypeAudioIn);
     audioInLayerInputPortConnectionsAction->setVisible(showAudioIn);
 
     // Menu items for MIDI output port layers
 
-    bool showMidiOut = (type == KonfytPatchLayer::TypeMidiOut);
+    bool showMidiOut = (type == PatchLayer::TypeMidiOut);
     ui->actionEdit_MIDI_Send_List->setVisible(showMidiOut);
 
     // Menu items for instrument layers
 
-    bool showInstr = (type == KonfytPatchLayer::TypeSfz)
-            || (type == KonfytPatchLayer::TypeSoundfontProgram);
+    bool showInstr = (type == PatchLayer::TypeSfz)
+            || (type == PatchLayer::TypeSoundfontProgram);
 
     ui->actionReload_Layer->setVisible(showInstr);
 
@@ -5498,7 +5498,7 @@ void MainWindow::onAudioInLayerInputPortConnectionActionTrigger()
     // Show port in connections page and select audio input port
 
     if (!layerToolMenuSourceitem) { return; }
-    KonfytPatchLayerPtr patchLayer = layerToolMenuSourceitem->getPatchLayer();
+    PatchLayerPtr patchLayer = layerToolMenuSourceitem->getPatchLayer();
     if (!patchLayer) { return; }
 
     showConnectionsPage();
@@ -5508,7 +5508,7 @@ void MainWindow::onAudioInLayerInputPortConnectionActionTrigger()
 void MainWindow::onLayerResetOptionMenuActionTrigger(QAction *action)
 {
     if (!layerToolMenuSourceitem) { return; }
-    KonfytPatchLayerPtr patchLayer = layerToolMenuSourceitem->getPatchLayer();
+    PatchLayerPtr patchLayer = layerToolMenuSourceitem->getPatchLayer();
     if (!patchLayer) { return; }
 
     KonfytReset option = layerResetOptionMenu.actionValue(action);
@@ -5833,7 +5833,7 @@ void MainWindow::on_listWidget_LibraryBottom_customContextMenuRequested(const QP
     libraryBottomContextMenu.clear();
     libraryBottomContextMenu.addAction("Add as patch to library", this, [=]()
     {
-        KonfytPatch patch;
+        Patch patch;
         patch.setName(QString("Soundfont %1 - %2").arg(sf->name).arg(s.name));
         patch.addSfLayer(sf->filename, s);
 
@@ -6103,7 +6103,7 @@ int MainWindow::addBus()
         print("ERROR: Failed to create audio bus. Failed to add JACK port(s).");
         return -1;
     }
-    KonfytProject::AudioPortPtr bus = prj->audioBus_getBus(busId);
+    Project::AudioPortPtr bus = prj->audioBus_getBus(busId);
     KONFYT_ASSERT(!bus.isNull());
     if (bus) {
         bus->leftJackPort = left;
@@ -6167,7 +6167,7 @@ int MainWindow::addMidiInPort()
     }
 
     int prjPortId = prj->midiInPort_addPort("New MIDI In Port");
-    KonfytProject::MidiPortPtr prjPort = prj->midiInPort_getPort(prjPortId);
+    Project::MidiPortPtr prjPort = prj->midiInPort_getPort(prjPortId);
     KfJackMidiPort* jackPort = addMidiInPortToJack(prjPortId);
     if (!jackPort) {
         // Could not create Jack port. Remove port from project again.
@@ -6232,7 +6232,7 @@ int MainWindow::addMidiOutPort()
     }
 }
 
-void MainWindow::removeAudioBusFromEngines(KonfytProject::AudioPortPtr bus)
+void MainWindow::removeAudioBusFromEngines(Project::AudioPortPtr bus)
 {
     if (!bus) { return; }
 
@@ -6242,7 +6242,7 @@ void MainWindow::removeAudioBusFromEngines(KonfytProject::AudioPortPtr bus)
     emit audioBusRemoved(bus);
 }
 
-void MainWindow::removeMidiInPortFromEngines(KonfytProject::MidiPortPtr prjPort)
+void MainWindow::removeMidiInPortFromEngines(Project::MidiPortPtr prjPort)
 {
     if (!prjPort) { return; }
 
@@ -6252,7 +6252,7 @@ void MainWindow::removeMidiInPortFromEngines(KonfytProject::MidiPortPtr prjPort)
     emit midiInPortRemoved(prjPort);
 }
 
-void MainWindow::removeMidiOutPortFromEngines(KonfytProject::MidiPortPtr prjPort)
+void MainWindow::removeMidiOutPortFromEngines(Project::MidiPortPtr prjPort)
 {
     if (!prjPort) { return; }
 
@@ -6262,7 +6262,7 @@ void MainWindow::removeMidiOutPortFromEngines(KonfytProject::MidiPortPtr prjPort
     emit midiOutPortRemoved(prjPort);
 }
 
-void MainWindow::removeAudioInPortFromEngines(KonfytProject::AudioPortPtr prjPort)
+void MainWindow::removeAudioInPortFromEngines(Project::AudioPortPtr prjPort)
 {
     KONFYT_ASSERT_RETURN(!prjPort.isNull());
 
@@ -6368,7 +6368,7 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
     if (mConsoleShowMidiMessages) {
         QString portName = "UNKNOWN";
         if (portIdInPrj >= 0) {
-            KonfytProject::MidiPortPtr prjPort = prj->midiInPort_getPort(portIdInPrj);
+            Project::MidiPortPtr prjPort = prj->midiInPort_getPort(portIdInPrj);
             if (prjPort) {
                 portName = prjPort->portName;
             }
@@ -6534,11 +6534,11 @@ void MainWindow::setupExternalAppsForCurrentProject()
     externalAppRunner.setProject(mCurrentProject);
     externalAppListAdapter->setProject(mCurrentProject);
 
-    connect(mCurrentProject.data(), &KonfytProject::externalAppRemoved,
+    connect(mCurrentProject.data(), &Project::externalAppRemoved,
             this, &MainWindow::externalAppEditor_onExternalAppRemoved);
 }
 
-void MainWindow::externalAppToEditor(KonfytProject::ExternalApp app)
+void MainWindow::externalAppToEditor(Project::ExternalApp app)
 {
     ui->lineEdit_extApp_name->setText(app.friendlyName);
     ui->lineEdit_extAppEditor_command->setText(app.command);
@@ -6548,9 +6548,9 @@ void MainWindow::externalAppToEditor(KonfytProject::ExternalApp app)
     ui->checkBox_extApp_startDetached->setChecked(app.startDetached);
 }
 
-KonfytProject::ExternalApp MainWindow::externalAppFromEditor()
+Project::ExternalApp MainWindow::externalAppFromEditor()
 {
-    KonfytProject::ExternalApp app;
+    Project::ExternalApp app;
     app.friendlyName = ui->lineEdit_extApp_name->text();
     app.command = ui->lineEdit_extAppEditor_command->text();
     app.runAtStartup = ui->checkBox_extApp_runAtStartup->isChecked();
@@ -6605,10 +6605,11 @@ void MainWindow::externalAppEditor_onExternalAppRemoved(int id)
 void MainWindow::setupExternalAppsMenu()
 {
     extAppsMenu.addAction(
-                "Project Directory Reference: " + QString(STRING_PROJECT_DIR),
+                QString("Project Directory Reference: %1")
+                .arg(KonfytProcess::PROJECT_DIR_PLACEHOLDER),
                 this, [=]()
     {
-        appendToExternalAppEditorCommandBox(STRING_PROJECT_DIR);
+        appendToExternalAppEditorCommandBox(KonfytProcess::PROJECT_DIR_PLACEHOLDER);
     });
 
     extAppsMenu.addAction("Browse for File...", this, [=]()
@@ -6650,7 +6651,7 @@ void MainWindow::setupExternalAppsMenu()
     foreach (ExtAppStockMenuItem item, stockItems) {
         extAppsMenu.addAction(item.menuText, this, [=]()
         {
-            externalAppToEditor(KonfytProject::ExternalApp(item.name, item.cmd));
+            externalAppToEditor(Project::ExternalApp(item.name, item.cmd));
         });
     }
 }
@@ -6692,7 +6693,7 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(
         if (current->parent() == busParent) {
             ui->checkBox_connectionsPage_ignoreGlobalVolume->setVisible(true);
             int busId = tree_busMap.value(current);
-            KonfytProject::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
+            Project::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
             if (bus) {
                 ui->checkBox_connectionsPage_ignoreGlobalVolume->setChecked(
                         bus->ignoreMasterGain);
@@ -6721,10 +6722,10 @@ void MainWindow::on_actionRemove_BusPort_triggered()
 
     int id = 0;
     QString name;
-    KonfytProject::AudioPortPtr bus;
-    KonfytProject::AudioPortPtr audioInPort;
-    KonfytProject::MidiPortPtr midiOutPort;
-    KonfytProject::MidiPortPtr midiInPort;
+    Project::AudioPortPtr bus;
+    Project::AudioPortPtr audioInPort;
+    Project::MidiPortPtr midiOutPort;
+    Project::MidiPortPtr midiInPort;
 
     if (busSelected) {
         if (prj->audioBus_count() == 1) { return; } // Do not remove last bus
@@ -6750,42 +6751,42 @@ void MainWindow::on_actionRemove_BusPort_triggered()
 
     // Check if any patch layers are using this bus/port
     struct PatchUse {
-        KonfytPatch* patch = nullptr;
+        Patch* patch = nullptr;
         int patchIndex = 0;
         QList<int> iLayers;
-        QList<KonfytPatchLayerPtr> layers;
+        QList<PatchLayerPtr> layers;
     };
     QList<PatchUse> used;
-    QList<KonfytPatch*> patchList = prj->getPatchList();
+    QList<Patch*> patchList = prj->getPatchList();
     for (int iPatch=0; iPatch < patchList.count(); iPatch++) {
         PatchUse use;
         use.patchIndex = iPatch;
         use.patch = patchList[iPatch];
-        QList<KonfytPatchLayerPtr> layers = use.patch->layers();
+        QList<PatchLayerPtr> layers = use.patch->layers();
         for (int iLayer=0; iLayer < layers.count(); iLayer++) {
-            KonfytPatchLayerPtr layer = layers[iLayer];
+            PatchLayerPtr layer = layers[iLayer];
             bool append = false;
             if (busSelected) {
-                if ( (layer->layerType() == KonfytPatchLayer::TypeAudioIn)
-                     || ( layer->layerType() == KonfytPatchLayer::TypeSfz)
-                     || ( layer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) ) {
+                if ( (layer->layerType() == PatchLayer::TypeAudioIn)
+                     || ( layer->layerType() == PatchLayer::TypeSfz)
+                     || ( layer->layerType() == PatchLayer::TypeSoundfontProgram) ) {
                     append = layer->busIdInProject() == id;
                 }
             }
             if (audioInSelected) {
-                if ( layer->layerType() == KonfytPatchLayer::TypeAudioIn ) {
+                if ( layer->layerType() == PatchLayer::TypeAudioIn ) {
                     append = layer->audioInPortData.portIdInProject == id;
                 }
             }
             if (midiOutSelected) {
-                if ( layer->layerType() == KonfytPatchLayer::TypeMidiOut ) {
+                if ( layer->layerType() == PatchLayer::TypeMidiOut ) {
                     append = layer->midiOutputPortData.portIdInProject == id;
                 }
             }
             if (midiInSelected) {
-                if ( (layer->layerType() == KonfytPatchLayer::TypeSfz)
-                     || ( layer->layerType() == KonfytPatchLayer::TypeMidiOut)
-                     || ( layer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) ) {
+                if ( (layer->layerType() == PatchLayer::TypeSfz)
+                     || ( layer->layerType() == PatchLayer::TypeMidiOut)
+                     || ( layer->layerType() == PatchLayer::TypeSoundfontProgram) ) {
                     append = layer->midiInPortIdInProject() == id;
                 }
             }
@@ -6818,7 +6819,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         // ------------------------------------------------------------------------------
         if (busSelected) {
             int busIdToChangeTo = prj->audioBus_getFirstBusId(id);
-            KonfytProject::AudioPortPtr busToChangeTo = prj->audioBus_getBus(busIdToChangeTo);
+            Project::AudioPortPtr busToChangeTo = prj->audioBus_getBus(busIdToChangeTo);
 
             KONFYT_ASSERT_RETURN(busIdToChangeTo >= 0);
             KONFYT_ASSERT_RETURN(!busToChangeTo.isNull());
@@ -6834,7 +6835,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove bus
                 // Change the bus for all layers still using this one
                 foreach (const PatchUse& use, used) {
-                    foreach (KonfytPatchLayerPtr layer, use.layers) {
+                    foreach (PatchLayerPtr layer, use.layers) {
                         pengine.setLayerBus(layer, busIdToChangeTo);
                     }
                 }
@@ -6853,7 +6854,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove port.
                 // Remove it from all patches where it was in use
                 foreach (const PatchUse& use, used) {
-                    foreach (KonfytPatchLayerPtr layer, use.layers) {
+                    foreach (PatchLayerPtr layer, use.layers) {
                         pengine.removeLayer(use.patch, layer);
                     }
                 }
@@ -6872,7 +6873,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove port.
                 // Remove it from all patches where it was in use
                 foreach (const PatchUse& use, used) {
-                    foreach (KonfytPatchLayerPtr layer, use.layers) {
+                    foreach (PatchLayerPtr layer, use.layers) {
                         pengine.removeLayer(use.patch, layer);
                     }
                 }
@@ -6893,7 +6894,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 // User chose to remove port
                 // Change the port for all layers still using this one
                 foreach (const PatchUse& use, used) {
-                    foreach (KonfytPatchLayerPtr layer, use.layers) {
+                    foreach (PatchLayerPtr layer, use.layers) {
                         pengine.setLayerMidiInPort(layer, portToChangeTo);
                     }
                 }
@@ -7025,7 +7026,9 @@ void MainWindow::on_actionAdd_Path_to_External_App_Box_Relative_to_Project_trigg
     if (prj) {
         QString projPath = prj->getDirPath();
         QDir projDir(projPath);
-        path = QString(STRING_PROJECT_DIR) + "/" + projDir.relativeFilePath(path);
+        path = QString("%1/%2")
+                .arg(KonfytProcess::PROJECT_DIR_PLACEHOLDER)
+                .arg(projDir.relativeFilePath(path));
     }
 
     // Add quotes
@@ -7068,11 +7071,11 @@ void MainWindow::setupPatchEngine()
 /* Update the input and output port settings for the preview patch layer. */
 void MainWindow::updatePreviewPatchLayer()
 {
-    foreach (KonfytPatchLayerPtr layer, mPreviewPatch.layers()) {
+    foreach (PatchLayerPtr layer, mPreviewPatch.layers()) {
         if (layer->hasError()) { continue; }
 
         // Set the MIDI input channel
-        KonfytMidiFilter filter = layer->midiFilter();
+        MidiFilter filter = layer->midiFilter();
         filter.inChan = previewPatchMidiInChannel;
         layer->setMidiFilter(filter);
 
@@ -7313,7 +7316,7 @@ void MainWindow::on_pushButton_triggersPage_assign_clicked()
 
     KonfytMidiEvent selectedEvent = triggersPageMidiEventList.selectedMidiEvent();
     QAction* action = triggersItemActionHash[item];
-    KonfytProject::Trigger trig;
+    Project::Trigger trig;
 
     trig.actionText = action->text();
     trig.bankLSB = selectedEvent.bankLSB;
@@ -7465,7 +7468,7 @@ void MainWindow::on_textBrowser_patchNote_textChanged()
         patchNote_ignoreChange = false;
     } else {
         // Change is due to user typing in box
-        KonfytPatch* patch = pengine.currentPatch();
+        Patch* patch = pengine.currentPatch();
         if (!patch) { return; }
         patch->setNote(ui->textBrowser_patchNote->toPlainText());
         patchModified();
@@ -7476,7 +7479,10 @@ void MainWindow::on_toolButton_layer_down_clicked()
 {
     int index = ui->listWidget_Layers->currentRow();
     if (index < 0) { return; } // Nothing selected
-    int to = wrapIndex(index + 1, layerWidgetList.count());
+
+    int to = index + 1;
+    if (to >= layerWidgetList.count()) { to = 0; }
+
     movePatchLayer(index, to);
     // Keep moved item selected
     ui->listWidget_Layers->setCurrentRow(to);
@@ -7486,7 +7492,10 @@ void MainWindow::on_toolButton_layer_up_clicked()
 {
     int index = ui->listWidget_Layers->currentRow();
     if (index < 0) { return; } // Nothing selected
-    int to = wrapIndex(index - 1, layerWidgetList.count());
+
+    int to = index - 1;
+    if (to < 0) { to = layerWidgetList.count() - 1; };
+
     movePatchLayer(index, to);
     // Keep moved item selected
     ui->listWidget_Layers->setCurrentRow(to);
@@ -7504,8 +7513,8 @@ void MainWindow::on_actionSave_Patch_As_Copy_triggered()
 {
     // Action to save current patch as a copy in the current project.
 
-    KonfytPatch* p = pengine.currentPatch();
-    KonfytPatch* newPatch = new KonfytPatch();
+    Patch* p = pengine.currentPatch();
+    Patch* newPatch = new Patch();
     newPatch->fromByteArray(p->toByteArray());
 
     addPatchToProject(newPatch);
@@ -7520,7 +7529,7 @@ void MainWindow::on_actionAdd_Patch_To_Library_triggered()
 {
     // Action to add current patch to the library.
 
-    KonfytPatch* pt = pengine.currentPatch(); // Get current patch
+    Patch* pt = pengine.currentPatch(); // Get current patch
 
     if (savePatchToLibrary(pt)) {
         print("Saved to library.");
@@ -7534,9 +7543,9 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
 {
     // Action to save the current patch to file.
 
-    QString ext = QString(".%1").arg(KONFYT_PATCH_SUFFIX);
+    QString ext = QString(".%1").arg(Patch::PATCH_FILENAME_SUFFIX);
 
-    KonfytPatch* pt = pengine.currentPatch(); // Get current patch
+    Patch* pt = pengine.currentPatch(); // Get current patch
     QFileDialog d;
     QString filename = d.getSaveFileName(this,
                                          "Save patch as file", mPatchesDir,
@@ -7558,7 +7567,7 @@ void MainWindow::on_actionAlways_Active_triggered()
 {
     // Action to toggle always-active for current patch.
 
-    KonfytPatch* p = pengine.currentPatch();
+    Patch* p = pengine.currentPatch();
     p->alwaysActive = !p->alwaysActive;
     ui->actionAlways_Active->setChecked(p->alwaysActive);
     ui->label_patch_alwaysActive->setVisible(p->alwaysActive);
@@ -7570,7 +7579,7 @@ void MainWindow::on_actionNew_Patch_triggered()
 {
     // Action to add new patch to project.
 
-    KonfytPatch* patch = newPatchToProject();
+    Patch* patch = newPatchToProject();
     setCurrentPatch(patch);
     ui->lineEdit_PatchName->setFocus();
     ui->lineEdit_PatchName->selectAll();
@@ -7585,11 +7594,11 @@ void MainWindow::on_actionAdd_Patch_From_File_triggered()
         return;
     }
 
-    QFileDialog d;
-    QString filename = d.getOpenFileName(this,
-                                         "Open patch from file",
-                                         mPatchesDir,
-                                         "*." + QString(KONFYT_PATCH_SUFFIX));
+    QString filter = QString("*.%1").arg(Patch::PATCH_FILENAME_SUFFIX);
+    QString filename = QFileDialog::getOpenFileName(this,
+                                                    "Open patch from file",
+                                                    mPatchesDir,
+                                                    filter);
     if (filename.isEmpty()) { return; }
 
     addPatchToProjectFromFile(filename);
@@ -7692,7 +7701,7 @@ void MainWindow::on_toolButton_MidiFilter_ccBlockedLast_clicked()
 
 void MainWindow::on_lineEdit_MidiFilter_velocityMap_textChanged(const QString &text)
 {
-    KonfytMidiMapping m;
+    MidiFilterMapping m;
     m.fromString(text);
     ui->midiFilter_velocityMapGraph->setMapping(m);
 
@@ -7771,7 +7780,7 @@ void MainWindow::on_checkBox_midiFilter_Prog_toggled(bool /*checked*/)
 
 void MainWindow::on_actionPatch_MIDI_Filter_triggered()
 {
-    KonfytPatch* patch = pengine.currentPatch();
+    Patch* patch = pengine.currentPatch();
     if (!patch) { return; }
 
     midiFilterEditPatch = patch;
@@ -7863,7 +7872,7 @@ void MainWindow::updateBusGainInJackEngine(int busId)
 {
     KONFYT_ASSERT_RETURN(!mCurrentProject.isNull());
 
-    KonfytProject::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
+    Project::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
     KONFYT_ASSERT_RETURN(!bus.isNull());
 
     float gain = 1;
@@ -8188,7 +8197,7 @@ void MainWindow::on_pushButton_connectionsPage_editScript_clicked()
     if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
         // Midi input port is selected
         int portId = tree_midiInMap.value(ui->tree_portsBusses->currentItem());
-        KonfytProject::MidiPortPtr prjPort = mCurrentProject->midiInPort_getPort(portId);
+        Project::MidiPortPtr prjPort = mCurrentProject->midiInPort_getPort(portId);
         if (prjPort) {
             showScriptEditorForPort(prjPort);
         }
@@ -8202,7 +8211,7 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
     if (currentItem->parent() != busParent) { return; }
 
     int busId = tree_busMap.value(currentItem);
-    KonfytProject::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
+    Project::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
     KONFYT_ASSERT_RETURN(!bus.isNull());
     bus->ignoreMasterGain = ui->checkBox_connectionsPage_ignoreGlobalVolume->isChecked();
 
@@ -8483,22 +8492,22 @@ void MainWindow::setupWarningConnectionsForProject(ProjectPtr prj)
 {
     if (!prj) { return; }
 
-    connect(prj.data(), &KonfytProject::audioBusNameChanged,
+    connect(prj.data(), &Project::audioBusNameChanged,
             this, [=](int /*busId*/)
     {
         updatePortConnectionWarnings();
     });
-    connect(prj.data(), &KonfytProject::midiInPortNameChanged,
+    connect(prj.data(), &Project::midiInPortNameChanged,
             this, [=](int /*portId*/)
     {
         updatePortConnectionWarnings();
     });
-    connect(prj.data(), &KonfytProject::midiOutPortNameChanged,
+    connect(prj.data(), &Project::midiOutPortNameChanged,
             this, [=](int /*portId*/)
     {
         updatePortConnectionWarnings();
     });
-    connect(prj.data(), &KonfytProject::audioInPortNameChanged,
+    connect(prj.data(), &Project::audioInPortNameChanged,
             this, [=](int /*portId*/)
     {
         updatePortConnectionWarnings();
@@ -8873,7 +8882,7 @@ void MainWindow::on_pushButton_midiSendList_sendSelected_clicked()
     // Send the MIDI message currently being edited
 
     KonfytMidiEvent event = midiEventFromMidiSendEditor().midiEvent;
-    KonfytPatchLayerPtr layer = midiSendListEditItem->getPatchLayer();
+    PatchLayerPtr layer = midiSendListEditItem->getPatchLayer();
     if (!layer->hasError()) {
         jack.sendMidiEventsOnRoute(layer->midiOutputPortData.jackRoute, {event});
     }
@@ -8881,7 +8890,7 @@ void MainWindow::on_pushButton_midiSendList_sendSelected_clicked()
 
 void MainWindow::on_pushButton_midiSendList_sendAll_clicked()
 {
-    KonfytPatchLayerPtr layer = midiSendListEditItem->getPatchLayer();
+    PatchLayerPtr layer = midiSendListEditItem->getPatchLayer();
     if (!layer->hasError()) {
         QList<KonfytMidiEvent> events;
         foreach (MidiSendItem item, midiSendList) {

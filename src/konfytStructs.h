@@ -26,7 +26,6 @@
 #include <QSharedPointer>
 #include <QString>
 
-// =============================================================================
 
 enum KonfytSoundType
 {
@@ -36,7 +35,7 @@ enum KonfytSoundType
     KfSoundTypePatch
 };
 
-// =============================================================================
+// ===========================================================================
 
 enum class KonfytReset
 {
@@ -49,7 +48,7 @@ KonfytReset konfytResetFromString(QString s, KonfytReset defaultValue);
 QString konfytResetToString(KonfytReset value);
 KonfytReset konfytResetFromInherits(QList<KonfytReset> inheritChain, KonfytReset defaultValue);
 
-// =============================================================================
+// ===========================================================================
 
 struct KonfytSoundPreset
 {
@@ -58,7 +57,7 @@ struct KonfytSoundPreset
     int program = -1;    // Program/preset number
 };
 
-// =============================================================================
+// ===========================================================================
 
 struct KonfytSound
 {
@@ -71,7 +70,7 @@ struct KonfytSound
 
 typedef QSharedPointer<KonfytSound> KfSoundPtr;
 
-// =============================================================================
+// ===========================================================================
 
 struct KonfytAppInfo
 {

@@ -30,34 +30,13 @@
 #include <QXmlStreamWriter>
 #include <QXmlStreamReader>
 
-#define XML_MIDIFILTER "midiFilter"
-#define XML_MIDIFILTER_ZONE "zone"
-#define XML_MIDIFILTER_ZONE_LOWNOTE "lowNote"
-#define XML_MIDIFILTER_ZONE_HINOTE "highNote"
-#define XML_MIDIFILTER_ZONE_ADD "add"
-#define XML_MIDIFILTER_ZONE_LOWVEL "lowVel"
-#define XML_MIDIFILTER_ZONE_HIVEL "highVel"
-#define XML_MIDIFILTER_ZONE_VEL_LIMIT_MIN "velLimitMin"
-#define XML_MIDIFILTER_ZONE_VEL_LIMIT_MAX "velLimitMax"
-#define XML_MIDIFILTER_ZONE_PITCH_DOWN_MAX "pitchDownMax"
-#define XML_MIDIFILTER_ZONE_PITCH_UP_MAX "pitchUpMax"
-#define XML_MIDIFILTER_ZONE_VELOCITY_MAP "velocityMap"
-#define XML_MIDIFILTER_PASSALLCC "passAllCC"
-#define XML_MIDIFILTER_PASSPB "passPitchbend"
-#define XML_MIDIFILTER_PASSPROG "passProg"
-#define XML_MIDIFILTER_IGNORE_GLOBAL_TRANSPOSE "ignoreGlobalTranspose"
-#define XML_MIDIFILTER_CC "cc"
-#define XML_MIDIFILTER_BLOCK_CC "blockcc"
-#define XML_MIDIFILTER_INCHAN "inChan"
-#define XML_MIDIFILTER_OUTCHAN "outChan"
-
 // ============================================================================
 
-struct KonfytMidiMapping {
+struct MidiFilterMapping {
     QList<int> inNodes;
     QList<int> outNodes;
     int map(int inValue);
-    KonfytMidiMapping();
+    MidiFilterMapping();
     void update();
     int clamp(int value, int min, int max);
     void fromString(QString s);
@@ -68,7 +47,7 @@ private:
 
 // ============================================================================
 
-struct KonfytMidiFilterZone {
+struct MidiFilterZone {
     int lowNote = 0;
     int highNote = 127;
     int add = 0;
@@ -78,20 +57,20 @@ struct KonfytMidiFilterZone {
     int velLimitMax = 127;
     int pitchDownMax = MIDI_PITCHBEND_SIGNED_MIN;
     int pitchUpMax = MIDI_PITCHBEND_SIGNED_MAX;
-    KonfytMidiMapping velocityMap;
+    MidiFilterMapping velocityMap;
 };
 
 // ============================================================================
 
-class KonfytMidiFilter
+class MidiFilter
 {
 public:
-    static KonfytMidiFilter allPassFilter();
+    static MidiFilter allPassFilter();
 
-    KonfytMidiFilterZone zone;
+    MidiFilterZone zone;
     void setZone(int lowNote, int highNote, int add, int lowVel, int highVel,
                  int velLimitMin, int velLimitMax);
-    void setZone(KonfytMidiFilterZone newZone);
+    void setZone(MidiFilterZone newZone);
 
     bool passFilter(const KonfytMidiEvent *ev);
     KonfytMidiEvent modify(const KonfytMidiEvent* ev);
@@ -109,6 +88,27 @@ public:
     void readFromXMLStream(QXmlStreamReader *r);
 
     void deprecatedVelocityToMap();
+
+    static constexpr const char* XML_MIDIFILTER = "midiFilter";
+    static constexpr const char* XML_ZONE = "zone";
+    static constexpr const char* XML_ZONE_LOWNOTE = "lowNote";
+    static constexpr const char* XML_ZONE_HINOTE = "highNote";
+    static constexpr const char* XML_ZONE_ADD = "add";
+    static constexpr const char* XML_ZONE_LOWVEL = "lowVel";
+    static constexpr const char* XML_ZONE_HIVEL = "highVel";
+    static constexpr const char* XML_ZONE_VEL_LIMIT_MIN = "velLimitMin";
+    static constexpr const char* XML_ZONE_VEL_LIMIT_MAX = "velLimitMax";
+    static constexpr const char* XML_ZONE_PITCH_DOWN_MAX = "pitchDownMax";
+    static constexpr const char* XML_ZONE_PITCH_UP_MAX = "pitchUpMax";
+    static constexpr const char* XML_ZONE_VELOCITY_MAP = "velocityMap";
+    static constexpr const char* XML_PASSALLCC = "passAllCC";
+    static constexpr const char* XML_PASSPB = "passPitchbend";
+    static constexpr const char* XML_PASSPROG = "passProg";
+    static constexpr const char* XML_IGNORE_GLOBAL_TRANSPOSE = "ignoreGlobalTranspose";
+    static constexpr const char* XML_CC = "cc";
+    static constexpr const char* XML_BLOCK_CC = "blockcc";
+    static constexpr const char* XML_INCHAN = "inChan";
+    static constexpr const char* XML_OUTCHAN = "outChan";
 };
 
 #endif // KONFYT_MIDI_FILTER_H

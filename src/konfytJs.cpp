@@ -444,8 +444,8 @@ void TempParent::removeTemporaryChildren()
 KonfytJSEngine::KonfytJSEngine(QObject *parent) : QObject(parent)
 {
     // For signal scriptErrorStatusChanged()
-    qRegisterMetaType<KonfytPatchLayerPtr>("KonfytPatchLayerPtr");
-    qRegisterMetaType<KonfytProject::MidiPortPtr>("KonfytProject::MidiPortPtr");
+    qRegisterMetaType<PatchLayerPtr>("KonfytPatchLayerPtr");
+    qRegisterMetaType<Project::MidiPortPtr>("KonfytProject::MidiPortPtr");
 
     // Start script watchdog timer in calling thread (i.e. before this
     // object has been moved to another thread, so not the scripting thread).
@@ -475,7 +475,7 @@ void KonfytJSEngine::setJackEngine(KonfytJackEngine *jackEngine)
             Qt::QueuedConnection);
 }
 
-void KonfytJSEngine::addOrUpdateLayerScript(KonfytPatchLayerPtr patchLayer)
+void KonfytJSEngine::addOrUpdateLayerScript(PatchLayerPtr patchLayer)
 {
     if (!patchLayer) {
         print("Error: addLayerScript: null patchLayer");
@@ -519,7 +519,7 @@ void KonfytJSEngine::addOrUpdateLayerScript(KonfytPatchLayerPtr patchLayer)
     });
 }
 
-void KonfytJSEngine::addOrUpdateJackPortScript(KonfytProject::MidiPortPtr prjPort)
+void KonfytJSEngine::addOrUpdateJackPortScript(Project::MidiPortPtr prjPort)
 {
     if (!prjPort) {
         print("Error: addJackPortScript: null port");
@@ -558,7 +558,7 @@ void KonfytJSEngine::addOrUpdateJackPortScript(KonfytProject::MidiPortPtr prjPor
     });
 }
 
-void KonfytJSEngine::removeLayerScript(KonfytPatchLayerPtr patchLayer)
+void KonfytJSEngine::removeLayerScript(PatchLayerPtr patchLayer)
 {
     layerScriptMap_guiThread.remove(patchLayer);
 
@@ -575,7 +575,7 @@ void KonfytJSEngine::removeLayerScript(KonfytPatchLayerPtr patchLayer)
     });
 }
 
-void KonfytJSEngine::removeJackPortScript(KonfytProject::MidiPortPtr prjPort)
+void KonfytJSEngine::removeJackPortScript(Project::MidiPortPtr prjPort)
 {
     prjPortScriptMap_guiThread.remove(prjPort);
 
@@ -592,7 +592,7 @@ void KonfytJSEngine::removeJackPortScript(KonfytProject::MidiPortPtr prjPort)
     });
 }
 
-QString KonfytJSEngine::script(KonfytPatchLayerPtr patchLayer)
+QString KonfytJSEngine::script(PatchLayerPtr patchLayer)
 {
     // Get from cached values in GUI script map, no need to cross thread boundary
     QString ret;
@@ -604,7 +604,7 @@ QString KonfytJSEngine::script(KonfytPatchLayerPtr patchLayer)
     return ret;
 }
 
-QString KonfytJSEngine::script(KonfytProject::MidiPortPtr prjPort)
+QString KonfytJSEngine::script(Project::MidiPortPtr prjPort)
 {
     // Get from cached values in GUI script map, no need to cross thread boundary
     QString ret;
@@ -616,7 +616,7 @@ QString KonfytJSEngine::script(KonfytProject::MidiPortPtr prjPort)
     return ret;
 }
 
-void KonfytJSEngine::setScriptEnabled(KonfytPatchLayerPtr patchLayer,
+void KonfytJSEngine::setScriptEnabled(PatchLayerPtr patchLayer,
                                       bool enable)
 {
     runInThread(this, [=]()
@@ -633,7 +633,7 @@ void KonfytJSEngine::setScriptEnabled(KonfytPatchLayerPtr patchLayer,
     });
 }
 
-void KonfytJSEngine::setScriptEnabled(KonfytProject::MidiPortPtr prjPort, bool enable)
+void KonfytJSEngine::setScriptEnabled(Project::MidiPortPtr prjPort, bool enable)
 {
     runInThread(this, [=]()
     {
@@ -649,7 +649,7 @@ void KonfytJSEngine::setScriptEnabled(KonfytProject::MidiPortPtr prjPort, bool e
     });
 }
 
-void KonfytJSEngine::scriptAverageProcessTimeMs(KonfytPatchLayerPtr patchLayer,
+void KonfytJSEngine::scriptAverageProcessTimeMs(PatchLayerPtr patchLayer,
                 QObject* context, std::function<void(float, float)> callback)
 {
     runInThread(this, [=]()
@@ -670,7 +670,7 @@ void KonfytJSEngine::scriptAverageProcessTimeMs(KonfytPatchLayerPtr patchLayer,
 }
 
 void KonfytJSEngine::scriptAverageProcessTimeMs(
-        KonfytProject::MidiPortPtr prjPort,
+        Project::MidiPortPtr prjPort,
         QObject* context,
         std::function<void(float, float)> callback)
 {
@@ -691,7 +691,7 @@ void KonfytJSEngine::scriptAverageProcessTimeMs(
     });
 }
 
-void KonfytJSEngine::scriptErrorString(KonfytPatchLayerPtr patchLayer,
+void KonfytJSEngine::scriptErrorString(PatchLayerPtr patchLayer,
                                        QObject* context,
                                        std::function<void(QString)> callback)
 {
@@ -711,7 +711,7 @@ void KonfytJSEngine::scriptErrorString(KonfytPatchLayerPtr patchLayer,
     });
 }
 
-void KonfytJSEngine::scriptErrorString(KonfytProject::MidiPortPtr prjPort,
+void KonfytJSEngine::scriptErrorString(Project::MidiPortPtr prjPort,
                                        QObject* context,
                                        std::function<void(QString)> callback)
 {
@@ -764,14 +764,14 @@ void KonfytJSEngine::afterScriptRun(ScriptEnvPtr s)
     }
 }
 
-KfJackMidiRoute *KonfytJSEngine::jackMidiRouteFromLayer(KonfytPatchLayerPtr layer)
+KfJackMidiRoute *KonfytJSEngine::jackMidiRouteFromLayer(PatchLayerPtr layer)
 {
     KfJackMidiRoute* ret = nullptr;
-    if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+    if (layer->layerType() == PatchLayer::TypeMidiOut) {
         ret = layer->midiOutputPortData.jackRoute;
-    } else if (layer->layerType() == KonfytPatchLayer::TypeSfz) {
+    } else if (layer->layerType() == PatchLayer::TypeSfz) {
         ret = jack->getPluginMidiRoute(layer->sfzData.portsInJackEngine);
-    } else if (layer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+    } else if (layer->layerType() == PatchLayer::TypeSoundfontProgram) {
         ret = jack->getPluginMidiRoute(layer->soundfontData.portsInJackEngine);
     }
     return ret;

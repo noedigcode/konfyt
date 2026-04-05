@@ -307,7 +307,7 @@ void KonfytJackEngine::removePlugin(KfJackPluginPorts *p)
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::setSoundfontMidiFilter(KfJackPluginPorts *p, KonfytMidiFilter filter)
+void KonfytJackEngine::setSoundfontMidiFilter(KfJackPluginPorts *p, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(p);
 
@@ -316,7 +316,7 @@ void KonfytJackEngine::setSoundfontMidiFilter(KfJackPluginPorts *p, KonfytMidiFi
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::setSoundfontMidiPreFilter(KfJackPluginPorts *p, KonfytMidiFilter filter)
+void KonfytJackEngine::setSoundfontMidiPreFilter(KfJackPluginPorts *p, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(p);
 
@@ -332,7 +332,7 @@ void KonfytJackEngine::setSoundfontActive(KfJackPluginPorts *p, bool active)
     setMidiRouteActive(p->midiRoute, active);
 }
 
-void KonfytJackEngine::setPluginMidiFilter(KfJackPluginPorts *p, KonfytMidiFilter filter)
+void KonfytJackEngine::setPluginMidiFilter(KfJackPluginPorts *p, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(p);
 
@@ -341,7 +341,7 @@ void KonfytJackEngine::setPluginMidiFilter(KfJackPluginPorts *p, KonfytMidiFilte
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::setPluginMidiPreFilter(KfJackPluginPorts *p, KonfytMidiFilter filter)
+void KonfytJackEngine::setPluginMidiPreFilter(KfJackPluginPorts *p, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(p);
 
@@ -586,7 +586,7 @@ void KonfytJackEngine::removeAndDisconnectPortClient(KfJackAudioPort *port, QStr
     refreshAllPortsConnections();
 }
 
-void KonfytJackEngine::setPortFilter(KfJackMidiPort *port, KonfytMidiFilter filter)
+void KonfytJackEngine::setPortFilter(KfJackMidiPort *port, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(port);
 
@@ -754,7 +754,7 @@ void KonfytJackEngine::setMidiRouteActive(KfJackMidiRoute *route, bool active)
     route->active = active;
 }
 
-void KonfytJackEngine::setRouteMidiFilter(KfJackMidiRoute *route, KonfytMidiFilter filter)
+void KonfytJackEngine::setRouteMidiFilter(KfJackMidiRoute *route, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(route);
 
@@ -763,7 +763,7 @@ void KonfytJackEngine::setRouteMidiFilter(KfJackMidiRoute *route, KonfytMidiFilt
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::setRouteMidiPreFilter(KfJackMidiRoute *route, KonfytMidiFilter filter)
+void KonfytJackEngine::setRouteMidiPreFilter(KfJackMidiRoute *route, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(route);
 

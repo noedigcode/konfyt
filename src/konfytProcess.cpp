@@ -47,7 +47,7 @@ KonfytProcess::~KonfytProcess()
 QString KonfytProcess::expandedAppName()
 {
     QString ret = appInfo.command;
-    ret.replace(STRING_PROJECT_DIR, projectDir);
+    ret.replace(PROJECT_DIR_PLACEHOLDER, projectDir);
     return ret;
 }
 
@@ -156,14 +156,14 @@ void ExternalAppRunner::setProject(ProjectPtr project)
         processes.clear();
     }
     mProject = project;
-    connect(mProject.data(), &KonfytProject::externalAppRemoved,
+    connect(mProject.data(), &Project::externalAppRemoved,
             this, &ExternalAppRunner::onAppRemoved);
-    connect(mProject.data(), &KonfytProject::externalAppModified,
+    connect(mProject.data(), &Project::externalAppModified,
             this, &ExternalAppRunner::onAppModified);
 
     // Run all apps which are set to run at startup
     foreach (int id, mProject->getExternalAppIds()) {
-        KonfytProject::ExternalApp app = mProject->getExternalApp(id);
+        Project::ExternalApp app = mProject->getExternalApp(id);
         if (app.runAtStartup) {
             print("Auto-starting external app: " + app.displayName());
             runApp(id);
@@ -333,11 +333,11 @@ void ExternalAppsListAdapter::setProject(ProjectPtr project)
         disconnect(mProject.data(), nullptr, this, nullptr);
     }
     mProject = project;
-    connect(mProject.data(), &KonfytProject::externalAppAdded,
+    connect(mProject.data(), &Project::externalAppAdded,
             this, &ExternalAppsListAdapter::onAppAdded);
-    connect(mProject.data(), &KonfytProject::externalAppRemoved,
+    connect(mProject.data(), &Project::externalAppRemoved,
             this, &ExternalAppsListAdapter::onAppRemoved);
-    connect(mProject.data(), &KonfytProject::externalAppModified,
+    connect(mProject.data(), &Project::externalAppModified,
             this, &ExternalAppsListAdapter::onAppModified);
 
     // Clear items and refill from project
@@ -360,7 +360,7 @@ void ExternalAppsListAdapter::selectAppInList(int id)
 }
 
 void ExternalAppsListAdapter::updateItem(QListWidgetItem *item,
-                                         KonfytProject::ExternalApp app,
+                                         Project::ExternalApp app,
                                          KonfytProcess::State state)
 {
     QString text = app.displayName();
@@ -409,7 +409,7 @@ void ExternalAppsListAdapter::onListWidgetItemDoubleClicked(QListWidgetItem *ite
 
 void ExternalAppsListAdapter::onAppAdded(int id)
 {
-    KonfytProject::ExternalApp app = mProject->getExternalApp(id);
+    Project::ExternalApp app = mProject->getExternalApp(id);
     QListWidgetItem* item = new QListWidgetItem();
     updateItem(item, app, mRunner->getAppState(id));
     itemIdMap.insert(id, item);
@@ -429,7 +429,7 @@ void ExternalAppsListAdapter::onAppModified(int id)
 {
     QListWidgetItem* item = itemIdMap.value(id);
     if (!item) { return; }
-    KonfytProject::ExternalApp app = mProject->getExternalApp(id);
+    Project::ExternalApp app = mProject->getExternalApp(id);
     updateItem(item, app, mRunner->getAppState(id));
 }
 
@@ -437,7 +437,7 @@ void ExternalAppsListAdapter::onAppStateChanged(int id)
 {
     QListWidgetItem* item = itemIdMap.value(id);
     if (!item) { return; }
-    KonfytProject::ExternalApp app = mProject->getExternalApp(id);
+    Project::ExternalApp app = mProject->getExternalApp(id);
     updateItem(item, app, mRunner->getAppState(id));
 }
 

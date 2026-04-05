@@ -32,10 +32,10 @@ class MidiMapGraphWidget : public QWidget
 public:
     explicit MidiMapGraphWidget(QWidget *parent = nullptr);
 
-    void setMapping(KonfytMidiMapping m);
+    void setMapping(MidiFilterMapping m);
 
 private:
-    KonfytMidiMapping mapping;
+    MidiFilterMapping mapping;
 
     void paintEvent(QPaintEvent *event);
 

@@ -28,48 +28,8 @@
 #include "konfytMidiFilter.h"
 #include "konfytStructs.h"
 
-// ============================================================================
 
-struct LayerSoundfontData
-{
-    QString parentSoundfont;
-    KonfytSoundPreset program;
-    KfFluidSynth* synthInEngine = nullptr;
-    KfJackPluginPorts* portsInJackEngine = nullptr;
-};
-
-// ============================================================================
-
-struct LayerSfzData
-{
-    QString path;
-    QString midiInPort;
-    QString audioOutPortLeft;
-    QString audioOutPortRight;
-    KfJackPluginPorts* portsInJackEngine = nullptr;
-    int indexInEngine = -1;
-};
-
-// ============================================================================
-
-struct LayerMidiOutData
-{
-    int portIdInProject;
-    KfJackMidiRoute* jackRoute = nullptr;
-};
-
-// ============================================================================
-
-struct LayerAudioInData
-{
-    int portIdInProject;
-    KfJackAudioRoute* jackRouteLeft = nullptr;
-    KfJackAudioRoute* jackRouteRight = nullptr;
-};
-
-// ============================================================================
-
-class KonfytPatchLayer
+class PatchLayer
 {
 public:
     enum LayerType {
@@ -80,13 +40,54 @@ public:
         TypeAudioIn          = 3
     };
 
-    KonfytPatchLayer();
+    // -----------------------------------------------------------------------
+
+    struct SoundfontData
+    {
+        QString parentSoundfont;
+        KonfytSoundPreset program;
+        KfFluidSynth* synthInEngine = nullptr;
+        KfJackPluginPorts* portsInJackEngine = nullptr;
+    };
+
+    // -----------------------------------------------------------------------
+
+    struct SfzData
+    {
+        QString path;
+        QString midiInPort;
+        QString audioOutPortLeft;
+        QString audioOutPortRight;
+        KfJackPluginPorts* portsInJackEngine = nullptr;
+        int indexInEngine = -1;
+    };
+
+    // -----------------------------------------------------------------------
+
+    struct MidiOutData
+    {
+        int portIdInProject;
+        KfJackMidiRoute* jackRoute = nullptr;
+    };
+
+    // -----------------------------------------------------------------------
+
+    struct AudioInData
+    {
+        int portIdInProject;
+        KfJackAudioRoute* jackRouteLeft = nullptr;
+        KfJackAudioRoute* jackRouteRight = nullptr;
+    };
+
+    // -----------------------------------------------------------------------
+
+    PatchLayer();
 
     // Use to initialize layer
-    void initLayer(LayerSoundfontData newLayerData);
-    void initLayer(LayerSfzData newLayerData);
-    void initLayer(LayerMidiOutData newLayerData);
-    void initLayer(LayerAudioInData newLayerData);
+    void initLayer(SoundfontData newLayerData);
+    void initLayer(SfzData newLayerData);
+    void initLayer(MidiOutData newLayerData);
+    void initLayer(AudioInData newLayerData);
 
     LayerType layerType() const;
     bool hasMidiInput() const;
@@ -119,8 +120,8 @@ public:
     bool isPassMidiThrough() const;
     void setPassMidiThrough(bool enable);
 
-    KonfytMidiFilter midiFilter() const;
-    void setMidiFilter(KonfytMidiFilter midiFilter);
+    MidiFilter midiFilter() const;
+    void setMidiFilter(MidiFilter midiFilter);
 
     void setErrorMessage(QString msg);
     bool hasError() const;
@@ -128,10 +129,10 @@ public:
 
     // Depending on the layer type, one of the following is used:
     // TODO: MERGE BELOW INTO LAYER
-    LayerSoundfontData    soundfontData;
-    LayerSfzData          sfzData;
-    LayerMidiOutData      midiOutputPortData;
-    LayerAudioInData      audioInPortData;
+    SoundfontData soundfontData;
+    SfzData       sfzData;
+    MidiOutData   midiOutputPortData;
+    AudioInData   audioInPortData;
 
     QList<MidiSendItem> midiSendList;
     QList<KonfytMidiEvent> getMidiSendListEvents();
@@ -150,7 +151,7 @@ private:
     float mGain = 1.0;
     bool mSolo = false;
     bool mMute = false;
-    KonfytMidiFilter mMidiFilter;
+    MidiFilter mMidiFilter;
     QString mName = "UNINITIALIZED LAYER";
     int mBusIdInProject = 0;
     int mMidiInPortIdInProject = 0;
@@ -235,6 +236,6 @@ public:
     static constexpr const char* XML_MIDISENDLIST = "midiSendList";
 };
 
-typedef QSharedPointer<KonfytPatchLayer> KonfytPatchLayerPtr;
+typedef QSharedPointer<PatchLayer> PatchLayerPtr;
 
 #endif // KONFYT_PATCH_LAYER_H

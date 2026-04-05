@@ -21,22 +21,22 @@
 
 #include "konfytPatchLayer.h"
 
-void KonfytPatchLayer::setErrorMessage(QString msg)
+void PatchLayer::setErrorMessage(QString msg)
 {
     mErrorMessage = msg;
 }
 
-bool KonfytPatchLayer::hasError() const
+bool PatchLayer::hasError() const
 {
     return !mErrorMessage.isEmpty();
 }
 
-QString KonfytPatchLayer::errorMessage() const
+QString PatchLayer::errorMessage() const
 {
     return mErrorMessage;
 }
 
-QList<KonfytMidiEvent> KonfytPatchLayer::getMidiSendListEvents()
+QList<KonfytMidiEvent> PatchLayer::getMidiSendListEvents()
 {
     QList<KonfytMidiEvent> events;
     foreach (MidiSendItem item, midiSendList) {
@@ -45,27 +45,27 @@ QList<KonfytMidiEvent> KonfytPatchLayer::getMidiSendListEvents()
     return events;
 }
 
-void KonfytPatchLayer::writeToXmlStream(QXmlStreamWriter *stream) const
+void PatchLayer::writeToXmlStream(QXmlStreamWriter *stream) const
 {
     switch (mLayerType) {
-    case KonfytPatchLayer::TypeUninitialized:
+    case PatchLayer::TypeUninitialized:
         break;
-    case KonfytPatchLayer::TypeSoundfontProgram:
+    case PatchLayer::TypeSoundfontProgram:
         writeSoundfontDataToXmlStream(stream);
         break;
-    case KonfytPatchLayer::TypeSfz:
+    case PatchLayer::TypeSfz:
         writeSfzDataToXmlStream(stream);
         break;
-    case KonfytPatchLayer::TypeMidiOut:
+    case PatchLayer::TypeMidiOut:
         writeMidiOutDataToXmlStream(stream);
         break;
-    case KonfytPatchLayer::TypeAudioIn:
+    case PatchLayer::TypeAudioIn:
         writeAudioInDataToXmlStream(stream);
         break;
     }
 }
 
-void KonfytPatchLayer::readFromXmlStream(QXmlStreamReader *r, QString *errors)
+void PatchLayer::readFromXmlStream(QXmlStreamReader *r, QString *errors)
 {
     if (r->name() == XML_SF_LAYER) {
 
@@ -86,7 +86,7 @@ void KonfytPatchLayer::readFromXmlStream(QXmlStreamReader *r, QString *errors)
     }
 }
 
-QByteArray KonfytPatchLayer::toByteArray()
+QByteArray PatchLayer::toByteArray()
 {
     QByteArray data;
     QXmlStreamWriter stream(&data);
@@ -94,7 +94,7 @@ QByteArray KonfytPatchLayer::toByteArray()
     return data;
 }
 
-void KonfytPatchLayer::fromByteArray(QByteArray data)
+void PatchLayer::fromByteArray(QByteArray data)
 {
     QXmlStreamReader r(data);
 
@@ -104,7 +104,7 @@ void KonfytPatchLayer::fromByteArray(QByteArray data)
     }
 }
 
-void KonfytPatchLayer::writeSoundfontDataToXmlStream(QXmlStreamWriter *stream) const
+void PatchLayer::writeSoundfontDataToXmlStream(QXmlStreamWriter *stream) const
 {
     stream->writeStartElement(XML_SF_LAYER);
 
@@ -129,15 +129,15 @@ void KonfytPatchLayer::writeSoundfontDataToXmlStream(QXmlStreamWriter *stream) c
     stream->writeEndElement(); // Layer
 }
 
-void KonfytPatchLayer::readSoundfontDataFromXmlStream(QXmlStreamReader *r, QString *errors)
+void PatchLayer::readSoundfontDataFromXmlStream(QXmlStreamReader *r, QString *errors)
 {
-    LayerSoundfontData sfData;
+    SoundfontData sfData;
     int bus = 0;
     int midiIn = 0;
     float gain = 1.0;
     bool solo = false;
     bool mute = false;
-    KonfytMidiFilter midiFilter;
+    MidiFilter midiFilter;
     LayerScriptData script;
     KonfytReset resetOption = KonfytReset::Inherit;
 
@@ -157,7 +157,7 @@ void KonfytPatchLayer::readSoundfontDataFromXmlStream(QXmlStreamReader *r, QStri
             solo = (r->readElementText() == "1");
         } else if (r->name() == XML_SF_MUTE) {
             mute = (r->readElementText() == "1");
-        } else if (r->name() == XML_MIDIFILTER) {
+        } else if (r->name() == MidiFilter::XML_MIDIFILTER) {
             midiFilter.readFromXMLStream(r);
         } else if (r->name() == XML_SF_BUS) {
             bus = r->readElementText().toInt();
@@ -187,7 +187,7 @@ void KonfytPatchLayer::readSoundfontDataFromXmlStream(QXmlStreamReader *r, QStri
     setResetOption(resetOption);
 }
 
-void KonfytPatchLayer::writeSfzDataToXmlStream(QXmlStreamWriter *stream) const
+void PatchLayer::writeSfzDataToXmlStream(QXmlStreamWriter *stream) const
 {
     stream->writeStartElement(XML_SFZ_LAYER);
 
@@ -209,16 +209,16 @@ void KonfytPatchLayer::writeSfzDataToXmlStream(QXmlStreamWriter *stream) const
     stream->writeEndElement(); // Layer
 }
 
-void KonfytPatchLayer::readSfzDataFromXmlStream(QXmlStreamReader *r, QString *errors)
+void PatchLayer::readSfzDataFromXmlStream(QXmlStreamReader *r, QString *errors)
 {
-    LayerSfzData p;
+    SfzData p;
     int bus = 0;
     int midiIn = 0;
     QString name;
     float gain = 1.0;
     bool solo = false;
     bool mute = false;
-    KonfytMidiFilter midiFilter;
+    MidiFilter midiFilter;
     LayerScriptData script;
     KonfytReset resetOption = KonfytReset::Inherit;
 
@@ -238,7 +238,7 @@ void KonfytPatchLayer::readSfzDataFromXmlStream(QXmlStreamReader *r, QString *er
             solo = (r->readElementText() == "1");
         } else if (r->name() == XML_SFZ_MUTE) {
             mute = (r->readElementText() == "1");
-        } else if (r->name() == XML_MIDIFILTER) {
+        } else if (r->name() == MidiFilter::XML_MIDIFILTER) {
             midiFilter.readFromXMLStream(r);
         } else if (r->name() == XML_SCRIPT) {
             script = readScriptFromXmlStream(r, errors);
@@ -265,7 +265,7 @@ void KonfytPatchLayer::readSfzDataFromXmlStream(QXmlStreamReader *r, QString *er
     setResetOption(resetOption);
 }
 
-void KonfytPatchLayer::writeMidiOutDataToXmlStream(QXmlStreamWriter *stream) const
+void PatchLayer::writeMidiOutDataToXmlStream(QXmlStreamWriter *stream) const
 {
     stream->writeStartElement(XML_MIDIOUT);
 
@@ -296,14 +296,14 @@ void KonfytPatchLayer::writeMidiOutDataToXmlStream(QXmlStreamWriter *stream) con
     stream->writeEndElement(); // Layer
 }
 
-void KonfytPatchLayer::readMidiOutDataFromXmlStream(QXmlStreamReader *r, QString *errors)
+void PatchLayer::readMidiOutDataFromXmlStream(QXmlStreamReader *r, QString *errors)
 {
-    LayerMidiOutData mp;
+    MidiOutData mp;
     int midiIn = 0;
     QList<MidiSendItem> midiSendItems;
     bool solo = false;
     bool mute = false;
-    KonfytMidiFilter midiFilter;
+    MidiFilter midiFilter;
     LayerScriptData script;
     KonfytReset resetOption = KonfytReset::Inherit;
 
@@ -314,7 +314,7 @@ void KonfytPatchLayer::readMidiOutDataFromXmlStream(QXmlStreamReader *r, QString
             solo = (r->readElementText() == "1");
         } else if (r->name() == XML_MIDIOUT_MUTE) {
             mute = (r->readElementText() == "1");
-        } else if (r->name() == XML_MIDIFILTER) {
+        } else if (r->name() == MidiFilter::XML_MIDIFILTER) {
             midiFilter.readFromXMLStream(r);
         } else if (r->name() == XML_SCRIPT) {
             script = readScriptFromXmlStream(r, errors);
@@ -355,7 +355,7 @@ void KonfytPatchLayer::readMidiOutDataFromXmlStream(QXmlStreamReader *r, QString
     setResetOption(resetOption);
 }
 
-void KonfytPatchLayer::writeAudioInDataToXmlStream(QXmlStreamWriter *stream) const
+void PatchLayer::writeAudioInDataToXmlStream(QXmlStreamWriter *stream) const
 {
     stream->writeStartElement(XML_AUDIOIN);
 
@@ -372,9 +372,9 @@ void KonfytPatchLayer::writeAudioInDataToXmlStream(QXmlStreamWriter *stream) con
     stream->writeEndElement(); // Layer
 }
 
-void KonfytPatchLayer::readAudioInDataFromXmlStream(QXmlStreamReader *r, QString *errors)
+void PatchLayer::readAudioInDataFromXmlStream(QXmlStreamReader *r, QString *errors)
 {
-    LayerAudioInData a;
+    AudioInData a;
     int bus = 0;
     QString name;
     float gain = 1.0;
@@ -413,7 +413,7 @@ void KonfytPatchLayer::readAudioInDataFromXmlStream(QXmlStreamReader *r, QString
     setResetOption(resetOption);
 }
 
-void KonfytPatchLayer::writeScriptToXmlStream(QXmlStreamWriter *stream) const
+void PatchLayer::writeScriptToXmlStream(QXmlStreamWriter *stream) const
 {
     stream->writeStartElement(XML_SCRIPT);
 
@@ -426,7 +426,7 @@ void KonfytPatchLayer::writeScriptToXmlStream(QXmlStreamWriter *stream) const
     stream->writeEndElement(); // script
 }
 
-void KonfytPatchLayer::appendError(QString *errorString, QString msg)
+void PatchLayer::appendError(QString *errorString, QString msg)
 {
     if (errorString) {
         if (!errorString->isEmpty()) { errorString->append("\n"); }
@@ -434,7 +434,7 @@ void KonfytPatchLayer::appendError(QString *errorString, QString msg)
     }
 }
 
-KonfytPatchLayer::LayerScriptData KonfytPatchLayer::readScriptFromXmlStream(
+PatchLayer::LayerScriptData PatchLayer::readScriptFromXmlStream(
         QXmlStreamReader *r, QString* /*errors*/)
 {
     LayerScriptData ret;
@@ -454,12 +454,12 @@ KonfytPatchLayer::LayerScriptData KonfytPatchLayer::readScriptFromXmlStream(
     return ret;
 }
 
-KonfytPatchLayer::KonfytPatchLayer()
+PatchLayer::PatchLayer()
 {
     gainMidiCtrl.setValue(mGain * 127.0);
 }
 
-void KonfytPatchLayer::initLayer(LayerSoundfontData newLayerData)
+void PatchLayer::initLayer(SoundfontData newLayerData)
 {
     mLayerType = TypeSoundfontProgram;
     soundfontData = newLayerData;
@@ -467,7 +467,7 @@ void KonfytPatchLayer::initLayer(LayerSoundfontData newLayerData)
     mMidiFilter.passProg = false;
 }
 
-void KonfytPatchLayer::initLayer(LayerSfzData newLayerData)
+void PatchLayer::initLayer(SfzData newLayerData)
 {
     mLayerType = TypeSfz;
     sfzData = newLayerData;
@@ -475,7 +475,7 @@ void KonfytPatchLayer::initLayer(LayerSfzData newLayerData)
     mMidiFilter.passProg = false;
 }
 
-void KonfytPatchLayer::initLayer(LayerMidiOutData newLayerData)
+void PatchLayer::initLayer(MidiOutData newLayerData)
 {
     mLayerType = TypeMidiOut;
     midiOutputPortData = newLayerData;
@@ -483,29 +483,29 @@ void KonfytPatchLayer::initLayer(LayerMidiOutData newLayerData)
     mMidiFilter.passProg = true;
 }
 
-void KonfytPatchLayer::initLayer(LayerAudioInData newLayerData)
+void PatchLayer::initLayer(AudioInData newLayerData)
 {
     mLayerType = TypeAudioIn;
     audioInPortData = newLayerData;
     mName = "Audio In Port";
 }
 
-QString KonfytPatchLayer::name() const
+QString PatchLayer::name() const
 {
     return mName;
 }
 
-void KonfytPatchLayer::setName(QString name)
+void PatchLayer::setName(QString name)
 {
     mName = name;
 }
 
-float KonfytPatchLayer::gain() const
+float PatchLayer::gain() const
 {
     return mGain;
 }
 
-void KonfytPatchLayer::setGain(float gain)
+void PatchLayer::setGain(float gain)
 {
     mGain = gain;
     gainMidiCtrl.setValue(gain * 127.0);
@@ -513,7 +513,7 @@ void KonfytPatchLayer::setGain(float gain)
 
 /* Change the gain relatively by the specified MIDI value, ignoring MIDI pickup
  * range. */
-void KonfytPatchLayer::addGainRelativeMidiValue(int value)
+void PatchLayer::addGainRelativeMidiValue(int value)
 {
     value += gainMidiCtrl.value();
     value = qMax(0, qMin(127, value));
@@ -523,74 +523,74 @@ void KonfytPatchLayer::addGainRelativeMidiValue(int value)
 }
 
 /* Set gain from MIDI, taking MIDI pickup range into account. */
-void KonfytPatchLayer::setGainByMidi(int value)
+void PatchLayer::setGainByMidi(int value)
 {
     if (gainMidiCtrl.midiInput(value)) {
         mGain = gainMidiCtrl.value() / 127.0;
     }
 }
 
-void KonfytPatchLayer::setGainMidiPickupRange(int range)
+void PatchLayer::setGainMidiPickupRange(int range)
 {
     gainMidiCtrl.pickupRange = range;
 }
 
-int KonfytPatchLayer::gainMidiPickupRange()
+int PatchLayer::gainMidiPickupRange()
 {
     return gainMidiCtrl.pickupRange;
 }
 
-void KonfytPatchLayer::setSolo(bool isSolo)
+void PatchLayer::setSolo(bool isSolo)
 {
     mSolo = isSolo;
 }
 
-void KonfytPatchLayer::setMute(bool isMute)
+void PatchLayer::setMute(bool isMute)
 {
     mMute = isMute;
 }
 
-bool KonfytPatchLayer::isSolo() const
+bool PatchLayer::isSolo() const
 {
     return mSolo;
 }
 
-bool KonfytPatchLayer::isMute() const
+bool PatchLayer::isMute() const
 {
     return mMute;
 }
 
-int KonfytPatchLayer::busIdInProject() const
+int PatchLayer::busIdInProject() const
 {
     return mBusIdInProject;
 }
 
-void KonfytPatchLayer::setBusIdInProject(int bus)
+void PatchLayer::setBusIdInProject(int bus)
 {
     mBusIdInProject = bus;
 }
 
-int KonfytPatchLayer::midiInPortIdInProject() const
+int PatchLayer::midiInPortIdInProject() const
 {
     return mMidiInPortIdInProject;
 }
 
-void KonfytPatchLayer::setMidiInPortIdInProject(int port)
+void PatchLayer::setMidiInPortIdInProject(int port)
 {
     mMidiInPortIdInProject = port;
 }
 
-void KonfytPatchLayer::setResetOption(KonfytReset option)
+void PatchLayer::setResetOption(KonfytReset option)
 {
     mResetOption = option;
 }
 
-KonfytReset KonfytPatchLayer::getResetOption()
+KonfytReset PatchLayer::getResetOption()
 {
     return mResetOption;
 }
 
-void KonfytPatchLayer::createResetSnapshot()
+void PatchLayer::createResetSnapshot()
 {
     mResetSnapshot.valid = true;
     mResetSnapshot.gain = mGain;
@@ -598,7 +598,7 @@ void KonfytPatchLayer::createResetSnapshot()
     mResetSnapshot.mute = mMute;
 }
 
-void KonfytPatchLayer::restoreResetSnapshotIfAllowed(KonfytReset inheritedOption)
+void PatchLayer::restoreResetSnapshotIfAllowed(KonfytReset inheritedOption)
 {
     KonfytReset resultingOption = konfytResetFromInherits(
                                         {mResetOption, inheritedOption},
@@ -614,53 +614,53 @@ void KonfytPatchLayer::restoreResetSnapshotIfAllowed(KonfytReset inheritedOption
     setMute(mResetSnapshot.mute);
 }
 
-QString KonfytPatchLayer::script() const
+QString PatchLayer::script() const
 {
     return mScript;
 }
 
-void KonfytPatchLayer::setScript(QString script)
+void PatchLayer::setScript(QString script)
 {
     mScript = script;
 }
 
-bool KonfytPatchLayer::isScriptEnabled() const
+bool PatchLayer::isScriptEnabled() const
 {
     return mScriptEnabled;
 }
 
-void KonfytPatchLayer::setScriptEnabled(bool enable)
+void PatchLayer::setScriptEnabled(bool enable)
 {
     mScriptEnabled = enable;
 }
 
-bool KonfytPatchLayer::isPassMidiThrough() const
+bool PatchLayer::isPassMidiThrough() const
 {
     return mPassMidiThrough;
 }
 
-void KonfytPatchLayer::setPassMidiThrough(bool enable)
+void PatchLayer::setPassMidiThrough(bool enable)
 {
     mPassMidiThrough = enable;
 }
 
-KonfytMidiFilter KonfytPatchLayer::midiFilter() const
+MidiFilter PatchLayer::midiFilter() const
 {
     return mMidiFilter;
 }
 
-void KonfytPatchLayer::setMidiFilter(KonfytMidiFilter midiFilter)
+void PatchLayer::setMidiFilter(MidiFilter midiFilter)
 {
     mMidiFilter = midiFilter;
 }
 
-KonfytPatchLayer::LayerType KonfytPatchLayer::layerType() const
+PatchLayer::LayerType PatchLayer::layerType() const
 {
     return mLayerType;
 }
 
 /* Shorthand for determining of layer type has MIDI input. */
-bool KonfytPatchLayer::hasMidiInput() const
+bool PatchLayer::hasMidiInput() const
 {
     return    (mLayerType == TypeMidiOut)
            || (mLayerType == TypeSfz)

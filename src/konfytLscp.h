@@ -40,7 +40,7 @@ class KonfytLscp : public QObject
 {
     Q_OBJECT
 public:
-    // ----------------------------------------------------
+    // -----------------------------------------------------------------------
     struct LsPort
     {
         LsPort(int index, lscp_device_port_info_t* port);
@@ -52,7 +52,7 @@ public:
 
         QString paramsToString();
     };
-    // ----------------------------------------------------
+    // -----------------------------------------------------------------------
     struct LsDevice
     {
         LsDevice();
@@ -70,7 +70,7 @@ public:
         QString toString();
         QString paramsToString();
     };
-    // ----------------------------------------------------
+    // -----------------------------------------------------------------------
     struct LsChannel
     {
         QString midiJackPort;
@@ -81,7 +81,7 @@ public:
         int audioLeftChanIndex = -1;
         int audioRightChanIndex = -1;
     };
-    // ----------------------------------------------------
+    // -----------------------------------------------------------------------
 
     explicit KonfytLscp(QObject *parent = 0);
 

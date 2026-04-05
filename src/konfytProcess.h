@@ -30,7 +30,6 @@
 #include <QListWidget>
 #include <QTimer>
 
-// =============================================================================
 
 /* Class for running an external application. */
 class KonfytProcess : public QObject
@@ -41,11 +40,13 @@ public:
     enum State { NOT_STARTED, STARTING, RUNNING, FINISHED, STOPPING, STOPPED,
                  CRASHED, ERROR };
 
+    static constexpr const char* PROJECT_DIR_PLACEHOLDER = "$PROJ_DIR$";
+
     KonfytProcess();
     ~KonfytProcess();
 
     QProcess process;
-    KonfytProject::ExternalApp appInfo;
+    Project::ExternalApp appInfo;
     QString projectDir;
 
     QString expandedAppName();
@@ -69,7 +70,7 @@ private slots:
     void onProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
 };
 
-// =============================================================================
+// ===========================================================================
 
 class ExternalAppRunner : public QObject
 {
@@ -102,7 +103,7 @@ private slots:
     void onProcessErrorOccurred(int id, QString errorString);
 };
 
-// =============================================================================
+// ===========================================================================
 
 class ExternalAppsListAdapter : public QObject
 {
@@ -128,7 +129,7 @@ private:
     ExternalAppRunner* mRunner = nullptr;
     QMap<int, QListWidgetItem*> itemIdMap;
 
-    void updateItem(QListWidgetItem* item, KonfytProject::ExternalApp app,
+    void updateItem(QListWidgetItem* item, Project::ExternalApp app,
                     KonfytProcess::State state);
 
 private slots:

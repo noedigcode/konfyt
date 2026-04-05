@@ -26,7 +26,6 @@
 #include "konfytUtils.h"
 #include "konfytFluidsynthEngine.h"
 #include "konfytJackStructs.h"
-#include "konfytProject.h"
 #include "konfytStructs.h"
 #include "ringbufferqmutex.h"
 #include "sleepyRingBuffer.h"
@@ -102,7 +101,7 @@ public:
     void addPortClient(KfJackAudioPort *port, QString newClient);
     void removeAndDisconnectPortClient(KfJackMidiPort *port, QString mJackClient);
     void removeAndDisconnectPortClient(KfJackAudioPort *port, QString mJackClient);
-    void setPortFilter(KfJackMidiPort *port, KonfytMidiFilter filter);
+    void setPortFilter(KfJackMidiPort *port, MidiFilter filter);
     void setPortGain(KfJackAudioPort *port, float gain);
     bool sendMidiEventsOnPort(KfJackMidiPort* port, QList<KonfytMidiEvent> events);
     void setMidiPortBlockMidiDirectThrough(KfJackMidiPort* port, bool block);
@@ -121,16 +120,16 @@ public:
     void setMidiRoute(KfJackMidiRoute* route, KfJackMidiPort* sourcePort, KfJackMidiPort* destPort);
     void removeMidiRoute(KfJackMidiRoute *route);
     void setMidiRouteActive(KfJackMidiRoute *route, bool active);
-    void setRouteMidiFilter(KfJackMidiRoute *route, KonfytMidiFilter filter);
-    void setRouteMidiPreFilter(KfJackMidiRoute *route, KonfytMidiFilter filter);
+    void setRouteMidiFilter(KfJackMidiRoute *route, MidiFilter filter);
+    void setRouteMidiPreFilter(KfJackMidiRoute *route, MidiFilter filter);
     bool sendMidiEventsOnRoute(KfJackMidiRoute *route, QList<KonfytMidiEvent> events);
     void setRouteBlockMidiDirectThrough(KfJackMidiRoute* route, bool block);
 
     // SFZ plugins
     KfJackPluginPorts* addPluginPortsAndConnect(const KonfytJackPortsSpec &spec);
     void removePlugin(KfJackPluginPorts *p);
-    void setPluginMidiFilter(KfJackPluginPorts *p, KonfytMidiFilter filter);
-    void setPluginMidiPreFilter(KfJackPluginPorts *p, KonfytMidiFilter filter);
+    void setPluginMidiFilter(KfJackPluginPorts *p, MidiFilter filter);
+    void setPluginMidiPreFilter(KfJackPluginPorts *p, MidiFilter filter);
     void setPluginActive(KfJackPluginPorts *p, bool active);
     void setPluginGain(KfJackPluginPorts *p, float gain);
     void setPluginRouting(KfJackPluginPorts *p, KfJackMidiPort *midiInPort,
@@ -143,8 +142,8 @@ public:
     // Fluidsynth
     KfJackPluginPorts* addSoundfont(KfFluidSynth* fluidSynth);
     void removeSoundfont(KfJackPluginPorts *p);
-    void setSoundfontMidiFilter(KfJackPluginPorts *p, KonfytMidiFilter filter);
-    void setSoundfontMidiPreFilter(KfJackPluginPorts *p, KonfytMidiFilter filter);
+    void setSoundfontMidiFilter(KfJackPluginPorts *p, MidiFilter filter);
+    void setSoundfontMidiPreFilter(KfJackPluginPorts *p, MidiFilter filter);
     void setSoundfontActive(KfJackPluginPorts *p, bool active);
     void setSoundfontRouting(KfJackPluginPorts *p, KfJackMidiPort *midiInPort,
                                      KfJackAudioPort *leftPort,

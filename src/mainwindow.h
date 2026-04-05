@@ -122,9 +122,6 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
-    // ========================================================================
-    // MainWindow
-    // ========================================================================
 public:
     explicit MainWindow(QWidget *parent, KonfytAppInfo appInfoArg);
     ~MainWindow();
@@ -201,9 +198,8 @@ private:
 private:
     void highlightButton(QAbstractButton* button, bool highlight);
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Project related
-    // ========================================================================
 private:
     ProjectPtr mCurrentProject;
     void setupInitialProjectFromCmdLineArgs();
@@ -220,11 +216,11 @@ private:
 
     void updateProjectNameInGui();
 
-    KonfytPatch* newPatchToProject();
+    Patch* newPatchToProject();
     void removePatchFromProject(int i);
-    void addPatchToProject(KonfytPatch* patch);
-    KonfytPatch* addPatchToProjectFromFile(QString filename);
-    bool savePatchToLibrary(KonfytPatch* patch);
+    void addPatchToProject(Patch* patch);
+    Patch* addPatchToProjectFromFile(QString filename);
+    bool savePatchToLibrary(Patch* patch);
 
     // Projects menu
 private:
@@ -250,9 +246,8 @@ private slots:
     void onProjectNameChanged();
     void onProjectMidiPickupRangeChanged(int range);
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Library and filesystem view
-    // ========================================================================
 
     // Library/filesystem common
 private:
@@ -386,16 +381,15 @@ private slots:
     void on_actionAdd_Path_to_External_App_Box_Relative_to_Project_triggered();
     void on_action_CopyFilesystemPath_triggered();
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Patches
-    // ========================================================================
 private:
     KonfytPatchEngine pengine;
     void setupPatchEngine();
-    KonfytPatch* mCurrentPatch = nullptr; // Current patch being played
+    Patch* mCurrentPatch = nullptr; // Current patch being played
 
     // Patch preview
-    KonfytPatch mPreviewPatch;  // Patch played when in preview mode
+    Patch mPreviewPatch;  // Patch played when in preview mode
     float previewGain = 1.0;    // Gain when in preview mode
     int previewPatchMidiInPort = 0;
     int previewPatchMidiInChannel = -1;
@@ -404,7 +398,7 @@ private:
 
     // Current patch functions
     int currentPatchIndex();
-    void setCurrentPatch(KonfytPatch *patch);
+    void setCurrentPatch(Patch *patch);
     void setCurrentPatchByIndex(int index);
 
     void newPatchIfCurrentNull();
@@ -427,8 +421,8 @@ private:
     bool patchNote_ignoreChange = false;
 
 private slots:
-    void onPatchSelected(KonfytPatch* patch);
-    void onPatchLayerLoaded(KonfytPatchLayerPtr patchLayer);
+    void onPatchSelected(Patch* patch);
+    void onPatchLayerLoaded(PatchLayerPtr patchLayer);
 
     // Patch menu
 private:
@@ -445,9 +439,9 @@ private slots:
     // Layers
 private:
     QList<KonfytLayerWidget*> layerWidgetList;
-    void addPatchLayerToGUI(KonfytPatchLayerPtr patchLayer, int index = -1);
+    void addPatchLayerToGUI(PatchLayerPtr patchLayer, int index = -1);
     void addPatchLayerToIndicatorHandler(KonfytLayerWidget* layerWidget,
-                                         KonfytPatchLayerPtr patchLayer);
+                                         PatchLayerPtr patchLayer);
     void removePatchLayer(KonfytLayerWidget *layerWidget);
     void removePatchLayerFromGuiOnly(KonfytLayerWidget *layerWidget);
     void clearPatchLayersFromGuiOnly();
@@ -557,9 +551,8 @@ private slots:
     void toggleShowPatchListNumbers();
     void toggleShowPatchListNotes();
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Connections screen (Ports and buses)
-    // ========================================================================
 private:
     QMenu portsBusesTreeMenu;
     void setupPortsBusesTreeMenu();
@@ -616,9 +609,8 @@ private slots:
     void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
     void on_toolButton_connectionsPage_portsBussesListOptions_clicked();
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Settings
-    // ========================================================================
 private:
     bool mSettingsFirstRun = false;
     ResetOptionComboBox mProjectResetOptionComboBox;
@@ -676,9 +668,8 @@ private:
 private slots:
     void scanThreadFihishedSlot();
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // MIDI filter editor
-    // ========================================================================
 private:
     enum MidiFilterEditType {
         MidiFilterEditPort,
@@ -689,18 +680,18 @@ private:
     KonfytLayerWidget* midiFilterEditItem = nullptr;
     KfJackMidiRoute* midiFilterEditRoute = nullptr;
     int midiFilterEditPort;
-    KonfytPatch* midiFilterEditPatch = nullptr;
+    Patch* midiFilterEditPatch = nullptr;
     void showMidiFilterEditor();
     KonfytMidiEvent midiFilterLastEvent;
     void updateMidiFilterEditorLastRx(KonfytMidiEvent ev);
     QList<int> textToNonRepeatedUint7List(QString text);
     QString intListToText(QList<int> lst);
-    KonfytMidiFilter midiFilterFromGuiEditor();
-    void updateMidiFilterBeingEdited(KonfytMidiFilter newFilter);
+    MidiFilter midiFilterFromGuiEditor();
+    void updateMidiFilterBeingEdited(MidiFilter newFilter);
     bool blockMidiFilterEditorModified = false;
 
-    KonfytMidiFilter midiFilterUnderEdit;
-    KonfytMidiFilter midiFilterEditorOriginalFilter;
+    MidiFilter midiFilterUnderEdit;
+    MidiFilter midiFilterEditorOriginalFilter;
 
     // MIDI map presets
     struct MidiMapPreset {
@@ -754,9 +745,8 @@ private slots:
     void on_checkBox_midiFilter_Prog_toggled(bool checked);
     void on_actionPatch_MIDI_Filter_triggered();
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // MIDI send list
-    // ========================================================================
 
     // MIDI send list editor
 private:
@@ -813,9 +803,8 @@ private slots:
     void on_pushButton_savedMidiMsgs_remove_clicked();
     void on_treeWidget_savedMidiMessages_itemClicked(QTreeWidgetItem *item, int column);
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // JACK / MIDI
-    // ========================================================================
 private:
     KonfytJackEngine jack;
     int mJackXrunCount = 0;
@@ -836,18 +825,17 @@ private slots:
     void onJackXrunOccurred();
     void onJackPortRegisteredOrConnected();
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Scripting / Script editor
-    // ========================================================================
 private:
     KonfytJSEngine scriptEngine;
     QThread scriptingThread;
     void setupScripting();
-    KonfytPatchLayerPtr mScriptEditLayer;
-    KonfytProject::MidiPortPtr mScriptEditPort;
+    PatchLayerPtr mScriptEditLayer;
+    Project::MidiPortPtr mScriptEditPort;
     QWidget* stackedWidgetBeforeScriptEditor = nullptr;
-    void showScriptEditorForPatchLayer(KonfytPatchLayerPtr patchLayer);
-    void showScriptEditorForPort(KonfytProject::MidiPortPtr prjPort);
+    void showScriptEditorForPatchLayer(PatchLayerPtr patchLayer);
+    void showScriptEditorForPort(Project::MidiPortPtr prjPort);
     void showScriptEditor();
     bool scriptEditorIgnoreChanged = false;
     QTimer scriptInfoTimer;
@@ -857,11 +845,11 @@ private:
 private slots:
     void onScriptInfoTimer();
     void onJsEnginePrint(QString msg);
-    void onLayerScriptPrint(KonfytPatchLayerPtr patchLayer, QString msg);
-    void onPortScriptPrint(KonfytProject::MidiPortPtr prjPort, QString msg);
-    void onLayerScriptErrorStatusChanged(KonfytPatchLayerPtr patchLayer,
+    void onLayerScriptPrint(PatchLayerPtr patchLayer, QString msg);
+    void onPortScriptPrint(Project::MidiPortPtr prjPort, QString msg);
+    void onLayerScriptErrorStatusChanged(PatchLayerPtr patchLayer,
                                          QString errorString);
-    void onPortScriptErrorStatusChanged(KonfytProject::MidiPortPtr prjPort,
+    void onPortScriptErrorStatusChanged(Project::MidiPortPtr prjPort,
                                         QString errorString);
     void on_action_Edit_Script_triggered();
     void on_pushButton_script_update_clicked();
@@ -883,9 +871,8 @@ private slots:
     void on_tabWidget_scripting_currentChanged(int index);
     void on_treeWidget_scripts_itemClicked(QTreeWidgetItem *item, int column);
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // External apps
-    // ========================================================================
 private:
     void setupExternalApps();
     void setupExternalAppsForCurrentProject();
@@ -896,8 +883,8 @@ private:
     // External apps editor
 private:
     int externalAppEditorCurrentId = -1;
-    void externalAppToEditor(KonfytProject::ExternalApp app);
-    KonfytProject::ExternalApp externalAppFromEditor();
+    void externalAppToEditor(Project::ExternalApp app);
+    Project::ExternalApp externalAppFromEditor();
 
     void showExternalAppEditor(int id);
     void hideExternalAppEditor();
@@ -927,29 +914,27 @@ private slots:
     void on_pushButton_extApp_edit_clicked();
     void on_pushButton_extApp_remove_clicked();
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Buses, audio and MIDI ports
-    // ========================================================================
 private:
     int addBus();
     int addAudioInPort();
     int addMidiInPort();
     int addMidiOutPort();
 
-    void removeAudioBusFromEngines(KonfytProject::AudioPortPtr bus);
-    void removeMidiInPortFromEngines(KonfytProject::MidiPortPtr prjPort);
-    void removeMidiOutPortFromEngines(KonfytProject::MidiPortPtr prjPort);
-    void removeAudioInPortFromEngines(KonfytProject::AudioPortPtr prjPort);
+    void removeAudioBusFromEngines(Project::AudioPortPtr bus);
+    void removeMidiInPortFromEngines(Project::MidiPortPtr prjPort);
+    void removeMidiOutPortFromEngines(Project::MidiPortPtr prjPort);
+    void removeAudioInPortFromEngines(Project::AudioPortPtr prjPort);
 
 signals:
-    void audioBusRemoved(KonfytProject::AudioPortPtr bus);
-    void midiInPortRemoved(KonfytProject::MidiPortPtr prjPort);
-    void midiOutPortRemoved(KonfytProject::MidiPortPtr prjPort);
-    void audioInPortRemoved(KonfytProject::AudioPortPtr prjPort);
+    void audioBusRemoved(Project::AudioPortPtr bus);
+    void midiInPortRemoved(Project::MidiPortPtr prjPort);
+    void midiOutPortRemoved(Project::MidiPortPtr prjPort);
+    void audioInPortRemoved(Project::AudioPortPtr prjPort);
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Triggers
-    // ========================================================================
 private:
     /* To add a new trigger, create an action with unique text in the mainwindow.ui editor.
      * Add the action to the list in initTriggers().
@@ -988,9 +973,8 @@ private slots:
             QTreeWidgetItem *current=nullptr, QTreeWidgetItem *previous=nullptr);
     void on_spinBox_Triggers_midiPickupRange_valueChanged(int arg1);
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Other JACK connections
-    // ========================================================================
 private:
     bool jackPage_audio = true; // True to display audio ports, false for MIDI
     void setupOtherJackConsPage();
@@ -1015,9 +999,8 @@ private slots:
     void on_listWidget_jackConnections_currentItemChanged(
             QListWidgetItem *current, QListWidgetItem *previous);
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Warnings
-    // ========================================================================
 
     // Port connection warnings
 private:
@@ -1032,9 +1015,9 @@ private:
     void updateOtherJackMidiConnectionWarnings();
     void updateOtherJackAudioConnectionWarnings();
 
-    BiQMap<KonfytProject::AudioPortPtr, QListWidgetItem*> audioBusWarningMap;
-    BiQMap<KonfytProject::MidiPortPtr, QListWidgetItem*> midiPortWarningMap; // MIDI in and out ports
-    BiQMap<KonfytProject::AudioPortPtr, QListWidgetItem*> audioInPortWarningMap;
+    BiQMap<Project::AudioPortPtr, QListWidgetItem*> audioBusWarningMap;
+    BiQMap<Project::MidiPortPtr, QListWidgetItem*> midiPortWarningMap; // MIDI in and out ports
+    BiQMap<Project::AudioPortPtr, QListWidgetItem*> audioInPortWarningMap;
 
     QListWidgetItem* otherJackMidiConsWarningHeader = nullptr;
     BiQMap<QListWidgetItem*, QString> otherJackMidiConsWarningMap;
@@ -1043,24 +1026,24 @@ private:
     BiQMap<QListWidgetItem*, QString> otherJackAudioConsWarningMap;
 
 private slots:
-    void audioBusWarnings_onBusRemoved(KonfytProject::AudioPortPtr bus);
-    void midiPortWarnings_onPortRemoved(KonfytProject::MidiPortPtr prjPort);
-    void audioInPortWarnings_onPortRemoved(KonfytProject::AudioPortPtr prjPort);
+    void audioBusWarnings_onBusRemoved(Project::AudioPortPtr bus);
+    void midiPortWarnings_onPortRemoved(Project::MidiPortPtr prjPort);
+    void audioInPortWarnings_onPortRemoved(Project::AudioPortPtr prjPort);
     void portWarnings_onItemDoubleClicked(QListWidgetItem* item);
 
     // Script warnings
 private:
     void setupScriptingWarnings();
 
-    BiQMap<KonfytPatchLayerPtr, QListWidgetItem*> scriptWarningLayerMap;
-    BiQMap<KonfytProject::MidiPortPtr, QListWidgetItem*> scriptWarningPortMap;
+    BiQMap<PatchLayerPtr, QListWidgetItem*> scriptWarningLayerMap;
+    BiQMap<Project::MidiPortPtr, QListWidgetItem*> scriptWarningPortMap;
 private slots:
     void scriptWarningsOnScriptEngineLayerErrorStatusChanged(
-            KonfytPatchLayerPtr patchLayer, QString errorString);
+            PatchLayerPtr patchLayer, QString errorString);
     void scriptWarningsOnScriptEnginePortErrorStatusChanged(
-            KonfytProject::MidiPortPtr prjPort, QString errorString);
-    void scriptWarningsOnPatchLayerUnloaded(KonfytPatchLayerPtr patchLayer);
-    void scriptWarningsOnPortRemoved(KonfytProject::MidiPortPtr prjPort);
+            Project::MidiPortPtr prjPort, QString errorString);
+    void scriptWarningsOnPatchLayerUnloaded(PatchLayerPtr patchLayer);
+    void scriptWarningsOnPortRemoved(Project::MidiPortPtr prjPort);
     void scriptWarningsOnItemDoubleClicked(QListWidgetItem* item);
 
     // SFZ engine warnings
@@ -1071,9 +1054,8 @@ private slots:
     void sfzEngineWarnings_onSfzEngineErrorChanged(QString error);
     void sfzEngineWarnings_onItemDoubleClicked(QListWidgetItem* item);
 
-    // ========================================================================
+    // -----------------------------------------------------------------------
     // Other
-    // ========================================================================
 
 private:
     // Center-view and sidebar (For changing to and from Saved MIDI Send List sidebar)

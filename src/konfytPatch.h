@@ -32,7 +32,7 @@
 #include <QXmlStreamWriter>
 
 
-class KonfytPatch
+class Patch
 {
 public:
 
@@ -44,55 +44,57 @@ public:
     QString note() const;
     void setNote(QString newNote);
     bool alwaysActive = false;
-    KonfytMidiFilter patchMidiFilter = KonfytMidiFilter::allPassFilter(); // Patch-wide MIDI filter
+    MidiFilter patchMidiFilter = MidiFilter::allPassFilter(); // Patch-wide MIDI filter
     KonfytReset getResetOption();
     void setResetOption(KonfytReset option);
 
     // -----------------------------------------------------------------------
     // General layer related functions
 
-    QList<KonfytPatchLayerPtr> layers();
-    KonfytPatchLayerPtr layer(int index);
+    QList<PatchLayerPtr> layers();
+    PatchLayerPtr layer(int index);
     int layerCount() const;
     bool isValidLayerIndex(int layerIndex) const;
-    void removeLayer(KonfytPatchLayerPtr layer);
-    void moveLayer(KonfytPatchLayerPtr layer, int newIndex);
+    void removeLayer(PatchLayerPtr layer);
+    void moveLayer(PatchLayerPtr layer, int newIndex);
     void clearLayers();
-    int layerIndex(KonfytPatchLayerPtr layer) const;
+    int layerIndex(PatchLayerPtr layer) const;
     void createLayerResetSnapshots();
 
-    void addLayer(KonfytPatchLayerPtr layer);
+    void addLayer(PatchLayerPtr layer);
 
     // -----------------------------------------------------------------------
     // Soundfont layer related functions
 
-    KonfytPatchLayerPtr addSfLayer(QString soundfontPath, KonfytSoundPreset preset);
-    QList<KonfytPatchLayerPtr> getSfLayerList() const;
+    PatchLayerPtr addSfLayer(QString soundfontPath, KonfytSoundPreset preset);
+    QList<PatchLayerPtr> getSfLayerList() const;
 
     // -----------------------------------------------------------------------
     // SFZ Plugin functions
 
-    KonfytPatchLayerPtr addPlugin(LayerSfzData newPlugin, QString name);
-    QList<KonfytPatchLayerPtr> getPluginLayerList() const;
+    PatchLayerPtr addPlugin(PatchLayer::SfzData newPlugin, QString name);
+    QList<PatchLayerPtr> getPluginLayerList() const;
 
     // -----------------------------------------------------------------------
     // Midi routing
 
     QList<int> getMidiOutputPortListProjectIds() const;
-    QList<KonfytPatchLayerPtr> getMidiOutputLayerList() const;
-    KonfytPatchLayerPtr addMidiOutputPort(int newPort);
-    KonfytPatchLayerPtr addMidiOutputPort(LayerMidiOutData newPort);
+    QList<PatchLayerPtr> getMidiOutputLayerList() const;
+    PatchLayerPtr addMidiOutputPort(int newPort);
+    PatchLayerPtr addMidiOutputPort(PatchLayer::MidiOutData newPort);
 
     // -----------------------------------------------------------------------
     // Audio input ports
 
     QList<int> getAudioInPortListProjectIds() const;
-    QList<KonfytPatchLayerPtr> getAudioInLayerList() const;
-    KonfytPatchLayerPtr addAudioInPort(int newPort);
-    KonfytPatchLayerPtr addAudioInPort(LayerAudioInData newPort, QString name);
+    QList<PatchLayerPtr> getAudioInLayerList() const;
+    PatchLayerPtr addAudioInPort(int newPort);
+    PatchLayerPtr addAudioInPort(PatchLayer::AudioInData newPort, QString name);
 
     // -----------------------------------------------------------------------
     // Save/load functions
+
+    static constexpr const char* PATCH_FILENAME_SUFFIX = "konfytpatch";
 
     bool savePatchToFile(QString filename) const;
     bool loadPatchFromFile(QString filename, QString* errors = nullptr);
@@ -106,9 +108,9 @@ private:
     KonfytReset mResetOption = KonfytReset::Inherit;
 
     // List of layers (all types, order is important for user in the patch)
-    QList<KonfytPatchLayerPtr> mLayers;
+    QList<PatchLayerPtr> mLayers;
 
-    QList<KonfytPatchLayerPtr> layersOfType(KonfytPatchLayer::LayerType layerType) const;
+    QList<PatchLayerPtr> layersOfType(PatchLayer::LayerType layerType) const;
 
     void writeToXmlStream(QXmlStreamWriter* stream) const;
     void readFromXmlStream(QXmlStreamReader* r, QString* errors = nullptr);

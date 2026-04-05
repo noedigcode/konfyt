@@ -60,9 +60,9 @@ void KonfytPatchEngine::panic(bool p)
 void KonfytPatchEngine::setProject(ProjectPtr project)
 {
     mCurrentProject = project;
-    connect(project.data(), &KonfytProject::patchURIsNeedUpdating,
+    connect(project.data(), &Project::patchURIsNeedUpdating,
             this, &KonfytPatchEngine::onProjectPatchURIsNeedUdating);
-    connect(project.data(), &KonfytProject::projectModifiedStateChanged,
+    connect(project.data(), &Project::projectModifiedStateChanged,
             this, &KonfytPatchEngine::onProjectModifiedStateChanged);
 
     onProjectPatchURIsNeedUdating();
@@ -75,20 +75,20 @@ void KonfytPatchEngine::reloadPatch()
 }
 
 /* Ensure patch and all layers are unloaded from their respective engines. */
-void KonfytPatchEngine::unloadPatch(KonfytPatch *patch)
+void KonfytPatchEngine::unloadPatch(Patch *patch)
 {
-    if ( !patches.contains(patch) ) { return; }
+    if ( !mPatches.contains(patch) ) { return; }
 
-    foreach (KonfytPatchLayerPtr layer, patch->layers()) {
+    foreach (PatchLayerPtr layer, patch->layers()) {
         unloadLayerFromEngines(layer);
     }
 
-    patches.removeAll(patch);
+    mPatches.removeAll(patch);
     if (mCurrentPatch == patch) { mCurrentPatch = nullptr; }
 }
 
 /* Load newPatch, replacing the current newPatch. */
-void KonfytPatchEngine::loadPatchAndSetCurrent(KonfytPatch *newPatch)
+void KonfytPatchEngine::loadPatchAndSetCurrent(Patch *newPatch)
 {
     if (newPatch == nullptr) { return; }
 
@@ -98,7 +98,7 @@ void KonfytPatchEngine::loadPatchAndSetCurrent(KonfytPatch *newPatch)
 
         // Switching away from current patch.
         // Deactivate routes and restore snapshot depending on reset option.
-        foreach (KonfytPatchLayerPtr layer, mCurrentPatch->layers()) {
+        foreach (PatchLayerPtr layer, mCurrentPatch->layers()) {
 
             // Deactivate layer
             if (!mCurrentPatch->alwaysActive) {
@@ -141,16 +141,16 @@ void KonfytPatchEngine::loadPatchAndSetCurrent(KonfytPatch *newPatch)
     loadPatch(newPatch);
 }
 
-void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
+void KonfytPatchEngine::loadPatch(Patch *patch)
 {
     bool patchIsNew = false;
-    if ( !patches.contains(patch) ) {
+    if ( !mPatches.contains(patch) ) {
         patchIsNew = true;
-        patches.append(patch);
+        mPatches.append(patch);
     }
 
     // SFZ layers
-    foreach (KonfytPatchLayerPtr layer, patch->getPluginLayerList()) {
+    foreach (PatchLayerPtr layer, patch->getPluginLayerList()) {
         // If layer indexInEngine is -1, the layer hasn't been loaded yet.
         if (patchIsNew) { layer->sfzData.indexInEngine = -1; }
         if (layer->sfzData.indexInEngine == -1) {
@@ -160,7 +160,7 @@ void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
     }
 
     // Fluidsynth layers
-    foreach (KonfytPatchLayerPtr layer, patch->getSfLayerList()) {
+    foreach (PatchLayerPtr layer, patch->getSfLayerList()) {
         if (patchIsNew) { layer->soundfontData.synthInEngine = nullptr; }
         if ( layer->soundfontData.synthInEngine == nullptr ) {
             loadSoundfontLayer(layer);
@@ -169,7 +169,7 @@ void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
     }
 
     // Audio input ports
-    foreach (KonfytPatchLayerPtr layer, patch->getAudioInLayerList()) {
+    foreach (PatchLayerPtr layer, patch->getAudioInLayerList()) {
         if (layer->audioInPortData.jackRouteLeft == nullptr) {
             // Routes haven't been created yet
             loadAudioInputPort(layer);
@@ -178,7 +178,7 @@ void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
 
 
     // Midi output ports
-    foreach (KonfytPatchLayerPtr layer, patch->getMidiOutputLayerList()) {
+    foreach (PatchLayerPtr layer, patch->getMidiOutputLayerList()) {
         if (layer->midiOutputPortData.jackRoute == nullptr) {
             // Route hasn't been created yet
             loadMidiOutputPort(layer);
@@ -186,7 +186,7 @@ void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
     }
 
     // All layers are now loaded. Now set gains, activate routes, etc.
-    foreach (KonfytPatchLayerPtr layer, patch->layers()) {
+    foreach (PatchLayerPtr layer, patch->layers()) {
         updateLayerRouting(layer);
         updateLayerGain(layer);
         updateLayerPatchMidiFilterInJackEngine(patch, layer);
@@ -198,13 +198,13 @@ void KonfytPatchEngine::loadPatch(KonfytPatch *patch)
     }
 }
 
-KonfytPatchLayerPtr KonfytPatchEngine::addSfProgramLayer(
+PatchLayerPtr KonfytPatchEngine::addSfProgramLayer(
         QString soundfontPath,
         KonfytSoundPreset newProgram)
 {
-    KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, KonfytPatchLayerPtr());
+    KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, PatchLayerPtr());
 
-    KonfytPatchLayerPtr layer = mCurrentPatch->addSfLayer(soundfontPath,
+    PatchLayerPtr layer = mCurrentPatch->addSfLayer(soundfontPath,
                                                           newProgram);
     updatePatchLayersURIs(mCurrentPatch);
 
@@ -223,14 +223,14 @@ KonfytPatchLayerPtr KonfytPatchEngine::addSfProgramLayer(
     return layer;
 }
 
-void KonfytPatchEngine::removeLayer(KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::removeLayer(PatchLayerPtr layer)
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
     removeLayer(mCurrentPatch, layer);
 }
 
-void KonfytPatchEngine::removeLayer(KonfytPatch *patch, KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::removeLayer(Patch *patch, PatchLayerPtr layer)
 {
     unloadLayerFromEngines(layer);
     patch->removeLayer(layer);
@@ -238,7 +238,7 @@ void KonfytPatchEngine::removeLayer(KonfytPatch *patch, KonfytPatchLayerPtr laye
     loadPatch(patch); // To refresh solo and mute
 }
 
-void KonfytPatchEngine::moveLayer(KonfytPatchLayerPtr layer, int newIndex)
+void KonfytPatchEngine::moveLayer(PatchLayerPtr layer, int newIndex)
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
@@ -246,7 +246,7 @@ void KonfytPatchEngine::moveLayer(KonfytPatchLayerPtr layer, int newIndex)
     updatePatchLayersURIs(mCurrentPatch);
 }
 
-void KonfytPatchEngine::addLayer(KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::addLayer(PatchLayerPtr layer)
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
@@ -258,9 +258,9 @@ void KonfytPatchEngine::addLayer(KonfytPatchLayerPtr layer)
     reloadPatch();
 }
 
-void KonfytPatchEngine::unloadLayerFromEngines(KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::unloadLayerFromEngines(PatchLayerPtr layer)
 {
-    if (layer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+    if (layer->layerType() == PatchLayer::TypeSoundfontProgram) {
         if (layer->soundfontData.synthInEngine) {
             // First remove from JACK engine
             if (layer->soundfontData.portsInJackEngine) {
@@ -273,7 +273,7 @@ void KonfytPatchEngine::unloadLayerFromEngines(KonfytPatchLayerPtr layer)
             // Set unloaded in patch
             layer->soundfontData.synthInEngine = nullptr;
         }
-    } else if (layer->layerType() == KonfytPatchLayer::TypeSfz) {
+    } else if (layer->layerType() == PatchLayer::TypeSfz) {
         if (layer->sfzData.indexInEngine >= 0) {
             // First remove from JACK
             if (layer->sfzData.portsInJackEngine) {
@@ -286,13 +286,13 @@ void KonfytPatchEngine::unloadLayerFromEngines(KonfytPatchLayerPtr layer)
             // Set unloaded in patch
             layer->sfzData.indexInEngine = -1;
         }
-    } else if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+    } else if (layer->layerType() == PatchLayer::TypeMidiOut) {
         if (layer->midiOutputPortData.jackRoute) {
             jack->removeMidiRoute(layer->midiOutputPortData.jackRoute);
             scriptEngine->removeLayerScript(layer);
             layer->midiOutputPortData.jackRoute = nullptr;
         }
-    } else if (layer->layerType() == KonfytPatchLayer::TypeAudioIn) {
+    } else if (layer->layerType() == PatchLayer::TypeAudioIn) {
         if (layer->audioInPortData.jackRouteLeft) {
             jack->removeAudioRoute(layer->audioInPortData.jackRouteLeft);
             layer->audioInPortData.jackRouteLeft = nullptr;
@@ -306,26 +306,26 @@ void KonfytPatchEngine::unloadLayerFromEngines(KonfytPatchLayerPtr layer)
     emit patchLayerUnloaded(layer);
 }
 
-void KonfytPatchEngine::reloadLayer(KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::reloadLayer(PatchLayerPtr layer)
 {
     unloadLayerFromEngines(layer);
     reloadPatch();
 }
 
-bool KonfytPatchEngine::isPatchLoaded(KonfytPatch *patch)
+bool KonfytPatchEngine::isPatchLoaded(Patch *patch)
 {
-    return patches.contains(patch);
+    return mPatches.contains(patch);
 }
 
-KonfytPatchLayerPtr KonfytPatchEngine::addSfzLayer(QString path)
+PatchLayerPtr KonfytPatchEngine::addSfzLayer(QString path)
 {
-    KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, KonfytPatchLayerPtr());
+    KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, PatchLayerPtr());
 
-    LayerSfzData plugin;
+    PatchLayer::SfzData plugin;
     plugin.path = path;
 
     // Add the plugin to the patch
-    KonfytPatchLayerPtr layer = mCurrentPatch->addPlugin(plugin, "sfz");
+    PatchLayerPtr layer = mCurrentPatch->addPlugin(plugin, "sfz");
     updatePatchLayersURIs(mCurrentPatch);
 
     // The bus defaults to 0, but the project may not have a bus 0.
@@ -343,16 +343,16 @@ KonfytPatchLayerPtr KonfytPatchEngine::addSfzLayer(QString path)
     return layer;
 }
 
-void KonfytPatchEngine::updateLayerRouting(KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::updateLayerRouting(PatchLayerPtr layer)
 {
     if (layer->hasError()) { return; }
 
-    KonfytPatchLayer::LayerType layerType = layer->layerType();
+    PatchLayer::LayerType layerType = layer->layerType();
 
-    KonfytProject::AudioPortPtr bus;
-    if ( (layerType == KonfytPatchLayer::TypeSoundfontProgram) ||
-         (layerType == KonfytPatchLayer::TypeSfz) ||
-         (layerType == KonfytPatchLayer::TypeAudioIn) )
+    Project::AudioPortPtr bus;
+    if ( (layerType == PatchLayer::TypeSoundfontProgram) ||
+         (layerType == PatchLayer::TypeSfz) ||
+         (layerType == PatchLayer::TypeAudioIn) )
     {
         if ( !mCurrentProject->audioBus_exists(layer->busIdInProject()) ) {
             // Invalid bus. Default to the first one.
@@ -375,10 +375,10 @@ void KonfytPatchEngine::updateLayerRouting(KonfytPatchLayerPtr layer)
             return;
         }
     }
-    KonfytProject::MidiPortPtr midiInPort;
-    if ( (layerType == KonfytPatchLayer::TypeSoundfontProgram) ||
-         (layerType == KonfytPatchLayer::TypeSfz) ||
-         (layerType == KonfytPatchLayer::TypeMidiOut) )
+    Project::MidiPortPtr midiInPort;
+    if ( (layerType == PatchLayer::TypeSoundfontProgram) ||
+         (layerType == PatchLayer::TypeSfz) ||
+         (layerType == PatchLayer::TypeMidiOut) )
     {
         if ( !mCurrentProject->midiInPort_exists(layer->midiInPortIdInProject()) ) {
             // Invalid Midi in port. Default to first one.
@@ -402,25 +402,25 @@ void KonfytPatchEngine::updateLayerRouting(KonfytPatchLayerPtr layer)
         }
     }
 
-    if (layerType ==  KonfytPatchLayer::TypeSoundfontProgram) {
+    if (layerType ==  PatchLayer::TypeSoundfontProgram) {
 
-        LayerSoundfontData sfData = layer->soundfontData;
+        PatchLayer::SoundfontData sfData = layer->soundfontData;
         jack->setSoundfontRouting( sfData.portsInJackEngine, midiInPort->jackPort,
                                    bus->leftJackPort, bus->rightJackPort );
 
-    } else if (layerType == KonfytPatchLayer::TypeSfz) {
+    } else if (layerType == PatchLayer::TypeSfz) {
 
-        LayerSfzData pluginData = layer->sfzData;
+        PatchLayer::SfzData pluginData = layer->sfzData;
         jack->setPluginRouting(pluginData.portsInJackEngine,
                                midiInPort->jackPort,
                                bus->leftJackPort, bus->rightJackPort);
 
-    } else if (layerType == KonfytPatchLayer::TypeMidiOut) {
+    } else if (layerType == PatchLayer::TypeMidiOut) {
 
-        LayerMidiOutData portData = layer->midiOutputPortData;
+        PatchLayer::MidiOutData portData = layer->midiOutputPortData;
         if (mCurrentProject->midiOutPort_exists(portData.portIdInProject)) {
 
-            KonfytProject::MidiPortPtr prjMidiOutPort =
+            Project::MidiPortPtr prjMidiOutPort =
                 mCurrentProject->midiOutPort_getPort( portData.portIdInProject );
             if (prjMidiOutPort) {
                 jack->setMidiRoute(portData.jackRoute, midiInPort->jackPort,
@@ -435,15 +435,15 @@ void KonfytPatchEngine::updateLayerRouting(KonfytPatchLayerPtr layer)
                   .arg(layer->name()).arg(portData.portIdInProject));
         }
 
-    } else if (layerType == KonfytPatchLayer::TypeAudioIn) {
+    } else if (layerType == PatchLayer::TypeAudioIn) {
 
         // The port number in audioInLayerStruct refers to a stereo port pair index in the project.
         // The bus number in audioInLayerStruct refers to a bus in the project with a left and right jack port.
         // We have to retrieve the port pair and bus from the project in order to get the left and right port Jack port numbers.
-        LayerAudioInData audioPortData = layer->audioInPortData;
+        PatchLayer::AudioInData audioPortData = layer->audioInPortData;
         if (mCurrentProject->audioInPort_exists(audioPortData.portIdInProject)) {
 
-            KonfytProject::AudioPortPtr portPair =
+            Project::AudioPortPtr portPair =
                     mCurrentProject->audioInPort_getPort(
                         audioPortData.portIdInProject);
             if (portPair) {
@@ -465,7 +465,7 @@ void KonfytPatchEngine::updateLayerRouting(KonfytPatchLayerPtr layer)
                   .arg(layer->name()).arg(audioPortData.portIdInProject));
         }
 
-    } else if (layerType == KonfytPatchLayer::TypeUninitialized) {
+    } else if (layerType == PatchLayer::TypeUninitialized) {
 
         KONFYT_ASSERT_FAIL("Layer type uninitialized.");
 
@@ -476,29 +476,29 @@ void KonfytPatchEngine::updateLayerRouting(KonfytPatchLayerPtr layer)
     }
 }
 
-void KonfytPatchEngine::updateLayerGain(KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::updateLayerGain(PatchLayerPtr layer)
 {
     if (layer->hasError()) { return; }
 
-    KonfytPatchLayer::LayerType layerType = layer->layerType();
+    PatchLayer::LayerType layerType = layer->layerType();
 
-    if (layerType ==  KonfytPatchLayer::TypeSoundfontProgram) {
+    if (layerType ==  PatchLayer::TypeSoundfontProgram) {
 
-        LayerSoundfontData sfData = layer->soundfontData;
+        PatchLayer::SoundfontData sfData = layer->soundfontData;
         if (sfData.synthInEngine == nullptr) { return; } // Layer not loaded yet
         fluidsynthEngine.setGain( sfData.synthInEngine, konfytConvertGain(layer->gain()) );
 
-    } else if (layerType == KonfytPatchLayer::TypeSfz) {
+    } else if (layerType == PatchLayer::TypeSfz) {
 
-        LayerSfzData pluginData = layer->sfzData;
+        PatchLayer::SfzData pluginData = layer->sfzData;
         if (pluginData.indexInEngine == -1) { return; } // Layer not loaded yet
         // Set gain of JACK ports instead of sfzEngine->setGain() since this
         // isn't implemented for all engine types yet.
         jack->setPluginGain(pluginData.portsInJackEngine, konfytConvertGain(layer->gain()) );
 
-    } else if (layerType == KonfytPatchLayer::TypeAudioIn) {
+    } else if (layerType == PatchLayer::TypeAudioIn) {
 
-        LayerAudioInData audioPortData = layer->audioInPortData;
+        PatchLayer::AudioInData audioPortData = layer->audioInPortData;
         if (audioPortData.jackRouteLeft == nullptr) { return; } // Layer not loaded yet
         // Left channel Gain
         jack->setAudioRouteGain(audioPortData.jackRouteLeft,
@@ -507,11 +507,11 @@ void KonfytPatchEngine::updateLayerGain(KonfytPatchLayerPtr layer)
         jack->setAudioRouteGain(audioPortData.jackRouteRight,
                                 konfytConvertGain(layer->gain()));
 
-    } else if (layerType == KonfytPatchLayer::TypeMidiOut) {
+    } else if (layerType == PatchLayer::TypeMidiOut) {
 
         // Ignore
 
-    } else if (layerType == KonfytPatchLayer::TypeUninitialized) {
+    } else if (layerType == PatchLayer::TypeUninitialized) {
 
         KONFYT_ASSERT_FAIL("Layer type uninitialized.");
 
@@ -522,15 +522,15 @@ void KonfytPatchEngine::updateLayerGain(KonfytPatchLayerPtr layer)
     }
 }
 
-void KonfytPatchEngine::activatePatchLayerRoutesForSoloMute(KonfytPatch *patch)
+void KonfytPatchEngine::activatePatchLayerRoutesForSoloMute(Patch *patch)
 {
     if (patch == nullptr) { return; }
 
-    QList<KonfytPatchLayerPtr> layerList = patch->layers();
+    QList<PatchLayerPtr> layerList = patch->layers();
 
     // Determine solo
     bool solo = false;
-    foreach (KonfytPatchLayerPtr layer, layerList) {
+    foreach (PatchLayerPtr layer, layerList) {
         if (layer->isSolo()) {
             solo = true;
             break;
@@ -538,7 +538,7 @@ void KonfytPatchEngine::activatePatchLayerRoutesForSoloMute(KonfytPatch *patch)
     }
 
     // Activate/deactivate routing based on solo/mute
-    foreach (KonfytPatchLayerPtr layer, layerList) {
+    foreach (PatchLayerPtr layer, layerList) {
 
         if (layer->hasError()) { continue; }
 
@@ -551,31 +551,31 @@ void KonfytPatchEngine::activatePatchLayerRoutesForSoloMute(KonfytPatch *patch)
     }
 }
 
-void KonfytPatchEngine::setLayerActive(KonfytPatchLayerPtr layer, bool active)
+void KonfytPatchEngine::setLayerActive(PatchLayerPtr layer, bool active)
 {
     if (layer->hasError()) { return; }
 
-    KonfytPatchLayer::LayerType layerType = layer->layerType();
+    PatchLayer::LayerType layerType = layer->layerType();
 
     // Activate route(s) in JACK engine
-    if (layerType ==  KonfytPatchLayer::TypeSoundfontProgram) {
+    if (layerType ==  PatchLayer::TypeSoundfontProgram) {
 
         jack->setSoundfontActive(layer->soundfontData.portsInJackEngine, active);
 
-    } else if (layerType == KonfytPatchLayer::TypeSfz) {
+    } else if (layerType == PatchLayer::TypeSfz) {
 
         jack->setPluginActive(layer->sfzData.portsInJackEngine, active);
 
-    } else if (layerType == KonfytPatchLayer::TypeMidiOut) {
+    } else if (layerType == PatchLayer::TypeMidiOut) {
 
         jack->setMidiRouteActive(layer->midiOutputPortData.jackRoute, active);
 
-    } else if (layerType == KonfytPatchLayer::TypeAudioIn) {
+    } else if (layerType == PatchLayer::TypeAudioIn) {
 
         jack->setAudioRouteActive(layer->audioInPortData.jackRouteLeft, active);
         jack->setAudioRouteActive(layer->audioInPortData.jackRouteRight, active);
 
-    } else if (layerType == KonfytPatchLayer::TypeUninitialized) {
+    } else if (layerType == PatchLayer::TypeUninitialized) {
 
         KONFYT_ASSERT_FAIL("Layer type uninitialized.");
 
@@ -587,24 +587,24 @@ void KonfytPatchEngine::setLayerActive(KonfytPatchLayerPtr layer, bool active)
 }
 
 void KonfytPatchEngine::updateLayerPatchMidiFilterInJackEngine(
-        KonfytPatch *patch, KonfytPatchLayerPtr layer)
+        Patch *patch, PatchLayerPtr layer)
 {
     KONFYT_ASSERT_RETURN(patch != nullptr);
     KONFYT_ASSERT_RETURN(!layer.isNull());
 
     if (layer->hasError()) { return; }
 
-    if (layer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+    if (layer->layerType() == PatchLayer::TypeSoundfontProgram) {
 
         jack->setSoundfontMidiPreFilter(layer->soundfontData.portsInJackEngine,
                                         patch->patchMidiFilter);
 
-    } else if (layer->layerType() == KonfytPatchLayer::TypeSfz) {
+    } else if (layer->layerType() == PatchLayer::TypeSfz) {
 
         jack->setPluginMidiPreFilter(layer->sfzData.portsInJackEngine,
                                      patch->patchMidiFilter);
 
-    } else if (layer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+    } else if (layer->layerType() == PatchLayer::TypeMidiOut) {
 
         jack->setRouteMidiPreFilter(layer->midiOutputPortData.jackRoute,
                                     patch->patchMidiFilter);
@@ -614,21 +614,21 @@ void KonfytPatchEngine::updateLayerPatchMidiFilterInJackEngine(
     }
 }
 
-void KonfytPatchEngine::updateLayerBlockMidiDirectThroughInJack(KonfytPatchLayerPtr patchLayer)
+void KonfytPatchEngine::updateLayerBlockMidiDirectThroughInJack(PatchLayerPtr patchLayer)
 {
     bool block = !patchLayer->isPassMidiThrough();
 
-    if (patchLayer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+    if (patchLayer->layerType() == PatchLayer::TypeSoundfontProgram) {
 
         jack->setSoundfontBlockMidiDirectThrough(
                     patchLayer->soundfontData.portsInJackEngine, block);
 
-    } else if (patchLayer->layerType() == KonfytPatchLayer::TypeSfz) {
+    } else if (patchLayer->layerType() == PatchLayer::TypeSfz) {
 
         jack->setPluginBlockMidiDirectThrough(
                     patchLayer->sfzData.portsInJackEngine, block);
 
-    } else if (patchLayer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+    } else if (patchLayer->layerType() == PatchLayer::TypeMidiOut) {
 
         jack->setRouteBlockMidiDirectThrough(
                     patchLayer->midiOutputPortData.jackRoute, block);
@@ -683,31 +683,31 @@ void KonfytPatchEngine::setupAndInitSfzEngine(KonfytAppInfo appInfo)
 /* Update layer URIs in specified patch.
  * This must be called if some action caused the patch and/or its layers indices
  * to change, i.e. insert, remove and move of patches or layers. */
-void KonfytPatchEngine::updatePatchLayersURIs(KonfytPatch *patch)
+void KonfytPatchEngine::updatePatchLayersURIs(Patch *patch)
 {
     KONFYT_ASSERT_RETURN(patch != nullptr);
     if (!mCurrentProject) { return; }
 
     int ipatch = mCurrentProject->getPatchIndex(patch);
     for (int i=0; i < patch->layerCount(); i++) {
-        KonfytPatchLayerPtr layer = patch->layer(i);
+        PatchLayerPtr layer = patch->layer(i);
         layer->uri = QString("P%1L%2").arg(ipatch+1).arg(i+1);
     }
 }
 
 /* Return the current patch. */
-KonfytPatch *KonfytPatchEngine::currentPatch()
+Patch *KonfytPatchEngine::currentPatch()
 {
     return mCurrentPatch;
 }
 
-void KonfytPatchEngine::setPatchFilter(KonfytPatch *patch, KonfytMidiFilter filter)
+void KonfytPatchEngine::setPatchFilter(Patch *patch, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(patch != nullptr);
-    KONFYT_ASSERT_RETURN(patches.contains(patch));
+    KONFYT_ASSERT_RETURN(mPatches.contains(patch));
 
     patch->patchMidiFilter = filter;
-    foreach (KonfytPatchLayerPtr layer, patch->layers()) {
+    foreach (PatchLayerPtr layer, patch->layers()) {
         updateLayerPatchMidiFilterInJackEngine(patch, layer);
     }
 }
@@ -717,7 +717,7 @@ void KonfytPatchEngine::setMidiPickupRange(int range)
     mMidiPickupRange = range;
 }
 
-void KonfytPatchEngine::setLayerGain(KonfytPatchLayerPtr patchLayer, float newGain)
+void KonfytPatchEngine::setLayerGain(PatchLayerPtr patchLayer, float newGain)
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
     KONFYT_ASSERT_RETURN(!patchLayer.isNull());
@@ -738,7 +738,7 @@ void KonfytPatchEngine::setLayerGainByMidi(int layerIndex, int midiValue)
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
-    KonfytPatchLayerPtr patchLayer = mCurrentPatch->layer(layerIndex);
+    PatchLayerPtr patchLayer = mCurrentPatch->layer(layerIndex);
     KONFYT_ASSERT_RETURN(!patchLayer.isNull());
 
     patchLayer->setGainMidiPickupRange(mMidiPickupRange);
@@ -750,14 +750,14 @@ void KonfytPatchEngine::setLayerGainByMidiRelative(int layerIndex, int midiValue
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
-    KonfytPatchLayerPtr patchLayer = mCurrentPatch->layer(layerIndex);
+    PatchLayerPtr patchLayer = mCurrentPatch->layer(layerIndex);
     KONFYT_ASSERT_RETURN(!patchLayer.isNull());
 
     patchLayer->addGainRelativeMidiValue(midiValue);
     updateLayerGain(patchLayer);
 }
 
-void KonfytPatchEngine::setLayerSolo(KonfytPatchLayerPtr patchLayer, bool solo)
+void KonfytPatchEngine::setLayerSolo(PatchLayerPtr patchLayer, bool solo)
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
     KONFYT_ASSERT_RETURN(!patchLayer.isNull());
@@ -774,7 +774,7 @@ void KonfytPatchEngine::setLayerSolo(int layerIndex, bool solo)
     setLayerSolo( mCurrentPatch->layer(layerIndex), solo );
 }
 
-void KonfytPatchEngine::setLayerMute(KonfytPatchLayerPtr patchLayer, bool mute)
+void KonfytPatchEngine::setLayerMute(PatchLayerPtr patchLayer, bool mute)
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
     KONFYT_ASSERT_RETURN(!patchLayer.isNull());
@@ -791,31 +791,31 @@ void KonfytPatchEngine::setLayerMute(int layerIndex, bool mute)
     setLayerMute( mCurrentPatch->layer(layerIndex), mute );
 }
 
-void KonfytPatchEngine::setLayerBus(KonfytPatchLayerPtr patchLayer, int bus)
+void KonfytPatchEngine::setLayerBus(PatchLayerPtr patchLayer, int bus)
 {
     patchLayer->setBusIdInProject(bus);
     updateLayerRouting(patchLayer);
 }
 
-void KonfytPatchEngine::setLayerMidiInPort(KonfytPatchLayerPtr patchLayer, int portId)
+void KonfytPatchEngine::setLayerMidiInPort(PatchLayerPtr patchLayer, int portId)
 {
     patchLayer->setMidiInPortIdInProject(portId);
     updateLayerRouting(patchLayer);
 }
 
-void KonfytPatchEngine::setLayerScript(KonfytPatchLayerPtr patchLayer, QString script)
+void KonfytPatchEngine::setLayerScript(PatchLayerPtr patchLayer, QString script)
 {
     patchLayer->setScript(script);
     scriptEngine->addOrUpdateLayerScript(patchLayer);
 }
 
-void KonfytPatchEngine::setLayerScriptEnabled(KonfytPatchLayerPtr patchLayer, bool enable)
+void KonfytPatchEngine::setLayerScriptEnabled(PatchLayerPtr patchLayer, bool enable)
 {
     patchLayer->setScriptEnabled(enable);
     scriptEngine->setScriptEnabled(patchLayer, enable);
 }
 
-void KonfytPatchEngine::setLayerPassMidiThrough(KonfytPatchLayerPtr patchLayer, bool pass)
+void KonfytPatchEngine::setLayerPassMidiThrough(PatchLayerPtr patchLayer, bool pass)
 {
     patchLayer->setPassMidiThrough(pass);
     updateLayerBlockMidiDirectThroughInJack(patchLayer);
@@ -825,17 +825,17 @@ void KonfytPatchEngine::sendCurrentPatchMidi()
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
-    foreach (KonfytPatchLayerPtr layer, mCurrentPatch->getMidiOutputLayerList()) {
+    foreach (PatchLayerPtr layer, mCurrentPatch->getMidiOutputLayerList()) {
         sendLayerMidi(layer);
     }
 }
 
-void KonfytPatchEngine::sendLayerMidi(KonfytPatchLayerPtr patchLayer)
+void KonfytPatchEngine::sendLayerMidi(PatchLayerPtr patchLayer)
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
     if (patchLayer->hasError()) { return; }
-    if (patchLayer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+    if (patchLayer->layerType() == PatchLayer::TypeMidiOut) {
         jack->sendMidiEventsOnRoute(patchLayer->midiOutputPortData.jackRoute,
                                     patchLayer->getMidiSendListEvents());
     }
@@ -848,33 +848,33 @@ int KonfytPatchEngine::getNumLayers() const
     return mCurrentPatch->layerCount();
 }
 
-void KonfytPatchEngine::setLayerFilter(KonfytPatchLayerPtr patchLayer, KonfytMidiFilter filter)
+void KonfytPatchEngine::setLayerFilter(PatchLayerPtr patchLayer, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(mCurrentPatch);
 
     patchLayer->setMidiFilter(filter);
 
     // And also in the respective engine.
-    if (patchLayer->layerType() == KonfytPatchLayer::TypeSoundfontProgram) {
+    if (patchLayer->layerType() == PatchLayer::TypeSoundfontProgram) {
 
         jack->setSoundfontMidiFilter(patchLayer->soundfontData.portsInJackEngine, filter);
 
-    } else if (patchLayer->layerType() == KonfytPatchLayer::TypeSfz) {
+    } else if (patchLayer->layerType() == PatchLayer::TypeSfz) {
 
         jack->setPluginMidiFilter(patchLayer->sfzData.portsInJackEngine, filter);
 
-    } else if (patchLayer->layerType() == KonfytPatchLayer::TypeMidiOut) {
+    } else if (patchLayer->layerType() == PatchLayer::TypeMidiOut) {
 
         jack->setRouteMidiFilter(patchLayer->midiOutputPortData.jackRoute, filter);
 
     }
 }
 
-KonfytPatchLayerPtr KonfytPatchEngine::addMidiOutPortToPatch(int port)
+PatchLayerPtr KonfytPatchEngine::addMidiOutPortToPatch(int port)
 {
-    KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, KonfytPatchLayerPtr());
+    KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, PatchLayerPtr());
 
-    KonfytPatchLayerPtr layer = mCurrentPatch->addMidiOutputPort(port);
+    PatchLayerPtr layer = mCurrentPatch->addMidiOutputPort(port);
     updatePatchLayersURIs(mCurrentPatch);
 
     // The MIDI in port defaults to 0, but the project may not have a port 0.
@@ -888,11 +888,11 @@ KonfytPatchLayerPtr KonfytPatchEngine::addMidiOutPortToPatch(int port)
     return layer;
 }
 
-KonfytPatchLayerPtr KonfytPatchEngine::addAudioInPortToPatch(int port)
+PatchLayerPtr KonfytPatchEngine::addAudioInPortToPatch(int port)
 {
-    KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, KonfytPatchLayerPtr());
+    KONFYT_ASSERT_RETURN_VAL(mCurrentPatch, PatchLayerPtr());
 
-    KonfytPatchLayerPtr layer = mCurrentPatch->addAudioInPort(port);
+    PatchLayerPtr layer = mCurrentPatch->addAudioInPort(port);
     updatePatchLayersURIs(mCurrentPatch);
 
     // The bus defaults to 0, but the project may not have a bus 0.
@@ -904,7 +904,7 @@ KonfytPatchLayerPtr KonfytPatchEngine::addAudioInPortToPatch(int port)
     return layer;
 }
 
-void KonfytPatchEngine::loadSfzLayer(KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::loadSfzLayer(PatchLayerPtr layer)
 {
     // Load in SFZ engine
     int ID = sfzEngine->addSfz( layer->sfzData.path );
@@ -949,7 +949,7 @@ void KonfytPatchEngine::loadSfzLayer(KonfytPatchLayerPtr layer)
     emit patchLayerLoaded(layer); // TODO 2023-10-06 Why only for SFZ layers?
 }
 
-void KonfytPatchEngine::loadSoundfontLayer(KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::loadSoundfontLayer(PatchLayerPtr layer)
 {
     // Load in Fluidsynth engine
     layer->soundfontData.synthInEngine =
@@ -972,7 +972,7 @@ void KonfytPatchEngine::loadSoundfontLayer(KonfytPatchLayerPtr layer)
     updateLayerBlockMidiDirectThroughInJack(layer);
 }
 
-void KonfytPatchEngine::loadAudioInputPort(KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::loadAudioInputPort(PatchLayerPtr layer)
 {
     // Get source ports
     int portId = layer->audioInPortData.portIdInProject;
@@ -981,7 +981,7 @@ void KonfytPatchEngine::loadAudioInputPort(KonfytPatchLayerPtr layer)
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    KonfytProject::AudioPortPtr srcPorts = mCurrentProject->audioInPort_getPort(portId);
+    Project::AudioPortPtr srcPorts = mCurrentProject->audioInPort_getPort(portId);
     KONFYT_ASSERT_RETURN(!srcPorts.isNull());
 
     // Get destination ports (bus)
@@ -991,7 +991,7 @@ void KonfytPatchEngine::loadAudioInputPort(KonfytPatchLayerPtr layer)
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    KonfytProject::AudioPortPtr destPorts = mCurrentProject->audioBus_getBus(busId);
+    Project::AudioPortPtr destPorts = mCurrentProject->audioBus_getBus(busId);
     KONFYT_ASSERT_RETURN(!destPorts.isNull());
 
     // Route for left port
@@ -1002,7 +1002,7 @@ void KonfytPatchEngine::loadAudioInputPort(KonfytPatchLayerPtr layer)
                 srcPorts->rightJackPort, destPorts->rightJackPort);
 }
 
-void KonfytPatchEngine::loadMidiOutputPort(KonfytPatchLayerPtr layer)
+void KonfytPatchEngine::loadMidiOutputPort(PatchLayerPtr layer)
 {
     // Get source port
     int srcId = layer->midiInPortIdInProject();
@@ -1011,7 +1011,7 @@ void KonfytPatchEngine::loadMidiOutputPort(KonfytPatchLayerPtr layer)
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    KonfytProject::MidiPortPtr srcPort = mCurrentProject->midiInPort_getPort(srcId);
+    Project::MidiPortPtr srcPort = mCurrentProject->midiInPort_getPort(srcId);
     KONFYT_ASSERT_RETURN(!srcPort.isNull());
 
     // Get destination port
@@ -1021,7 +1021,7 @@ void KonfytPatchEngine::loadMidiOutputPort(KonfytPatchLayerPtr layer)
         print("loadPatch: " + layer->errorMessage());
         return;
     }
-    KonfytProject::MidiPortPtr destPort = mCurrentProject->midiOutPort_getPort(destId);
+    Project::MidiPortPtr destPort = mCurrentProject->midiOutPort_getPort(destId);
     KONFYT_ASSERT_RETURN(!destPort.isNull());
 
     // Create route
@@ -1045,8 +1045,8 @@ void KonfytPatchEngine::onSfzEngineInitDone(QString error)
         print("SFZ engine initialised successfully.");
 
         // Set all patches SFZ layers as not loaded yet, and load all patches.
-        foreach (KonfytPatch* patch, patches) {
-            foreach (KonfytPatchLayerPtr layer, patch->getPluginLayerList()) {
+        foreach (Patch* patch, mPatches) {
+            foreach (PatchLayerPtr layer, patch->getPluginLayerList()) {
                 // Unload layer but do not try to remove from sfz engine
                 if (layer->sfzData.portsInJackEngine) {
                     jack->removePlugin(layer->sfzData.portsInJackEngine);
@@ -1067,7 +1067,7 @@ void KonfytPatchEngine::onProjectPatchURIsNeedUdating()
 {
     if (!mCurrentProject) { return; }
 
-    foreach (KonfytPatch* patch, mCurrentProject->getPatchList()) {
+    foreach (Patch* patch, mCurrentProject->getPatchList()) {
         updatePatchLayersURIs(patch);
     }
 }
@@ -1077,7 +1077,7 @@ void KonfytPatchEngine::onProjectModifiedStateChanged(bool modified)
     if (!modified) {
         // Modified == false means project was saved. Create new patch reset
         // snapshots.
-        foreach (KonfytPatch* patch, mCurrentProject->getPatchList()) {
+        foreach (Patch* patch, mCurrentProject->getPatchList()) {
             patch->createLayerResetSnapshots();
         }
     }

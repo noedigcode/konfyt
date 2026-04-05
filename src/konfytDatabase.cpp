@@ -43,12 +43,12 @@ KfSoundPtr KonfytDatabaseWorker::patchFromFile(QString filename)
 {
     KfSoundPtr ret;
 
-    KonfytPatch p;
+    Patch p;
     if (p.loadPatchFromFile(filename)) {
         ret.reset(new KonfytSound(KfSoundTypePatch));
         ret->filename = filename;
         ret->name = p.name();
-        foreach (KonfytPatchLayerPtr layer, p.layers()) {
+        foreach (PatchLayerPtr layer, p.layers()) {
             KonfytSoundPreset preset;
             preset.name = layer->name();
             ret->presets.append(preset);
@@ -182,7 +182,7 @@ void KonfytDatabaseWorker::scanSfzs()
 
 void KonfytDatabaseWorker::scanPatches()
 {
-    QStringList patchSuffix = {KONFYT_PATCH_SUFFIX};
+    QStringList patchSuffix = {Patch::PATCH_FILENAME_SUFFIX};
     patchResults.clear();
 
     emit scanStatus("Scanning for patches in " + patchDir);
