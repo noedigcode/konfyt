@@ -1389,6 +1389,7 @@ void MainWindow::setupConnectionsPage()
     ui->tree_portsBusses->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->tree_portsBusses, &QTreeWidget::customContextMenuRequested,
             this, &MainWindow::onPortsBusesTreeMenuRequested);
+    setupPortsBusesTreeMenu();
 }
 
 void MainWindow::showConnectionsPage()
@@ -1925,26 +1926,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
  * corresponding action is called. */
 void MainWindow::onPortsBusesTreeMenuRequested()
 {
-    QMenu* m = &portsBusesTreeMenu;
-
-    m->clear();
-
-    QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
-    portsBusesTreeMenuItem = item;
-
-    if (item) {
-        if (item->parent()) {
-            m->addAction(ui->actionRename_BusPort);
-            m->addAction(ui->actionRemove_BusPort);
-            m->addSeparator();
-        }
-    }
-    m->addAction(ui->actionAdd_Bus);
-    m->addAction(ui->actionAdd_Audio_In_Port);
-    m->addAction(ui->actionAdd_MIDI_Out_Port);
-    m->addAction(ui->actionAdd_MIDI_In_Port);
-
-    portsBusesTreeMenu.popup(QCursor::pos());
+    showPortsBusesTreeMenu();
 }
 
 void MainWindow::initTriggers()
@@ -6695,7 +6677,8 @@ void MainWindow::on_actionRemove_BusPort_triggered()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    QTreeWidgetItem* item = portsBusesTreeMenuItem;
+    QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
+    if (!item) { return; }
 
     bool busSelected = item->parent() == busParent;
     bool audioInSelected = item->parent() == audioInParent;
@@ -7211,12 +7194,15 @@ QString MainWindow::loadSfzFileText(QString filename)
     return text;
 }
 
+/* Initiate a rename in the GUI for the port/bus selected in the ports/buses
+ * tree widget. */
 void MainWindow::on_actionRename_BusPort_triggered()
 {
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    QTreeWidgetItem* item = portsBusesTreeMenuItem;
+    QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
+    if (!item) { return; }
 
     // See on_tree_portsBusses_itemChanged for the renaming.
 
@@ -8121,6 +8107,28 @@ void MainWindow::toggleShowPatchListNotes()
     patchListAdapter.setPatchNotesVisible(visible);
 }
 
+void MainWindow::setupPortsBusesTreeMenu()
+{
+    portsBusesTreeMenu.addAction(ui->actionRename_BusPort);
+    portsBusesTreeMenu.addAction(ui->actionRemove_BusPort);
+    portsBusesTreeMenu.addSeparator();
+    portsBusesTreeMenu.addAction(ui->actionAdd_Bus);
+    portsBusesTreeMenu.addAction(ui->actionAdd_Audio_In_Port);
+    portsBusesTreeMenu.addAction(ui->actionAdd_MIDI_Out_Port);
+    portsBusesTreeMenu.addAction(ui->actionAdd_MIDI_In_Port);
+}
+
+void MainWindow::showPortsBusesTreeMenu()
+{
+    QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
+
+    bool portSelected = (item && item->parent());
+    ui->actionRename_BusPort->setEnabled(portSelected);
+    ui->actionRemove_BusPort->setEnabled(portSelected);
+
+    portsBusesTreeMenu.popup(QCursor::pos());
+}
+
 void MainWindow::on_pushButton_JackAudioPorts_clicked()
 {
     showOtherJackConsPageAudio();
@@ -8173,7 +8181,7 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
 
 void MainWindow::on_toolButton_connectionsPage_portsBussesListOptions_clicked()
 {
-    onPortsBusesTreeMenuRequested();
+    showPortsBusesTreeMenu();
 }
 
 void MainWindow::setupSettings()

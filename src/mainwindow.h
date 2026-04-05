@@ -556,11 +556,9 @@ private slots:
     // Connections screen (Ports and buses)
     // ========================================================================
 private:
-    // portsBusesTreeMenu: Context menu when item in the tree is right-clicked on
-    //   Opened when user right-clicks on tree_portsBusses, see onPortsBusesTreeMenuRequested()
-    //   When an item is clicked: slot corresponding to action is called.
     QMenu portsBusesTreeMenu;
-    QTreeWidgetItem* portsBusesTreeMenuItem; // The item that was right-clicked on
+    void setupPortsBusesTreeMenu();
+    void showPortsBusesTreeMenu();
 
     void setupConnectionsPage();
     void showConnectionsPage();

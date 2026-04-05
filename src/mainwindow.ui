@@ -2462,7 +2462,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>1</number>
+                 <number>4</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -3422,8 +3422,8 @@ border-bottom: 1px solid rgb(40,40,40);</string>
                                 <rect>
                                  <x>0</x>
                                  <y>0</y>
-                                 <width>415</width>
-                                 <height>243</height>
+                                 <width>74</width>
+                                 <height>432</height>
                                 </rect>
                                </property>
                                <layout class="QVBoxLayout" name="verticalLayout_44">
