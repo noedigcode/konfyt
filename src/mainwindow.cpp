@@ -1218,7 +1218,7 @@ void MainWindow::applySettings()
     setPatchesDir(ui->comboBox_settings_patchDirs->currentText());
     setSoundfontsDir(ui->comboBox_settings_soundfontDirs->currentText());
     setSfzDir(ui->comboBox_settings_sfzDirs->currentText());
-    mFilemanager = ui->comboBox_Settings_filemanager->currentText();
+    mFilemanager = ui->comboBox_Settings_filemanager->currentText().trimmed();
     mPromptOnQuit = ui->checkBox_settings_promptOnQuit->isChecked();
     mOpenLastProjectAtStartup = ui->checkBox_settings_openLastProjectAtStartup->isChecked();
     mDefaultResetOption = mSettingsDefaultResetOptionComboBox.selectedValue();
@@ -3224,7 +3224,8 @@ QStringList MainWindow::scanDirForFilesSkipBackupSubdirs(QString dirname,
 
 void MainWindow::openFileManager(QString path)
 {
-    if (mFilemanager.length()) {
+    QString cmd = mFilemanager.trimmed();
+    if (cmd.length()) {
         QProcess* process = new QProcess();
 
         connect(process, static_cast<void (QProcess::*)(int, QProcess::ExitStatus)>(&QProcess::finished),
@@ -3233,7 +3234,7 @@ void MainWindow::openFileManager(QString path)
             process->deleteLater();
         });
 
-        process->start(mFilemanager, QStringList() << path);
+        process->start(cmd, QStringList() << path);
 
     } else {
         QDesktopServices::openUrl(QUrl::fromLocalFile(path));
