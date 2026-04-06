@@ -35,16 +35,16 @@
 
 
 namespace Ui {
-class KonfytLayerWidget;
+class PatchLayerWidget;
 }
 
-class KonfytLayerWidget : public QWidget
+class PatchLayerWidget : public QWidget
 {
     Q_OBJECT
     
 public:
-    explicit KonfytLayerWidget(QWidget *parent = 0);
-    ~KonfytLayerWidget();
+    explicit PatchLayerWidget(QWidget *parent = 0);
+    ~PatchLayerWidget();
 
     typedef QSharedPointer<Project> ProjectPtr;
     void setProject(ProjectPtr project);
@@ -70,15 +70,15 @@ public:
     void indicateAudioRight(float value);
 
 signals:
-    void slider_moved_signal(KonfytLayerWidget* layerItem, float gain);
-    void solo_clicked_signal(KonfytLayerWidget* layerItem, bool solo);
-    void mute_clicked_signal(KonfytLayerWidget* layerItem, bool mute);
-    void rightToolbutton_clicked_signal(KonfytLayerWidget* layerItem);
-    void leftToolbutton_clicked_signal(KonfytLayerWidget* layerItem);
-    void sendMidiEvents_clicked_signal(KonfytLayerWidget* layerItem);
+    void slider_moved_signal(PatchLayerWidget* layerItem, float gain);
+    void solo_clicked_signal(PatchLayerWidget* layerItem, bool solo);
+    void mute_clicked_signal(PatchLayerWidget* layerItem, bool mute);
+    void rightToolbutton_clicked_signal(PatchLayerWidget* layerItem);
+    void leftToolbutton_clicked_signal(PatchLayerWidget* layerItem);
+    void sendMidiEvents_clicked_signal(PatchLayerWidget* layerItem);
     
 private:
-    Ui::KonfytLayerWidget *ui;
+    Ui::PatchLayerWidget *ui;
     ProjectPtr mProject; // Pointer to current project to get bus and port naming info
 
     PatchLayerPtr mPatchLayer;

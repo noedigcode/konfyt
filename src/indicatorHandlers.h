@@ -30,26 +30,26 @@
 class LayerIndicatorHandler
 {
 public:
-    void layerWidgetAdded(KonfytLayerWidget* w, KfJackMidiRoute* route);
-    void layerWidgetAdded(KonfytLayerWidget* w, KfJackAudioRoute* route1,
+    void layerWidgetAdded(PatchLayerWidget* w, KfJackMidiRoute* route);
+    void layerWidgetAdded(PatchLayerWidget* w, KfJackAudioRoute* route1,
                           KfJackAudioRoute* route2);
     void jackEventReceived(KfJackMidiRxEvent ev);
     void jackEventReceived(KfJackAudioRxEvent ev);
-    void layerWidgetRemoved(KonfytLayerWidget* w);
+    void layerWidgetRemoved(PatchLayerWidget* w);
 
 private:
     struct MidiState {
         bool sustain = false;
         bool pitchbend = false;
-        KonfytLayerWidget* widget = nullptr;
+        PatchLayerWidget* widget = nullptr;
     };
 
     QMap<KfJackMidiRoute*, MidiState> midiRouteStateMap;
-    QMap<KonfytLayerWidget*, KfJackMidiRoute*> midiWidgetRouteMap;
+    QMap<PatchLayerWidget*, KfJackMidiRoute*> midiWidgetRouteMap;
 
     struct AudioInfo {
         bool left = true;
-        KonfytLayerWidget* widget = nullptr;
+        PatchLayerWidget* widget = nullptr;
     };
 
     QMap<KfJackAudioRoute*, AudioInfo> audioRouteMap;

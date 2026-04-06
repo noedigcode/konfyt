@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>KonfytLayerWidget</class>
- <widget class="QWidget" name="KonfytLayerWidget">
+ <class>PatchLayerWidget</class>
+ <widget class="QWidget" name="PatchLayerWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -14,7 +14,7 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget#KonfytLayerWidget{
+   <string notr="true">QWidget#PatchLayerWidget{
 	min-height: 2.5em;
 	max-height: 2.5em;
 }

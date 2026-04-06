@@ -24,9 +24,9 @@
 
 #include <math.h>
 
-KonfytLayerWidget::KonfytLayerWidget(QWidget *parent) :
+PatchLayerWidget::PatchLayerWidget(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::KonfytLayerWidget)
+    ui(new Ui::PatchLayerWidget)
 {
     ui->setupUi(this);
 
@@ -34,29 +34,29 @@ KonfytLayerWidget::KonfytLayerWidget(QWidget *parent) :
     background_rectRight = 0;
 
     connect(&midiIndicateTimer, &QTimer::timeout,
-            this, &KonfytLayerWidget::midiIndicateTimerEvent);
+            this, &PatchLayerWidget::midiIndicateTimerEvent);
 
     connect(&audioIndicateTimer, &QTimer::timeout,
-            this, &KonfytLayerWidget::audioIndicateTimerEvent);
+            this, &PatchLayerWidget::audioIndicateTimerEvent);
     audioIndicateTimer.start(100);
 }
 
-KonfytLayerWidget::~KonfytLayerWidget()
+PatchLayerWidget::~PatchLayerWidget()
 {
     delete ui;
 }
 
-void KonfytLayerWidget::setProject(KonfytLayerWidget::ProjectPtr project)
+void PatchLayerWidget::setProject(PatchLayerWidget::ProjectPtr project)
 {
     mProject = project;
 
     connect(mProject.data(), &Project::audioInPortNameChanged,
-            this, &KonfytLayerWidget::onProjectAudioInPortNameChanged);
+            this, &PatchLayerWidget::onProjectAudioInPortNameChanged);
     connect(mProject.data(), &Project::midiOutPortNameChanged,
-            this, &KonfytLayerWidget::onProjectMidiOutPortNameChanged);
+            this, &PatchLayerWidget::onProjectMidiOutPortNameChanged);
 }
 
-void KonfytLayerWidget::paintEvent(QPaintEvent* /*e*/)
+void PatchLayerWidget::paintEvent(QPaintEvent* /*e*/)
 {
     static QColor colorFG = QColor(24, 87, 127, 255);
     static QColor colorBG = QColor(30, 30, 30, 255);
@@ -135,7 +135,7 @@ void KonfytLayerWidget::paintEvent(QPaintEvent* /*e*/)
     }
 }
 
-void KonfytLayerWidget::onProjectMidiOutPortNameChanged(int portId)
+void PatchLayerWidget::onProjectMidiOutPortNameChanged(int portId)
 {
     if (!mPatchLayer) { return; }
 
@@ -146,7 +146,7 @@ void KonfytLayerWidget::onProjectMidiOutPortNameChanged(int portId)
     }
 }
 
-void KonfytLayerWidget::onProjectAudioInPortNameChanged(int portId)
+void PatchLayerWidget::onProjectAudioInPortNameChanged(int portId)
 {
     if (!mPatchLayer) { return; }
 
@@ -157,13 +157,13 @@ void KonfytLayerWidget::onProjectAudioInPortNameChanged(int portId)
     }
 }
 
-void KonfytLayerWidget::on_toolButton_left_clicked()
+void PatchLayerWidget::on_toolButton_left_clicked()
 {
     emit leftToolbutton_clicked_signal(this);
 }
 
 /* This function has to be called before the object can be used. */
-void KonfytLayerWidget::initLayer(PatchLayerPtr patchLayer, QListWidgetItem *listItem)
+void PatchLayerWidget::initLayer(PatchLayerPtr patchLayer, QListWidgetItem *listItem)
 {
     mPatchLayer = patchLayer;
     mListWidgetItem = listItem;
@@ -172,18 +172,18 @@ void KonfytLayerWidget::initLayer(PatchLayerPtr patchLayer, QListWidgetItem *lis
     setUpGUI();
 }
 
-void KonfytLayerWidget::refresh()
+void PatchLayerWidget::refresh()
 {
     setUpGUI();
 }
 
-void KonfytLayerWidget::setHighlighted(bool highlight)
+void PatchLayerWidget::setHighlighted(bool highlight)
 {
     mHighlighted = highlight;
 }
 
 /* Set up the widgets corresponding to the layer item. */
-void KonfytLayerWidget::setUpGUI()
+void PatchLayerWidget::setUpGUI()
 {
     mFilepath = "";
     bool gainSliderVisible = true;
@@ -307,7 +307,7 @@ void KonfytLayerWidget::setUpGUI()
 }
 
 /* Change the background to indicate MIDI filter zone. */
-void KonfytLayerWidget::updateBackgroundFromFilter()
+void PatchLayerWidget::updateBackgroundFromFilter()
 {
     if (!mPatchLayer) { return; }
     MidiFilter filter = mPatchLayer->midiFilter();
@@ -315,7 +315,7 @@ void KonfytLayerWidget::updateBackgroundFromFilter()
     this->changeBackground(z.lowNote, z.highNote);
 }
 
-void KonfytLayerWidget::updateRightToolButton()
+void PatchLayerWidget::updateRightToolButton()
 {
     if (!mPatchLayer) { return; }
 
@@ -333,7 +333,7 @@ void KonfytLayerWidget::updateRightToolButton()
     }
 }
 
-void KonfytLayerWidget::updateInputSideToolButton()
+void PatchLayerWidget::updateInputSideToolButton()
 {
     if (!mPatchLayer) { return; }
 
@@ -341,7 +341,7 @@ void KonfytLayerWidget::updateInputSideToolButton()
         int midiPortId = mPatchLayer->midiInPortIdInProject();
         if (mProject->midiInPort_exists(midiPortId)) {
             QString btnTxt = QString("%1:").arg(midiPortId);
-            QString tooltip = "MIDI In Port: " + mProject->midiInPort_getPort(midiPortId)->portName;
+            QString tooltip = "MIDI In Port: " + mProject->midiInPort_getPort(midiPortId)->name;
             tooltip.append("\nMIDI Channel: ");
             int inChan = mPatchLayer->midiFilter().inChan;
             if (inChan < 0) {
@@ -364,7 +364,7 @@ void KonfytLayerWidget::updateInputSideToolButton()
 
 /* Change the background depending on the min and max values (between 0 and 127),
  * used to indicate the range/zone of a MIDI filter. */
-void KonfytLayerWidget::changeBackground(int min, int max)
+void PatchLayerWidget::changeBackground(int min, int max)
 {
     max++; // inclusive!
     background_rectLeft = (float)min/127.0;
@@ -373,22 +373,22 @@ void KonfytLayerWidget::changeBackground(int min, int max)
     //this->repaint(); // Done in audioIndicateTimerEvent()
 }
 
-PatchLayerPtr KonfytLayerWidget::getPatchLayer()
+PatchLayerPtr PatchLayerWidget::getPatchLayer()
 {
     return mPatchLayer;
 }
 
-QListWidgetItem* KonfytLayerWidget::getListWidgetItem()
+QListWidgetItem* PatchLayerWidget::getListWidgetItem()
 {
     return mListWidgetItem;
 }
 
-QString KonfytLayerWidget::getFilePath()
+QString PatchLayerWidget::getFilePath()
 {
     return mFilepath;
 }
 
-void KonfytLayerWidget::indicateMidi()
+void PatchLayerWidget::indicateMidi()
 {
     midiIndicateTimer.start(500);
     if (!midiIndicate) {
@@ -397,7 +397,7 @@ void KonfytLayerWidget::indicateMidi()
     }
 }
 
-void KonfytLayerWidget::indicateSustain(bool sustain)
+void PatchLayerWidget::indicateSustain(bool sustain)
 {
     if (sustain != midiIndicateSustain) {
         midiIndicateSustain = sustain;
@@ -405,7 +405,7 @@ void KonfytLayerWidget::indicateSustain(bool sustain)
     }
 }
 
-void KonfytLayerWidget::indicatePitchbend(bool pitchbend)
+void PatchLayerWidget::indicatePitchbend(bool pitchbend)
 {
     if (pitchbend != midiIndicatePitchbend) {
         midiIndicatePitchbend = pitchbend;
@@ -413,14 +413,14 @@ void KonfytLayerWidget::indicatePitchbend(bool pitchbend)
     }
 }
 
-void KonfytLayerWidget::indicateAudioLeft(float value)
+void PatchLayerWidget::indicateAudioLeft(float value)
 {
     if (value < audioZeroLimit) { return; }
     if (value > 0) { value += audioIndicateStep; }
     audioLeftValue = qMax(value, audioLeftValue);
 }
 
-void KonfytLayerWidget::indicateAudioRight(float value)
+void PatchLayerWidget::indicateAudioRight(float value)
 {
     if (value < audioZeroLimit) { return; }
     if (value > 0) { value += audioIndicateStep; }
@@ -429,32 +429,32 @@ void KonfytLayerWidget::indicateAudioRight(float value)
 
 /* Set slider gain from outside the class, e.g. if gain was changed by some
  * other event like a MIDI trigger. */
-void KonfytLayerWidget::setSliderGain(float newGain)
+void PatchLayerWidget::setSliderGain(float newGain)
 {
     ui->gainSlider->setValue(newGain*ui->gainSlider->maximum());
 }
 
 /* Set solo button from outside the class, e.g. if it was changed by some
  * other event like a midi trigger. */
-void KonfytLayerWidget::setSoloButton(bool solo)
+void PatchLayerWidget::setSoloButton(bool solo)
 {
     ui->toolButton_solo->setChecked(solo);
 }
 
 /* Set mute button from outside the class, e.g. if it was changed by some
  * other event like a midi trigger. */
-void KonfytLayerWidget::setMuteButton(bool mute)
+void PatchLayerWidget::setMuteButton(bool mute)
 {
     ui->toolButton_mute->setChecked(mute);
 }
 
-void KonfytLayerWidget::on_gainSlider_sliderMoved(int position)
+void PatchLayerWidget::on_gainSlider_sliderMoved(int position)
 {
     float gain = (float)position/(float)ui->gainSlider->maximum();
     emit slider_moved_signal(this, gain);
 }
 
-void KonfytLayerWidget::on_gainSlider_valueChanged(int /*value*/)
+void PatchLayerWidget::on_gainSlider_valueChanged(int /*value*/)
 {
     // Update slider tooltip
     float tooltip_gain = (float)ui->gainSlider->value()/(float)ui->gainSlider->maximum();
@@ -465,38 +465,36 @@ void KonfytLayerWidget::on_gainSlider_valueChanged(int /*value*/)
                                n2s( tooltip_midi ) );
 }
 
-/* Solo button: Clicked. */
-void KonfytLayerWidget::on_toolButton_solo_clicked()
+void PatchLayerWidget::on_toolButton_solo_clicked()
 {
     bool solo = ui->toolButton_solo->isChecked();
     emit solo_clicked_signal(this, solo);
 }
 
-/* Mute button: Clicked. */
-void KonfytLayerWidget::on_toolButton_mute_clicked()
+void PatchLayerWidget::on_toolButton_mute_clicked()
 {
     bool mute = ui->toolButton_mute->isChecked();
     emit mute_clicked_signal(this, mute);
 }
 
-void KonfytLayerWidget::on_toolButton_right_clicked()
+void PatchLayerWidget::on_toolButton_right_clicked()
 {
     emit rightToolbutton_clicked_signal(this);
 }
 
-void KonfytLayerWidget::on_toolButton_sendEvents_clicked()
+void PatchLayerWidget::on_toolButton_sendEvents_clicked()
 {
     emit sendMidiEvents_clicked_signal(this);
 }
 
-void KonfytLayerWidget::midiIndicateTimerEvent()
+void PatchLayerWidget::midiIndicateTimerEvent()
 {
     midiIndicate = false;
     midiIndicateTimer.stop();
     //this->repaint(); // Done in audioIndicateTimerEvent()
 }
 
-void KonfytLayerWidget::audioIndicateTimerEvent()
+void PatchLayerWidget::audioIndicateTimerEvent()
 {
     audioLeftValue = qMax((float)0.0, audioLeftValue - audioIndicateStep);
     audioRightValue = qMax((float)0.0, audioRightValue - audioIndicateStep);

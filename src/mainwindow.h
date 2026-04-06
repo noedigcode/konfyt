@@ -438,24 +438,24 @@ private slots:
 
     // Layers
 private:
-    QList<KonfytLayerWidget*> layerWidgetList;
+    QList<PatchLayerWidget*> layerWidgetList;
     void addPatchLayerToGUI(PatchLayerPtr patchLayer, int index = -1);
-    void addPatchLayerToIndicatorHandler(KonfytLayerWidget* layerWidget,
+    void addPatchLayerToIndicatorHandler(PatchLayerWidget* layerWidget,
                                          PatchLayerPtr patchLayer);
-    void removePatchLayer(KonfytLayerWidget *layerWidget);
-    void removePatchLayerFromGuiOnly(KonfytLayerWidget *layerWidget);
+    void removePatchLayer(PatchLayerWidget *layerWidget);
+    void removePatchLayerFromGuiOnly(PatchLayerWidget *layerWidget);
     void clearPatchLayersFromGuiOnly();
     void movePatchLayer(int indexFrom, int indexTo);
-    KfJackMidiRoute* jackMidiRouteFromLayerWidget(KonfytLayerWidget* layerWidget);
+    KfJackMidiRoute* jackMidiRouteFromLayerWidget(PatchLayerWidget* layerWidget);
 
     QByteArray mCopiedLayerData;
 
 private slots:
-    void onLayer_slider_moved(KonfytLayerWidget* layerWidget, float gain);
-    void onLayer_solo_clicked(KonfytLayerWidget* layerWidget, bool solo);
-    void onLayer_mute_clicked(KonfytLayerWidget* layerWidget, bool mute);
-    void onLayer_midiSend_clicked(KonfytLayerWidget* layerWidget);
-    void onLayer_rightToolbutton_clicked(KonfytLayerWidget* layerWidget);
+    void onLayer_slider_moved(PatchLayerWidget* layerWidget, float gain);
+    void onLayer_solo_clicked(PatchLayerWidget* layerWidget, bool solo);
+    void onLayer_mute_clicked(PatchLayerWidget* layerWidget, bool mute);
+    void onLayer_midiSend_clicked(PatchLayerWidget* layerWidget);
+    void onLayer_rightToolbutton_clicked(PatchLayerWidget* layerWidget);
 
     // Menu to add MIDI out port layer
 private:
@@ -479,12 +479,12 @@ private:
     QAction* audioInLayerInputPortConnectionsAction;
     ResetOptionMenu layerResetOptionMenu;
     void setupLayerToolMenu();
-    KonfytLayerWidget* layerToolMenuSourceitem = nullptr;
+    PatchLayerWidget* layerToolMenuSourceitem = nullptr;
     void updateLayerToolMenu();
 private slots:
     void onAudioInLayerInputPortConnectionActionTrigger();
     void onLayerResetOptionMenuActionTrigger(QAction* action);
-    void onLayer_leftToolbutton_clicked(KonfytLayerWidget* layerItem);
+    void onLayer_leftToolbutton_clicked(PatchLayerWidget* layerItem);
     void on_actionReload_Layer_triggered();
     void on_actionRemove_Layer_triggered();
     void on_actionCopy_Layer_triggered();
@@ -677,7 +677,7 @@ private:
         MidiFilterEditPatch
     };
     MidiFilterEditType midiFilterEditType;
-    KonfytLayerWidget* midiFilterEditItem = nullptr;
+    PatchLayerWidget* midiFilterEditItem = nullptr;
     KfJackMidiRoute* midiFilterEditRoute = nullptr;
     int midiFilterEditPort;
     Patch* midiFilterEditPatch = nullptr;
@@ -750,7 +750,7 @@ private slots:
 
     // MIDI send list editor
 private:
-    KonfytLayerWidget* midiSendListEditItem = nullptr;
+    PatchLayerWidget* midiSendListEditItem = nullptr;
     KfJackMidiRoute* midiSendListEditRoute = nullptr;
     QList<MidiSendItem> midiSendList;
     void setupMidiSendListEditor();

@@ -2797,7 +2797,7 @@ void MainWindow::onPatchSelected(Patch *patch)
 
 void MainWindow::onPatchLayerLoaded(PatchLayerPtr patchLayer)
 {
-    foreach (KonfytLayerWidget* w, layerWidgetList) {
+    foreach (PatchLayerWidget* w, layerWidgetList) {
         if (w->getPatchLayer() == patchLayer) {
             // Refresh in indicator handler, as JACK routes may have changed
             layerIndicatorHandler.layerWidgetRemoved(w);
@@ -4709,7 +4709,7 @@ void MainWindow::triggerPanic(bool panic)
     toolbar->style()->polish(toolbar);
 
     // Clear sustain and pitchbend indicators for all layers
-    foreach (KonfytLayerWidget* w, layerWidgetList) {
+    foreach (PatchLayerWidget* w, layerWidgetList) {
         if ( ! w->getPatchLayer()->hasMidiInput() ) { continue; }
         w->indicateSustain(false);
         w->indicatePitchbend(false);
@@ -4953,7 +4953,7 @@ void MainWindow::onLayerMidiInChannelMenu_ActionTrigger(QAction *action)
     patchModified();
 }
 
-void MainWindow::onLayer_midiSend_clicked(KonfytLayerWidget *layerWidget)
+void MainWindow::onLayer_midiSend_clicked(PatchLayerWidget *layerWidget)
 {
     pengine.sendLayerMidi(layerWidget->getPatchLayer());
 }
@@ -5075,25 +5075,25 @@ void MainWindow::on_pushButton_extApp_remove_clicked()
 }
 
 /* Slot: on layer item slider move. */
-void MainWindow::onLayer_slider_moved(KonfytLayerWidget *layerWidget, float gain)
+void MainWindow::onLayer_slider_moved(PatchLayerWidget *layerWidget, float gain)
 {
     pengine.setLayerGain(layerWidget->getPatchLayer(), gain);
 }
 
 /* Slot: on layer item solo button clicked. */
-void MainWindow::onLayer_solo_clicked(KonfytLayerWidget *layerWidget, bool solo)
+void MainWindow::onLayer_solo_clicked(PatchLayerWidget *layerWidget, bool solo)
 {
     pengine.setLayerSolo(layerWidget->getPatchLayer(), solo);
 }
 
 /* Slot: on layer item mute button clicked. */
-void MainWindow::onLayer_mute_clicked(KonfytLayerWidget *layerWidget, bool mute)
+void MainWindow::onLayer_mute_clicked(PatchLayerWidget *layerWidget, bool mute)
 {
     pengine.setLayerMute(layerWidget->getPatchLayer(), mute);
 }
 
 /* Slot: on layer item bus button clicked. */
-void MainWindow::onLayer_rightToolbutton_clicked(KonfytLayerWidget *layerWidget)
+void MainWindow::onLayer_rightToolbutton_clicked(PatchLayerWidget *layerWidget)
 {
     // Save the layer item for future use
     layerToolMenuSourceitem = layerWidget;
@@ -5115,7 +5115,7 @@ void MainWindow::onLayer_rightToolbutton_clicked(KonfytLayerWidget *layerWidget)
     // The rest will be done in onlayerBusMenu_ActionTrigger() when the user clicked a menu item.
 }
 
-void MainWindow::onLayer_leftToolbutton_clicked(KonfytLayerWidget *layerItem)
+void MainWindow::onLayer_leftToolbutton_clicked(PatchLayerWidget *layerItem)
 {
     // Save the layer item for future use
     layerToolMenuSourceitem = layerItem;
@@ -5234,7 +5234,7 @@ void MainWindow::updateLayerMidiOutChannelMenu(QMenu *menu, int currentMidiPort)
 void MainWindow::addPatchLayerToGUI(PatchLayerPtr patchLayer, int index)
 {
     // Create new GUI layer item
-    KonfytLayerWidget* layerWidget = new KonfytLayerWidget();
+    PatchLayerWidget* layerWidget = new PatchLayerWidget();
     layerWidget->setProject(mCurrentProject);
     QListWidgetItem* item = new QListWidgetItem();
     layerWidget->initLayer(patchLayer, item);
@@ -5254,26 +5254,26 @@ void MainWindow::addPatchLayerToGUI(PatchLayerPtr patchLayer, int index)
     item->setSizeHint(QSize(0, layerWidget->size().height()));
 
     // Layer widget connections
-    connect(layerWidget, &KonfytLayerWidget::slider_moved_signal,
+    connect(layerWidget, &PatchLayerWidget::slider_moved_signal,
             this, &MainWindow::onLayer_slider_moved);
 
-    connect(layerWidget, &KonfytLayerWidget::solo_clicked_signal,
+    connect(layerWidget, &PatchLayerWidget::solo_clicked_signal,
             this, &MainWindow::onLayer_solo_clicked);
 
-    connect(layerWidget, &KonfytLayerWidget::mute_clicked_signal,
+    connect(layerWidget, &PatchLayerWidget::mute_clicked_signal,
             this, &MainWindow::onLayer_mute_clicked);
 
-    connect(layerWidget, &KonfytLayerWidget::leftToolbutton_clicked_signal,
+    connect(layerWidget, &PatchLayerWidget::leftToolbutton_clicked_signal,
             this, &MainWindow::onLayer_leftToolbutton_clicked);
 
-    connect(layerWidget, &KonfytLayerWidget::rightToolbutton_clicked_signal,
+    connect(layerWidget, &PatchLayerWidget::rightToolbutton_clicked_signal,
             this, &MainWindow::onLayer_rightToolbutton_clicked);
 
-    connect(layerWidget, &KonfytLayerWidget::sendMidiEvents_clicked_signal,
+    connect(layerWidget, &PatchLayerWidget::sendMidiEvents_clicked_signal,
             this, &MainWindow::onLayer_midiSend_clicked);
 }
 
-void MainWindow::addPatchLayerToIndicatorHandler(KonfytLayerWidget *layerWidget, PatchLayerPtr patchLayer)
+void MainWindow::addPatchLayerToIndicatorHandler(PatchLayerWidget *layerWidget, PatchLayerPtr patchLayer)
 {
     PatchLayerPtr pl(patchLayer);
     KfJackMidiRoute* midiRoute = nullptr;
@@ -5304,7 +5304,7 @@ void MainWindow::addPatchLayerToIndicatorHandler(KonfytLayerWidget *layerWidget,
 }
 
 /* Remove a patch layer from the engine, GUI and the internal list. */
-void MainWindow::removePatchLayer(KonfytLayerWidget *layerWidget)
+void MainWindow::removePatchLayer(PatchLayerWidget *layerWidget)
 {
     pengine.removeLayer(layerWidget->getPatchLayer());
 
@@ -5315,7 +5315,7 @@ void MainWindow::removePatchLayer(KonfytLayerWidget *layerWidget)
 
 /* Remove a layer item from the GUI (and our internal list) only.
  * This is used if the layers in the engine should not be modified. */
-void MainWindow::removePatchLayerFromGuiOnly(KonfytLayerWidget *layerWidget)
+void MainWindow::removePatchLayerFromGuiOnly(PatchLayerWidget *layerWidget)
 {
     // Remove from our internal list (do first since layerWidget will be deleted
     // when QListWidgetItem is removed from list widget)
@@ -5344,7 +5344,7 @@ void MainWindow::movePatchLayer(int indexFrom, int indexTo)
     KONFYT_ASSERT_RETURN(indexTo >= 0);
     KONFYT_ASSERT_RETURN(indexTo < layerWidgetList.count());
 
-    KonfytLayerWidget* layerWidget = layerWidgetList.value(indexFrom);
+    PatchLayerWidget* layerWidget = layerWidgetList.value(indexFrom);
     PatchLayerPtr patchLayer = layerWidget->getPatchLayer();
 
     pengine.moveLayer(patchLayer, indexTo);
@@ -5355,7 +5355,7 @@ void MainWindow::movePatchLayer(int indexFrom, int indexTo)
     patchModified();
 }
 
-KfJackMidiRoute *MainWindow::jackMidiRouteFromLayerWidget(KonfytLayerWidget *layerWidget)
+KfJackMidiRoute *MainWindow::jackMidiRouteFromLayerWidget(PatchLayerWidget *layerWidget)
 {
     KfJackMidiRoute* route = nullptr;
 
@@ -7504,7 +7504,7 @@ void MainWindow::on_toolButton_layer_up_clicked()
 void MainWindow::on_listWidget_Layers_currentItemChanged(
         QListWidgetItem* current, QListWidgetItem* /*previous*/)
 {
-    foreach (KonfytLayerWidget* w, layerWidgetList) {
+    foreach (PatchLayerWidget* w, layerWidgetList) {
         w->setHighlighted(w->getListWidgetItem() == current);
     }
 }

@@ -22,7 +22,7 @@
 #include "indicatorHandlers.h"
 
 
-void LayerIndicatorHandler::layerWidgetAdded(KonfytLayerWidget *w, KfJackMidiRoute *route)
+void LayerIndicatorHandler::layerWidgetAdded(PatchLayerWidget *w, KfJackMidiRoute *route)
 {
     MidiState& state = midiRouteStateMap[route]; // Created if it does not exist
 
@@ -32,7 +32,7 @@ void LayerIndicatorHandler::layerWidgetAdded(KonfytLayerWidget *w, KfJackMidiRou
     midiWidgetRouteMap.insert(w, route);
 }
 
-void LayerIndicatorHandler::layerWidgetAdded(KonfytLayerWidget *w,
+void LayerIndicatorHandler::layerWidgetAdded(PatchLayerWidget *w,
                                              KfJackAudioRoute *route1,
                                              KfJackAudioRoute *route2)
 {
@@ -76,7 +76,7 @@ void LayerIndicatorHandler::jackEventReceived(KfJackAudioRxEvent ev)
     }
 }
 
-void LayerIndicatorHandler::layerWidgetRemoved(KonfytLayerWidget *w)
+void LayerIndicatorHandler::layerWidgetRemoved(PatchLayerWidget *w)
 {
     KfJackMidiRoute* route = midiWidgetRouteMap.take(w);
 
