@@ -153,7 +153,7 @@ private:
 
     const int SERVER_PORT = 8888;
 
-    // Parameter constnats
+    // Parameter constants
     const char* KEY_NAME = "NAME";
     const char* KEY_CHANNELS = "CHANNELS";
     const char* KEY_PORTS = "PORTS";

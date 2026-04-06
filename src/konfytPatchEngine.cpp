@@ -324,8 +324,8 @@ PatchLayerPtr KonfytPatchEngine::addSfzLayer(QString path)
     plugin.path = path;
 
     // Add the plugin to the patch
-    PatchLayerPtr layer = mCurrentPatch->addPlugin(plugin, "sfz");
     updatePatchLayersURIs(mCurrentPatch);
+    PatchLayerPtr layer = mCurrentPatch->addPlugin(plugin);
 
     // The bus defaults to 0, but the project may not have a bus 0.
     // Set the layer bus to the first one in the project.
@@ -431,7 +431,7 @@ void KonfytPatchEngine::updateLayerRouting(PatchLayerPtr layer)
 
         } else {
             print(QString("WARNING: Layer %1 invalid MIDI out port %2")
-                  .arg(layer->name()).arg(portData.portIdInProject));
+                  .arg(layer->uri).arg(portData.portIdInProject));
         }
 
     } else if (layerType == PatchLayer::TypeAudioIn) {
@@ -915,28 +915,18 @@ void KonfytPatchEngine::loadSfzLayer(PatchLayerPtr layer)
     layer->setErrorMessage("");
 
     layer->sfzData.indexInEngine = ID;
-    layer->setName(sfzEngine->pluginName(ID));
-    // Add to JACK engine
 
-    // Find the plugin midi input port
-    layer->sfzData.midiInPort = sfzEngine->midiInJackPortName(ID);
-
-    // Find the plugin audio output ports
-    QStringList audioLR = sfzEngine->audioOutJackPortNames(ID);
-    layer->sfzData.audioOutPortLeft = audioLR[0];
-    layer->sfzData.audioOutPortRight = audioLR[1];
-
-    // The plugin object now contains the midi input port and
-    // audio left and right output ports. Give this to JACK, which will:
+    // Give port details to JACK which will:
     // - create a midi output port and connect it to the plugin midi input port,
     // - create audio input ports and connect it to the plugin audio output ports.
     // - assign the midi filter
     KonfytJackPortsSpec spec;
-    spec.name = layer->name();
-    spec.midiOutConnectTo = layer->sfzData.midiInPort;
+    spec.name = sfzEngine->pluginName(ID);;
+    spec.midiOutConnectTo = sfzEngine->midiInJackPortName(ID);
     spec.midiFilter = layer->midiFilter();
-    spec.audioInLeftConnectTo = layer->sfzData.audioOutPortLeft;
-    spec.audioInRightConnectTo = layer->sfzData.audioOutPortRight;
+    QStringList audioLR = sfzEngine->audioOutJackPortNames(ID);
+    spec.audioInLeftConnectTo = audioLR.value(0);
+    spec.audioInRightConnectTo = audioLR.value(1);
     KfJackPluginPorts* jackPorts = jack->addPluginPortsAndConnect( spec );
     layer->sfzData.portsInJackEngine = jackPorts;
 

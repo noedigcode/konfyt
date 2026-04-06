@@ -197,6 +197,7 @@ void KonfytMidiEvent::setDataFromHexString(QString hexString)
     hexString = hexString.replace(" ", "");
     mDatasize = 0;
     for (int i=1; i < hexString.count(); i += 2) {
+        if (mDatasize >= MIDI_DATA_MAX_SIZE) { break; }
         uint8_t hexVal = hexString.mid(i-1, 2).toInt(nullptr, 16);
         mData[mDatasize] = hexVal;
         mDatasize++;
@@ -342,50 +343,39 @@ QString KonfytMidiEvent::toString() const
     }
 }
 
-void KonfytMidiEvent::writeToXMLStream(QXmlStreamWriter *w) const
+Xml KonfytMidiEvent::toXml() const
 {
-    w->writeStartElement(XML_MIDIEVENT);
-
-    w->writeTextElement(XML_MIDIEVENT_TYPE, n2s(type()));
-    w->writeTextElement(XML_MIDIEVENT_CHANNEL, n2s(channel));
+    Xml xml(XML_MIDIEVENT);
+    xml.addTextChild(XML_MIDIEVENT_TYPE, n2s(type()));
+    xml.addTextChild(XML_MIDIEVENT_CHANNEL, n2s(channel));
     if (dataSize() > 2) {
-        w->writeTextElement(XML_MIDIEVENT_DATAHEX, dataToHexString());
+        xml.addTextChild(XML_MIDIEVENT_DATAHEX, dataToHexString());
     } else {
-        w->writeTextElement(XML_MIDIEVENT_DATA1, n2s(data1()));
-        w->writeTextElement(XML_MIDIEVENT_DATA2, n2s(data2()));
+        xml.addTextChild(XML_MIDIEVENT_DATA1, n2s(data1()));
+        xml.addTextChild(XML_MIDIEVENT_DATA2, n2s(data2()));
     }
-    w->writeTextElement(XML_MIDIEVENT_BANKMSB, n2s(bankMSB));
-    w->writeTextElement(XML_MIDIEVENT_BANKLSB, n2s(bankLSB));
-
-    w->writeEndElement();
+    xml.addTextChild(XML_MIDIEVENT_BANKMSB, n2s(bankMSB));
+    xml.addTextChild(XML_MIDIEVENT_BANKLSB, n2s(bankLSB));
+    return xml;
 }
 
-QString KonfytMidiEvent::readFromXmlStream(QXmlStreamReader *r)
+void KonfytMidiEvent::readFromXml(Xml xml)
 {
-    QString error;
-    while (r->readNextStartElement()) {
-        if (r->name() == XML_MIDIEVENT_TYPE) {
-            setType( r->readElementText().toInt() );
-        } else if (r->name() == XML_MIDIEVENT_CHANNEL) {
-            channel = r->readElementText().toInt();
-        } else if (r->name() == XML_MIDIEVENT_DATA1) {
-            setData1( r->readElementText().toInt() );
-        } else if (r->name() == XML_MIDIEVENT_DATA2) {
-            setData2( r->readElementText().toInt() );
-        } else if (r->name() == XML_MIDIEVENT_DATAHEX) {
-            setDataFromHexString( r->readElementText() );
-        } else if (r->name() == XML_MIDIEVENT_BANKMSB) {
-            bankMSB = r->readElementText().toInt();
-        } else if (r->name() == XML_MIDIEVENT_BANKLSB) {
-            bankLSB = r->readElementText().toInt();
-        } else {
-            error += QString("KonfytMidiEvent::readFromXmlStream:"
-                             "Unrecognized MIDI event element: %1\n")
-                    .arg( r->name().toString() );
-            r->skipCurrentElement();
+    setType(xml.childInt(XML_MIDIEVENT_TYPE, mType));
+    xml.setIntFromChild(XML_MIDIEVENT_CHANNEL, &channel);
+    setData1(xml.childInt(XML_MIDIEVENT_DATA1, data1()));
+    setData2(xml.childInt(XML_MIDIEVENT_DATA2, data2()));
+
+    Xml hexXml = xml.child(XML_MIDIEVENT_DATAHEX);
+    if (hexXml.isValid()) {
+        QString hexString = hexXml.text();
+        if (!hexString.isEmpty()) {
+            setDataFromHexString(hexString);
         }
     }
-    return error;
+
+    xml.setIntFromChild(XML_MIDIEVENT_BANKMSB, &bankMSB);
+    xml.setIntFromChild(XML_MIDIEVENT_BANKLSB, &bankLSB);
 }
 
 QString MidiSendItem::toString() const
@@ -397,35 +387,19 @@ QString MidiSendItem::toString() const
     }
 }
 
-void MidiSendItem::writeToXMLStream(QXmlStreamWriter *w) const
+Xml MidiSendItem::toXml() const
 {
-    w->writeStartElement(XML_MIDI_SEND_ITEM);
-
-    w->writeTextElement(XML_MIDI_SEND_ITEM_DESCRIPTION, description);
-    midiEvent.writeToXMLStream(w);
-
-    w->writeEndElement();
+    Xml xml(XML_MIDI_SEND_ITEM);
+    xml.addTextChild(XML_DESCRIPTION, description);
+    xml.addChild(midiEvent.toXml());
+    return xml;
 }
 
-QString MidiSendItem::readFromXmlStream(QXmlStreamReader *r)
+void MidiSendItem::readFromXml(Xml xml)
 {
-    QString error;
-    while (r->readNextStartElement()) {
-        if (r->name() == XML_MIDI_SEND_ITEM) {
-            error += readFromXmlStream(r);
-        } else if (r->name() == XML_MIDI_SEND_ITEM_DESCRIPTION) {
-            description = r->readElementText();
-        } else if (r->name() == KonfytMidiEvent::XML_MIDIEVENT) {
-            error += midiEvent.readFromXmlStream(r);
-        } else {
-            error += QString("MidiSendItem::readFromXmlStream:"
-                             "Unrecognized XML element: %1\n")
-                    .arg( r->name().toString() );
-        }
-    }
-    return error;
+    description = xml.childText(XML_DESCRIPTION);
+    midiEvent.readFromXml(xml.child(KonfytMidiEvent::XML_MIDIEVENT));
 }
-
 
 void MidiValueController::setValue(int value)
 {

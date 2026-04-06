@@ -25,10 +25,9 @@
 #include "konfytUtils.h"
 #include "konfytStructs.h"
 #include "konfytMidi.h"
+#include "xml.h"
 
 #include <QList>
-#include <QXmlStreamWriter>
-#include <QXmlStreamReader>
 
 // ============================================================================
 
@@ -84,10 +83,12 @@ public:
     int outChan = -1; // -1 = original
     bool ignoreGlobalTranspose = false;
 
-    void writeToXMLStream(QXmlStreamWriter* stream) const;
-    void readFromXMLStream(QXmlStreamReader *r);
+    Xml toXml() const;
+    void readFromXml(Xml xml);
 
     void deprecatedVelocityToMap();
+
+    Xml boolToXml(QString name, bool value) const;
 
     static constexpr const char* XML_MIDIFILTER = "midiFilter";
     static constexpr const char* XML_ZONE = "zone";

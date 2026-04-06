@@ -34,8 +34,6 @@
 #include <QProcess>
 #include <QStringList>
 #include <QThread>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
 
 #include <functional>
 
@@ -118,11 +116,11 @@ class
     void clearDatabase();
     void clearDatabase_exceptSoundfonts();
 
-    bool saveDatabaseToFile(QString filename);
-    bool loadDatabaseFromFile(QString filename);
+    Result saveDatabaseToFile(QString filename);
+    Result loadDatabaseFromFile(QString filename);
 
-    static void soundfontToXml(KfSoundPtr sf, QXmlStreamWriter* stream);
-    static KfSoundPtr soundfontFromXml(QXmlStreamReader* r);
+    static Xml soundfontToXml(KfSoundPtr sf);
+    static KfSoundPtr soundfontFromXml(Xml xml);
 
     // Search functionality
     void search(QString str);

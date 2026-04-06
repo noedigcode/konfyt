@@ -44,7 +44,7 @@ KfSoundPtr KonfytDatabaseWorker::patchFromFile(QString filename)
     KfSoundPtr ret;
 
     Patch p;
-    if (p.loadPatchFromFile(filename)) {
+    if (p.loadPatchFromFile(filename).ok) {
         ret.reset(new KonfytSound(KfSoundTypePatch));
         ret->filename = filename;
         ret->name = p.name();
@@ -182,7 +182,7 @@ void KonfytDatabaseWorker::scanSfzs()
 
 void KonfytDatabaseWorker::scanPatches()
 {
-    QStringList patchSuffix = {Patch::PATCH_FILENAME_SUFFIX};
+    QStringList patchSuffix = {Patch::PATCH_FILE_EXTENSION_NODOT};
     patchResults.clear();
 
     emit scanStatus("Scanning for patches in " + patchDir);
@@ -461,62 +461,59 @@ void KonfytDatabase::loadSfontInfoFromFile(QString filename)
     // The worker thread will now load the soundfont and emit a signal when done
 }
 
-/* Save the database to an xml file. Returns true if success, false if not. */
-bool KonfytDatabase::saveDatabaseToFile(QString filename)
+Result KonfytDatabase::saveDatabaseToFile(QString filename)
 {
-    QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        emit print("Failed to open file for saving database.");
-        return false;
-    }
+    Xml xmlDatabase(XML_DATABASE);
 
-    QXmlStreamWriter stream(&file);
-    stream.setAutoFormatting(true);
-    stream.writeStartDocument();
-
-    stream.writeComment("This is a Konfyt database.");
-
-    stream.writeStartElement(XML_DATABASE);
-
-    // All the soundfonts
+    // Soundfonts
     foreach (KfSoundPtr sf, mAllSoundfonts) {
-        soundfontToXml(sf, &stream);
+        xmlDatabase.addChild(soundfontToXml(sf));
     }
 
-    // All the patches
+    // Patches
     foreach (KfSoundPtr patch, mAllPatches) {
-
-        stream.writeStartElement("patch");
-        stream.writeAttribute("filename", patch->filename);
-        stream.writeAttribute("name", patch->name);
+        Xml patchXml("patch");
+        patchXml.setAttribute("filename", patch->filename);
+        patchXml.setAttribute("name", patch->name);
 
         // Layers
         foreach (const KonfytSoundPreset &preset, patch->presets) {
-            stream.writeStartElement("layer");
-
-            stream.writeTextElement("name", preset.name);
-
-            stream.writeEndElement();
+            Xml layerXml("layer");
+            layerXml.addTextChild("name", preset.name);
+            patchXml.addChild(layerXml);
         }
 
-        stream.writeEndElement(); // patch
+        xmlDatabase.addChild(patchXml);
     }
 
-    // All the SFZs
+    // SFZs
     foreach (KfSoundPtr sfz, mAllSfzs) {
-
-        stream.writeStartElement("sfz");
-        stream.writeAttribute("filename", sfz->filename);
-        stream.writeEndElement();
-
+        Xml sfzXml("sfz");
+        sfzXml.setAttribute("filename", sfz->filename);
+        xmlDatabase.addChild(sfzXml);
     }
 
-    stream.writeEndElement(); // database
+    QFile file(filename);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        QString error = QString("Failed to open file for saving database. "
+                                "File: %1. Error: %2")
+                .arg(filename).arg(file.errorString());
+        emit print(error);
+        return Result::failure(error);
+    }
 
-    stream.writeEndDocument();
+    QByteArray data = xmlDatabase.toByteArray();
+    qint64 nwritten = file.write(data);
+    if (nwritten != data.count()) {
+        QString error = QString("Could only write %1 of %2 bytes while saving database. "
+                                "File: %3. Error: %4")
+                .arg(filename).arg(file.errorString());
+        emit print(error);
+        return Result::failure(error);
+    }
 
     file.close();
-    return true;
+    return Result::success();
 }
 
 /* Build a tree of all sfz items, based on their directory structure. */
@@ -551,125 +548,94 @@ void KonfytDatabase::buildPatchTree_results()
 }
 
 /* Clears the database and loads it from a single saved database xml file. */
-bool KonfytDatabase::loadDatabaseFromFile(QString filename)
+Result KonfytDatabase::loadDatabaseFromFile(QString filename)
 {
     QFile file(filename);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        emit print("Failed to open database file for reading.");
-        return false;
+        QString error = QString("Failed to open file for reading database. "
+                                "File: %1. Error: %2")
+                .arg(filename).arg(file.errorString());
+        emit print(error);
+        return Result::failure(error);
     }
 
-    QXmlStreamReader r(&file);
-    r.setNamespaceProcessing(false);
+    Xml databaseXml;
+    databaseXml.loadFromData(file.readAll());
+    file.close();
 
     this->clearDatabase();
 
-    while (r.readNextStartElement()) { // sfdatabase
-
-        while (r.readNextStartElement()) { // soundfont or patch
-
-            if (r.name() == "soundfont") {
-
-                KfSoundPtr sf = soundfontFromXml(&r);
-                addSfont(sf);
-
-            } else if (r.name() == "patch") {
-
-                KfSoundPtr patch(new KonfytSound(KfSoundTypePatch));
-                patch->filename = r.attributes().value("filename").toString();
-                patch->name = r.attributes().value("name").toString();
-                if (patch->name.isEmpty()) {
-                    patch->name = QFileInfo(patch->filename).baseName();
-                }
-
-                while (r.readNextStartElement()) { // layer
-                    if (r.name() == "layer") {
-                        KonfytSoundPreset p;
-                        while (r.readNextStartElement()) {
-                            if (r.name() == "name") {
-                                p.name = r.readElementText();
-                            }
-                        }
-                        patch->presets.append(p);
-                    } else {
-                        r.skipCurrentElement();
-                    }
-                }
-                addPatch(patch);
-
-            } else if (r.name() == "sfz") {
-
-                KfSoundPtr sfz(new KonfytSound(KfSoundTypeSfz));
-                sfz->filename = r.attributes().value("filename").toString();
-                sfz->name = QFileInfo(sfz->filename).fileName();
-                addSfz(sfz);
-                r.skipCurrentElement();
-
-            } else {
-                r.skipCurrentElement();
-            }
-        }
+    foreach (Xml soundfontXml, databaseXml.childrenNamed("soundfont")) {
+        KfSoundPtr sf = soundfontFromXml(soundfontXml);
+        addSfont(sf);
     }
 
-    file.close();
+    foreach (Xml patchXml, databaseXml.childrenNamed("patch")) {
+
+        KfSoundPtr patch(new KonfytSound(KfSoundTypePatch));
+        patch->filename = patchXml.attribute("filename");
+        patch->name = patchXml.attribute("name");
+        if (patch->name.isEmpty()) {
+            patch->name = QFileInfo(patch->filename).baseName();
+        }
+        foreach (Xml layerXml, patchXml.childrenNamed("layer")) {
+            KonfytSoundPreset p;
+            p.name = layerXml.childText("name");
+            patch->presets.append(p);
+        }
+        addPatch(patch);
+    }
+
+    foreach (Xml sfzXml, databaseXml.childrenNamed("sfz")) {
+        KfSoundPtr sfz(new KonfytSound(KfSoundTypeSfz));
+        sfz->filename = sfzXml.attribute("filename");
+        sfz->name = QFileInfo(sfz->filename).fileName();
+        addSfz(sfz);
+    }
 
     buildSfontTree();
     buildSfzTree();
     buildPatchTree();
 
-    return true;
+    return Result::success();
 }
 
-void KonfytDatabase::soundfontToXml(KfSoundPtr sf, QXmlStreamWriter *stream)
+Xml KonfytDatabase::soundfontToXml(KfSoundPtr sf)
 {
-    stream->writeStartElement("soundfont");
+    Xml xml("soundfont");
 
-    stream->writeAttribute("filename", sf->filename);
-    stream->writeAttribute("name", sf->name);
+    xml.setAttribute("filename", sf->filename);
+    xml.setAttribute("name", sf->name);
 
     // All the programs ("presets")
     foreach (const KonfytSoundPreset &preset, sf->presets) {
 
-        stream->writeStartElement("preset");
+        Xml presetXml("preset");
 
-        stream->writeTextElement("bank", n2s(preset.bank));
-        stream->writeTextElement("program", n2s(preset.program));
-        stream->writeTextElement("name", preset.name);
+        presetXml.addTextChild("bank", n2s(preset.bank));
+        presetXml.addTextChild("program", n2s(preset.program));
+        presetXml.addTextChild("name", preset.name);
 
-        stream->writeEndElement();
+        xml.addChild(presetXml);
     }
 
-    stream->writeEndElement();
+    return xml;
 }
 
-KfSoundPtr KonfytDatabase::soundfontFromXml(QXmlStreamReader *r)
+KfSoundPtr KonfytDatabase::soundfontFromXml(Xml xml)
 {
     KfSoundPtr sf(new KonfytSound(KfSoundTypeSoundfont));
-    sf->filename = r->attributes().value("filename").toString();
-    sf->name = r->attributes().value("name").toString();
+    sf->filename = xml.attribute("filename");
+    sf->name = xml.attribute("name");
 
-    while (r->readNextStartElement()) { // preset
-
-        if (r->name() == "preset") {
-
-            KonfytSoundPreset p;
-
-            while (r->readNextStartElement()) {
-                if (r->name() == "bank") {
-                    p.bank = r->readElementText().toInt();
-                } else if (r->name() == "program") {
-                    p.program = r->readElementText().toInt();
-                } else if (r->name() == "name") {
-                    p.name = r->readElementText();
-                }
-            }
-
-            sf->presets.append(p);
-
-        } else {
-            r->skipCurrentElement();
-        }
+    foreach (Xml presetXml, xml.childrenNamed("preset")) {
+        KonfytSoundPreset p;
+        p.name = presetXml.childText("name");
+        presetXml.setIntFromChild("bank", &p.bank);
+        presetXml.setIntFromChild("program", &p.program);
+        sf->presets.append(p);
     }
+
     return sf;
 }
 

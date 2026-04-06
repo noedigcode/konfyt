@@ -136,10 +136,9 @@ void RemoteScannerServer::onSocketReadyRead()
                 errors++;
             } else {
                 successes++;
-                QByteArray xml = socket->read(len);
-                QXmlStreamReader r(xml);
-                r.readNextStartElement();
-                KfSoundPtr s = KonfytDatabase::soundfontFromXml(&r);
+                Xml xml;
+                xml.loadFromData(socket->read(len));
+                KfSoundPtr s = KonfytDatabase::soundfontFromXml(xml);
                 emit newSoundfont(s);
             }
 
@@ -171,20 +170,20 @@ void RemoteScannerClient::connectToServer()
 
 void RemoteScannerClient::onSocketReadyRead()
 {
-    QByteArray xml;
+    QByteArray xmlData;
     QByteArray line = socket.readLine();
     line.replace("\n", "");
     KfSoundPtr sf = fluidsynth.soundfontFromFile(line);
     if (sf) {
-        QXmlStreamWriter w(&xml);
-        KonfytDatabase::soundfontToXml(sf, &w);
+        Xml xml = KonfytDatabase::soundfontToXml(sf);
+        xmlData = xml.toByteArray();
     }
     // Send "soundfont x\n" where x is the length of the XML data representing
     // the soundfont object, followed by the XML data.
     // If the soundfont could not be loaded, x is zero and no XML data is sent.
     QByteArray tosend;
-    tosend.append(QString("soundfont %1\n").arg(xml.length()).toLocal8Bit());
-    tosend.append(xml);
+    tosend.append(QString("soundfont %1\n").arg(xmlData.length()).toLocal8Bit());
+    tosend.append(xmlData);
     socket.write(tosend);
 
     elapsed.start(); // Reset comms timeout

@@ -444,8 +444,8 @@ void TempParent::removeTemporaryChildren()
 KonfytJSEngine::KonfytJSEngine(QObject *parent) : QObject(parent)
 {
     // For signal scriptErrorStatusChanged()
-    qRegisterMetaType<PatchLayerPtr>("KonfytPatchLayerPtr");
-    qRegisterMetaType<Project::MidiPortPtr>("KonfytProject::MidiPortPtr");
+    qRegisterMetaType<PatchLayerPtr>("PatchLayerPtr");
+    qRegisterMetaType<Project::MidiPortPtr>("Project::MidiPortPtr");
 
     // Start script watchdog timer in calling thread (i.e. before this
     // object has been moved to another thread, so not the scripting thread).

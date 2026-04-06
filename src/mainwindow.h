@@ -340,7 +340,8 @@ private slots:
 private:
     KonfytDatabase db;
     void setupDatabase();
-    bool saveDatabase();
+    void loadDatabase();
+    void saveDatabase();
 private slots:
     void onDatabaseScanFinished();
     void onDatabaseScanStatus(QString msg);

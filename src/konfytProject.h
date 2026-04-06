@@ -26,14 +26,13 @@
 #include "konfytJackStructs.h"
 #include "konfytPatch.h"
 #include "konfytStructs.h"
+#include "xml.h"
 
 #include <QDir>
 #include <QFile>
 #include <QObject>
 #include <QSharedPointer>
 #include <QStringList>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
 
 
 class Project;
@@ -112,15 +111,15 @@ public:
     enum PortLeftRight { LeftPort, RightPort };
 
     static const QString NEW_PROJECT_DEFAULT_NAME;
-    static const QString PROJECT_FILENAME_EXTENSION;
+    static const QString PROJECT_FILE_EXTENSION_WITHDOT;
     static const QString PROJECT_PATCH_DIR;
     static const QString PROJECT_BACKUP_DIR;
 
     explicit Project(QObject *parent = 0);
 
-    bool loadProject(QString filepath);
-    bool saveProject();
-    bool saveProjectAs(QString dirpath);
+    Result loadProject(QString filepath);
+    Result saveProject();
+    Result saveProjectAs(QString dirpath);
     bool isModified();
     void setModified(bool mod);
 
@@ -152,12 +151,12 @@ public:
     // -----------------------------------------------------------------------
     // MIDI input ports
 
-    QList<int> midiInPort_getAllPortIds();  // Get list of port ids
+    QList<int> midiInPort_getAllPortIds() const;  // Get list of port ids
     QList<MidiPortPtr> midiInPort_getAllPorts();
     int midiInPort_addPort(QString portName);
     void midiInPort_removePort(int portId);
-    bool midiInPort_exists(int portId);
-    MidiPortPtr midiInPort_getPort(int portId);
+    bool midiInPort_exists(int portId) const;
+    MidiPortPtr midiInPort_getPort(int portId) const;
     int midiInPort_idFromPtr(MidiPortPtr p);
     int midiInPort_getPortIdWithJackId(KfJackMidiPort *jackPort);
     int midiInPort_getFirstPortId(int skipId);
@@ -172,7 +171,7 @@ public:
     // -----------------------------------------------------------------------
     // MIDI output ports
 
-    QList<int> midiOutPort_getAllPortIds();  // Get list of port ids
+    QList<int> midiOutPort_getAllPortIds() const;  // Get list of port ids
     QList<MidiPortPtr> midiOutPort_getAllPorts();
     int midiOutPort_addPort(QString portName);
     void midiOutPort_removePort(int portId);
@@ -189,7 +188,7 @@ public:
     // -----------------------------------------------------------------------
     // Audio input ports
 
-    QList<int> audioInPort_getAllPortIds(); // Get list of port ids
+    QList<int> audioInPort_getAllPortIds() const; // Get list of port ids
     QList<AudioPortPtr> audioInPort_getAllPorts();
     int audioInPort_add(QString portName);
     void audioInPort_remove(int portId);
@@ -209,10 +208,10 @@ public:
     void audioBus_remove(int busId);
     int audioBus_count();
     bool audioBus_exists(int busId);
-    AudioPortPtr audioBus_getBus(int busId);
+    AudioPortPtr audioBus_getBus(int busId) const;
     int audioBus_idFromPtr(AudioPortPtr p);
     int audioBus_getFirstBusId(int skipId);
-    QList<int> audioBus_getAllBusIds();
+    QList<int> audioBus_getAllBusIds() const;
     QList<AudioPortPtr> audioBus_getAllBuses();
     void audioBus_setName(int busId, QString name);
     void audioBus_replace(int busId, AudioPortPtr newBus);
@@ -256,7 +255,7 @@ public:
     KonfytJackConPair removeJackAudioCon(int i);
 
 signals:
-    void print(QString msg);
+    void print(QString msg) const;
     void projectModifiedStateChanged(bool modified);
     void projectNameChanged();
     void patchURIsNeedUpdating();
@@ -271,7 +270,6 @@ signals:
     void externalAppModified(int id);
     
 private:
-    QList<PatchPtr> mPatches;
     QString mProjectDirpath;
     QString mProjectName = NEW_PROJECT_DEFAULT_NAME;
     QString mProjectFilename;
@@ -279,127 +277,131 @@ private:
 
     QString filenameFromProjectName();
     void backupProject(QString dirpath, QString projectFilename, QString tag);
-    void writeToXmlStream(QXmlStreamWriter *stream);
-    void readFromXmlStream(QXmlStreamReader* r);
+    Xml toXml() const;
+
+    QList<PatchPtr> mPatches;
+    void readPatchesFromProjectXml(Xml projectXml);
+    void addPatchesToProjectXml(Xml* projectXml) const;
 
     QMap<int, MidiPortPtr> midiInPortMap;
     int midiInPort_getUniqueId();
+    void readMidiInPortsFromProjectXml(Xml projectXml);
+    void addMidiInPortsToProjectXml(Xml* projectXml) const;
 
     QMap<int, MidiPortPtr> midiOutPortMap;
     int midiOutPort_getUniqueId();
+    void readMidiOutPortsFromProjectXml(Xml projectXml);
+    void addMidiOutPortsToProjectXml(Xml* projectXml) const;
 
     QMap<int, AudioPortPtr> audioInPortMap;
     int audioInPort_getUniqueId();
+    void readAudioInPortsFromProjectXml(Xml projectXml);
+    void addAudioInPortsToProjectXml(Xml* projectXml) const;
 
     QMap<int, AudioPortPtr> audioBusMap;
     int audioBus_getUniqueId();
+    void readBusesFromProjectXml(Xml projectXml);
+    void addBusesToProjectXml(Xml* projectXml) const;
 
-    int getUniqueIdHelper(QList<int> ids);
+    int getUniqueIdNotInList(QList<int> ids);
 
     struct PortScriptData {
         QString content;
         bool enabled = false;
         bool passMidiThrough = true;
     };
-    void writePortScript(QXmlStreamWriter* w, MidiPortPtr prjPort) const;
-    PortScriptData readPortScript(QXmlStreamReader* r);
+    Xml portScriptToXml(MidiPortPtr port) const;
+    PortScriptData readPortScript(Xml xml);
 
-    QMap<int, ExternalApp> externalApps;
+    QMap<int, ExternalApp> mExternalApps;
     int getUniqueExternalAppId();
     void clearExternalApps();
-    void writeExternalApps(QXmlStreamWriter* w);
+    void addExternalAppsToXml(Xml* xml) const;
+    void readExternalApps(Xml xml);
 
-    void preExternalAppsRead();
-    QList<ExternalApp> tempExternalAppList;
-    void readExternalApps(QXmlStreamReader* r);
-    void postExternalAppsRead();
+    QHash<QString, Trigger> mTriggerHash;
+    bool mProgramChangeSwitchPatches = true;
+    bool mShowPatchListNumbers = true;
+    bool mShowPatchListNotes = false;
+    int mMidiPickupRange = 127;
+    void readTriggersFromProjectXml(Xml projectXml);
+    void addTriggersToProjectXml(Xml* projectXml) const;
 
-    QHash<QString, Trigger> triggerHash;
-    bool programChangeSwitchPatches = true;
-    bool patchListNumbers = true;
-    bool patchListNotes = false;
-    int midiPickupRange = 127;
+    QList<KonfytJackConPair> mJackMidiConList;
+    void readJackMidiConList(Xml xml, bool makeNotBreak);
+    QList<KonfytJackConPair> mJackAudioConList;
+    void readJackAudioConList(Xml xml, bool makeNotBreak);
 
-    QList<KonfytJackConPair> jackMidiConList;
-    void readJackMidiConList(QXmlStreamReader* r, bool makeNotBreak);
-    QList<KonfytJackConPair> jackAudioConList;
-    void readJackAudioConList(QXmlStreamReader* r, bool makeNotBreak);
-
-    bool modified = false; // Whether project has been modified since last load/save.
+    bool mModified = false; // Whether project has been modified since last load/save.
 
 private:
-    static constexpr const char* XML_PRJ = "konfytProject";
-    static constexpr const char* XML_PRJ_NAME = "name";
-    static constexpr const char* XML_PRJ_KONFYT_VERSION = "KonfytVersion";
-    static constexpr const char* XML_PRJ_RESET_OPTION = "resetOption";
-    static constexpr const char* XML_PRJ_PATCH = "patch";
-    static constexpr const char* XML_PRJ_PATCH_FILENAME = "filename";
-    static constexpr const char* XML_PRJ_PATCH_LIST_NUMBERS = "patchListNumbers";
-    static constexpr const char* XML_PRJ_PATCH_LIST_NOTES = "patchListNotes";
-    static constexpr const char* XML_PRJ_MIDI_PICKUP_RANGE = "midiPickupRange";
-    static constexpr const char* XML_PRJ_MIDI_IN_PORTLIST = "midiInPortList";
-    static constexpr const char* XML_PRJ_MIDI_IN_PORT = "port";
-    static constexpr const char* XML_PRJ_MIDI_IN_PORT_ID = "portId";
-    static constexpr const char* XML_PRJ_MIDI_IN_PORT_NAME = "portName";
-    static constexpr const char* XML_PRJ_MIDI_IN_PORT_CLIENT = "client";
-    static constexpr const char* XML_PRJ_MIDI_OUT_PORTLIST = "midiOutPortList";
-    static constexpr const char* XML_PRJ_MIDI_OUT_PORT = "port";
-    static constexpr const char* XML_PRJ_MIDI_OUT_PORT_ID = "portId";
-    static constexpr const char* XML_PRJ_MIDI_OUT_PORT_NAME = "portName";
-    static constexpr const char* XML_PRJ_MIDI_OUT_PORT_CLIENT = "client";
-    static constexpr const char* XML_PRJ_BUSLIST = "audioBusList";
-    static constexpr const char* XML_PRJ_BUS = "bus";
-    static constexpr const char* XML_PRJ_BUS_ID = "busId";
-    static constexpr const char* XML_PRJ_BUS_NAME = "busName";
-    static constexpr const char* XML_PRJ_BUS_LGAIN = "leftGain";
-    static constexpr const char* XML_PRJ_BUS_RGAIN = "rightGain";
-    static constexpr const char* XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME = "ignoreGlobalVolume";
-    static constexpr const char* XML_PRJ_BUS_LCLIENT = "leftClient";
-    static constexpr const char* XML_PRJ_BUS_RCLIENT = "rightClient";
-    static constexpr const char* XML_PRJ_AUDIOINLIST = "audioInputPortList";
-    static constexpr const char* XML_PRJ_AUDIOIN_PORT = "port";
-    static constexpr const char* XML_PRJ_AUDIOIN_PORT_ID = "portId";
-    static constexpr const char* XML_PRJ_AUDIOIN_PORT_NAME = "portName";
-    static constexpr const char* XML_PRJ_AUDIOIN_PORT_LGAIN = "leftGain";
-    static constexpr const char* XML_PRJ_AUDIOIN_PORT_RGAIN = "rightGain";
-    static constexpr const char* XML_PRJ_AUDIOIN_PORT_LCLIENT = "leftClient";
-    static constexpr const char* XML_PRJ_AUDIOIN_PORT_RCLIENT = "rightClient";
+    static constexpr const char* XML_PROJECT = "konfytProject";
+    static constexpr const char* XML_PROJECT_NAME = "name";
+    static constexpr const char* XML_KONFYT_VERSION = "KonfytVersion";
+    static constexpr const char* XML_RESET_OPTION = "resetOption";
+    static constexpr const char* XML_PATCH = "patch";
+    static constexpr const char* XML_PATCH_FILENAME = "filename";
+    static constexpr const char* XML_PATCH_LIST_NUMBERS = "patchListNumbers";
+    static constexpr const char* XML_PATCH_LIST_NOTES = "patchListNotes";
+    static constexpr const char* XML_MIDI_PICKUP_RANGE = "midiPickupRange";
+    static constexpr const char* XML_MIDI_IN_PORTLIST = "midiInPortList";
+    static constexpr const char* XML_MIDI_IN_PORT = "port";
+    static constexpr const char* XML_MIDI_IN_PORT_ID = "portId";
+    static constexpr const char* XML_MIDI_IN_PORT_NAME = "portName";
+    static constexpr const char* XML_MIDI_IN_PORT_CLIENT = "client";
+    static constexpr const char* XML_MIDI_OUT_PORTLIST = "midiOutPortList";
+    static constexpr const char* XML_MIDI_OUT_PORT = "port";
+    static constexpr const char* XML_MIDI_OUT_PORT_ID = "portId";
+    static constexpr const char* XML_MIDI_OUT_PORT_NAME = "portName";
+    static constexpr const char* XML_MIDI_OUT_PORT_CLIENT = "client";
+    static constexpr const char* XML_BUSLIST = "audioBusList";
+    static constexpr const char* XML_BUS = "bus";
+    static constexpr const char* XML_BUS_ID = "busId";
+    static constexpr const char* XML_BUS_NAME = "busName";
+    static constexpr const char* XML_BUS_LGAIN = "leftGain";
+    static constexpr const char* XML_BUS_RGAIN = "rightGain";
+    static constexpr const char* XML_BUS_IGNORE_GLOBAL_VOLUME = "ignoreGlobalVolume";
+    static constexpr const char* XML_BUS_LCLIENT = "leftClient";
+    static constexpr const char* XML_BUS_RCLIENT = "rightClient";
+    static constexpr const char* XML_AUDIOINLIST = "audioInputPortList";
+    static constexpr const char* XML_AUDIOIN_PORT = "port";
+    static constexpr const char* XML_AUDIOIN_PORT_ID = "portId";
+    static constexpr const char* XML_AUDIOIN_PORT_NAME = "portName";
+    static constexpr const char* XML_AUDIOIN_PORT_LGAIN = "leftGain";
+    static constexpr const char* XML_AUDIOIN_PORT_RGAIN = "rightGain";
+    static constexpr const char* XML_AUDIOIN_PORT_LCLIENT = "leftClient";
+    static constexpr const char* XML_AUDIOIN_PORT_RCLIENT = "rightClient";
 
-    static constexpr const char* XML_PRJ_PORT_SCRIPT = "script";
-    static constexpr const char* XML_PRJ_PORT_SCRIPT_CONTENT = "content";
-    static constexpr const char* XML_PRJ_PORT_SCRIPT_ENABLED = "enabled";
-    static constexpr const char* XML_PRJ_PORT_SCRIPT_PASS_MIDI_THROUGH = "passMidiThrough";
+    static constexpr const char* XML_PORT_SCRIPT = "script";
+    static constexpr const char* XML_PORT_SCRIPT_CONTENT = "content";
+    static constexpr const char* XML_PORT_SCRIPT_ENABLED = "enabled";
+    static constexpr const char* XML_PORT_SCRIPT_PASS_MIDI_THROUGH = "passMidiThrough";
 
-    // TODO DEPRECATED - replaced by EXT_APP below
-    static constexpr const char* XML_PRJ_PROCESSLIST = "processList";
-    static constexpr const char* XML_PRJ_PROCESS = "process";
-    static constexpr const char* XML_PRJ_PROCESS_APPNAME = "appname";
+    static constexpr const char* XML_EXT_APP_LIST = "externalAppList";
+    static constexpr const char* XML_EXT_APP = "externalApp";
+    static constexpr const char* XML_EXT_APP_NAME = "friendlyName";
+    static constexpr const char* XML_EXT_APP_CMD = "command";
+    static constexpr const char* XML_EXT_APP_RUNATSTARTUP = "runAtStartup";
+    static constexpr const char* XML_EXT_APP_RESTART = "autoRestart";
+    static constexpr const char* XML_EXT_APP_WARN_BEFORE_CLOSING = "warnBeforeClosing";
+    static constexpr const char* XML_EXT_APP_START_DETACHED = "startDetached";
 
-    static constexpr const char* XML_PRJ_EXT_APP_LIST = "externalAppList";
-    static constexpr const char* XML_PRJ_EXT_APP = "externalApp";
-    static constexpr const char* XML_PRJ_EXT_APP_NAME = "friendlyName";
-    static constexpr const char* XML_PRJ_EXT_APP_CMD = "command";
-    static constexpr const char* XML_PRJ_EXT_APP_RUNATSTARTUP = "runAtStartup";
-    static constexpr const char* XML_PRJ_EXT_APP_RESTART = "autoRestart";
-    static constexpr const char* XML_PRJ_EXT_APP_WARN_BEFORE_CLOSING = "warnBeforeClosing";
-    static constexpr const char* XML_PRJ_EXT_APP_START_DETACHED = "startDetached";
-
-    static constexpr const char* XML_PRJ_TRIGGERLIST = "triggerList";
-    static constexpr const char* XML_PRJ_TRIGGER = "trigger";
-    static constexpr const char* XML_PRJ_TRIGGER_ACTIONTEXT = "actionText";
-    static constexpr const char* XML_PRJ_TRIGGER_TYPE = "type";
-    static constexpr const char* XML_PRJ_TRIGGER_CHAN = "channel";
-    static constexpr const char* XML_PRJ_TRIGGER_DATA1 = "data1";
-    static constexpr const char* XML_PRJ_TRIGGER_BANKMSB = "bankMSB";
-    static constexpr const char* XML_PRJ_TRIGGER_BANKLSB = "bankLSB";
-    static constexpr const char* XML_PRJ_PROG_CHANGE_SWITCH_PATCHES = "programChangeSwitchPatches";
-    static constexpr const char* XML_PRJ_OTHERJACK_MIDI_CON_LIST = "otherJackMidiConList";
-    static constexpr const char* XML_PRJ_OTHERJACK_MIDI_CON_BREAK_LIST = "otherJackMidiConBreakList";
-    static constexpr const char* XML_PRJ_OTHERJACK_AUDIO_CON_LIST = "otherJackAudioConList";
-    static constexpr const char* XML_PRJ_OTHERJACK_AUDIO_CON_BREAK_LIST = "otherJackAudioConBreakList";
-    static constexpr const char* XML_PRJ_OTHERJACKCON = "otherJackCon";
-    static constexpr const char* XML_PRJ_OTHERJACKCON_SRC = "srcPort";
-    static constexpr const char* XML_PRJ_OTHERJACKCON_DEST = "destPort";
+    static constexpr const char* XML_TRIGGERLIST = "triggerList";
+    static constexpr const char* XML_TRIGGER = "trigger";
+    static constexpr const char* XML_TRIGGER_ACTIONTEXT = "actionText";
+    static constexpr const char* XML_TRIGGER_TYPE = "type";
+    static constexpr const char* XML_TRIGGER_CHAN = "channel";
+    static constexpr const char* XML_TRIGGER_DATA1 = "data1";
+    static constexpr const char* XML_TRIGGER_BANKMSB = "bankMSB";
+    static constexpr const char* XML_TRIGGER_BANKLSB = "bankLSB";
+    static constexpr const char* XML_PROG_CHANGE_SWITCH_PATCHES = "programChangeSwitchPatches";
+    static constexpr const char* XML_OTHERJACK_MIDI_CON_LIST = "otherJackMidiConList";
+    static constexpr const char* XML_OTHERJACK_MIDI_CON_BREAK_LIST = "otherJackMidiConBreakList";
+    static constexpr const char* XML_OTHERJACK_AUDIO_CON_LIST = "otherJackAudioConList";
+    static constexpr const char* XML_OTHERJACK_AUDIO_CON_BREAK_LIST = "otherJackAudioConBreakList";
+    static constexpr const char* XML_OTHERJACKCON = "otherJackCon";
+    static constexpr const char* XML_OTHERJACKCON_SRC = "srcPort";
+    static constexpr const char* XML_OTHERJACKCON_DEST = "destPort";
 };
 
 #endif // KONFYT_PROJECT_H

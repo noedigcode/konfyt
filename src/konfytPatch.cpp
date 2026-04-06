@@ -30,50 +30,61 @@ QList<PatchLayerPtr> Patch::getSfLayerList() const
 }
 
 /* Saves the patch to a XML patch file. */
-bool Patch::savePatchToFile(QString filename) const
+Result Patch::savePatchToFile(QString filename) const
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        // error message.
-        return false;
+        return Result::failure(
+            QString("Failed to open file for writing. File: %1. Error: %2")
+                    .arg(filename).arg(file.errorString()));
     }
 
-    QXmlStreamWriter stream(&file);
-    writeToXmlStream(&stream);
+    QByteArray data = toXmlByteArray();
+    qint64 nwritten = file.write(data);
+    if (nwritten != data.count()) {
+        return Result::failure(
+            QString("Only wrote %1 of %2 to file. File: %1. Error: %2")
+                    .arg(nwritten).arg(data.count()).arg(filename)
+                    .arg(file.errorString()));
+    }
 
     file.close();
-    return true;
+    return Result::success();
 }
 
-/* Loads a patch from a patch XML file. If errors string pointer is specified,
- * any parsing errors are appended to it. */
-bool Patch::loadPatchFromFile(QString filename, QString *errors)
+Result Patch::loadPatchFromFile(QString filename)
 {
     QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        appendError(errors, "Failed to open file for reading.");
-        return false;
+    if (!file.open(QIODevice::ReadOnly)) {
+        return Result::failure(
+            QString("Error opening file for reading. File: %1. Error: %2")
+                    .arg(filename).arg(file.errorString()));
     }
-
-    QXmlStreamReader r(&file);
-    readFromXmlStream(&r, errors);
-
+    QByteArray data = file.readAll();
     file.close();
-    return true;
+
+    return fromXmlByteArray(data);
 }
 
-QByteArray Patch::toByteArray()
+QByteArray Patch::toXmlByteArray() const
 {
-    QByteArray data;
-    QXmlStreamWriter stream(&data);
-    writeToXmlStream(&stream);
+    Xml xml = toXml();
+    QByteArray data = xml.toByteArray();
     return data;
 }
 
-void Patch::fromByteArray(QByteArray data)
+Result Patch::fromXmlByteArray(QByteArray data)
 {
-    QXmlStreamReader r(data);
-    readFromXmlStream(&r);
+    Xml xml;
+    Xml::Result xmlResult = xml.loadFromData(data);
+    if (!xmlResult.ok) {
+        return Result::failure(QString("Error loading XML: %1")
+                               .arg(xmlResult.toString()));
+    }
+
+    readFromXml(xml);
+
+    return Result::success();
 }
 
 QList<PatchLayerPtr> Patch::layersOfType(
@@ -89,101 +100,44 @@ QList<PatchLayerPtr> Patch::layersOfType(
     return l;
 }
 
-void Patch::writeToXmlStream(QXmlStreamWriter *stream) const
+Xml Patch::toXml() const
 {
-    stream->setAutoFormatting(true);
-    stream->writeStartDocument();
+    Xml xml(XML_PATCH);
 
-    stream->writeComment("This is a Konfyt patch file.");
+    xml.setAttribute(XML_PATCH_NAME, mPatchName);
+    xml.addTextChild(XML_PATCH_NOTE, this->note());
+    xml.addTextChild(XML_PATCH_ALWAYSACTIVE, QVariant(alwaysActive).toString());
+    xml.addTextChild(XML_PATCH_RESET_OPTION, konfytResetToString(mResetOption));
+    xml.addChild(patchMidiFilter.toXml());
 
-    stream->writeStartElement(XML_PATCH);
-    stream->writeAttribute(XML_PATCH_NAME, this->mPatchName);
-
-    stream->writeTextElement(XML_PATCH_NOTE, this->note());
-    stream->writeTextElement(XML_PATCH_ALWAYSACTIVE, QVariant(alwaysActive).toString());
-    stream->writeTextElement(XML_PATCH_RESET_OPTION, konfytResetToString(mResetOption));
-
-    patchMidiFilter.writeToXMLStream(stream);
-
-    // Save all layers in order.
     foreach (PatchLayerPtr layer, mLayers) {
-        layer->writeToXmlStream(stream);
+        xml.addChild(layer->toXml());
     }
 
-    stream->writeEndElement(); // patch
-
-    stream->writeEndDocument();
+    return xml;
 }
 
-void Patch::readFromXmlStream(QXmlStreamReader *r, QString *errors)
+void Patch::readFromXml(Xml xml)
 {
-    r->setNamespaceProcessing(false);
-
     this->clearLayers();
 
-    while (r->readNextStartElement()) { // patch
+    mPatchName = xml.attribute(XML_PATCH_NAME);
+    setNote(xml.childText(XML_PATCH_NOTE));
+    xml.setBoolFromChild(XML_PATCH_ALWAYSACTIVE, &alwaysActive);
+    mResetOption = konfytResetFromString(
+                xml.childText(XML_PATCH_RESET_OPTION),
+                KonfytReset::Inherit);
+    patchMidiFilter.readFromXml(xml.child(MidiFilter::XML_MIDIFILTER));
 
-        // Get the patch name attribute
-        QXmlStreamAttributes ats =  r->attributes();
-        if (ats.count()) {
-            this->mPatchName = ats.at(0).value().toString();
-        }
-
-        while (r->readNextStartElement()) {
-
-            if (r->name() == XML_PATCH_NOTE) {
-
-                this->setNote(r->readElementText());
-
-            } else if (r->name() == XML_PATCH_ALWAYSACTIVE) {
-
-                this->alwaysActive = QVariant(r->readElementText()).toBool();
-
-            } else if (r->name() == XML_PATCH_RESET_OPTION) {
-
-                mResetOption = konfytResetFromString(r->readElementText(),
-                                                     KonfytReset::Inherit);
-
-            } else if (r->name() == MidiFilter::XML_MIDIFILTER) {
-
-                this->patchMidiFilter.readFromXMLStream(r);
-
-            } else if (r->name() == PatchLayer::XML_SF_LAYER) {
-
-                xmlReadLayer(r, errors);
-
-            } else if (r->name() == PatchLayer::XML_SFZ_LAYER) {
-
-                xmlReadLayer(r, errors);
-
-            } else if (r->name() == PatchLayer::XML_MIDIOUT) {
-
-                xmlReadLayer(r, errors);
-
-            } else if (r->name() == PatchLayer::XML_AUDIOIN) {
-
-                xmlReadLayer(r, errors);
-
-            } else {
-                appendError(errors, "Unrecognized layer type: " + r->name().toString() );
-                r->skipCurrentElement(); // not any of the layer types
-            }
-        }
-    }
-}
-
-void Patch::xmlReadLayer(QXmlStreamReader *r, QString *errors)
-{
-    PatchLayerPtr layer(new PatchLayer());
-    layer->readFromXmlStream(r, errors);
-    mLayers.append(layer);
-}
-
-void Patch::appendError(QString *errorString, QString msg)
-{
-    if (errorString) {
-        if (!errorString->isEmpty()) { errorString->append("\n"); }
-        errorString->append(msg);
+    QList<Xml> layersXml = xml.childrenNamed(
+                {PatchLayer::XML_SF_LAYER,
+                 PatchLayer::XML_SFZ_LAYER,
+                 PatchLayer::XML_MIDIOUT_LAYER,
+                 PatchLayer::XML_AUDIOIN_LAYER});
+    foreach (Xml layerXml, layersXml) {
+        PatchLayerPtr layer(new PatchLayer());
+        layer->readFromXml(layerXml);
+        mLayers.append(layer);
     }
 }
 
@@ -337,18 +291,16 @@ PatchLayerPtr Patch::addAudioInPort(int newPort)
     // Set up a default new audio input port with the specified port number
     PatchLayer::AudioInData a;
     a.portIdInProject = newPort;
-    QString name = "Audio Input Port " + n2s(newPort);
 
-    return addAudioInPort(a, name);
+    return addAudioInPort(a);
 }
 
-PatchLayerPtr Patch::addAudioInPort(PatchLayer::AudioInData newPort, QString name)
+PatchLayerPtr Patch::addAudioInPort(PatchLayer::AudioInData newPort)
 {
     PatchLayerPtr layer;
 
     // Set up layer item
     layer.reset(new PatchLayer());
-    layer->setName(name);
     layer->initLayer(newPort);
 
     mLayers.append(layer);
@@ -376,10 +328,9 @@ PatchLayerPtr Patch::addMidiOutputPort(PatchLayer::MidiOutData newPort)
     return layer;
 }
 
-PatchLayerPtr Patch::addPlugin(PatchLayer::SfzData newPlugin, QString name)
+PatchLayerPtr Patch::addPlugin(PatchLayer::SfzData newPlugin)
 {
     PatchLayerPtr layer(new PatchLayer);
-    layer->setName(name);
     layer->initLayer(newPlugin);
 
     mLayers.append(layer);

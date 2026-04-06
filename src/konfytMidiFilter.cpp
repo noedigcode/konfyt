@@ -146,119 +146,90 @@ KonfytMidiEvent MidiFilter::modify(const KonfytMidiEvent* ev)
     return r;
 }
 
-void MidiFilter::writeToXMLStream(QXmlStreamWriter *stream) const
+Xml MidiFilter::toXml() const
 {
-    stream->writeStartElement(XML_MIDIFILTER);
+    Xml xml(XML_MIDIFILTER);
 
     // Note / velocity zone
     MidiFilterZone z = this->zone;
-    stream->writeStartElement(XML_ZONE);
-    stream->writeTextElement(XML_ZONE_LOWNOTE, n2s(z.lowNote));
-    stream->writeTextElement(XML_ZONE_HINOTE, n2s(z.highNote));
-    stream->writeTextElement(XML_ZONE_ADD, n2s(z.add));
-    stream->writeTextElement(XML_ZONE_LOWVEL, n2s(z.lowVel));
-    stream->writeTextElement(XML_ZONE_HIVEL, n2s(z.highVel));
-    stream->writeTextElement(XML_ZONE_VEL_LIMIT_MIN, n2s(z.velLimitMin));
-    stream->writeTextElement(XML_ZONE_VEL_LIMIT_MAX, n2s(z.velLimitMax));
-    stream->writeTextElement(XML_ZONE_PITCH_DOWN_MAX, n2s(z.pitchDownMax));
-    stream->writeTextElement(XML_ZONE_PITCH_UP_MAX, n2s(z.pitchUpMax));
-    stream->writeTextElement(XML_ZONE_VELOCITY_MAP, z.velocityMap.toString());
-    stream->writeEndElement();
+    Xml zoneXml(XML_ZONE);
+    zoneXml.addTextChild(XML_ZONE_LOWNOTE, n2s(z.lowNote));
+    zoneXml.addTextChild(XML_ZONE_HINOTE, n2s(z.highNote));
+    zoneXml.addTextChild(XML_ZONE_ADD, n2s(z.add));
+    zoneXml.addTextChild(XML_ZONE_LOWVEL, n2s(z.lowVel));
+    zoneXml.addTextChild(XML_ZONE_HIVEL, n2s(z.highVel));
+    zoneXml.addTextChild(XML_ZONE_VEL_LIMIT_MIN, n2s(z.velLimitMin));
+    zoneXml.addTextChild(XML_ZONE_VEL_LIMIT_MAX, n2s(z.velLimitMax));
+    zoneXml.addTextChild(XML_ZONE_PITCH_DOWN_MAX, n2s(z.pitchDownMax));
+    zoneXml.addTextChild(XML_ZONE_PITCH_UP_MAX, n2s(z.pitchUpMax));
+    zoneXml.addTextChild(XML_ZONE_VELOCITY_MAP, z.velocityMap.toString());
+    xml.addChild(zoneXml);
 
-    // passAllCC
-    QString tempBool;
-    if (this->passAllCC) { tempBool = "1"; } else { tempBool = "0"; }
-    stream->writeTextElement(XML_PASSALLCC, tempBool);
-
-    // passPitchbend
-    if (this->passPitchbend) { tempBool = "1"; } else { tempBool = "0"; }
-    stream->writeTextElement(XML_PASSPB, tempBool);
-
-    // passProg
-    if (this->passProg) { tempBool = "1"; } else { tempBool = "0"; }
-    stream->writeTextElement(XML_PASSPROG, tempBool);
-
-    // ignoreGlobalTranspose
-    stream->writeTextElement(XML_IGNORE_GLOBAL_TRANSPOSE,
-                             bool2str(this->ignoreGlobalTranspose));
+    xml.addChild(boolToXml(XML_PASSALLCC, this->passAllCC));
+    xml.addChild(boolToXml(XML_PASSPB, this->passPitchbend));
+    xml.addChild(boolToXml(XML_PASSPROG, this->passProg));
+    xml.addChild(boolToXml(XML_IGNORE_GLOBAL_TRANSPOSE, this->ignoreGlobalTranspose));
 
     // List of allowed CCs
-    for (int i=0; i<this->passCC.count(); i++) {
-        stream->writeTextElement(XML_CC, n2s(this->passCC.at(i)));
+    foreach (int cc, passCC) {
+        xml.addTextChild(XML_CC, n2s(cc));
     }
+
     // List of blocked CCs
     foreach (int cc, blockCC) {
-        stream->writeTextElement(XML_BLOCK_CC, n2s(cc));
+        xml.addTextChild(XML_BLOCK_CC, n2s(cc));
     }
 
     // Input/output channels
-    stream->writeTextElement(XML_INCHAN, n2s(this->inChan));
-    stream->writeTextElement(XML_OUTCHAN, n2s(this->outChan));
+    xml.addTextChild(XML_INCHAN, n2s(this->inChan));
+    xml.addTextChild(XML_OUTCHAN, n2s(this->outChan));
 
-    stream->writeEndElement(); // midiFilter
+    return xml;
 }
 
-void MidiFilter::readFromXMLStream(QXmlStreamReader *r)
+void MidiFilter::readFromXml(Xml xml)
 {
     this->passCC.clear();
     this->blockCC.clear();
 
-    while (r->readNextStartElement()) { // Filter properties
-        if (r->name() == XML_ZONE) {
-            MidiFilterZone z;
-            bool gotMap = false;
-            while (r->readNextStartElement()) { // zone properties
-                if (r->name() == XML_ZONE_LOWNOTE) {
-                    z.lowNote = r->readElementText().toInt();
-                } else if (r->name() == XML_ZONE_HINOTE) {
-                    z.highNote = r->readElementText().toInt();
-                } else if (r->name() == XML_ZONE_ADD) {
-                    z.add = r->readElementText().toInt();
-                } else if (r->name() ==  XML_ZONE_LOWVEL) {
-                    z.lowVel = r->readElementText().toInt();
-                } else if (r->name() == XML_ZONE_HIVEL) {
-                    z.highVel = r->readElementText().toInt();
-                } else if (r->name() == XML_ZONE_VEL_LIMIT_MIN) {
-                    z.velLimitMin = r->readElementText().toInt();
-                } else if (r->name() == XML_ZONE_VEL_LIMIT_MAX) {
-                    z.velLimitMax = r->readElementText().toInt();
-                } else if (r->name() == XML_ZONE_PITCH_DOWN_MAX) {
-                    z.pitchDownMax = r->readElementText().toInt();
-                } else if (r->name() == XML_ZONE_PITCH_UP_MAX) {
-                    z.pitchUpMax = r->readElementText().toInt();
-                } else if (r->name() == XML_ZONE_VELOCITY_MAP) {
-                    gotMap = true;
-                    z.velocityMap.fromString(r->readElementText());
-                } else {
-                    r->skipCurrentElement();
-                }
-            } // end zone while
-            this->setZone(z);
-            if (!gotMap) {
-                // No velocity map loaded. This is probably an old project file.
-                // Convert the old velocity min/max and limits to a map.
-                deprecatedVelocityToMap();
-            }
-        } else if (r->name() == XML_PASSALLCC) {
-            this->passAllCC = (r->readElementText() == "1");
-        } else if (r->name() == XML_PASSPB) {
-            this->passPitchbend = (r->readElementText() == "1");
-        } else if (r->name() == XML_PASSPROG) {
-            this->passProg = (r->readElementText() == "1");
-        } else if (r->name() == XML_IGNORE_GLOBAL_TRANSPOSE) {
-            this->ignoreGlobalTranspose = (r->readElementText() == "1");
-        } else if (r->name() == XML_CC) {
-            this->passCC.append(r->readElementText().toInt());
-        } else if (r->name() == XML_BLOCK_CC) {
-            this->blockCC.append(r->readElementText().toInt());
-        } else if (r->name() == XML_INCHAN) {
-            this->inChan = r->readElementText().toInt();
-        } else if (r->name() == XML_OUTCHAN) {
-            this->outChan = r->readElementText().toInt();
-        } else {
-            r->skipCurrentElement();
-        }
-    } // end filter while
+    // MIDI Zone
+
+    Xml zoneXml = xml.child(XML_ZONE);
+    MidiFilterZone z;
+    zoneXml.setIntFromChild(XML_ZONE_LOWNOTE, &z.lowNote);
+    zoneXml.setIntFromChild(XML_ZONE_HINOTE, &z.highNote);
+    zoneXml.setIntFromChild(XML_ZONE_ADD, &z.add);
+    zoneXml.setIntFromChild(XML_ZONE_LOWVEL, &z.lowVel);
+    zoneXml.setIntFromChild(XML_ZONE_HIVEL, &z.highVel);
+    zoneXml.setIntFromChild(XML_ZONE_VEL_LIMIT_MIN, &z.velLimitMin);
+    zoneXml.setIntFromChild(XML_ZONE_VEL_LIMIT_MAX, &z.velLimitMax);
+    zoneXml.setIntFromChild(XML_ZONE_PITCH_DOWN_MAX, &z.pitchDownMax);
+    zoneXml.setIntFromChild(XML_ZONE_PITCH_UP_MAX, &z.pitchUpMax);
+    Xml mapXml = zoneXml.child(XML_ZONE_VELOCITY_MAP);
+    bool gotMap = mapXml.isValid();
+    if (gotMap) { z.velocityMap.fromString(mapXml.text()); }
+
+    this->setZone(z);
+
+    if (!gotMap) {
+        // No velocity map loaded. This is probably an old project file.
+        // Convert the old velocity min/max and limits to a map.
+        deprecatedVelocityToMap();
+    }
+
+    xml.setBoolFromChild(XML_PASSALLCC, &this->passAllCC);
+    xml.setBoolFromChild(XML_PASSPB, &this->passPitchbend);
+    xml.setBoolFromChild(XML_PASSPROG, &this->passProg);
+    xml.setBoolFromChild(XML_IGNORE_GLOBAL_TRANSPOSE, &this->ignoreGlobalTranspose);
+
+    foreach (Xml ccXml, xml.childrenNamed(XML_CC)) {
+        this->passCC.append(ccXml.text().toInt());
+    }
+    foreach (Xml blockccXml, xml.childrenNamed(XML_BLOCK_CC)) {
+        this->blockCC.append(blockccXml.text().toInt());
+    }
+    xml.setIntFromChild(XML_INCHAN, &this->inChan);
+    xml.setIntFromChild(XML_OUTCHAN, &this->outChan);
 }
 
 /* Translate the old deprecated velocity min/max and limits to a velocity map. */
@@ -302,6 +273,13 @@ void MidiFilter::deprecatedVelocityToMap()
             }
         }
     }
+}
+
+Xml MidiFilter::boolToXml(QString name, bool value) const
+{
+    // Convert bool to "1" or "0" string. This is used to ensure backwards
+    // compatibility with older projects that specifically checked for this.
+    return Xml(name, value ? "1" : "0");
 }
 
 int MidiFilterMapping::map(int inValue)

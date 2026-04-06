@@ -83,5 +83,15 @@ struct KonfytAppInfo
     QString jackClientName;
 };
 
+// ===========================================================================
+
+struct Result
+{
+    bool ok = false;
+    QString errorString;
+    static Result failure(QString errorString);
+    static Result success();
+};
+
 
 #endif // KONFYT_STRUCTS_H

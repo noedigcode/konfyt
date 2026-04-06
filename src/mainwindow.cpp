@@ -24,6 +24,7 @@
 
 #include <QClipboard>
 
+
 MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     QMainWindow(parent),
     appInfo(appInfoArg),
@@ -48,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent, KonfytAppInfo appInfoArg) :
     setupFilesystemView();
     setupPatchListAdapter();
     setupDatabase();
+    loadDatabase();
     setupExternalApps();
     setupPortConnectionWarnings();
     setupScriptingWarnings();
@@ -247,7 +249,7 @@ void MainWindow::updateProjectsMenu()
         print("Projects directory does not exist: " + mProjectsDir);
     } else {
         projectDirList = scanDirForFilesSkipBackupSubdirs(mProjectsDir,
-                                    Project::PROJECT_FILENAME_EXTENSION);
+                                    Project::PROJECT_FILE_EXTENSION_WITHDOT);
     }
 
     // Setup menu
@@ -265,7 +267,7 @@ void MainWindow::updateProjectsMenu()
         foreach (QString dir, projectDirList) {
             QFileInfo fi(dir);
             QAction* newAction = projectsMenu.addAction(
-                fi.fileName().remove(Project::PROJECT_FILENAME_EXTENSION));
+                fi.fileName().remove(Project::PROJECT_FILE_EXTENSION_WITHDOT));
             newAction->setToolTip(fi.filePath());
             projectsMenuMap.insert(newAction, fi);
         }
@@ -306,7 +308,7 @@ void MainWindow::on_actionProject_Open_triggered()
     // Show open dialog box
     QString filename = QFileDialog::getOpenFileName(this,
                             "Select project to open", mProjectsDir,
-                            "*" + Project::PROJECT_FILENAME_EXTENSION);
+                            "*" + Project::PROJECT_FILE_EXTENSION_WITHDOT);
     if (filename.isEmpty()) {
         print("Cancelled.");
         return;
@@ -696,12 +698,12 @@ QTreeWidgetItem* MainWindow::scanProjectScripts(QString path, ItemScriptMap* map
     root->setIcon(0, mFolderIcon);
 
     QStringList paths = scanDirForFilesSkipBackupSubdirs(path,
-                                    Project::PROJECT_FILENAME_EXTENSION);
+                                    Project::PROJECT_FILE_EXTENSION_WITHDOT);
 
     foreach (QString path, paths) {
 
         ProjectPtr prj(new Project());
-        if (!prj->loadProject(path)) { continue; }
+        if (!prj->loadProject(path).ok) { continue; }
 
         QTreeWidgetItem* projectItem = new QTreeWidgetItem();
 
@@ -1041,31 +1043,33 @@ void MainWindow::saveMidiMapPresets()
     QString filename = midiMapPresetsFilename;
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        print("Failed to open MIDI map presets file for writing: " + filename);
+        QString error =
+            QString("Failed to open MIDI map presets file for writing. "
+                    "File: %1. Error: %2").arg(filename).arg(file.errorString());
+        print(error);
         return;
     }
 
-    QXmlStreamWriter stream(&file);
-    stream.setAutoFormatting(true);
-    stream.writeStartDocument();
-
-    stream.writeComment("This is a Konfyt MIDI map presets file.");
-
-    stream.writeStartElement(XML_MIDI_MAP_PRESETS);
+    Xml xml(XML_MIDI_MAP_PRESETS);
 
     foreach (MidiMapPreset* preset, midiMapUserPresets) {
-        stream.writeStartElement(XML_MIDI_MAP_PRESET);
-        stream.writeTextElement(XML_MIDI_MAP_PRESET_NAME, preset->name);
-        stream.writeTextElement(XML_MIDI_MAP_PRESET_DATA, preset->data);
-        stream.writeEndElement();
+        Xml presetXml(XML_MIDI_MAP_PRESET);
+        presetXml.addTextChild(XML_MIDI_MAP_PRESET_NAME, preset->name);
+        presetXml.addTextChild(XML_MIDI_MAP_PRESET_DATA, preset->data);
+        xml.addChild(presetXml);
     }
 
-    stream.writeEndElement(); // midiMapPresets
+    QByteArray data = xml.toByteArray();
+    qint64 nwritten = file.write(data);
 
-    stream.writeEndDocument();
+    if (nwritten != data.count()) {
+        print(QString("Only %1 of %2 bytes written to MIDI map presets file. "
+                      "File: %1. Error: %2").arg(filename).arg(file.errorString()));
+    } else {
+        print("Saved MIDI map presets.");
+    }
+
     file.close();
-
-    print("Saved MIDI map presets.");
 }
 
 void MainWindow::loadMidiMapPresets()
@@ -1077,37 +1081,22 @@ void MainWindow::loadMidiMapPresets()
         return;
     }
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        print("Failed to open MIDI map presets file for reading: " + filename);
+        print(QString("Failed to open MIDI map presets file for reading. "
+                      "File: %1. Error: %2").arg(filename).arg(file.errorString()));
         return;
     }
 
-    QXmlStreamReader r(&file);
-    r.setNamespaceProcessing(false);
+    Xml xml;
+    xml.loadFromData(file.readAll());
+    file.close();
 
     midiMapUserPresets.clear();
 
-    while (r.readNextStartElement()) {
-        if (r.name() == XML_MIDI_MAP_PRESETS) { // list of presets
-
-            while (r.readNextStartElement()) {
-                if (r.name() == XML_MIDI_MAP_PRESET) { // preset
-                    MidiMapPreset* preset = new MidiMapPreset();
-                    while (r.readNextStartElement()) {
-                        if (r.name() == XML_MIDI_MAP_PRESET_NAME) {
-                            preset->name = r.readElementText();
-                        } else if (r.name() == XML_MIDI_MAP_PRESET_DATA) {
-                            preset->data = r.readElementText();
-                        }
-                    }
-                    midiMapUserPresets.append(preset);
-                } else {
-                    r.skipCurrentElement();
-                }
-            }
-
-        } else {
-            r.skipCurrentElement();
-        }
+    foreach (Xml presetXml, xml.childrenNamed(XML_MIDI_MAP_PRESET)) {
+        MidiMapPreset* preset = new MidiMapPreset();
+        preset->name = presetXml.childText(XML_MIDI_MAP_PRESET_NAME);
+        preset->data = presetXml.childText(XML_MIDI_MAP_PRESET_DATA);
+        midiMapUserPresets.append(preset);
     }
 
     file.close();
@@ -1248,52 +1237,28 @@ bool MainWindow::loadSettingsFile(QString dir)
         return false;
     }
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        print("Failed to open settings file: " + filename);
+        print(QString("Failed to open settings file for reading. File: %1. Error: %2")
+              .arg(filename).arg(file.errorString()));
         return false;
     }
 
-    QXmlStreamReader r(&file);
-    r.setNamespaceProcessing(false);
-
-    while (r.readNextStartElement()) { // Settings
-
-        if (r.name() == XML_SETTINGS) {
-
-            while (r.readNextStartElement()) {
-
-                if (r.name() == XML_SETTINGS_PRJDIR) {
-                    mProjectsDir = r.readElementText();
-                } else if (r.name() == XML_SETTINGS_SFDIR) {
-                    setSoundfontsDir(r.readElementText());
-                } else if (r.name() == XML_SETTINGS_PATCHESDIR) {
-                    setPatchesDir(r.readElementText());
-                } else if (r.name() == XML_SETTINGS_SFZDIR) {
-                    setSfzDir(r.readElementText());
-                } else if (r.name() == XML_SETTINGS_FILEMAN) {
-                    mFilemanager = r.readElementText();
-                } else if (r.name() == XML_SETTINGS_DEFAULT_RESET_OPTION) {
-                    mDefaultResetOption = konfytResetFromString(
-                                r.readElementText(), KonfytReset::NoReset);
-                } else if (r.name() == XML_SETTINGS_PROMPT_ON_QUIT) {
-                    mPromptOnQuit = Qstr2bool(r.readElementText());
-                } else if (r.name() == XML_SETTINGS_START_MAXIMIZED) {
-                    mStartMaximized = Qstr2bool(r.readElementText());
-                } else if (r.name() == XML_SETTINGS_OPEN_LAST_PROJECT) {
-                    mOpenLastProjectAtStartup = Qstr2bool(r.readElementText());
-                } else if (r.name() == XML_SETTINGS_LAST_PROJECT_FILEPATH) {
-                    mLastProjectFilePath = r.readElementText();
-                } else {
-                    r.skipCurrentElement();
-                }
-
-            }
-
-        } else {
-            r.skipCurrentElement();
-        }
-    }
-
+    Xml xml;
+    xml.loadFromData(file.readAll());
     file.close();
+
+    mProjectsDir = xml.childText(XML_SETTINGS_PRJDIR);
+    setSoundfontsDir(xml.childText(XML_SETTINGS_SFDIR));
+    setPatchesDir(xml.childText(XML_SETTINGS_PATCHESDIR));
+    setSfzDir(xml.childText(XML_SETTINGS_SFZDIR));
+    mFilemanager = xml.childText(XML_SETTINGS_FILEMAN);
+    mDefaultResetOption = konfytResetFromString(
+                xml.childText(XML_SETTINGS_DEFAULT_RESET_OPTION),
+                              KonfytReset::NoReset);
+    mPromptOnQuit = Qstr2bool(xml.childText(XML_SETTINGS_PROMPT_ON_QUIT));
+    mStartMaximized = Qstr2bool(xml.childText(XML_SETTINGS_START_MAXIMIZED));
+    mOpenLastProjectAtStartup = Qstr2bool(xml.childText(XML_SETTINGS_OPEN_LAST_PROJECT));
+    mLastProjectFilePath = xml.childText(XML_SETTINGS_LAST_PROJECT_FILEPATH);
+
     return true;
 }
 
@@ -1306,38 +1271,38 @@ bool MainWindow::saveSettingsFile()
     QString filename = mSettingsDir + "/" + SETTINGS_FILE;
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        print("Failed to open settings file for writing: " + filename);
+        print(QString("Failed to open settings file for writing. File: %1. Error: %2")
+              .arg(filename).arg(file.errorString()));
         return false;
     }
 
-    // Create xml writer and write settings to file.
-    QXmlStreamWriter stream(&file);
-    stream.setAutoFormatting(true);
-    stream.writeStartDocument();
-
-    stream.writeComment("This is a Konfyt settings file.");
-
-    stream.writeStartElement(XML_SETTINGS);
+    Xml xml(XML_SETTINGS);
 
     // Settings
-    stream.writeTextElement(XML_SETTINGS_PRJDIR, mProjectsDir);
-    stream.writeTextElement(XML_SETTINGS_SFDIR, mSoundfontsDir);
-    stream.writeTextElement(XML_SETTINGS_PATCHESDIR, mPatchesDir);
-    stream.writeTextElement(XML_SETTINGS_SFZDIR, mSfzDir);
-    stream.writeTextElement(XML_SETTINGS_FILEMAN, mFilemanager);
-    stream.writeTextElement(XML_SETTINGS_DEFAULT_RESET_OPTION,
+    xml.addTextChild(XML_SETTINGS_PRJDIR, mProjectsDir);
+    xml.addTextChild(XML_SETTINGS_SFDIR, mSoundfontsDir);
+    xml.addTextChild(XML_SETTINGS_PATCHESDIR, mPatchesDir);
+    xml.addTextChild(XML_SETTINGS_SFZDIR, mSfzDir);
+    xml.addTextChild(XML_SETTINGS_FILEMAN, mFilemanager);
+    xml.addTextChild(XML_SETTINGS_DEFAULT_RESET_OPTION,
                             konfytResetToString(mDefaultResetOption));
-    stream.writeTextElement(XML_SETTINGS_PROMPT_ON_QUIT, bool2str(mPromptOnQuit));
+    xml.addTextChild(XML_SETTINGS_PROMPT_ON_QUIT, bool2str(mPromptOnQuit));
     mStartMaximized = this->isMaximized();
-    stream.writeTextElement(XML_SETTINGS_START_MAXIMIZED, bool2str(mStartMaximized));
-    stream.writeTextElement(XML_SETTINGS_OPEN_LAST_PROJECT, bool2str(mOpenLastProjectAtStartup));
-    stream.writeTextElement(XML_SETTINGS_LAST_PROJECT_FILEPATH, mLastProjectFilePath);
+    xml.addTextChild(XML_SETTINGS_START_MAXIMIZED, bool2str(mStartMaximized));
+    xml.addTextChild(XML_SETTINGS_OPEN_LAST_PROJECT, bool2str(mOpenLastProjectAtStartup));
+    xml.addTextChild(XML_SETTINGS_LAST_PROJECT_FILEPATH, mLastProjectFilePath);
 
-    stream.writeEndElement(); // Settings
-
-    stream.writeEndDocument();
-
+    QByteArray data = xml.toByteArray();
+    qint64 nwritten = file.write(data);
     file.close();
+
+    if (nwritten != data.count()) {
+        print(QString("Only %1 of %2 bytes could be written while saving settings. "
+                      "File: %3. Error: %4")
+              .arg(nwritten).arg(data.count()).arg(filename).arg(file.errorString()));
+        return false;
+    }
+
     return true;
 }
 
@@ -1357,14 +1322,17 @@ bool MainWindow::loadProjectFromFile(QString filename)
 {
     ProjectPtr prj = newProjectPtr();
 
-    if (prj->loadProject(filename)) {
+    Result loadResult = prj->loadProject(filename);
+    if (loadResult.ok) {
         print("Project loaded from file.");
         // Load project in engines and GUI
         loadProject(prj);
         return true;
     } else {
-        print("Failed to load project from file: " + filename);
-        msgBox("Error loading project.", filename);
+        QString error = QString("File: %1. Error: %2")
+                .arg(filename).arg(loadResult.errorString);
+        print("Failed to load project from file: " + error);
+        msgBox("Error loading project.", error);
         return false;
     }
 }
@@ -2381,15 +2349,11 @@ PatchPtr MainWindow::addPatchFromFile(QString filename)
     }
 
     PatchPtr patch(new Patch());
-    QString errors;
-    if (patch->loadPatchFromFile(filename, &errors)) {
+    if (patch->loadPatchFromFile(filename).ok) {
         addPatch(patch);
     } else {
         print("Failed loading patch from file: " + filename);
         patch.reset();
-    }
-    if (!errors.isEmpty()) {
-        print("Load errors for patch " + filename + ":\n" + errors);
     }
 
     return patch;
@@ -3361,7 +3325,7 @@ bool MainWindow::fileExtensionIs(QString filepath, QString extension)
 /* Determine if specified file is a Konfyt patch file. */
 bool MainWindow::fileExtensionIsPatch(QString filepath)
 {
-    return fileExtensionIs(filepath, Patch::PATCH_FILENAME_SUFFIX);
+    return fileExtensionIs(filepath, Patch::PATCH_FILE_EXTENSION_NODOT);
 }
 
 bool MainWindow::fileExtensionIsSfzOrGig(QString filepath)
@@ -3628,14 +3592,14 @@ bool MainWindow::savePatchToLibrary(PatchPtr patch)
 
     // Create unique name
     QString filepath = getUniquePath(dir.path(), sanitiseFilename(patch->name()),
-                                     Patch::PATCH_FILENAME_SUFFIX);
+                                     Patch::PATCH_FILE_EXTENSION_NODOT);
     if (filepath.isEmpty()) {
         print("Could not find a unique filename.");
         return false;
     }
 
     // Save patch
-    if (patch->savePatchToFile(filepath)) {
+    if (patch->savePatchToFile(filepath).ok) {
 
         print("Patch saved as: " + filepath);
         db.addPatch(filepath);
@@ -3790,39 +3754,39 @@ void MainWindow::setupDatabase()
 
     connect(&db, &KonfytDatabase::sfontInfoLoadedFromFile,
             this, &MainWindow::onDatabaseSfontInfoLoaded);
+}
 
-    // Check if database file exists.
-    if (db.loadDatabaseFromFile(mSettingsDir + "/" + DATABASE_FILE)) {
-        print("Database loaded from file. Rescan to refresh.");
-        print("Database contains:");
-        print("   " + n2s(db.soundfontCount()) + " sf2/3 soundfonts.");
-        print("   " + n2s(db.sfzCount()) + " sfz/gig instruments.");
-        print("   " + n2s(db.patchCount()) + " patches.");
-    } else {
-        print("No database file found.");
-        // Check if old database location exists
-        QString oldDir = QDir::homePath() + "/.konfyt/konfyt.database";
-        if (db.loadDatabaseFromFile(oldDir)) {
-            print("Found database file in old location. Saving to new location.");
-            db.saveDatabaseToFile(mSettingsDir + "/" + DATABASE_FILE);
+void MainWindow::loadDatabase()
+{
+    // Try loading database from default location
+    QString databasePath = QString("%1/%2").arg(mSettingsDir).arg(DATABASE_FILE);
+    if (QFileInfo(databasePath).isFile()) {
+        Result r = db.loadDatabaseFromFile(databasePath);
+        if (r.ok) {
+            print("Database loaded.");
+            print("Database contains:");
+            print("   " + n2s(db.soundfontCount()) + " sf2/3 soundfonts.");
+            print("   " + n2s(db.sfzCount()) + " sfz/gig instruments.");
+            print("   " + n2s(db.patchCount()) + " patches.");
         } else {
-            // Still no database file.
-            print("You can scan directories to create a database from Settings.");
+            print("Error loading database file: " + r.errorString);
         }
+    } else {
+        print("Database file does not exist: " + databasePath);
+        print("You can scan directories to create a database from Settings.");
     }
 
     fillLibraryTreeWithAll(); // Fill the tree widget with all the database entries
 }
 
-bool MainWindow::saveDatabase()
+void MainWindow::saveDatabase()
 {
-    // Save to database file
-    if (db.saveDatabaseToFile(mSettingsDir + "/" + DATABASE_FILE)) {
-        print("Saved database to file " + mSettingsDir + "/" + DATABASE_FILE);
-        return true;
+    QString databasePath = QString("%1/%2").arg(mSettingsDir).arg(DATABASE_FILE);
+    Result saveResult = db.saveDatabaseToFile(databasePath);
+    if (saveResult.ok) {
+        print("Saved database to file: " + databasePath);
     } else {
-        print("Failed to save database.");
-        return false;
+        print("Failed to save database: " + saveResult.errorString);
     }
 }
 
@@ -3964,12 +3928,13 @@ bool MainWindow::saveProject(ProjectPtr prj)
         return saveProjectInNewDir(prj);
     } else {
         // Save in currently set directory
-        if (prj->saveProject()) {
+        Result saveResult = prj->saveProject();
+        if (saveResult.ok) {
             print("Project saved.");
             return true;
         } else {
             print("Failed to save project.");
-            msgBox("Failed to save project.");
+            msgBox("Failed to save project.", saveResult.errorString);
             return false;
         }
     }
@@ -4048,13 +4013,14 @@ bool MainWindow::saveProjectInNewDir(ProjectPtr prj)
     }
 
     // Save the project
-    if (mCurrentProject->saveProjectAs(saveDir)) {
+    Result saveResult = mCurrentProject->saveProjectAs(saveDir);
+    if (saveResult.ok) {
         print("Project Saved to " + saveDir);
         updateProjectsMenu();
         return true;
     } else {
         print("Failed to save project.");
-        msgBox("Failed to save project.", saveDir);
+        msgBox("Failed to save project.", saveResult.errorString);
         return false;
     }
 }
@@ -5135,7 +5101,7 @@ void MainWindow::on_actionCopy_Layer_triggered()
     PatchLayerPtr layer = layerToolMenuSourceitem->getPatchLayer();
     if (!layer) { return; }
 
-    mCopiedLayerData = layer->toByteArray();
+    mCopiedLayerData = layer->toXmlByteArray();
 }
 
 void MainWindow::on_actionPaste_Layer_triggered()
@@ -5144,7 +5110,7 @@ void MainWindow::on_actionPaste_Layer_triggered()
     if (mCopiedLayerData.isEmpty()) { return; }
 
     PatchLayerPtr layer(new PatchLayer());
-    layer->fromByteArray(mCopiedLayerData);
+    layer->fromXmlByteArray(mCopiedLayerData);
 
     pengine.addLayer(layer);
     addPatchLayerToGUI(layer);
@@ -7217,7 +7183,8 @@ QString MainWindow::loadSfzFileText(QString filename)
 
     } else if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
 
-        print("Failed to open file: " + filename);
+        print(QString("Failed to SFZ file. File: %1. Error: %2")
+              .arg(filename).arg(file.errorString()));
         text = "Failed to open file.";
 
     } else {
@@ -7514,7 +7481,7 @@ void MainWindow::on_actionSave_Patch_As_Copy_triggered()
 
     PatchPtr currentPatch = pengine.currentPatch();
     PatchPtr newPatch(new Patch());
-    newPatch->fromByteArray(currentPatch->toByteArray());
+    newPatch->fromXmlByteArray(currentPatch->toXmlByteArray());
 
     addPatch(newPatch);
 
@@ -7542,7 +7509,7 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
 {
     // Action to save the current patch to file.
 
-    QString ext = QString(".%1").arg(Patch::PATCH_FILENAME_SUFFIX);
+    QString ext = QString(".%1").arg(Patch::PATCH_FILE_EXTENSION_NODOT);
 
     PatchPtr patch = pengine.currentPatch(); // Get current patch
     QString filename = QFileDialog::getSaveFileName(this,
@@ -7553,11 +7520,12 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
     // Add suffix if not already added
     if (!filename.endsWith(ext)) { filename = filename + ext; }
 
-    if (patch->savePatchToFile(filename)) {
+    Result saveResult = patch->savePatchToFile(filename);
+    if (saveResult.ok) {
         print("Patch saved to file: " + filename);
     } else {
         print("Failed saving patch to file: " + filename);
-        msgBox("Could not save patch to file.", filename);
+        msgBox("Could not save patch to file.", saveResult.errorString);
     }
 }
 
@@ -7592,7 +7560,7 @@ void MainWindow::on_actionAdd_Patch_From_File_triggered()
         return;
     }
 
-    QString filter = QString("*.%1").arg(Patch::PATCH_FILENAME_SUFFIX);
+    QString filter = QString("*.%1").arg(Patch::PATCH_FILE_EXTENSION_NODOT);
     QString filename = QFileDialog::getOpenFileName(this,
                                                     "Open patch from file",
                                                     mPatchesDir,
@@ -8230,28 +8198,18 @@ void MainWindow::setupSettings()
     // Settings dir is standard (XDG) config dir
     mSettingsDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     print("Settings path: " + mSettingsDir);
-    // Check if settings file exists
+
+    // Load settings
     if (loadSettingsFile(mSettingsDir)) {
         print("Settings loaded.");
     } else {
         print("Could not load settings.");
-        // Check if old settings file exists.
-        QString oldDir = QDir::homePath() + "/.konfyt";
-        if (loadSettingsFile(oldDir)) {
-            print("Loaded settings from old location: " + mSettingsDir);
-            print("Saving to new settings location.");
-            if (saveSettingsFile()) {
-                print("Saved settings file to new location: " + mSettingsDir);
-            } else {
-                print("Could not save settings to new location: " + mSettingsDir);
-            }
-        } else {
-            // If settings file does not exist, it's probably the first run.
-            // Set flag so the about dialog and settings will be shown.
-            mSettingsFirstRun = true;
-            // Create settings dir, so we have it.
-            createSettingsDir();
-        }
+
+        // If settings file does not exist, it's probably the first run.
+        // Set flag so the about dialog and settings will be shown.
+        mSettingsFirstRun = true;
+        // Create settings dir, so we have it.
+        createSettingsDir();
     }
 
     // Set up settings dialog
@@ -8655,17 +8613,17 @@ void MainWindow::loadSavedMidiSendItems(QString dirname)
     foreach (QString filename, files) {
         QFile file(filename);
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            print("Failed to open MIDI Send preset file: " + filename);
+            print(QString("Failed to open MIDI Send preset file. "
+                          "File: %1. Error: %2")
+                  .arg(filename).arg(file.errorString()));
             continue;
         }
-        QXmlStreamReader r(&file);
-        r.setNamespaceProcessing(false);
+        Xml xml;
+        xml.loadFromData(file.readAll());
+        file.close();
+
         MidiSendItem item;
-        QString error = item.readFromXmlStream(&r);
-        if (!error.isEmpty()) {
-            print("Errors for MIDI Send preset file " + filename + ":");
-            print(error);
-        }
+        item.readFromXml(xml);
         item.filename = filename;
         addSavedMidiSendItem(item);
     }
@@ -8678,17 +8636,19 @@ bool MainWindow::saveMidiSendItemToFile(QString filename, MidiSendItem item)
 {
     QFile file(filename);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        print("Failed to open MIDI Send Message preset file for writing: " + filename);
+        print(QString("Failed to open MIDI Send Message preset file for writing. "
+                      "File: %1. Error: %2").arg(filename).arg(file.errorString()));
         return false;
     }
 
-    QXmlStreamWriter stream(&file);
-    stream.setAutoFormatting(true);
-    stream.writeStartDocument();
+    Xml xml = item.toXml();
+    QByteArray data = xml.toByteArray();
 
-    item.writeToXMLStream(&stream);
-
-    stream.writeEndDocument();
+    qint64 nwritten = file.write(data);
+    if (nwritten != data.count()) {
+        print(QString("Only %1 of %2 bytes written to MIDI Send Message preset file. "
+                      "File: %3. Error: %4").arg(filename).arg(file.errorString()));
+    }
 
     file.close();
 

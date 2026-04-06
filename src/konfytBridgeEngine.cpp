@@ -30,9 +30,7 @@ KonfytBridgeEngine::KonfytBridgeEngine(QObject *parent) :
 KonfytBridgeEngine::~KonfytBridgeEngine()
 {
     // Stop all processes
-    QList<int> ids = items.keys();
-    for (int i=0; i < ids.count(); i++) {
-        int id = ids[i];
+    foreach (int id, items.keys()) {
         KonfytBridgeItem &item = items[id];
         item.process->blockSignals(true);
         item.process->kill();

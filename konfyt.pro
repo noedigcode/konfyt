@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 CONFIG += qt
-QT       += core gui network qml
+QT       += core gui network qml xml
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -49,7 +49,8 @@ SOURCES += src/main.cpp\
     src/midiMapGraphWidget.cpp \
     src/patchListWidgetAdapter.cpp \
     src/remotescanner.cpp \
-    src/scriptEditWidget.cpp
+    src/scriptEditWidget.cpp \
+    src/xml.cpp
 
 HEADERS  += src/mainwindow.h \
     src/GidListWidget.h \
@@ -86,7 +87,8 @@ HEADERS  += src/mainwindow.h \
     src/remotescanner.h \
     src/ringbufferqmutex.h \
     src/scriptEditWidget.h \
-    src/sleepyRingBuffer.h
+    src/sleepyRingBuffer.h \
+    src/xml.h
 
 FORMS    += src/mainwindow.ui \
     src/consolewindow.ui \

@@ -27,9 +27,6 @@
 
 #include <QFile>
 #include <QSharedPointer>
-#include <QWeakPointer>
-#include <QXmlStreamReader>
-#include <QXmlStreamWriter>
 
 
 class Patch
@@ -72,7 +69,7 @@ public:
     // -----------------------------------------------------------------------
     // SFZ Plugin functions
 
-    PatchLayerPtr addPlugin(PatchLayer::SfzData newPlugin, QString name);
+    PatchLayerPtr addPlugin(PatchLayer::SfzData newPlugin);
     QList<PatchLayerPtr> getPluginLayerList() const;
 
     // -----------------------------------------------------------------------
@@ -89,18 +86,20 @@ public:
     QList<int> getAudioInPortListProjectIds() const;
     QList<PatchLayerPtr> getAudioInLayerList() const;
     PatchLayerPtr addAudioInPort(int newPort);
-    PatchLayerPtr addAudioInPort(PatchLayer::AudioInData newPort, QString name);
+    PatchLayerPtr addAudioInPort(PatchLayer::AudioInData newPort);
 
     // -----------------------------------------------------------------------
     // Save/load functions
 
-    static constexpr const char* PATCH_FILENAME_SUFFIX = "konfytpatch";
+    static constexpr const char* PATCH_FILE_EXTENSION_NODOT = "konfytpatch";
 
-    bool savePatchToFile(QString filename) const;
-    bool loadPatchFromFile(QString filename, QString* errors = nullptr);
+    Result savePatchToFile(QString filename) const;
+    Result loadPatchFromFile(QString filename);
 
-    QByteArray toByteArray();
-    void fromByteArray(QByteArray data);
+    QByteArray toXmlByteArray() const;
+    Result fromXmlByteArray(QByteArray data);
+    Xml toXml() const;
+    void readFromXml(Xml xml);
 
 private:
     QString mPatchName;
@@ -111,13 +110,6 @@ private:
     QList<PatchLayerPtr> mLayers;
 
     QList<PatchLayerPtr> layersOfType(PatchLayer::LayerType layerType) const;
-
-    void writeToXmlStream(QXmlStreamWriter* stream) const;
-    void readFromXmlStream(QXmlStreamReader* r, QString* errors = nullptr);
-
-    void xmlReadLayer(QXmlStreamReader* r, QString* errors = nullptr);
-
-    void appendError(QString *errorString, QString msg);
 
     static constexpr const char* XML_PATCH = "sfpatch";
     static constexpr const char* XML_PATCH_NAME = "name";

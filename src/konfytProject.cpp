@@ -23,12 +23,13 @@
 
 #include <QDateTime>
 
+#include <QDomDocument>
 #include <iostream>
 
 // ============================================================================
 
 const QString Project::NEW_PROJECT_DEFAULT_NAME = "New Project";
-const QString Project::PROJECT_FILENAME_EXTENSION = ".konfytproject";
+const QString Project::PROJECT_FILE_EXTENSION_WITHDOT = ".konfytproject";
 const QString Project::PROJECT_PATCH_DIR = "patches";
 const QString Project::PROJECT_BACKUP_DIR = "backup";
 
@@ -44,7 +45,7 @@ Project::Project(QObject *parent) :
     this->midiInPort_addPort("MIDI In");
 }
 
-bool Project::saveProject()
+Result Project::saveProject()
 {
     return saveProjectAs(mProjectDirpath);
 }
@@ -54,13 +55,13 @@ bool Project::saveProject()
  * If the project already has a filename (i.e. set when loaded) that filename
  * will be used for the project XML file. If the filename is empty, a new
  * filename will be derived from the project name. */
-bool Project::saveProjectAs(QString dirpath)
+Result Project::saveProjectAs(QString dirpath)
 {
     // Abort if directory does not exist
     QDir dir(dirpath);
     if (!dir.exists()) {
         print("saveProjectAs: Directory does not exist.");
-        return false;
+        return Result::failure("Direcory does not exist: " + dirpath);
     }
     mProjectDirpath = dirpath;
 
@@ -83,7 +84,7 @@ bool Project::saveProjectAs(QString dirpath)
             print("saveProjectAs: Created patches directory: " + patchesPath);
         } else {
             print("ERROR: saveProjectAs: Could not create patches directory.");
-            return false;
+            return Result::failure("Could not create patches directory: " + patchesPath);
         }
     }
 
@@ -105,14 +106,23 @@ bool Project::saveProjectAs(QString dirpath)
     QFile file(filepath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
         print("saveProjectAs: Could not open file for writing: " + filepath);
-        return false;
+        return Result::failure(
+            QString("Could not open file for writing. File: %1. Error: %2")
+                    .arg(filepath).arg(file.errorString()));
     }
 
     print("saveProjectAs: Project directory: " + mProjectDirpath);
     print("saveProjectAs: Project filename: " + mProjectFilename);
 
-    QXmlStreamWriter stream(&file);
-    writeToXmlStream(&stream);
+    Xml xml = toXml();
+    QByteArray data = xml.toByteArray();
+    qint64 nwritten = file.write(data);
+    if (nwritten != data.count()) {
+        return Result::failure(QString("Only %1 of %2 bytes written while saving project. "
+                                       "File: %3. Error: %4")
+                               .arg(filepath).arg(file.errorString()));
+    }
+
     file.close();
 
     setModified(false);
@@ -123,44 +133,106 @@ bool Project::saveProjectAs(QString dirpath)
     // this version will still be backed up.
     backupProject(dirpath, mProjectFilename, "b_postsave");
 
-    return true;
+    return Result::success();
 }
 
-/* Returns whether the project has been modified since the last load/save. */
+/* Returns whether the project has been mModified since the last load/save. */
 bool Project::isModified()
 {
-    return this->modified;
+    return this->mModified;
 }
 
 void Project::setModified(bool mod)
 {
-    this->modified = mod;
+    this->mModified = mod;
     emit projectModifiedStateChanged(mod);
 }
 
-/* Load project xml file (containing list of all the patches) and load all the
- * patch files from the same directory. */
-bool Project::loadProject(QString filepath)
+/* Load project xml file. Patches listed in the project are also loaded from
+ * the patches subdirectory. */
+Result Project::loadProject(QString filepath)
 {
     QFile file(filepath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        print("loadProject: Could not open file for reading.");
-        return false;
+    if (!file.open(QIODevice::ReadOnly)) {
+        return Result::failure(QString("Error opening file for reading. File error: %1")
+                               .arg(file.errorString()));
+    }
+    QByteArray data = file.readAll();
+    file.close();
+
+    Xml projectXml;
+    Xml::Result xmlResult = projectXml.loadFromData(data);
+    if (!xmlResult.ok) {
+        return Result::failure(QString("Error loading XML: %1")
+                               .arg(xmlResult.toString()));
     }
 
     QFileInfo fi(file);
     mProjectFilename = fi.fileName();
     mProjectDirpath = fi.dir().path();
 
-    print("loadProject: Loading project file: " + mProjectFilename);
-    print("loadProject: In directory: " +mProjectDirpath);
+    // Pre xml load
 
-    QXmlStreamReader r(&file);
-    readFromXmlStream(&r);
+    mPatches.clear();
+    midiInPortMap.clear();
+    midiOutPortMap.clear();
+    clearExternalApps();
+    audioBusMap.clear();
+    audioInPortMap.clear();
+    mJackMidiConList.clear();
+    mJackAudioConList.clear();
 
-    file.close();
+    // Load from xml
 
-    postExternalAppsRead(); // Commit loaded list. Used for backwards compatibility.
+    // General project settings
+
+    mProjectName = projectXml.attribute(XML_PROJECT_NAME);
+
+    mShowPatchListNumbers = Qstr2bool(projectXml.childText(XML_PATCH_LIST_NUMBERS));
+    mShowPatchListNotes = Qstr2bool(projectXml.childText(XML_PATCH_LIST_NOTES));
+    mResetOption = konfytResetFromString(
+                projectXml.childText(XML_RESET_OPTION),
+                KonfytReset::Inherit);
+    setMidiPickupRange(projectXml.childInt(XML_MIDI_PICKUP_RANGE));
+
+    // Patches
+    readPatchesFromProjectXml(projectXml);
+
+    // MIDI input ports
+    readMidiInPortsFromProjectXml(projectXml);
+
+    // MIDI output ports
+    readMidiOutPortsFromProjectXml(projectXml);
+
+    // Buses
+    readBusesFromProjectXml(projectXml);
+
+    // Audio input ports
+    readAudioInPortsFromProjectXml(projectXml);
+
+    // External apps
+
+    Xml externalAppsList = projectXml.child(XML_EXT_APP_LIST);
+    readExternalApps(externalAppsList);
+
+    // Triggers
+    readTriggersFromProjectXml(projectXml);
+
+    // Other JACK connections
+
+    Xml list = projectXml.child(XML_OTHERJACK_MIDI_CON_LIST);
+    readJackMidiConList(list, true);
+
+    list = projectXml.child(XML_OTHERJACK_MIDI_CON_BREAK_LIST);
+    readJackMidiConList(list, false);
+
+    list = projectXml.child(XML_OTHERJACK_AUDIO_CON_LIST);
+    readJackAudioConList(list, true);
+
+    list = projectXml.child(XML_OTHERJACK_AUDIO_CON_BREAK_LIST);
+    readJackAudioConList(list, false);
+
+    // Post xml load
 
     // Create an audio output bus if there are none, so there is at least one.
     if (audioBus_count() == 0) {
@@ -174,35 +246,35 @@ bool Project::loadProject(QString filepath)
 
     setModified(false);
 
-    return true;
+    return Result::success();
 }
 
 bool Project::getShowPatchListNumbers()
 {
-    return patchListNumbers;
+    return mShowPatchListNumbers;
 }
 
 void Project::setShowPatchListNumbers(bool show)
 {
-    patchListNumbers = show;
+    mShowPatchListNumbers = show;
     setModified(true);
 }
 
 bool Project::getShowPatchListNotes()
 {
-    return patchListNotes;
+    return mShowPatchListNotes;
 }
 
 void Project::setShowPatchListNotes(bool show)
 {
-    patchListNotes = show;
+    mShowPatchListNotes = show;
     setModified(true);
 }
 
 void Project::setMidiPickupRange(int range)
 {
-    if (midiPickupRange != range) {
-        midiPickupRange = range;
+    if (mMidiPickupRange != range) {
+        mMidiPickupRange = range;
         setModified(true);
         emit midiPickupRangeChanged(range);
     }
@@ -210,7 +282,7 @@ void Project::setMidiPickupRange(int range)
 
 int Project::getMidiPickupRange()
 {
-    return midiPickupRange;
+    return mMidiPickupRange;
 }
 
 KonfytReset Project::getResetOption()
@@ -326,7 +398,7 @@ void Project::setProjectFileName(QString newName)
     mProjectFilename = newName;
 }
 
-QList<int> Project::midiInPort_getAllPortIds()
+QList<int> Project::midiInPort_getAllPortIds() const
 {
     return midiInPortMap.keys();
 }
@@ -358,12 +430,12 @@ void Project::midiInPort_removePort(int portId)
     setModified(true);
 }
 
-bool Project::midiInPort_exists(int portId)
+bool Project::midiInPort_exists(int portId) const
 {
     return midiInPortMap.contains(portId);
 }
 
-Project::MidiPortPtr Project::midiInPort_getPort(int portId)
+Project::MidiPortPtr Project::midiInPort_getPort(int portId) const
 {
     KONFYT_ASSERT_RETURN_VAL(midiInPort_exists(portId), MidiPortPtr());
 
@@ -491,261 +563,367 @@ int Project::midiOutPort_addPort(QString portName)
 int Project::audioBus_getUniqueId()
 {
     QList<int> l = audioBusMap.keys();
-    return getUniqueIdHelper( l );
+    return getUniqueIdNotInList( l );
+}
+
+void Project::readBusesFromProjectXml(Xml projectXml)
+{
+    Xml buslist = projectXml.child(XML_BUSLIST);
+    foreach (Xml busXml, buslist.childrenNamed(XML_BUS)) {
+
+        AudioPortPtr bus(new AudioPort());
+        bus->name = busXml.childText(XML_BUS_NAME);
+        bus->leftGain = busXml.childFloat(XML_BUS_LGAIN, bus->leftGain);
+        bus->rightGain = busXml.childFloat(XML_BUS_RGAIN, bus->rightGain);
+        foreach (Xml clientXml, busXml.childrenNamed(XML_BUS_LCLIENT)) {
+            bus->leftClients.append(clientXml.text());
+        }
+        foreach (Xml clientXml, busXml.childrenNamed(XML_BUS_RCLIENT)) {
+            bus->rightClients.append(clientXml.text());
+        }
+        bus->ignoreMasterGain = Qstr2bool(busXml.childText(
+                                            XML_BUS_IGNORE_GLOBAL_VOLUME));
+
+        int id = busXml.childInt(XML_BUS_ID, audioBus_getUniqueId());
+        if (audioBusMap.contains(id)) {
+            print(QString("loadProject: Duplicate bus id detected: %1").arg(id));
+        }
+        this->audioBusMap.insert(id, bus);
+    }
+}
+
+void Project::addBusesToProjectXml(Xml *projectXml) const
+{
+    Xml audioOutListXml(XML_BUSLIST);
+    foreach (int id, audioBus_getAllBusIds()) {
+        AudioPortPtr b = audioBus_getBus(id);
+        Xml busXml(XML_BUS);
+        busXml.addTextChild(XML_BUS_ID, n2s(id));
+        busXml.addTextChild(XML_BUS_NAME, b->name);
+        busXml.addTextChild(XML_BUS_LGAIN, n2s(b->leftGain));
+        busXml.addTextChild(XML_BUS_RGAIN, n2s(b->rightGain));
+        busXml.addTextChild(XML_BUS_IGNORE_GLOBAL_VOLUME,
+                            bool2str(b->ignoreMasterGain));
+        foreach (QString client, b->leftClients) {
+            busXml.addTextChild(XML_BUS_LCLIENT, client);
+        }
+        foreach (QString client, b->rightClients) {
+            busXml.addTextChild(XML_BUS_RCLIENT, client);
+        }
+        audioOutListXml.addChild(busXml);
+    }
+    projectXml->addChild(audioOutListXml);
 }
 
 int Project::midiInPort_getUniqueId()
 {
     QList<int> l = midiInPortMap.keys();
-    return getUniqueIdHelper( l );
+    return getUniqueIdNotInList( l );
+}
+
+void Project::readMidiInPortsFromProjectXml(Xml projectXml)
+{
+    Xml midiInPortList = projectXml.child(XML_MIDI_IN_PORTLIST);
+    foreach (Xml portXml, midiInPortList.childrenNamed(XML_MIDI_IN_PORT)) {
+
+        MidiPortPtr port(new MidiPort());
+        port->name = portXml.childText(XML_MIDI_IN_PORT_NAME);
+        foreach (Xml clientXml, portXml.childrenNamed(XML_MIDI_IN_PORT_CLIENT)) {
+            port->clients.append(clientXml.text());
+        }
+        port->filter.readFromXml(portXml.child(MidiFilter::XML_MIDIFILTER));
+        PortScriptData s = readPortScript(portXml.child(XML_PORT_SCRIPT));
+        port->script = s.content;
+        port->scriptEnabled = s.enabled;
+        port->passMidiThrough = s.passMidiThrough;
+
+        int id = portXml.childInt(XML_MIDI_IN_PORT_ID,
+                                  midiInPort_getUniqueId());
+        if (midiInPortMap.contains(id)) {
+            print(QString("loadProject: Duplicate midi in port id detected: %1")
+                  .arg(id));
+        }
+        this->midiInPortMap.insert(id, port);
+    }
+}
+
+void Project::addMidiInPortsToProjectXml(Xml *projectXml) const
+{
+    Xml midiInListXml(XML_MIDI_IN_PORTLIST);
+    foreach (int id, midiInPort_getAllPortIds()) {
+        MidiPortPtr p = midiInPort_getPort(id);
+        Xml portXml(XML_MIDI_IN_PORT);
+        portXml.addTextChild(XML_MIDI_IN_PORT_ID, n2s(id));
+        portXml.addTextChild(XML_MIDI_IN_PORT_NAME, p->name);
+        portXml.addChild(p->filter.toXml());
+        foreach (QString client, p->clients) {
+            portXml.addTextChild(XML_MIDI_IN_PORT_CLIENT, client);
+        }
+        portXml.addChild(portScriptToXml(p));
+        midiInListXml.addChild(portXml);
+    }
+    projectXml->addChild(midiInListXml);
 }
 
 int Project::midiOutPort_getUniqueId()
 {
     QList<int> l = midiOutPortMap.keys();
-    return getUniqueIdHelper( l );
+    return getUniqueIdNotInList( l );
+}
+
+void Project::readMidiOutPortsFromProjectXml(Xml projectXml)
+{
+    Xml midiOutPortList = projectXml.child(XML_MIDI_OUT_PORTLIST);
+    foreach (Xml portXml, midiOutPortList.childrenNamed(XML_MIDI_OUT_PORT)) {
+
+        MidiPortPtr port(new MidiPort());
+        port->name = portXml.childText(XML_MIDI_OUT_PORT_NAME);
+        foreach (Xml clientXml, portXml.childrenNamed(XML_MIDI_OUT_PORT_CLIENT)) {
+            port->clients.append(clientXml.text());
+        }
+
+        int id = portXml.childInt(XML_MIDI_OUT_PORT_ID,
+                                  midiOutPort_getUniqueId());
+        if (midiOutPortMap.contains(id)) {
+            print(QString("loadProject: Duplicate midi out port id detected: %1")
+                  .arg(id));
+        }
+        this->midiOutPortMap.insert(id, port);
+    }
+}
+
+void Project::addMidiOutPortsToProjectXml(Xml *projectXml) const
+{
+    Xml midiOutListXml(XML_MIDI_OUT_PORTLIST);
+    foreach (int id, midiOutPort_getAllPortIds()) {
+        MidiPortPtr p = midiOutPort_getPort(id);
+        Xml portXml(XML_MIDI_OUT_PORT);
+        portXml.addTextChild(XML_MIDI_OUT_PORT_ID, n2s(id));
+        portXml.addTextChild(XML_MIDI_OUT_PORT_NAME, p->name);
+        foreach (QString client, p->clients) {
+            portXml.addTextChild(XML_MIDI_OUT_PORT_CLIENT, client);
+        }
+        midiOutListXml.addChild(portXml);
+    }
+    projectXml->addChild(midiOutListXml);
 }
 
 int Project::audioInPort_getUniqueId()
 {
     QList<int> l = audioInPortMap.keys();
-    return getUniqueIdHelper( l );
+    return getUniqueIdNotInList( l );
 }
 
-int Project::getUniqueIdHelper(QList<int> ids)
+void Project::readAudioInPortsFromProjectXml(Xml projectXml)
+{
+    Xml audioInPortList = projectXml.child(XML_AUDIOINLIST);
+    foreach (Xml portXml, audioInPortList.childrenNamed(XML_AUDIOIN_PORT)) {
+
+        AudioPortPtr port(new AudioPort());
+        port->name = portXml.childText(XML_AUDIOIN_PORT_NAME);
+        port->leftGain = portXml.childFloat(XML_AUDIOIN_PORT_LGAIN,
+                                            port->leftGain);
+        port->rightGain = portXml.childFloat(XML_AUDIOIN_PORT_RGAIN,
+                                             port->rightGain);
+        foreach (Xml clientXml, portXml.childrenNamed(XML_AUDIOIN_PORT_LCLIENT)) {
+            port->leftClients.append(clientXml.text());
+        }
+        foreach (Xml clientXml, portXml.childrenNamed(XML_AUDIOIN_PORT_RCLIENT)) {
+            port->rightClients.append(clientXml.text());
+        }
+
+        int id = portXml.childInt(XML_AUDIOIN_PORT_ID,
+                                  audioInPort_getUniqueId());
+        if (audioInPortMap.contains(id)) {
+            print("loadProject: Duplicate audio in port id detected: "
+                  + n2s(id));
+        }
+        this->audioInPortMap.insert(id, port);
+    }
+}
+
+void Project::addAudioInPortsToProjectXml(Xml *projectXml) const
+{
+    Xml audioInListXml(XML_AUDIOINLIST);
+    foreach (int id, audioInPort_getAllPortIds()) {
+        AudioPortPtr p = audioInPort_getPort(id);
+        Xml portXml(XML_AUDIOIN_PORT);
+        portXml.addTextChild(XML_AUDIOIN_PORT_ID, n2s(id));
+        portXml.addTextChild(XML_AUDIOIN_PORT_NAME, p->name);
+        portXml.addTextChild(XML_AUDIOIN_PORT_LGAIN, n2s(p->leftGain));
+        portXml.addTextChild(XML_AUDIOIN_PORT_RGAIN, n2s(p->rightGain));
+        foreach (QString client, p->leftClients) {
+            portXml.addTextChild(XML_AUDIOIN_PORT_LCLIENT, client);
+        }
+        foreach (QString client, p->rightClients) {
+            portXml.addTextChild(XML_AUDIOIN_PORT_RCLIENT, client);
+        }
+        audioInListXml.addChild(portXml);
+    }
+    projectXml->addChild(audioInListXml);
+}
+
+int Project::getUniqueIdNotInList(QList<int> ids)
 {
     /* Given the list of ids, find the highest id and add one. */
-    int id=-1;
-    for (int i=0; i<ids.count(); i++) {
-        if (ids[i]>id) { id = ids[i]; }
+    int id = -1;
+    foreach (int existingId, ids) {
+        if (existingId > id) { id = existingId; }
     }
-    return id+1;
+    return id + 1;
 }
 
-void Project::writePortScript(QXmlStreamWriter* w, MidiPortPtr prjPort) const
+Xml Project::portScriptToXml(MidiPortPtr port) const
 {
-    w->writeStartElement(XML_PRJ_PORT_SCRIPT);
+    Xml xml(XML_PORT_SCRIPT);
 
-    w->writeTextElement(XML_PRJ_PORT_SCRIPT_CONTENT, prjPort->script);
-    w->writeTextElement(XML_PRJ_PORT_SCRIPT_ENABLED,
-                             QVariant(prjPort->scriptEnabled).toString());
-    w->writeTextElement(XML_PRJ_PORT_SCRIPT_PASS_MIDI_THROUGH,
-                             QVariant(prjPort->passMidiThrough).toString());
+    xml.addTextChild(XML_PORT_SCRIPT_CONTENT, port->script);
+    xml.addTextChild(XML_PORT_SCRIPT_ENABLED,
+                     QVariant(port->scriptEnabled).toString());
+    xml.addTextChild(XML_PORT_SCRIPT_PASS_MIDI_THROUGH,
+                     QVariant(port->passMidiThrough).toString());
 
-    w->writeEndElement(); // script
+    return xml;
 }
 
-Project::PortScriptData Project::readPortScript(QXmlStreamReader* r)
+Project::PortScriptData Project::readPortScript(Xml xml)
 {
     PortScriptData ret;
 
-    while (r->readNextStartElement()) {
-        if (r->name() == XML_PRJ_PORT_SCRIPT_CONTENT) {
-            ret.content = r->readElementText();
-        } else if (r->name() == XML_PRJ_PORT_SCRIPT_ENABLED) {
-            ret.enabled = QVariant(r->readElementText()).toBool();
-        } else if (r->name() == XML_PRJ_PORT_SCRIPT_PASS_MIDI_THROUGH) {
-            ret.passMidiThrough = QVariant(r->readElementText()).toBool();
-        } else {
-            r->skipCurrentElement();
-        }
-    }
+    ret.content = xml.childText(XML_PORT_SCRIPT_CONTENT);
+    ret.enabled = xml.childBool(XML_PORT_SCRIPT_ENABLED, ret.enabled);
+    ret.passMidiThrough = xml.childBool(XML_PORT_SCRIPT_PASS_MIDI_THROUGH,
+                                        ret.passMidiThrough);
 
     return ret;
 }
 
 int Project::getUniqueExternalAppId()
 {
-    return getUniqueIdHelper( externalApps.keys() );
+    return getUniqueIdNotInList( mExternalApps.keys() );
 }
 
 void Project::clearExternalApps()
 {
-    foreach (int id, externalApps.keys()) {
+    foreach (int id, mExternalApps.keys()) {
         removeExternalApp(id);
     }
 }
 
-void Project::writeExternalApps(QXmlStreamWriter *w)
+void Project::addExternalAppsToXml(Xml *xml) const
 {
-    // Write old list for backwards compatibility
-    // TODO DEPRECATED
-    w->writeStartElement(XML_PRJ_PROCESSLIST);
-    foreach (const ExternalApp& app, externalApps.values()) {
-        w->writeStartElement(XML_PRJ_PROCESS);
-        w->writeTextElement(XML_PRJ_PROCESS_APPNAME, app.command);
-        w->writeEndElement(); // end of process
-    }
-    w->writeEndElement(); // end of processList
-
     // Write new-style list
-    w->writeStartElement(XML_PRJ_EXT_APP_LIST);
-    foreach (const ExternalApp& app, externalApps.values()) {
-        w->writeStartElement(XML_PRJ_EXT_APP);
-        w->writeTextElement(XML_PRJ_EXT_APP_NAME, app.friendlyName);
-        w->writeTextElement(XML_PRJ_EXT_APP_CMD, app.command);
-        w->writeTextElement(XML_PRJ_EXT_APP_RUNATSTARTUP, bool2str(app.runAtStartup));
-        w->writeTextElement(XML_PRJ_EXT_APP_RESTART, bool2str(app.autoRestart));
-        w->writeTextElement(XML_PRJ_EXT_APP_WARN_BEFORE_CLOSING,
+    Xml appListXml(XML_EXT_APP_LIST);
+    foreach (const ExternalApp& app, mExternalApps.values()) {
+        Xml appXml(XML_EXT_APP);
+        appXml.addTextChild(XML_EXT_APP_NAME, app.friendlyName);
+        appXml.addTextChild(XML_EXT_APP_CMD, app.command);
+        appXml.addTextChild(XML_EXT_APP_RUNATSTARTUP, bool2str(app.runAtStartup));
+        appXml.addTextChild(XML_EXT_APP_RESTART, bool2str(app.autoRestart));
+        appXml.addTextChild(XML_EXT_APP_WARN_BEFORE_CLOSING,
                             bool2str(app.warnBeforeClosing));
-        w->writeTextElement(XML_PRJ_EXT_APP_START_DETACHED,
+        appXml.addTextChild(XML_EXT_APP_START_DETACHED,
                             bool2str(app.startDetached));
-        w->writeEndElement();
+        appListXml.addChild(appXml);
     }
-    w->writeEndElement(); // end of external apps
+    xml->addChild(appListXml);
 }
 
-void Project::preExternalAppsRead()
+void Project::readExternalApps(Xml xml)
 {
-    // TODO DEPRECATED
-    tempExternalAppList.clear();
-}
-
-void Project::readExternalApps(QXmlStreamReader *r)
-{
-    if (r->name() == XML_PRJ_PROCESSLIST) {
-        // Old deprecated list for backwards compatability
-        // Only load if other list not loaded yet
-        // TODO DEPRECATED
-        if (!tempExternalAppList.isEmpty()) {
-            print("loadProject: Skipping deprecated external apps as new-style list already loaded.");
-            r->skipCurrentElement();
-            return;
-        }
-
-        while (r->readNextStartElement()) { // process
-            ExternalApp app;
-            while (r->readNextStartElement()) {
-                if (r->name() == XML_PRJ_PROCESS_APPNAME) {
-                    app.command = r->readElementText();
-                } else {
-                    print("loadProject: Unrecognized process element: " +r->name().toString());
-                    r->skipCurrentElement();
-                }
-            }
-            tempExternalAppList.append(app);
-        }
-
-    } else if (r->name() == XML_PRJ_EXT_APP_LIST) {
-
-        if (!tempExternalAppList.isEmpty()) {
-            // Clear (overwrite) temp list which could contain old deprecated list.
-            print("loadProject: Ignoring deprecated old external apps list in favor new-style list found in project.");
-            tempExternalAppList.clear();
-        }
-
-        while (r->readNextStartElement()) { // External App
-            if (r->name() == XML_PRJ_EXT_APP) {
-                ExternalApp app;
-                while (r->readNextStartElement()) {
-                    if (r->name() == XML_PRJ_EXT_APP_NAME) {
-                        app.friendlyName = r->readElementText();
-                    } else if (r->name() == XML_PRJ_EXT_APP_CMD) {
-                        app.command = r->readElementText();
-                    } else if (r->name() == XML_PRJ_EXT_APP_RUNATSTARTUP) {
-                        app.runAtStartup = Qstr2bool(r->readElementText());
-                    } else if (r->name() == XML_PRJ_EXT_APP_RESTART) {
-                        app.autoRestart = Qstr2bool(r->readElementText());
-                    } else if (r->name() == XML_PRJ_EXT_APP_WARN_BEFORE_CLOSING) {
-                        app.warnBeforeClosing = Qstr2bool(r->readElementText());
-                    } else if (r->name() == XML_PRJ_EXT_APP_START_DETACHED) {
-                        app.startDetached = Qstr2bool(r->readElementText());
-                    } else {
-                        print("loadProject: Unrecognized externalApp element: " + r->name().toString());
-                        r->skipCurrentElement();
-                    }
-                }
-                tempExternalAppList.append(app);
-            } else {
-                print("loadProject: Unrecognized externalAppList element: " + r->name().toString());
-                r->skipCurrentElement();
-            }
-        }
-    }
-}
-
-void Project::postExternalAppsRead()
-{
-    // TODO DEPRECATED
-    foreach (const ExternalApp& app, tempExternalAppList) {
+    foreach (Xml appXml, xml.childrenNamed(XML_EXT_APP)) {
+        ExternalApp app;
+        app.friendlyName = appXml.childText(XML_EXT_APP_NAME);
+        app.command = appXml.childText(XML_EXT_APP_CMD);
+        appXml.setBoolFromChild(XML_EXT_APP_RUNATSTARTUP,
+                                &app.runAtStartup);
+        appXml.setBoolFromChild(XML_EXT_APP_RESTART,
+                                &app.autoRestart);
+        appXml.setBoolFromChild(XML_EXT_APP_WARN_BEFORE_CLOSING,
+                                &app.warnBeforeClosing);
+        appXml.setBoolFromChild(XML_EXT_APP_START_DETACHED,
+                                &app.startDetached);
         addExternalApp(app);
     }
 }
 
-void Project::readJackMidiConList(QXmlStreamReader* r, bool makeNotBreak)
+void Project::readTriggersFromProjectXml(Xml projectXml)
 {
-    // NB: Do not clear the jackMidiConList, as this function is called
-    // separately for make and break connection lists during project load.
-    // Make and break lists are stored separately for backwards compatibility
-    // with older versions which only saved make connections.
-
-    while (r->readNextStartElement()) {
-        if (r->name() == XML_PRJ_OTHERJACKCON) {
-
-            QString srcPort, destPort;
-            while (r->readNextStartElement()) {
-                if (r->name() == XML_PRJ_OTHERJACKCON_SRC) {
-                    srcPort = r->readElementText();
-                } else if (r->name() == XML_PRJ_OTHERJACKCON_DEST) {
-                    destPort = r->readElementText();
-                } else {
-                    print("readJackMidiConList: Unrecognized JACK con element: "
-                          + r->name().toString() );
-                    r->skipCurrentElement();
-                }
-            }
-
-            if (makeNotBreak) {
-                addJackMidiConMake(srcPort, destPort);
-            } else {
-                addJackMidiConBreak(srcPort, destPort);
-            }
-
-        } else {
-            print("readJackMidiConList: "
-                  "Unrecognized otherJackMidiConList element: "
-                  + r->name().toString() );
-            r->skipCurrentElement();
-        }
+    Xml triggerList = projectXml.child(XML_TRIGGERLIST);
+    mProgramChangeSwitchPatches = Qstr2bool(
+                triggerList.childText(XML_PROG_CHANGE_SWITCH_PATCHES));
+    foreach (Xml triggerXml, triggerList.childrenNamed(XML_TRIGGER)) {
+        Trigger trig;
+        trig.actionText = triggerXml.childText(XML_TRIGGER_ACTIONTEXT);
+        trig.type = triggerXml.childInt(XML_TRIGGER_TYPE,
+                                        trig.type);
+        trig.channel = triggerXml.childInt(XML_TRIGGER_CHAN, trig.channel);
+        trig.data1 = triggerXml.childInt(XML_TRIGGER_DATA1, trig.data1);
+        trig.bankMSB = triggerXml.childInt(XML_TRIGGER_BANKMSB,
+                                           trig.bankMSB);
+        trig.bankLSB = triggerXml.childInt(XML_TRIGGER_BANKLSB,
+                                           trig.bankLSB);
+        this->addAndReplaceTrigger(trig);
     }
 }
 
-void Project::readJackAudioConList(QXmlStreamReader* r, bool makeNotBreak)
+void Project::addTriggersToProjectXml(Xml *projectXml) const
+{
+    Xml triggerListXml(XML_TRIGGERLIST);
+    triggerListXml.addTextChild(XML_PROG_CHANGE_SWITCH_PATCHES,
+                             bool2str(mProgramChangeSwitchPatches));
+    foreach (Trigger trigger, mTriggerHash.values()) {
+        Xml triggerXml(XML_TRIGGER);
+        triggerXml.addTextChild(XML_TRIGGER_ACTIONTEXT, trigger.actionText);
+        triggerXml.addTextChild(XML_TRIGGER_TYPE, n2s(trigger.type));
+        triggerXml.addTextChild(XML_TRIGGER_CHAN, n2s(trigger.channel));
+        triggerXml.addTextChild(XML_TRIGGER_DATA1, n2s(trigger.data1));
+        triggerXml.addTextChild(XML_TRIGGER_BANKMSB, n2s(trigger.bankMSB));
+        triggerXml.addTextChild(XML_TRIGGER_BANKLSB, n2s(trigger.bankLSB));
+        triggerListXml.addChild(triggerXml);
+    }
+    projectXml->addChild(triggerListXml);
+}
+
+void Project::readJackMidiConList(Xml xml, bool makeNotBreak)
+{
+    // NB: Do not clear the jackMidiConList, as this function is called
+    // separately for make and break connection lists during project load.
+    // Make and break lists are stored separately in the project  for backwards
+    // compatibility with older versions which only saved make connections.
+
+    foreach (Xml conXml, xml.childrenNamed(XML_OTHERJACKCON)) {
+
+        QString srcPort = conXml.childText(XML_OTHERJACKCON_SRC);
+        QString destPort = conXml.childText(XML_OTHERJACKCON_DEST);
+
+        if (makeNotBreak) {
+            addJackMidiConMake(srcPort, destPort);
+        } else {
+            addJackMidiConBreak(srcPort, destPort);
+        }
+
+    }
+}
+
+void Project::readJackAudioConList(Xml xml, bool makeNotBreak)
 {
     // NB: Do not clear the jackAudioConList, as this function is called
     // separately for make and break connection lists during project load.
-    // Make and break lists are stored separately for backwards compatibility
-    // with older versions which only saved make connections.
+    // Make and break lists are stored separately in the projedct for backwards
+    // compatibility with older versions which only saved make connections.
 
-    while (r->readNextStartElement()) {
-        if (r->name() == XML_PRJ_OTHERJACKCON) {
+    foreach (Xml conXml, xml.childrenNamed(XML_OTHERJACKCON)) {
 
-            QString srcPort, destPort;
-            while (r->readNextStartElement()) {
-                if (r->name() == XML_PRJ_OTHERJACKCON_SRC) {
-                    srcPort = r->readElementText();
-                } else if (r->name() == XML_PRJ_OTHERJACKCON_DEST) {
-                    destPort = r->readElementText();
-                } else {
-                    print("readJackAudioConList: "
-                          "Unrecognized JACK con element: "
-                          + r->name().toString() );
-                    r->skipCurrentElement();
-                }
-            }
+        QString srcPort = conXml.childText(XML_OTHERJACKCON_SRC);
+        QString destPort = conXml.childText(XML_OTHERJACKCON_DEST);
 
-            if (makeNotBreak) {
-                addJackAudioConMake(srcPort, destPort);
-            } else {
-                addJackAudioConBreak(srcPort, destPort);
-            }
-
+        if (makeNotBreak) {
+            addJackAudioConMake(srcPort, destPort);
         } else {
-            print("readJackAudioConList: "
-                  "Unrecognized otherJackAudioConList element: "
-                  + r->name().toString() );
-            r->skipCurrentElement();
+            addJackAudioConBreak(srcPort, destPort);
         }
+
     }
 }
 
@@ -781,7 +959,7 @@ bool Project::audioBus_exists(int busId)
     return audioBusMap.contains(busId);
 }
 
-Project::AudioPortPtr Project::audioBus_getBus(int busId)
+Project::AudioPortPtr Project::audioBus_getBus(int busId) const
 {
     KONFYT_ASSERT(audioBusMap.contains(busId));
 
@@ -813,7 +991,7 @@ int Project::audioBus_getFirstBusId(int skipId)
     return ret;
 }
 
-QList<int> Project::audioBus_getAllBusIds()
+QList<int> Project::audioBus_getAllBusIds() const
 {
     return audioBusMap.keys();
 }
@@ -884,7 +1062,7 @@ void Project::audioBus_removeClient(int busId, PortLeftRight leftRight, QString 
 int Project::addExternalApp(ExternalApp app)
 {
     int id = getUniqueExternalAppId();
-    externalApps.insert(id, app);
+    mExternalApps.insert(id, app);
 
     setModified(true);
 
@@ -892,7 +1070,7 @@ int Project::addExternalApp(ExternalApp app)
     return id;
 }
 
-QList<int> Project::audioInPort_getAllPortIds()
+QList<int> Project::audioInPort_getAllPortIds() const
 {
     return audioInPortMap.keys();
 }
@@ -1072,7 +1250,7 @@ void Project::midiOutPort_removeClient(int portId, QString client)
     setModified(true);
 }
 
-QList<int> Project::midiOutPort_getAllPortIds()
+QList<int> Project::midiOutPort_getAllPortIds() const
 {
     return midiOutPortMap.keys();
 }
@@ -1097,8 +1275,8 @@ QStringList Project::midiOutPort_getClients(int portId)
 
 void Project::removeExternalApp(int id)
 {
-    if (externalApps.contains(id)) {
-        externalApps.remove(id);
+    if (mExternalApps.contains(id)) {
+        mExternalApps.remove(id);
         setModified(true);
         emit externalAppRemoved(id);
     } else {
@@ -1108,24 +1286,24 @@ void Project::removeExternalApp(int id)
 
 Project::ExternalApp Project::getExternalApp(int id)
 {
-    return externalApps.value(id);
+    return mExternalApps.value(id);
 }
 
 QList<int> Project::getExternalAppIds()
 {
-    return externalApps.keys();
+    return mExternalApps.keys();
 }
 
 bool Project::hasExternalAppWithId(int id)
 {
-    return externalApps.keys().contains(id);
+    return mExternalApps.keys().contains(id);
 }
 
 void Project::modifyExternalApp(int id, ExternalApp app)
 {
-    KONFYT_ASSERT_RETURN(externalApps.contains(id));
+    KONFYT_ASSERT_RETURN(mExternalApps.contains(id));
 
-    externalApps.insert(id, app);
+    mExternalApps.insert(id, app);
     setModified(true);
     emit externalAppModified(id);
 }
@@ -1134,38 +1312,38 @@ void Project::addAndReplaceTrigger(Trigger newTrigger)
 {
     // Remove any action that has the same trigger
     int trigint = newTrigger.toInt();
-    QList<QString> l = triggerHash.keys();
+    QList<QString> l = mTriggerHash.keys();
     for (int i=0; i<l.count(); i++) {
-        if (triggerHash.value(l[i]).toInt() == trigint) {
-            triggerHash.remove(l[i]);
+        if (mTriggerHash.value(l[i]).toInt() == trigint) {
+            mTriggerHash.remove(l[i]);
         }
     }
 
-    triggerHash.insert(newTrigger.actionText, newTrigger);
+    mTriggerHash.insert(newTrigger.actionText, newTrigger);
     setModified(true);
 }
 
 void Project::removeTrigger(QString actionText)
 {
-    if (triggerHash.contains(actionText)) {
-        triggerHash.remove(actionText);
+    if (mTriggerHash.contains(actionText)) {
+        mTriggerHash.remove(actionText);
         setModified(true);
     }
 }
 
 QList<Project::Trigger> Project::getTriggerList()
 {
-    return triggerHash.values();
+    return mTriggerHash.values();
 }
 
 bool Project::isProgramChangeSwitchPatches()
 {
-    return programChangeSwitchPatches;
+    return mProgramChangeSwitchPatches;
 }
 
 void Project::setProgramChangeSwitchPatches(bool value)
 {
-    programChangeSwitchPatches = value;
+    mProgramChangeSwitchPatches = value;
     setModified(true);
 }
 
@@ -1175,7 +1353,7 @@ KonfytJackConPair Project::addJackMidiConMake(QString srcPort, QString destPort)
     a.srcPort = srcPort;
     a.destPort = destPort;
     a.makeNotBreak = true;
-    this->jackMidiConList.append(a);
+    this->mJackMidiConList.append(a);
     setModified(true);
     return a;
 }
@@ -1186,23 +1364,23 @@ KonfytJackConPair Project::addJackMidiConBreak(QString srcPort, QString destPort
     a.srcPort = srcPort;
     a.destPort = destPort;
     a.makeNotBreak = false;
-    this->jackMidiConList.append(a);
+    this->mJackMidiConList.append(a);
     setModified(true);
     return a;
 }
 
 QList<KonfytJackConPair> Project::getJackMidiConList()
 {
-    return this->jackMidiConList;
+    return this->mJackMidiConList;
 }
 
 KonfytJackConPair Project::removeJackMidiCon(int i)
 {
-    KONFYT_ASSERT_RETURN_VAL( (i >= 0) && (i < jackMidiConList.count()),
+    KONFYT_ASSERT_RETURN_VAL( (i >= 0) && (i < mJackMidiConList.count()),
                               KonfytJackConPair() );
 
-    KonfytJackConPair p = jackMidiConList[i];
-    jackMidiConList.removeAt(i);
+    KonfytJackConPair p = mJackMidiConList[i];
+    mJackMidiConList.removeAt(i);
     setModified(true);
     return p;
 }
@@ -1213,7 +1391,7 @@ KonfytJackConPair Project::addJackAudioConMake(QString srcPort, QString destPort
     a.srcPort = srcPort;
     a.destPort = destPort;
     a.makeNotBreak = true;
-    jackAudioConList.append(a);
+    mJackAudioConList.append(a);
     setModified(true);
     return a;
 }
@@ -1224,23 +1402,23 @@ KonfytJackConPair Project::addJackAudioConBreak(QString srcPort, QString destPor
     a.srcPort = srcPort;
     a.destPort = destPort;
     a.makeNotBreak = false;
-    jackAudioConList.append(a);
+    mJackAudioConList.append(a);
     setModified(true);
     return a;
 }
 
 QList<KonfytJackConPair> Project::getJackAudioConList()
 {
-    return jackAudioConList;
+    return mJackAudioConList;
 }
 
 KonfytJackConPair Project::removeJackAudioCon(int i)
 {
-    KONFYT_ASSERT_RETURN_VAL( (i >= 0) && (i < jackAudioConList.count()),
+    KONFYT_ASSERT_RETURN_VAL( (i >= 0) && (i < mJackAudioConList.count()),
                               KonfytJackConPair() );
 
-    KonfytJackConPair p = jackAudioConList[i];
-    jackAudioConList.removeAt(i);
+    KonfytJackConPair p = mJackAudioConList[i];
+    mJackAudioConList.removeAt(i);
     setModified(true);
     return p;
 }
@@ -1251,7 +1429,7 @@ QString Project::filenameFromProjectName()
     if (basename.isEmpty()) {
         basename = "project";
     }
-    return basename + PROJECT_FILENAME_EXTENSION;
+    return basename + PROJECT_FILE_EXTENSION_WITHDOT;
 }
 
 /* Copy project files of the specified project filename and directory to the
@@ -1327,461 +1505,142 @@ void Project::backupProject(QString dirpath, QString projectFilename,
     print("Backed up project to: " + backupDirPath);
 }
 
-void Project::writeToXmlStream(QXmlStreamWriter* stream)
+Xml Project::toXml() const
 {
-    stream->setAutoFormatting(true);
-    stream->writeStartDocument();
+    Xml projectXml(XML_PROJECT);
 
-    stream->writeComment("This is a Konfyt project.");
-    stream->writeComment(QString("Created with %1 version %2")
-                        .arg(APP_NAME).arg(APP_VERSION));
+    projectXml.setAttribute(XML_PROJECT_NAME, this->mProjectName);
+    projectXml.setAttribute(XML_KONFYT_VERSION, APP_VERSION);
 
-    stream->writeStartElement(XML_PRJ);
-    stream->writeAttribute(XML_PRJ_NAME, this->mProjectName);
-    stream->writeAttribute(XML_PRJ_KONFYT_VERSION, APP_VERSION);
+    // Misc project settings
+    projectXml.addTextChild(XML_PATCH_LIST_NUMBERS, bool2str(mShowPatchListNumbers));
+    projectXml.addTextChild(XML_PATCH_LIST_NOTES, bool2str(mShowPatchListNotes));
+    projectXml.addTextChild(XML_MIDI_PICKUP_RANGE, n2s(mMidiPickupRange));
+    projectXml.addTextChild(XML_RESET_OPTION, konfytResetToString(mResetOption));
 
-    // Write misc settings
-    stream->writeTextElement(XML_PRJ_PATCH_LIST_NUMBERS, bool2str(patchListNumbers));
-    stream->writeTextElement(XML_PRJ_PATCH_LIST_NOTES, bool2str(patchListNotes));
-    stream->writeTextElement(XML_PRJ_MIDI_PICKUP_RANGE, n2s(midiPickupRange));
-    stream->writeTextElement(XML_PRJ_RESET_OPTION, konfytResetToString(mResetOption));
+    // Patches
+    addPatchesToProjectXml(&projectXml);
 
-    // Write patches
-    for (int i = 0; i < mPatches.count(); i++) {
+    // MIDI input ports
+    addMidiInPortsToProjectXml(&projectXml);
 
-        stream->writeStartElement(XML_PRJ_PATCH);
-        // Patch properties
-        PatchPtr pat = mPatches.at(i);
-        QString patchPathRel = QString("%1/%2_%3.%4")
-                                    .arg(PROJECT_PATCH_DIR)
-                                    .arg(i)
-                                    .arg(sanitiseFilename(pat->name()))
-                                    .arg(Patch::PATCH_FILENAME_SUFFIX);
-        stream->writeTextElement(XML_PRJ_PATCH_FILENAME, patchPathRel);
+    // MIDI output ports
+    addMidiOutPortsToProjectXml(&projectXml);
 
-        // Save the patch file in patches subdirectory
-        QString patchPathAbs = mProjectDirpath + "/" + patchPathRel;
-        if ( !pat->savePatchToFile(patchPathAbs) ) {
-            print("ERROR: saveProjectAs: Failed to save patch " + patchPathAbs);
-            // TODO: BUBBLE ERRORS UP SO A MSGBOX CAN BE SHOWN TO USER THAT ONE OR MORE ERRORS HAVE OCCURRED.
-        } else {
-            print("saveProjectAs: Saved patch: " + patchPathRel);
-        }
+    // Audio output ports (buses)
+    addBusesToProjectXml(&projectXml);
 
-        stream->writeEndElement();
-    }
-
-    // Write midiInPortList
-    stream->writeStartElement(XML_PRJ_MIDI_IN_PORTLIST);
-    QList<int> midiInIds = midiInPort_getAllPortIds();
-    for (int i=0; i < midiInIds.count(); i++) {
-        int id = midiInIds[i];
-        MidiPortPtr p = midiInPort_getPort(id);
-        stream->writeStartElement(XML_PRJ_MIDI_IN_PORT);
-        stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_ID, n2s(id));
-        stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_NAME, p->name);
-        p->filter.writeToXMLStream(stream);
-        foreach (QString client, p->clients) {
-            stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_CLIENT, client);
-        }
-        writePortScript(stream, p);
-        stream->writeEndElement(); // end of port
-    }
-    stream->writeEndElement(); // end of midiInPortList
-
-    // Write midiOutPortList
-    stream->writeStartElement(XML_PRJ_MIDI_OUT_PORTLIST);
-    QList<int> midiOutIds = midiOutPort_getAllPortIds();
-    for (int i=0; i<midiOutIds.count(); i++) {
-        int id = midiOutIds[i];
-        MidiPortPtr p = midiOutPort_getPort(id);
-        stream->writeStartElement(XML_PRJ_MIDI_OUT_PORT);
-        stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_ID, n2s(id));
-        stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_NAME, p->name);
-        foreach (QString client, p->clients) {
-            stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_CLIENT, client);
-        }
-        stream->writeEndElement(); // end of port
-    }
-    stream->writeEndElement(); // end of midiOutPortList
-
-    // Write audioBusList
-    stream->writeStartElement(XML_PRJ_BUSLIST);
-    QList<int> busIds = audioBus_getAllBusIds();
-    for (int i=0; i<busIds.count(); i++) {
-        stream->writeStartElement(XML_PRJ_BUS);
-        AudioPortPtr b = audioBusMap.value(busIds[i]);
-        stream->writeTextElement( XML_PRJ_BUS_ID, n2s(busIds[i]) );
-        stream->writeTextElement( XML_PRJ_BUS_NAME, b->name );
-        stream->writeTextElement( XML_PRJ_BUS_LGAIN, n2s(b->leftGain) );
-        stream->writeTextElement( XML_PRJ_BUS_RGAIN, n2s(b->rightGain) );
-        stream->writeTextElement( XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME,
-                                 bool2str(b->ignoreMasterGain) );
-        foreach (QString client, b->leftClients) {
-            stream->writeTextElement(XML_PRJ_BUS_LCLIENT, client);
-        }
-        foreach (QString client, b->rightClients) {
-            stream->writeTextElement(XML_PRJ_BUS_RCLIENT, client);
-        }
-        stream->writeEndElement(); // end of bus
-    }
-    stream->writeEndElement(); // end of audioBusList
-
-    // Write audio input ports
-    stream->writeStartElement(XML_PRJ_AUDIOINLIST);
-    QList<int> audioInIds = audioInPort_getAllPortIds();
-    for (int i=0; i<audioInIds.count(); i++) {
-        int id = audioInIds[i];
-        AudioPortPtr p = audioInPort_getPort(id);
-        stream->writeStartElement(XML_PRJ_AUDIOIN_PORT);
-        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_ID, n2s(id) );
-        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_NAME, p->name );
-        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_LGAIN, n2s(p->leftGain) );
-        stream->writeTextElement( XML_PRJ_AUDIOIN_PORT_RGAIN, n2s(p->rightGain) );
-        foreach (QString client, p->leftClients) {
-            stream->writeTextElement(XML_PRJ_AUDIOIN_PORT_LCLIENT, client);
-        }
-        foreach (QString client, p->rightClients) {
-            stream->writeTextElement(XML_PRJ_AUDIOIN_PORT_RCLIENT, client);
-        }
-        stream->writeEndElement(); // end of port
-    }
-    stream->writeEndElement(); // end of audioInputPortList
+    // Audio input ports
+    addAudioInPortsToProjectXml(&projectXml);
 
     // External applications
-    writeExternalApps(stream);
+    addExternalAppsToXml(&projectXml);
 
-    // Write trigger list
-    stream->writeStartElement(XML_PRJ_TRIGGERLIST);
-    stream->writeTextElement(XML_PRJ_PROG_CHANGE_SWITCH_PATCHES, bool2str(programChangeSwitchPatches));
-    QList<Trigger> trigs = triggerHash.values();
-    for (int i=0; i<trigs.count(); i++) {
-        stream->writeStartElement(XML_PRJ_TRIGGER);
-        stream->writeTextElement(XML_PRJ_TRIGGER_ACTIONTEXT, trigs[i].actionText);
-        stream->writeTextElement(XML_PRJ_TRIGGER_TYPE, n2s(trigs[i].type) );
-        stream->writeTextElement(XML_PRJ_TRIGGER_CHAN, n2s(trigs[i].channel) );
-        stream->writeTextElement(XML_PRJ_TRIGGER_DATA1, n2s(trigs[i].data1) );
-        stream->writeTextElement(XML_PRJ_TRIGGER_BANKMSB, n2s(trigs[i].bankMSB) );
-        stream->writeTextElement(XML_PRJ_TRIGGER_BANKLSB, n2s(trigs[i].bankLSB) );
-        stream->writeEndElement(); // end of trigger
-    }
-    stream->writeEndElement(); // end of trigger list
+    // Triggers
+    addTriggersToProjectXml(&projectXml);
 
     // Write other JACK MIDI make-connections list
     // Make and break lists are stored separately for backwards compatibility
     // with older versions which only saved make connections.
-    stream->writeStartElement(XML_PRJ_OTHERJACK_MIDI_CON_LIST);
-    foreach (const KonfytJackConPair& p, jackMidiConList) {
+    Xml midiMakeConListXml(XML_OTHERJACK_MIDI_CON_LIST);
+    foreach (const KonfytJackConPair& p, mJackMidiConList) {
         if (!p.makeNotBreak) { continue; }
-        stream->writeStartElement(XML_PRJ_OTHERJACKCON);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, p.srcPort);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, p.destPort);
-        stream->writeEndElement(); // end JACK connection pair
+        Xml conXml(XML_OTHERJACKCON);
+        conXml.addTextChild(XML_OTHERJACKCON_SRC, p.srcPort);
+        conXml.addTextChild(XML_OTHERJACKCON_DEST, p.destPort);
+        midiMakeConListXml.addChild(conXml);
     }
-    stream->writeEndElement(); // Other JACK MIDI connections list
+    projectXml.addChild(midiMakeConListXml);
 
     // Write other JACK MIDI break-connections list
-    stream->writeStartElement(XML_PRJ_OTHERJACK_MIDI_CON_BREAK_LIST);
-    foreach (const KonfytJackConPair& p, jackMidiConList) {
+    Xml midiBreakConListXml(XML_OTHERJACK_MIDI_CON_BREAK_LIST);
+    foreach (const KonfytJackConPair& p, mJackMidiConList) {
         if (p.makeNotBreak) { continue; }
-        stream->writeStartElement(XML_PRJ_OTHERJACKCON);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, p.srcPort);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, p.destPort);
-        stream->writeEndElement();
+        Xml conXml(XML_OTHERJACKCON);
+        conXml.addTextChild(XML_OTHERJACKCON_SRC, p.srcPort);
+        conXml.addTextChild(XML_OTHERJACKCON_DEST, p.destPort);
+        midiBreakConListXml.addChild(conXml);
     }
-    stream->writeEndElement();
+    projectXml.addChild(midiBreakConListXml);
 
     // Write other JACK Audio make-connections list
     // Make and break lists are stored separately for backwards compatibility
     // with older versions which only saved make connections.
-    stream->writeStartElement(XML_PRJ_OTHERJACK_AUDIO_CON_LIST);
-    foreach (const KonfytJackConPair& p, jackAudioConList) {
+    Xml audioMakeConListXml(XML_OTHERJACK_AUDIO_CON_LIST);
+    foreach (const KonfytJackConPair& p, mJackAudioConList) {
         if (!p.makeNotBreak) { continue; }
-        stream->writeStartElement(XML_PRJ_OTHERJACKCON);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, p.srcPort);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, p.destPort);
-        stream->writeEndElement();
+        Xml conXml(XML_OTHERJACKCON);
+        conXml.addTextChild(XML_OTHERJACKCON_SRC, p.srcPort);
+        conXml.addTextChild(XML_OTHERJACKCON_DEST, p.destPort);
+        audioMakeConListXml.addChild(conXml);
     }
-    stream->writeEndElement();
+    projectXml.addChild(audioMakeConListXml);
 
     // Write other JACK Audio break-connections list
-    stream->writeStartElement(XML_PRJ_OTHERJACK_AUDIO_CON_BREAK_LIST);
-    foreach (const KonfytJackConPair& p, jackAudioConList) {
+    Xml audioBreakConListXml(XML_OTHERJACK_AUDIO_CON_BREAK_LIST);
+    foreach (const KonfytJackConPair& p, mJackAudioConList) {
         if (p.makeNotBreak) { continue; }
-        stream->writeStartElement(XML_PRJ_OTHERJACKCON);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_SRC, p.srcPort);
-        stream->writeTextElement(XML_PRJ_OTHERJACKCON_DEST, p.destPort);
-        stream->writeEndElement();
+        Xml conXml(XML_OTHERJACKCON);
+        conXml.addTextChild(XML_OTHERJACKCON_SRC, p.srcPort);
+        conXml.addTextChild(XML_OTHERJACKCON_DEST, p.destPort);
+        audioBreakConListXml.addChild(conXml);
     }
-    stream->writeEndElement();
+    projectXml.addChild(audioBreakConListXml);
 
-    stream->writeEndElement(); // project
-
-    stream->writeEndDocument();
+    return projectXml;
 }
 
-void Project::readFromXmlStream(QXmlStreamReader* r)
+void Project::readPatchesFromProjectXml(Xml projectXml)
 {
-    r->setNamespaceProcessing(false);
+    foreach (Xml patchXml, projectXml.childrenNamed(XML_PATCH)) {
 
-    QString patchPathRel;
-    mPatches.clear();
-    midiInPortMap.clear();
-    midiOutPortMap.clear();
-    clearExternalApps();
-    preExternalAppsRead(); // Used for backwards compatibility.
-    audioBusMap.clear();
-    audioInPortMap.clear();
-    jackMidiConList.clear();
-    jackAudioConList.clear();
+        QString patchPathRel = patchXml.childText(XML_PATCH_FILENAME);
 
-    while (r->readNextStartElement()) { // project
-
-        // Get the project name attribute
-        QXmlStreamAttributes ats =  r->attributes();
-        if (ats.count()) {
-            mProjectName = ats.value(XML_PRJ_NAME).toString();
+        // Add new patch
+        PatchPtr patch(new Patch());
+        QString errors;
+        QString patchPathAbs = mProjectDirpath + "/" + patchPathRel;
+        print("loadProject: Loading patch " + patchPathRel);
+        Result r = patch->loadPatchFromFile(patchPathAbs);
+        if (r.ok) {
+            this->addPatch(patch);
+        } else {
+            print(QString("loadProject: Error loading patch. File: %1. Error: %2")
+                  .arg(r.errorString).arg(patchPathAbs));
+        }
+        if (!errors.isEmpty()) {
+            print("Load errors for patch " + patchPathAbs + ":\n" + errors);
         }
 
-        while (r->readNextStartElement()) {
+    }
+}
 
-            if (r->name() == XML_PRJ_PATCH) { // patch
+void Project::addPatchesToProjectXml(Xml *projectXml) const
+{
+    for (int i = 0; i < mPatches.count(); i++) {
 
-                while (r->readNextStartElement()) { // patch properties
+        Xml patchXml(XML_PATCH);
 
-                    if (r->name() == XML_PRJ_PATCH_FILENAME) {
-                        patchPathRel = r->readElementText();
-                    } else {
-                        print("loadProject: Unrecognized patch element: "
-                              + r->name().toString() );
-                        r->skipCurrentElement();
-                    }
+        PatchPtr patch = mPatches.at(i);
+        QString patchPathRel = QString("%1/%2_%3.%4")
+                                    .arg(PROJECT_PATCH_DIR)
+                                    .arg(i)
+                                    .arg(sanitiseFilename(patch->name()))
+                                    .arg(Patch::PATCH_FILE_EXTENSION_NODOT);
+        patchXml.addTextChild(XML_PATCH_FILENAME, patchPathRel);
 
-                }
-
-                // Add new patch
-                PatchPtr patch(new Patch());
-                QString errors;
-                QString patchPathAbs = mProjectDirpath + "/" + patchPathRel;
-                print("loadProject: Loading patch " + patchPathRel);
-                if (patch->loadPatchFromFile(patchPathAbs, &errors)) {
-                    this->addPatch(patch);
-                } else {
-                    // Error message on loading patch.
-                    print("loadProject: Error loading patch: " + patchPathAbs);
-                }
-                if (!errors.isEmpty()) {
-                    print("Load errors for patch " + patchPathAbs + ":\n" + errors);
-                }
-
-            } else if (r->name() == XML_PRJ_PATCH_LIST_NUMBERS) {
-
-                patchListNumbers = Qstr2bool(r->readElementText());
-
-            } else if (r->name() == XML_PRJ_PATCH_LIST_NOTES) {
-
-                patchListNotes = Qstr2bool(r->readElementText());
-
-            } else if (r->name() == XML_PRJ_RESET_OPTION) {
-
-                mResetOption = konfytResetFromString(r->readElementText(),
-                                                     KonfytReset::Inherit);
-
-            } else if (r->name() == XML_PRJ_MIDI_PICKUP_RANGE) {
-
-                setMidiPickupRange(r->readElementText().toInt());
-
-            } else if (r->name() == XML_PRJ_MIDI_IN_PORTLIST) {
-
-                while (r->readNextStartElement()) { // port
-                    MidiPortPtr p(new MidiPort());
-                    int id = midiInPort_getUniqueId();
-                    while (r->readNextStartElement()) {
-                        if (r->name() == XML_PRJ_MIDI_IN_PORT_ID) {
-                            id = r->readElementText().toInt();
-                        } else if (r->name() == XML_PRJ_MIDI_IN_PORT_NAME) {
-                            p->name = r->readElementText();
-                        } else if (r->name() == XML_PRJ_MIDI_IN_PORT_CLIENT) {
-                            p->clients.append( r->readElementText() );
-                        } else if (r->name() == MidiFilter::XML_MIDIFILTER) {
-                            p->filter.readFromXMLStream(r);
-                        } else if (r->name() == XML_PRJ_PORT_SCRIPT) {
-                            PortScriptData s = readPortScript(r);
-                            p->script = s.content;
-                            p->scriptEnabled = s.enabled;
-                            p->passMidiThrough = s.passMidiThrough;
-                        } else {
-                            print("loadProject: "
-                                  "Unrecognized midiInPortList port element: "
-                                  + r->name().toString() );
-                        }
-                    }
-                    if (midiInPortMap.contains(id)) {
-                        print("loadProject: Duplicate midi in port id detected: "
-                              + n2s(id));
-                    }
-                    this->midiInPortMap.insert(id, p);
-                }
-
-            } else if (r->name() == XML_PRJ_MIDI_OUT_PORTLIST) {
-
-                while (r->readNextStartElement()) { // port
-                    MidiPortPtr p(new MidiPort());
-                    int id = midiOutPort_getUniqueId();
-                    while (r->readNextStartElement()) {
-                        if (r->name() == XML_PRJ_MIDI_OUT_PORT_ID) {
-                            id = r->readElementText().toInt();
-                        } else if (r->name() == XML_PRJ_MIDI_OUT_PORT_NAME) {
-                            p->name = r->readElementText();
-                        } else if (r->name() == XML_PRJ_MIDI_OUT_PORT_CLIENT) {
-                            p->clients.append( r->readElementText() );
-                        } else {
-                            print("loadProject: "
-                                  "Unrecognized midiOutPortList port element: "
-                                  + r->name().toString() );
-                            r->skipCurrentElement();
-                        }
-                    }
-                    if (midiOutPortMap.contains(id)) {
-                        print("loadProject: Duplicate midi out port id detected: "
-                              + n2s(id));
-                    }
-                    this->midiOutPortMap.insert(id, p);
-                }
-
-            } else if (r->name() == XML_PRJ_BUSLIST) {
-
-                while (r->readNextStartElement()) { // bus
-                    AudioPortPtr b(new AudioPort());
-                    int id = audioBus_getUniqueId();
-                    while (r->readNextStartElement()) {
-                        if (r->name() == XML_PRJ_BUS_ID) {
-                            id = r->readElementText().toInt();
-                        } else if (r->name() == XML_PRJ_BUS_NAME) {
-                            b->name = r->readElementText();
-                        } else if (r->name() == XML_PRJ_BUS_LGAIN) {
-                            b->leftGain = r->readElementText().toFloat();
-                        } else if (r->name() == XML_PRJ_BUS_RGAIN) {
-                            b->rightGain = r->readElementText().toFloat();
-                        } else if (r->name() == XML_PRJ_BUS_LCLIENT) {
-                            b->leftClients.append( r->readElementText() );
-                        } else if (r->name() == XML_PRJ_BUS_RCLIENT) {
-                            b->rightClients.append( r->readElementText() );
-                        } else if (r->name() == XML_PRJ_BUS_IGNORE_GLOBAL_VOLUME) {
-                            b->ignoreMasterGain = Qstr2bool(r->readElementText());
-                        } else {
-                            print("loadProject: Unrecognized bus element: "
-                                  + r->name().toString() );
-                            r->skipCurrentElement();
-                        }
-                    }
-                    if (audioBusMap.contains(id)) {
-                        print("loadProject: Duplicate bus id detected: " + n2s(id));
-                    }
-                    this->audioBusMap.insert(id, b);
-                }
-
-            } else if (r->name() == XML_PRJ_AUDIOINLIST) {
-
-                while (r->readNextStartElement()) { // port
-                    AudioPortPtr p(new AudioPort());
-                    int id = audioInPort_getUniqueId();
-                    while (r->readNextStartElement()) {
-                        if (r->name() == XML_PRJ_AUDIOIN_PORT_ID) {
-                            id = r->readElementText().toInt();
-                        } else if (r->name() == XML_PRJ_AUDIOIN_PORT_NAME) {
-                            p->name = r->readElementText();
-                        } else if (r->name() == XML_PRJ_AUDIOIN_PORT_LGAIN) {
-                            p->leftGain = r->readElementText().toFloat();
-                        } else if (r->name() == XML_PRJ_AUDIOIN_PORT_RGAIN) {
-                            p->rightGain = r->readElementText().toFloat();
-                        } else if (r->name() == XML_PRJ_AUDIOIN_PORT_LCLIENT) {
-                            p->leftClients.append( r->readElementText() );
-                        } else if (r->name() == XML_PRJ_AUDIOIN_PORT_RCLIENT) {
-                            p->rightClients.append( r->readElementText() );
-                        } else {
-                            print("loadProject: "
-                                  "Unrecognized audio input port element: "
-                                  + r->name().toString() );
-                            r->skipCurrentElement();
-                        }
-                    }
-                    if (audioInPortMap.contains(id)) {
-                        print("loadProject: Duplicate audio in port id detected: "
-                              + n2s(id));
-                    }
-                    this->audioInPortMap.insert(id, p);
-                }
-
-            } else if (r->name() == XML_PRJ_PROCESSLIST) {
-
-                // TODO DEPRECATED
-                readExternalApps(r);
-
-            } else if (r->name() == XML_PRJ_EXT_APP_LIST) {
-
-                readExternalApps(r);
-
-
-            } else if (r->name() == XML_PRJ_TRIGGERLIST) {
-
-                while (r->readNextStartElement()) {
-
-                    if (r->name() == XML_PRJ_PROG_CHANGE_SWITCH_PATCHES) {
-                        programChangeSwitchPatches = Qstr2bool(r->readElementText());
-                    } else if (r->name() == XML_PRJ_TRIGGER) {
-
-                        Trigger trig;
-                        while (r->readNextStartElement()) {
-                            if (r->name() == XML_PRJ_TRIGGER_ACTIONTEXT) {
-                                trig.actionText = r->readElementText();
-                            } else if (r->name() == XML_PRJ_TRIGGER_TYPE) {
-                                trig.type = r->readElementText().toInt();
-                            } else if (r->name() == XML_PRJ_TRIGGER_CHAN) {
-                                trig.channel = r->readElementText().toInt();
-                            } else if (r->name() == XML_PRJ_TRIGGER_DATA1) {
-                                trig.data1 = r->readElementText().toInt();
-                            } else if (r->name() == XML_PRJ_TRIGGER_BANKMSB) {
-                                trig.bankMSB = r->readElementText().toInt();
-                            } else if (r->name() == XML_PRJ_TRIGGER_BANKLSB) {
-                                trig.bankLSB = r->readElementText().toInt();
-                            } else {
-                                print("loadProject: Unrecognized trigger element: "
-                                      + r->name().toString() );
-                                r->skipCurrentElement();
-                            }
-                        }
-                        this->addAndReplaceTrigger(trig);
-
-                    } else {
-                        print("loadProject: Unrecognized triggerList element: "
-                              + r->name().toString() );
-                        r->skipCurrentElement();
-                    }
-                }
-
-            } else if (r->name() == XML_PRJ_OTHERJACK_MIDI_CON_LIST) {
-
-                readJackMidiConList(r, true);
-
-            } else if (r->name() == XML_PRJ_OTHERJACK_MIDI_CON_BREAK_LIST) {
-
-                readJackMidiConList(r, false);
-
-            } else if (r->name() == XML_PRJ_OTHERJACK_AUDIO_CON_LIST) {
-
-                readJackAudioConList(r, true);
-
-            } else if (r->name() == XML_PRJ_OTHERJACK_AUDIO_CON_BREAK_LIST) {
-
-                readJackAudioConList(r, false);
-
-            } else {
-                print("loadProject: Unrecognized project element: "
-                      + r->name().toString() );
-                r->skipCurrentElement();
-            }
+        // Save the patch file in patches subdirectory
+        QString patchPathAbs = mProjectDirpath + "/" + patchPathRel;
+        Result r = patch->savePatchToFile(patchPathAbs);
+        if (r.ok) {
+            print("saveProjectAs: Saved patch: " + patchPathRel);
+        } else {
+            print(QString("ERROR: saveProjectAs: Failed to save patch. File: %1. Error: %2")
+                  .arg(patchPathAbs).arg(r.errorString));
+            // TODO: BUBBLE ERRORS UP SO A MSGBOX CAN BE SHOWN TO USER THAT ONE OR MORE ERRORS HAVE OCCURRED.
         }
+
+        projectXml->addChild(patchXml);
     }
 }
 

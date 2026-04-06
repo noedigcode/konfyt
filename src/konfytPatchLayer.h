@@ -46,6 +46,7 @@ public:
     {
         QString soundfontFilePath;
         KonfytSoundPreset program;
+        // Runtime variables:
         KfFluidSynth* synthInEngine = nullptr;
         KfJackPluginPorts* portsInJackEngine = nullptr;
     };
@@ -55,9 +56,7 @@ public:
     struct SfzData
     {
         QString path;
-        QString midiInPort;
-        QString audioOutPortLeft;
-        QString audioOutPortRight;
+        // Runtime variables:
         KfJackPluginPorts* portsInJackEngine = nullptr;
         int indexInEngine = -1;
     };
@@ -67,6 +66,7 @@ public:
     struct MidiOutData
     {
         int portIdInProject;
+        // Runtime variables:
         KfJackMidiRoute* jackRoute = nullptr;
     };
 
@@ -75,6 +75,7 @@ public:
     struct AudioInData
     {
         int portIdInProject;
+        // Runtime variables:
         KfJackAudioRoute* jackRouteLeft = nullptr;
         KfJackAudioRoute* jackRouteRight = nullptr;
     };
@@ -91,8 +92,7 @@ public:
 
     LayerType layerType() const;
     bool hasMidiInput() const;
-    QString name() const;
-    void setName(QString name);
+    bool hasAudioOutput() const;
     float gain() const;
     void setGain(float gain);
     void addGainRelativeMidiValue(int value);
@@ -137,13 +137,14 @@ public:
     QList<MidiSendItem> midiSendList;
     QList<KonfytMidiEvent> getMidiSendListEvents();
 
+    // Runtime properties
     QString uri;
+    QString name() const;
 
-    void writeToXmlStream(QXmlStreamWriter* stream) const;
-    void readFromXmlStream(QXmlStreamReader* r, QString* errors = nullptr);
-
-    QByteArray toByteArray();
-    void fromByteArray(QByteArray data);
+    QByteArray toXmlByteArray() const;
+    Result fromXmlByteArray(QByteArray data);
+    Xml toXml() const;
+    void readFromXml(Xml xml);
 
 private:
     LayerType mLayerType = TypeUninitialized;
@@ -152,9 +153,12 @@ private:
     bool mSolo = false;
     bool mMute = false;
     MidiFilter mMidiFilter;
-    QString mName = "UNINITIALIZED LAYER";
     int mBusIdInProject = 0;
     int mMidiInPortIdInProject = 0;
+
+    // Name used during runtime
+    QString mName = "UNINITIALIZED LAYER";
+    void updateName();
 
     KonfytReset mResetOption = KonfytReset::Inherit;
     struct ResetSnapshot
@@ -172,59 +176,49 @@ private:
 
     MidiValueController gainMidiCtrl;
 
-    void writeSoundfontDataToXmlStream(QXmlStreamWriter* stream) const;
-    void readSoundfontDataFromXmlStream(QXmlStreamReader* r, QString* errors);
-    void writeSfzDataToXmlStream(QXmlStreamWriter* stream) const;
-    void readSfzDataFromXmlStream(QXmlStreamReader* r, QString* errors);
-    void writeMidiOutDataToXmlStream(QXmlStreamWriter* stream) const;
-    void readMidiOutDataFromXmlStream(QXmlStreamReader* r, QString* errors);
-    void writeAudioInDataToXmlStream(QXmlStreamWriter* stream) const;
-    void readAudioInDataFromXmlStream(QXmlStreamReader* r, QString* errors);
-    void writeScriptToXmlStream(QXmlStreamWriter* stream) const;
+    Xml soundfontDataToXml() const;
+    void readSoundfontDataFromXml(Xml xml);
+
+    Xml sfzDataToXml() const;
+    void readSfzDataFromXml(Xml xml);
+
+    Xml midiOutDataToXml() const;
+    void readMidiOutDataFromXml(Xml xml);
+
+    Xml audioInDataToXml() const;
+    void readAudioInDataFromXml(Xml xml);
+
+    void addCommonDataToXml(Xml* xml) const;
+    void readCommonDataFromXml(Xml xml);
 
     struct LayerScriptData {
         QString content;
         bool enabled = false;
         bool passMidiThrough = true;
     };
-    LayerScriptData readScriptFromXmlStream(QXmlStreamReader* r, QString* errors);
-
-    void appendError(QString *errorString, QString msg);
+    LayerScriptData readScriptFromXml(Xml xml);
 
 public:
     static constexpr const char* XML_SF_LAYER = "sfLayer";
     static constexpr const char* XML_SF_FILENAME = "soundfont_filename";
     static constexpr const char* XML_SF_BANK = "bank";
     static constexpr const char* XML_SF_PROGRAM = "program";
-    static constexpr const char* XML_SF_NAME = "name";
-    static constexpr const char* XML_SF_GAIN = "gain";
-    static constexpr const char* XML_SF_BUS = "bus";
-    static constexpr const char* XML_SF_SOLO = "solo";
-    static constexpr const char* XML_SF_MUTE = "mute";
-    static constexpr const char* XML_SF_MIDI_IN = "midiIn";
+    static constexpr const char* XML_SF_PROGRAM_NAME = "name";
 
     static constexpr const char* XML_SFZ_LAYER = "sfzLayer";
-    static constexpr const char* XML_SFZ_NAME = "name";
     static constexpr const char* XML_SFZ_PATH = "path";
-    static constexpr const char* XML_SFZ_GAIN = "gain";
-    static constexpr const char* XML_SFZ_BUS = "bus";
-    static constexpr const char* XML_SFZ_SOLO = "solo";
-    static constexpr const char* XML_SFZ_MUTE = "mute";
-    static constexpr const char* XML_SFZ_MIDI_IN = "midiIn";
 
-    static constexpr const char* XML_MIDIOUT = "midiOutputPortLayer";
+    static constexpr const char* XML_MIDIOUT_LAYER = "midiOutputPortLayer";
     static constexpr const char* XML_MIDIOUT_PORT = "port";
-    static constexpr const char* XML_MIDIOUT_SOLO = "solo";
-    static constexpr const char* XML_MIDIOUT_MUTE = "mute";
-    static constexpr const char* XML_MIDIOUT_MIDI_IN = "midiIn";
 
-    static constexpr const char* XML_AUDIOIN = "audioInPortLayer";
-    static constexpr const char* XML_AUDIOIN_NAME = "name";
+    static constexpr const char* XML_AUDIOIN_LAYER = "audioInPortLayer";
     static constexpr const char* XML_AUDIOIN_PORT = "port";
-    static constexpr const char* XML_AUDIOIN_GAIN = "gain";
-    static constexpr const char* XML_AUDIOIN_BUS = "bus";
-    static constexpr const char* XML_AUDIOIN_SOLO = "solo";
-    static constexpr const char* XML_AUDIOIN_MUTE = "mute";
+
+    static constexpr const char* XML_GAIN = "gain";
+    static constexpr const char* XML_SOLO = "solo";
+    static constexpr const char* XML_MUTE = "mute";
+    static constexpr const char* XML_BUS = "bus";
+    static constexpr const char* XML_MIDI_IN = "midiIn";
 
     static constexpr const char* XML_SCRIPT = "script";
     static constexpr const char* XML_SCRIPT_CONTENT = "content";

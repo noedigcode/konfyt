@@ -23,10 +23,9 @@
 #define KONFYTMIDI_H
 
 #include "konfytUtils.h"
+#include "xml.h"
 
 #include <QString>
-#include <QXmlStreamWriter>
-#include <QXmlStreamReader>
 
 // ===========================================================================
 // MIDI Constants
@@ -144,9 +143,8 @@ public:
 
     QString toString() const;
 
-    void writeToXMLStream(QXmlStreamWriter* w) const;
-    /* Reads from XML stream and returns error messages. */
-    QString readFromXmlStream(QXmlStreamReader* r);
+    Xml toXml() const;
+    void readFromXml(Xml xml);
 
     static constexpr const char* XML_MIDIEVENT = "midiEvent";
     static constexpr const char* XML_MIDIEVENT_TYPE = "type";
@@ -168,12 +166,11 @@ struct MidiSendItem
 
     QString toString() const;
 
-    void writeToXMLStream(QXmlStreamWriter* w) const;
-    /* Reads from XML stream and returns error messages. */
-    QString readFromXmlStream(QXmlStreamReader* r);
+    Xml toXml() const;
+    void readFromXml(Xml xml);
 
     static constexpr const char* XML_MIDI_SEND_ITEM = "midiSendItem";
-    static constexpr const char* XML_MIDI_SEND_ITEM_DESCRIPTION = "description";
+    static constexpr const char* XML_DESCRIPTION = "description";
 };
 
 // ===========================================================================

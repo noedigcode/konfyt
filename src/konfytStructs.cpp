@@ -61,3 +61,18 @@ KonfytReset konfytResetFromInherits(QList<KonfytReset> inheritChain, KonfytReset
     }
     return ret;
 }
+
+Result Result::failure(QString errorString)
+{
+    Result r;
+    r.ok = false;
+    r.errorString = errorString;
+    return r;
+}
+
+Result Result::success()
+{
+    Result r;
+    r.ok = true;
+    return r;
+}
