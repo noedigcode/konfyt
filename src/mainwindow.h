@@ -216,11 +216,11 @@ private:
 
     void updateProjectNameInGui();
 
-    Patch* newPatchToProject();
-    void removePatchFromProject(int i);
-    void addPatchToProject(Patch* patch);
-    Patch* addPatchToProjectFromFile(QString filename);
-    bool savePatchToLibrary(Patch* patch);
+    PatchPtr addNewPatch();
+    void removePatch(int index);
+    void addPatch(PatchPtr patch);
+    PatchPtr addPatchFromFile(QString filename);
+    bool savePatchToLibrary(PatchPtr patch);
 
     // Projects menu
 private:
@@ -386,10 +386,10 @@ private slots:
 private:
     KonfytPatchEngine pengine;
     void setupPatchEngine();
-    Patch* mCurrentPatch = nullptr; // Current patch being played
+    PatchPtr mCurrentPatch;
 
     // Patch preview
-    Patch mPreviewPatch;  // Patch played when in preview mode
+    PatchPtr mPreviewPatch {new Patch()};  // Patch played when in preview mode
     float previewGain = 1.0;    // Gain when in preview mode
     int previewPatchMidiInPort = 0;
     int previewPatchMidiInChannel = -1;
@@ -398,7 +398,7 @@ private:
 
     // Current patch functions
     int currentPatchIndex();
-    void setCurrentPatch(Patch *patch);
+    void setCurrentPatch(PatchPtr patch);
     void setCurrentPatchByIndex(int index);
 
     void newPatchIfCurrentNull();
@@ -421,7 +421,7 @@ private:
     bool patchNote_ignoreChange = false;
 
 private slots:
-    void onPatchSelected(Patch* patch);
+    void onPatchSelected(PatchPtr patch);
     void onPatchLayerLoaded(PatchLayerPtr patchLayer);
 
     // Patch menu
@@ -680,7 +680,7 @@ private:
     PatchLayerWidget* midiFilterEditItem = nullptr;
     KfJackMidiRoute* midiFilterEditRoute = nullptr;
     int midiFilterEditPort;
-    Patch* midiFilterEditPatch = nullptr;
+    PatchPtr midiFilterEditPatch;
     void showMidiFilterEditor();
     KonfytMidiEvent midiFilterLastEvent;
     void updateMidiFilterEditorLastRx(KonfytMidiEvent ev);

@@ -293,7 +293,7 @@ void MainWindow::on_actionProject_New_triggered()
 {
     if (requestCurrentProjectClose()) {
         loadNewProject(); // Create and load new project
-        newPatchToProject(); // Create a new patch and add to current project.
+        addNewPatch(); // Create a new patch and add to current project.
         setCurrentPatchByIndex(0);
         mCurrentProject->setModified(false);
     }
@@ -715,8 +715,7 @@ QTreeWidgetItem* MainWindow::scanProjectScripts(QString path, ItemScriptMap* map
             projectItem->addChild(item);
         }
 
-        QList<Patch*> patches = prj->getPatchList();
-        foreach (Patch* patch, patches) {
+        foreach (PatchPtr patch, prj->getPatchList()) {
 
             QTreeWidgetItem* patchItem = new QTreeWidgetItem();
             patchItem->setText(0, QString("Patch %1").arg(patch->name()));
@@ -2237,7 +2236,7 @@ void MainWindow::unloadCurrentProject()
 
     clearPortsBussesConnectionsData();
 
-    foreach (Patch* patch, mCurrentProject->getPatchList()) {
+    foreach (PatchPtr patch, mCurrentProject->getPatchList()) {
         pengine.unloadPatch(patch);
     }
 
@@ -2314,26 +2313,26 @@ void MainWindow::updateAudioInPortsMenu(QMenu *menu)
 }
 
 /* Create a new patch, and add it to the current project. (And update the GUI.) */
-Patch *MainWindow::newPatchToProject()
+PatchPtr MainWindow::addNewPatch()
 {
-    Patch* patch = new Patch();
+    PatchPtr patch(new Patch());
     patch->setName("New Patch");
 
-    addPatchToProject(patch);
+    addPatch(patch);
 
     return patch;
 }
 
-/* Remove the patch with specified index from the project. */
-void MainWindow::removePatchFromProject(int i)
+/* Remove the patch with specified index. The patch is removed from the current
+ * project, unloaded from the engine, and removed from the GUI. */
+void MainWindow::removePatch(int index)
 {
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) { return; }
+    if (!mCurrentProject) { return; }
 
-    if ( (i>=0) && (i<prj->getNumPatches()) ) {
+    if ( (index >= 0) && (index < mCurrentProject->getNumPatches()) ) {
 
         // Remove from project
-        Patch* patch = prj->removePatch(i);
+        PatchPtr patch = mCurrentProject->removePatch(index);
 
         // Remove from patch engine
         pengine.unloadPatch(patch);
@@ -2342,19 +2341,16 @@ void MainWindow::removePatchFromProject(int i)
         patchListAdapter.removePatch(patch);
 
         if (mCurrentPatch == patch) {
-            mCurrentPatch = nullptr;
+            mCurrentPatch.reset();
             updatePatchView();
         }
         print("Patch Removed.");
-
-        // Delete the patch
-        delete patch;
     }
 }
 
-/* Add a patch to the current project, after the current patch (or at end if
- * none) and update the GUI. */
-void MainWindow::addPatchToProject(Patch* patch)
+/* Add the specified patch after the current patch (or at the end if no patch
+ * is active). The patch is added to the current project and in the GUI. */
+void MainWindow::addPatch(PatchPtr patch)
 {
     if (!mCurrentProject) {
         print("ERROR: addPatchToProject: No active project.");
@@ -2377,27 +2373,26 @@ void MainWindow::addPatchToProject(Patch* patch)
     setCurrentPatchByIndex(index);
 }
 
-Patch *MainWindow::addPatchToProjectFromFile(QString filename)
+PatchPtr MainWindow::addPatchFromFile(QString filename)
 {
     if (!mCurrentProject) {
         print("ERROR: addPatchToProjectFromFile: No active project.");
         return nullptr;
     }
 
-    Patch* pt = new Patch();
+    PatchPtr patch(new Patch());
     QString errors;
-    if (pt->loadPatchFromFile(filename, &errors)) {
-        addPatchToProject(pt);
+    if (patch->loadPatchFromFile(filename, &errors)) {
+        addPatch(patch);
     } else {
         print("Failed loading patch from file: " + filename);
-        delete pt;
-        pt = nullptr;
+        patch.reset();
     }
     if (!errors.isEmpty()) {
         print("Load errors for patch " + filename + ":\n" + errors);
     }
 
-    return pt;
+    return patch;
 }
 
 /* Returns true if a soundfont program is selected in the library/filesystem. */
@@ -2662,11 +2657,11 @@ void MainWindow::loadCurrentPatchAndUpdateGui()
 void MainWindow::loadPreviewPatchAndUpdateGui()
 {
     // Unload preview patch if it is loaded
-    pengine.unloadPatch(&mPreviewPatch);
+    pengine.unloadPatch(mPreviewPatch);
     // Clear preview patch
-    mPreviewPatch.clearLayers();
+    mPreviewPatch->clearLayers();
     // Load empty preview patch
-    pengine.loadPatchAndSetCurrent(&mPreviewPatch);
+    pengine.loadPatchAndSetCurrent(mPreviewPatch);
 
     // Add selected library/filesystem item as a layer to the patch
 
@@ -2696,10 +2691,9 @@ void MainWindow::loadPreviewPatchAndUpdateGui()
 
 void MainWindow::loadAllPatches()
 {
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) { return; }
+    if (!mCurrentProject) { return; }
 
-    foreach (Patch* patch, prj->getPatchList()) {
+    foreach (PatchPtr patch, mCurrentProject->getPatchList()) {
         pengine.loadPatch(patch);
         patchListAdapter.setPatchLoaded(patch, true);
     }
@@ -2710,8 +2704,8 @@ void MainWindow::updatePatchView()
     clearPatchLayersFromGuiOnly();
 
     // Only for master patch, not preview mode patch
-    Patch* patch = mCurrentPatch;
-    if (patch == nullptr) {
+    PatchPtr patch = mCurrentPatch;
+    if (patch.isNull()) {
         // No patch active
         ui->lineEdit_PatchName->setText("");
         ui->lineEdit_PatchName->setEnabled(false);
@@ -2749,9 +2743,8 @@ void MainWindow::updateWindowTitle()
     if (mPreviewMode) {
         title += "Preview";
     } else {
-        Patch* currentPatch = pengine.currentPatch();
-        if (currentPatch) {
-            title += currentPatch->name();
+        if (mCurrentPatch) {
+            title += mCurrentPatch->name();
         }
     }
 
@@ -2790,7 +2783,7 @@ void MainWindow::setupPatchResetOptionMenu()
             this, &MainWindow::onPatchResetOptionMenuAboutToShow);
 }
 
-void MainWindow::onPatchSelected(Patch *patch)
+void MainWindow::onPatchSelected(PatchPtr patch)
 {
     setCurrentPatch(patch);
 }
@@ -3305,7 +3298,7 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
         if (fileExtensionIsPatch(f)) {
             // Load patch into current project and switch to patch
 
-            addPatchToProjectFromFile(f);
+            addPatchFromFile(f);
 
             // Locate in filesystem view
             ui->tabWidget_library->setCurrentWidget(ui->tab_filesystem);
@@ -3314,7 +3307,7 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
 
         } else if (fileExtensionIsSfzOrGig(f)) {
             // Create new patch and load sfz into patch
-            newPatchToProject(); // Create a new patch and add to current project.
+            addNewPatch(); // Create a new patch and add to current project.
             setCurrentPatchByIndex(-1);
 
             addSfzToCurrentPatch(f);
@@ -3341,7 +3334,7 @@ void MainWindow::setupInitialProjectFromCmdLineArgs()
     // If no patches have been loaded from cmdline arguments, and the current
     // project is a default created project, add a default patch.
     if ( defaultProject && (mCurrentProject->getNumPatches() == 0) ) {
-        newPatchToProject(); // Create a new patch and add to current project.
+        addNewPatch(); // Create a new patch and add to current project.
         setCurrentPatchByIndex(0);
         // Since this is a default startup project, mark as not modified.
         mCurrentProject->setModified(false);
@@ -3392,7 +3385,7 @@ void MainWindow::on_treeWidget_Library_itemClicked(QTreeWidgetItem *item, int /*
 }
 
 /* Set the current patch, and update the GUI accordingly. */
-void MainWindow::setCurrentPatch(Patch* patch)
+void MainWindow::setCurrentPatch(PatchPtr patch)
 {
     mCurrentPatch = patch;
     loadCurrentPatchAndUpdateGui();
@@ -3536,7 +3529,7 @@ void MainWindow::newPatchIfCurrentNull()
     KONFYT_ASSERT_RETURN(prj);
 
     if (!mCurrentPatch) {
-        newPatchToProject();
+        addNewPatch();
         // Switch to latest patch
         setCurrentPatchByIndex(-1);
     }
@@ -3584,7 +3577,7 @@ void MainWindow::setPreviewMode(bool previewModeOn)
         loadPreviewPatchAndUpdateGui();
     } else {
         setMasterGainFloat(masterGain); // To update GUI slider
-        pengine.unloadPatch(&mPreviewPatch);
+        pengine.unloadPatch(mPreviewPatch);
         loadCurrentPatchAndUpdateGui();
     }
 }
@@ -3599,7 +3592,7 @@ void MainWindow::on_lineEdit_PatchName_returnPressed()
 
 void MainWindow::on_lineEdit_PatchName_editingFinished()
 {
-    Patch* patch = pengine.currentPatch();
+    PatchPtr patch = pengine.currentPatch();
     if (!patch) { return; }
 
     // Rename patch
@@ -3625,7 +3618,7 @@ void MainWindow::on_lineEdit_ProjectName_editingFinished()
 }
 
 /* Save patch to library (in other words, to patchesDir directory.) */
-bool MainWindow::savePatchToLibrary(Patch *patch)
+bool MainWindow::savePatchToLibrary(PatchPtr patch)
 {
     QDir dir(mPatchesDir);
     if (!dir.exists()) {
@@ -3878,7 +3871,7 @@ void MainWindow::on_toolButton_RemovePatch_clicked()
         QAction* a = patchRemoveMenu->addAction("Remove selected patch");
         connect(a, &QAction::triggered, this, [=]()
         {
-            removePatchFromProject(ui->listWidget_Patches->currentRow());
+            removePatch(ui->listWidget_Patches->currentRow());
         });
     }
 
@@ -5833,11 +5826,11 @@ void MainWindow::on_listWidget_LibraryBottom_customContextMenuRequested(const QP
     libraryBottomContextMenu.clear();
     libraryBottomContextMenu.addAction("Add as patch to library", this, [=]()
     {
-        Patch patch;
-        patch.setName(QString("Soundfont %1 - %2").arg(sf->name).arg(s.name));
-        patch.addSfLayer(sf->filename, s);
+        PatchPtr patch(new Patch());
+        patch->setName(QString("Soundfont %1 - %2").arg(sf->name).arg(s.name));
+        patch->addSfLayer(sf->filename, s);
 
-        savePatchToLibrary(&patch);
+        savePatchToLibrary(patch);
     });
     libraryBottomContextMenu.popup(QCursor::pos());
 }
@@ -5850,7 +5843,7 @@ void MainWindow::on_treeWidget_Library_itemDoubleClicked(
 
     if ( libraryTreeItemType(item) == libTreePatch ) {
 
-        addPatchToProjectFromFile(librarySelectedPatch()->filename);
+        addPatchFromFile(librarySelectedPatch()->filename);
 
     } else if (libraryTreeItemType(item) == libTreeSoundfont) {
 
@@ -6013,7 +6006,7 @@ void MainWindow::on_treeWidget_filesystem_itemDoubleClicked(QTreeWidgetItem *ite
 
         // File is a patch
         if (mPreviewMode) { setPreviewMode(false); }
-        addPatchToProjectFromFile(info.filePath());
+        addPatchFromFile(info.filePath());
 
     } else if ( fileExtensionIsSoundfont(info.filePath()) ) {
         // If soundfont, read soundfont and fill program list.
@@ -6757,13 +6750,13 @@ void MainWindow::on_actionRemove_BusPort_triggered()
 
     // Check if any patch layers are using this bus/port
     struct PatchUse {
-        Patch* patch = nullptr;
+        PatchPtr patch;
         int patchIndex = 0;
         QList<int> iLayers;
         QList<PatchLayerPtr> layers;
     };
     QList<PatchUse> used;
-    QList<Patch*> patchList = prj->getPatchList();
+    QList<PatchPtr> patchList = prj->getPatchList();
     for (int iPatch=0; iPatch < patchList.count(); iPatch++) {
         PatchUse use;
         use.patchIndex = iPatch;
@@ -7077,7 +7070,7 @@ void MainWindow::setupPatchEngine()
 /* Update the input and output port settings for the preview patch layer. */
 void MainWindow::updatePreviewPatchLayer()
 {
-    foreach (PatchLayerPtr layer, mPreviewPatch.layers()) {
+    foreach (PatchLayerPtr layer, mPreviewPatch->layers()) {
         if (layer->hasError()) { continue; }
 
         // Set the MIDI input channel
@@ -7474,7 +7467,7 @@ void MainWindow::on_textBrowser_patchNote_textChanged()
         patchNote_ignoreChange = false;
     } else {
         // Change is due to user typing in box
-        Patch* patch = pengine.currentPatch();
+        PatchPtr patch = pengine.currentPatch();
         if (!patch) { return; }
         patch->setNote(ui->textBrowser_patchNote->toPlainText());
         patchModified();
@@ -7519,11 +7512,11 @@ void MainWindow::on_actionSave_Patch_As_Copy_triggered()
 {
     // Action to save current patch as a copy in the current project.
 
-    Patch* p = pengine.currentPatch();
-    Patch* newPatch = new Patch();
-    newPatch->fromByteArray(p->toByteArray());
+    PatchPtr currentPatch = pengine.currentPatch();
+    PatchPtr newPatch(new Patch());
+    newPatch->fromByteArray(currentPatch->toByteArray());
 
-    addPatchToProject(newPatch);
+    addPatch(newPatch);
 
     setCurrentPatch(newPatch);
 
@@ -7535,9 +7528,9 @@ void MainWindow::on_actionAdd_Patch_To_Library_triggered()
 {
     // Action to add current patch to the library.
 
-    Patch* pt = pengine.currentPatch(); // Get current patch
+    PatchPtr patch = pengine.currentPatch();
 
-    if (savePatchToLibrary(pt)) {
+    if (savePatchToLibrary(patch)) {
         print("Saved to library.");
     } else {
         print("Could not save patch to library.");
@@ -7551,17 +7544,16 @@ void MainWindow::on_actionSave_Patch_To_File_triggered()
 
     QString ext = QString(".%1").arg(Patch::PATCH_FILENAME_SUFFIX);
 
-    Patch* pt = pengine.currentPatch(); // Get current patch
-    QFileDialog d;
-    QString filename = d.getSaveFileName(this,
+    PatchPtr patch = pengine.currentPatch(); // Get current patch
+    QString filename = QFileDialog::getSaveFileName(this,
                                          "Save patch as file", mPatchesDir,
                                          QString("*%1").arg(ext));
-    if (filename == "") { return; } // Dialog was cancelled.
+    if (filename.isEmpty()) { return; } // Dialog was cancelled.
 
     // Add suffix if not already added
     if (!filename.endsWith(ext)) { filename = filename + ext; }
 
-    if (pt->savePatchToFile(filename)) {
+    if (patch->savePatchToFile(filename)) {
         print("Patch saved to file: " + filename);
     } else {
         print("Failed saving patch to file: " + filename);
@@ -7573,10 +7565,10 @@ void MainWindow::on_actionAlways_Active_triggered()
 {
     // Action to toggle always-active for current patch.
 
-    Patch* p = pengine.currentPatch();
-    p->alwaysActive = !p->alwaysActive;
-    ui->actionAlways_Active->setChecked(p->alwaysActive);
-    ui->label_patch_alwaysActive->setVisible(p->alwaysActive);
+    PatchPtr patch = pengine.currentPatch();
+    patch->alwaysActive = !patch->alwaysActive;
+    ui->actionAlways_Active->setChecked(patch->alwaysActive);
+    ui->label_patch_alwaysActive->setVisible(patch->alwaysActive);
 
     setProjectModified();
 }
@@ -7585,7 +7577,7 @@ void MainWindow::on_actionNew_Patch_triggered()
 {
     // Action to add new patch to project.
 
-    Patch* patch = newPatchToProject();
+    PatchPtr patch = addNewPatch();
     setCurrentPatch(patch);
     ui->lineEdit_PatchName->setFocus();
     ui->lineEdit_PatchName->selectAll();
@@ -7607,7 +7599,7 @@ void MainWindow::on_actionAdd_Patch_From_File_triggered()
                                                     filter);
     if (filename.isEmpty()) { return; }
 
-    addPatchToProjectFromFile(filename);
+    addPatchFromFile(filename);
 }
 
 void MainWindow::on_pushButton_Panic_clicked()
@@ -7786,7 +7778,7 @@ void MainWindow::on_checkBox_midiFilter_Prog_toggled(bool /*checked*/)
 
 void MainWindow::on_actionPatch_MIDI_Filter_triggered()
 {
-    Patch* patch = pengine.currentPatch();
+    PatchPtr patch = pengine.currentPatch();
     if (!patch) { return; }
 
     midiFilterEditPatch = patch;

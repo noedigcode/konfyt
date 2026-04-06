@@ -75,7 +75,7 @@ void KonfytPatchEngine::reloadPatch()
 }
 
 /* Ensure patch and all layers are unloaded from their respective engines. */
-void KonfytPatchEngine::unloadPatch(Patch *patch)
+void KonfytPatchEngine::unloadPatch(PatchPtr patch)
 {
     if ( !mPatches.contains(patch) ) { return; }
 
@@ -87,10 +87,9 @@ void KonfytPatchEngine::unloadPatch(Patch *patch)
     if (mCurrentPatch == patch) { mCurrentPatch = nullptr; }
 }
 
-/* Load newPatch, replacing the current newPatch. */
-void KonfytPatchEngine::loadPatchAndSetCurrent(Patch *newPatch)
+void KonfytPatchEngine::loadPatchAndSetCurrent(PatchPtr newPatch)
 {
-    if (newPatch == nullptr) { return; }
+    if (!newPatch) { return; }
 
     bool switchToDifferentPatch = (newPatch != mCurrentPatch);
 
@@ -141,7 +140,7 @@ void KonfytPatchEngine::loadPatchAndSetCurrent(Patch *newPatch)
     loadPatch(newPatch);
 }
 
-void KonfytPatchEngine::loadPatch(Patch *patch)
+void KonfytPatchEngine::loadPatch(PatchPtr patch)
 {
     bool patchIsNew = false;
     if ( !mPatches.contains(patch) ) {
@@ -230,7 +229,7 @@ void KonfytPatchEngine::removeLayer(PatchLayerPtr layer)
     removeLayer(mCurrentPatch, layer);
 }
 
-void KonfytPatchEngine::removeLayer(Patch *patch, PatchLayerPtr layer)
+void KonfytPatchEngine::removeLayer(PatchPtr patch, PatchLayerPtr layer)
 {
     unloadLayerFromEngines(layer);
     patch->removeLayer(layer);
@@ -312,7 +311,7 @@ void KonfytPatchEngine::reloadLayer(PatchLayerPtr layer)
     reloadPatch();
 }
 
-bool KonfytPatchEngine::isPatchLoaded(Patch *patch)
+bool KonfytPatchEngine::isPatchLoaded(PatchPtr patch)
 {
     return mPatches.contains(patch);
 }
@@ -522,9 +521,9 @@ void KonfytPatchEngine::updateLayerGain(PatchLayerPtr layer)
     }
 }
 
-void KonfytPatchEngine::activatePatchLayerRoutesForSoloMute(Patch *patch)
+void KonfytPatchEngine::activatePatchLayerRoutesForSoloMute(PatchPtr patch)
 {
-    if (patch == nullptr) { return; }
+    if (!patch) { return; }
 
     QList<PatchLayerPtr> layerList = patch->layers();
 
@@ -587,7 +586,7 @@ void KonfytPatchEngine::setLayerActive(PatchLayerPtr layer, bool active)
 }
 
 void KonfytPatchEngine::updateLayerPatchMidiFilterInJackEngine(
-        Patch *patch, PatchLayerPtr layer)
+        PatchPtr patch, PatchLayerPtr layer)
 {
     KONFYT_ASSERT_RETURN(patch != nullptr);
     KONFYT_ASSERT_RETURN(!layer.isNull());
@@ -683,7 +682,7 @@ void KonfytPatchEngine::setupAndInitSfzEngine(KonfytAppInfo appInfo)
 /* Update layer URIs in specified patch.
  * This must be called if some action caused the patch and/or its layers indices
  * to change, i.e. insert, remove and move of patches or layers. */
-void KonfytPatchEngine::updatePatchLayersURIs(Patch *patch)
+void KonfytPatchEngine::updatePatchLayersURIs(PatchPtr patch)
 {
     KONFYT_ASSERT_RETURN(patch != nullptr);
     if (!mCurrentProject) { return; }
@@ -695,13 +694,12 @@ void KonfytPatchEngine::updatePatchLayersURIs(Patch *patch)
     }
 }
 
-/* Return the current patch. */
-Patch *KonfytPatchEngine::currentPatch()
+PatchPtr KonfytPatchEngine::currentPatch()
 {
     return mCurrentPatch;
 }
 
-void KonfytPatchEngine::setPatchFilter(Patch *patch, MidiFilter filter)
+void KonfytPatchEngine::setPatchFilter(PatchPtr patch, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(patch != nullptr);
     KONFYT_ASSERT_RETURN(mPatches.contains(patch));
@@ -1045,7 +1043,7 @@ void KonfytPatchEngine::onSfzEngineInitDone(QString error)
         print("SFZ engine initialised successfully.");
 
         // Set all patches SFZ layers as not loaded yet, and load all patches.
-        foreach (Patch* patch, mPatches) {
+        foreach (PatchPtr patch, mPatches) {
             foreach (PatchLayerPtr layer, patch->getPluginLayerList()) {
                 // Unload layer but do not try to remove from sfz engine
                 if (layer->sfzData.portsInJackEngine) {
@@ -1067,7 +1065,7 @@ void KonfytPatchEngine::onProjectPatchURIsNeedUdating()
 {
     if (!mCurrentProject) { return; }
 
-    foreach (Patch* patch, mCurrentProject->getPatchList()) {
+    foreach (PatchPtr patch, mCurrentProject->getPatchList()) {
         updatePatchLayersURIs(patch);
     }
 }
@@ -1077,7 +1075,7 @@ void KonfytPatchEngine::onProjectModifiedStateChanged(bool modified)
     if (!modified) {
         // Modified == false means project was saved. Create new patch reset
         // snapshots.
-        foreach (Patch* patch, mCurrentProject->getPatchList()) {
+        foreach (PatchPtr patch, mCurrentProject->getPatchList()) {
             patch->createLayerResetSnapshots();
         }
     }

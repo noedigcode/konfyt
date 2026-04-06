@@ -36,12 +36,12 @@ void PatchListWidgetAdapter::init(GidListWidget* listWidget)
             this, &PatchListWidgetAdapter::onListWidgetItemMoved);
 }
 
-void PatchListWidgetAdapter::addPatch(Patch *patch)
+void PatchListWidgetAdapter::addPatch(PatchPtr patch)
 {
     insertPatch(patch, mListWidget->count());
 }
 
-void PatchListWidgetAdapter::insertPatch(Patch *patch, int index)
+void PatchListWidgetAdapter::insertPatch(PatchPtr patch, int index)
 {
     KONFYT_ASSERT(!patchDataMap.contains(patch));
 
@@ -53,14 +53,14 @@ void PatchListWidgetAdapter::insertPatch(Patch *patch, int index)
     updatePatchItem(patch);
 }
 
-void PatchListWidgetAdapter::addPatches(QList<Patch *> patches)
+void PatchListWidgetAdapter::addPatches(QList<PatchPtr> patches)
 {
-    foreach (Patch* p, patches) {
+    foreach (PatchPtr p, patches) {
         addPatch(p);
     }
 }
 
-void PatchListWidgetAdapter::removePatch(Patch *patch)
+void PatchListWidgetAdapter::removePatch(PatchPtr patch)
 {
     KONFYT_ASSERT(patchDataMap.contains(patch));
     KONFYT_ASSERT(itemPatchMap.values().contains(patch));
@@ -71,7 +71,7 @@ void PatchListWidgetAdapter::removePatch(Patch *patch)
     updateAll();
 }
 
-void PatchListWidgetAdapter::patchModified(Patch *patch)
+void PatchListWidgetAdapter::patchModified(PatchPtr patch)
 {
     updatePatchItem(patch);
 }
@@ -115,7 +115,7 @@ void PatchListWidgetAdapter::setPatchNotesVisible(bool visible)
     updateAll();
 }
 
-void PatchListWidgetAdapter::setPatchLoaded(Patch *patch, bool loaded)
+void PatchListWidgetAdapter::setPatchLoaded(PatchPtr patch, bool loaded)
 {
     if (patch == nullptr) { return; }
     KONFYT_ASSERT_RETURN(patchDataMap.contains(patch));
@@ -125,9 +125,9 @@ void PatchListWidgetAdapter::setPatchLoaded(Patch *patch, bool loaded)
     updatePatchItem(patch);
 }
 
-void PatchListWidgetAdapter::setCurrentPatch(Patch *patch)
+void PatchListWidgetAdapter::setCurrentPatch(PatchPtr patch)
 {
-    Patch* lastPatch = mCurrentPatch;
+    PatchPtr lastPatch = mCurrentPatch;
     mCurrentPatch = patch;
 
     if (lastPatch) { updatePatchIcon(lastPatch); }
@@ -142,7 +142,7 @@ void PatchListWidgetAdapter::setCurrentPatch(Patch *patch)
 
 void PatchListWidgetAdapter::onListWidgetCurrentChanged(QListWidgetItem *item)
 {
-    Patch* patch = itemPatchMap.value(item);
+    PatchPtr patch = itemPatchMap.value(item);
     emit patchSelected(patch);
 }
 
@@ -153,7 +153,7 @@ void PatchListWidgetAdapter::onListWidgetItemMoved(QListWidgetItem* /*item*/,
     updateAll();
 }
 
-void PatchListWidgetAdapter::updatePatchItem(Patch *patch)
+void PatchListWidgetAdapter::updatePatchItem(PatchPtr patch)
 {
     KONFYT_ASSERT_RETURN(patchDataMap.contains(patch));
     PatchData data = patchDataMap.value(patch);
@@ -178,7 +178,7 @@ void PatchListWidgetAdapter::updatePatchItem(Patch *patch)
     updatePatchIcon(patch);
 }
 
-void PatchListWidgetAdapter::updatePatchIcon(Patch *patch)
+void PatchListWidgetAdapter::updatePatchIcon(PatchPtr patch)
 {
     if (!patchDataMap.contains(patch)) {
         // This could be the case if a patch was removed
@@ -200,7 +200,7 @@ void PatchListWidgetAdapter::updatePatchIcon(Patch *patch)
 
 void PatchListWidgetAdapter::updateAll()
 {
-    foreach (Patch* patch, patchDataMap.keys()) {
+    foreach (PatchPtr patch, patchDataMap.keys()) {
         updatePatchItem(patch);
     }
 }

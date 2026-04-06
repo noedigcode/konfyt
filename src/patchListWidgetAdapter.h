@@ -37,22 +37,22 @@ public:
     explicit PatchListWidgetAdapter(QObject *parent = nullptr);
 
     void init(GidListWidget* listWidget);
-    void addPatch(Patch* patch);
-    void insertPatch(Patch* patch, int index);
-    void addPatches(QList<Patch*> patches);
-    void removePatch(Patch* patch);
-    void patchModified(Patch* patch);
+    void addPatch(PatchPtr patch);
+    void insertPatch(PatchPtr patch, int index);
+    void addPatches(QList<PatchPtr> patches);
+    void removePatch(PatchPtr patch);
+    void patchModified(PatchPtr patch);
     void clear();
     void moveSelectedPatchUp();
     void moveSelectedPatchDown();
     void setPatchNumbersVisible(bool visible);
     void setPatchNotesVisible(bool visible);
-    void setPatchLoaded(Patch* patch, bool loaded);
-    void setCurrentPatch(Patch* patch);
+    void setPatchLoaded(PatchPtr patch, bool loaded);
+    void setCurrentPatch(PatchPtr patch);
 
 signals:
     /* Emitted when current patch selection changed. nullptr if no patch is selected. */
-    void patchSelected(Patch* patch);
+    void patchSelected(PatchPtr patch);
     void patchMoved(int indexFrom, int indexTo);
 
 private:
@@ -64,17 +64,17 @@ private:
     const QString notenames = "CDEFGAB";
 
     GidListWidget* mListWidget = nullptr;
-    QMap<Patch*, PatchData> patchDataMap;
-    QMap<QListWidgetItem*, Patch*> itemPatchMap;
+    QMap<PatchPtr, PatchData> patchDataMap;
+    QMap<QListWidgetItem*, PatchPtr> itemPatchMap;
     bool mNumbersVisible = true;
     bool mNotesVisible = false;
-    Patch* mCurrentPatch = nullptr;
+    PatchPtr mCurrentPatch;
 
 private slots:
     void onListWidgetCurrentChanged(QListWidgetItem* item);
     void onListWidgetItemMoved(QListWidgetItem* item, int from, int to);
-    void updatePatchItem(Patch* patch);
-    void updatePatchIcon(Patch* patch);
+    void updatePatchItem(PatchPtr patch);
+    void updatePatchIcon(PatchPtr patch);
     void updateAll();
     void moveItem(int indexFrom, int indexTo);
 };

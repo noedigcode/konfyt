@@ -226,69 +226,63 @@ void Project::setResetOption(KonfytReset option)
     }
 }
 
-void Project::addPatch(Patch *newPatch)
+void Project::addPatch(PatchPtr newPatch)
 {
-    patchList.append(newPatch);
+    mPatches.append(newPatch);
     setModified(true);
     patchURIsNeedUpdating();
 }
 
-void Project::insertPatch(Patch *newPatch, int index)
+void Project::insertPatch(PatchPtr newPatch, int index)
 {
-    patchList.insert(index, newPatch);
+    mPatches.insert(index, newPatch);
     setModified(true);
     patchURIsNeedUpdating();
 }
 
-/* Removes the patch from project and returns the pointer.
- * Note that the pointer has not been freed.
- * Returns nullptr if index out of bounds. */
-Patch *Project::removePatch(int i)
+/* Removes the patch with the specified index from project and returns the
+ * patch, or a null pointer if the specified index is out of bounds. */
+PatchPtr Project::removePatch(int index)
 {
-    if ( (i>=0) && (i<patchList.count())) {
-        Patch* patch = patchList[i];
-        patchList.removeAt(i);
+    PatchPtr ret;
+    if ( (index >= 0) && (index < mPatches.count())) {
+        ret = mPatches[index];
+        mPatches.removeAt(index);
         setModified(true);
         patchURIsNeedUpdating();
-        return patch;
-    } else {
-        return nullptr;
     }
+    return ret;
 }
 
 void Project::movePatch(int indexFrom, int indexTo)
 {
-    KONFYT_ASSERT_RETURN( (indexFrom >= 0) && (indexFrom < patchList.count()) );
-    KONFYT_ASSERT_RETURN( (indexTo >= 0) && (indexTo < patchList.count()) );
+    KONFYT_ASSERT_RETURN( (indexFrom >= 0) && (indexFrom < mPatches.count()) );
+    KONFYT_ASSERT_RETURN( (indexTo >= 0) && (indexTo < mPatches.count()) );
 
-    patchList.move(indexFrom, indexTo);
+    mPatches.move(indexFrom, indexTo);
     setModified(true);
     patchURIsNeedUpdating();
 }
 
-Patch *Project::getPatch(int i)
+PatchPtr Project::getPatch(int index)
 {
-    if ( (i>=0) && (i<patchList.count())) {
-        return patchList.at(i);
-    } else {
-        return nullptr;
-    }
+    return mPatches.value(index);
 }
 
 /* Returns the index of the specified patch and -1 if invalid. */
-int Project::getPatchIndex(Patch *patch)
+int Project::getPatchIndex(PatchPtr patch)
 {
-    return patchList.indexOf(patch);
+    return mPatches.indexOf(patch);
 }
 
-QList<Patch *> Project::getPatchList()
+QList<PatchPtr> Project::getPatchList()
 {
-    return patchList;
+    return mPatches;
 }
 
 int Project::getNumPatches()
 {
-    return patchList.count();
+    return mPatches.count();
 }
 
 QString Project::getDirPath()
@@ -1353,11 +1347,11 @@ void Project::writeToXmlStream(QXmlStreamWriter* stream)
     stream->writeTextElement(XML_PRJ_RESET_OPTION, konfytResetToString(mResetOption));
 
     // Write patches
-    for (int i=0; i<patchList.count(); i++) {
+    for (int i = 0; i < mPatches.count(); i++) {
 
         stream->writeStartElement(XML_PRJ_PATCH);
         // Patch properties
-        Patch* pat = patchList.at(i);
+        PatchPtr pat = mPatches.at(i);
         QString patchPathRel = QString("%1/%2_%3.%4")
                                     .arg(PROJECT_PATCH_DIR)
                                     .arg(i)
@@ -1531,7 +1525,7 @@ void Project::readFromXmlStream(QXmlStreamReader* r)
     r->setNamespaceProcessing(false);
 
     QString patchPathRel;
-    patchList.clear();
+    mPatches.clear();
     midiInPortMap.clear();
     midiOutPortMap.clear();
     clearExternalApps();
@@ -1566,12 +1560,12 @@ void Project::readFromXmlStream(QXmlStreamReader* r)
                 }
 
                 // Add new patch
-                Patch* pt = new Patch();
+                PatchPtr patch(new Patch());
                 QString errors;
                 QString patchPathAbs = mProjectDirpath + "/" + patchPathRel;
                 print("loadProject: Loading patch " + patchPathRel);
-                if (pt->loadPatchFromFile(patchPathAbs, &errors)) {
-                    this->addPatch(pt);
+                if (patch->loadPatchFromFile(patchPathAbs, &errors)) {
+                    this->addPatch(patch);
                 } else {
                     // Error message on loading patch.
                     print("loadProject: Error loading patch: " + patchPathAbs);

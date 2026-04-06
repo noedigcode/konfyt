@@ -126,4 +126,6 @@ private:
     static constexpr const char* XML_PATCH_RESET_OPTION = "resetOption";
 };
 
+typedef QSharedPointer<Patch> PatchPtr;
+
 #endif // KONFYT_PATCH_H

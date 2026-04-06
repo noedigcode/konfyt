@@ -60,16 +60,16 @@ public:
     // -----------------------------------------------------------------------
     // Patches
 
-    void loadPatchAndSetCurrent(Patch* newPatch);
-    void loadPatch(Patch* patch);
+    void loadPatchAndSetCurrent(PatchPtr newPatch);
+    void loadPatch(PatchPtr patch);
     void reloadPatch();
-    void unloadPatch(Patch* patch);
+    void unloadPatch(PatchPtr patch);
     void unloadLayerFromEngines(PatchLayerPtr layer);
     void reloadLayer(PatchLayerPtr layer);
-    bool isPatchLoaded(Patch* patch);
+    bool isPatchLoaded(PatchPtr patch);
 
-    Patch* currentPatch();
-    void setPatchFilter(Patch* patch, MidiFilter filter);
+    PatchPtr currentPatch();
+    void setPatchFilter(PatchPtr patch, MidiFilter filter);
 
     // -----------------------------------------------------------------------
     // Modify layers
@@ -95,7 +95,7 @@ public:
 
     int getNumLayers() const;
     void removeLayer(PatchLayerPtr layer); // currentPatch
-    void removeLayer(Patch* patch, PatchLayerPtr layer);
+    void removeLayer(PatchPtr patch, PatchLayerPtr layer);
     void moveLayer(PatchLayerPtr layer, int newIndex);
 
     void addLayer(PatchLayerPtr layer);
@@ -113,11 +113,11 @@ signals:
     void sfzEngineErrorStringChanged(QString errorString);
     
 private:
-    Patch* mCurrentPatch = nullptr;
+    PatchPtr mCurrentPatch;
     ProjectPtr mCurrentProject;
     int mMidiPickupRange = 127;
 
-    QList<Patch*> mPatches;
+    QList<PatchPtr> mPatches;
 
     void loadSfzLayer(PatchLayerPtr layer);
     void loadSoundfontLayer(PatchLayerPtr layer);
@@ -125,9 +125,9 @@ private:
     void loadMidiOutputPort(PatchLayerPtr layer);
     void updateLayerRouting(PatchLayerPtr layer);
     void updateLayerGain(PatchLayerPtr layer);
-    void activatePatchLayerRoutesForSoloMute(Patch* patch);
+    void activatePatchLayerRoutesForSoloMute(PatchPtr patch);
     void setLayerActive(PatchLayerPtr layer, bool active);
-    void updateLayerPatchMidiFilterInJackEngine(Patch* patch,
+    void updateLayerPatchMidiFilterInJackEngine(PatchPtr patch,
                                                 PatchLayerPtr layer);
 
     void updateLayerBlockMidiDirectThroughInJack(PatchLayerPtr patchLayer);
@@ -142,7 +142,7 @@ private:
 
     KonfytJackEngine* jack = nullptr;
 
-    void updatePatchLayersURIs(Patch* patch);
+    void updatePatchLayersURIs(PatchPtr patch);
 
 private slots:
     void onSfzEngineInitDone(QString error);

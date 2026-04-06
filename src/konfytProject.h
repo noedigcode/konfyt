@@ -124,13 +124,13 @@ public:
     bool isModified();
     void setModified(bool mod);
 
-    void addPatch(Patch* newPatch);
-    void insertPatch(Patch* newPatch, int index);
-    Patch* removePatch(int i);
+    void addPatch(PatchPtr newPatch);
+    void insertPatch(PatchPtr newPatch, int index);
+    PatchPtr removePatch(int index);
     void movePatch(int indexFrom, int indexTo);
-    Patch* getPatch(int i);
-    int getPatchIndex(Patch* patch);
-    QList<Patch*> getPatchList();
+    PatchPtr getPatch(int index);
+    int getPatchIndex(PatchPtr patch);
+    QList<PatchPtr> getPatchList();
     int getNumPatches();
 
     QString getDirPath();
@@ -271,7 +271,7 @@ signals:
     void externalAppModified(int id);
     
 private:
-    QList<Patch*> patchList;
+    QList<PatchPtr> mPatches;
     QString mProjectDirpath;
     QString mProjectName = NEW_PROJECT_DEFAULT_NAME;
     QString mProjectFilename;
