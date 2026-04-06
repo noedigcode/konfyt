@@ -201,34 +201,67 @@ void PatchLayerWidget::setUpGUI()
 
     if (mPatchLayer->layerType() == PatchLayer::TypeSoundfontProgram) {
 
-        mFilepath = mPatchLayer->soundfontData.parentSoundfont;
+        mFilepath = mPatchLayer->soundfontData.soundfontFilePath;
         // Display soundfont and program name
-        text = (mPatchLayer->soundfontData.parentSoundfont + "/" +
-                mPatchLayer->soundfontData.program.name);
-        tooltip = text;
+        QString filename = QFileInfo(mFilepath).fileName();
+        text = QString("%1/%2").arg(filename)
+                .arg(mPatchLayer->soundfontData.program.name);
+        tooltip = mFilepath;
 
     } else if (mPatchLayer->layerType() == PatchLayer::TypeSfz) {
 
         mFilepath = mPatchLayer->sfzData.path;
         // Display sfz name
-        text = mPatchLayer->sfzData.path;
-        tooltip = mPatchLayer->name() + ": " + mPatchLayer->sfzData.path;
+        QFileInfo fi(mFilepath);
+        QString filename = fi.fileName();
+        QString parentDir = QFileInfo(fi.path()).fileName();
+        if (fi.baseName().toLower() == parentDir.toLower()) {
+            text = filename;
+        } else {
+            text = QString("%1/%2").arg(parentDir, filename);
+        }
+        tooltip = mFilepath;
 
     } else if (mPatchLayer->layerType() == PatchLayer::TypeMidiOut) {
 
-        // Display port id and name
-        int portId = mPatchLayer->midiOutputPortData.portIdInProject;
-        text = "MIDI Out " + n2s(portId);
+        // Layer text
+
+        QString inPortText;
+        QString outPortText;
+
+        bool flagError = false;
+        int inPortId = mPatchLayer->midiInPortIdInProject();
+        int outPortId = mPatchLayer->midiOutputPortData.portIdInProject;
         if (mProject) {
-            // TODO: setErrorMessage should not be done here, it should be set
-            //       in the engine when loading the patch
-            if (mProject->midiOutPort_exists(portId)) {
-                text = text + ": " + mProject->midiOutPort_getPort(portId)->portName;
+            Project::MidiPortPtr inPort = mProject->midiInPort_getPort(inPortId);
+            if (inPort) {
+                inPortText = inPort->name;
             } else {
-                mPatchLayer->setErrorMessage("No MIDI out port " + n2s(portId) + " in project.");
+                inPortText = QString("[No port %1]").arg(inPortId);
+                flagError = true;
             }
+            Project::MidiPortPtr outPort = mProject->midiOutPort_getPort(outPortId);
+            if (outPort) {
+                outPortText = outPort->name;
+            } else {
+                outPortText = QString("[No port %1]").arg(outPortId);
+                flagError = true;
+            }
+        } else {
+            inPortText = QString::number(inPortId);
+            outPortText = QString::number(outPortId);
         }
+
+        text = QString("MIDI: %1 → %2").arg(inPortText, outPortText);
+
+        if (flagError) {
+            // TODO: setErrorMessage should not be done here, it should be set
+            // in the engine when loading the patch
+            mPatchLayer->setErrorMessage(text);
+        }
+
         gainSliderVisible = false;
+
         // Use right toolbutton as MIDI output channel
         int outchan = mPatchLayer->midiFilter().outChan;
         if (outchan >= 0) {
@@ -240,18 +273,43 @@ void PatchLayerWidget::setUpGUI()
 
     } else if (mPatchLayer->layerType() == PatchLayer::TypeAudioIn ) {
 
-        // Display port id and name
-        int portId = mPatchLayer->audioInPortData.portIdInProject;
-        text = "Audio In " + n2s(portId);
+        // Layer text
+
+        QString inPortText;
+        QString outPortText;
+
+        bool flagError = false;
+        int inPortId = mPatchLayer->audioInPortData.portIdInProject;
+        int outPortId = mPatchLayer->busIdInProject();
+
         if (mProject) {
-            // TODO: setErrorMessage should not be done here, it should be set
-            //       in the engine when loading the patch
-            if (mProject->audioInPort_exists(portId)) {
-                text = text + ": " + mProject->audioInPort_getPort(portId)->name;
+            Project::AudioPortPtr inPort = mProject->audioInPort_getPort(inPortId);
+            if (inPort) {
+                inPortText = inPort->name;
             } else {
-                mPatchLayer->setErrorMessage("No audio in port " + n2s(portId) + " in project.");
+                inPortText = QString("[No port %1]").arg(inPortId);
+                flagError = true;
             }
+            Project::AudioPortPtr outPort = mProject->audioBus_getBus(outPortId);
+            if (outPort) {
+                outPortText = outPort->name;
+            } else {
+                outPortText = QString("[No port %1]").arg(outPortId);
+                flagError = true;
+            }
+        } else {
+            inPortText = QString::number(inPortId);
+            outPortText = QString::number(outPortId);
         }
+
+        text = QString("Audio: %1 → %2").arg(inPortText, outPortText);
+
+        if (flagError) {
+            // TODO: setErrorMessage should not be done here, it should be set
+            // in the engine when loading the patch
+            mPatchLayer->setErrorMessage(text);
+        }
+
         backgroundFilter = false;
 
     } else {

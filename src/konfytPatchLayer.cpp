@@ -109,7 +109,7 @@ void PatchLayer::writeSoundfontDataToXmlStream(QXmlStreamWriter *stream) const
     stream->writeStartElement(XML_SF_LAYER);
 
     KonfytSoundPreset p = soundfontData.program;
-    stream->writeTextElement(XML_SF_FILENAME, soundfontData.parentSoundfont);
+    stream->writeTextElement(XML_SF_FILENAME, soundfontData.soundfontFilePath);
     stream->writeTextElement(XML_SF_BANK, n2s(p.bank));
     stream->writeTextElement(XML_SF_PROGRAM, n2s(p.program));
     stream->writeTextElement(XML_SF_NAME, p.name);
@@ -144,7 +144,7 @@ void PatchLayer::readSoundfontDataFromXmlStream(QXmlStreamReader *r, QString *er
     while (r->readNextStartElement()) { // layer properties
 
         if (r->name() == XML_SF_FILENAME) {
-            sfData.parentSoundfont = r->readElementText();
+            sfData.soundfontFilePath = r->readElementText();
         } else if (r->name() == XML_SF_BANK) {
             sfData.program.bank = r->readElementText().toInt();
         } else if (r->name() == XML_SF_PROGRAM) {
@@ -463,7 +463,7 @@ void PatchLayer::initLayer(SoundfontData newLayerData)
 {
     mLayerType = TypeSoundfontProgram;
     soundfontData = newLayerData;
-    mName = soundfontData.parentSoundfont + "/" + soundfontData.program.name;
+    mName = soundfontData.soundfontFilePath + "/" + soundfontData.program.name;
     mMidiFilter.passProg = false;
 }
 

@@ -44,7 +44,7 @@ public:
 
     struct SoundfontData
     {
-        QString parentSoundfont;
+        QString soundfontFilePath;
         KonfytSoundPreset program;
         KfFluidSynth* synthInEngine = nullptr;
         KfJackPluginPorts* portsInJackEngine = nullptr;

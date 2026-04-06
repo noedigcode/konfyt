@@ -236,12 +236,11 @@ void Patch::addLayer(PatchLayerPtr layer)
     mLayers.append(layer);
 }
 
-PatchLayerPtr Patch::addSfLayer(QString soundfontPath,
-                                            KonfytSoundPreset preset)
+PatchLayerPtr Patch::addSfLayer(QString soundfontPath, KonfytSoundPreset preset)
 {
     PatchLayer::SoundfontData sfData;
     sfData.program = preset;
-    sfData.parentSoundfont = soundfontPath;
+    sfData.soundfontFilePath = soundfontPath;
 
     PatchLayerPtr layer(new PatchLayer());
     layer->initLayer(sfData);

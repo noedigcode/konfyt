@@ -954,7 +954,7 @@ void KonfytPatchEngine::loadSoundfontLayer(PatchLayerPtr layer)
     // Load in Fluidsynth engine
     layer->soundfontData.synthInEngine =
             fluidsynthEngine.addSoundfontProgram(
-                layer->soundfontData.parentSoundfont,
+                layer->soundfontData.soundfontFilePath,
                 layer->soundfontData.program);
     if (!layer->soundfontData.synthInEngine) {
         layer->setErrorMessage("Failed to load soundfont.");

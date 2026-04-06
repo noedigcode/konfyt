@@ -453,7 +453,7 @@ void MainWindow::showScriptEditor()
         script = mScriptEditPort->script;
         scriptEnabled = mScriptEditPort->scriptEnabled;
         passMidiThrough = mScriptEditPort->passMidiThrough;
-        title = QString("Port: %1").arg(mScriptEditPort->portName);
+        title = QString("Port: %1").arg(mScriptEditPort->name);
 
         Project::MidiPortPtr port = mScriptEditPort;
         scriptEngine.scriptErrorString(port, this, [=](QString errorText)
@@ -559,7 +559,7 @@ void MainWindow::onLayerScriptPrint(PatchLayerPtr patchLayer, QString msg)
 
 void MainWindow::onPortScriptPrint(Project::MidiPortPtr prjPort, QString msg)
 {
-    onJsEnginePrint(QString("script: [%1] %2").arg(prjPort->portName, msg));
+    onJsEnginePrint(QString("script: [%1] %2").arg(prjPort->name, msg));
 }
 
 void MainWindow::onLayerScriptErrorStatusChanged(PatchLayerPtr patchLayer,
@@ -709,7 +709,7 @@ QTreeWidgetItem* MainWindow::scanProjectScripts(QString path, ItemScriptMap* map
         foreach (Project::MidiPortPtr port, midiInPorts) {
             if (port->script.trimmed().isEmpty()) { continue; }
             QTreeWidgetItem* item = new QTreeWidgetItem();
-            item->setText(0, QString("Port %1").arg(port->portName));
+            item->setText(0, QString("Port %1").arg(port->name));
             item->setIcon(0, mFileIcon);
             mItemScriptMap.insert(item, port->script);
             projectItem->addChild(item);
@@ -1511,7 +1511,7 @@ void MainWindow::updatePortsBussesTree()
         KONFYT_ASSERT_CONTINUE(!p.isNull());
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setFlags(item->flags() | Qt::ItemIsEditable);
-        item->setText(0, p->portName);
+        item->setText(0, p->name);
         tree_midiOutMap.insert(item, id);
         midiOutParent->addChild(item);
     }
@@ -1525,7 +1525,7 @@ void MainWindow::updatePortsBussesTree()
         if (!p) { continue; }
         QTreeWidgetItem *item = new QTreeWidgetItem();
         item->setFlags(item->flags() | Qt::ItemIsEditable);
-        item->setText(0, p->portName);
+        item->setText(0, p->name);
         tree_midiInMap.insert(item, id);
         midiInParent->addChild(item);
     }
@@ -2281,7 +2281,7 @@ void MainWindow::updateMidiOutPortsMenu(QMenu *menu)
     foreach (int id, midiOutIds) {
         Project::MidiPortPtr projectPort = prj->midiOutPort_getPort(id);
         KONFYT_ASSERT_CONTINUE(!projectPort.isNull());
-        QAction* action = patchMidiOutPortsMenu.addAction( n2s(id) + " " + projectPort->portName);
+        QAction* action = patchMidiOutPortsMenu.addAction( n2s(id) + " " + projectPort->name);
         action->setProperty(PTY_MIDI_OUT_PORT, id);
     }
 
@@ -4188,7 +4188,7 @@ void MainWindow::updateMidiInPortsWarnings()
 
         if (prjPort->clients.count() == 0) {
             errorText = QString("MIDI-in \"%1\" not connected")
-                    .arg(prjPort->portName);
+                    .arg(prjPort->name);
         }
 
         // Check if all connected clients are active
@@ -4203,7 +4203,7 @@ void MainWindow::updateMidiInPortsWarnings()
         }
         if (notRunning) {
             errorText = QString("MIDI-in \"%1\" client(s) inactive")
-                    .arg(prjPort->portName);
+                    .arg(prjPort->name);
         }
 
         // Update GUI item
@@ -4241,7 +4241,7 @@ void MainWindow::updateMidiOutPortWarnings()
 
         if (prjPort->clients.count() == 0) {
             errorText = QString("MIDI-out \"%1\" not connected")
-                    .arg(prjPort->portName);
+                    .arg(prjPort->name);
         }
 
         // Check if clients are available
@@ -4256,7 +4256,7 @@ void MainWindow::updateMidiOutPortWarnings()
         }
         if (notRunning) {
             errorText = QString("MIDI-out \"%1\" client(s) inactive")
-                    .arg(prjPort->portName);
+                    .arg(prjPort->name);
         }
 
         // Update GUI item
@@ -4602,7 +4602,7 @@ void MainWindow::scriptWarningsOnScriptEnginePortErrorStatusChanged(
         ui->listWidget_Warnings->addItem(item);
     }
 
-    item->setText(QString("Port script error: %1").arg(prjPort->portName));
+    item->setText(QString("Port script error: %1").arg(prjPort->name));
 }
 
 void MainWindow::scriptWarningsOnPatchLayerUnloaded(PatchLayerPtr patchLayer)
@@ -5395,7 +5395,7 @@ void MainWindow::updateMidiInPortsMenu(QMenu *menu, int currentPortId)
     foreach(int id, midiInIds) {
         Project::MidiPortPtr prjPort = prj->midiInPort_getPort(id);
         if (!prjPort) { continue; }
-        QAction* action = menu->addAction( n2s(id) + " " + prjPort->portName);
+        QAction* action = menu->addAction( n2s(id) + " " + prjPort->name);
         action->setProperty(PTY_MIDI_IN_PORT, id);
         if (id == currentPortId) {
             action->setIcon(QIcon("://icons/right_w_outline.png"));
@@ -5435,7 +5435,7 @@ void MainWindow::updateMidiInChannelMenu(QMenu *menu, int currentChannel)
 
 void MainWindow::updateLayerToolMenu()
 {
-    KonfytLayerWidget* layerWidget = layerToolMenuSourceitem;
+    PatchLayerWidget* layerWidget = layerToolMenuSourceitem;
     PatchLayerPtr patchLayer = layerWidget->getPatchLayer();
     PatchLayer::LayerType type = patchLayer->layerType();
 
@@ -6370,7 +6370,7 @@ void MainWindow::handlePortMidiEvent(KfJackMidiRxEvent rxEvent)
         if (portIdInPrj >= 0) {
             Project::MidiPortPtr prjPort = prj->midiInPort_getPort(portIdInPrj);
             if (prjPort) {
-                portName = prjPort->portName;
+                portName = prjPort->name;
             }
         }
         print("MIDI EVENT " + ev.toString() + " from port " + portName);
@@ -6731,21 +6731,27 @@ void MainWindow::on_actionRemove_BusPort_triggered()
         if (prj->audioBus_count() == 1) { return; } // Do not remove last bus
         id = tree_busMap.value(item);
         bus = prj->audioBus_getBus(id);
-        name = bus->name;
+        if (bus) {
+            name = bus->name;
+        }
     } else if (audioInSelected) {
         id = tree_audioInMap.value(item);
         audioInPort = prj->audioInPort_getPort(id);
-        name = audioInPort->name;
+        if (audioInPort) {
+            name = audioInPort->name;
+        }
     } else if (midiOutSelected) {
         id = tree_midiOutMap.value(item);
         midiOutPort = prj->midiOutPort_getPort(id);
-        name = midiOutPort->portName;
+        if (midiOutPort) {
+            name = midiOutPort->name;
+        }
     } else if (midiInSelected) {
         if (prj->midiInPort_count() == 1) { return; } // Do not remove last MIDI in port
         id = tree_midiInMap.value(item);
         midiInPort = prj->midiInPort_getPort(id);
         if (midiInPort) {
-            name = midiInPort->portName;
+            name = midiInPort->name;
         }
     }
 
@@ -6888,7 +6894,7 @@ void MainWindow::on_actionRemove_BusPort_triggered()
                 " Are you sure you want to delete the port?"
                 " All layers using this port will be assigned to port \"%2\".")
                     .arg(selectedText)
-                    .arg(prj->midiInPort_getPort(portToChangeTo)->portName);
+                    .arg(prj->midiInPort_getPort(portToChangeTo)->name);
             int choice = msgBoxYesNo(text, detailedText);
             if (choice == QMessageBox::Yes) {
                 // User chose to remove port

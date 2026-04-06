@@ -346,7 +346,7 @@ int Project::midiInPort_addPort(QString portName)
 {
     MidiPortPtr p(new MidiPort());
 
-    p->portName = portName;
+    p->name = portName;
 
     int portId = midiInPort_getUniqueId();
     midiInPortMap.insert(portId, p);
@@ -425,7 +425,7 @@ void Project::midiInPort_setName(int portId, QString name)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    midiInPortMap[portId]->portName = name;
+    midiInPortMap[portId]->name = name;
     setModified(true);
     emit midiInPortNameChanged(portId);
 }
@@ -484,7 +484,7 @@ void Project::midiInPort_setPortFilter(int portId, MidiFilter filter)
 int Project::midiOutPort_addPort(QString portName)
 {
     MidiPortPtr p(new MidiPort());
-    p->portName = portName;
+    p->name = portName;
 
     int portId = midiOutPort_getUniqueId();
     midiOutPortMap.insert(portId, p);
@@ -960,10 +960,10 @@ bool Project::audioInPort_exists(int portId) const
     return audioInPortMap.contains(portId);
 }
 
+/* Returns the audio port corresponding to the specified portId, or a null
+ * pointer if a port doesn't exist with the specified portId. */
 Project::AudioPortPtr Project::audioInPort_getPort(int portId) const
 {
-    KONFYT_ASSERT(audioInPortMap.contains(portId));
-
     return audioInPortMap.value(portId);
 }
 
@@ -1024,7 +1024,7 @@ void Project::midiOutPort_setName(int portId, QString name)
     MidiPortPtr p = midiOutPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
-    p->portName = name;
+    p->name = name;
 
     setModified(true);
     emit midiOutPortNameChanged(portId);
@@ -1044,10 +1044,10 @@ bool Project::midiOutPort_exists(int portId) const
     return midiOutPortMap.contains(portId);
 }
 
+/* Returns a port pointer corresponding to the specified portId, or a null
+ * pointer if a port with this portId doesn't exist. */
 Project::MidiPortPtr Project::midiOutPort_getPort(int portId) const
 {
-    KONFYT_ASSERT(midiOutPortMap.contains(portId));
-
     return midiOutPortMap.value(portId);
 }
 
@@ -1385,7 +1385,7 @@ void Project::writeToXmlStream(QXmlStreamWriter* stream)
         MidiPortPtr p = midiInPort_getPort(id);
         stream->writeStartElement(XML_PRJ_MIDI_IN_PORT);
         stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_ID, n2s(id));
-        stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_NAME, p->portName);
+        stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_NAME, p->name);
         p->filter.writeToXMLStream(stream);
         foreach (QString client, p->clients) {
             stream->writeTextElement(XML_PRJ_MIDI_IN_PORT_CLIENT, client);
@@ -1403,7 +1403,7 @@ void Project::writeToXmlStream(QXmlStreamWriter* stream)
         MidiPortPtr p = midiOutPort_getPort(id);
         stream->writeStartElement(XML_PRJ_MIDI_OUT_PORT);
         stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_ID, n2s(id));
-        stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_NAME, p->portName);
+        stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_NAME, p->name);
         foreach (QString client, p->clients) {
             stream->writeTextElement(XML_PRJ_MIDI_OUT_PORT_CLIENT, client);
         }
@@ -1606,7 +1606,7 @@ void Project::readFromXmlStream(QXmlStreamReader* r)
                         if (r->name() == XML_PRJ_MIDI_IN_PORT_ID) {
                             id = r->readElementText().toInt();
                         } else if (r->name() == XML_PRJ_MIDI_IN_PORT_NAME) {
-                            p->portName = r->readElementText();
+                            p->name = r->readElementText();
                         } else if (r->name() == XML_PRJ_MIDI_IN_PORT_CLIENT) {
                             p->clients.append( r->readElementText() );
                         } else if (r->name() == MidiFilter::XML_MIDIFILTER) {
@@ -1638,7 +1638,7 @@ void Project::readFromXmlStream(QXmlStreamReader* r)
                         if (r->name() == XML_PRJ_MIDI_OUT_PORT_ID) {
                             id = r->readElementText().toInt();
                         } else if (r->name() == XML_PRJ_MIDI_OUT_PORT_NAME) {
-                            p->portName = r->readElementText();
+                            p->name = r->readElementText();
                         } else if (r->name() == XML_PRJ_MIDI_OUT_PORT_CLIENT) {
                             p->clients.append( r->readElementText() );
                         } else {

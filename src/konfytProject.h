@@ -64,7 +64,7 @@ public:
 
     struct MidiPort
     {
-        QString portName;
+        QString name;
         QStringList clients;
         KfJackMidiPort* jackPort = nullptr; // TODO THIS MUST NOT BE IN PROJECT
         MidiFilter filter = MidiFilter::allPassFilter();
