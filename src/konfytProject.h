@@ -283,22 +283,22 @@ private:
     void readPatchesFromProjectXml(Xml projectXml);
     void addPatchesToProjectXml(Xml* projectXml) const;
 
-    QMap<int, MidiPortPtr> midiInPortMap;
+    QMap<int, MidiPortPtr> mMidiInPortMap;
     int midiInPort_getUniqueId();
     void readMidiInPortsFromProjectXml(Xml projectXml);
     void addMidiInPortsToProjectXml(Xml* projectXml) const;
 
-    QMap<int, MidiPortPtr> midiOutPortMap;
+    QMap<int, MidiPortPtr> mMidiOutPortMap;
     int midiOutPort_getUniqueId();
     void readMidiOutPortsFromProjectXml(Xml projectXml);
     void addMidiOutPortsToProjectXml(Xml* projectXml) const;
 
-    QMap<int, AudioPortPtr> audioInPortMap;
+    QMap<int, AudioPortPtr> mAudioInPortMap;
     int audioInPort_getUniqueId();
     void readAudioInPortsFromProjectXml(Xml projectXml);
     void addAudioInPortsToProjectXml(Xml* projectXml) const;
 
-    QMap<int, AudioPortPtr> audioBusMap;
+    QMap<int, AudioPortPtr> mAudioBusMap;
     int audioBus_getUniqueId();
     void readBusesFromProjectXml(Xml projectXml);
     void addBusesToProjectXml(Xml* projectXml) const;

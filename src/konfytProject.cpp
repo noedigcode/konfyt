@@ -174,11 +174,11 @@ Result Project::loadProject(QString filepath)
     // Pre xml load
 
     mPatches.clear();
-    midiInPortMap.clear();
-    midiOutPortMap.clear();
+    mMidiInPortMap.clear();
+    mMidiOutPortMap.clear();
     clearExternalApps();
-    audioBusMap.clear();
-    audioInPortMap.clear();
+    mAudioBusMap.clear();
+    mAudioInPortMap.clear();
     mJackMidiConList.clear();
     mJackAudioConList.clear();
 
@@ -400,12 +400,12 @@ void Project::setProjectFileName(QString newName)
 
 QList<int> Project::midiInPort_getAllPortIds() const
 {
-    return midiInPortMap.keys();
+    return mMidiInPortMap.keys();
 }
 
 QList<Project::MidiPortPtr> Project::midiInPort_getAllPorts()
 {
-    return midiInPortMap.values();
+    return mMidiInPortMap.values();
 }
 
 int Project::midiInPort_addPort(QString portName)
@@ -415,7 +415,7 @@ int Project::midiInPort_addPort(QString portName)
     p->name = portName;
 
     int portId = midiInPort_getUniqueId();
-    midiInPortMap.insert(portId, p);
+    mMidiInPortMap.insert(portId, p);
 
     setModified(true);
 
@@ -426,36 +426,36 @@ void Project::midiInPort_removePort(int portId)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    midiInPortMap.remove(portId);
+    mMidiInPortMap.remove(portId);
     setModified(true);
 }
 
 bool Project::midiInPort_exists(int portId) const
 {
-    return midiInPortMap.contains(portId);
+    return mMidiInPortMap.contains(portId);
 }
 
 Project::MidiPortPtr Project::midiInPort_getPort(int portId) const
 {
     KONFYT_ASSERT_RETURN_VAL(midiInPort_exists(portId), MidiPortPtr());
 
-    return midiInPortMap.value(portId);
+    return mMidiInPortMap.value(portId);
 }
 
 /* Returns the port id corresponding to the specified port pointer, or -1 if the
  * specified port does not exist. */
 int Project::midiInPort_idFromPtr(MidiPortPtr p)
 {
-    return midiInPortMap.key(p, -1);
+    return mMidiInPortMap.key(p, -1);
 }
 
 int Project::midiInPort_getPortIdWithJackId(KfJackMidiPort *jackPort)
 {
     int ret = -1;
 
-    QList<int> ids = midiInPortMap.keys();
+    QList<int> ids = mMidiInPortMap.keys();
     foreach (int id, ids) {
-        MidiPortPtr p = midiInPortMap[id];
+        MidiPortPtr p = mMidiInPortMap[id];
         if (p->jackPort == jackPort) {
             ret = id;
             break;
@@ -469,7 +469,7 @@ int Project::midiInPort_getPortIdWithJackId(KfJackMidiPort *jackPort)
 int Project::midiInPort_getFirstPortId(int skipId)
 {
     int ret = -1;
-    QList<int> l = midiInPortMap.keys();
+    QList<int> l = mMidiInPortMap.keys();
     KONFYT_ASSERT_RETURN_VAL(l.count(), ret);
 
     for (int i=0; i < l.count(); i++) {
@@ -484,14 +484,14 @@ int Project::midiInPort_getFirstPortId(int skipId)
 
 int Project::midiInPort_count()
 {
-    return midiInPortMap.count();
+    return mMidiInPortMap.count();
 }
 
 void Project::midiInPort_setName(int portId, QString name)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    midiInPortMap[portId]->name = name;
+    mMidiInPortMap[portId]->name = name;
     setModified(true);
     emit midiInPortNameChanged(portId);
 }
@@ -500,7 +500,7 @@ void Project::midiInPort_setJackPort(int portId, KfJackMidiPort *jackport)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    midiInPortMap[portId]->jackPort = jackport;
+    mMidiInPortMap[portId]->jackPort = jackport;
     // Do not set the project modified
 }
 
@@ -509,7 +509,7 @@ QStringList Project::midiInPort_getClients(int portId)
     QStringList ret;
     KONFYT_ASSERT_RETURN_VAL(midiInPort_exists(portId), ret);
 
-    ret = midiInPortMap.value(portId)->clients;
+    ret = mMidiInPortMap.value(portId)->clients;
 
     return ret;
 }
@@ -518,7 +518,7 @@ void Project::midiInPort_addClient(int portId, QString client)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    MidiPortPtr p = midiInPortMap.value(portId);
+    MidiPortPtr p = mMidiInPortMap.value(portId);
     if (p) {
         p->clients.append(client);
         setModified(true);
@@ -529,7 +529,7 @@ void Project::midiInPort_removeClient(int portId, QString client)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    MidiPortPtr p = midiInPortMap.value(portId);
+    MidiPortPtr p = mMidiInPortMap.value(portId);
     if (p) {
         p->clients.removeAll(client);
         setModified(true);
@@ -540,7 +540,7 @@ void Project::midiInPort_setPortFilter(int portId, MidiFilter filter)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    MidiPortPtr p = midiInPortMap.value(portId);
+    MidiPortPtr p = mMidiInPortMap.value(portId);
     if (p) {
         p->filter = filter;
         setModified(true);
@@ -553,7 +553,7 @@ int Project::midiOutPort_addPort(QString portName)
     p->name = portName;
 
     int portId = midiOutPort_getUniqueId();
-    midiOutPortMap.insert(portId, p);
+    mMidiOutPortMap.insert(portId, p);
 
     setModified(true);
 
@@ -562,7 +562,7 @@ int Project::midiOutPort_addPort(QString portName)
 
 int Project::audioBus_getUniqueId()
 {
-    QList<int> l = audioBusMap.keys();
+    QList<int> l = mAudioBusMap.keys();
     return getUniqueIdNotInList( l );
 }
 
@@ -585,10 +585,10 @@ void Project::readBusesFromProjectXml(Xml projectXml)
                                             XML_BUS_IGNORE_GLOBAL_VOLUME));
 
         int id = busXml.childInt(XML_BUS_ID, audioBus_getUniqueId());
-        if (audioBusMap.contains(id)) {
+        if (mAudioBusMap.contains(id)) {
             print(QString("loadProject: Duplicate bus id detected: %1").arg(id));
         }
-        this->audioBusMap.insert(id, bus);
+        this->mAudioBusMap.insert(id, bus);
     }
 }
 
@@ -617,7 +617,7 @@ void Project::addBusesToProjectXml(Xml *projectXml) const
 
 int Project::midiInPort_getUniqueId()
 {
-    QList<int> l = midiInPortMap.keys();
+    QList<int> l = mMidiInPortMap.keys();
     return getUniqueIdNotInList( l );
 }
 
@@ -639,11 +639,11 @@ void Project::readMidiInPortsFromProjectXml(Xml projectXml)
 
         int id = portXml.childInt(XML_MIDI_IN_PORT_ID,
                                   midiInPort_getUniqueId());
-        if (midiInPortMap.contains(id)) {
+        if (mMidiInPortMap.contains(id)) {
             print(QString("loadProject: Duplicate midi in port id detected: %1")
                   .arg(id));
         }
-        this->midiInPortMap.insert(id, port);
+        this->mMidiInPortMap.insert(id, port);
     }
 }
 
@@ -667,7 +667,7 @@ void Project::addMidiInPortsToProjectXml(Xml *projectXml) const
 
 int Project::midiOutPort_getUniqueId()
 {
-    QList<int> l = midiOutPortMap.keys();
+    QList<int> l = mMidiOutPortMap.keys();
     return getUniqueIdNotInList( l );
 }
 
@@ -684,11 +684,11 @@ void Project::readMidiOutPortsFromProjectXml(Xml projectXml)
 
         int id = portXml.childInt(XML_MIDI_OUT_PORT_ID,
                                   midiOutPort_getUniqueId());
-        if (midiOutPortMap.contains(id)) {
+        if (mMidiOutPortMap.contains(id)) {
             print(QString("loadProject: Duplicate midi out port id detected: %1")
                   .arg(id));
         }
-        this->midiOutPortMap.insert(id, port);
+        this->mMidiOutPortMap.insert(id, port);
     }
 }
 
@@ -710,7 +710,7 @@ void Project::addMidiOutPortsToProjectXml(Xml *projectXml) const
 
 int Project::audioInPort_getUniqueId()
 {
-    QList<int> l = audioInPortMap.keys();
+    QList<int> l = mAudioInPortMap.keys();
     return getUniqueIdNotInList( l );
 }
 
@@ -734,11 +734,11 @@ void Project::readAudioInPortsFromProjectXml(Xml projectXml)
 
         int id = portXml.childInt(XML_AUDIOIN_PORT_ID,
                                   audioInPort_getUniqueId());
-        if (audioInPortMap.contains(id)) {
+        if (mAudioInPortMap.contains(id)) {
             print("loadProject: Duplicate audio in port id detected: "
                   + n2s(id));
         }
-        this->audioInPortMap.insert(id, port);
+        this->mAudioInPortMap.insert(id, port);
     }
 }
 
@@ -934,7 +934,7 @@ int Project::audioBus_add(QString busName)
     bus->name = busName;
 
     int busId = audioBus_getUniqueId();
-    audioBusMap.insert(busId, bus);
+    mAudioBusMap.insert(busId, bus);
 
     setModified(true);
 
@@ -943,41 +943,41 @@ int Project::audioBus_add(QString busName)
 
 void Project::audioBus_remove(int busId)
 {
-    KONFYT_ASSERT_RETURN(audioBusMap.contains(busId));
+    KONFYT_ASSERT_RETURN(mAudioBusMap.contains(busId));
 
-    audioBusMap.remove(busId);
+    mAudioBusMap.remove(busId);
     setModified(true);
 }
 
 int Project::audioBus_count()
 {
-    return audioBusMap.count();
+    return mAudioBusMap.count();
 }
 
 bool Project::audioBus_exists(int busId)
 {
-    return audioBusMap.contains(busId);
+    return mAudioBusMap.contains(busId);
 }
 
 Project::AudioPortPtr Project::audioBus_getBus(int busId) const
 {
-    KONFYT_ASSERT(audioBusMap.contains(busId));
+    KONFYT_ASSERT(mAudioBusMap.contains(busId));
 
-    return audioBusMap.value(busId);
+    return mAudioBusMap.value(busId);
 }
 
 /* Returns the bus id corresponding to the specified bus pointer, or -1 if the
  * specified bus does not exist. */
 int Project::audioBus_idFromPtr(AudioPortPtr p)
 {
-    return audioBusMap.key(p, -1);
+    return mAudioBusMap.key(p, -1);
 }
 
 /* Gets the first bus Id that is not skipId. */
 int Project::audioBus_getFirstBusId(int skipId)
 {
     int ret = -1;
-    QList<int> l = audioBusMap.keys();
+    QList<int> l = mAudioBusMap.keys();
 
     KONFYT_ASSERT(l.count());
 
@@ -993,18 +993,18 @@ int Project::audioBus_getFirstBusId(int skipId)
 
 QList<int> Project::audioBus_getAllBusIds() const
 {
-    return audioBusMap.keys();
+    return mAudioBusMap.keys();
 }
 
 QList<Project::AudioPortPtr> Project::audioBus_getAllBuses()
 {
-    return audioBusMap.values();
+    return mAudioBusMap.values();
 }
 
 void Project::audioBus_setName(int busId, QString name)
 {
     KONFYT_ASSERT_RETURN(audioBus_exists(busId));
-    audioBusMap[busId]->name = name;
+    mAudioBusMap[busId]->name = name;
     setModified(true);
     emit audioBusNameChanged(busId);
 }
@@ -1018,16 +1018,16 @@ void Project::audioBus_replace(int busId, AudioPortPtr newBus)
 /* Do not change the project's modified state. */
 void Project::audioBus_replace_noModify(int busId, AudioPortPtr newBus)
 {
-    KONFYT_ASSERT_RETURN(audioBusMap.contains(busId));
+    KONFYT_ASSERT_RETURN(mAudioBusMap.contains(busId));
 
-    audioBusMap.insert(busId, newBus);
+    mAudioBusMap.insert(busId, newBus);
 }
 
 void Project::audioBus_addClient(int busId, PortLeftRight leftRight, QString client)
 {
-    KONFYT_ASSERT_RETURN(audioBusMap.contains(busId));
+    KONFYT_ASSERT_RETURN(mAudioBusMap.contains(busId));
 
-    AudioPortPtr b = audioBusMap.value(busId);
+    AudioPortPtr b = mAudioBusMap.value(busId);
     if (!b) { return; }
 
     if (leftRight == Project::LeftPort) {
@@ -1045,9 +1045,9 @@ void Project::audioBus_addClient(int busId, PortLeftRight leftRight, QString cli
 
 void Project::audioBus_removeClient(int busId, PortLeftRight leftRight, QString client)
 {
-    KONFYT_ASSERT_RETURN(audioBusMap.contains(busId));
+    KONFYT_ASSERT_RETURN(mAudioBusMap.contains(busId));
 
-    AudioPortPtr b = audioBusMap.value(busId);
+    AudioPortPtr b = mAudioBusMap.value(busId);
     if (!b) { return; }
 
     if (leftRight == Project::LeftPort) {
@@ -1055,7 +1055,7 @@ void Project::audioBus_removeClient(int busId, PortLeftRight leftRight, QString 
     } else {
         b->rightClients.removeAll(client);
     }
-    audioBusMap.insert(busId, b);
+    mAudioBusMap.insert(busId, b);
     setModified(true);
 }
 
@@ -1072,12 +1072,12 @@ int Project::addExternalApp(ExternalApp app)
 
 QList<int> Project::audioInPort_getAllPortIds() const
 {
-    return audioInPortMap.keys();
+    return mAudioInPortMap.keys();
 }
 
 QList<Project::AudioPortPtr> Project::audioInPort_getAllPorts()
 {
-    return audioInPortMap.values();
+    return mAudioInPortMap.values();
 }
 
 int Project::audioInPort_add(QString portName)
@@ -1086,7 +1086,7 @@ int Project::audioInPort_add(QString portName)
     port->name = portName;
 
     int portId = audioInPort_getUniqueId();
-    audioInPortMap.insert(portId, port);
+    mAudioInPortMap.insert(portId, port);
 
     setModified(true);
 
@@ -1095,20 +1095,20 @@ int Project::audioInPort_add(QString portName)
 
 void Project::audioInPort_remove(int portId)
 {
-    KONFYT_ASSERT_RETURN(audioInPortMap.contains(portId));
+    KONFYT_ASSERT_RETURN(mAudioInPortMap.contains(portId));
 
-    audioInPortMap.remove(portId);
+    mAudioInPortMap.remove(portId);
     setModified(true);
 }
 
 int Project::audioInPort_count()
 {
-    return audioInPortMap.count();
+    return mAudioInPortMap.count();
 }
 
 void Project::audioInPort_setName(int portId, QString name)
 {
-    AudioPortPtr p = audioInPortMap.value(portId);
+    AudioPortPtr p = mAudioInPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
     p->name = name;
@@ -1119,7 +1119,7 @@ void Project::audioInPort_setName(int portId, QString name)
 
 void Project::audioInPort_setJackPorts(int portId, KfJackAudioPort *left, KfJackAudioPort *right)
 {
-    AudioPortPtr p = audioInPortMap.value(portId);
+    AudioPortPtr p = mAudioInPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
     p->leftJackPort = left;
@@ -1129,26 +1129,26 @@ void Project::audioInPort_setJackPorts(int portId, KfJackAudioPort *left, KfJack
 
 bool Project::audioInPort_exists(int portId) const
 {
-    return audioInPortMap.contains(portId);
+    return mAudioInPortMap.contains(portId);
 }
 
 /* Returns the audio port corresponding to the specified portId, or a null
  * pointer if a port doesn't exist with the specified portId. */
 Project::AudioPortPtr Project::audioInPort_getPort(int portId) const
 {
-    return audioInPortMap.value(portId);
+    return mAudioInPortMap.value(portId);
 }
 
 /* Returns the port id corresponding to the specified port pointer, or -1 if the
  * specified port does not exist. */
 int Project::audioInPort_idFromPtr(AudioPortPtr p)
 {
-    return audioInPortMap.key(p, -1);
+    return mAudioInPortMap.key(p, -1);
 }
 
 void Project::audioInPort_addClient(int portId, PortLeftRight leftRight, QString client)
 {
-    AudioPortPtr p = audioInPortMap.value(portId);
+    AudioPortPtr p = mAudioInPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
     if (leftRight == Project::LeftPort) {
@@ -1166,7 +1166,7 @@ void Project::audioInPort_addClient(int portId, PortLeftRight leftRight, QString
 
 void Project::audioInPort_removeClient(int portId, PortLeftRight leftRight, QString client)
 {
-    AudioPortPtr p = audioInPortMap.value(portId);
+    AudioPortPtr p = mAudioInPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
     if (leftRight == Project::LeftPort) {
@@ -1180,20 +1180,20 @@ void Project::audioInPort_removeClient(int portId, PortLeftRight leftRight, QStr
 
 void Project::midiOutPort_removePort(int portId)
 {
-    KONFYT_ASSERT_RETURN(midiOutPortMap.contains(portId));
+    KONFYT_ASSERT_RETURN(mMidiOutPortMap.contains(portId));
 
-    midiOutPortMap.remove(portId);
+    mMidiOutPortMap.remove(portId);
     setModified(true);
 }
 
 int Project::midiOutPort_count()
 {
-    return midiOutPortMap.count();
+    return mMidiOutPortMap.count();
 }
 
 void Project::midiOutPort_setName(int portId, QString name)
 {
-    MidiPortPtr p = midiOutPortMap.value(portId);
+    MidiPortPtr p = mMidiOutPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
     p->name = name;
@@ -1204,7 +1204,7 @@ void Project::midiOutPort_setName(int portId, QString name)
 
 void Project::midiOutPort_setJackPort(int portId, KfJackMidiPort *jackport)
 {
-    MidiPortPtr p = midiOutPortMap.value(portId);
+    MidiPortPtr p = mMidiOutPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
     p->jackPort = jackport;
@@ -1213,26 +1213,26 @@ void Project::midiOutPort_setJackPort(int portId, KfJackMidiPort *jackport)
 
 bool Project::midiOutPort_exists(int portId) const
 {
-    return midiOutPortMap.contains(portId);
+    return mMidiOutPortMap.contains(portId);
 }
 
 /* Returns a port pointer corresponding to the specified portId, or a null
  * pointer if a port with this portId doesn't exist. */
 Project::MidiPortPtr Project::midiOutPort_getPort(int portId) const
 {
-    return midiOutPortMap.value(portId);
+    return mMidiOutPortMap.value(portId);
 }
 
 /* Returns the port id corresponding to the specified port pointer, or -1 if the
  * specified port does not exist. */
 int Project::midiOutPort_idFromPtr(MidiPortPtr p)
 {
-    return midiOutPortMap.key(p, -1);
+    return mMidiOutPortMap.key(p, -1);
 }
 
 void Project::midiOutPort_addClient(int portId, QString client)
 {
-    MidiPortPtr p = midiOutPortMap.value(portId);
+    MidiPortPtr p = mMidiOutPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
     p->clients.append(client);
@@ -1242,7 +1242,7 @@ void Project::midiOutPort_addClient(int portId, QString client)
 
 void Project::midiOutPort_removeClient(int portId, QString client)
 {
-    MidiPortPtr p = midiOutPortMap.value(portId);
+    MidiPortPtr p = mMidiOutPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
     p->clients.removeAll(client);
@@ -1252,19 +1252,19 @@ void Project::midiOutPort_removeClient(int portId, QString client)
 
 QList<int> Project::midiOutPort_getAllPortIds() const
 {
-    return midiOutPortMap.keys();
+    return mMidiOutPortMap.keys();
 }
 
 QList<Project::MidiPortPtr> Project::midiOutPort_getAllPorts()
 {
-    return midiOutPortMap.values();
+    return mMidiOutPortMap.values();
 }
 
 QStringList Project::midiOutPort_getClients(int portId)
 {
     QStringList ret;
 
-    MidiPortPtr p = midiOutPortMap.value(portId);
+    MidiPortPtr p = mMidiOutPortMap.value(portId);
     KONFYT_ASSERT(!p.isNull());
     if (p) {
         ret = p->clients;
