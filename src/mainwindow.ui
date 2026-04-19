@@ -1236,7 +1236,7 @@ border-bottom-left-radius: 0;</string>
                       </property>
                       <widget class="QTabWidget" name="tabWidget_library">
                        <property name="currentIndex">
-                        <number>0</number>
+                        <number>1</number>
                        </property>
                        <widget class="QWidget" name="tab_library">
                         <attribute name="title">
@@ -2462,7 +2462,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>4</number>
+                 <number>0</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -3323,7 +3323,7 @@ border-bottom: 1px solid rgb(40,40,40);</string>
                            </sizepolicy>
                           </property>
                           <property name="currentIndex">
-                           <number>2</number>
+                           <number>0</number>
                           </property>
                           <widget class="QWidget" name="tab_settings_currentProject">
                            <attribute name="title">
@@ -3422,8 +3422,8 @@ border-bottom: 1px solid rgb(40,40,40);</string>
                                 <rect>
                                  <x>0</x>
                                  <y>0</y>
-                                 <width>74</width>
-                                 <height>432</height>
+                                 <width>409</width>
+                                 <height>241</height>
                                 </rect>
                                </property>
                                <layout class="QVBoxLayout" name="verticalLayout_44">
@@ -4061,8 +4061,8 @@ border-bottom-left-radius: 0;</string>
                                 <rect>
                                  <x>0</x>
                                  <y>0</y>
-                                 <width>415</width>
-                                 <height>66</height>
+                                 <width>409</width>
+                                 <height>64</height>
                                 </rect>
                                </property>
                                <layout class="QVBoxLayout" name="verticalLayout_45">
@@ -11462,6 +11462,194 @@ li.checked::marker { content: &quot;\2612&quot;; }
    <header>GidListWidget.h</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>pushButton_LavaMonster</tabstop>
+  <tabstop>pushButton_LiveMode</tabstop>
+  <tabstop>toolButton_Settings</tabstop>
+  <tabstop>toolButton_Project</tabstop>
+  <tabstop>pushButton_ShowConnections</tabstop>
+  <tabstop>pushButton_ShowTriggersPage</tabstop>
+  <tabstop>pushButton_ShowJackPage</tabstop>
+  <tabstop>MIDI_indicator_pitchbend</tabstop>
+  <tabstop>MIDI_indicator_sustain</tabstop>
+  <tabstop>MIDI_indicator</tabstop>
+  <tabstop>pushButton_Panic</tabstop>
+  <tabstop>tabWidget_library</tabstop>
+  <tabstop>toolButton_LibraryPreview</tabstop>
+  <tabstop>toolButton_ClearSearch</tabstop>
+  <tabstop>lineEdit_Search</tabstop>
+  <tabstop>treeWidget_Library</tabstop>
+  <tabstop>treeWidget_filesystem</tabstop>
+  <tabstop>toolButton_filesystem_refresh</tabstop>
+  <tabstop>toolButton_filesystem_back</tabstop>
+  <tabstop>toolButton_filesystem_up</tabstop>
+  <tabstop>lineEdit_filesystem_path</tabstop>
+  <tabstop>toolButton_filesystemPathDropdown</tabstop>
+  <tabstop>checkBox_filesystem_ShowOnlySounds</tabstop>
+  <tabstop>checkBox_filesystem_hiddenFiles</tabstop>
+  <tabstop>listWidget_LibraryBottom</tabstop>
+  <tabstop>textBrowser_LibraryBottom</tabstop>
+  <tabstop>pushButton_savedMidiMsgs_remove</tabstop>
+  <tabstop>treeWidget_savedMidiMessages</tabstop>
+  <tabstop>tabWidget_scripting</tabstop>
+  <tabstop>textBrowser_scripting_api</tabstop>
+  <tabstop>pushButton_scripts_rescan</tabstop>
+  <tabstop>treeWidget_scripts</tabstop>
+  <tabstop>plainTextEdit_script_browser</tabstop>
+  <tabstop>listWidget_Patches</tabstop>
+  <tabstop>toolButton_PatchListMenu</tabstop>
+  <tabstop>toolButton_AddPatch</tabstop>
+  <tabstop>toolButton_PatchDown</tabstop>
+  <tabstop>toolButton_PatchUp</tabstop>
+  <tabstop>toolButton_RemovePatch</tabstop>
+  <tabstop>lineEdit_ProjectName</tabstop>
+  <tabstop>lineEdit_PatchName</tabstop>
+  <tabstop>toolButton_patchMenu</tabstop>
+  <tabstop>toolButton_layer_AddMidiPort</tabstop>
+  <tabstop>toolButton_layer_AddAudioInput</tabstop>
+  <tabstop>toolButton_layer_down</tabstop>
+  <tabstop>toolButton_layer_up</tabstop>
+  <tabstop>listWidget_Layers</tabstop>
+  <tabstop>textBrowser_patchNote</tabstop>
+  <tabstop>tabWidget_settings</tabstop>
+  <tabstop>comboBox_Settings_project_resetOption</tabstop>
+  <tabstop>scrollArea</tabstop>
+  <tabstop>comboBox_Settings_resetOptionDefaultForNewProjects</tabstop>
+  <tabstop>comboBox_Settings_filemanager</tabstop>
+  <tabstop>checkBox_settings_promptOnQuit</tabstop>
+  <tabstop>checkBox_settings_openLastProjectAtStartup</tabstop>
+  <tabstop>comboBox_settings_projectsDir</tabstop>
+  <tabstop>pushButton_settings_Projects</tabstop>
+  <tabstop>comboBox_settings_soundfontDirs</tabstop>
+  <tabstop>pushButton_Settings_Soundfonts</tabstop>
+  <tabstop>comboBox_settings_patchDirs</tabstop>
+  <tabstop>pushButton_Settings_Patches</tabstop>
+  <tabstop>comboBox_settings_sfzDirs</tabstop>
+  <tabstop>pushButton_Settings_Sfz</tabstop>
+  <tabstop>scrollArea_2</tabstop>
+  <tabstop>pushButton_Settings_Cancel</tabstop>
+  <tabstop>pushButtonSettings_QuickRescanLibrary</tabstop>
+  <tabstop>pushButtonSettings_RescanLibrary</tabstop>
+  <tabstop>pushButton_Settings_Apply</tabstop>
+  <tabstop>lineEdit_MidiFilter_Last</tabstop>
+  <tabstop>comboBox_midiFilter_inChannel</tabstop>
+  <tabstop>toolButton_MidiFilter_inChan_last</tabstop>
+  <tabstop>spinBox_midiFilter_LowNote</tabstop>
+  <tabstop>toolButton_MidiFilter_lowNote</tabstop>
+  <tabstop>spinBox_midiFilter_HighNote</tabstop>
+  <tabstop>toolButton_MidiFilter_HighNote</tabstop>
+  <tabstop>spinBox_midiFilter_Add</tabstop>
+  <tabstop>toolButton_MidiFilter_Add_Plus12</tabstop>
+  <tabstop>toolButton_MidiFilter_Add_Minus12</tabstop>
+  <tabstop>checkBox_midiFilter_ignoreGlobalTranspose</tabstop>
+  <tabstop>lineEdit_MidiFilter_velocityMap</tabstop>
+  <tabstop>toolButton_MidiFilter_velocityMap_presets</tabstop>
+  <tabstop>toolButton_MidiFilter_velocityMap_save</tabstop>
+  <tabstop>checkBox_midiFilter_AllCCs</tabstop>
+  <tabstop>lineEdit_MidiFilter_ccAllowed</tabstop>
+  <tabstop>toolButton_MidiFilter_ccAllowedLast</tabstop>
+  <tabstop>lineEdit_MidiFilter_ccBlocked</tabstop>
+  <tabstop>toolButton_MidiFilter_ccBlockedLast</tabstop>
+  <tabstop>checkBox_midiFilter_pitchbend</tabstop>
+  <tabstop>checkBox_midiFilter_Prog</tabstop>
+  <tabstop>spinBox_midiFilter_pitchDownRange</tabstop>
+  <tabstop>toolButton_MidiFilter_pitchDownFull</tabstop>
+  <tabstop>toolButton_MidiFilter_pitchDownHalf</tabstop>
+  <tabstop>toolButton_MidiFilter_pitchDownLast</tabstop>
+  <tabstop>spinBox_midiFilter_pitchUpRange</tabstop>
+  <tabstop>toolButton_MidiFilter_pitchUpFull</tabstop>
+  <tabstop>toolButton_MidiFilter_pitchUpHalf</tabstop>
+  <tabstop>toolButton_MidiFilter_pitchUpLast</tabstop>
+  <tabstop>pushButton_midiFilter_Cancel</tabstop>
+  <tabstop>pushButton_midiFilter_Apply</tabstop>
+  <tabstop>toolButton_connectionsPage_portsBussesListOptions</tabstop>
+  <tabstop>tree_portsBusses</tabstop>
+  <tabstop>tree_Connections</tabstop>
+  <tabstop>pushButton_connectionsPage_MidiFilter</tabstop>
+  <tabstop>pushButton_connectionsPage_editScript</tabstop>
+  <tabstop>checkBox_connectionsPage_ignoreGlobalVolume</tabstop>
+  <tabstop>pushButton_connectionsPage_OK</tabstop>
+  <tabstop>tree_Triggers</tabstop>
+  <tabstop>pushButton_triggersPage_clear</tabstop>
+  <tabstop>pushButton_triggersPage_assign</tabstop>
+  <tabstop>listWidget_triggers_eventList</tabstop>
+  <tabstop>checkBox_Triggers_ProgSwitchPatches</tabstop>
+  <tabstop>spinBox_Triggers_midiPickupRange</tabstop>
+  <tabstop>pushButton_triggersPage_OK</tabstop>
+  <tabstop>pushButton_JackAudioPorts</tabstop>
+  <tabstop>pushButton_JackMidiPorts</tabstop>
+  <tabstop>treeWidget_jackPortsOut</tabstop>
+  <tabstop>treeWidget_jackportsIn</tabstop>
+  <tabstop>pushButton_jackConAdd</tabstop>
+  <tabstop>pushButton_jackConAddBreak</tabstop>
+  <tabstop>pushButton_jackConRemove</tabstop>
+  <tabstop>listWidget_jackConnections</tabstop>
+  <tabstop>pushButton_jackCon_OK</tabstop>
+  <tabstop>pushButton_savedMidiMsgs_save</tabstop>
+  <tabstop>pushButton_midiSendList_sendSelected</tabstop>
+  <tabstop>lineEdit_midiSendList_Description</tabstop>
+  <tabstop>comboBox_midiSendList_type</tabstop>
+  <tabstop>spinBox_midiSendList_channel</tabstop>
+  <tabstop>spinBox_midiSendList_cc_data1</tabstop>
+  <tabstop>spinBox_midiSendList_cc_data2</tabstop>
+  <tabstop>spinBox_midiSendList_program</tabstop>
+  <tabstop>checkBox_midiSendList_bank</tabstop>
+  <tabstop>spinBox_midiSendList_msb</tabstop>
+  <tabstop>spinBox_midiSendList_lsb</tabstop>
+  <tabstop>spinBox_midiSendList_pitchbend</tabstop>
+  <tabstop>pushButton_midiSendList_pbmin</tabstop>
+  <tabstop>pushButton_midiSendList_pbzero</tabstop>
+  <tabstop>pushButton_midiSendList_pbmax</tabstop>
+  <tabstop>lineEdit_midiSendList_sysex_bytes</tabstop>
+  <tabstop>pushButton_midiSendList_add</tabstop>
+  <tabstop>pushButton_midiSendList_replace</tabstop>
+  <tabstop>listWidget_midiSendList</tabstop>
+  <tabstop>toolButton_midiSendList_down</tabstop>
+  <tabstop>toolButton_midiSendList_up</tabstop>
+  <tabstop>pushButton_midiSendList_remove</tabstop>
+  <tabstop>pushButton_midiSendList_sendAll</tabstop>
+  <tabstop>listWidget_midiSendList_lastReceived</tabstop>
+  <tabstop>pushButton_midiSendList_cancel</tabstop>
+  <tabstop>pushButton_midiSendList_apply</tabstop>
+  <tabstop>lineEdit_extApp_name</tabstop>
+  <tabstop>lineEdit_extAppEditor_command</tabstop>
+  <tabstop>toolButton_ExtAppsMenu</tabstop>
+  <tabstop>checkBox_extApp_runAtStartup</tabstop>
+  <tabstop>checkBox_extApp_restart</tabstop>
+  <tabstop>checkBox_extApp_warnBeforeClosing</tabstop>
+  <tabstop>checkBox_extApp_startDetached</tabstop>
+  <tabstop>pushButton_extAppEditor_Cancel</tabstop>
+  <tabstop>pushButton_extAppEditor_apply</tabstop>
+  <tabstop>pushButton_script_update</tabstop>
+  <tabstop>checkBox_script_enable</tabstop>
+  <tabstop>checkBox_script_passMidiThrough</tabstop>
+  <tabstop>plainTextEdit_script</tabstop>
+  <tabstop>pushButton_scriptEditor_OK</tabstop>
+  <tabstop>pushButton_dev_highlighted</tabstop>
+  <tabstop>textBrowser</tabstop>
+  <tabstop>checkBox_ConsoleShowMidiMessages</tabstop>
+  <tabstop>pushButton_ShowConsole</tabstop>
+  <tabstop>pushButton_ClearConsole</tabstop>
+  <tabstop>pushButton_RestartApp</tabstop>
+  <tabstop>tabWidget_right</tabstop>
+  <tabstop>textBrowser_Testing</tabstop>
+  <tabstop>pushButton_MasterIn_TransposeSub12</tabstop>
+  <tabstop>pushButton_MasterIn_TransposeAdd12</tabstop>
+  <tabstop>pushButton_MasterIn_TransposeZero</tabstop>
+  <tabstop>spinBox_MasterIn_Transpose</tabstop>
+  <tabstop>horizontalSlider_MasterGain</tabstop>
+  <tabstop>listWidget_Warnings</tabstop>
+  <tabstop>pushButton_ExtApp_RunSelected</tabstop>
+  <tabstop>pushButton_ExtApp_RunAll</tabstop>
+  <tabstop>pushButton_ExtApp_Stop</tabstop>
+  <tabstop>pushButton_ExtApp_StopAll</tabstop>
+  <tabstop>listWidget_ExtApps</tabstop>
+  <tabstop>pushButton_extApp_edit</tabstop>
+  <tabstop>pushButton_extApp_add</tabstop>
+  <tabstop>pushButton_extApp_remove</tabstop>
+  <tabstop>textBrowser_about</tabstop>
+  <tabstop>pushButton_about_ok</tabstop>
+ </tabstops>
  <resources>
   <include location="../images.qrc"/>
  </resources>
