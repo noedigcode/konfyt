@@ -8501,6 +8501,8 @@ void MainWindow::on_pushButton_midiSendList_add_clicked()
 
 void MainWindow::on_comboBox_midiSendList_type_currentIndexChanged(int index)
 {
+    bool channelEnabled = true;
+
     int type = midiSendTypeComboItems.value(index, MIDI_EVENT_TYPE_CC);
     switch (type) {
     case MIDI_EVENT_TYPE_CC:
@@ -8520,8 +8522,11 @@ void MainWindow::on_comboBox_midiSendList_type_currentIndexChanged(int index)
         break;
     case MIDI_EVENT_TYPE_SYSTEM:
         ui->stackedWidget_midiSend->setCurrentWidget(ui->page_midiSend_sysex);
+        channelEnabled = false;
         break;
     }
+
+    ui->spinBox_midiSendList_channel->setEnabled(channelEnabled);
 }
 
 /* MIDI send list program bank checkbox: enable/disable bank select boxes. */
