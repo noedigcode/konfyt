@@ -1,6 +1,34 @@
 Changelog
 =========
 
+[1.8.0] - April 2026
+--------------------
+
+Added
+
+- Layer copy and paste.
+
+Changes
+
+- Ports/buses tree menu: always show rename and remove options, disabling it
+  when not applicable.
+- Patch menu: rename patch copy, add to library and save to file actions for
+  clarity with addition of new layer paste.
+- MIDI and audio ports layers text now show input and output port names.
+- Soundfont layers text now show ony the filename and program, with the full path
+  in the tooltip.
+- SFZ layers text now shows the parent folder and filename, or only the filename
+  if it is the same as the parent folder name. Full path is shown in the tooltip.
+- Refactored XML loading and saving code, improving maintainability.
+- Remove support for old pre-v1.1.0 settings path location.
+- Remove support for old pre-v1.3.0 external app format in project file.
+- Disable MIDI Send List Editor channel selector when Sysex is selected.
+
+Fixes
+
+- Trim file manager setting to prevent errors resulting from accidental spaces.
+
+
 [1.7.0] - April 2026
 --------------------
 
