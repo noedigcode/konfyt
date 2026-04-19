@@ -402,7 +402,7 @@ void MainWindow::setupScripting()
     // Setup script api
     QFile file("://scriptingApi.md");
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        print("Error loading scripting API documentation.");
+        print("Error loading scripting API documentation. Error: " + file.errorString());
     } else {
         QString api = file.readAll();
         file.close();
@@ -475,7 +475,7 @@ void MainWindow::showScriptEditor()
     if (script.trimmed().isEmpty()) {
         QFile file("://blank.js");
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            print("Error loading blank template script.");
+            print("Error loading blank template script. Error: " + file.errorString());
         } else {
             script = file.readAll();
             file.close();
@@ -2972,8 +2972,10 @@ void MainWindow::onActionRemoveLibraryPatchTriggered()
     if (removed) {
         print("Removed patch file: " + f.fileName());
     } else {
-        print("Failed to remove patch file: " + f.fileName());
-        msgBox("Failed to remove patch file.", f.fileName());
+        QString error = QString("Failed to remove patch file. File: %1. Error: %2")
+                .arg(f.fileName(), f.errorString());
+        print(error);
+        msgBox(error);
     }
 
     // Remove from library tree
@@ -8714,9 +8716,11 @@ void MainWindow::on_pushButton_savedMidiMsgs_remove_clicked()
             delete selected;
             savedMidiSendItems.removeAt(index);
         } else {
-            print("Failed to remove MIDI Send Message preset file: " + f.fileName());
+            QString error = QString("File: %1. Error: %2")
+                    .arg(f.fileName(), f.errorString());
+            print("Failed to remove MIDI Send Message preset file: " + error);
             msgBox("Failed to remove the MIDI Send Message preset file.",
-                   f.fileName());
+                   error);
         }
     }
 }

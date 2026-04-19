@@ -96,8 +96,8 @@ Result Project::saveProjectAs(QString dirpath)
         QFile file(mProjectFilename);
         if (!file.rename(newFilename)) {
             print(QString("saveProjectAs: Could not rename old project file "
-                          "\"%1\" to \"%2\".")
-                  .arg(mProjectFilename, newFilename));
+                          "\"%1\" to \"%2\". Error: %3")
+                  .arg(mProjectFilename, newFilename, file.errorString()));
         }
     }
 
@@ -1496,9 +1496,10 @@ void Project::backupProject(QString dirpath, QString projectFilename,
     foreach (QString relPath, relPathsToCopy) {
         QString src = QString("%1/%2").arg(dirpath, relPath);
         QString dest = QString("%1/%2").arg(backupDirPath, relPath);
-        if (!QFile(src).copy(dest)) {
-            print(QString("ERROR: backupProject: Could not copy file %1 to %2")
-                    .arg(src, dest));
+        QFile file(src);
+        if (!file.copy(src, dest)) {
+            print(QString("ERROR: backupProject: Could not copy file %1 to %2. Error: %3")
+                    .arg(src, dest, file.errorString()));
         }
     }
 
