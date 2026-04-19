@@ -196,6 +196,9 @@ void MainWindow::setupGuiDefaults()
         showAboutDialog();
         // In main area, show settings
         showSettingsDialog();
+        // In settings, show the paths tab, which is the most important for
+        // a first-time run.
+        ui->tabWidget_settings->setCurrentWidget(ui->tab_settings_paths);
     } else {
         // On window level, show main area
         ui->stackedWidget_window->setCurrentWidget(ui->page_window_main);
