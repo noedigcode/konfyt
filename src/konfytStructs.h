@@ -22,6 +22,8 @@
 #ifndef KONFYT_STRUCTS_H
 #define KONFYT_STRUCTS_H
 
+#include "file.h"
+
 #include <QApplication>
 #include <QSharedPointer>
 #include <QString>
@@ -87,8 +89,14 @@ struct KonfytAppInfo
 
 struct Result
 {
+    Result();
+    Result(bool ok, QString errorString);
+    Result(File::ReadResult r);
+    Result(File::WriteResult r);
+
     bool ok = false;
     QString errorString;
+
     static Result failure(QString errorString);
     static Result success();
 };

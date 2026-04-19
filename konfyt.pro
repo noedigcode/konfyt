@@ -21,6 +21,7 @@ INCLUDEPATH += src
 SOURCES += src/main.cpp\
     src/GidListWidget.cpp \
     src/consolewindow.cpp \
+    src/file.cpp \
     src/indicatorHandlers.cpp \
     src/konfytAudio.cpp \
     src/konfytJs.cpp \
@@ -56,6 +57,7 @@ HEADERS  += src/mainwindow.h \
     src/GidListWidget.h \
     src/biqmap.h \
     src/consolewindow.h \
+    src/file.h \
     src/indicatorHandlers.h \
     src/konfytAudio.h \
     src/konfytDebug.h \

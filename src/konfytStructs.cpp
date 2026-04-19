@@ -62,6 +62,28 @@ KonfytReset konfytResetFromInherits(QList<KonfytReset> inheritChain, KonfytReset
     return ret;
 }
 
+Result::Result()
+{
+
+}
+
+Result::Result(bool ok, QString errorString) : ok(ok), errorString(errorString)
+{
+
+}
+
+Result::Result(File::ReadResult r)
+{
+    ok = r.ok;
+    errorString = r.toString();
+}
+
+Result::Result(File::WriteResult r)
+{
+    ok = r.ok;
+    errorString = r.toString();
+}
+
 Result Result::failure(QString errorString)
 {
     Result r;

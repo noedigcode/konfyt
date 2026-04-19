@@ -22,6 +22,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "file.h"
+
 #include <QClipboard>
 
 
@@ -400,12 +402,11 @@ void MainWindow::setupScripting()
     scriptInfoTimer.start(100);
 
     // Setup script api
-    QFile file("://scriptingApi.md");
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        print("Error loading scripting API documentation. Error: " + file.errorString());
+    File::ReadResult readResult = File::readAll("://scriptingApi.md");
+    if (!readResult.ok) {
+        print("Error loading scripting API documentation: " + readResult.toString());
     } else {
-        QString api = file.readAll();
-        file.close();
+        QString api = readResult.data;
         ui->textBrowser_scripting_api->setMarkdown(api);
     }
 }
@@ -473,12 +474,11 @@ void MainWindow::showScriptEditor()
 
     // If the script is empty, insert a template script
     if (script.trimmed().isEmpty()) {
-        QFile file("://blank.js");
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            print("Error loading blank template script. Error: " + file.errorString());
+        File::ReadResult readResult = File::readAll("://blank.js");
+        if (!readResult.ok) {
+            print("Error loading blank template script: " + readResult.toString());
         } else {
-            script = file.readAll();
-            file.close();
+            script = readResult.data;
         }
     }
 
@@ -1040,16 +1040,6 @@ void MainWindow::popupMidiMapPresetMenu(QWidget *requester)
 
 void MainWindow::saveMidiMapPresets()
 {
-    QString filename = midiMapPresetsFilename;
-    QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QString error =
-            QString("Failed to open MIDI map presets file for writing. "
-                    "File: %1. Error: %2").arg(filename).arg(file.errorString());
-        print(error);
-        return;
-    }
-
     Xml xml(XML_MIDI_MAP_PRESETS);
 
     foreach (MidiMapPreset* preset, midiMapUserPresets) {
@@ -1060,35 +1050,30 @@ void MainWindow::saveMidiMapPresets()
     }
 
     QByteArray data = xml.toByteArray();
-    qint64 nwritten = file.write(data);
 
-    if (nwritten != data.count()) {
-        print(QString("Only %1 of %2 bytes written to MIDI map presets file. "
-                      "File: %1. Error: %2").arg(filename).arg(file.errorString()));
+    File::WriteResult writeResult = File::write(midiMapPresetsFilename, data);
+    if (!writeResult.ok) {
+        print("Failed to open MIDI map presets file for writing: " + writeResult.toString());
     } else {
         print("Saved MIDI map presets.");
     }
-
-    file.close();
 }
 
 void MainWindow::loadMidiMapPresets()
 {
-    QString filename = midiMapPresetsFilename;
-    QFile file(filename);
-    if (!file.exists()) {
-        print("No MIDI map presets file found.");
+    if (!QFileInfo(midiMapPresetsFilename).exists()) {
+        print("No MIDI map presets file to load.");
         return;
     }
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        print(QString("Failed to open MIDI map presets file for reading. "
-                      "File: %1. Error: %2").arg(filename).arg(file.errorString()));
+
+    File::ReadResult readResult = File::readAll(midiMapPresetsFilename);
+    if (!readResult.ok) {
+        print("Failed to read MIDI map presets: " + readResult.toString());
         return;
     }
 
     Xml xml;
-    xml.loadFromData(file.readAll());
-    file.close();
+    xml.loadFromData(readResult.data);
 
     midiMapUserPresets.clear();
 
@@ -1098,8 +1083,6 @@ void MainWindow::loadMidiMapPresets()
         preset->data = presetXml.childText(XML_MIDI_MAP_PRESET_DATA);
         midiMapUserPresets.append(preset);
     }
-
-    file.close();
 
     print(QString("Loaded %1 MIDI map presets.").arg(midiMapUserPresets.count()));
 }
@@ -1231,20 +1214,20 @@ void MainWindow::applySettings()
 bool MainWindow::loadSettingsFile(QString dir)
 {
     QString filename = dir + "/" + SETTINGS_FILE;
-    QFile file(filename);
-    if (!file.exists()) {
+
+    if (!QFileInfo(filename).exists()) {
         print("Settings file does not exist: " + filename);
         return false;
     }
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        print(QString("Failed to open settings file for reading. File: %1. Error: %2")
-              .arg(filename).arg(file.errorString()));
+
+    File::ReadResult readResult = File::readAll(filename);
+    if (!readResult.ok) {
+        print("Failed to read settings file: " + readResult.toString());
         return false;
     }
 
     Xml xml;
-    xml.loadFromData(file.readAll());
-    file.close();
+    xml.loadFromData(readResult.data);
 
     mProjectsDir = xml.childText(XML_SETTINGS_PRJDIR);
     setSoundfontsDir(xml.childText(XML_SETTINGS_SFDIR));
@@ -1267,15 +1250,6 @@ bool MainWindow::saveSettingsFile()
     // First, create settings directory if it doesn't exist.
     createSettingsDir();
 
-    // Open settings file for writing.
-    QString filename = mSettingsDir + "/" + SETTINGS_FILE;
-    QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        print(QString("Failed to open settings file for writing. File: %1. Error: %2")
-              .arg(filename).arg(file.errorString()));
-        return false;
-    }
-
     Xml xml(XML_SETTINGS);
 
     // Settings
@@ -1293,13 +1267,11 @@ bool MainWindow::saveSettingsFile()
     xml.addTextChild(XML_SETTINGS_LAST_PROJECT_FILEPATH, mLastProjectFilePath);
 
     QByteArray data = xml.toByteArray();
-    qint64 nwritten = file.write(data);
-    file.close();
 
-    if (nwritten != data.count()) {
-        print(QString("Only %1 of %2 bytes could be written while saving settings. "
-                      "File: %3. Error: %4")
-              .arg(nwritten).arg(data.count()).arg(filename).arg(file.errorString()));
+    QString filename = mSettingsDir + "/" + SETTINGS_FILE;
+    File::WriteResult writeResult = File::write(filename, data);
+    if (!writeResult.ok) {
+        print("Failed to save settings: " + writeResult.toString());
         return false;
     }
 
@@ -7183,16 +7155,15 @@ QString MainWindow::loadSfzFileText(QString filename)
         print("File exceeds max allowed size to show contents: " + filename);
         text = "File exceeds max allowed size to show contents.";
 
-    } else if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-
-        print(QString("Failed to SFZ file. File: %1. Error: %2")
-              .arg(filename).arg(file.errorString()));
-        text = "Failed to open file.";
-
     } else {
 
-        text = QString(file.readAll());
-        file.close();
+        File::ReadResult readResult = File::readAll(filename);
+        if (readResult.ok) {
+            text = readResult.data;
+        } else {
+            print("Failed to load SFZ file contents: " + readResult.toString());
+            text = "Failed to open file.";
+        }
 
     }
 
@@ -8618,16 +8589,15 @@ void MainWindow::loadSavedMidiSendItems(QString dirname)
     QStringList files = scanDirForFilesSkipBackupSubdirs(dirname);
 
     foreach (QString filename, files) {
-        QFile file(filename);
-        if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            print(QString("Failed to open MIDI Send preset file. "
-                          "File: %1. Error: %2")
-                  .arg(filename).arg(file.errorString()));
+
+        File::ReadResult readResult = File::readAll(filename);
+        if (!readResult.ok) {
+            print("Failed to open MIDI Send preset file: " + readResult.toString());
             continue;
         }
+
         Xml xml;
-        xml.loadFromData(file.readAll());
-        file.close();
+        xml.loadFromData(readResult.data);
 
         MidiSendItem item;
         item.readFromXml(xml);
@@ -8641,23 +8611,14 @@ void MainWindow::loadSavedMidiSendItems(QString dirname)
 
 bool MainWindow::saveMidiSendItemToFile(QString filename, MidiSendItem item)
 {
-    QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        print(QString("Failed to open MIDI Send Message preset file for writing. "
-                      "File: %1. Error: %2").arg(filename).arg(file.errorString()));
-        return false;
-    }
-
     Xml xml = item.toXml();
     QByteArray data = xml.toByteArray();
 
-    qint64 nwritten = file.write(data);
-    if (nwritten != data.count()) {
-        print(QString("Only %1 of %2 bytes written to MIDI Send Message preset file. "
-                      "File: %3. Error: %4").arg(filename).arg(file.errorString()));
+    File::WriteResult writeResult = File::write(filename, data);
+    if (!writeResult.ok) {
+        print("Failed to save MIDI Send Message preset: " + writeResult.toString());
+        return false;
     }
-
-    file.close();
 
     return true;
 }

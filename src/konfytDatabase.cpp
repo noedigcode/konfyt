@@ -21,6 +21,7 @@
 
 #include "konfytDatabase.h"
 
+#include "file.h"
 
 // ============================================================================
 // KonfytDatabaseWorker
@@ -493,27 +494,14 @@ Result KonfytDatabase::saveDatabaseToFile(QString filename)
         xmlDatabase.addChild(sfzXml);
     }
 
-    QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        QString error = QString("Failed to open file for saving database. "
-                                "File: %1. Error: %2")
-                .arg(filename).arg(file.errorString());
-        emit print(error);
-        return Result::failure(error);
-    }
-
     QByteArray data = xmlDatabase.toByteArray();
-    qint64 nwritten = file.write(data);
-    if (nwritten != data.count()) {
-        QString error = QString("Could only write %1 of %2 bytes while saving database. "
-                                "File: %3. Error: %4")
-                .arg(filename).arg(file.errorString());
-        emit print(error);
-        return Result::failure(error);
+
+    File::WriteResult writeResult = File::write(filename, data);
+    if (!writeResult.ok) {
+        print("Error saving database: " + writeResult.toString());
     }
 
-    file.close();
-    return Result::success();
+    return Result(writeResult);
 }
 
 /* Build a tree of all sfz items, based on their directory structure. */
@@ -550,18 +538,14 @@ void KonfytDatabase::buildPatchTree_results()
 /* Clears the database and loads it from a single saved database xml file. */
 Result KonfytDatabase::loadDatabaseFromFile(QString filename)
 {
-    QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        QString error = QString("Failed to open file for reading database. "
-                                "File: %1. Error: %2")
-                .arg(filename).arg(file.errorString());
-        emit print(error);
-        return Result::failure(error);
+    File::ReadResult readResult = File::readAll(filename);
+    if (!readResult.ok) {
+        print("Error reading database: " + readResult.errorString);
+        return Result(readResult);
     }
 
     Xml databaseXml;
-    databaseXml.loadFromData(file.readAll());
-    file.close();
+    databaseXml.loadFromData(readResult.data);
 
     this->clearDatabase();
 

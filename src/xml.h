@@ -23,7 +23,6 @@
 #define XML_H
 
 #include <QString>
-#include <QFile>
 #include <QDomElement>
 #include <QMap>
 #include <QVariant>

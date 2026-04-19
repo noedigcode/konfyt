@@ -25,7 +25,6 @@
 #include "konfytMidiFilter.h"
 #include "konfytPatchLayer.h"
 
-#include <QFile>
 #include <QSharedPointer>
 
 

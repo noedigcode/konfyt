@@ -103,27 +103,18 @@ Result Project::saveProjectAs(QString dirpath)
 
     // Open project file for writing
     QString filepath = dirpath + "/" + mProjectFilename;
-    QFile file(filepath);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        print("saveProjectAs: Could not open file for writing: " + filepath);
-        return Result::failure(
-            QString("Could not open file for writing. File: %1. Error: %2")
-                    .arg(filepath).arg(file.errorString()));
-    }
 
     print("saveProjectAs: Project directory: " + mProjectDirpath);
     print("saveProjectAs: Project filename: " + mProjectFilename);
 
     Xml xml = toXml();
     QByteArray data = xml.toByteArray();
-    qint64 nwritten = file.write(data);
-    if (nwritten != data.count()) {
-        return Result::failure(QString("Only %1 of %2 bytes written while saving project. "
-                                       "File: %3. Error: %4")
-                               .arg(filepath).arg(file.errorString()));
-    }
 
-    file.close();
+    File::WriteResult writeResult = File::write(filepath, data);
+    if (!writeResult.ok) {
+        print("saveProjectAs: Could not open file for writing: " + writeResult.toString());
+        return Result(writeResult);
+    }
 
     setModified(false);
 
@@ -152,22 +143,19 @@ void Project::setModified(bool mod)
  * the patches subdirectory. */
 Result Project::loadProject(QString filepath)
 {
-    QFile file(filepath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return Result::failure(QString("Error opening file for reading. File error: %1")
-                               .arg(file.errorString()));
+    File::ReadResult readResult = File::readAll(filepath);
+    if (!readResult.ok) {
+        return Result(readResult);
     }
-    QByteArray data = file.readAll();
-    file.close();
 
     Xml projectXml;
-    Xml::Result xmlResult = projectXml.loadFromData(data);
+    Xml::Result xmlResult = projectXml.loadFromData(readResult.data);
     if (!xmlResult.ok) {
         return Result::failure(QString("Error loading XML: %1")
                                .arg(xmlResult.toString()));
     }
 
-    QFileInfo fi(file);
+    QFileInfo fi(filepath);
     mProjectFilename = fi.fileName();
     mProjectDirpath = fi.dir().path();
 

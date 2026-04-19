@@ -21,6 +21,7 @@
 
 #include "konfytPatch.h"
 
+#include "file.h"
 #include "konfytUtils.h"
 
 
@@ -32,38 +33,21 @@ QList<PatchLayerPtr> Patch::getSfLayerList() const
 /* Saves the patch to a XML patch file. */
 Result Patch::savePatchToFile(QString filename) const
 {
-    QFile file(filename);
-    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        return Result::failure(
-            QString("Failed to open file for writing. File: %1. Error: %2")
-                    .arg(filename).arg(file.errorString()));
-    }
-
     QByteArray data = toXmlByteArray();
-    qint64 nwritten = file.write(data);
-    if (nwritten != data.count()) {
-        return Result::failure(
-            QString("Only wrote %1 of %2 to file. File: %1. Error: %2")
-                    .arg(nwritten).arg(data.count()).arg(filename)
-                    .arg(file.errorString()));
-    }
 
-    file.close();
-    return Result::success();
+    File::WriteResult writeResult = File::write(filename, data);
+
+    return Result(writeResult);
 }
 
 Result Patch::loadPatchFromFile(QString filename)
 {
-    QFile file(filename);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return Result::failure(
-            QString("Error opening file for reading. File: %1. Error: %2")
-                    .arg(filename).arg(file.errorString()));
+    File::ReadResult readResult = File::readAll(filename);
+    if (!readResult.ok) {
+        return Result(readResult);
     }
-    QByteArray data = file.readAll();
-    file.close();
 
-    return fromXmlByteArray(data);
+    return fromXmlByteArray(readResult.data);
 }
 
 QByteArray Patch::toXmlByteArray() const
