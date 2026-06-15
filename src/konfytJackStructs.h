@@ -39,28 +39,36 @@ struct KonfytJackPortsSpec
     QString audioInRightConnectTo;
 };
 
-struct KfJackAudioPort
+struct KfJackPort
 {
     friend class KonfytJackEngine;
+    enum Direction {INPUT, OUTPUT};
+    KfJackPort(Direction direction) : direction(direction) {}
 protected:
-    float gain = 1;
+    Direction direction = INPUT;
     jack_port_t* jackPointer = nullptr;
     void* buffer;
     QStringList connectionList;
 };
 
-struct KfJackMidiPort
+struct KfJackAudioPort : public KfJackPort
 {
     friend class KonfytJackEngine;
+    KfJackAudioPort(Direction direction) : KfJackPort(direction) {}
 protected:
-    jack_port_t* jackPointer = nullptr;
-    void* buffer;
+    float gain = 1;
+};
+
+struct KfJackMidiPort : public KfJackPort
+{
+    friend class KonfytJackEngine;
+    KfJackMidiPort(Direction direction) : KfJackPort(direction) {}
+protected:
     MidiFilter filter;
     // True to block events from being sent through, for when events need to be
     // diverted solely to scripting.
     bool blockDirectThrough = false;
     RingbufferQMutex<KonfytMidiEvent> eventsTxBuffer{100};
-    QStringList connectionList;
     int noteOns = 0;
     bool sustainNonZero = false;
     bool pitchbendNonZero = false;

@@ -101,10 +101,8 @@ public:
     void removeAllMidiInAndOutPorts();
     void clearPortClients(KfJackMidiPort *port);
     void clearPortClients(KfJackAudioPort *port);
-    void addPortClient(KfJackMidiPort *port, QString newClient);
-    void addPortClient(KfJackAudioPort *port, QString newClient);
-    void removeAndDisconnectPortClient(KfJackMidiPort *port, QString mJackClient);
-    void removeAndDisconnectPortClient(KfJackAudioPort *port, QString mJackClient);
+    void addPortClient(KfJackPort *port, QString newClient);
+    void removeAndDisconnectPortClient(KfJackPort *port, QString client);
     void setPortFilter(KfJackMidiPort *port, MidiFilter filter);
     void setPortGain(KfJackAudioPort *port, float gain);
     bool sendMidiEventsOnPort(KfJackMidiPort* port, QList<KonfytMidiEvent> events);
@@ -217,7 +215,7 @@ private:
     QMutex jackProcessMutex;
     int jackProcessLocks = 0;
 
-    // Port data structures
+    // General input and output ports
     QList<KfJackMidiPort*> midiInPorts;
     QList<KfJackMidiPort*> midiOutPorts;
     QList<KfJackAudioPort*> audioOutPorts;
@@ -245,9 +243,8 @@ private:
     void timerEvent(QTimerEvent *event);
     void startTimer();
     void refreshAllPortsConnections();
-    enum PortDirection { INPUT_PORT, OUTPUT_PORT };
-    void refreshConnections(jack_port_t* jackPort, QStringList clients,
-                            PortDirection dir);
+    void refreshConnections(KfJackPort* port, QStringList connectionList);
+    void disconnectClientsFromPort(KfJackPort* port, QStringList clients);
 
     int mGlobalTranspose = 0;
 

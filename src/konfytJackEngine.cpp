@@ -85,35 +85,35 @@ void KonfytJackEngine::refreshAllPortsConnections()
 
     // Refresh connections for midi input ports
     foreach (KfJackMidiPort* port, midiInPorts) {
-        refreshConnections(port->jackPointer, port->connectionList, INPUT_PORT);
+        // Normal named client/ports
+        refreshConnections(port, port->connectionList);
     }
 
     // Refresh connections for midi output ports
     foreach (KfJackMidiPort* port, midiOutPorts) {
-        refreshConnections(port->jackPointer, port->connectionList, OUTPUT_PORT);
+        refreshConnections(port, port->connectionList);
     }
 
     // Refresh connections for plugin midi and audio ports
     foreach (KfJackPluginPorts* pluginPort, pluginPorts) {
         // Midi out
-        refreshConnections(pluginPort->midi->jackPointer,
-                           pluginPort->midi->connectionList, OUTPUT_PORT);
+        refreshConnections(pluginPort->midi, pluginPort->midi->connectionList);
         // Audio in left
-        refreshConnections(pluginPort->audioInLeft->jackPointer,
-                           pluginPort->audioInLeft->connectionList, INPUT_PORT);
+        refreshConnections(pluginPort->audioInLeft,
+                           pluginPort->audioInLeft->connectionList);
         // Audio in right
-        refreshConnections(pluginPort->audioInRight->jackPointer,
-                           pluginPort->audioInRight->connectionList, INPUT_PORT);
+        refreshConnections(pluginPort->audioInRight,
+                           pluginPort->audioInRight->connectionList);
     }
 
     // Refresh connections for audio input ports
     foreach (KfJackAudioPort* port, audioInPorts) {
-        refreshConnections(port->jackPointer, port->connectionList, INPUT_PORT);
+        refreshConnections(port, port->connectionList);
     }
 
     // Refresh connections for audio output ports (aka buses)
     foreach (KfJackAudioPort* port, audioOutPorts) {
-        refreshConnections(port->jackPointer, port->connectionList, OUTPUT_PORT);
+        refreshConnections(port, port->connectionList);
     }
 
     // Refresh other JACK connections
@@ -126,26 +126,51 @@ void KonfytJackEngine::refreshAllPortsConnections()
     }
 }
 
-void KonfytJackEngine::refreshConnections(jack_port_t *jackPort,
-                                          QStringList clients, PortDirection dir)
+void KonfytJackEngine::refreshConnections(KfJackPort* port, QStringList connectionList)
 {
     const char* src = nullptr;
     const char* dest = nullptr;
-    const char* portname = jack_port_name(jackPort);
-    if (dir == INPUT_PORT) {
+    const char* portname = jack_port_name(port->jackPointer);
+    if (port->direction == KfJackPort::INPUT) {
         dest = portname;
     } else {
         src = portname;
     }
-    foreach (QString s, clients) {
+    foreach (QString s, connectionList) {
         const char* clientname = s.toLocal8Bit().constData();
-        if (dir == INPUT_PORT) {
+        if (port->direction == KfJackPort::INPUT) {
             src = clientname;
         } else {
             dest = clientname;
         }
         jack_connect(mJackClient, src, dest);
     }
+}
+
+void KonfytJackEngine::disconnectClientsFromPort(KfJackPort* port, QStringList clients)
+{
+    KONFYT_ASSERT_RETURN(port);
+
+    if (!clientIsActive()) { return; }
+
+    const char* portName = jack_port_name(port->jackPointer);
+
+    pauseJackProcessing(true);
+
+    // Disconnect clients from port in JACK
+    foreach (QString client, clients) {
+        int err = 0;
+        if (port->direction == KfJackPort::INPUT) {
+            err = jack_disconnect(mJackClient, client.toLocal8Bit().constData(), portName);
+        } else {
+            err = jack_disconnect(mJackClient, portName, client.toLocal8Bit().constData());
+        }
+        if (err) {
+            print("Failed to disconnect JACK port client.");
+        }
+    }
+
+    pauseJackProcessing(false);
 }
 
 /* Add new soundfont ports. Also assigns MIDI filter. */
@@ -156,8 +181,8 @@ KfJackPluginPorts* KonfytJackEngine::addSoundfont(KfFluidSynth *fluidSynth)
      * external Jack connections. */
 
     KfJackPluginPorts* p = new KfJackPluginPorts();
-    p->audioInLeft = new KfJackAudioPort();
-    p->audioInRight = new KfJackAudioPort();
+    p->audioInLeft = new KfJackAudioPort(KfJackPort::INPUT);
+    p->audioInRight = new KfJackAudioPort(KfJackPort::INPUT);
 
     // Because our audio is not received from jack audio ports, we have to allocate
     // the buffers now so fluidsynth can write to them in the jack process callback.
@@ -165,7 +190,7 @@ KfJackPluginPorts* KonfytJackEngine::addSoundfont(KfFluidSynth *fluidSynth)
     p->audioInRight->buffer = malloc(sizeof(jack_default_audio_sample_t)*mJackBufferSize);
     // TODO Give some sort of error indication to user when buffer is null.
 
-    p->midi = new KfJackMidiPort(); // Dummy port for note records, etc.
+    p->midi = new KfJackMidiPort(KfJackPort::INPUT); // Dummy port for note records, etc.
     p->fluidSynthInEngine = fluidSynth;
 
     p->midiRoute = addMidiRoute();
@@ -219,9 +244,9 @@ void KonfytJackEngine::removeSoundfont(KfJackPluginPorts *p)
  * A unique ID is returned. */
 KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPortsSpec &spec)
 {
-    KfJackMidiPort* midiPort = new KfJackMidiPort();
-    KfJackAudioPort* alPort = new KfJackAudioPort();
-    KfJackAudioPort* arPort = new KfJackAudioPort();
+    KfJackMidiPort* midiPort = new KfJackMidiPort(KfJackPort::OUTPUT);
+    KfJackAudioPort* alPort = new KfJackAudioPort(KfJackPort::INPUT);
+    KfJackAudioPort* arPort = new KfJackAudioPort(KfJackPort::INPUT);
 
     // Add a new midi output port which will be connected to the plugin midi input
     QString midiName = spec.name;
@@ -509,7 +534,7 @@ void KonfytJackEngine::removePortFromAllRoutes(KfJackAudioPort *port)
     pauseJackProcessing(false);
 }
 
-void KonfytJackEngine::addPortClient(KfJackMidiPort *port, QString newClient)
+void KonfytJackEngine::addPortClient(KfJackPort* port, QString newClient)
 {
     KONFYT_ASSERT_RETURN(port);
 
@@ -529,7 +554,7 @@ void KonfytJackEngine::addPortClient(KfJackAudioPort *port, QString newClient)
     refreshAllPortsConnections();
 }
 
-void KonfytJackEngine::removeAndDisconnectPortClient(KfJackMidiPort *port, QString client)
+void KonfytJackEngine::removeAndDisconnectPortClient(KfJackPort* port, QString client)
 {
     KONFYT_ASSERT_RETURN(port);
 
@@ -537,26 +562,11 @@ void KonfytJackEngine::removeAndDisconnectPortClient(KfJackMidiPort *port, QStri
 
     if (!port->connectionList.contains(client)) { return; }
 
-    bool portIsInput = midiInPorts.contains(port);
-    const char* portName = jack_port_name(port->jackPointer);
+    disconnectClientsFromPort(port, {client});
 
-    pauseJackProcessing(true);
-
-    // Disconnect client from port in JACK
-    int err = 0;
-    if (portIsInput) {
-        err = jack_disconnect(mJackClient, client.toLocal8Bit().constData(), portName);
-    } else {
-        err = jack_disconnect(mJackClient, portName, client.toLocal8Bit().constData());
-    }
     // Remove client from port's list
     port->connectionList.removeAll(client);
 
-    pauseJackProcessing(false);
-
-    if (err) {
-        print("Failed to disconnect JACK MIDI port client.");
-    }
     refreshAllPortsConnections();
 }
 
@@ -1722,7 +1732,8 @@ KfJackMidiPort *KonfytJackEngine::addMidiPort(QString name, bool isInput)
     if (!clientIsActive()) { return nullptr; }
     pauseJackProcessing(true);
 
-    KfJackMidiPort* port = new KfJackMidiPort();
+    KfJackMidiPort* port = new KfJackMidiPort(
+                isInput ? KfJackPort::INPUT : KfJackPort::OUTPUT);
     port->jackPointer = registerJackMidiPort(name, isInput);
     if (isInput) {
         midiInPorts.append(port);
@@ -1739,7 +1750,8 @@ KfJackAudioPort *KonfytJackEngine::addAudioPort(QString name, bool isInput)
     if (!clientIsActive()) { return nullptr; }
     pauseJackProcessing(true);
 
-    KfJackAudioPort* port = new KfJackAudioPort();
+    KfJackAudioPort* port = new KfJackAudioPort(
+                isInput ? KfJackPort::INPUT : KfJackPort::OUTPUT);
     port->jackPointer = registerJackAudioPort(name, isInput);
     if (isInput) {
         audioInPorts.append(port);
