@@ -1509,7 +1509,7 @@ void MainWindow::updateConnectionsTree()
         // A midi output port is selected
         l = jack.getMidiInputPortsList();
         id = tree_midiOutMap.value( ui->tree_portsBusses->currentItem() );
-    } else if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
+    } else if (connectionsTreeIsMidiInPortSelected()) {
         // Midi input port is selected
         l = jack.getMidiOutputPortsList();
         id = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
@@ -1545,7 +1545,7 @@ void MainWindow::updateConnectionsTree()
         // A midi output port is selected
         leftCons = prj->midiOutPort_getClients(id);
 
-    } else if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
+    } else if (connectionsTreeIsMidiInPortSelected()) {
         // Midi input is selected
         leftCons = prj->midiInPort_getClients(id);
     }
@@ -1673,6 +1673,17 @@ void MainWindow::clearPortsBussesConnectionsData()
     midiInParent = nullptr;
 
     clearConnectionsTree();
+}
+
+bool MainWindow::connectionsTreeIsMidiInPortSelected()
+{
+    QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
+    return item && item->parent() == midiInParent;
+}
+
+int MainWindow::connectionsTreeGetSelectedMidiInPortId()
+{
+    return tree_midiInMap.value(ui->tree_portsBusses->currentItem());
 }
 
 void MainWindow::clearConnectionsTree()
@@ -1839,9 +1850,9 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
             }
         }
 
-    } else if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
+    } else if (connectionsTreeIsMidiInPortSelected()) {
         // Midi input is selected
-        int portId = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
+        int portId = connectionsTreeGetSelectedMidiInPortId();
         Project::MidiPortPtr p = prj->midiInPort_getPort(portId);
         if (p) {
             if (c->isChecked()) {
@@ -8160,7 +8171,7 @@ void MainWindow::on_pushButton_JackMidiPorts_clicked()
 
 void MainWindow::on_pushButton_connectionsPage_MidiFilter_clicked()
 {
-    if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
+    if (connectionsTreeIsMidiInPortSelected()) {
         // Midi input port is selected
         midiFilterEditPort = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
         midiFilterEditType = MidiFilterEditPort;
@@ -8170,7 +8181,7 @@ void MainWindow::on_pushButton_connectionsPage_MidiFilter_clicked()
 
 void MainWindow::on_pushButton_connectionsPage_editScript_clicked()
 {
-    if ( ui->tree_portsBusses->currentItem()->parent() == midiInParent ) {
+    if (connectionsTreeIsMidiInPortSelected()) {
         // Midi input port is selected
         int portId = tree_midiInMap.value(ui->tree_portsBusses->currentItem());
         Project::MidiPortPtr prjPort = mCurrentProject->midiInPort_getPort(portId);

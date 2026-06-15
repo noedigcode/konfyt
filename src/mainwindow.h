@@ -572,6 +572,8 @@ private:
     void updatePortsBussesTree();
     void updateConnectionsTree();
     void clearPortsBussesConnectionsData();
+    bool connectionsTreeIsMidiInPortSelected();
+    int connectionsTreeGetSelectedMidiInPortId();
 
     QTreeWidgetItem* busParent = nullptr;
     QTreeWidgetItem* audioInParent = nullptr;
