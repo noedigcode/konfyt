@@ -71,6 +71,7 @@ QString getUniquePath(QString dirname, QString name, QString extension);
 void konfytAssertMsg(const char* file, int line, const char* func,
                      const char* text);
 
+bool indexValid(int index, int listLength);
 
 
 #endif // KONFYT_DEFINES_H

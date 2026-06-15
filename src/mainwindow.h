@@ -574,9 +574,6 @@ private:
     void clearPortsBussesConnectionsData();
     bool connectionsTreeIsMidiInPortSelected();
     int connectionsTreeGetSelectedMidiInPortId();
-    void updateRegexConnectionsTree();
-    void updateGuiForJackConRegexPreview();
-    void updateRegexConnectionsButtons();
 
     QTreeWidgetItem* busParent = nullptr;
     QTreeWidgetItem* audioInParent = nullptr;
@@ -600,15 +597,6 @@ private:
 private slots:
     void checkboxes_clicked_slot(QCheckBox* c);
     void onPortsBusesTreeMenuRequested();
-    void onMidiInPortConnectRegexAdded(int portId, KonfytPortRegex r);
-    void onMidiInPortConnectRegexChanged(int portId, int index, KonfytPortRegex r);
-    void onMidiInPortConnectRegexRemoved(int portId, int index);
-    void on_lineEdit_jackCon_regex_client_textChanged(const QString &text);
-    void on_lineEdit_jackCon_regex_port_textChanged(const QString &text);
-    void on_pushButton_jackCon_regex_add_clicked();
-    void on_pushButton_jackCon_regex_remove_clicked();
-    void on_pushButton_jackCon_regex_replace_clicked();
-    void on_treeWidget_jackCon_regexes_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
     void on_pushButton_connectionsPage_OK_clicked();
     void on_pushButton_ShowConnections_clicked();
     void on_tree_portsBusses_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
@@ -623,6 +611,24 @@ private slots:
     void on_pushButton_connectionsPage_editScript_clicked();
     void on_checkBox_connectionsPage_ignoreGlobalVolume_clicked();
     void on_toolButton_connectionsPage_portsBussesListOptions_clicked();
+
+    // -----------------------------------------------------------------------
+    // Regex connections
+private:
+    void updateRegexConnectionsTree();
+    void updateGuiForJackConRegexPreview();
+    void updateRegexConnectionsButtons();
+
+private slots:
+    void onMidiInPortConnectRegexAdded(int portId, KonfytPortRegex r);
+    void onMidiInPortConnectRegexChanged(int portId, int index, KonfytPortRegex r);
+    void onMidiInPortConnectRegexRemoved(int portId, int index);
+    void on_lineEdit_jackCon_regex_client_textChanged(const QString &text);
+    void on_lineEdit_jackCon_regex_port_textChanged(const QString &text);
+    void on_pushButton_jackCon_regex_add_clicked();
+    void on_pushButton_jackCon_regex_remove_clicked();
+    void on_pushButton_jackCon_regex_replace_clicked();
+    void on_treeWidget_jackCon_regexes_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
 
     // -----------------------------------------------------------------------
     // Settings
@@ -947,14 +953,6 @@ signals:
     void midiInPortRemoved(Project::MidiPortPtr prjPort);
     void midiOutPortRemoved(Project::MidiPortPtr prjPort);
     void audioInPortRemoved(Project::AudioPortPtr prjPort);
-
-    // Regex connections
-private:
-    void updateGuiForJackConRegexPreview();
-
-private slots:
-    void on_lineEdit_jackCon_regex_client_textChanged(const QString &arg1);
-    void on_lineEdit_jackCon_regex_port_textChanged(const QString &arg1);
 
     // ========================================================================
     // Triggers

@@ -1698,7 +1698,7 @@ void MainWindow::updateRegexConnectionsTree()
     if (connectionsTreeIsMidiInPortSelected()) {
         int portId = connectionsTreeGetSelectedMidiInPortId();
 
-        PrjMidiPortPtr port = prj->midiInPort_getPort(portId);
+        Project::MidiPortPtr port = prj->midiInPort_getPort(portId);
         foreach (KonfytPortRegex r, port->clientRegexes) {
             QTreeWidgetItem* item = new QTreeWidgetItem();
             item->setText(0, QString("[%1] [%2]").arg(r.clientRegex).arg(r.portRegex));
@@ -1944,7 +1944,7 @@ void MainWindow::onMidiInPortConnectRegexAdded(int portId, KonfytPortRegex r)
     ProjectPtr prj = mCurrentProject;
     KONFYT_ASSERT_RETURN(!prj.isNull());
 
-    PrjMidiPortPtr port = prj->midiInPort_getPort(portId);
+    Project::MidiPortPtr port = prj->midiInPort_getPort(portId);
     KONFYT_ASSERT_RETURN(!port.isNull());
 
     // Add to JACK engine
@@ -1959,7 +1959,7 @@ void MainWindow::onMidiInPortConnectRegexChanged(int portId, int index, KonfytPo
     ProjectPtr prj = mCurrentProject;
     KONFYT_ASSERT_RETURN(!prj.isNull());
 
-    PrjMidiPortPtr port = prj->midiInPort_getPort(portId);
+    Project::MidiPortPtr port = prj->midiInPort_getPort(portId);
     KONFYT_ASSERT_RETURN(!port.isNull());
 
     // Update in JACK engine
@@ -1974,7 +1974,7 @@ void MainWindow::onMidiInPortConnectRegexRemoved(int portId, int index)
     ProjectPtr prj = mCurrentProject;
     KONFYT_ASSERT_RETURN(!prj.isNull());
 
-    PrjMidiPortPtr port = prj->midiInPort_getPort(portId);
+    Project::MidiPortPtr port = prj->midiInPort_getPort(portId);
     KONFYT_ASSERT_RETURN(!port.isNull());
 
     // Remove from JACK engine
@@ -2176,11 +2176,11 @@ void MainWindow::loadProject(ProjectPtr prj)
     connect(prj.data(), &Project::midiPickupRangeChanged,
             this, &MainWindow::onProjectMidiPickupRangeChanged);
 
-    connect(prj.data(), &KonfytProject::midiInPortConnectRegexAdded,
+    connect(prj.data(), &Project::midiInPortConnectRegexAdded,
             this, &MainWindow::onMidiInPortConnectRegexAdded);
-    connect(prj.data(), &KonfytProject::midiInPortConnectRegexChanged,
+    connect(prj.data(), &Project::midiInPortConnectRegexChanged,
             this, &MainWindow::onMidiInPortConnectRegexChanged);
-    connect(prj.data(), &KonfytProject::midiInPortConnectRegexRemoved,
+    connect(prj.data(), &Project::midiInPortConnectRegexRemoved,
             this, &MainWindow::onMidiInPortConnectRegexRemoved);
 
     setupWarningConnectionsForProject(prj);
@@ -9125,15 +9125,5 @@ QAction *MainWindow::ResetOptionMenu::actionWithValue(KonfytReset value)
     return ret;
 }
 
-void MainWindow::on_pushButton_jackCon_regex_add_clicked()
-{
-    ProjectPtr prj = mCurrentProject;
-    if (!prj) { return; }
-
-    KonfytPortRegex r;
-    r.clientRegex = ui->lineEdit_jackCon_regex_client->text();
-    r.portRegex = ui->lineEdit_jackCon_regex_port->text();
-
-}
 
 
