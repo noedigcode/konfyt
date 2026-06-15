@@ -44,6 +44,7 @@ struct KfJackPort
     friend class KonfytJackEngine;
     enum Direction {INPUT, OUTPUT};
     KfJackPort(Direction direction) : direction(direction) {}
+    virtual ~KfJackPort() {}
 protected:
     Direction direction = INPUT;
     jack_port_t* jackPointer = nullptr;

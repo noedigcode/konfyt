@@ -1102,13 +1102,13 @@ QStringList KonfytJackEngine::getPortConnectRegexClientList(KfJackPort* port,
                                                 QList<KonfytPortRegex> regexes)
 {
     QStringList clientPortsList;
-    if (midiInPorts.contains(port)) {
+    if (midiInPorts.contains(dynamic_cast<KfJackMidiPort*>(port))) {
         clientPortsList = getMidiOutputPortsList();
-    } else if (midiOutPorts.contains(port)) {
+    } else if (midiOutPorts.contains(dynamic_cast<KfJackMidiPort*>(port))) {
         clientPortsList = getMidiInputPortsList();
-    } else if (audioInPorts.contains(port)) {
+    } else if (audioInPorts.contains(dynamic_cast<KfJackAudioPort*>(port))) {
         clientPortsList = getAudioOutputPortsList();
-    } else if (audioOutPorts.contains(port)) {
+    } else if (audioOutPorts.contains(dynamic_cast<KfJackAudioPort*>(port))) {
         clientPortsList = getAudioInputPortsList();
     }
 
