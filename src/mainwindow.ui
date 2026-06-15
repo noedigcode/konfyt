@@ -6371,7 +6371,59 @@ border-top-left-radius: 0;</string>
                              </widget>
                             </item>
                             <item>
-                             <widget class="QLineEdit" name="lineEdit_jackCon_regex_client"/>
+                             <widget class="QFrame" name="frame_65">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>23</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>16777215</width>
+                                <height>23</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true"/>
+                              </property>
+                              <property name="frameShape">
+                               <enum>QFrame::StyledPanel</enum>
+                              </property>
+                              <property name="frameShadow">
+                               <enum>QFrame::Raised</enum>
+                              </property>
+                              <property name="buttonFrame" stdset="0">
+                               <bool>true</bool>
+                              </property>
+                              <layout class="QHBoxLayout" name="horizontalLayout_85">
+                               <property name="spacing">
+                                <number>1</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <widget class="QLineEdit" name="lineEdit_jackCon_regex_client">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
                             </item>
                             <item>
                              <widget class="QLabel" name="label_27">
@@ -6381,14 +6433,210 @@ border-top-left-radius: 0;</string>
                              </widget>
                             </item>
                             <item>
-                             <widget class="QLineEdit" name="lineEdit_jackCon_regex_port"/>
+                             <widget class="QFrame" name="frame_66">
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>23</height>
+                               </size>
+                              </property>
+                              <property name="maximumSize">
+                               <size>
+                                <width>16777215</width>
+                                <height>23</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true"/>
+                              </property>
+                              <property name="frameShape">
+                               <enum>QFrame::StyledPanel</enum>
+                              </property>
+                              <property name="frameShadow">
+                               <enum>QFrame::Raised</enum>
+                              </property>
+                              <property name="buttonFrame" stdset="0">
+                               <bool>true</bool>
+                              </property>
+                              <layout class="QHBoxLayout" name="horizontalLayout_86">
+                               <property name="spacing">
+                                <number>1</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <widget class="QLineEdit" name="lineEdit_jackCon_regex_port">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
+                             </widget>
+                            </item>
+                           </layout>
+                          </item>
+                          <item>
+                           <layout class="QHBoxLayout" name="horizontalLayout_83">
+                            <item>
+                             <spacer name="horizontalSpacer_26">
+                              <property name="orientation">
+                               <enum>Qt::Horizontal</enum>
+                              </property>
+                              <property name="sizeHint" stdset="0">
+                               <size>
+                                <width>40</width>
+                                <height>20</height>
+                               </size>
+                              </property>
+                             </spacer>
                             </item>
                             <item>
-                             <widget class="QPushButton" name="pushButton_jackCon_regex_add">
-                              <property name="text">
-                               <string>Add</string>
+                             <widget class="QFrame" name="frame_6">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
                               </property>
+                              <property name="minimumSize">
+                               <size>
+                                <width>0</width>
+                                <height>23</height>
+                               </size>
+                              </property>
+                              <property name="styleSheet">
+                               <string notr="true"/>
+                              </property>
+                              <property name="frameShape">
+                               <enum>QFrame::StyledPanel</enum>
+                              </property>
+                              <property name="frameShadow">
+                               <enum>QFrame::Raised</enum>
+                              </property>
+                              <property name="buttonFrame" stdset="0">
+                               <bool>true</bool>
+                              </property>
+                              <layout class="QHBoxLayout" name="horizontalLayout_84">
+                               <property name="spacing">
+                                <number>1</number>
+                               </property>
+                               <property name="leftMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="topMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="rightMargin">
+                                <number>0</number>
+                               </property>
+                               <property name="bottomMargin">
+                                <number>0</number>
+                               </property>
+                               <item>
+                                <widget class="QPushButton" name="pushButton_jackCon_regex_add">
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;
+</string>
+                                 </property>
+                                 <property name="text">
+                                  <string>Add</string>
+                                 </property>
+                                 <property name="icon">
+                                  <iconset resource="../images.qrc">
+                                   <normaloff>:/icons/down_w_tail.png</normaloff>:/icons/down_w_tail.png</iconset>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QPushButton" name="pushButton_jackCon_regex_replace">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="minimumSize">
+                                  <size>
+                                   <width>66</width>
+                                   <height>0</height>
+                                  </size>
+                                 </property>
+                                 <property name="toolTip">
+                                  <string>Add selected port pair as a persistent connection break - the ports will be kept disconnected</string>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;
+border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                                 </property>
+                                 <property name="text">
+                                  <string>Replace</string>
+                                 </property>
+                                 <property name="KonfytWideButton" stdset="0">
+                                  <bool>true</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                               <item>
+                                <widget class="QPushButton" name="pushButton_jackCon_regex_remove">
+                                 <property name="sizePolicy">
+                                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
+                                   <horstretch>0</horstretch>
+                                   <verstretch>0</verstretch>
+                                  </sizepolicy>
+                                 </property>
+                                 <property name="minimumSize">
+                                  <size>
+                                   <width>66</width>
+                                   <height>0</height>
+                                  </size>
+                                 </property>
+                                 <property name="toolTip">
+                                  <string>Remove the selected persistent connection port pair below</string>
+                                 </property>
+                                 <property name="styleSheet">
+                                  <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                                 </property>
+                                 <property name="text">
+                                  <string>Remove</string>
+                                 </property>
+                                 <property name="KonfytWideButton" stdset="0">
+                                  <bool>true</bool>
+                                 </property>
+                                </widget>
+                               </item>
+                              </layout>
                              </widget>
+                            </item>
+                            <item>
+                             <spacer name="horizontalSpacer_25">
+                              <property name="orientation">
+                               <enum>Qt::Horizontal</enum>
+                              </property>
+                              <property name="sizeHint" stdset="0">
+                               <size>
+                                <width>40</width>
+                                <height>20</height>
+                               </size>
+                              </property>
+                             </spacer>
                             </item>
                            </layout>
                           </item>
@@ -10166,7 +10414,7 @@ border-top-right-radius: 0;
                 <enum>QTabWidget::South</enum>
                </property>
                <property name="currentIndex">
-                <number>0</number>
+                <number>1</number>
                </property>
                <widget class="QWidget" name="tab_15">
                 <attribute name="title">

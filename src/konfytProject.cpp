@@ -535,6 +535,82 @@ void Project::midiInPort_setPortFilter(int portId, MidiFilter filter)
     }
 }
 
+void Project::midiInPort_addPortConnectRegex(int portId, KonfytPortRegex r)
+{
+    KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
+
+    PrjMidiPortPtr p = midiInPortMap.value(portId);
+    if (p) {
+        p->clientRegexes.append(r);
+        setModified(true);
+        emit midiInPortConnectRegexAdded(portId, r);
+    }
+}
+
+void Project::midiInPort_removePortConnectRegex(int portId, int index)
+{
+    KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
+
+    PrjMidiPortPtr port = midiInPortMap.value(portId);
+    if (port) {
+        KONFYT_ASSERT_RETURN(indexValid(index, port->clientRegexes.count()));
+        port->clientRegexes.removeAt(index);
+        setModified(true);
+        emit midiInPortConnectRegexRemoved(portId, index);
+    }
+}
+
+void Project::midiInPort_updatePortConnectRegex(int portId, int index, KonfytPortRegex r)
+{
+    KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
+
+    PrjMidiPortPtr port = midiInPortMap.value(portId);
+    if (port) {
+        KONFYT_ASSERT_RETURN(indexValid(index, port->clientRegexes.count()));
+        port->clientRegexes.replace(index, r);
+        setModified(true);
+        emit midiInPortConnectRegexChanged(portId, index, r);
+    }
+}
+
+void Project::midiInPort_addPortConnectRegex(int portId, KonfytPortRegex r)
+{
+    KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
+
+    PrjMidiPortPtr p = midiInPortMap.value(portId);
+    if (p) {
+        p->clientRegexes.append(r);
+        setModified(true);
+        emit midiInPortConnectRegexAdded(portId, r);
+    }
+}
+
+void Project::midiInPort_removePortConnectRegex(int portId, int index)
+{
+    KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
+
+    PrjMidiPortPtr port = midiInPortMap.value(portId);
+    if (port) {
+        KONFYT_ASSERT_RETURN(indexValid(index, port->clientRegexes.count()));
+        port->clientRegexes.removeAt(index);
+        setModified(true);
+        emit midiInPortConnectRegexRemoved(portId, index);
+    }
+}
+
+void Project::midiInPort_updatePortConnectRegex(int portId, int index, KonfytPortRegex r)
+{
+    KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
+
+    PrjMidiPortPtr port = midiInPortMap.value(portId);
+    if (port) {
+        KONFYT_ASSERT_RETURN(indexValid(index, port->clientRegexes.count()));
+        port->clientRegexes.replace(index, r);
+        setModified(true);
+        emit midiInPortConnectRegexChanged(portId, index, r);
+    }
+}
+
 int Project::midiOutPort_addPort(QString portName)
 {
     MidiPortPtr p(new MidiPort());

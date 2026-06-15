@@ -102,7 +102,10 @@ public:
     void clearPortClients(KfJackMidiPort *port);
     void clearPortClients(KfJackAudioPort *port);
     void addPortClient(KfJackPort *port, QString newClient);
+    void addPortConnectRegex(KfJackPort *port, KonfytPortRegex r);
     void removeAndDisconnectPortClient(KfJackPort *port, QString client);
+    void removeAndDisconnectPortConRegex(KfJackPort *port, int index);
+    void updatePortConnectRegex(KfJackPort *port, int index, KonfytPortRegex r);
     void setPortFilter(KfJackMidiPort *port, MidiFilter filter);
     void setPortGain(KfJackAudioPort *port, float gain);
     bool sendMidiEventsOnPort(KfJackMidiPort* port, QList<KonfytMidiEvent> events);
@@ -220,6 +223,8 @@ private:
     QList<KfJackMidiPort*> midiOutPorts;
     QList<KfJackAudioPort*> audioOutPorts;
     QList<KfJackAudioPort*> audioInPorts;
+    QStringList getPortConnectRegexClientList(KfJackPort* port,
+                                              QList<KonfytPortRegex> regexes);
 
     QList<KfJackPluginPorts*> pluginPorts;
     QList<KfJackPluginPorts*> fluidsynthPorts;
@@ -243,6 +248,7 @@ private:
     void timerEvent(QTimerEvent *event);
     void startTimer();
     void refreshAllPortsConnections();
+    void refreshRegexConnections(KfJackPort* port);
     void refreshConnections(KfJackPort* port, QStringList connectionList);
     void disconnectClientsFromPort(KfJackPort* port, QStringList clients);
 

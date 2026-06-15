@@ -49,6 +49,7 @@ protected:
     jack_port_t* jackPointer = nullptr;
     void* buffer;
     QStringList connectionList;
+    QList<KonfytPortRegex> regexConnectionList;
 };
 
 struct KfJackAudioPort : public KfJackPort

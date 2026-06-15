@@ -95,3 +95,8 @@ void konfytAssertMsg(const char *file, int line, const char *func, const char *t
               << ", FUNCTION " << func << "(): " << text << std::endl
               << std::flush;
 }
+
+bool indexValid(int index, int listLength)
+{
+    return ( (index >= 0) && (index < listLength) );
+}

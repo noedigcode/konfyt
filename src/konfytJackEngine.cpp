@@ -21,7 +21,8 @@
 
 #include "konfytJackEngine.h"
 
-#include <iostream>
+#include <QDebug> // todo regex
+#include <QRegularExpression>
 
 
 KonfytJackEngine::KonfytJackEngine(QObject *parent) :
@@ -87,6 +88,8 @@ void KonfytJackEngine::refreshAllPortsConnections()
     foreach (KfJackMidiPort* port, midiInPorts) {
         // Normal named client/ports
         refreshConnections(port, port->connectionList);
+        // Regex client/ports
+        refreshRegexConnections(port);
     }
 
     // Refresh connections for midi output ports
@@ -124,6 +127,14 @@ void KonfytJackEngine::refreshAllPortsConnections()
             jack_disconnect(mJackClient, p.srcPort.toLocal8Bit(), p.destPort.toLocal8Bit());
         }
     }
+}
+
+void KonfytJackEngine::refreshRegexConnections(KfJackPort* port)
+{
+    QStringList connectionList = getPortConnectRegexClientList(port,
+                                                    port->regexConnectionList);
+
+    refreshConnections(port, connectionList);
 }
 
 void KonfytJackEngine::refreshConnections(KfJackPort* port, QStringList connectionList)
@@ -544,13 +555,13 @@ void KonfytJackEngine::addPortClient(KfJackPort* port, QString newClient)
     refreshAllPortsConnections();
 }
 
-void KonfytJackEngine::addPortClient(KfJackAudioPort *port, QString newClient)
+void KonfytJackEngine::addPortConnectRegex(KfJackPort* port, KonfytPortRegex r)
 {
     KONFYT_ASSERT_RETURN(port);
 
     if (!clientIsActive()) { return; }
 
-    port->connectionList.append(newClient);
+    port->regexConnectionList.append(r);
     refreshAllPortsConnections();
 }
 
@@ -570,34 +581,38 @@ void KonfytJackEngine::removeAndDisconnectPortClient(KfJackPort* port, QString c
     refreshAllPortsConnections();
 }
 
-void KonfytJackEngine::removeAndDisconnectPortClient(KfJackAudioPort *port, QString client)
+void KonfytJackEngine::removeAndDisconnectPortConRegex(KfJackPort* port, int index)
 {
     KONFYT_ASSERT_RETURN(port);
 
     if (!clientIsActive()) { return; }
 
-    if (!port->connectionList.contains(client)) { return; }
+    KONFYT_ASSERT_RETURN(index >= 0 && index < port->regexConnectionList.count());
+    KonfytPortRegex r = port->regexConnectionList.takeAt(index);
 
-    bool portIsInput = audioInPorts.contains(port);
-    const char* portName = jack_port_name(port->jackPointer);
+    QStringList connectionList = getPortConnectRegexClientList(port, {r});
 
-    pauseJackProcessing(true);
+    disconnectClientsFromPort(port, connectionList);
 
-    // Disconnect client from port in JACK
-    int err = 0;
-    if (portIsInput) {
-        err = jack_disconnect(mJackClient, client.toLocal8Bit().constData(), portName);
-    } else {
-        err = jack_disconnect(mJackClient, portName, client.toLocal8Bit().constData());
-    }
-    // Remove client from port's list
-    port->connectionList.removeAll(client);
+    refreshAllPortsConnections();
+}
 
-    pauseJackProcessing(false);
+void KonfytJackEngine::updatePortConnectRegex(KfJackPort* port, int index, KonfytPortRegex r)
+{
+    KONFYT_ASSERT_RETURN(port);
 
-    if (err) {
-        print("Failed to disconnect JACK audio port client.");
-    }
+    if (!clientIsActive()) { return; }
+
+    KONFYT_ASSERT_RETURN(index >= 0 && index < port->regexConnectionList.count());
+
+    // First, disconnect current regex clients
+    KonfytPortRegex oldr = port->regexConnectionList.value(index);
+    QStringList connectionList = getPortConnectRegexClientList(port, {oldr});
+    disconnectClientsFromPort(port, connectionList);
+
+    // Replace regex with new
+    port->regexConnectionList.replace(index, r);
+
     refreshAllPortsConnections();
 }
 
@@ -1081,6 +1096,45 @@ void KonfytJackEngine::initMidiClosureEvents()
     evAllNotesOff.setCC(MIDI_MSG_ALL_NOTES_OFF, 0);
     evSustainZero.setCC(64, 0);
     evPitchbendZero.setPitchbend(0);
+}
+
+QStringList KonfytJackEngine::getPortConnectRegexClientList(KfJackPort* port,
+                                                QList<KonfytPortRegex> regexes)
+{
+    QStringList clientPortsList;
+    if (midiInPorts.contains(port)) {
+        clientPortsList = getMidiOutputPortsList();
+    } else if (midiOutPorts.contains(port)) {
+        clientPortsList = getMidiInputPortsList();
+    } else if (audioInPorts.contains(port)) {
+        clientPortsList = getAudioOutputPortsList();
+    } else if (audioOutPorts.contains(port)) {
+        clientPortsList = getAudioInputPortsList();
+    }
+
+    QStringList clientNames;
+    QStringList portNames;
+    foreach (QString clientPort, clientPortsList) {
+        clientNames.append( clientNameFromJackPortString(clientPort) );
+        portNames.append( portNameFromJackPortString(clientPort) );
+    }
+
+    QStringList connectionList;
+    foreach (KonfytPortRegex r, regexes) {
+        QRegularExpression clientRe(r.clientRegex);
+        QRegularExpression portRe(r.portRegex);
+        for (int i = 0; i < clientNames.count(); i++) {
+            QRegularExpressionMatch clientMatch = clientRe.match(clientNames.value(i));
+            if (clientMatch.hasMatch()) {
+                QRegularExpressionMatch portMatch = portRe.match(portNames.value(i));
+                if (portMatch.hasMatch()) {
+                    connectionList.append(clientPortsList.value(i));
+                }
+            }
+        }
+    }
+
+    return connectionList;
 }
 
 /* Helper function for JACK process callback. */

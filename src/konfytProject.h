@@ -65,6 +65,7 @@ public:
     {
         QString name;
         QStringList clients;
+        QList<KonfytPortRegex> clientRegexes;
         KfJackMidiPort* jackPort = nullptr; // TODO THIS MUST NOT BE IN PROJECT
         MidiFilter filter = MidiFilter::allPassFilter();
         QString script;
@@ -168,6 +169,8 @@ public:
     void midiInPort_removeClient(int portId, QString client);
     void midiInPort_setPortFilter(int portId, MidiFilter filter);
     void midiInPort_addPortConnectRegex(int portId, KonfytPortRegex r);
+    void midiInPort_removePortConnectRegex(int portId, int index);
+    void midiInPort_updatePortConnectRegex(int portId, int index, KonfytPortRegex r);
 
     // -----------------------------------------------------------------------
     // MIDI output ports
@@ -261,7 +264,12 @@ signals:
     void projectNameChanged();
     void patchURIsNeedUpdating();
     void audioBusNameChanged(int busId);
+
     void midiInPortNameChanged(int portId);
+    void midiInPortConnectRegexAdded(int portId, KonfytPortRegex r);
+    void midiInPortConnectRegexChanged(int portId, int index, KonfytPortRegex r);
+    void midiInPortConnectRegexRemoved(int portId, int index);
+
     void midiOutPortNameChanged(int portId);
     void audioInPortNameChanged(int portId);
     void midiPickupRangeChanged(int range);

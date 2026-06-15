@@ -1332,6 +1332,8 @@ void MainWindow::setupConnectionsPage()
     connect(ui->tree_portsBusses, &QTreeWidget::customContextMenuRequested,
             this, &MainWindow::onPortsBusesTreeMenuRequested);
     setupPortsBusesTreeMenu();
+
+    updateRegexConnectionsButtons();
 }
 
 void MainWindow::showConnectionsPage()
@@ -1686,6 +1688,62 @@ int MainWindow::connectionsTreeGetSelectedMidiInPortId()
     return tree_midiInMap.value(ui->tree_portsBusses->currentItem());
 }
 
+void MainWindow::updateRegexConnectionsTree()
+{
+    ui->treeWidget_jackCon_regexes->clear();
+
+    ProjectPtr prj = mCurrentProject;
+    KONFYT_ASSERT_RETURN(!prj.isNull());
+
+    if (connectionsTreeIsMidiInPortSelected()) {
+        int portId = connectionsTreeGetSelectedMidiInPortId();
+
+        PrjMidiPortPtr port = prj->midiInPort_getPort(portId);
+        foreach (KonfytPortRegex r, port->clientRegexes) {
+            QTreeWidgetItem* item = new QTreeWidgetItem();
+            item->setText(0, QString("[%1] [%2]").arg(r.clientRegex).arg(r.portRegex));
+            ui->treeWidget_jackCon_regexes->addTopLevelItem(item);
+            // todo regex add left/right/midi port connection checkbox
+        }
+
+    }
+
+    updateRegexConnectionsButtons();
+}
+
+void MainWindow::updateGuiForJackConRegexPreview()
+{
+    QRegularExpression clientRe(ui->lineEdit_jackCon_regex_client->text());
+    QRegularExpression portRe(ui->lineEdit_jackCon_regex_port->text());
+
+    ui->tree_Connections->clearSelection();
+
+    foreach (QString client, conClientsMap.keys()) {
+        QRegularExpressionMatch clientMatch = clientRe.match(client);
+        if (clientMatch.hasMatch()) {
+            QTreeWidgetItem* clientItem = conClientsMap.value(client);
+            for (int i = 0; i < clientItem->childCount(); i++) {
+                QTreeWidgetItem* portItem = clientItem->child(i);
+                QString jackPortString = conPortsMap.value(portItem);
+                QString portName =
+                        KonfytJackEngine::portNameFromJackPortString(jackPortString);
+                QRegularExpressionMatch portMatch = portRe.match(portName);
+                if (portMatch.hasMatch()) {
+                    portItem->setSelected(true);
+                }
+            }
+        }
+    }
+}
+
+void MainWindow::updateRegexConnectionsButtons()
+{
+    bool enable = ui->treeWidget_jackCon_regexes->currentItem() != nullptr;
+
+    ui->pushButton_jackCon_regex_remove->setEnabled(enable);
+    ui->pushButton_jackCon_regex_replace->setEnabled(enable);
+}
+
 void MainWindow::clearConnectionsTree()
 {
     QList<QCheckBox*> ll = conChecksMap1.keys();
@@ -1881,6 +1939,118 @@ void MainWindow::onPortsBusesTreeMenuRequested()
     showPortsBusesTreeMenu();
 }
 
+void MainWindow::onMidiInPortConnectRegexAdded(int portId, KonfytPortRegex r)
+{
+    ProjectPtr prj = mCurrentProject;
+    KONFYT_ASSERT_RETURN(!prj.isNull());
+
+    PrjMidiPortPtr port = prj->midiInPort_getPort(portId);
+    KONFYT_ASSERT_RETURN(!port.isNull());
+
+    // Add to JACK engine
+    jack.addPortConnectRegex(port->jackPort, r);
+
+    // Update GUI
+    updateRegexConnectionsTree();
+}
+
+void MainWindow::onMidiInPortConnectRegexChanged(int portId, int index, KonfytPortRegex r)
+{
+    ProjectPtr prj = mCurrentProject;
+    KONFYT_ASSERT_RETURN(!prj.isNull());
+
+    PrjMidiPortPtr port = prj->midiInPort_getPort(portId);
+    KONFYT_ASSERT_RETURN(!port.isNull());
+
+    // Update in JACK engine
+    jack.updatePortConnectRegex(port->jackPort, index, r);
+
+    // Update GUI
+    updateRegexConnectionsTree();
+}
+
+void MainWindow::onMidiInPortConnectRegexRemoved(int portId, int index)
+{
+    ProjectPtr prj = mCurrentProject;
+    KONFYT_ASSERT_RETURN(!prj.isNull());
+
+    PrjMidiPortPtr port = prj->midiInPort_getPort(portId);
+    KONFYT_ASSERT_RETURN(!port.isNull());
+
+    // Remove from JACK engine
+    jack.removeAndDisconnectPortConRegex(port->jackPort, index);
+
+    // Update GUI
+    updateRegexConnectionsTree();
+}
+
+void MainWindow::on_lineEdit_jackCon_regex_client_textChanged(const QString& /*text*/)
+{
+    updateGuiForJackConRegexPreview();
+}
+
+void MainWindow::on_lineEdit_jackCon_regex_port_textChanged(const QString& /*text*/)
+{
+    updateGuiForJackConRegexPreview();
+}
+
+void MainWindow::on_pushButton_jackCon_regex_add_clicked()
+{
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
+
+    KonfytPortRegex r;
+    r.clientRegex = ui->lineEdit_jackCon_regex_client->text();
+    r.portRegex = ui->lineEdit_jackCon_regex_port->text();
+
+    // todo regex: do for other port types
+    if (connectionsTreeIsMidiInPortSelected()) {
+        int portId = connectionsTreeGetSelectedMidiInPortId();
+        prj->midiInPort_addPortConnectRegex(portId, r);
+    }
+}
+
+void MainWindow::on_pushButton_jackCon_regex_remove_clicked()
+{
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
+
+    int index = ui->treeWidget_jackCon_regexes->indexOfTopLevelItem(
+                ui->treeWidget_jackCon_regexes->currentItem());
+    if (index == -1) { return; }
+
+    if (connectionsTreeIsMidiInPortSelected()) {
+        int portId = connectionsTreeGetSelectedMidiInPortId();
+        prj->midiInPort_removePortConnectRegex(portId, index);
+    }
+    // todo regex: other port types
+}
+
+void MainWindow::on_pushButton_jackCon_regex_replace_clicked()
+{
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
+
+    int index = ui->treeWidget_jackCon_regexes->indexOfTopLevelItem(
+                ui->treeWidget_jackCon_regexes->currentItem());
+    if (index == -1) { return; }
+
+    KonfytPortRegex r;
+    r.clientRegex = ui->lineEdit_jackCon_regex_client->text();
+    r.portRegex = ui->lineEdit_jackCon_regex_port->text();
+
+    if (connectionsTreeIsMidiInPortSelected()) {
+        int portId = connectionsTreeGetSelectedMidiInPortId();
+        prj->midiInPort_updatePortConnectRegex(portId, index, r);
+    }
+    // todo regex: other port types
+}
+
+void MainWindow::on_treeWidget_jackCon_regexes_currentItemChanged(QTreeWidgetItem* /*current*/, QTreeWidgetItem* /*previous*/)
+{
+    updateRegexConnectionsButtons();
+}
+
 void MainWindow::initTriggers()
 {
     // Create a list of actions we will be adding to the triggers list
@@ -2005,6 +2175,13 @@ void MainWindow::loadProject(ProjectPtr prj)
             this, &MainWindow::onProjectNameChanged);
     connect(prj.data(), &Project::midiPickupRangeChanged,
             this, &MainWindow::onProjectMidiPickupRangeChanged);
+
+    connect(prj.data(), &KonfytProject::midiInPortConnectRegexAdded,
+            this, &MainWindow::onMidiInPortConnectRegexAdded);
+    connect(prj.data(), &KonfytProject::midiInPortConnectRegexChanged,
+            this, &MainWindow::onMidiInPortConnectRegexChanged);
+    connect(prj.data(), &KonfytProject::midiInPortConnectRegexRemoved,
+            this, &MainWindow::onMidiInPortConnectRegexRemoved);
 
     setupWarningConnectionsForProject(prj);
 
@@ -6218,41 +6395,6 @@ void MainWindow::removeAudioInPortFromEngines(Project::AudioPortPtr prjPort)
     emit audioInPortRemoved(prjPort);
 }
 
-void MainWindow::updateGuiForJackConRegexPreview()
-{
-    QRegularExpression clientRe(ui->lineEdit_jackCon_regex_client->text());
-    QRegularExpression portRe(ui->lineEdit_jackCon_regex_port->text());
-
-    ui->tree_Connections->clearSelection();
-
-    foreach (QString client, conClientsMap.keys()) {
-        QRegularExpressionMatch clientMatch = clientRe.match(client);
-        if (clientMatch.hasMatch()) {
-            QTreeWidgetItem* clientItem = conClientsMap.value(client);
-            for (int i = 0; i < clientItem->childCount(); i++) {
-                QTreeWidgetItem* portItem = clientItem->child(i);
-                QString jackPortString = conPortsMap.value(portItem);
-                QString portName =
-                    KonfytJackEngine::portNameFromJackPortString(jackPortString);
-                QRegularExpressionMatch portMatch = portRe.match(portName);
-                if (portMatch.hasMatch()) {
-                    portItem->setSelected(true);
-                }
-            }
-        }
-    }
-}
-
-void MainWindow::on_lineEdit_jackCon_regex_client_textChanged(const QString &arg1)
-{
-    updateGuiForJackConRegexPreview();
-}
-
-void MainWindow::on_lineEdit_jackCon_regex_port_textChanged(const QString &arg1)
-{
-    updateGuiForJackConRegexPreview();
-}
-
 void MainWindow::on_actionAdd_MIDI_Out_Port_triggered()
 {
     int portId = addMidiOutPort();
@@ -6685,6 +6827,8 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(
     }
 
     updateConnectionsTree();
+    updateRegexConnectionsButtons();
+    updateRegexConnectionsTree();
 }
 
 /* Remove the bus/port selected in the connections ports/buses tree widget. */
@@ -8893,7 +9037,6 @@ void MainWindow::on_toolButton_LibraryPreview_clicked()
     setPreviewMode( ui->toolButton_LibraryPreview->isChecked() );
 }
 
-
 void MainWindow::ResetOptionComboBox::initComboBox(QComboBox *comboBox)
 {
     mComboBox = comboBox;
@@ -8982,9 +9125,6 @@ QAction *MainWindow::ResetOptionMenu::actionWithValue(KonfytReset value)
     return ret;
 }
 
-
-
-
 void MainWindow::on_pushButton_jackCon_regex_add_clicked()
 {
     ProjectPtr prj = mCurrentProject;
@@ -8995,4 +9135,5 @@ void MainWindow::on_pushButton_jackCon_regex_add_clicked()
     r.portRegex = ui->lineEdit_jackCon_regex_port->text();
 
 }
+
 
