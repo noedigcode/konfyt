@@ -571,6 +571,7 @@ private:
     void connectionsTreeSelectAndEditMidiOutPort(int portId);
     void updatePortsBussesTree();
     void updateConnectionsTree();
+    void updateConnectionsTreeCheckboxesForRegexes();
     void clearPortsBussesConnectionsData();
 
     bool connectionsTreeIsBusSelected();
@@ -607,7 +608,7 @@ private:
     QMap<QString, QTreeWidgetItem*> notRunningClientsMap;
 
 private slots:
-    void checkboxes_clicked_slot(QCheckBox* c);
+    void onConnectionsTreeCheckBoxClicked(QCheckBox* c);
     void onPortsBusesTreeMenuRequested();
     void on_pushButton_connectionsPage_OK_clicked();
     void on_pushButton_ShowConnections_clicked();
@@ -628,7 +629,7 @@ private slots:
     // Regex connections
 private:
     void fillRegexConnectionsTree();
-    void updateGuiForJackConRegexPreview();
+    void selectConnectionsTreePortsBasedOnRegexEditor();
     void updateRegexConnectionsButtons();
 
     QList<QTreeWidgetItem*> mPortConRegexTreeLeftItems;

@@ -2462,7 +2462,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>4</number>
+                 <number>10</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -10425,6 +10425,40 @@ padding: 3px;</string>
                     </widget>
                    </item>
                   </layout>
+                 </widget>
+                 <widget class="QCheckBox" name="checkBox_template_conTreeNoRegexMatch">
+                  <property name="geometry">
+                   <rect>
+                    <x>130</x>
+                    <y>400</y>
+                    <width>301</width>
+                    <height>24</height>
+                   </rect>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
+                  <property name="text">
+                   <string>Connections tree no regex match</string>
+                  </property>
+                 </widget>
+                 <widget class="QCheckBox" name="checkBox_template_conTreeRegexMatch">
+                  <property name="geometry">
+                   <rect>
+                    <x>130</x>
+                    <y>430</y>
+                    <width>271</width>
+                    <height>24</height>
+                   </rect>
+                  </property>
+                  <property name="styleSheet">
+                   <string notr="true">QCheckBox::indicator {
+	border: 2px solid rgb(19, 236, 47);;
+}</string>
+                  </property>
+                  <property name="text">
+                   <string>Connections tree regex match</string>
+                  </property>
                  </widget>
                 </widget>
                </widget>

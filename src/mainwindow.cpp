@@ -1498,106 +1498,82 @@ void MainWindow::updateConnectionsTree()
     }
 
     // Get list of JACK ports, depending on the selected tree item.
-    QStringList l; // List of Jack client:ports
-    int id; // Index/id of bus/port
+    QStringList jackClientPorts; // List of Jack client:ports
+    QStringList leftCons;
+    QStringList rightCons;
     if (connectionsTreeIsBusSelected()) {
-        // A bus is selected
-        l = jack.getAudioInputPortsList();
-        id = tree_busMap.value( ui->tree_portsBusses->currentItem() );
-    } else if ( ui->tree_portsBusses->currentItem()->parent() == audioInParent ) {
-        // An audio input port is selected
-        l = jack.getAudioOutputPortsList();
-        id = tree_audioInMap.value( ui->tree_portsBusses->currentItem() );
-    } else if ( ui->tree_portsBusses->currentItem()->parent() == midiOutParent ) {
-        // A midi output port is selected
-        l = jack.getMidiInputPortsList();
-        id = tree_midiOutMap.value( ui->tree_portsBusses->currentItem() );
+        jackClientPorts = jack.getAudioInputPortsList();
+        Project::AudioPortPtr bus = connectionsTreeGetSelectedBus();
+        if (bus) {
+            leftCons = bus->leftClients;
+            rightCons = bus->rightClients;
+        }
+    } else if (connectionsTreeIsAudioInPortSelected()) {
+        jackClientPorts = jack.getAudioOutputPortsList();
+        Project::AudioPortPtr p = connectionsTreeGetSelectedAudioInPort();
+        if (p) {
+            leftCons = p->leftClients;
+            rightCons = p->rightClients;
+        }
+    } else if (connectionsTreeIsMidiOutPortSelected()) {
+        jackClientPorts = jack.getMidiInputPortsList();
+        Project::MidiPortPtr p = connectionsTreeGetSelectedMidiOutPort();
+        if (p) {
+            leftCons = p->clients;
+        }
     } else if (connectionsTreeIsMidiInPortSelected()) {
-        // Midi input port is selected
-        l = jack.getMidiOutputPortsList();
-        id = tree_midiInMap.value( ui->tree_portsBusses->currentItem() );
+        jackClientPorts = jack.getMidiOutputPortsList();
+        Project::MidiPortPtr p = connectionsTreeGetSelectedMidiInPort();
+        if (p) {
+            leftCons = p->clients;
+        }
     } else {
-        // One of the parents are selected.
+        // One of the parent tree widget items are selected.
         clearConnectionsTree();
         return;
     }
 
-    QStringList leftCons;
-    QStringList rightCons;
-    if (connectionsTreeIsBusSelected()) {
-        // Get the selected bus
-        Project::AudioPortPtr bus = prj->audioBus_getBus(id);
-        if (bus) {
-            leftCons = bus->leftClients;
-            rightCons = bus->rightClients;
-        } else {
-            print("Error: updateConnectionsTree: bus null for id " + n2s(id));
-        }
-
-    } else if ( ui->tree_portsBusses->currentItem()->parent() == audioInParent ) {
-        // An audio input port is selected
-        Project::AudioPortPtr p = prj->audioInPort_getPort(id);
-        if (p) {
-            leftCons = p->leftClients;
-            rightCons = p->rightClients;
-        } else {
-            print("Error: updateConnectionsTree: audioInPort null for id " + n2s(id));
-        }
-
-    } else if ( ui->tree_portsBusses->currentItem()->parent() == midiOutParent ) {
-        // A midi output port is selected
-        leftCons = prj->midiOutPort_getClients(id);
-
-    } else if (connectionsTreeIsMidiInPortSelected()) {
-        // Midi input is selected
-        leftCons = prj->midiInPort_getClients(id);
-    }
-
-    QList<QString> portsInTree = conPortsMap.values();
+    QList<QString> jackClientPortsInTree = conPortsMap.values();
 
     // Determine which JACK ports to add to tree
     QStringList toAdd;
-    for (int i=0; i < l.count(); i++) {
-        if (!portsInTree.contains(l[i])) {
-            toAdd.append(l[i]);
+    foreach (QString jackClientPort, jackClientPorts) {
+        if (!jackClientPortsInTree.contains(jackClientPort)) {
+            toAdd.append(jackClientPort);
         }
     }
 
     // Also add ports marked as connected in project, but which are not in tree
-    for (int i=0; i < leftCons.count(); i++) {
-        QString p = leftCons[i];
-        if (!portsInTree.contains(p) && !toAdd.contains(p)) {
+    foreach (QString p, leftCons) {
+        if (!jackClientPortsInTree.contains(p) && !toAdd.contains(p)) {
             toAdd.append(p);
         }
     }
-    for (int i=0; i < rightCons.count(); i++) {
-        QString p = rightCons[i];
-        if (!portsInTree.contains(p) && !toAdd.contains(p)) {
+    foreach (QString p, rightCons) {
+        if (!jackClientPortsInTree.contains(p) && !toAdd.contains(p)) {
             toAdd.append(p);
         }
     }
 
     // Determine which JACK ports to remove from tree
     QStringList toRemTemp;
-    for (int i=0; i < portsInTree.count(); i++) {
-        if (!l.contains(portsInTree[i])) {
-            toRemTemp.append(portsInTree[i]);
+    foreach (QString p, jackClientPortsInTree) {
+        if (!jackClientPorts.contains(p)) {
+            toRemTemp.append(p);
         }
     }
 
     // Don't remove ports which have connections in the project
     QStringList toRem;
-    for (int i=0; i < toRemTemp.count(); i++) {
-        QString port = toRemTemp[i];
-        if ( (!leftCons.contains(port)) && (!rightCons.contains(port)) ) {
-            toRem.append(toRemTemp[i]);
+    foreach (QString p, toRemTemp) {
+        if ( (!leftCons.contains(p)) && (!rightCons.contains(p)) ) {
+            toRem.append(p);
         }
     }
 
 
     // Now, remove all ports that are in toRem
-    for (int i=0; i < toRem.count(); i++) {
-        QString rem = toRem[i];
+    foreach (QString rem, toRem) {
         QTreeWidgetItem* item = conPortsMap.key(rem);
         conPortsMap.remove(item);
         QCheckBox* c = conChecksMap1.key(item);
@@ -1607,13 +1583,8 @@ void MainWindow::updateConnectionsTree()
         delete item;
     }
 
-    QStringList ourJackClients;
-    ourJackClients.append(jack.clientName());
-    ourJackClients.append(pengine.ourJackClientNames());
-
     // Add all ports that are in toAdd
-    for (int i=0; i < toAdd.count(); i++) {
-        QString add = toAdd[i];
+    foreach (QString add, toAdd) {
         // Skip our client ports
         if (!jackPortBelongstoUs(add)) {
             addClientPortToTree(add);
@@ -1621,13 +1592,11 @@ void MainWindow::updateConnectionsTree()
     }
 
     // Remove empty clients
-    QList<QTreeWidgetItem*> clients = conClientsMap.values();
-    for (int i=0; i < clients.count(); i++) {
-        QTreeWidgetItem* client = clients[i];
-        if (client->childCount() == 0) {
-            QString c = conClientsMap.key(client);
+    foreach (QTreeWidgetItem* clientItem, conClientsMap.values()) {
+        if (clientItem->childCount() == 0) {
+            QString c = conClientsMap.key(clientItem);
             conClientsMap.remove(c);
-            delete client;
+            delete clientItem;
         }
     }
 
@@ -1635,11 +1604,9 @@ void MainWindow::updateConnectionsTree()
     QColor inactiveColor = QColor(Qt::red);
 
     // Mark items red if not active and set checkboxes
-    QList<QTreeWidgetItem*> items = conPortsMap.keys();
-    for (int i=0; i < items.count(); i++) {
-        QTreeWidgetItem* item = items[i];
+    foreach (QTreeWidgetItem* item, conPortsMap.keys()) {
         QString port = conPortsMap[item];
-        if ( !l.contains(port) ) {
+        if ( !jackClientPorts.contains(port) ) {
             // Mark red
             item->setBackground(0, QBrush(inactiveColor));
         } else {
@@ -1652,8 +1619,92 @@ void MainWindow::updateConnectionsTree()
         if (cb) { cb->setChecked(rightCons.contains(port)); }
     }
 
+    updateConnectionsTreeCheckboxesForRegexes();
+
     ui->tree_Connections->sortItems(0, Qt::AscendingOrder);
     ui->tree_Connections->expandAll();
+}
+
+void MainWindow::updateConnectionsTreeCheckboxesForRegexes()
+{
+    // Get regexes for currently selected port/bus
+    struct RegexInfo {
+        KonfytPortRegex regex;
+        Project::PortLeftRight leftRight;
+    };
+    QList<RegexInfo> regexInfos;
+    Project::AudioPortPtr audioPort;
+    Project::MidiPortPtr midiPort;
+    if (connectionsTreeIsBusSelected()) {
+        audioPort = connectionsTreeGetSelectedBus();
+    } else if (connectionsTreeIsAudioInPortSelected()) {
+        audioPort = connectionsTreeGetSelectedAudioInPort();
+    } else if (connectionsTreeIsMidiInPortSelected()) {
+        midiPort = connectionsTreeGetSelectedMidiInPort();
+    } else if (connectionsTreeIsMidiOutPortSelected()) {
+        midiPort = connectionsTreeGetSelectedMidiOutPort();
+    }
+    if (audioPort) {
+        RegexInfo ri;
+        foreach (KonfytPortRegex r, audioPort->leftClientRegexes) {
+            ri.regex = r;
+            ri.leftRight = Project::LeftPort;
+            regexInfos.append(ri);
+        }
+        foreach (KonfytPortRegex r, audioPort->rightClientRegexes) {
+            ri.regex = r;
+            ri.leftRight = Project::RightPort;
+            regexInfos.append(ri);
+        }
+    } else if (midiPort) {
+        RegexInfo ri;
+        foreach (KonfytPortRegex r, midiPort->clientRegexes) {
+            ri.regex = r;
+            ri.leftRight = Project::LeftPort;
+            regexInfos.append(ri);
+        }
+    }
+
+    // Mark checkboxs based on regex match and left/right
+    QMap<QCheckBox*, bool> cbMarks;
+    foreach (QCheckBox* cb, conChecksMap1.keys()) {
+        cbMarks.insert(cb, false);
+    }
+    foreach (QCheckBox* cb, conChecksMap2.keys()) {
+        cbMarks.insert(cb, false);
+    }
+    foreach (RegexInfo regexInfo, regexInfos) {
+        QRegularExpression clientRe(regexInfo.regex.clientRegex);
+        QRegularExpression portRe(regexInfo.regex.portRegex);
+        foreach (QTreeWidgetItem* item, conPortsMap.keys()) {
+            QString jackClientPort = conPortsMap.value(item);
+            QString jackClient = KonfytJackEngine::clientNameFromJackPortString(jackClientPort);
+            bool match = false;
+            if (clientRe.match(jackClient).hasMatch()) {
+                QString jackPort = KonfytJackEngine::portNameFromJackPortString(jackClientPort);
+                if (portRe.match(jackPort).hasMatch()) {
+                    match = true;
+                }
+            }
+
+            QCheckBox* cbl = conChecksMap1.key(item);
+            if (cbl && match && regexInfo.leftRight == Project::LeftPort) {
+                cbMarks[cbl] = true;
+            }
+
+            QCheckBox* cbr = conChecksMap2.key(item);
+            if (cbr && match && regexInfo.leftRight == Project::RightPort) {
+                cbMarks[cbr] = true;
+            }
+        }
+    }
+    foreach (QCheckBox* cb, cbMarks.keys()) {
+        if (cbMarks[cb]) {
+            cb->setStyleSheet(ui->checkBox_template_conTreeRegexMatch->styleSheet());
+        } else {
+            cb->setStyleSheet(ui->checkBox_template_conTreeNoRegexMatch->styleSheet());
+        }
+    }
 }
 
 void MainWindow::clearPortsBussesConnectionsData()
@@ -1836,7 +1887,7 @@ void MainWindow::fillRegexConnectionsTree()
     updateRegexConnectionsButtons();
 }
 
-void MainWindow::updateGuiForJackConRegexPreview()
+void MainWindow::selectConnectionsTreePortsBasedOnRegexEditor()
 {
     // Select the JACK ports that match the regexes in the regex editor
 
@@ -1918,14 +1969,13 @@ void MainWindow::updatePortConRegexTreeAudioItem(QTreeWidgetItem *item,
 
 void MainWindow::clearConnectionsTree()
 {
-    QList<QCheckBox*> ll = conChecksMap1.keys();
-    for (int i=0; i<ll.count(); i++) {
-        delete ll[i];
+    foreach (QCheckBox* cb, conChecksMap1.keys()) {
+        delete cb;
     }
     conChecksMap1.clear();
-    ll = conChecksMap2.keys();
-    for (int i=0; i<ll.count(); i++) {
-        delete ll[i];
+
+    foreach (QCheckBox* cb, conChecksMap2.keys()) {
+        delete cb;
     }
     conChecksMap2.clear();
 
@@ -1971,7 +2021,7 @@ void MainWindow::addClientPortToTree(QString jackport)
         conChecksMap1.insert(cb, portItem);
         connect(cb, &QCheckBox::clicked, this, [=]()
         {
-            checkboxes_clicked_slot(cb);
+            onConnectionsTreeCheckBoxClicked(cb);
         });
 
     } else {
@@ -1985,7 +2035,7 @@ void MainWindow::addClientPortToTree(QString jackport)
         conChecksMap1.insert(cbl, portItem);
         connect(cbl, &QCheckBox::clicked, this, [=]()
         {
-            checkboxes_clicked_slot(cbl);
+            onConnectionsTreeCheckBoxClicked(cbl);
         });
 
         QCheckBox* cbr = new QCheckBox();
@@ -1993,13 +2043,13 @@ void MainWindow::addClientPortToTree(QString jackport)
         conChecksMap2.insert(cbr, portItem);
         connect(cbr, &QCheckBox::clicked, this, [=]()
         {
-            checkboxes_clicked_slot(cbr);
+            onConnectionsTreeCheckBoxClicked(cbr);
         });
     }
 }
 
 /* One of the connections page ports checkboxes have been clicked. */
-void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
+void MainWindow::onConnectionsTreeCheckBoxClicked(QCheckBox *c)
 {
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
@@ -2016,12 +2066,10 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
         leftRight = Project::RightPort;
     }
 
-    // Now we get the JACK port string:
     QString portString = conPortsMap[t];
 
     if (connectionsTreeIsBusSelected()) {
-        // Get the selected bus
-        int busId = tree_busMap.value( ui->tree_portsBusses->currentItem() );
+        int busId = connectionsTreeGetSelectedBusId();
         Project::AudioPortPtr bus = prj->audioBus_getBus(busId);
         if (bus) {
             KfJackAudioPort* jackPort;
@@ -2041,9 +2089,8 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
             }
         }
 
-    } else if ( ui->tree_portsBusses->currentItem()->parent() == audioInParent ) {
-        // An audio input port is selected
-        int portId = tree_audioInMap.value( ui->tree_portsBusses->currentItem() );
+    } else if (connectionsTreeIsAudioInPortSelected()) {
+        int portId = connectionsTreeGetSelectedAudioInPortId();
         Project::AudioPortPtr p = prj->audioInPort_getPort(portId);
         if (p) {
             KfJackAudioPort* jackPort;
@@ -2063,9 +2110,8 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
             }
         }
 
-    } else if ( ui->tree_portsBusses->currentItem()->parent() == midiOutParent ) {
-        // A midi output port is selected
-        int portId = tree_midiOutMap.value( ui->tree_portsBusses->currentItem() );
+    } else if (connectionsTreeIsMidiOutPortSelected()) {
+        int portId = connectionsTreeGetSelectedMidiOutPortId();
         Project::MidiPortPtr p = prj->midiOutPort_getPort(portId);
         if (p) {
             if (c->isChecked()) {
@@ -2082,7 +2128,6 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
         }
 
     } else if (connectionsTreeIsMidiInPortSelected()) {
-        // Midi input is selected
         int portId = connectionsTreeGetSelectedMidiInPortId();
         Project::MidiPortPtr p = prj->midiInPort_getPort(portId);
         if (p) {
@@ -2123,6 +2168,8 @@ void MainWindow::onMidiInPortConnectRegexAdded(Project::MidiPortPtr port, Konfyt
 
     // Select newly added item
     ui->treeWidget_jackCon_regexes->setCurrentItem(item);
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onMidiInPortConnectRegexChanged(Project::MidiPortPtr port, int index, KonfytPortRegex r)
@@ -2138,6 +2185,8 @@ void MainWindow::onMidiInPortConnectRegexChanged(Project::MidiPortPtr port, int 
     if (!item) { return; }
 
     updatePortConRegexTreeMidiItem(item, r);
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onMidiInPortConnectRegexRemoved(Project::MidiPortPtr port, int index)
@@ -2154,6 +2203,8 @@ void MainWindow::onMidiInPortConnectRegexRemoved(Project::MidiPortPtr port, int 
     if (item) {
         delete item; // Removes item from tree widget
     }
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onMidiOutPortConnectRegexAdded(Project::MidiPortPtr port, KonfytPortRegex r)
@@ -2167,6 +2218,8 @@ void MainWindow::onMidiOutPortConnectRegexAdded(Project::MidiPortPtr port, Konfy
 
     // Select newly added item
     ui->treeWidget_jackCon_regexes->setCurrentItem(item);
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onMidiOutPortConnectRegexChanged(Project::MidiPortPtr port, int index, KonfytPortRegex r)
@@ -2182,6 +2235,8 @@ void MainWindow::onMidiOutPortConnectRegexChanged(Project::MidiPortPtr port, int
     if (!item) { return; }
 
     updatePortConRegexTreeMidiItem(item, r);
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onMidiOutPortConnectRegexRemoved(Project::MidiPortPtr port, int index)
@@ -2198,6 +2253,8 @@ void MainWindow::onMidiOutPortConnectRegexRemoved(Project::MidiPortPtr port, int
     if (item) {
         delete item; // Removes item from tree widget
     }
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onAudioInPortConnectRegexAdded(Project::AudioPortPtr port,
@@ -2219,6 +2276,8 @@ void MainWindow::onAudioInPortConnectRegexAdded(Project::AudioPortPtr port,
 
     // Select newly added item
     ui->treeWidget_jackCon_regexes->setCurrentItem(item);
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onAudioInPortConnectRegexChanged(Project::AudioPortPtr port,
@@ -2246,6 +2305,8 @@ void MainWindow::onAudioInPortConnectRegexChanged(Project::AudioPortPtr port,
     if (!item) { return; }
 
     updatePortConRegexTreeAudioItem(item, leftRight, r);
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onAudioInPortConnectRegexRemoved(Project::AudioPortPtr port,
@@ -2276,6 +2337,8 @@ void MainWindow::onAudioInPortConnectRegexRemoved(Project::AudioPortPtr port,
     if (item) {
         delete item; // Removes item from tree widget
     }
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onAudioBusConnectRegexAdded(Project::AudioPortPtr bus,
@@ -2297,6 +2360,8 @@ void MainWindow::onAudioBusConnectRegexAdded(Project::AudioPortPtr bus,
 
     // Select newly added item
     ui->treeWidget_jackCon_regexes->setCurrentItem(item);
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onAudioBusConnectRegexChanged(Project::AudioPortPtr bus,
@@ -2324,6 +2389,8 @@ void MainWindow::onAudioBusConnectRegexChanged(Project::AudioPortPtr bus,
     if (!item) { return; }
 
     updatePortConRegexTreeAudioItem(item, leftRight, r);
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::onAudioBusConnectRegexRemoved(Project::AudioPortPtr bus,
@@ -2354,16 +2421,18 @@ void MainWindow::onAudioBusConnectRegexRemoved(Project::AudioPortPtr bus,
     if (item) {
         delete item; // Removes item from tree widget
     }
+
+    updateConnectionsTreeCheckboxesForRegexes();
 }
 
 void MainWindow::on_lineEdit_jackCon_regex_client_textChanged(const QString& /*text*/)
 {
-    updateGuiForJackConRegexPreview();
+    selectConnectionsTreePortsBasedOnRegexEditor();
 }
 
 void MainWindow::on_lineEdit_jackCon_regex_port_textChanged(const QString& /*text*/)
 {
-    updateGuiForJackConRegexPreview();
+    selectConnectionsTreePortsBasedOnRegexEditor();
 }
 
 void MainWindow::on_pushButton_jackCon_regex_add_clicked()
@@ -2563,7 +2632,7 @@ void MainWindow::on_treeWidget_jackCon_regexes_currentItemChanged(
     ui->radioButton_jackCon_regex_right->setChecked(leftRight == Project::RightPort);
 
     // Ensure preview gets updated even when line edits textChanged slots don't fire
-    updateGuiForJackConRegexPreview();
+    selectConnectionsTreePortsBasedOnRegexEditor();
 }
 
 void MainWindow::on_treeWidget_jackCon_regexes_itemClicked(QTreeWidgetItem *item, int /*column*/)
@@ -7427,7 +7496,7 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(
     updateConnectionsTree();
     updateRegexConnectionsButtons();
     fillRegexConnectionsTree();
-    updateGuiForJackConRegexPreview();
+    selectConnectionsTreePortsBasedOnRegexEditor();
 }
 
 /* Remove the bus/port selected in the connections ports/buses tree widget. */
