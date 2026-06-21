@@ -2462,7 +2462,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>4</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
@@ -6045,7 +6045,7 @@ border-bottom-left-radius: 0;</string>
                        <property name="verticalSpacing">
                         <number>2</number>
                        </property>
-                       <item row="1" column="1">
+                       <item row="3" column="1">
                         <widget class="QTreeWidget" name="tree_Connections">
                          <property name="styleSheet">
                           <string notr="true"/>
@@ -6084,7 +6084,7 @@ border-bottom-left-radius: 0;</string>
                          </column>
                         </widget>
                        </item>
-                       <item row="1" column="0" rowspan="3">
+                       <item row="1" column="0" rowspan="5">
                         <widget class="QTreeWidget" name="tree_portsBusses">
                          <property name="maximumSize">
                           <size>
@@ -6104,19 +6104,6 @@ border-bottom-left-radius: 0;</string>
                        </item>
                        <item row="0" column="0">
                         <layout class="QHBoxLayout" name="horizontalLayout_75">
-                         <item>
-                          <widget class="QLabel" name="label_7">
-                           <property name="sizePolicy">
-                            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                             <horstretch>0</horstretch>
-                             <verstretch>0</verstretch>
-                            </sizepolicy>
-                           </property>
-                           <property name="text">
-                            <string>Ports/Buses</string>
-                           </property>
-                          </widget>
-                         </item>
                          <item>
                           <widget class="QFrame" name="frame_60">
                            <property name="sizePolicy">
@@ -6181,94 +6168,27 @@ border-bottom-left-radius: 0;</string>
                            </layout>
                           </widget>
                          </item>
+                         <item>
+                          <widget class="QLabel" name="label_7">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="text">
+                            <string>Ports/Buses</string>
+                           </property>
+                          </widget>
+                         </item>
                         </layout>
                        </item>
-                       <item row="3" column="1">
+                       <item row="5" column="1">
                         <layout class="QGridLayout" name="gridLayout_31">
                          <property name="topMargin">
                           <number>4</number>
                          </property>
                          <item row="0" column="0">
-                          <widget class="QFrame" name="frame_connectionsPage_MidiFilter">
-                           <property name="styleSheet">
-                            <string notr="true"/>
-                           </property>
-                           <property name="frameShape">
-                            <enum>QFrame::StyledPanel</enum>
-                           </property>
-                           <property name="frameShadow">
-                            <enum>QFrame::Raised</enum>
-                           </property>
-                           <property name="buttonFrame" stdset="0">
-                            <bool>true</bool>
-                           </property>
-                           <layout class="QHBoxLayout" name="horizontalLayout_33">
-                            <property name="spacing">
-                             <number>1</number>
-                            </property>
-                            <property name="leftMargin">
-                             <number>0</number>
-                            </property>
-                            <property name="topMargin">
-                             <number>0</number>
-                            </property>
-                            <property name="rightMargin">
-                             <number>0</number>
-                            </property>
-                            <property name="bottomMargin">
-                             <number>0</number>
-                            </property>
-                            <item>
-                             <widget class="QPushButton" name="pushButton_connectionsPage_MidiFilter">
-                              <property name="sizePolicy">
-                               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                                <horstretch>0</horstretch>
-                                <verstretch>0</verstretch>
-                               </sizepolicy>
-                              </property>
-                              <property name="minimumSize">
-                               <size>
-                                <width>0</width>
-                                <height>0</height>
-                               </size>
-                              </property>
-                              <property name="styleSheet">
-                               <string notr="true">border-bottom-right-radius: 0;
-border-top-right-radius: 0;
-</string>
-                              </property>
-                              <property name="text">
-                               <string>Edit Port MIDI Filter...</string>
-                              </property>
-                             </widget>
-                            </item>
-                            <item>
-                             <widget class="QPushButton" name="pushButton_connectionsPage_editScript">
-                              <property name="sizePolicy">
-                               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-                                <horstretch>0</horstretch>
-                                <verstretch>0</verstretch>
-                               </sizepolicy>
-                              </property>
-                              <property name="minimumSize">
-                               <size>
-                                <width>0</width>
-                                <height>0</height>
-                               </size>
-                              </property>
-                              <property name="styleSheet">
-                               <string notr="true">border-bottom-left-radius: 0;
-border-top-left-radius: 0;</string>
-                              </property>
-                              <property name="text">
-                               <string>Edit Port Script...</string>
-                              </property>
-                             </widget>
-                            </item>
-                           </layout>
-                          </widget>
-                         </item>
-                         <item row="0" column="2">
                           <spacer name="horizontalSpacer">
                            <property name="orientation">
                             <enum>Qt::Horizontal</enum>
@@ -6282,13 +6202,6 @@ border-top-left-radius: 0;</string>
                           </spacer>
                          </item>
                          <item row="0" column="1">
-                          <widget class="QCheckBox" name="checkBox_connectionsPage_ignoreGlobalVolume">
-                           <property name="text">
-                            <string>Bus Ignores Global Volume</string>
-                           </property>
-                          </widget>
-                         </item>
-                         <item row="0" column="3">
                           <widget class="QFrame" name="frame_13">
                            <property name="styleSheet">
                             <string notr="true"/>
@@ -6348,166 +6261,664 @@ border-top-left-radius: 0;</string>
                          </item>
                         </layout>
                        </item>
-                       <item row="0" column="1">
-                        <widget class="QLabel" name="label_12">
-                         <property name="text">
-                          <string>JACK connections to selected port/bus</string>
+                       <item row="4" column="1">
+                        <widget class="QGroupBox" name="groupBox_connectionsPage_regex">
+                         <property name="sizePolicy">
+                          <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                           <horstretch>0</horstretch>
+                           <verstretch>0</verstretch>
+                          </sizepolicy>
                          </property>
-                        </widget>
-                       </item>
-                       <item row="2" column="1">
-                        <widget class="QGroupBox" name="groupBox_2">
+                         <property name="minimumSize">
+                          <size>
+                           <width>0</width>
+                           <height>0</height>
+                          </size>
+                         </property>
                          <property name="title">
-                          <string>Select ports with regular expression</string>
+                          <string>Use regular expression to connect to JACK ports</string>
                          </property>
-                         <layout class="QVBoxLayout" name="verticalLayout_41">
+                         <layout class="QHBoxLayout" name="horizontalLayout_93">
                           <item>
-                           <layout class="QHBoxLayout" name="horizontalLayout_82">
+                           <widget class="QGroupBox" name="groupBox_SubSettings_5">
+                            <property name="sizePolicy">
+                             <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+                              <horstretch>0</horstretch>
+                              <verstretch>0</verstretch>
+                             </sizepolicy>
+                            </property>
+                            <property name="styleSheet">
+                             <string notr="true"/>
+                            </property>
+                            <property name="title">
+                             <string/>
+                            </property>
+                            <property name="KonfytSubGroupbox" stdset="0">
+                             <bool>true</bool>
+                            </property>
+                            <layout class="QVBoxLayout" name="verticalLayout_47">
+                             <property name="spacing">
+                              <number>2</number>
+                             </property>
+                             <property name="leftMargin">
+                              <number>5</number>
+                             </property>
+                             <property name="topMargin">
+                              <number>5</number>
+                             </property>
+                             <property name="rightMargin">
+                              <number>5</number>
+                             </property>
+                             <property name="bottomMargin">
+                              <number>5</number>
+                             </property>
+                             <item>
+                              <widget class="QStackedWidget" name="stackedWidget_jackCon_regex_con">
+                               <property name="currentIndex">
+                                <number>0</number>
+                               </property>
+                               <widget class="QWidget" name="page_jackCon_regex_con_audio">
+                                <layout class="QVBoxLayout" name="verticalLayout_48">
+                                 <property name="spacing">
+                                  <number>2</number>
+                                 </property>
+                                 <property name="leftMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="topMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="rightMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="bottomMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <item>
+                                  <widget class="QLabel" name="label_51">
+                                   <property name="text">
+                                    <string>Connect this port's</string>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                 <item>
+                                  <layout class="QHBoxLayout" name="horizontalLayout_87">
+                                   <property name="topMargin">
+                                    <number>0</number>
+                                   </property>
+                                   <item>
+                                    <widget class="QRadioButton" name="radioButton_jackCon_regex_left">
+                                     <property name="text">
+                                      <string>Left</string>
+                                     </property>
+                                     <property name="checked">
+                                      <bool>true</bool>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                   <item>
+                                    <widget class="QRadioButton" name="radioButton_jackCon_regex_right">
+                                     <property name="text">
+                                      <string>Right</string>
+                                     </property>
+                                    </widget>
+                                   </item>
+                                  </layout>
+                                 </item>
+                                </layout>
+                               </widget>
+                               <widget class="QWidget" name="page_jackCon_regex_con_midi">
+                                <layout class="QVBoxLayout" name="verticalLayout_49">
+                                 <property name="leftMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="topMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="rightMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="bottomMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <item>
+                                  <widget class="QLabel" name="label_52">
+                                   <property name="text">
+                                    <string>Connect this port's MIDI</string>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                </layout>
+                               </widget>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QLabel" name="label_25">
+                               <property name="text">
+                                <string>To client(s) matching regex:</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QFrame" name="frame_65">
+                               <property name="minimumSize">
+                                <size>
+                                 <width>0</width>
+                                 <height>29</height>
+                                </size>
+                               </property>
+                               <property name="maximumSize">
+                                <size>
+                                 <width>16777215</width>
+                                 <height>29</height>
+                                </size>
+                               </property>
+                               <property name="styleSheet">
+                                <string notr="true"/>
+                               </property>
+                               <property name="frameShape">
+                                <enum>QFrame::StyledPanel</enum>
+                               </property>
+                               <property name="frameShadow">
+                                <enum>QFrame::Raised</enum>
+                               </property>
+                               <property name="buttonFrame" stdset="0">
+                                <bool>true</bool>
+                               </property>
+                               <layout class="QHBoxLayout" name="horizontalLayout_85">
+                                <property name="spacing">
+                                 <number>1</number>
+                                </property>
+                                <property name="leftMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="topMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
+                                </property>
+                                <item>
+                                 <widget class="QLineEdit" name="lineEdit_jackCon_regex_client">
+                                  <property name="sizePolicy">
+                                   <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                   </sizepolicy>
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QLabel" name="label_27">
+                               <property name="text">
+                                <string>Port(s) matching regex:</string>
+                               </property>
+                              </widget>
+                             </item>
+                             <item>
+                              <widget class="QFrame" name="frame_66">
+                               <property name="minimumSize">
+                                <size>
+                                 <width>0</width>
+                                 <height>29</height>
+                                </size>
+                               </property>
+                               <property name="maximumSize">
+                                <size>
+                                 <width>16777215</width>
+                                 <height>29</height>
+                                </size>
+                               </property>
+                               <property name="styleSheet">
+                                <string notr="true"/>
+                               </property>
+                               <property name="frameShape">
+                                <enum>QFrame::StyledPanel</enum>
+                               </property>
+                               <property name="frameShadow">
+                                <enum>QFrame::Raised</enum>
+                               </property>
+                               <property name="buttonFrame" stdset="0">
+                                <bool>true</bool>
+                               </property>
+                               <layout class="QHBoxLayout" name="horizontalLayout_86">
+                                <property name="spacing">
+                                 <number>1</number>
+                                </property>
+                                <property name="leftMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="topMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
+                                </property>
+                                <item>
+                                 <widget class="QLineEdit" name="lineEdit_jackCon_regex_port">
+                                  <property name="sizePolicy">
+                                   <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                   </sizepolicy>
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
+                              </widget>
+                             </item>
+                            </layout>
+                           </widget>
+                          </item>
+                          <item>
+                           <layout class="QVBoxLayout" name="verticalLayout_46" stretch="0,1">
+                            <property name="spacing">
+                             <number>2</number>
+                            </property>
+                            <property name="sizeConstraint">
+                             <enum>QLayout::SetDefaultConstraint</enum>
+                            </property>
                             <item>
-                             <widget class="QLabel" name="label_25">
-                              <property name="text">
-                               <string>Client:</string>
+                             <layout class="QHBoxLayout" name="horizontalLayout_82">
+                              <property name="spacing">
+                               <number>2</number>
                               </property>
-                             </widget>
+                              <item>
+                               <widget class="QFrame" name="frame_67">
+                                <property name="styleSheet">
+                                 <string notr="true"/>
+                                </property>
+                                <property name="frameShape">
+                                 <enum>QFrame::StyledPanel</enum>
+                                </property>
+                                <property name="frameShadow">
+                                 <enum>QFrame::Raised</enum>
+                                </property>
+                                <property name="buttonFrame" stdset="0">
+                                 <bool>true</bool>
+                                </property>
+                                <layout class="QHBoxLayout" name="horizontalLayout_83">
+                                 <property name="spacing">
+                                  <number>1</number>
+                                 </property>
+                                 <property name="leftMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="topMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="rightMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="bottomMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <item>
+                                  <widget class="QPushButton" name="pushButton_jackCon_regex_add">
+                                   <property name="sizePolicy">
+                                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                     <horstretch>0</horstretch>
+                                     <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                   </property>
+                                   <property name="styleSheet">
+                                    <string notr="true">border-top-right-radius: 0;
+border-bottom-right-radius: 0;
+</string>
+                                   </property>
+                                   <property name="text">
+                                    <string>Add</string>
+                                   </property>
+                                   <property name="icon">
+                                    <iconset resource="../images.qrc">
+                                     <normaloff>:/icons/down_w_tail.png</normaloff>:/icons/down_w_tail.png</iconset>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                 <item>
+                                  <widget class="QPushButton" name="pushButton_jackCon_regex_replace">
+                                   <property name="sizePolicy">
+                                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                     <horstretch>0</horstretch>
+                                     <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                   </property>
+                                   <property name="minimumSize">
+                                    <size>
+                                     <width>0</width>
+                                     <height>0</height>
+                                    </size>
+                                   </property>
+                                   <property name="toolTip">
+                                    <string>Add selected port pair as a persistent connection break - the ports will be kept disconnected</string>
+                                   </property>
+                                   <property name="styleSheet">
+                                    <string notr="true">border-top-left-radius: 0;
+border-bottom-left-radius: 0;</string>
+                                   </property>
+                                   <property name="text">
+                                    <string>Replace</string>
+                                   </property>
+                                   <property name="KonfytWideButton" stdset="0">
+                                    <bool>false</bool>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                </layout>
+                               </widget>
+                              </item>
+                              <item>
+                               <spacer name="horizontalSpacer_27">
+                                <property name="orientation">
+                                 <enum>Qt::Horizontal</enum>
+                                </property>
+                                <property name="sizeHint" stdset="0">
+                                 <size>
+                                  <width>40</width>
+                                  <height>20</height>
+                                 </size>
+                                </property>
+                               </spacer>
+                              </item>
+                              <item>
+                               <widget class="QFrame" name="frame_69">
+                                <property name="styleSheet">
+                                 <string notr="true"/>
+                                </property>
+                                <property name="frameShape">
+                                 <enum>QFrame::StyledPanel</enum>
+                                </property>
+                                <property name="frameShadow">
+                                 <enum>QFrame::Raised</enum>
+                                </property>
+                                <property name="buttonFrame" stdset="0">
+                                 <bool>true</bool>
+                                </property>
+                                <layout class="QHBoxLayout" name="horizontalLayout_84">
+                                 <property name="spacing">
+                                  <number>1</number>
+                                 </property>
+                                 <property name="leftMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="topMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="rightMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <property name="bottomMargin">
+                                  <number>0</number>
+                                 </property>
+                                 <item>
+                                  <widget class="QPushButton" name="pushButton_jackCon_regex_remove">
+                                   <property name="sizePolicy">
+                                    <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                     <horstretch>0</horstretch>
+                                     <verstretch>0</verstretch>
+                                    </sizepolicy>
+                                   </property>
+                                   <property name="minimumSize">
+                                    <size>
+                                     <width>0</width>
+                                     <height>0</height>
+                                    </size>
+                                   </property>
+                                   <property name="toolTip">
+                                    <string>Remove the selected persistent connection port pair below</string>
+                                   </property>
+                                   <property name="styleSheet">
+                                    <string notr="true"/>
+                                   </property>
+                                   <property name="text">
+                                    <string>Remove</string>
+                                   </property>
+                                   <property name="KonfytWideButton" stdset="0">
+                                    <bool>false</bool>
+                                   </property>
+                                  </widget>
+                                 </item>
+                                </layout>
+                               </widget>
+                              </item>
+                             </layout>
                             </item>
                             <item>
-                             <widget class="QFrame" name="frame_65">
-                              <property name="minimumSize">
-                               <size>
-                                <width>0</width>
-                                <height>23</height>
-                               </size>
+                             <widget class="QTreeWidget" name="treeWidget_jackCon_regexes">
+                              <property name="sizePolicy">
+                               <sizepolicy hsizetype="Expanding" vsizetype="Ignored">
+                                <horstretch>0</horstretch>
+                                <verstretch>0</verstretch>
+                               </sizepolicy>
                               </property>
-                              <property name="maximumSize">
-                               <size>
-                                <width>16777215</width>
-                                <height>23</height>
-                               </size>
+                              <property name="indentation">
+                               <number>0</number>
                               </property>
-                              <property name="styleSheet">
-                               <string notr="true"/>
-                              </property>
-                              <property name="frameShape">
-                               <enum>QFrame::StyledPanel</enum>
-                              </property>
-                              <property name="frameShadow">
-                               <enum>QFrame::Raised</enum>
-                              </property>
-                              <property name="buttonFrame" stdset="0">
+                              <property name="headerHidden">
                                <bool>true</bool>
                               </property>
-                              <layout class="QHBoxLayout" name="horizontalLayout_85">
-                               <property name="spacing">
-                                <number>1</number>
+                              <column>
+                               <property name="text">
+                                <string notr="true">1</string>
                                </property>
-                               <property name="leftMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="topMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="rightMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="bottomMargin">
-                                <number>0</number>
-                               </property>
-                               <item>
-                                <widget class="QLineEdit" name="lineEdit_jackCon_regex_client">
-                                 <property name="sizePolicy">
-                                  <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                                   <horstretch>0</horstretch>
-                                   <verstretch>0</verstretch>
-                                  </sizepolicy>
-                                 </property>
-                                </widget>
-                               </item>
-                              </layout>
-                             </widget>
-                            </item>
-                            <item>
-                             <widget class="QLabel" name="label_27">
-                              <property name="text">
-                               <string>Port:</string>
-                              </property>
-                             </widget>
-                            </item>
-                            <item>
-                             <widget class="QFrame" name="frame_66">
-                              <property name="minimumSize">
-                               <size>
-                                <width>0</width>
-                                <height>23</height>
-                               </size>
-                              </property>
-                              <property name="maximumSize">
-                               <size>
-                                <width>16777215</width>
-                                <height>23</height>
-                               </size>
-                              </property>
-                              <property name="styleSheet">
-                               <string notr="true"/>
-                              </property>
-                              <property name="frameShape">
-                               <enum>QFrame::StyledPanel</enum>
-                              </property>
-                              <property name="frameShadow">
-                               <enum>QFrame::Raised</enum>
-                              </property>
-                              <property name="buttonFrame" stdset="0">
-                               <bool>true</bool>
-                              </property>
-                              <layout class="QHBoxLayout" name="horizontalLayout_86">
-                               <property name="spacing">
-                                <number>1</number>
-                               </property>
-                               <property name="leftMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="topMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="rightMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="bottomMargin">
-                                <number>0</number>
-                               </property>
-                               <item>
-                                <widget class="QLineEdit" name="lineEdit_jackCon_regex_port">
-                                 <property name="sizePolicy">
-                                  <sizepolicy hsizetype="Expanding" vsizetype="Minimum">
-                                   <horstretch>0</horstretch>
-                                   <verstretch>0</verstretch>
-                                  </sizepolicy>
-                                 </property>
-                                </widget>
-                               </item>
-                              </layout>
+                              </column>
                              </widget>
                             </item>
                            </layout>
                           </item>
-                          <item>
-                           <layout class="QHBoxLayout" name="horizontalLayout_83">
+                         </layout>
+                        </widget>
+                       </item>
+                       <item row="2" column="1">
+                        <widget class="QLabel" name="label_12">
+                         <property name="text">
+                          <string>JACK connections</string>
+                         </property>
+                        </widget>
+                       </item>
+                       <item row="0" column="1">
+                        <layout class="QHBoxLayout" name="horizontalLayout_92">
+                         <property name="leftMargin">
+                          <number>0</number>
+                         </property>
+                         <property name="topMargin">
+                          <number>0</number>
+                         </property>
+                         <item>
+                          <widget class="QStackedWidget" name="stackedWidget_consHeader">
+                           <property name="sizePolicy">
+                            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                             <horstretch>0</horstretch>
+                             <verstretch>0</verstretch>
+                            </sizepolicy>
+                           </property>
+                           <property name="currentIndex">
+                            <number>1</number>
+                           </property>
+                           <widget class="QWidget" name="page_consHeader_midi">
+                            <layout class="QHBoxLayout" name="horizontalLayout_90">
+                             <property name="spacing">
+                              <number>0</number>
+                             </property>
+                             <property name="leftMargin">
+                              <number>0</number>
+                             </property>
+                             <property name="topMargin">
+                              <number>0</number>
+                             </property>
+                             <property name="rightMargin">
+                              <number>0</number>
+                             </property>
+                             <property name="bottomMargin">
+                              <number>0</number>
+                             </property>
+                             <item>
+                              <widget class="QFrame" name="frame_connectionsPage_MidiFilter">
+                               <property name="styleSheet">
+                                <string notr="true"/>
+                               </property>
+                               <property name="frameShape">
+                                <enum>QFrame::StyledPanel</enum>
+                               </property>
+                               <property name="frameShadow">
+                                <enum>QFrame::Raised</enum>
+                               </property>
+                               <property name="buttonFrame" stdset="0">
+                                <bool>true</bool>
+                               </property>
+                               <layout class="QHBoxLayout" name="horizontalLayout_33">
+                                <property name="spacing">
+                                 <number>1</number>
+                                </property>
+                                <property name="leftMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="topMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="rightMargin">
+                                 <number>0</number>
+                                </property>
+                                <property name="bottomMargin">
+                                 <number>0</number>
+                                </property>
+                                <item>
+                                 <widget class="QPushButton" name="pushButton_connectionsPage_MidiFilter">
+                                  <property name="sizePolicy">
+                                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                   </sizepolicy>
+                                  </property>
+                                  <property name="minimumSize">
+                                   <size>
+                                    <width>0</width>
+                                    <height>0</height>
+                                   </size>
+                                  </property>
+                                  <property name="styleSheet">
+                                   <string notr="true">border-bottom-right-radius: 0;
+border-top-right-radius: 0;
+</string>
+                                  </property>
+                                  <property name="text">
+                                   <string>Edit Port MIDI Filter...</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                                <item>
+                                 <widget class="QPushButton" name="pushButton_connectionsPage_editScript">
+                                  <property name="sizePolicy">
+                                   <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+                                    <horstretch>0</horstretch>
+                                    <verstretch>0</verstretch>
+                                   </sizepolicy>
+                                  </property>
+                                  <property name="minimumSize">
+                                   <size>
+                                    <width>0</width>
+                                    <height>0</height>
+                                   </size>
+                                  </property>
+                                  <property name="styleSheet">
+                                   <string notr="true">border-bottom-left-radius: 0;
+border-top-left-radius: 0;</string>
+                                  </property>
+                                  <property name="text">
+                                   <string>Edit Port Script...</string>
+                                  </property>
+                                 </widget>
+                                </item>
+                               </layout>
+                              </widget>
+                             </item>
+                            </layout>
+                           </widget>
+                           <widget class="QWidget" name="page_consHeader_bus">
+                            <layout class="QHBoxLayout" name="horizontalLayout_91">
+                             <property name="spacing">
+                              <number>0</number>
+                             </property>
+                             <property name="leftMargin">
+                              <number>0</number>
+                             </property>
+                             <property name="topMargin">
+                              <number>0</number>
+                             </property>
+                             <property name="rightMargin">
+                              <number>0</number>
+                             </property>
+                             <property name="bottomMargin">
+                              <number>0</number>
+                             </property>
+                             <item>
+                              <widget class="QCheckBox" name="checkBox_connectionsPage_ignoreGlobalVolume">
+                               <property name="text">
+                                <string>Bus Ignores Global Volume</string>
+                               </property>
+                              </widget>
+                             </item>
+                            </layout>
+                           </widget>
+                           <widget class="QWidget" name="page_consHeader_empty"/>
+                          </widget>
+                         </item>
+                         <item>
+                          <spacer name="horizontalSpacer_28">
+                           <property name="orientation">
+                            <enum>Qt::Horizontal</enum>
+                           </property>
+                           <property name="sizeHint" stdset="0">
+                            <size>
+                             <width>40</width>
+                             <height>20</height>
+                            </size>
+                           </property>
+                          </spacer>
+                         </item>
+                         <item>
+                          <widget class="QFrame" name="frame_connectionsPage_MidiFilter_2">
+                           <property name="styleSheet">
+                            <string notr="true"/>
+                           </property>
+                           <property name="frameShape">
+                            <enum>QFrame::StyledPanel</enum>
+                           </property>
+                           <property name="frameShadow">
+                            <enum>QFrame::Raised</enum>
+                           </property>
+                           <property name="buttonFrame" stdset="0">
+                            <bool>true</bool>
+                           </property>
+                           <layout class="QHBoxLayout" name="horizontalLayout_88">
+                            <property name="spacing">
+                             <number>1</number>
+                            </property>
+                            <property name="leftMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="topMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="rightMargin">
+                             <number>0</number>
+                            </property>
+                            <property name="bottomMargin">
+                             <number>0</number>
+                            </property>
                             <item>
-                             <spacer name="horizontalSpacer_26">
-                              <property name="orientation">
-                               <enum>Qt::Horizontal</enum>
-                              </property>
-                              <property name="sizeHint" stdset="0">
-                               <size>
-                                <width>40</width>
-                                <height>20</height>
-                               </size>
-                              </property>
-                             </spacer>
-                            </item>
-                            <item>
-                             <widget class="QFrame" name="frame_6">
+                             <widget class="QPushButton" name="pushButton_connectionsPage_showHideRegex">
                               <property name="sizePolicy">
-                               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                               <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
                                 <horstretch>0</horstretch>
                                 <verstretch>0</verstretch>
                                </sizepolicy>
@@ -6515,142 +6926,21 @@ border-top-left-radius: 0;</string>
                               <property name="minimumSize">
                                <size>
                                 <width>0</width>
-                                <height>23</height>
+                                <height>0</height>
                                </size>
                               </property>
                               <property name="styleSheet">
                                <string notr="true"/>
                               </property>
-                              <property name="frameShape">
-                               <enum>QFrame::StyledPanel</enum>
+                              <property name="text">
+                               <string>Regular Expressions</string>
                               </property>
-                              <property name="frameShadow">
-                               <enum>QFrame::Raised</enum>
-                              </property>
-                              <property name="buttonFrame" stdset="0">
-                               <bool>true</bool>
-                              </property>
-                              <layout class="QHBoxLayout" name="horizontalLayout_84">
-                               <property name="spacing">
-                                <number>1</number>
-                               </property>
-                               <property name="leftMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="topMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="rightMargin">
-                                <number>0</number>
-                               </property>
-                               <property name="bottomMargin">
-                                <number>0</number>
-                               </property>
-                               <item>
-                                <widget class="QPushButton" name="pushButton_jackCon_regex_add">
-                                 <property name="styleSheet">
-                                  <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;
-</string>
-                                 </property>
-                                 <property name="text">
-                                  <string>Add</string>
-                                 </property>
-                                 <property name="icon">
-                                  <iconset resource="../images.qrc">
-                                   <normaloff>:/icons/down_w_tail.png</normaloff>:/icons/down_w_tail.png</iconset>
-                                 </property>
-                                </widget>
-                               </item>
-                               <item>
-                                <widget class="QPushButton" name="pushButton_jackCon_regex_replace">
-                                 <property name="sizePolicy">
-                                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-                                   <horstretch>0</horstretch>
-                                   <verstretch>0</verstretch>
-                                  </sizepolicy>
-                                 </property>
-                                 <property name="minimumSize">
-                                  <size>
-                                   <width>66</width>
-                                   <height>0</height>
-                                  </size>
-                                 </property>
-                                 <property name="toolTip">
-                                  <string>Add selected port pair as a persistent connection break - the ports will be kept disconnected</string>
-                                 </property>
-                                 <property name="styleSheet">
-                                  <string notr="true">border-top-right-radius: 0;
-border-bottom-right-radius: 0;
-border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                                 </property>
-                                 <property name="text">
-                                  <string>Replace</string>
-                                 </property>
-                                 <property name="KonfytWideButton" stdset="0">
-                                  <bool>true</bool>
-                                 </property>
-                                </widget>
-                               </item>
-                               <item>
-                                <widget class="QPushButton" name="pushButton_jackCon_regex_remove">
-                                 <property name="sizePolicy">
-                                  <sizepolicy hsizetype="Minimum" vsizetype="Maximum">
-                                   <horstretch>0</horstretch>
-                                   <verstretch>0</verstretch>
-                                  </sizepolicy>
-                                 </property>
-                                 <property name="minimumSize">
-                                  <size>
-                                   <width>66</width>
-                                   <height>0</height>
-                                  </size>
-                                 </property>
-                                 <property name="toolTip">
-                                  <string>Remove the selected persistent connection port pair below</string>
-                                 </property>
-                                 <property name="styleSheet">
-                                  <string notr="true">border-top-left-radius: 0;
-border-bottom-left-radius: 0;</string>
-                                 </property>
-                                 <property name="text">
-                                  <string>Remove</string>
-                                 </property>
-                                 <property name="KonfytWideButton" stdset="0">
-                                  <bool>true</bool>
-                                 </property>
-                                </widget>
-                               </item>
-                              </layout>
                              </widget>
                             </item>
-                            <item>
-                             <spacer name="horizontalSpacer_25">
-                              <property name="orientation">
-                               <enum>Qt::Horizontal</enum>
-                              </property>
-                              <property name="sizeHint" stdset="0">
-                               <size>
-                                <width>40</width>
-                                <height>20</height>
-                               </size>
-                              </property>
-                             </spacer>
-                            </item>
                            </layout>
-                          </item>
-                          <item>
-                           <widget class="QTreeWidget" name="treeWidget_jackCon_regexes">
-                            <column>
-                             <property name="text">
-                              <string notr="true">1</string>
-                             </property>
-                            </column>
-                           </widget>
-                          </item>
-                         </layout>
-                        </widget>
+                          </widget>
+                         </item>
+                        </layout>
                        </item>
                       </layout>
                      </item>
@@ -11864,10 +12154,8 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <tabstop>pushButton_midiFilter_Apply</tabstop>
   <tabstop>toolButton_connectionsPage_portsBussesListOptions</tabstop>
   <tabstop>tree_portsBusses</tabstop>
-  <tabstop>tree_Connections</tabstop>
   <tabstop>pushButton_connectionsPage_MidiFilter</tabstop>
   <tabstop>pushButton_connectionsPage_editScript</tabstop>
-  <tabstop>checkBox_connectionsPage_ignoreGlobalVolume</tabstop>
   <tabstop>pushButton_connectionsPage_OK</tabstop>
   <tabstop>tree_Triggers</tabstop>
   <tabstop>pushButton_triggersPage_clear</tabstop>
@@ -11949,6 +12237,17 @@ li.checked::marker { content: &quot;\2612&quot;; }
   <tabstop>pushButton_extApp_remove</tabstop>
   <tabstop>textBrowser_about</tabstop>
   <tabstop>pushButton_about_ok</tabstop>
+  <tabstop>tree_Connections</tabstop>
+  <tabstop>radioButton_jackCon_regex_left</tabstop>
+  <tabstop>radioButton_jackCon_regex_right</tabstop>
+  <tabstop>lineEdit_jackCon_regex_client</tabstop>
+  <tabstop>lineEdit_jackCon_regex_port</tabstop>
+  <tabstop>pushButton_jackCon_regex_add</tabstop>
+  <tabstop>pushButton_jackCon_regex_replace</tabstop>
+  <tabstop>pushButton_jackCon_regex_remove</tabstop>
+  <tabstop>treeWidget_jackCon_regexes</tabstop>
+  <tabstop>checkBox_connectionsPage_ignoreGlobalVolume</tabstop>
+  <tabstop>pushButton_connectionsPage_showHideRegex</tabstop>
  </tabstops>
  <resources>
   <include location="../images.qrc"/>

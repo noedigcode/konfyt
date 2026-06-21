@@ -1339,8 +1339,9 @@ void MainWindow::setupConnectionsPage()
 void MainWindow::showConnectionsPage()
 {
     ui->stackedWidget->setCurrentWidget(ui->connectionsPage);
-    ui->frame_connectionsPage_MidiFilter->setVisible(false);
-    ui->checkBox_connectionsPage_ignoreGlobalVolume->setVisible(false);
+
+    ui->stackedWidget_consHeader->setCurrentWidget(ui->page_consHeader_empty);
+    ui->groupBox_connectionsPage_regex->setVisible(false);
 
     updatePortsBussesTree();
     updateConnectionsTree();
@@ -1499,7 +1500,7 @@ void MainWindow::updateConnectionsTree()
     // Get list of JACK ports, depending on the selected tree item.
     QStringList l; // List of Jack client:ports
     int id; // Index/id of bus/port
-    if ( ui->tree_portsBusses->currentItem()->parent() == busParent ) {
+    if (connectionsTreeIsBusSelected()) {
         // A bus is selected
         l = jack.getAudioInputPortsList();
         id = tree_busMap.value( ui->tree_portsBusses->currentItem() );
@@ -1523,7 +1524,7 @@ void MainWindow::updateConnectionsTree()
 
     QStringList leftCons;
     QStringList rightCons;
-    if ( ui->tree_portsBusses->currentItem()->parent() == busParent ) {
+    if (connectionsTreeIsBusSelected()) {
         // Get the selected bus
         Project::AudioPortPtr bus = prj->audioBus_getBus(id);
         if (bus) {
@@ -1677,10 +1678,66 @@ void MainWindow::clearPortsBussesConnectionsData()
     clearConnectionsTree();
 }
 
+bool MainWindow::connectionsTreeIsBusSelected()
+{
+    QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
+    return item && (item->parent() == busParent);
+}
+
+bool MainWindow::connectionsTreeIsAudioInPortSelected()
+{
+    QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
+    return item && (item->parent() == audioInParent);
+}
+
 bool MainWindow::connectionsTreeIsMidiInPortSelected()
 {
     QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
-    return item && item->parent() == midiInParent;
+    return item && (item->parent() == midiInParent);
+}
+
+bool MainWindow::connectionsTreeIsMidiOutPortSelected()
+{
+    QTreeWidgetItem* item = ui->tree_portsBusses->currentItem();
+    return item && (item->parent() == midiOutParent);
+}
+
+int MainWindow::connectionsTreeGetSelectedBusId()
+{
+    return tree_busMap.value(ui->tree_portsBusses->currentItem());
+}
+
+Project::AudioPortPtr MainWindow::connectionsTreeGetSelectedBus()
+{
+    Project::AudioPortPtr bus;
+
+    if (connectionsTreeIsBusSelected()) {
+        int busId = connectionsTreeGetSelectedBusId();
+        if (mCurrentProject) {
+            bus = mCurrentProject->audioBus_getBus(busId);
+        }
+    }
+
+    return bus;
+}
+
+int MainWindow::connectionsTreeGetSelectedAudioInPortId()
+{
+    return tree_audioInMap.value(ui->tree_portsBusses->currentItem());
+}
+
+Project::AudioPortPtr MainWindow::connectionsTreeGetSelectedAudioInPort()
+{
+    Project::AudioPortPtr port;
+
+    if (connectionsTreeIsAudioInPortSelected()) {
+        int portId = connectionsTreeGetSelectedAudioInPortId();
+        if (mCurrentProject) {
+            port = mCurrentProject->audioInPort_getPort(portId);
+        }
+    }
+
+    return port;
 }
 
 int MainWindow::connectionsTreeGetSelectedMidiInPortId()
@@ -1688,24 +1745,92 @@ int MainWindow::connectionsTreeGetSelectedMidiInPortId()
     return tree_midiInMap.value(ui->tree_portsBusses->currentItem());
 }
 
-void MainWindow::updateRegexConnectionsTree()
+Project::MidiPortPtr MainWindow::connectionsTreeGetSelectedMidiInPort()
+{
+    Project::MidiPortPtr port;
+
+    if (connectionsTreeIsMidiInPortSelected()) {
+        int portId = connectionsTreeGetSelectedMidiInPortId();
+        if (mCurrentProject) {
+            port = mCurrentProject->midiInPort_getPort(portId);
+        }
+    }
+
+    return port;
+}
+
+int MainWindow::connectionsTreeGetSelectedMidiOutPortId()
+{
+    return tree_midiOutMap.value(ui->tree_portsBusses->currentItem());
+}
+
+Project::MidiPortPtr MainWindow::connectionsTreeGetSelectedMidiOutPort()
+{
+    Project::MidiPortPtr port;
+
+    if (connectionsTreeIsMidiOutPortSelected()) {
+        int portId = connectionsTreeGetSelectedMidiOutPortId();
+        if (mCurrentProject) {
+            port = mCurrentProject->midiOutPort_getPort(portId);
+        }
+    }
+
+    return port;
+}
+
+void MainWindow::fillRegexConnectionsTree()
 {
     ui->treeWidget_jackCon_regexes->clear();
+    mPortConRegexTreeLeftItems.clear();
+    mPortConRegexTreeRightItems.clear();
 
     ProjectPtr prj = mCurrentProject;
     KONFYT_ASSERT_RETURN(!prj.isNull());
 
+    QList<KonfytPortRegex> midiRegexes;
+    QList<KonfytPortRegex> leftRegexes;
+    QList<KonfytPortRegex> rightRegexes;
+
     if (connectionsTreeIsMidiInPortSelected()) {
+
         int portId = connectionsTreeGetSelectedMidiInPortId();
-
         Project::MidiPortPtr port = prj->midiInPort_getPort(portId);
-        foreach (KonfytPortRegex r, port->clientRegexes) {
-            QTreeWidgetItem* item = new QTreeWidgetItem();
-            item->setText(0, QString("[%1] [%2]").arg(r.clientRegex).arg(r.portRegex));
-            ui->treeWidget_jackCon_regexes->addTopLevelItem(item);
-            // todo regex add left/right/midi port connection checkbox
-        }
+        KONFYT_ASSERT_RETURN(!port.isNull());
+        midiRegexes = port->clientRegexes;
 
+    } else if (connectionsTreeIsMidiOutPortSelected()) {
+
+        int portId = connectionsTreeGetSelectedMidiOutPortId();
+        Project::MidiPortPtr port = prj->midiOutPort_getPort(portId);
+        KONFYT_ASSERT_RETURN(!port.isNull());
+        midiRegexes = port->clientRegexes;
+
+    } else if (connectionsTreeIsAudioInPortSelected()) {
+
+        int portId = connectionsTreeGetSelectedAudioInPortId();
+        Project::AudioPortPtr port = prj->audioInPort_getPort(portId);
+        KONFYT_ASSERT_RETURN(!port.isNull());
+        leftRegexes = port->leftClientRegexes;
+        rightRegexes = port->rightClientRegexes;
+
+    } else if (connectionsTreeIsBusSelected()) {
+
+        int busId = connectionsTreeGetSelectedBusId();
+        Project::AudioPortPtr bus = prj->audioBus_getBus(busId);
+        KONFYT_ASSERT_RETURN(!bus.isNull());
+        leftRegexes = bus->leftClientRegexes;
+        rightRegexes = bus->rightClientRegexes;
+
+    }
+
+    foreach (KonfytPortRegex r, midiRegexes) {
+        addPortConRegexTreeMidiItem(r);
+    }
+    foreach (KonfytPortRegex r, leftRegexes) {
+        addPortConRegexTreeAudioItem(r, Project::LeftPort);
+    }
+    foreach (KonfytPortRegex r, rightRegexes) {
+        addPortConRegexTreeAudioItem(r, Project::RightPort);
     }
 
     updateRegexConnectionsButtons();
@@ -1713,10 +1838,16 @@ void MainWindow::updateRegexConnectionsTree()
 
 void MainWindow::updateGuiForJackConRegexPreview()
 {
-    QRegularExpression clientRe(ui->lineEdit_jackCon_regex_client->text());
-    QRegularExpression portRe(ui->lineEdit_jackCon_regex_port->text());
+    // Select the JACK ports that match the regexes in the regex editor
 
     ui->tree_Connections->clearSelection();
+
+    QString clientRegexText = ui->lineEdit_jackCon_regex_client->text();
+    QString portRegexText = ui->lineEdit_jackCon_regex_port->text();
+    if (clientRegexText.isEmpty() && portRegexText.isEmpty()) { return; }
+
+    QRegularExpression clientRe(clientRegexText);
+    QRegularExpression portRe(portRegexText);
 
     foreach (QString client, conClientsMap.keys()) {
         QRegularExpressionMatch clientMatch = clientRe.match(client);
@@ -1742,6 +1873,47 @@ void MainWindow::updateRegexConnectionsButtons()
 
     ui->pushButton_jackCon_regex_remove->setEnabled(enable);
     ui->pushButton_jackCon_regex_replace->setEnabled(enable);
+}
+
+QTreeWidgetItem *MainWindow::addPortConRegexTreeMidiItem(KonfytPortRegex regex)
+{
+    QTreeWidgetItem* item = new QTreeWidgetItem();
+    updatePortConRegexTreeMidiItem(item, regex);
+    ui->treeWidget_jackCon_regexes->addTopLevelItem(item);
+    mPortConRegexTreeLeftItems.append(item);
+
+    return item;
+}
+
+QTreeWidgetItem *MainWindow::addPortConRegexTreeAudioItem(KonfytPortRegex regex,
+                                                          Project::PortLeftRight leftRight)
+{
+    QTreeWidgetItem* item = new QTreeWidgetItem();
+    updatePortConRegexTreeAudioItem(item, leftRight, regex);
+    ui->treeWidget_jackCon_regexes->addTopLevelItem(item);
+    if (leftRight == Project::LeftPort) {
+        mPortConRegexTreeLeftItems.append(item);
+    } else {
+        mPortConRegexTreeRightItems.append(item);
+    }
+
+    return item;
+}
+
+void MainWindow::updatePortConRegexTreeMidiItem(QTreeWidgetItem *item,
+                                                KonfytPortRegex regex)
+{
+    item->setText(0, QString("[%1] [%2]").arg(regex.clientRegex).arg(regex.portRegex));
+}
+
+void MainWindow::updatePortConRegexTreeAudioItem(QTreeWidgetItem *item,
+                                                 Project::PortLeftRight leftRight,
+                                                 KonfytPortRegex regex)
+{
+    item->setText(0, QString("[%1] [%2] (%3)")
+                  .arg(regex.clientRegex)
+                  .arg(regex.portRegex)
+                  .arg(leftRight == Project::LeftPort ? "left" : "right"));
 }
 
 void MainWindow::clearConnectionsTree()
@@ -1781,7 +1953,8 @@ void MainWindow::addClientPortToTree(QString jackport)
     // Create a tree item for the port, and add as a child to the client tree item.
     QTreeWidgetItem* portItem = new QTreeWidgetItem();
     QString portname = KonfytJackEngine::portNameFromJackPortString(jackport);
-    portItem->setText(TREECON_COL_PORT, portname); // Extract port name
+    portItem->setText(TREECON_COL_PORT, portname);
+    portItem->setToolTip(TREECON_COL_PORT, portname);
     clientItem->addChild(portItem);
     conPortsMap.insert(portItem, jackport);
 
@@ -1846,7 +2019,7 @@ void MainWindow::checkboxes_clicked_slot(QCheckBox *c)
     // Now we get the JACK port string:
     QString portString = conPortsMap[t];
 
-    if ( ui->tree_portsBusses->currentItem()->parent() == busParent ) {
+    if (connectionsTreeIsBusSelected()) {
         // Get the selected bus
         int busId = tree_busMap.value( ui->tree_portsBusses->currentItem() );
         Project::AudioPortPtr bus = prj->audioBus_getBus(busId);
@@ -1939,49 +2112,248 @@ void MainWindow::onPortsBusesTreeMenuRequested()
     showPortsBusesTreeMenu();
 }
 
-void MainWindow::onMidiInPortConnectRegexAdded(int portId, KonfytPortRegex r)
+void MainWindow::onMidiInPortConnectRegexAdded(Project::MidiPortPtr port, KonfytPortRegex r)
 {
-    ProjectPtr prj = mCurrentProject;
-    KONFYT_ASSERT_RETURN(!prj.isNull());
-
-    Project::MidiPortPtr port = prj->midiInPort_getPort(portId);
-    KONFYT_ASSERT_RETURN(!port.isNull());
-
     // Add to JACK engine
     jack.addPortConnectRegex(port->jackPort, r);
 
-    // Update GUI
-    updateRegexConnectionsTree();
+    // Add to tree widget if port is selected
+    if (connectionsTreeGetSelectedMidiInPort() != port) { return; }
+    QTreeWidgetItem* item = addPortConRegexTreeMidiItem(r);
+
+    // Select newly added item
+    ui->treeWidget_jackCon_regexes->setCurrentItem(item);
 }
 
-void MainWindow::onMidiInPortConnectRegexChanged(int portId, int index, KonfytPortRegex r)
+void MainWindow::onMidiInPortConnectRegexChanged(Project::MidiPortPtr port, int index, KonfytPortRegex r)
 {
-    ProjectPtr prj = mCurrentProject;
-    KONFYT_ASSERT_RETURN(!prj.isNull());
-
-    Project::MidiPortPtr port = prj->midiInPort_getPort(portId);
-    KONFYT_ASSERT_RETURN(!port.isNull());
-
     // Update in JACK engine
     jack.updatePortConnectRegex(port->jackPort, index, r);
 
-    // Update GUI
-    updateRegexConnectionsTree();
+    // Update in tree widget if port is selected
+
+    if (connectionsTreeGetSelectedMidiInPort() != port) { return; }
+
+    QTreeWidgetItem* item = mPortConRegexTreeLeftItems.value(index);
+    if (!item) { return; }
+
+    updatePortConRegexTreeMidiItem(item, r);
 }
 
-void MainWindow::onMidiInPortConnectRegexRemoved(int portId, int index)
+void MainWindow::onMidiInPortConnectRegexRemoved(Project::MidiPortPtr port, int index)
 {
-    ProjectPtr prj = mCurrentProject;
-    KONFYT_ASSERT_RETURN(!prj.isNull());
-
-    Project::MidiPortPtr port = prj->midiInPort_getPort(portId);
-    KONFYT_ASSERT_RETURN(!port.isNull());
-
     // Remove from JACK engine
     jack.removeAndDisconnectPortConRegex(port->jackPort, index);
 
-    // Update GUI
-    updateRegexConnectionsTree();
+    // Remove from tree widget if port is selected
+
+    if (connectionsTreeGetSelectedMidiInPort() != port) { return; }
+
+    if (!indexValid(index, mPortConRegexTreeLeftItems.count())) { return; }
+    QTreeWidgetItem* item = mPortConRegexTreeLeftItems.takeAt(index);
+    if (item) {
+        delete item; // Removes item from tree widget
+    }
+}
+
+void MainWindow::onMidiOutPortConnectRegexAdded(Project::MidiPortPtr port, KonfytPortRegex r)
+{
+    // Add to JACK engine
+    jack.addPortConnectRegex(port->jackPort, r);
+
+    // Add to tree widget if port is selected
+    if (connectionsTreeGetSelectedMidiOutPort() != port) { return; }
+    QTreeWidgetItem* item = addPortConRegexTreeMidiItem(r);
+
+    // Select newly added item
+    ui->treeWidget_jackCon_regexes->setCurrentItem(item);
+}
+
+void MainWindow::onMidiOutPortConnectRegexChanged(Project::MidiPortPtr port, int index, KonfytPortRegex r)
+{
+    // Update in JACK engine
+    jack.updatePortConnectRegex(port->jackPort, index, r);
+
+    // Update in tree widget if port is selected
+
+    if (connectionsTreeGetSelectedMidiOutPort() != port) { return; }
+
+    QTreeWidgetItem* item = mPortConRegexTreeLeftItems.value(index);
+    if (!item) { return; }
+
+    updatePortConRegexTreeMidiItem(item, r);
+}
+
+void MainWindow::onMidiOutPortConnectRegexRemoved(Project::MidiPortPtr port, int index)
+{
+    // Remove from JACK engine
+    jack.removeAndDisconnectPortConRegex(port->jackPort, index);
+
+    // Remove from tree widget if port is selected
+
+    if (connectionsTreeGetSelectedMidiOutPort() != port) { return; }
+
+    if (!indexValid(index, mPortConRegexTreeLeftItems.count())) { return; }
+    QTreeWidgetItem* item = mPortConRegexTreeLeftItems.takeAt(index);
+    if (item) {
+        delete item; // Removes item from tree widget
+    }
+}
+
+void MainWindow::onAudioInPortConnectRegexAdded(Project::AudioPortPtr port,
+                                                Project::PortLeftRight leftRight,
+                                                KonfytPortRegex r)
+{
+    // Add to JACK engine
+    KfJackPort* jackPort;
+    if (leftRight == Project::LeftPort) {
+        jackPort = port->leftJackPort;
+    } else {
+        jackPort = port->rightJackPort;
+    }
+    jack.addPortConnectRegex(jackPort, r);
+
+    // Add to tree widget if port is selected
+    if (connectionsTreeGetSelectedAudioInPort() != port) { return; }
+    QTreeWidgetItem* item = addPortConRegexTreeAudioItem(r, leftRight);
+
+    // Select newly added item
+    ui->treeWidget_jackCon_regexes->setCurrentItem(item);
+}
+
+void MainWindow::onAudioInPortConnectRegexChanged(Project::AudioPortPtr port,
+                                                  int index,
+                                                  Project::PortLeftRight leftRight,
+                                                  KonfytPortRegex r)
+{
+    // Update in JACK engine
+    KfJackPort* jackPort;
+    if (leftRight == Project::LeftPort) {
+        jackPort = port->leftJackPort;
+    } else {
+        jackPort = port->rightJackPort;
+    }
+    jack.updatePortConnectRegex(jackPort, index, r);
+
+    // Update in tree widget if port is selected
+    if (connectionsTreeGetSelectedAudioInPort() != port) { return; }
+    QTreeWidgetItem* item = nullptr;
+    if (leftRight == Project::LeftPort) {
+        item = mPortConRegexTreeLeftItems.value(index);
+    } else {
+        item = mPortConRegexTreeRightItems.value(index);
+    }
+    if (!item) { return; }
+
+    updatePortConRegexTreeAudioItem(item, leftRight, r);
+}
+
+void MainWindow::onAudioInPortConnectRegexRemoved(Project::AudioPortPtr port,
+                                                  int index,
+                                                  Project::PortLeftRight leftRight)
+{
+    // Remove from JACK engine
+    KfJackPort* jackPort;
+    if (leftRight == Project::LeftPort) {
+        jackPort = port->leftJackPort;
+    } else {
+        jackPort = port->rightJackPort;
+    }
+    jack.removeAndDisconnectPortConRegex(jackPort, index);
+
+    // Remove from tree widget if port is selected
+    if (connectionsTreeGetSelectedAudioInPort() != port) { return; }
+    QTreeWidgetItem* item = nullptr;
+    if (leftRight == Project::LeftPort) {
+        if (indexValid(index, mPortConRegexTreeLeftItems.count())) {
+            item = mPortConRegexTreeLeftItems.takeAt(index);
+        }
+    } else {
+        if (indexValid(index, mPortConRegexTreeRightItems.count())) {
+            item = mPortConRegexTreeRightItems.takeAt(index);
+        }
+    }
+    if (item) {
+        delete item; // Removes item from tree widget
+    }
+}
+
+void MainWindow::onAudioBusConnectRegexAdded(Project::AudioPortPtr bus,
+                                             Project::PortLeftRight leftRight,
+                                             KonfytPortRegex r)
+{
+    // Add to JACK engine
+    KfJackPort* jackPort;
+    if (leftRight == Project::LeftPort) {
+        jackPort = bus->leftJackPort;
+    } else {
+        jackPort = bus->rightJackPort;
+    }
+    jack.addPortConnectRegex(jackPort, r);
+
+    // Add to tree widget if bus is selected
+    if (connectionsTreeGetSelectedBus() != bus) { return; }
+    QTreeWidgetItem* item = addPortConRegexTreeAudioItem(r, leftRight);
+
+    // Select newly added item
+    ui->treeWidget_jackCon_regexes->setCurrentItem(item);
+}
+
+void MainWindow::onAudioBusConnectRegexChanged(Project::AudioPortPtr bus,
+                                               int index,
+                                               Project::PortLeftRight leftRight,
+                                               KonfytPortRegex r)
+{
+    // Update in JACK engine
+    KfJackPort* jackPort;
+    if (leftRight == Project::LeftPort) {
+        jackPort = bus->leftJackPort;
+    } else {
+        jackPort = bus->rightJackPort;
+    }
+    jack.updatePortConnectRegex(jackPort, index, r);
+
+    // Update in tree widget if port is selected
+    if (connectionsTreeGetSelectedBus() != bus) { return; }
+    QTreeWidgetItem* item = nullptr;
+    if (leftRight == Project::LeftPort) {
+        item = mPortConRegexTreeLeftItems.value(index);
+    } else {
+        item = mPortConRegexTreeRightItems.value(index);
+    }
+    if (!item) { return; }
+
+    updatePortConRegexTreeAudioItem(item, leftRight, r);
+}
+
+void MainWindow::onAudioBusConnectRegexRemoved(Project::AudioPortPtr bus,
+                                               int index,
+                                               Project::PortLeftRight leftRight)
+{
+    // Remove from JACK engine
+    KfJackPort* jackPort;
+    if (leftRight == Project::LeftPort) {
+        jackPort = bus->leftJackPort;
+    } else {
+        jackPort = bus->rightJackPort;
+    }
+    jack.removeAndDisconnectPortConRegex(jackPort, index);
+
+    // Remove from tree widget if bus is selected
+    if (connectionsTreeGetSelectedBus() != bus) { return; }
+    QTreeWidgetItem* item = nullptr;
+    if (leftRight == Project::LeftPort) {
+        if (indexValid(index, mPortConRegexTreeLeftItems.count())) {
+            item = mPortConRegexTreeLeftItems.takeAt(index);
+        }
+    } else {
+        if (indexValid(index, mPortConRegexTreeRightItems.count())) {
+            item = mPortConRegexTreeRightItems.takeAt(index);
+        }
+    }
+    if (item) {
+        delete item; // Removes item from tree widget
+    }
 }
 
 void MainWindow::on_lineEdit_jackCon_regex_client_textChanged(const QString& /*text*/)
@@ -2002,11 +2374,22 @@ void MainWindow::on_pushButton_jackCon_regex_add_clicked()
     KonfytPortRegex r;
     r.clientRegex = ui->lineEdit_jackCon_regex_client->text();
     r.portRegex = ui->lineEdit_jackCon_regex_port->text();
+    Project::PortLeftRight leftRight =
+            ui->radioButton_jackCon_regex_left->isChecked() ?
+                Project::LeftPort : Project::RightPort;
 
-    // todo regex: do for other port types
-    if (connectionsTreeIsMidiInPortSelected()) {
+    if (connectionsTreeIsBusSelected()) {
+        int busId = connectionsTreeGetSelectedBusId();
+        prj->audioBus_addPortConnectRegex(busId, leftRight, r);
+    } else if (connectionsTreeIsAudioInPortSelected()) {
+        int portId = connectionsTreeGetSelectedAudioInPortId();
+        prj->audioInPort_addPortConnectRegex(portId, leftRight, r);
+    } else if (connectionsTreeIsMidiInPortSelected()) {
         int portId = connectionsTreeGetSelectedMidiInPortId();
         prj->midiInPort_addPortConnectRegex(portId, r);
+    } else if (connectionsTreeIsMidiOutPortSelected()) {
+        int portId = connectionsTreeGetSelectedMidiOutPortId();
+        prj->midiOutPort_addPortConnectRegex(portId, r);
     }
 }
 
@@ -2015,15 +2398,32 @@ void MainWindow::on_pushButton_jackCon_regex_remove_clicked()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    int index = ui->treeWidget_jackCon_regexes->indexOfTopLevelItem(
-                ui->treeWidget_jackCon_regexes->currentItem());
+    Project::PortLeftRight leftRight;
+    int index = -1;
+    QTreeWidgetItem* item = ui->treeWidget_jackCon_regexes->currentItem();
+    if (mPortConRegexTreeLeftItems.contains(item)) {
+        index = mPortConRegexTreeLeftItems.indexOf(item);
+        leftRight = Project::LeftPort;
+    } else if (mPortConRegexTreeRightItems.contains(item)) {
+        index = mPortConRegexTreeRightItems.indexOf(item);
+        leftRight = Project::RightPort;
+    }
+
     if (index == -1) { return; }
 
     if (connectionsTreeIsMidiInPortSelected()) {
         int portId = connectionsTreeGetSelectedMidiInPortId();
         prj->midiInPort_removePortConnectRegex(portId, index);
+    } else if (connectionsTreeIsMidiOutPortSelected()) {
+        int portId = connectionsTreeGetSelectedMidiOutPortId();
+        prj->midiOutPort_removePortConnectRegex(portId, index);
+    } else if (connectionsTreeIsAudioInPortSelected()) {
+        int portId = connectionsTreeGetSelectedAudioInPortId();
+        prj->audioInPort_removePortConnectRegex(portId, leftRight, index);
+    } else if (connectionsTreeIsBusSelected()) {
+        int busId = connectionsTreeGetSelectedBusId();
+        prj->audioBus_removePortConnectRegex(busId, leftRight, index);
     }
-    // todo regex: other port types
 }
 
 void MainWindow::on_pushButton_jackCon_regex_replace_clicked()
@@ -2031,24 +2431,153 @@ void MainWindow::on_pushButton_jackCon_regex_replace_clicked()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    int index = ui->treeWidget_jackCon_regexes->indexOfTopLevelItem(
-                ui->treeWidget_jackCon_regexes->currentItem());
+    Project::PortLeftRight oldLeftRight;
+    int index = -1;
+    QTreeWidgetItem* item = ui->treeWidget_jackCon_regexes->currentItem();
+    if (mPortConRegexTreeLeftItems.contains(item)) {
+        index = mPortConRegexTreeLeftItems.indexOf(item);
+        oldLeftRight = Project::LeftPort;
+    } else if (mPortConRegexTreeRightItems.contains(item)) {
+        index = mPortConRegexTreeRightItems.indexOf(item);
+        oldLeftRight = Project::RightPort;
+    }
+
     if (index == -1) { return; }
 
     KonfytPortRegex r;
     r.clientRegex = ui->lineEdit_jackCon_regex_client->text();
     r.portRegex = ui->lineEdit_jackCon_regex_port->text();
 
+    Project::PortLeftRight newLeftRight =
+            ui->radioButton_jackCon_regex_left->isChecked() ?
+                Project::LeftPort : Project::RightPort;
+
     if (connectionsTreeIsMidiInPortSelected()) {
+
         int portId = connectionsTreeGetSelectedMidiInPortId();
         prj->midiInPort_updatePortConnectRegex(portId, index, r);
+
+    } else if (connectionsTreeIsMidiOutPortSelected()) {
+
+        int portId = connectionsTreeGetSelectedMidiOutPortId();
+        prj->midiOutPort_updatePortConnectRegex(portId, index, r);
+
+    } else if (connectionsTreeIsAudioInPortSelected()) {
+
+        int portId = connectionsTreeGetSelectedAudioInPortId();
+        if (oldLeftRight != newLeftRight) {
+            // Left/right changed. First remove old one, then add new one.
+            prj->audioInPort_removePortConnectRegex(portId, oldLeftRight, index);
+            prj->audioInPort_addPortConnectRegex(portId, newLeftRight, r);
+        } else {
+            // Left/right unchanged. Update the regex.
+            prj->audioInPort_updatePortConnectRegex(portId, newLeftRight, index, r);
+        }
+
+    } else if (connectionsTreeIsBusSelected()) {
+
+        int busId = connectionsTreeGetSelectedBusId();
+        if (oldLeftRight != newLeftRight) {
+            // Left/right changed. First remove old one, then add new one.
+            prj->audioBus_removePortConnectRegex(busId, oldLeftRight, index);
+            prj->audioBus_addPortConnectRegex(busId, newLeftRight, r);
+        } else {
+            // Left/right unchanged. Update the regex.
+            prj->audioBus_updatePortConnectRegex(busId, newLeftRight, index, r);
+        }
     }
-    // todo regex: other port types
 }
 
-void MainWindow::on_treeWidget_jackCon_regexes_currentItemChanged(QTreeWidgetItem* /*current*/, QTreeWidgetItem* /*previous*/)
+void MainWindow::on_treeWidget_jackCon_regexes_currentItemChanged(
+        QTreeWidgetItem* current, QTreeWidgetItem* /*previous*/)
 {
     updateRegexConnectionsButtons();
+
+    // Fill the edit area from the selected item
+
+    // Get index and left/right from selected item
+    Project::PortLeftRight leftRight;
+    int index = -1;
+    if (mPortConRegexTreeLeftItems.contains(current)) {
+        index = mPortConRegexTreeLeftItems.indexOf(current);
+        leftRight = Project::LeftPort;
+    } else if (mPortConRegexTreeRightItems.contains(current)) {
+        index = mPortConRegexTreeRightItems.indexOf(current);
+        leftRight = Project::RightPort;
+    }
+
+    if (index == -1) { return; }
+
+    ProjectPtr prj = mCurrentProject;
+    if (!prj) { return; }
+
+    // Get regex based on selected bus/port type and index & left/right
+
+    KonfytPortRegex regex;
+
+    if (connectionsTreeIsMidiInPortSelected()) {
+
+        int portId = connectionsTreeGetSelectedMidiInPortId();
+        Project::MidiPortPtr port = prj->midiInPort_getPort(portId);
+        if (port) {
+            regex = port->clientRegexes.value(index);
+        }
+
+    } else if (connectionsTreeIsMidiOutPortSelected()) {
+
+        int portId = connectionsTreeGetSelectedMidiOutPortId();
+        Project::MidiPortPtr port = prj->midiOutPort_getPort(portId);
+        if (port) {
+            regex = port->clientRegexes.value(index);
+        }
+
+    } else if (connectionsTreeIsAudioInPortSelected()) {
+
+        int portId = connectionsTreeGetSelectedAudioInPortId();
+        Project::AudioPortPtr port = prj->audioInPort_getPort(portId);
+        if (port) {
+            if (leftRight == Project::LeftPort) {
+                regex = port->leftClientRegexes.value(index);
+            } else {
+                regex = port->rightClientRegexes.value(index);
+            }
+        }
+
+    } else if (connectionsTreeIsBusSelected()) {
+
+        int busId = connectionsTreeGetSelectedBusId();
+        Project::AudioPortPtr bus = prj->audioBus_getBus(busId);
+        if (bus) {
+            if (leftRight == Project::LeftPort) {
+                regex = bus->leftClientRegexes.value(index);
+            } else {
+                regex = bus->rightClientRegexes.value(index);
+            }
+        }
+    }
+
+    // Set regex content to edit area
+    ui->lineEdit_jackCon_regex_client->setText(regex.clientRegex);
+    ui->lineEdit_jackCon_regex_port->setText(regex.portRegex);
+    ui->radioButton_jackCon_regex_left->setChecked(leftRight == Project::LeftPort);
+    ui->radioButton_jackCon_regex_right->setChecked(leftRight == Project::RightPort);
+
+    // Ensure preview gets updated even when line edits textChanged slots don't fire
+    updateGuiForJackConRegexPreview();
+}
+
+void MainWindow::on_treeWidget_jackCon_regexes_itemClicked(QTreeWidgetItem *item, int /*column*/)
+{
+    // This accounts for when the user clicks on an already selected item in
+    // the tree widget (i.e. when currentItemChanged() wouldn't fire).
+
+    on_treeWidget_jackCon_regexes_currentItemChanged(item, nullptr);
+}
+
+void MainWindow::on_pushButton_connectionsPage_showHideRegex_clicked()
+{
+    ui->groupBox_connectionsPage_regex->setVisible(
+                !ui->groupBox_connectionsPage_regex->isVisible());
 }
 
 void MainWindow::initTriggers()
@@ -2183,6 +2712,27 @@ void MainWindow::loadProject(ProjectPtr prj)
     connect(prj.data(), &Project::midiInPortConnectRegexRemoved,
             this, &MainWindow::onMidiInPortConnectRegexRemoved);
 
+    connect(prj.data(), &Project::midiOutPortConnectRegexAdded,
+            this, &MainWindow::onMidiOutPortConnectRegexAdded);
+    connect(prj.data(), &Project::midiOutPortConnectRegexChanged,
+            this, &MainWindow::onMidiOutPortConnectRegexChanged);
+    connect(prj.data(), &Project::midiOutPortConnectRegexRemoved,
+            this, &MainWindow::onMidiOutPortConnectRegexRemoved);
+
+    connect(prj.data(), &Project::audioInPortConnectRegexAdded,
+            this, &MainWindow::onAudioInPortConnectRegexAdded);
+    connect(prj.data(), &Project::audioInPortConnectRegexChanged,
+            this, &MainWindow::onAudioInPortConnectRegexChanged);
+    connect(prj.data(), &Project::audioInPortConnectRegexRemoved,
+            this, &MainWindow::onAudioInPortConnectRegexRemoved);
+
+    connect(prj.data(), &Project::audioBusConnectRegexAdded,
+            this, &MainWindow::onAudioBusConnectRegexAdded);
+    connect(prj.data(), &Project::audioBusConnectRegexChanged,
+            this, &MainWindow::onAudioBusConnectRegexChanged);
+    connect(prj.data(), &Project::audioBusConnectRegexRemoved,
+            this, &MainWindow::onAudioBusConnectRegexRemoved);
+
     setupWarningConnectionsForProject(prj);
 
     updateProjectNameInGui();
@@ -2195,20 +2745,24 @@ void MainWindow::loadProject(ProjectPtr prj)
     patchListAdapter.addPatches(mCurrentProject->getPatchList());
 
     // Process MIDI in ports
+    foreach (int prjPortId, prj->midiInPort_getAllPortIds()) {
 
-    QList<int> midiInIds = prj->midiInPort_getAllPortIds();
-    for (int j=0; j < midiInIds.count(); j++) {
-        int prjPortId = midiInIds[j];
+        Project::MidiPortPtr prjPort = prj->midiInPort_getPort(prjPortId);
+        KONFYT_ASSERT_CONTINUE(!prjPort.isNull());
+
         // Add to Jack, and update Jack port reference in project
         // TODO: PROJECT IS NOT TECHNICALLY THE BEST PLACE TO KEEP THE PORT
         // REFERENCE. KEEP IN MAINWINDOW OR PATCHENGINE.
         prj->midiInPort_setJackPort(prjPortId, addMidiInPortToJack(prjPortId));
 
-        // Also add port clients to Jack
-        Project::MidiPortPtr prjPort = prj->midiInPort_getPort(prjPortId);
-        if (!prjPort) { continue; }
+        // Add port clients to Jack
         foreach (QString client, prjPort->clients) {
             jack.addPortClient(prjPort->jackPort, client);
+        }
+
+        // Process port connect regexes
+        foreach (KonfytPortRegex r, prjPort->clientRegexes) {
+            onMidiInPortConnectRegexAdded(prjPort, r);
         }
 
         // Set port MIDI filter in Jack
@@ -2221,73 +2775,87 @@ void MainWindow::loadProject(ProjectPtr prj)
     }
 
     // Process MIDI out ports
+    foreach (int prjPortId, prj->midiOutPort_getAllPortIds()) {
 
-    QList<int> midiOutIds = prj->midiOutPort_getAllPortIds();
-    for (int j=0; j < midiOutIds.count(); j++) {
-        int prjPortId = midiOutIds[j];
+        Project::MidiPortPtr prjPort = prj->midiOutPort_getPort(prjPortId);
+        KONFYT_ASSERT_CONTINUE(!prjPort.isNull());
+
         // Add to Jack, and update Jack port reference in project
         prj->midiOutPort_setJackPort(prjPortId, addMidiOutPortToJack(prjPortId));
 
-        // Also add port clients to Jack
-        Project::MidiPortPtr projectPort = prj->midiOutPort_getPort(prjPortId);
-        KONFYT_ASSERT_CONTINUE(!projectPort.isNull());
-        foreach (QString client, projectPort->clients) {
-            jack.addPortClient(projectPort->jackPort, client);
+        // Add port clients to Jack
+        foreach (QString client, prjPort->clients) {
+            jack.addPortClient(prjPort->jackPort, client);
+        }
+
+        // Process port connect regexes
+        foreach (KonfytPortRegex r, prjPort->clientRegexes) {
+            onMidiOutPortConnectRegexAdded(prjPort, r);
         }
     }
 
     // Audio Buses (output ports)
+    foreach (int prjBusId, prj->audioBus_getAllBusIds()) {
 
-    QList<int> busIds = prj->audioBus_getAllBusIds();
-    for (int j=0; j < busIds.count(); j++) {
-        int id = busIds[j];
-        Project::AudioPortPtr b =  prj->audioBus_getBus(id);
-        KONFYT_ASSERT_CONTINUE(!b.isNull());
+        Project::AudioPortPtr bus = prj->audioBus_getBus(prjBusId);
+        KONFYT_ASSERT_CONTINUE(!bus.isNull());
 
-        // Add audio bus ports to jack client
+        // Add audio bus ports to Jack client
         KfJackAudioPort* left;
         KfJackAudioPort* right;
-        addAudioBusToJack( id, &left, &right);
+        addAudioBusToJack(prjBusId, &left, &right);
         if ( (left != nullptr) && (right != nullptr) ) {
             // Update left and right port references of bus in project
-            b->leftJackPort = left;
-            b->rightJackPort = right;
-            prj->audioBus_replace_noModify( id, b ); // use noModify function as to not change the project's modified state.
-            // Add port clients to jack client
-            foreach (QString client, b->leftClients) {
-                jack.addPortClient(b->leftJackPort, client);
+            bus->leftJackPort = left;
+            bus->rightJackPort = right;
+            prj->audioBus_replace_noModify( prjBusId, bus ); // use noModify function as to not change the project's modified state.
+            // Add port clients to Jack client
+            foreach (QString client, bus->leftClients) {
+                jack.addPortClient(bus->leftJackPort, client);
             }
-            foreach (QString client, b->rightClients) {
-                jack.addPortClient(b->rightJackPort, client);
+            foreach (QString client, bus->rightClients) {
+                jack.addPortClient(bus->rightJackPort, client);
+            }
+            // Process port connect regexes
+            foreach (KonfytPortRegex r, bus->leftClientRegexes) {
+                onAudioBusConnectRegexAdded(bus, Project::LeftPort, r);
+            }
+            foreach (KonfytPortRegex r, bus->rightClientRegexes) {
+                onAudioBusConnectRegexAdded(bus, Project::RightPort, r);
             }
         } else {
             print("ERROR: setCurrentProject: Failed to create audio bus JACK port(s).");
         }
-        updateBusGainInJackEngine(id);
+        updateBusGainInJackEngine(prjBusId);
 
     }
 
     // Audio input ports
+    foreach (int prjPortId, prj->audioInPort_getAllPortIds()) {
 
-    QList<int> audioInIds = prj->audioInPort_getAllPortIds();
-    for (int j=0; j < audioInIds.count(); j++) {
-        int id = audioInIds[j];
+        Project::AudioPortPtr prjPort = prj->audioInPort_getPort(prjPortId);
+        KONFYT_ASSERT_CONTINUE(!prjPort.isNull());
 
         // Add audio ports to jack client
         KfJackAudioPort* left;
         KfJackAudioPort* right;
-        addAudioInPortsToJack( id, &left, &right );
+        addAudioInPortsToJack(prjPortId, &left, &right);
         if ((left != nullptr) && (right != nullptr)) {
-            // Update left and right port numbers in project
-            prj->audioInPort_setJackPorts(id, left, right);
-            // Add port clients to jack client
-            Project::AudioPortPtr p = prj->audioInPort_getPort(id);
-            KONFYT_ASSERT_CONTINUE(!p.isNull());
-            foreach (QString client, p->leftClients) {
-                jack.addPortClient(p->leftJackPort, client);
+            // Update left and right Jack ports in project
+            prj->audioInPort_setJackPorts(prjPortId, left, right);
+            // Add port clients to Jack client
+            foreach (QString client, prjPort->leftClients) {
+                jack.addPortClient(prjPort->leftJackPort, client);
             }
-            foreach (QString client, p->rightClients) {
-                jack.addPortClient(p->rightJackPort, client);
+            foreach (QString client, prjPort->rightClients) {
+                jack.addPortClient(prjPort->rightJackPort, client);
+            }
+            // Process port connect regexes
+            foreach (KonfytPortRegex r, prjPort->leftClientRegexes) {
+                onAudioInPortConnectRegexAdded(prjPort, Project::LeftPort, r);
+            }
+            foreach (KonfytPortRegex r, prjPort->rightClientRegexes) {
+                onAudioInPortConnectRegexAdded(prjPort, Project::RightPort, r);
             }
         } else {
             print("ERROR: setCurrentProject: Failed to create audio input JACK port(s).");
@@ -6803,32 +7371,63 @@ void MainWindow::on_tree_portsBusses_currentItemChanged(
 {
     if (!current) { return; }
 
-    // Enable MIDI Filter button if MIDI in port selected
-    if ( current->parent() == midiInParent ) {
-        // Midi input port is selected
-        ui->frame_connectionsPage_MidiFilter->setVisible(true);
-    } else {
-        ui->frame_connectionsPage_MidiFilter->setVisible(false);
+    bool showRegexes = false;
+    bool enableRegexLeftRight = false;
+
+    // Change connections header based on type of port/bus selected
+    if (connectionsTreeIsBusSelected()) {
+
+        ui->stackedWidget_consHeader->setCurrentWidget(ui->page_consHeader_bus);
+        Project::AudioPortPtr bus = connectionsTreeGetSelectedBus();
+        if (bus) {
+            ui->checkBox_connectionsPage_ignoreGlobalVolume->setChecked(
+                    bus->ignoreMasterGain);
+            showRegexes = !bus->leftClientRegexes.isEmpty()
+                    || !bus->rightClientRegexes.isEmpty();
+        }
+        enableRegexLeftRight = true;
+
+    } else if (connectionsTreeIsMidiInPortSelected()) {
+
+        ui->stackedWidget_consHeader->setCurrentWidget(ui->page_consHeader_midi);
+        Project::MidiPortPtr port = connectionsTreeGetSelectedMidiInPort();
+        if (port) {
+            showRegexes = !port->clientRegexes.isEmpty();
+        }
+
+    } else if (connectionsTreeIsMidiOutPortSelected()) {
+
+        ui->stackedWidget_consHeader->setCurrentWidget(ui->page_consHeader_empty);
+        Project::MidiPortPtr port = connectionsTreeGetSelectedMidiOutPort();
+        if (port) {
+            showRegexes = !port->clientRegexes.isEmpty();
+        }
+
+    } else if (connectionsTreeIsAudioInPortSelected()) {
+
+        ui->stackedWidget_consHeader->setCurrentWidget(ui->page_consHeader_empty);
+        Project::AudioPortPtr port = connectionsTreeGetSelectedAudioInPort();
+        if (port) {
+            showRegexes = !port->leftClientRegexes.isEmpty()
+                    || !port->rightClientRegexes.isEmpty();
+        }
+        enableRegexLeftRight = true;
+
     }
 
-    // Show/hide and update ignore-global-volume checkbox if bus selected
-    if (mCurrentProject) {
-        if (current->parent() == busParent) {
-            ui->checkBox_connectionsPage_ignoreGlobalVolume->setVisible(true);
-            int busId = tree_busMap.value(current);
-            Project::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
-            if (bus) {
-                ui->checkBox_connectionsPage_ignoreGlobalVolume->setChecked(
-                        bus->ignoreMasterGain);
-            }
-        } else {
-            ui->checkBox_connectionsPage_ignoreGlobalVolume->setVisible(false);
-        }
+    ui->groupBox_connectionsPage_regex->setVisible(showRegexes);
+
+    // Show/hide left/right selection in regex editor
+    if (enableRegexLeftRight) {
+        ui->stackedWidget_jackCon_regex_con->setCurrentWidget(ui->page_jackCon_regex_con_audio);
+    } else {
+        ui->stackedWidget_jackCon_regex_con->setCurrentWidget(ui->page_jackCon_regex_con_midi);
     }
 
     updateConnectionsTree();
     updateRegexConnectionsButtons();
-    updateRegexConnectionsTree();
+    fillRegexConnectionsTree();
+    updateGuiForJackConRegexPreview();
 }
 
 /* Remove the bus/port selected in the connections ports/buses tree widget. */
@@ -8338,10 +8937,9 @@ void MainWindow::on_pushButton_connectionsPage_editScript_clicked()
 void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
 {
     if (!mCurrentProject) { return; }
-    QTreeWidgetItem* currentItem = ui->tree_portsBusses->currentItem();
-    if (currentItem->parent() != busParent) { return; }
+    if (!connectionsTreeIsBusSelected()) { return; }
 
-    int busId = tree_busMap.value(currentItem);
+    int busId = connectionsTreeGetSelectedBusId();
     Project::AudioPortPtr bus = mCurrentProject->audioBus_getBus(busId);
     KONFYT_ASSERT_RETURN(!bus.isNull());
     bus->ignoreMasterGain = ui->checkBox_connectionsPage_ignoreGlobalVolume->isChecked();
@@ -8709,6 +9307,8 @@ void MainWindow::on_checkBox_midiSendList_bank_stateChanged(int arg1)
 
 void MainWindow::on_listWidget_midiSendList_currentRowChanged(int currentRow)
 {
+    // TODO Why use currentRowChanged and not just currentItemChanged?
+
     if (currentRow >= 0) {
         // Valid item selected
         midiEventToMidiSendEditor(midiSendList.value(currentRow));
@@ -8726,6 +9326,12 @@ void MainWindow::on_listWidget_midiSendList_itemClicked(QListWidgetItem *item)
 
     on_listWidget_midiSendList_currentRowChanged(
                 ui->listWidget_midiSendList->row(item) );
+}
+
+void MainWindow::on_listWidget_midiSendList_currentItemChanged(
+        QListWidgetItem* /*current*/, QListWidgetItem* /*previous*/)
+{
+    updateMidiSendListEditorButtonStates();
 }
 
 void MainWindow::on_pushButton_midiSendList_pbmin_clicked()
@@ -9020,12 +9626,6 @@ void MainWindow::on_pushButton_midiSendList_sendAll_clicked()
     }
 }
 
-void MainWindow::on_listWidget_midiSendList_currentItemChanged(
-        QListWidgetItem* /*current*/, QListWidgetItem* /*previous*/)
-{
-    updateMidiSendListEditorButtonStates();
-}
-
 void MainWindow::on_treeWidget_savedMidiMessages_currentItemChanged(
         QTreeWidgetItem* /*current*/, QTreeWidgetItem* /*previous*/)
 {
@@ -9124,6 +9724,3 @@ QAction *MainWindow::ResetOptionMenu::actionWithValue(KonfytReset value)
     }
     return ret;
 }
-
-
-

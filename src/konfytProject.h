@@ -55,6 +55,8 @@ public:
         float rightGain = 1;
         QStringList leftClients;
         QStringList rightClients;
+        QList<KonfytPortRegex> leftClientRegexes;
+        QList<KonfytPortRegex> rightClientRegexes;
         bool ignoreMasterGain = false; // Only applicable for output ports (buses)
     };
     typedef QSharedPointer<AudioPort> AudioPortPtr;
@@ -188,6 +190,9 @@ public:
     QStringList midiOutPort_getClients(int portId);  // Get client list of single port
     void midiOutPort_addClient(int portId, QString client);
     void midiOutPort_removeClient(int portId, QString client);
+    void midiOutPort_addPortConnectRegex(int portId, KonfytPortRegex r);
+    void midiOutPort_removePortConnectRegex(int portId, int index);
+    void midiOutPort_updatePortConnectRegex(int portId, int index, KonfytPortRegex r);
 
     // -----------------------------------------------------------------------
     // Audio input ports
@@ -204,6 +209,9 @@ public:
     void audioInPort_setJackPorts(int portId, KfJackAudioPort* left, KfJackAudioPort* right);
     void audioInPort_addClient(int portId, PortLeftRight leftRight, QString client);
     void audioInPort_removeClient(int portId, PortLeftRight leftRight, QString client);
+    void audioInPort_addPortConnectRegex(int portId, PortLeftRight leftRight, KonfytPortRegex r);
+    void audioInPort_removePortConnectRegex(int portId, PortLeftRight leftRight, int index);
+    void audioInPort_updatePortConnectRegex(int portId, PortLeftRight leftRight, int index, KonfytPortRegex r);
 
     // -----------------------------------------------------------------------
     // Audio buses (output ports)
@@ -222,6 +230,9 @@ public:
     void audioBus_replace_noModify(int busId, AudioPortPtr newBus);
     void audioBus_addClient(int busId, PortLeftRight leftRight, QString client);
     void audioBus_removeClient(int busId, PortLeftRight leftRight, QString client);
+    void audioBus_addPortConnectRegex(int portId, PortLeftRight leftRight, KonfytPortRegex r);
+    void audioBus_removePortConnectRegex(int portId, PortLeftRight leftRight, int index);
+    void audioBus_updatePortConnectRegex(int portId, PortLeftRight leftRight, int index, KonfytPortRegex r);
 
     // -----------------------------------------------------------------------
     // External Apps
@@ -266,9 +277,21 @@ signals:
     void audioBusNameChanged(int busId);
 
     void midiInPortNameChanged(int portId);
-    void midiInPortConnectRegexAdded(int portId, KonfytPortRegex r);
-    void midiInPortConnectRegexChanged(int portId, int index, KonfytPortRegex r);
-    void midiInPortConnectRegexRemoved(int portId, int index);
+    void audioBusConnectRegexAdded(AudioPortPtr bus, PortLeftRight leftRight, KonfytPortRegex r);
+    void audioBusConnectRegexChanged(AudioPortPtr bus, int index, PortLeftRight leftRight, KonfytPortRegex r);
+    void audioBusConnectRegexRemoved(AudioPortPtr bus, int index, PortLeftRight leftRight);
+
+    void midiInPortConnectRegexAdded(MidiPortPtr port, KonfytPortRegex r);
+    void midiInPortConnectRegexChanged(MidiPortPtr port, int index, KonfytPortRegex r);
+    void midiInPortConnectRegexRemoved(MidiPortPtr port, int index);
+
+    void midiOutPortConnectRegexAdded(MidiPortPtr port, KonfytPortRegex r);
+    void midiOutPortConnectRegexChanged(MidiPortPtr port, int index, KonfytPortRegex r);
+    void midiOutPortConnectRegexRemoved(MidiPortPtr port, int index);
+
+    void audioInPortConnectRegexAdded(AudioPortPtr port, PortLeftRight leftRight, KonfytPortRegex r);
+    void audioInPortConnectRegexChanged(AudioPortPtr port, int index, PortLeftRight leftRight, KonfytPortRegex r);
+    void audioInPortConnectRegexRemoved(AudioPortPtr port, int index, PortLeftRight leftRight);
 
     void midiOutPortNameChanged(int portId);
     void audioInPortNameChanged(int portId);
@@ -341,6 +364,9 @@ private:
     QList<KonfytJackConPair> mJackAudioConList;
     void readJackAudioConList(Xml xml, bool makeNotBreak);
 
+    void addPortConnectRegexesToXml(QList<KonfytPortRegex> regexes, QString name, Xml* xml) const;
+    QList<KonfytPortRegex> getPortConnectRegexesFromXml(QString name, Xml* xml);
+
     bool mModified = false; // Whether project has been modified since last load/save.
 
 private:
@@ -411,6 +437,12 @@ private:
     static constexpr const char* XML_OTHERJACKCON = "otherJackCon";
     static constexpr const char* XML_OTHERJACKCON_SRC = "srcPort";
     static constexpr const char* XML_OTHERJACKCON_DEST = "destPort";
+
+    static constexpr const char* XML_PORT_CON_REGEX = "portConnectRegex";
+    static constexpr const char* XML_PORT_CON_REGEX_LEFT = "leftPortConnectRegex";
+    static constexpr const char* XML_PORT_CON_REGEX_RIGHT = "rightPortConnectRegex";
+    static constexpr const char* XML_PORT_CON_REGEX_CLIENT = "clientRegex";
+    static constexpr const char* XML_PORT_CON_REGEX_PORT = "portRegex";
 };
 
 #endif // KONFYT_PROJECT_H

@@ -107,8 +107,6 @@ struct KonfytPortRegex
 {
     QString clientRegex;
     QString portRegex;
-    bool leftConnected = false;
-    bool rightConnected = false;
 };
 
 

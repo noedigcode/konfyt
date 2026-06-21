@@ -94,7 +94,10 @@ void KonfytJackEngine::refreshAllPortsConnections()
 
     // Refresh connections for midi output ports
     foreach (KfJackMidiPort* port, midiOutPorts) {
+        // Normal named client/ports
         refreshConnections(port, port->connectionList);
+        // Regex client/ports
+        refreshRegexConnections(port);
     }
 
     // Refresh connections for plugin midi and audio ports
@@ -111,12 +114,18 @@ void KonfytJackEngine::refreshAllPortsConnections()
 
     // Refresh connections for audio input ports
     foreach (KfJackAudioPort* port, audioInPorts) {
+        // Normal named client/ports
         refreshConnections(port, port->connectionList);
+        // Regex client/ports
+        refreshRegexConnections(port);
     }
 
     // Refresh connections for audio output ports (aka buses)
     foreach (KfJackAudioPort* port, audioOutPorts) {
+        // Normal named client/ports
         refreshConnections(port, port->connectionList);
+        // Regex client/ports
+        refreshRegexConnections(port);
     }
 
     // Refresh other JACK connections

@@ -572,8 +572,20 @@ private:
     void updatePortsBussesTree();
     void updateConnectionsTree();
     void clearPortsBussesConnectionsData();
+
+    bool connectionsTreeIsBusSelected();
+    bool connectionsTreeIsAudioInPortSelected();
     bool connectionsTreeIsMidiInPortSelected();
+    bool connectionsTreeIsMidiOutPortSelected();
+
+    int connectionsTreeGetSelectedBusId();
+    Project::AudioPortPtr connectionsTreeGetSelectedBus();
+    int connectionsTreeGetSelectedAudioInPortId();
+    Project::AudioPortPtr connectionsTreeGetSelectedAudioInPort();
     int connectionsTreeGetSelectedMidiInPortId();
+    Project::MidiPortPtr connectionsTreeGetSelectedMidiInPort();
+    int connectionsTreeGetSelectedMidiOutPortId();
+    Project::MidiPortPtr connectionsTreeGetSelectedMidiOutPort();
 
     QTreeWidgetItem* busParent = nullptr;
     QTreeWidgetItem* audioInParent = nullptr;
@@ -615,20 +627,43 @@ private slots:
     // -----------------------------------------------------------------------
     // Regex connections
 private:
-    void updateRegexConnectionsTree();
+    void fillRegexConnectionsTree();
     void updateGuiForJackConRegexPreview();
     void updateRegexConnectionsButtons();
 
+    QList<QTreeWidgetItem*> mPortConRegexTreeLeftItems;
+    QList<QTreeWidgetItem*> mPortConRegexTreeRightItems;
+
+    QTreeWidgetItem* addPortConRegexTreeMidiItem(KonfytPortRegex regex);
+    QTreeWidgetItem* addPortConRegexTreeAudioItem(KonfytPortRegex regex, Project::PortLeftRight leftRight);
+    void updatePortConRegexTreeMidiItem(QTreeWidgetItem* item, KonfytPortRegex regex);
+    void updatePortConRegexTreeAudioItem(QTreeWidgetItem* item, Project::PortLeftRight leftRight, KonfytPortRegex regex);
+
 private slots:
-    void onMidiInPortConnectRegexAdded(int portId, KonfytPortRegex r);
-    void onMidiInPortConnectRegexChanged(int portId, int index, KonfytPortRegex r);
-    void onMidiInPortConnectRegexRemoved(int portId, int index);
+    void onMidiInPortConnectRegexAdded(Project::MidiPortPtr port, KonfytPortRegex r);
+    void onMidiInPortConnectRegexChanged(Project::MidiPortPtr port, int index, KonfytPortRegex r);
+    void onMidiInPortConnectRegexRemoved(Project::MidiPortPtr port, int index);
+
+    void onMidiOutPortConnectRegexAdded(Project::MidiPortPtr port, KonfytPortRegex r);
+    void onMidiOutPortConnectRegexChanged(Project::MidiPortPtr port, int index, KonfytPortRegex r);
+    void onMidiOutPortConnectRegexRemoved(Project::MidiPortPtr port, int index);
+
+    void onAudioInPortConnectRegexAdded(Project::AudioPortPtr port, Project::PortLeftRight leftRight, KonfytPortRegex r);
+    void onAudioInPortConnectRegexChanged(Project::AudioPortPtr port, int index, Project::PortLeftRight leftRight, KonfytPortRegex r);
+    void onAudioInPortConnectRegexRemoved(Project::AudioPortPtr port, int index, Project::PortLeftRight leftRight);
+
+    void onAudioBusConnectRegexAdded(Project::AudioPortPtr bus, Project::PortLeftRight leftRight, KonfytPortRegex r);
+    void onAudioBusConnectRegexChanged(Project::AudioPortPtr bus, int index, Project::PortLeftRight leftRight, KonfytPortRegex r);
+    void onAudioBusConnectRegexRemoved(Project::AudioPortPtr bus, int index, Project::PortLeftRight leftRight);
+
     void on_lineEdit_jackCon_regex_client_textChanged(const QString &text);
     void on_lineEdit_jackCon_regex_port_textChanged(const QString &text);
     void on_pushButton_jackCon_regex_add_clicked();
     void on_pushButton_jackCon_regex_remove_clicked();
     void on_pushButton_jackCon_regex_replace_clicked();
     void on_treeWidget_jackCon_regexes_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
+    void on_treeWidget_jackCon_regexes_itemClicked(QTreeWidgetItem *item, int column);
+    void on_pushButton_connectionsPage_showHideRegex_clicked();
 
     // -----------------------------------------------------------------------
     // Settings
@@ -797,6 +832,7 @@ private slots:
     void on_checkBox_midiSendList_bank_stateChanged(int arg1);
     void on_listWidget_midiSendList_currentRowChanged(int currentRow);
     void on_listWidget_midiSendList_itemClicked(QListWidgetItem *item);
+    void on_listWidget_midiSendList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
     void on_pushButton_midiSendList_pbmin_clicked();
     void on_pushButton_midiSendList_pbzero_clicked();
     void on_pushButton_midiSendList_pbmax_clicked();
@@ -808,7 +844,6 @@ private slots:
     void on_pushButton_midiSendList_remove_clicked();
     void on_pushButton_midiSendList_sendSelected_clicked();
     void on_pushButton_midiSendList_sendAll_clicked();
-    void on_listWidget_midiSendList_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
     void on_treeWidget_savedMidiMessages_currentItemChanged(QTreeWidgetItem *current, QTreeWidgetItem *previous);
 
     // Saved MIDI send items (presets)

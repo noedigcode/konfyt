@@ -543,7 +543,7 @@ void Project::midiInPort_addPortConnectRegex(int portId, KonfytPortRegex r)
     if (p) {
         p->clientRegexes.append(r);
         setModified(true);
-        emit midiInPortConnectRegexAdded(portId, r);
+        emit midiInPortConnectRegexAdded(p, r);
     }
 }
 
@@ -556,7 +556,7 @@ void Project::midiInPort_removePortConnectRegex(int portId, int index)
         KONFYT_ASSERT_RETURN(indexValid(index, port->clientRegexes.count()));
         port->clientRegexes.removeAt(index);
         setModified(true);
-        emit midiInPortConnectRegexRemoved(portId, index);
+        emit midiInPortConnectRegexRemoved(port, index);
     }
 }
 
@@ -569,7 +569,7 @@ void Project::midiInPort_updatePortConnectRegex(int portId, int index, KonfytPor
         KONFYT_ASSERT_RETURN(indexValid(index, port->clientRegexes.count()));
         port->clientRegexes.replace(index, r);
         setModified(true);
-        emit midiInPortConnectRegexChanged(portId, index, r);
+        emit midiInPortConnectRegexChanged(port, index, r);
     }
 }
 
@@ -607,6 +607,8 @@ void Project::readBusesFromProjectXml(Xml projectXml)
         foreach (Xml clientXml, busXml.childrenNamed(XML_BUS_RCLIENT)) {
             bus->rightClients.append(clientXml.text());
         }
+        bus->leftClientRegexes = getPortConnectRegexesFromXml(XML_PORT_CON_REGEX_LEFT, &busXml);
+        bus->rightClientRegexes = getPortConnectRegexesFromXml(XML_PORT_CON_REGEX_RIGHT, &busXml);
         bus->ignoreMasterGain = Qstr2bool(busXml.childText(
                                             XML_BUS_IGNORE_GLOBAL_VOLUME));
 
@@ -636,6 +638,8 @@ void Project::addBusesToProjectXml(Xml *projectXml) const
         foreach (QString client, b->rightClients) {
             busXml.addTextChild(XML_BUS_RCLIENT, client);
         }
+        addPortConnectRegexesToXml(b->leftClientRegexes, XML_PORT_CON_REGEX_LEFT, &busXml);
+        addPortConnectRegexesToXml(b->rightClientRegexes, XML_PORT_CON_REGEX_RIGHT, &busXml);
         audioOutListXml.addChild(busXml);
     }
     projectXml->addChild(audioOutListXml);
@@ -657,6 +661,7 @@ void Project::readMidiInPortsFromProjectXml(Xml projectXml)
         foreach (Xml clientXml, portXml.childrenNamed(XML_MIDI_IN_PORT_CLIENT)) {
             port->clients.append(clientXml.text());
         }
+        port->clientRegexes = getPortConnectRegexesFromXml(XML_PORT_CON_REGEX, &portXml);
         port->filter.readFromXml(portXml.child(MidiFilter::XML_MIDIFILTER));
         PortScriptData s = readPortScript(portXml.child(XML_PORT_SCRIPT));
         port->script = s.content;
@@ -685,6 +690,7 @@ void Project::addMidiInPortsToProjectXml(Xml *projectXml) const
         foreach (QString client, p->clients) {
             portXml.addTextChild(XML_MIDI_IN_PORT_CLIENT, client);
         }
+        addPortConnectRegexesToXml(p->clientRegexes, XML_PORT_CON_REGEX, &portXml);
         portXml.addChild(portScriptToXml(p));
         midiInListXml.addChild(portXml);
     }
@@ -707,6 +713,7 @@ void Project::readMidiOutPortsFromProjectXml(Xml projectXml)
         foreach (Xml clientXml, portXml.childrenNamed(XML_MIDI_OUT_PORT_CLIENT)) {
             port->clients.append(clientXml.text());
         }
+        port->clientRegexes = getPortConnectRegexesFromXml(XML_PORT_CON_REGEX, &portXml);
 
         int id = portXml.childInt(XML_MIDI_OUT_PORT_ID,
                                   midiOutPort_getUniqueId());
@@ -729,6 +736,7 @@ void Project::addMidiOutPortsToProjectXml(Xml *projectXml) const
         foreach (QString client, p->clients) {
             portXml.addTextChild(XML_MIDI_OUT_PORT_CLIENT, client);
         }
+        addPortConnectRegexesToXml(p->clientRegexes, XML_PORT_CON_REGEX, &portXml);
         midiOutListXml.addChild(portXml);
     }
     projectXml->addChild(midiOutListXml);
@@ -757,6 +765,8 @@ void Project::readAudioInPortsFromProjectXml(Xml projectXml)
         foreach (Xml clientXml, portXml.childrenNamed(XML_AUDIOIN_PORT_RCLIENT)) {
             port->rightClients.append(clientXml.text());
         }
+        port->leftClientRegexes = getPortConnectRegexesFromXml(XML_PORT_CON_REGEX_LEFT, &portXml);
+        port->rightClientRegexes = getPortConnectRegexesFromXml(XML_PORT_CON_REGEX_RIGHT, &portXml);
 
         int id = portXml.childInt(XML_AUDIOIN_PORT_ID,
                                   audioInPort_getUniqueId());
@@ -784,6 +794,8 @@ void Project::addAudioInPortsToProjectXml(Xml *projectXml) const
         foreach (QString client, p->rightClients) {
             portXml.addTextChild(XML_AUDIOIN_PORT_RCLIENT, client);
         }
+        addPortConnectRegexesToXml(p->leftClientRegexes, XML_PORT_CON_REGEX_LEFT, &portXml);
+        addPortConnectRegexesToXml(p->rightClientRegexes, XML_PORT_CON_REGEX_RIGHT, &portXml);
         audioInListXml.addChild(portXml);
     }
     projectXml->addChild(audioInListXml);
@@ -953,6 +965,29 @@ void Project::readJackAudioConList(Xml xml, bool makeNotBreak)
     }
 }
 
+void Project::addPortConnectRegexesToXml(QList<KonfytPortRegex> regexes,
+                                         QString name, Xml *xml) const
+{
+    foreach (KonfytPortRegex regex, regexes) {
+        Xml regexXml(name);
+        regexXml.addTextChild(XML_PORT_CON_REGEX_CLIENT, regex.clientRegex);
+        regexXml.addTextChild(XML_PORT_CON_REGEX_PORT, regex.portRegex);
+        xml->addChild(regexXml);
+    }
+}
+
+QList<KonfytPortRegex> Project::getPortConnectRegexesFromXml(QString name, Xml *xml)
+{
+    QList<KonfytPortRegex> ret;
+    foreach (Xml regexXml, xml->childrenNamed(name)) {
+        KonfytPortRegex r;
+        r.clientRegex = regexXml.childText(XML_PORT_CON_REGEX_CLIENT);
+        r.portRegex = regexXml.childText(XML_PORT_CON_REGEX_PORT);
+        ret.append(r);
+    }
+    return ret;
+}
+
 /* Adds bus and returns unique bus id. */
 int Project::audioBus_add(QString busName)
 {
@@ -1085,6 +1120,60 @@ void Project::audioBus_removeClient(int busId, PortLeftRight leftRight, QString 
     setModified(true);
 }
 
+void Project::audioBus_addPortConnectRegex(int portId,
+                                           PortLeftRight leftRight,
+                                           KonfytPortRegex r)
+{
+    AudioPortPtr b = mAudioBusMap.value(portId);
+    KONFYT_ASSERT_RETURN(!b.isNull());
+
+    if (leftRight == LeftPort) {
+        b->leftClientRegexes.append(r);
+    } else {
+        b->rightClientRegexes.append(r);
+    }
+    setModified(true);
+    emit audioBusConnectRegexAdded(b, leftRight, r);
+}
+
+void Project::audioBus_removePortConnectRegex(int portId,
+                                              PortLeftRight leftRight,
+                                              int index)
+{
+    AudioPortPtr b = mAudioBusMap.value(portId);
+    KONFYT_ASSERT_RETURN(!b.isNull());
+
+    if (leftRight == LeftPort) {
+        KONFYT_ASSERT_RETURN(indexValid(index, b->leftClientRegexes.count()));
+        b->leftClientRegexes.removeAt(index);
+    } else {
+        KONFYT_ASSERT_RETURN(indexValid(index, b->rightClientRegexes.count()));
+        b->rightClientRegexes.removeAt(index);
+    }
+
+    setModified(true);
+    emit audioBusConnectRegexRemoved(b, index, leftRight);
+}
+
+void Project::audioBus_updatePortConnectRegex(int portId,
+                                              PortLeftRight leftRight,
+                                              int index, KonfytPortRegex r)
+{
+    AudioPortPtr b = mAudioBusMap.value(portId);
+    KONFYT_ASSERT_RETURN(!b.isNull());
+
+    if (leftRight == LeftPort) {
+        KONFYT_ASSERT_RETURN(indexValid(index, b->leftClientRegexes.count()));
+        b->leftClientRegexes.replace(index, r);
+    } else {
+        KONFYT_ASSERT_RETURN(indexValid(index, b->rightClientRegexes.count()));
+        b->rightClientRegexes.replace(index, r);
+    }
+
+    setModified(true);
+    emit audioBusConnectRegexChanged(b, index, leftRight, r);
+}
+
 int Project::addExternalApp(ExternalApp app)
 {
     int id = getUniqueExternalAppId();
@@ -1177,7 +1266,7 @@ void Project::audioInPort_addClient(int portId, PortLeftRight leftRight, QString
     AudioPortPtr p = mAudioInPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
-    if (leftRight == Project::LeftPort) {
+    if (leftRight == LeftPort) {
         if (!p->leftClients.contains(client)) {
             p->leftClients.append(client);
         }
@@ -1195,13 +1284,67 @@ void Project::audioInPort_removeClient(int portId, PortLeftRight leftRight, QStr
     AudioPortPtr p = mAudioInPortMap.value(portId);
     KONFYT_ASSERT_RETURN(!p.isNull());
 
-    if (leftRight == Project::LeftPort) {
+    if (leftRight == LeftPort) {
         p->leftClients.removeAll(client);
     } else {
         p->rightClients.removeAll(client);
     }
 
     setModified(true);
+}
+
+void Project::audioInPort_addPortConnectRegex(int portId,
+                                              PortLeftRight leftRight,
+                                              KonfytPortRegex r)
+{
+    AudioPortPtr p = mAudioInPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
+
+    if (leftRight == LeftPort) {
+        p->leftClientRegexes.append(r);
+    } else {
+        p->rightClientRegexes.append(r);
+    }
+    setModified(true);
+    emit audioInPortConnectRegexAdded(p, leftRight, r);
+}
+
+void Project::audioInPort_removePortConnectRegex(int portId,
+                                                 PortLeftRight leftRight,
+                                                 int index)
+{
+    AudioPortPtr p = mAudioInPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
+
+    if (leftRight == LeftPort) {
+        KONFYT_ASSERT_RETURN(indexValid(index, p->leftClientRegexes.count()));
+        p->leftClientRegexes.removeAt(index);
+    } else {
+        KONFYT_ASSERT_RETURN(indexValid(index, p->rightClientRegexes.count()));
+        p->rightClientRegexes.removeAt(index);
+    }
+
+    setModified(true);
+    emit audioInPortConnectRegexRemoved(p, index, leftRight);
+}
+
+void Project::audioInPort_updatePortConnectRegex(int portId,
+                                                 PortLeftRight leftRight,
+                                                 int index, KonfytPortRegex r)
+{
+    AudioPortPtr p = mAudioInPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
+
+    if (leftRight == LeftPort) {
+        KONFYT_ASSERT_RETURN(indexValid(index, p->leftClientRegexes.count()));
+        p->leftClientRegexes.replace(index, r);
+    } else {
+        KONFYT_ASSERT_RETURN(indexValid(index, p->rightClientRegexes.count()));
+        p->rightClientRegexes.replace(index, r);
+    }
+
+    setModified(true);
+    emit audioInPortConnectRegexChanged(p, index, leftRight, r);
 }
 
 void Project::midiOutPort_removePort(int portId)
@@ -1274,6 +1417,38 @@ void Project::midiOutPort_removeClient(int portId, QString client)
     p->clients.removeAll(client);
 
     setModified(true);
+}
+
+void Project::midiOutPort_addPortConnectRegex(int portId, KonfytPortRegex r)
+{
+    MidiPortPtr p = mMidiOutPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
+
+    p->clientRegexes.append(r);
+    setModified(true);
+    emit midiOutPortConnectRegexAdded(p, r);
+}
+
+void Project::midiOutPort_removePortConnectRegex(int portId, int index)
+{
+    MidiPortPtr p = mMidiOutPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
+
+    KONFYT_ASSERT_RETURN(indexValid(index, p->clientRegexes.count()));
+    p->clientRegexes.removeAt(index);
+    setModified(true);
+    emit midiOutPortConnectRegexRemoved(p, index);
+}
+
+void Project::midiOutPort_updatePortConnectRegex(int portId, int index, KonfytPortRegex r)
+{
+    MidiPortPtr p = mMidiOutPortMap.value(portId);
+    KONFYT_ASSERT_RETURN(!p.isNull());
+
+    KONFYT_ASSERT_RETURN(indexValid(index, p->clientRegexes.count()));
+    p->clientRegexes.replace(index, r);
+    setModified(true);
+    emit midiOutPortConnectRegexChanged(p, index, r);
 }
 
 QList<int> Project::midiOutPort_getAllPortIds() const
