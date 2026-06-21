@@ -40,6 +40,26 @@ QCheckBox::indicator:checked {
 	background-color: rgb(19, 236, 47);
 }
 
+QCheckBox::indicator:unchecked {
+	background-color: rgb(38, 38, 38);
+}
+
+/* ---------------------------------------------------------------------- */
+QRadioButton::indicator {
+	border: 1px solid grey;
+    width: 13px;
+    height: 13px;
+	border-radius: 7px;
+}
+
+QRadioButton::indicator:checked {
+	background-color: rgb(19, 236, 47);
+}
+
+QRadioButton::indicator:unchecked {
+	background-color: rgb(38, 38, 38);
+}
+
 /* ---------------------------------------------------------------------- */
 /* MIDI Indicator */
 QCheckBox#MIDI_indicator::indicator {
@@ -2462,7 +2482,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
                  </size>
                 </property>
                 <property name="currentIndex">
-                 <number>10</number>
+                 <number>4</number>
                 </property>
                 <widget class="QWidget" name="PatchPage">
                  <property name="konfytGradient" stdset="0">
