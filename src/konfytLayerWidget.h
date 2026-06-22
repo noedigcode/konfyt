@@ -110,6 +110,8 @@ private:
 private slots:
     void onProjectMidiOutPortNameChanged(int portId);
     void onProjectAudioInPortNameChanged(int portId);
+    void onProjectBusNameChanged(int busId);
+    void onProjectMidiInPortNameChanged(int portId);
 
     void on_toolButton_left_clicked();
     void on_gainSlider_sliderMoved(int position);

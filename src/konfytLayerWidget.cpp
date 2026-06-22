@@ -54,6 +54,10 @@ void PatchLayerWidget::setProject(PatchLayerWidget::ProjectPtr project)
             this, &PatchLayerWidget::onProjectAudioInPortNameChanged);
     connect(mProject.data(), &Project::midiOutPortNameChanged,
             this, &PatchLayerWidget::onProjectMidiOutPortNameChanged);
+    connect(mProject.data(), &Project::audioBusNameChanged,
+            this, &PatchLayerWidget::onProjectBusNameChanged);
+    connect(mProject.data(), &Project::midiInPortNameChanged,
+            this, &PatchLayerWidget::onProjectMidiInPortNameChanged);
 }
 
 void PatchLayerWidget::paintEvent(QPaintEvent* /*e*/)
@@ -154,6 +158,40 @@ void PatchLayerWidget::onProjectAudioInPortNameChanged(int portId)
         if (portId == mPatchLayer->audioInPortData.portIdInProject) {
             refresh();
         }
+    }
+}
+
+void PatchLayerWidget::onProjectBusNameChanged(int busId)
+{
+    if (!mPatchLayer) { return; }
+
+    switch (mPatchLayer->layerType()) {
+    case PatchLayer::TypeSoundfontProgram:
+    case PatchLayer::TypeSfz:
+    case PatchLayer::TypeAudioIn:
+        if (mPatchLayer->busIdInProject() == busId) {
+            refresh();
+        }
+        break;
+    default:
+        break;
+    }
+}
+
+void PatchLayerWidget::onProjectMidiInPortNameChanged(int portId)
+{
+    if (!mPatchLayer) { return; }
+
+    switch (mPatchLayer->layerType()) {
+    case PatchLayer::TypeSoundfontProgram:
+    case PatchLayer::TypeSfz:
+    case PatchLayer::TypeMidiOut:
+        if (mPatchLayer->midiInPortIdInProject() == portId) {
+            refresh();
+        }
+        break;
+    default:
+        break;
     }
 }
 

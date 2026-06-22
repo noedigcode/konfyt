@@ -272,27 +272,27 @@ signals:
     void projectModifiedStateChanged(bool modified);
     void projectNameChanged();
     void patchURIsNeedUpdating();
-    void audioBusNameChanged(int busId);
 
-    void midiInPortNameChanged(int portId);
+    void audioBusNameChanged(int busId);
     void audioBusConnectRegexAdded(AudioPortPtr bus, PortLeftRight leftRight, KonfytPortRegex r);
     void audioBusConnectRegexChanged(AudioPortPtr bus, int index, PortLeftRight leftRight, KonfytPortRegex r);
     void audioBusConnectRegexRemoved(AudioPortPtr bus, int index, PortLeftRight leftRight);
 
+    void midiInPortNameChanged(int portId);
     void midiInPortConnectRegexAdded(MidiPortPtr port, KonfytPortRegex r);
     void midiInPortConnectRegexChanged(MidiPortPtr port, int index, KonfytPortRegex r);
     void midiInPortConnectRegexRemoved(MidiPortPtr port, int index);
 
+    void midiOutPortNameChanged(int portId);
     void midiOutPortConnectRegexAdded(MidiPortPtr port, KonfytPortRegex r);
     void midiOutPortConnectRegexChanged(MidiPortPtr port, int index, KonfytPortRegex r);
     void midiOutPortConnectRegexRemoved(MidiPortPtr port, int index);
 
+    void audioInPortNameChanged(int portId);
     void audioInPortConnectRegexAdded(AudioPortPtr port, PortLeftRight leftRight, KonfytPortRegex r);
     void audioInPortConnectRegexChanged(AudioPortPtr port, int index, PortLeftRight leftRight, KonfytPortRegex r);
     void audioInPortConnectRegexRemoved(AudioPortPtr port, int index, PortLeftRight leftRight);
 
-    void midiOutPortNameChanged(int portId);
-    void audioInPortNameChanged(int portId);
     void midiPickupRangeChanged(int range);
 
     void externalAppAdded(int id);
