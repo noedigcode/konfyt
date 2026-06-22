@@ -2877,7 +2877,6 @@ void MainWindow::loadProject(ProjectPtr prj)
             // Update left and right port references of bus in project
             bus->leftJackPort = left;
             bus->rightJackPort = right;
-            prj->audioBus_replace_noModify( prjBusId, bus ); // use noModify function as to not change the project's modified state.
             // Add port clients to Jack client
             foreach (QString client, bus->leftClients) {
                 jack.addPortClient(bus->leftJackPort, client);
@@ -6868,7 +6867,6 @@ int MainWindow::addBus()
     if (bus) {
         bus->leftJackPort = left;
         bus->rightJackPort = right;
-        prj->audioBus_replace(busId, bus);
     } else {
         print("Error: addBus: bus null for id " + n2s(busId));
         KONFYT_ASSERT_FAIL("bus null");
@@ -8069,7 +8067,7 @@ void MainWindow::on_tree_portsBusses_itemChanged(QTreeWidgetItem *item, int /*co
 
     if (item->parent() == busParent) {
         // Bus is selected
-        int id = tree_busMap.value( item );
+        int id = tree_busMap.value(item);
         prj->audioBus_setName(id, item->text(0));
 
     } else if (item->parent() == audioInParent) {
@@ -9014,8 +9012,7 @@ void MainWindow::on_checkBox_connectionsPage_ignoreGlobalVolume_clicked()
     KONFYT_ASSERT_RETURN(!bus.isNull());
     bus->ignoreMasterGain = ui->checkBox_connectionsPage_ignoreGlobalVolume->isChecked();
 
-    // Update in project
-    mCurrentProject->audioBus_replace(busId, bus);
+    mCurrentProject->setModified(true);
 
     // Update in JACK engine
     updateBusGainInJackEngine(busId);

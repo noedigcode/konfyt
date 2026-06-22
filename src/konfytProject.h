@@ -226,8 +226,6 @@ public:
     QList<int> audioBus_getAllBusIds() const;
     QList<AudioPortPtr> audioBus_getAllBuses();
     void audioBus_setName(int busId, QString name);
-    void audioBus_replace(int busId, AudioPortPtr newBus);
-    void audioBus_replace_noModify(int busId, AudioPortPtr newBus);
     void audioBus_addClient(int busId, PortLeftRight leftRight, QString client);
     void audioBus_removeClient(int busId, PortLeftRight leftRight, QString client);
     void audioBus_addPortConnectRegex(int portId, PortLeftRight leftRight, KonfytPortRegex r);

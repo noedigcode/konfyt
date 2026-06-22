@@ -479,9 +479,12 @@ void Project::midiInPort_setName(int portId, QString name)
 {
     KONFYT_ASSERT_RETURN(midiInPort_exists(portId));
 
-    mMidiInPortMap[portId]->name = name;
-    setModified(true);
-    emit midiInPortNameChanged(portId);
+    MidiPortPtr p = mMidiInPortMap.value(portId);
+    if (p) {
+        p->name = name;
+        setModified(true);
+        emit midiInPortNameChanged(portId);
+    }
 }
 
 void Project::midiInPort_setJackPort(int portId, KfJackMidiPort *jackport)
@@ -1065,23 +1068,13 @@ QList<Project::AudioPortPtr> Project::audioBus_getAllBuses()
 void Project::audioBus_setName(int busId, QString name)
 {
     KONFYT_ASSERT_RETURN(audioBus_exists(busId));
-    mAudioBusMap[busId]->name = name;
-    setModified(true);
-    emit audioBusNameChanged(busId);
-}
 
-void Project::audioBus_replace(int busId, AudioPortPtr newBus)
-{
-    audioBus_replace_noModify(busId, newBus);
-    setModified(true);
-}
-
-/* Do not change the project's modified state. */
-void Project::audioBus_replace_noModify(int busId, AudioPortPtr newBus)
-{
-    KONFYT_ASSERT_RETURN(mAudioBusMap.contains(busId));
-
-    mAudioBusMap.insert(busId, newBus);
+    AudioPortPtr b = mAudioBusMap.value(busId);
+    if (b) {
+        b->name = name;
+        setModified(true);
+        emit audioBusNameChanged(busId);
+    }
 }
 
 void Project::audioBus_addClient(int busId, PortLeftRight leftRight, QString client)
@@ -1089,7 +1082,7 @@ void Project::audioBus_addClient(int busId, PortLeftRight leftRight, QString cli
     KONFYT_ASSERT_RETURN(mAudioBusMap.contains(busId));
 
     AudioPortPtr b = mAudioBusMap.value(busId);
-    if (!b) { return; }
+    KONFYT_ASSERT_RETURN(!b.isNull());
 
     if (leftRight == Project::LeftPort) {
         if (!b->leftClients.contains(client)) {
@@ -1109,14 +1102,14 @@ void Project::audioBus_removeClient(int busId, PortLeftRight leftRight, QString 
     KONFYT_ASSERT_RETURN(mAudioBusMap.contains(busId));
 
     AudioPortPtr b = mAudioBusMap.value(busId);
-    if (!b) { return; }
+    KONFYT_ASSERT_RETURN(!b.isNull());
 
     if (leftRight == Project::LeftPort) {
         b->leftClients.removeAll(client);
     } else {
         b->rightClients.removeAll(client);
     }
-    mAudioBusMap.insert(busId, b);
+
     setModified(true);
 }
 
