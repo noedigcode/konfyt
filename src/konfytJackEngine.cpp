@@ -270,7 +270,7 @@ KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPo
 
     // Add a new midi output port which will be connected to the plugin midi input
     QString midiName = spec.name;
-    midiPort->jackPointer = registerJackMidiPort(midiName, false);
+    midiPort->jackPointer = registerJackMidiPort(midiName, midiPort->direction);
     if (midiPort->jackPointer == nullptr) {
         print("Failed to create JACK MIDI output port '" + midiName + "' for plugin.");
     }
@@ -278,7 +278,7 @@ KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPo
 
     // Add left audio input port where we will receive plugin audio
     QString nameL = QString("%1_in_L").arg(spec.name);
-    alPort->jackPointer = registerJackAudioPort(nameL, true);
+    alPort->jackPointer = registerJackAudioPort(nameL, alPort->direction);
     if (alPort->jackPointer == nullptr) {
         print("Failed to create left audio input port '" + nameL + "' for plugin.");
     }
@@ -286,7 +286,7 @@ KfJackPluginPorts* KonfytJackEngine::addPluginPortsAndConnect(const KonfytJackPo
 
     // Add right audio input port
     QString nameR = QString("%1_in_R").arg(spec.name);
-    arPort->jackPointer = registerJackAudioPort(nameR, true);
+    arPort->jackPointer = registerJackAudioPort(nameR, arPort->direction);
     if (arPort->jackPointer == nullptr) {
         print("Failed to create right audio input port '" + nameR + "' for plugin.");
     }
@@ -688,7 +688,9 @@ KfJackAudioRoute* KonfytJackEngine::addAudioRoute()
     return route;
 }
 
-void KonfytJackEngine::setAudioRoute(KfJackAudioRoute *route, KfJackAudioPort *sourcePort, KfJackAudioPort *destPort)
+void KonfytJackEngine::setAudioRoute(KfJackAudioRoute *route,
+                                     KfJackAudioPort *sourcePort,
+                                     KfJackAudioPort *destPort)
 {
     KONFYT_ASSERT_RETURN(route);
 
@@ -1790,15 +1792,15 @@ QString KonfytJackEngine::portNameFromJackPortString(QString portString)
     return portString.right(portString.length() - clientName.length() - 1);
 }
 
-KfJackMidiPort *KonfytJackEngine::addMidiPort(QString name, bool isInput)
+KfJackMidiPort *KonfytJackEngine::addMidiPort(QString name,
+                                              KfJackPort::Direction direction)
 {
     if (!clientIsActive()) { return nullptr; }
     pauseJackProcessing(true);
 
-    KfJackMidiPort* port = new KfJackMidiPort(
-                isInput ? KfJackPort::INPUT : KfJackPort::OUTPUT);
-    port->jackPointer = registerJackMidiPort(name, isInput);
-    if (isInput) {
+    KfJackMidiPort* port = new KfJackMidiPort(direction);
+    port->jackPointer = registerJackMidiPort(name, direction);
+    if (direction == KfJackPort::INPUT) {
         midiInPorts.append(port);
     } else {
         midiOutPorts.append(port);
@@ -1808,15 +1810,15 @@ KfJackMidiPort *KonfytJackEngine::addMidiPort(QString name, bool isInput)
     return port;
 }
 
-KfJackAudioPort *KonfytJackEngine::addAudioPort(QString name, bool isInput)
+KfJackAudioPort *KonfytJackEngine::addAudioPort(QString name,
+                                                KfJackPort::Direction direction)
 {
     if (!clientIsActive()) { return nullptr; }
     pauseJackProcessing(true);
 
-    KfJackAudioPort* port = new KfJackAudioPort(
-                isInput ? KfJackPort::INPUT : KfJackPort::OUTPUT);
-    port->jackPointer = registerJackAudioPort(name, isInput);
-    if (isInput) {
+    KfJackAudioPort* port = new KfJackAudioPort(direction);
+    port->jackPointer = registerJackAudioPort(name, direction);
+    if (direction) {
         audioInPorts.append(port);
     } else {
         audioOutPorts.append(port);
@@ -1938,32 +1940,38 @@ void KonfytJackEngine::updateAudioBufferSumCycleCount()
     mAudioBufferSumCycleCount = mJackSampleRate/mJackBufferSize/10;
 }
 
-jack_port_t *KonfytJackEngine::registerJackMidiPort(QString name, bool input)
+jack_port_t *KonfytJackEngine::registerJackMidiPort(QString name,
+                                                    KfJackPort::Direction direction)
 {
-    jack_port_t* port = jack_port_register( mJackClient,
-                                            name.toLocal8Bit().constData(),
-                                            JACK_DEFAULT_MIDI_TYPE,
-                                    input ? JackPortIsInput : JackPortIsOutput,
-                                            0);
+    unsigned long flag = (direction == KfJackPort::INPUT) ? JackPortIsInput :
+                                                            JackPortIsOutput;
+    jack_port_t* port = jack_port_register(mJackClient,
+                                           name.toLocal8Bit().constData(),
+                                           JACK_DEFAULT_MIDI_TYPE,
+                                           flag,
+                                           0);
     if (!port) {
         print(QString("Failed to register JACK MIDI %1 port: %2")
-                .arg(input ? "input" : "output")
-                .arg(name));
+              .arg(direction == KfJackPort::INPUT ? "input" : "output")
+              .arg(name));
     }
     return port;
 }
 
-jack_port_t *KonfytJackEngine::registerJackAudioPort(QString name, bool input)
+jack_port_t *KonfytJackEngine::registerJackAudioPort(QString name,
+                                                     KfJackPort::Direction direction)
 {
-    jack_port_t* port = jack_port_register( mJackClient,
-                                            name.toLocal8Bit().constData(),
-                                            JACK_DEFAULT_AUDIO_TYPE,
-                                    input ? JackPortIsInput : JackPortIsOutput,
-                                            0);
+    unsigned long flag = (direction == KfJackPort::INPUT) ? JackPortIsInput :
+                                                            JackPortIsOutput;
+    jack_port_t* port = jack_port_register(mJackClient,
+                                           name.toLocal8Bit().constData(),
+                                           JACK_DEFAULT_AUDIO_TYPE,
+                                           flag,
+                                           0);
     if (!port) {
         print(QString("Failed to register JACK Audio %1 port: %2")
-                .arg(input ? "input" : "output")
-                .arg(name));
+              .arg(direction == KfJackPort::INPUT ? "input" : "output")
+              .arg(name));
     }
     return port;
 }

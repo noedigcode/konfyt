@@ -93,8 +93,8 @@ public:
     static QString portNameFromJackPortString(QString portString);
 
     // Audio / MIDI in/out ports
-    KfJackMidiPort* addMidiPort(QString name, bool isInput);
-    KfJackAudioPort* addAudioPort(QString name, bool isInput);
+    KfJackMidiPort* addMidiPort(QString name, KfJackPort::Direction direction);
+    KfJackAudioPort* addAudioPort(QString name, KfJackPort::Direction direction);
     void removeMidiPort(KfJackMidiPort* port);
     void removeAudioPort(KfJackAudioPort *port);
     void removeAllAudioInAndOutPorts();
@@ -233,8 +233,8 @@ private:
     QList<KfJackMidiRoute*> midiRoutes;
     QList<KfJackAudioRoute*> audioRoutes;
 
-    jack_port_t* registerJackMidiPort(QString name, bool input);
-    jack_port_t* registerJackAudioPort(QString name, bool input);
+    jack_port_t* registerJackMidiPort(QString name, KfJackPort::Direction direction);
+    jack_port_t* registerJackAudioPort(QString name, KfJackPort::Direction direction);
 
     void removePortFromAllRoutes(KfJackMidiPort* port);
     void removePortFromAllRoutes(KfJackAudioPort* port);

@@ -6837,8 +6837,8 @@ void MainWindow::on_toolButton_filesystemPathDropdown_clicked()
  * are assigned to the leftPort and rightPort parameters. */
 void MainWindow::addAudioBusToJack(int busNo, KfJackAudioPort **leftPort, KfJackAudioPort **rightPort)
 {
-    *leftPort = jack.addAudioPort(QString("bus_%1_L").arg(busNo), false);
-    *rightPort = jack.addAudioPort(QString("bus_%1_R").arg(busNo), false);
+    *leftPort = jack.addAudioPort(QString("bus_%1_L").arg(busNo), KfJackPort::OUTPUT);
+    *rightPort = jack.addAudioPort(QString("bus_%1_R").arg(busNo), KfJackPort::OUTPUT);
 }
 
 /* Adds an audio bus to the current project and Jack. Returns bus index.
@@ -7045,24 +7045,25 @@ void MainWindow::on_actionAdd_MIDI_Out_Port_triggered()
  * This function adds the left and right Jack audio input ports, named according
  * to the given port number. The resulting Jack port IDs are assigned to the
  * leftPortId and rightPortId function parameters. */
-void MainWindow::addAudioInPortsToJack(int portNo, KfJackAudioPort **leftPort, KfJackAudioPort **rightPort)
+void MainWindow::addAudioInPortsToJack(int portNo, KfJackAudioPort **leftPort,
+                                       KfJackAudioPort **rightPort)
 {
-    *leftPort = jack.addAudioPort(QString("audio_in_%1_L").arg(portNo), true);
-    *rightPort = jack.addAudioPort(QString("audio_in_%1_R").arg(portNo), true);
+    *leftPort = jack.addAudioPort(QString("audio_in_%1_L").arg(portNo), KfJackPort::INPUT);
+    *rightPort = jack.addAudioPort(QString("audio_in_%1_R").arg(portNo), KfJackPort::INPUT);
 }
 
 /* Adds a new MIDI output port to JACK, named with the specified port ID. The
  * JACK engine port ID is returned, and null if an error occured. */
 KfJackMidiPort *MainWindow::addMidiOutPortToJack(int numberLabel)
 {
-    return jack.addMidiPort(QString("midi_out_%1").arg(numberLabel), false);
+    return jack.addMidiPort(QString("midi_out_%1").arg(numberLabel), KfJackPort::OUTPUT);
 }
 
 /* Adds a new MIDI port to JACK, named with the specified port ID. The JACK
  * engine port ID is returned, and null if an error occured. */
 KfJackMidiPort *MainWindow::addMidiInPortToJack(int numberLabel)
 {
-    return jack.addMidiPort(QString("midi_in_%1").arg(numberLabel), true);
+    return jack.addMidiPort(QString("midi_in_%1").arg(numberLabel), KfJackPort::INPUT);
 }
 
 bool MainWindow::jackPortBelongstoUs(QString jackPortName)
