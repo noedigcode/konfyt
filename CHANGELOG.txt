@@ -6,6 +6,7 @@ Changelog
 
 Added
 
+- Option to specify JACK port connections using regular expressions.
 - Layer copy and paste.
 
 Changes
@@ -26,6 +27,7 @@ Changes
 
 Fixes
 
+- Properly handle JACK buffer size changes and fix potential crash.
 - Trim file manager setting to prevent errors resulting from accidental spaces.
 
 
