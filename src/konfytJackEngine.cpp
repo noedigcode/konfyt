@@ -1818,7 +1818,7 @@ KfJackAudioPort *KonfytJackEngine::addAudioPort(QString name,
 
     KfJackAudioPort* port = new KfJackAudioPort(direction);
     port->jackPointer = registerJackAudioPort(name, direction);
-    if (direction) {
+    if (direction == KfJackPort::INPUT) {
         audioInPorts.append(port);
     } else {
         audioOutPorts.append(port);
