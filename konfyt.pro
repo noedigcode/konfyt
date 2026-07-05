@@ -90,6 +90,7 @@ HEADERS  += src/mainwindow.h \
     src/ringbufferqmutex.h \
     src/scriptEditWidget.h \
     src/sleepyRingBuffer.h \
+    src/warningListAdapter.h \
     src/xml.h
 
 FORMS    += src/mainwindow.ui \

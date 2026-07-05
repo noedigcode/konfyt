@@ -2170,6 +2170,7 @@ void MainWindow::onMidiInPortConnectRegexAdded(Project::MidiPortPtr port, Konfyt
     ui->treeWidget_jackCon_regexes->setCurrentItem(item);
 
     updateConnectionsTreeCheckboxesForRegexes();
+    updateMidiInPortsWarnings();
 }
 
 void MainWindow::onMidiInPortConnectRegexChanged(Project::MidiPortPtr port, int index, KonfytPortRegex r)
@@ -2187,6 +2188,7 @@ void MainWindow::onMidiInPortConnectRegexChanged(Project::MidiPortPtr port, int 
     updatePortConRegexTreeMidiItem(item, r);
 
     updateConnectionsTreeCheckboxesForRegexes();
+    updateMidiInPortsWarnings();
 }
 
 void MainWindow::onMidiInPortConnectRegexRemoved(Project::MidiPortPtr port, int index)
@@ -2205,6 +2207,7 @@ void MainWindow::onMidiInPortConnectRegexRemoved(Project::MidiPortPtr port, int 
     }
 
     updateConnectionsTreeCheckboxesForRegexes();
+    updateMidiInPortsWarnings();
 }
 
 void MainWindow::onMidiOutPortConnectRegexAdded(Project::MidiPortPtr port, KonfytPortRegex r)
@@ -2220,6 +2223,7 @@ void MainWindow::onMidiOutPortConnectRegexAdded(Project::MidiPortPtr port, Konfy
     ui->treeWidget_jackCon_regexes->setCurrentItem(item);
 
     updateConnectionsTreeCheckboxesForRegexes();
+    updateMidiOutPortWarnings();
 }
 
 void MainWindow::onMidiOutPortConnectRegexChanged(Project::MidiPortPtr port, int index, KonfytPortRegex r)
@@ -2237,6 +2241,7 @@ void MainWindow::onMidiOutPortConnectRegexChanged(Project::MidiPortPtr port, int
     updatePortConRegexTreeMidiItem(item, r);
 
     updateConnectionsTreeCheckboxesForRegexes();
+    updateMidiOutPortWarnings();
 }
 
 void MainWindow::onMidiOutPortConnectRegexRemoved(Project::MidiPortPtr port, int index)
@@ -2255,6 +2260,7 @@ void MainWindow::onMidiOutPortConnectRegexRemoved(Project::MidiPortPtr port, int
     }
 
     updateConnectionsTreeCheckboxesForRegexes();
+    updateMidiOutPortWarnings();
 }
 
 void MainWindow::onAudioInPortConnectRegexAdded(Project::AudioPortPtr port,
@@ -2362,6 +2368,7 @@ void MainWindow::onAudioBusConnectRegexAdded(Project::AudioPortPtr bus,
     ui->treeWidget_jackCon_regexes->setCurrentItem(item);
 
     updateConnectionsTreeCheckboxesForRegexes();
+    updateAudioBusWarnings();
 }
 
 void MainWindow::onAudioBusConnectRegexChanged(Project::AudioPortPtr bus,
@@ -2391,6 +2398,7 @@ void MainWindow::onAudioBusConnectRegexChanged(Project::AudioPortPtr bus,
     updatePortConRegexTreeAudioItem(item, leftRight, r);
 
     updateConnectionsTreeCheckboxesForRegexes();
+    updateAudioBusWarnings();
 }
 
 void MainWindow::onAudioBusConnectRegexRemoved(Project::AudioPortPtr bus,
@@ -2423,6 +2431,7 @@ void MainWindow::onAudioBusConnectRegexRemoved(Project::AudioPortPtr bus,
     }
 
     updateConnectionsTreeCheckboxesForRegexes();
+    updateAudioBusWarnings();
 }
 
 void MainWindow::on_lineEdit_jackCon_regex_client_textChanged(const QString& /*text*/)
@@ -4876,60 +4885,16 @@ void MainWindow::updateAudioBusWarnings()
     foreach (Project::AudioPortPtr bus, prj->audioBus_getAllBuses()) {
         if (!bus) { continue; }
 
-        QString errorText;
+        audioPortWarnings.updateSubject(bus, WarnChan_Bus_Connection,
+                getAudioPortConnectWarningText(bus, warningTypeTextBus));
 
-        // Check for no connections
+        audioPortWarnings.updateSubject(bus, WarnChan_Bus_ClientsInactive,
+                getAudioPortClientsInactiveWarningText(bus, warningTypeTextBus,
+                                                       KfJackPort::OUTPUT));
 
-        bool noLeftClients = (bus->leftClients.count() == 0);
-        bool noRightClients = (bus->rightClients.count() == 0);
-        if (noLeftClients && noRightClients) {
-            errorText = QString("Bus \"%1\" not connected").arg(bus->name);
-        } else if (noLeftClients) {
-            errorText = QString("Bus \"%1\" left not connected").arg(bus->name);
-        } else if (noRightClients) {
-            errorText = QString("Bus \"%1\" right not connected").arg(bus->name);
-        }
-
-        // Check if clients are available
-
-        QStringList jackAudioInPorts = jack.getAudioInputPortsList();
-        bool notRunning = false;
-        foreach (QString client, bus->leftClients) {
-            if (!jackAudioInPorts.contains(client)) {
-                notRunning = true;
-                break;
-            }
-        }
-        if (!notRunning) {
-            foreach (QString client, bus->rightClients) {
-                if (!jackAudioInPorts.contains(client)) {
-                    notRunning = true;
-                    break;
-                }
-            }
-        }
-        if (notRunning) {
-            errorText = QString("Bus \"%1\" client(s) inactive").arg(bus->name);
-        }
-
-        // Update GUI item
-
-        QListWidgetItem* item = audioBusWarningMap.value(bus);
-        if (!errorText.isEmpty()) {
-            // There is an error. Create warning item if one doesn't exist.
-            if (!item) {
-                item = new QListWidgetItem();
-                audioBusWarningMap.insert(bus, item);
-                ui->listWidget_Warnings->addItem(item);
-            }
-            item->setText(errorText);
-        } else {
-            // There is no error. Remove warning item if one exists.
-            if (item) {
-                audioBusWarningMap.remove(item);
-                delete item; // Removes item from QListWidget
-            }
-        }
+        audioPortWarnings.updateSubject(bus, WarnChan_Bus_Regex,
+                getAudioPortRegexWarningText(bus, warningTypeTextBus,
+                                             KfJackPort::OUTPUT));
     }
 }
 
@@ -4938,51 +4903,20 @@ void MainWindow::updateMidiInPortsWarnings()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (Project::MidiPortPtr prjPort, prj->midiInPort_getAllPorts()) {
-        if (!prjPort) { continue; }
+    foreach (Project::MidiPortPtr port, prj->midiInPort_getAllPorts()) {
+        if (!port) { continue; }
 
-        QString errorText;
+        midiPortWarnings.updateSubject(port, WarnChan_MidiIn_Connection,
+                getMidiPortConnectWarningText(port, warningTypeTextMidiIn));
 
-        // Check for no connections
+        midiPortWarnings.updateSubject(port, WarnChan_MidiIn_ClientsInactive,
+                getMidiPortClientsInactiveWarningText(port,
+                                                      warningTypeTextMidiIn,
+                                                      KfJackPort::INPUT));
 
-        if (prjPort->clients.count() == 0) {
-            errorText = QString("MIDI-in \"%1\" not connected")
-                    .arg(prjPort->name);
-        }
-
-        // Check if all connected clients are active
-
-        QStringList jackMidiOutPorts = jack.getMidiOutputPortsList();
-        bool notRunning = false;
-        foreach (QString client, prjPort->clients) {
-            if (!jackMidiOutPorts.contains(client)) {
-                notRunning = true;
-                break;
-            }
-        }
-        if (notRunning) {
-            errorText = QString("MIDI-in \"%1\" client(s) inactive")
-                    .arg(prjPort->name);
-        }
-
-        // Update GUI item
-
-        QListWidgetItem* item = midiPortWarningMap.value(prjPort);
-        if (!errorText.isEmpty()) {
-            // There is an error. Create warning item if one doesn't exist.
-            if (!item) {
-                item = new QListWidgetItem();
-                midiPortWarningMap.insert(prjPort, item);
-                ui->listWidget_Warnings->addItem(item);
-            }
-            item->setText(errorText);
-        } else {
-            // There is no error. Remove warning item if one exists.
-            if (item) {
-                midiPortWarningMap.remove(item);
-                delete item; // Removes item from QListWidget
-            }
-        }
+        midiPortWarnings.updateSubject(port, WarnChan_MidiIn_Regex,
+                getMidiPortRegexWarningText(port, warningTypeTextMidiIn,
+                                            KfJackPort::INPUT));
     }
 }
 
@@ -4991,52 +4925,20 @@ void MainWindow::updateMidiOutPortWarnings()
     ProjectPtr prj = mCurrentProject;
     if (!prj) { return; }
 
-    foreach (Project::MidiPortPtr prjPort, prj->midiOutPort_getAllPorts()) {
-        if (!prjPort) { continue; }
+    foreach (Project::MidiPortPtr port, prj->midiOutPort_getAllPorts()) {
+        if (!port) { continue; }
 
-        QString errorText;
+        midiPortWarnings.updateSubject(port, WarnChan_MidiOut_Connection,
+                getMidiPortConnectWarningText(port, warningTypeTextMidiOut));
 
-        // Check for no connections
+        midiPortWarnings.updateSubject(port, WarnChan_MidiOut_ClientsInactive,
+                getMidiPortClientsInactiveWarningText(port,
+                                                      warningTypeTextMidiOut,
+                                                      KfJackPort::OUTPUT));
 
-        if (prjPort->clients.count() == 0) {
-            errorText = QString("MIDI-out \"%1\" not connected")
-                    .arg(prjPort->name);
-        }
-
-        // Check if clients are available
-
-        QStringList jackMidiInPorts = jack.getMidiInputPortsList();
-        bool notRunning = false;
-        foreach (QString client, prjPort->clients) {
-            if (!jackMidiInPorts.contains(client) ) {
-                notRunning = true;
-                break;
-            }
-        }
-        if (notRunning) {
-            errorText = QString("MIDI-out \"%1\" client(s) inactive")
-                    .arg(prjPort->name);
-        }
-
-        // Update GUI item
-
-        QListWidgetItem* item = midiPortWarningMap.value(prjPort);
-        if (!errorText.isEmpty()) {
-            // There is an error. Create warning item if one doesn't exist.
-            if (!item) {
-                item = new QListWidgetItem();
-                midiPortWarningMap.insert(prjPort, item);
-                ui->listWidget_Warnings->addItem(item);
-            }
-            item->setText(errorText);
-        } else {
-            // There is no error. Remove warning item if one exists.
-            if (item) {
-                midiPortWarningMap.remove(item);
-                delete item; // Removes item from QListWidget
-            }
-        }
-
+        midiPortWarnings.updateSubject(port, WarnChan_MidiOut_Regex,
+                getMidiPortRegexWarningText(port, warningTypeTextMidiOut,
+                                             KfJackPort::OUTPUT));
     }
 }
 
@@ -5048,64 +4950,18 @@ void MainWindow::updateAudioInPortWarnings()
     foreach (Project::AudioPortPtr prjPort, prj->audioInPort_getAllPorts()) {
         if (!prjPort) { continue; }
 
-        QString errorText;
+        audioPortWarnings.updateSubject(prjPort, WarnChan_AudioIn_Connection,
+                                        getAudioPortConnectWarningText(
+                                            prjPort, warningTypeTextAudioIn));
 
-        // Check for no connections
+        audioPortWarnings.updateSubject(prjPort, WarnChan_AudioIn_ClientsInactive,
+                getAudioPortClientsInactiveWarningText(prjPort,
+                                                       warningTypeTextAudioIn,
+                                                       KfJackPort::INPUT));
 
-        bool noLeftClients = (prjPort->leftClients.count() == 0);
-        bool noRightClients = (prjPort->rightClients.count() == 0);
-        if (noLeftClients && noRightClients) {
-            errorText = QString("Audio-in \"%1\" not connected")
-                    .arg(prjPort->name);
-        } else if (noLeftClients) {
-            errorText = QString("Audio-in \"%1\" left not connected")
-                    .arg(prjPort->name);
-        } else if (noRightClients) {
-            errorText = QString("Audio-in \"%1\" right not connected")
-                    .arg(prjPort->name);
-        }
-
-        // Check for clients not available
-
-        QStringList jackAudioInPorts = jack.getAudioOutputPortsList();
-        bool notRunning = false;
-        foreach (QString client, prjPort->leftClients) {
-            if (!jackAudioInPorts.contains(client)) {
-                notRunning = true;
-                break;
-            }
-        }
-        if (!notRunning) {
-            foreach (QString client, prjPort->rightClients) {
-                if (!jackAudioInPorts.contains(client)) {
-                    notRunning = true;
-                    break;
-                }
-            }
-        }
-        if (notRunning) {
-            errorText = QString("Audio-in \"%1\" client(s) inactive")
-                    .arg(prjPort->name);
-        }
-
-        // Update GUI item
-
-        QListWidgetItem* item = audioInPortWarningMap.value(prjPort);
-        if (!errorText.isEmpty()) {
-            // There is an error. Create warning item if one doesn't exist.
-            if (!item) {
-                item = new QListWidgetItem();
-                audioInPortWarningMap.insert(prjPort, item);
-                ui->listWidget_Warnings->addItem(item);
-            }
-            item->setText(errorText);
-        } else {
-            // There is no error. Remove warning item if one exists.
-            if (item) {
-                audioInPortWarningMap.remove(item);
-                delete item; // Removes item form QListWidget
-            }
-        }
+        audioPortWarnings.updateSubject(prjPort, WarnChan_AudioIn_Regex,
+                getAudioPortRegexWarningText(prjPort, warningTypeTextAudioIn,
+                                             KfJackPort::INPUT));
     }
 }
 
@@ -5217,71 +5073,318 @@ void MainWindow::updateOtherJackAudioConnectionWarnings()
     }
 }
 
-void MainWindow::audioBusWarnings_onBusRemoved(Project::AudioPortPtr bus)
+bool MainWindow::noRegexMatchesJackClientPort(QStringList jackClientPorts,
+                                              QList<KonfytPortRegex> regexes)
 {
-    QListWidgetItem* item = audioBusWarningMap.value(bus);
-    if (item) {
-        audioBusWarningMap.remove(item);
-        delete item; // Removes item from QListWidget
+    QStringList clients;
+    QStringList ports;
+    foreach (QString clientPort, jackClientPorts) {
+        clients.append(jack.clientNameFromJackPortString(clientPort));
+        ports.append(jack.portNameFromJackPortString(clientPort));
     }
+    bool regexClientRunning = false;
+    foreach (KonfytPortRegex regex, regexes) {
+        QRegularExpression clientRe(regex.clientRegex);
+        QRegularExpression portRe(regex.portRegex);
+        for (int i = 0; i < clients.count(); i++) {
+            if (clientRe.match(clients[i]).hasMatch()) {
+                if (portRe.match(ports[i]).hasMatch()) {
+                    regexClientRunning = true;
+                    break;
+                }
+            }
+        }
+        if (regexClientRunning) { break; }
+    }
+    return !regexClientRunning;
+}
+
+void MainWindow::setupAudioPortWarnings()
+{
+    audioPortWarnings.setListWidget(this, ui->listWidget_Warnings);
+
+    audioPortWarnings.setDoubleClickCallback(
+                [=](Project::AudioPortPtr port, int channel)
+    {
+        WarningChannel warnChan = (WarningChannel)channel;
+        switch (warnChan) {
+        case WarnChan_Bus_Connection:
+            onAudioBusWarningDoubleClicked(port);
+            break;
+        case WarnChan_Bus_ClientsInactive:
+            onAudioBusWarningDoubleClicked(port);
+            break;
+        case WarnChan_Bus_Regex:
+            onAudioBusWarningDoubleClicked(port);
+            break;
+        case WarnChan_AudioIn_Connection:
+            onAudioInWarningDoubleClicked(port);
+            break;
+        case WarnChan_AudioIn_ClientsInactive:
+            onAudioInWarningDoubleClicked(port);
+            break;
+        case WarnChan_AudioIn_Regex:
+            onAudioInWarningDoubleClicked(port);
+            break;
+        default:
+            break;
+        }
+    });
+}
+
+QString MainWindow::getAudioPortConnectWarningText(Project::AudioPortPtr port,
+                                                   QString portTypeText)
+{
+    QString conWarnText;
+
+    bool noLeft = port->leftClients.isEmpty() && port->leftClientRegexes.isEmpty();
+    bool noRight = port->rightClients.isEmpty() && port->rightClientRegexes.isEmpty();
+    if (noLeft && noRight) {
+        conWarnText = QString("%1 \"%2\" not connected")
+                .arg(portTypeText).arg(port->name);
+    } else if (noLeft) {
+        conWarnText = QString("%1 \"%2\" left not connected")
+                .arg(portTypeText).arg(port->name);
+    } else if (noRight) {
+        conWarnText = QString("%1 \"%2\" right not connected")
+                .arg(portTypeText).arg(port->name);
+    }
+
+    return conWarnText;
+}
+
+void MainWindow::onAudioBusWarningDoubleClicked(Project::AudioPortPtr bus)
+{
+    if (!mCurrentProject) { return; }
+
+    // Show ports/buses screen and select bus
+    showConnectionsPage();
+    int busId = mCurrentProject->audioBus_idFromPtr(bus);
+    connectionsTreeSelectBus(busId);
+}
+
+QString MainWindow::getAudioPortClientsInactiveWarningText(
+        Project::AudioPortPtr port, QString portTypeText,
+        KfJackPort::Direction direction)
+{
+    QStringList jackPorts;
+    if (direction == KfJackPort::INPUT) {
+        jackPorts = jack.getAudioOutputPortsList();
+    } else {
+        jackPorts = jack.getAudioInputPortsList();
+    }
+
+    bool notRunning = false;
+    foreach (QString client, port->leftClients) {
+        if (!jackPorts.contains(client)) {
+            notRunning = true;
+            break;
+        }
+    }
+    if (!notRunning) {
+        foreach (QString client, port->rightClients) {
+            if (!jackPorts.contains(client)) {
+                notRunning = true;
+                break;
+            }
+        }
+    }
+
+    QString text;
+    if (notRunning) {
+        text = QString("%1 \"%2\" client(s) inactive")
+                .arg(portTypeText).arg(port->name);
+    }
+    return text;
+}
+
+QString MainWindow::getAudioPortRegexWarningText(Project::AudioPortPtr port,
+                                                 QString portTypeText,
+                                                 KfJackPort::Direction direction)
+{
+    QString regexWarnText;
+
+    QStringList jackPorts;
+    if (direction == KfJackPort::INPUT) {
+        jackPorts = jack.getAudioOutputPortsList();
+    } else {
+        jackPorts = jack.getAudioInputPortsList();
+    }
+
+    // For left and right, if there are regexes, warn if none of them match.
+    bool leftRegexWarn = false;
+    if (!port->leftClientRegexes.isEmpty()) {
+        leftRegexWarn = noRegexMatchesJackClientPort(
+                    jackPorts, port->leftClientRegexes);
+    }
+    bool rightRegexWarn = false;
+    if (!port->rightClientRegexes.isEmpty()) {
+        rightRegexWarn = noRegexMatchesJackClientPort(
+                    jackPorts, port->rightClientRegexes);
+    }
+
+    if (leftRegexWarn && rightRegexWarn) {
+        regexWarnText = QString("%1 \"%2\" no regex connection matches")
+                .arg(portTypeText).arg(port->name);
+    } else if (leftRegexWarn) {
+        regexWarnText = QString("%1 \"%2\" no left regex connection matches")
+                .arg(portTypeText).arg(port->name);
+    } else if (rightRegexWarn) {
+        regexWarnText = QString("%1 \"%2\" no right regex connection matches")
+                .arg(portTypeText).arg(port->name);
+    }
+
+    return regexWarnText;
+}
+
+void MainWindow::onAudioInWarningDoubleClicked(Project::AudioPortPtr port)
+{
+    if (!mCurrentProject) { return; }
+
+    // Show ports/buses screen and select audio input port
+    showConnectionsPage();
+    int portId = mCurrentProject->audioInPort_idFromPtr(port);
+    if (portId >= 0) {
+        connectionsTreeSelectAudioInPort(portId);
+    }
+}
+
+void MainWindow::setupMidiPortWarnings()
+{
+    midiPortWarnings.setListWidget(this, ui->listWidget_Warnings);
+
+    midiPortWarnings.setDoubleClickCallback(
+                [=](Project::MidiPortPtr port, int channel)
+    {
+        WarningChannel warnChan = (WarningChannel)channel;
+        switch (warnChan) {
+        case WarnChan_MidiIn_Connection:
+            onMidiInWarningDoubleClicked(port);
+            break;
+        case WarnChan_MidiIn_ClientsInactive:
+            onMidiInWarningDoubleClicked(port);
+            break;
+        case WarnChan_MidiIn_Regex:
+            onMidiInWarningDoubleClicked(port);
+            break;
+        case WarnChan_MidiOut_Connection:
+            onMidiOutWarningDoubleClicked(port);
+            break;
+        case WarnChan_MidiOut_ClientsInactive:
+            onMidiOutWarningDoubleClicked(port);
+            break;
+        case WarnChan_MidiOut_Regex:
+            onMidiOutWarningDoubleClicked(port);
+            break;
+        default:
+            break;
+        }
+    });
+}
+
+QString MainWindow::getMidiPortConnectWarningText(Project::MidiPortPtr port,
+                                                  QString portTypeText)
+{
+    QString conWarnText;
+
+    bool noCon = port->clients.isEmpty() && port->clientRegexes.isEmpty();
+    if (noCon) {
+        conWarnText = QString("%1 \"%2\" not connected")
+                .arg(portTypeText).arg(port->name);
+    }
+
+    return conWarnText;
+}
+
+QString MainWindow::getMidiPortClientsInactiveWarningText(
+        Project::MidiPortPtr port, QString portTypeText,
+        KfJackPort::Direction direction)
+{
+    QStringList jackPorts;
+    if (direction == KfJackPort::INPUT) {
+        jackPorts = jack.getMidiOutputPortsList();
+    } else {
+        jackPorts = jack.getMidiInputPortsList();
+    }
+
+    bool notRunning = false;
+    foreach (QString client, port->clients) {
+        if (!jackPorts.contains(client)) {
+            notRunning = true;
+            break;
+        }
+    }
+
+    QString text;
+    if (notRunning) {
+        text = QString("%1 \"%2\" client(s) inactive")
+                .arg(portTypeText).arg(port->name);
+    }
+    return text;
+}
+
+QString MainWindow::getMidiPortRegexWarningText(
+        Project::MidiPortPtr port, QString portTypeText,
+        KfJackPort::Direction direction)
+{
+    QString regexWarnText;
+
+    QStringList jackPorts;
+    if (direction == KfJackPort::INPUT) {
+        jackPorts = jack.getMidiOutputPortsList();
+    } else {
+        jackPorts = jack.getMidiInputPortsList();
+    }
+
+    // If there are regexes, warn if none of them match.
+    bool regexWarn = false;
+    if (!port->clientRegexes.isEmpty()) {
+        regexWarn = noRegexMatchesJackClientPort(jackPorts, port->clientRegexes);
+    }
+
+    if (regexWarn) {
+        regexWarnText = QString("%1 \"%2\" no regex connection matches")
+                .arg(portTypeText).arg(port->name);
+    }
+
+    return regexWarnText;
+}
+
+void MainWindow::onMidiInWarningDoubleClicked(Project::MidiPortPtr port)
+{
+    if (!mCurrentProject) { return; }
+
+    // Show ports/buses screen and select MIDI port
+    showConnectionsPage();
+    int portId = mCurrentProject->midiInPort_idFromPtr(port);
+    connectionsTreeSelectMidiInPort(portId);
+}
+
+void MainWindow::onMidiOutWarningDoubleClicked(Project::MidiPortPtr port)
+{
+    if (!mCurrentProject) { return; }
+
+    // Show ports/buses screen and select MIDI port
+    showConnectionsPage();
+    int portId = mCurrentProject->midiOutPort_idFromPtr(port);
+    connectionsTreeSelectMidiOutPort(portId);
+}
+
+void MainWindow::audioPortWarnings_onPortRemoved(Project::AudioPortPtr port)
+{
+    audioPortWarnings.removeSubject(port);
 }
 
 void MainWindow::midiPortWarnings_onPortRemoved(Project::MidiPortPtr prjPort)
 {
-    QListWidgetItem* item = midiPortWarningMap.value(prjPort);
-    if (item) {
-        midiPortWarningMap.remove(item);
-        delete item; // Removes item from QListWidget
-    }
-}
-
-void MainWindow::audioInPortWarnings_onPortRemoved(Project::AudioPortPtr prjPort)
-{
-    QListWidgetItem* item = audioInPortWarningMap.value(prjPort);
-    if (item) {
-        audioInPortWarningMap.remove(item);
-        delete item; // Removes item from QListWidget
-    }
+    midiPortWarnings.removeSubject(prjPort);
 }
 
 void MainWindow::portWarnings_onItemDoubleClicked(QListWidgetItem* item)
 {
     KONFYT_ASSERT_RETURN(!mCurrentProject.isNull());
 
-    if (audioBusWarningMap.contains(item)) {
-
-        // Show ports/buses screen and select bus
-        Project::AudioPortPtr bus = audioBusWarningMap.value(item);
-        showConnectionsPage();
-        int busId = mCurrentProject->audioBus_idFromPtr(bus);
-        connectionsTreeSelectBus(busId);
-
-    } else if (midiPortWarningMap.contains(item)) {
-
-        // Show ports/buses screen and select MIDI port
-        Project::MidiPortPtr p = midiPortWarningMap.value(item);
-        showConnectionsPage();
-        int id = mCurrentProject->midiInPort_idFromPtr(p);
-        if (id >= 0) {
-            connectionsTreeSelectMidiInPort(id);
-        } else {
-            id = mCurrentProject->midiOutPort_idFromPtr(p);
-            if (id >= 0) {
-                connectionsTreeSelectMidiOutPort(id);
-            }
-        }
-
-    } else if (audioInPortWarningMap.contains(item)) {
-
-        // Show ports/buses screen and select audio port
-        Project::AudioPortPtr p = audioInPortWarningMap.value(item);
-        showConnectionsPage();
-        int id = mCurrentProject->audioInPort_idFromPtr(p);
-        if (id >= 0) {
-            connectionsTreeSelectAudioInPort(id);
-        }
-
-    } else if (item == otherJackMidiConsWarningHeader) {
+    if (item == otherJackMidiConsWarningHeader) {
 
         // Show Other JACK MIDI Connections screen
         showOtherJackConsPageMidi();
@@ -9258,17 +9361,20 @@ void MainWindow::on_listWidget_jackConnections_currentItemChanged(
 
 void MainWindow::setupPortConnectionWarnings()
 {
+    setupAudioPortWarnings();
+    setupMidiPortWarnings();
+
     connect(this, &MainWindow::audioBusRemoved,
-            this, &MainWindow::audioBusWarnings_onBusRemoved);
+            this, &MainWindow::audioPortWarnings_onPortRemoved);
+
+    connect(this, &MainWindow::audioInPortRemoved,
+            this, &MainWindow::audioPortWarnings_onPortRemoved);
 
     connect(this, &MainWindow::midiInPortRemoved,
             this, &MainWindow::midiPortWarnings_onPortRemoved);
 
     connect(this, &MainWindow::midiOutPortRemoved,
             this, &MainWindow::midiPortWarnings_onPortRemoved);
-
-    connect(this, &MainWindow::audioInPortRemoved,
-            this, &MainWindow::audioInPortWarnings_onPortRemoved);
 
     connect(ui->listWidget_Warnings, &QListWidget::itemDoubleClicked,
             this, &MainWindow::portWarnings_onItemDoubleClicked);

@@ -40,6 +40,7 @@
 #include "menuEntryWidget.h"
 #include "midiEventListWidgetAdapter.h"
 #include "patchListWidgetAdapter.h"
+#include "warningListAdapter.h"
 
 #include <QAction>
 #include <QCheckBox>
@@ -1072,9 +1073,9 @@ private:
     void updateOtherJackMidiConnectionWarnings();
     void updateOtherJackAudioConnectionWarnings();
 
-    BiQMap<Project::AudioPortPtr, QListWidgetItem*> audioBusWarningMap;
-    BiQMap<Project::MidiPortPtr, QListWidgetItem*> midiPortWarningMap; // MIDI in and out ports
-    BiQMap<Project::AudioPortPtr, QListWidgetItem*> audioInPortWarningMap;
+    bool noRegexMatchesJackClientPort(QStringList jackClientPorts,
+                                      QList<KonfytPortRegex> regexes);
+
 
     QListWidgetItem* otherJackMidiConsWarningHeader = nullptr;
     BiQMap<QListWidgetItem*, QString> otherJackMidiConsWarningMap;
@@ -1082,10 +1083,58 @@ private:
     QListWidgetItem* otherJackAudioConsWarningHeader = nullptr;
     BiQMap<QListWidgetItem*, QString> otherJackAudioConsWarningMap;
 
+    enum WarningChannel {
+        WarnChan_Bus_Connection,
+        WarnChan_Bus_ClientsInactive,
+        WarnChan_Bus_Regex,
+        WarnChan_AudioIn_Connection,
+        WarnChan_AudioIn_ClientsInactive,
+        WarnChan_AudioIn_Regex,
+        WarnChan_MidiIn_Connection,
+        WarnChan_MidiIn_ClientsInactive,
+        WarnChan_MidiIn_Regex,
+        WarnChan_MidiOut_Connection,
+        WarnChan_MidiOut_ClientsInactive,
+        WarnChan_MidiOut_Regex
+    };
+    const QString warningTypeTextBus = "Bus";
+    const QString warningTypeTextAudioIn = "Audio-in";
+    const QString warningTypeTextMidiOut = "MIDI-out";
+    const QString warningTypeTextMidiIn = "MIDI-in";
+
+    WarningListAdapter<Project::AudioPortPtr> audioPortWarnings;
+    void setupAudioPortWarnings();
+
+    QString getAudioPortConnectWarningText(Project::AudioPortPtr port,
+                                           QString portTypeText);
+    QString getAudioPortClientsInactiveWarningText(Project::AudioPortPtr port,
+                                                   QString portTypeText,
+                                                   KfJackPort::Direction direction);
+    QString getAudioPortRegexWarningText(Project::AudioPortPtr port,
+                                         QString portTypeText,
+                                         KfJackPort::Direction direction);
+
+    void onAudioBusWarningDoubleClicked(Project::AudioPortPtr bus);
+    void onAudioInWarningDoubleClicked(Project::AudioPortPtr port);
+
+    WarningListAdapter<Project::MidiPortPtr> midiPortWarnings;
+    void setupMidiPortWarnings();
+
+    QString getMidiPortConnectWarningText(Project::MidiPortPtr port,
+                                          QString portTypeText);
+    QString getMidiPortClientsInactiveWarningText(Project::MidiPortPtr port,
+                                                  QString portTypeText,
+                                                  KfJackPort::Direction direction);
+    QString getMidiPortRegexWarningText(Project::MidiPortPtr port,
+                                               QString portTypeText,
+                                               KfJackPort::Direction direction);
+
+    void onMidiInWarningDoubleClicked(Project::MidiPortPtr port);
+    void onMidiOutWarningDoubleClicked(Project::MidiPortPtr port);
+
 private slots:
-    void audioBusWarnings_onBusRemoved(Project::AudioPortPtr bus);
+    void audioPortWarnings_onPortRemoved(Project::AudioPortPtr port);
     void midiPortWarnings_onPortRemoved(Project::MidiPortPtr prjPort);
-    void audioInPortWarnings_onPortRemoved(Project::AudioPortPtr prjPort);
     void portWarnings_onItemDoubleClicked(QListWidgetItem* item);
 
     // Script warnings
