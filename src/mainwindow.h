@@ -1076,6 +1076,7 @@ private:
     bool noRegexMatchesJackClientPort(QStringList jackClientPorts,
                                       QList<KonfytPortRegex> regexes);
 
+    // Other JACK connection warnings
 
     QListWidgetItem* otherJackMidiConsWarningHeader = nullptr;
     BiQMap<QListWidgetItem*, QString> otherJackMidiConsWarningMap;
@@ -1083,6 +1084,7 @@ private:
     QListWidgetItem* otherJackAudioConsWarningHeader = nullptr;
     BiQMap<QListWidgetItem*, QString> otherJackAudioConsWarningMap;
 
+    // Audio/MIDI port warning constants
     enum WarningChannel {
         WarnChan_Bus_Connection,
         WarnChan_Bus_ClientsInactive,
@@ -1102,6 +1104,8 @@ private:
     const QString warningTypeTextMidiOut = "MIDI-out";
     const QString warningTypeTextMidiIn = "MIDI-in";
 
+    // Audio port/bus warnings
+
     WarningListAdapter<Project::AudioPortPtr> audioPortWarnings;
     void setupAudioPortWarnings();
 
@@ -1116,6 +1120,8 @@ private:
 
     void onAudioBusWarningDoubleClicked(Project::AudioPortPtr bus);
     void onAudioInWarningDoubleClicked(Project::AudioPortPtr port);
+
+    // MIDI port warnings
 
     WarningListAdapter<Project::MidiPortPtr> midiPortWarnings;
     void setupMidiPortWarnings();
