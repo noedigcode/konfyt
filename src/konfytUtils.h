@@ -28,7 +28,7 @@
 // Version Info
 
 #define APP_NAME "Konfyt"
-#define APP_VERSION "1.8.0-rc4"
+#define APP_VERSION "1.8.0"
 #define APP_YEAR "2026"
 
 QString getCompileVersionText();
