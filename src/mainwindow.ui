@@ -6475,7 +6475,7 @@ border-bottom-left-radius: 0;</string>
                               </widget>
                              </item>
                              <item>
-                              <widget class="QLabel" name="label_27">
+                              <widget class="QLabel" name="label_271">
                                <property name="text">
                                 <string>Port(s) matching regex:</string>
                                </property>
@@ -6507,7 +6507,7 @@ border-bottom-left-radius: 0;</string>
                                <property name="buttonFrame" stdset="0">
                                 <bool>true</bool>
                                </property>
-                               <layout class="QHBoxLayout" name="horizontalLayout_86">
+                               <layout class="QHBoxLayout" name="horizontalLayout_861">
                                 <property name="spacing">
                                  <number>1</number>
                                 </property>
@@ -9903,7 +9903,7 @@ border-bottom-left-radius: 0;</string>
                             </widget>
                            </item>
                            <item>
-                            <widget class="QLabel" name="label_25">
+                            <widget class="QLabel" name="label_251">
                              <property name="text">
                               <string>Starting detached will keep the external app running when Konfyt closes. However, Konfyt will not be able to stop the external app or detect when it has stopped. &quot;Restart when closed&quot; and &quot;Warn before closing&quot; will have no effect.</string>
                              </property>
