@@ -68,7 +68,7 @@ private:
 
     QColor mDropLineColor {QApplication::palette().text().color()};
 
-    void startDrag();
+    void performDrag();
     void updateDropLineLocation(QPoint pos);
 };
 

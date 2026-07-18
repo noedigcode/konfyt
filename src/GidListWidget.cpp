@@ -48,11 +48,12 @@ void GidListWidget::mousePressEvent(QMouseEvent* event)
 
 void GidListWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    // Start drag/drop operation if left button has dragged further than the startDragDistance
+    // Start drag/drop operation if left button has dragged further than the
+    // startDragDistance
     if (event->buttons() & Qt::LeftButton) {
         int dist = (event->pos() - mDragStartPos).manhattanLength();
         if (dist >= QApplication::startDragDistance()) {
-            startDrag();
+            performDrag();
         }
     }
 }
@@ -123,7 +124,7 @@ void GidListWidget::dropEvent(QDropEvent* event)
     }
 }
 
-void GidListWidget::startDrag()
+void GidListWidget::performDrag()
 {
     mDragItem = itemAt(mDragStartPos);
     if (!mDragItem) { return; }
